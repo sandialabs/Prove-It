@@ -150,7 +150,7 @@ class Subset(BinaryOperation):
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
         from sets import subsetDef, A, B, x
-        unfolded = subsetDef.specialize({A:self.operands[0], B:self.operands[1]})
+        unfolded = subsetDef.specialize({A:self.operands[0], B:self.operands[1]}).deriveConclusion()
         if elemInstanceVar != None:
             unfolded = unfolded.relabeled({x:elemInstanceVar})
         return unfolded
@@ -177,7 +177,7 @@ class Superset(BinaryOperation):
         x will be relabeled if an elemInstanceVar is supplied.
         '''
         from sets import supersetDef, A, B, x
-        unfolded = supersetDef.specialize({A:self.operands[0], B:self.operands[1]})
+        unfolded = supersetDef.specialize({A:self.operands[0], B:self.operands[1]}).deriveConclusion()
         if elemInstanceVar != None:
             unfolded = unfolded.relabeled({x:elemInstanceVar})
         return unfolded
@@ -212,14 +212,15 @@ class SetOfAll(NestableOperationOverInstances):
             outStr += '}'
             if fenced: outStr += ']'
         elif formatType == MATHML:
-            outStr += '<mfenced open="{" closed="}">'
+            outStr += '<mfenced open="{" close="}">'
             outStr += '<mrow>' + innermostInstElem.formatted(formatType, fenced=innerFenced)
             if len(conditions) > 0:
                 outStr += '<mo>|</mo>'
-                outStr += '<mfenced separators=",">'
+                outStr += '<mfenced open="" close="" separators=",">'
                 for condition in conditions:
-                    outStr += condition.formated(formatType, fenced=True)
-            outStr += '</mfenced>'
+                    outStr += condition.formatted(formatType, fenced=True)
+                outStr += "</mfenced>"
+            outStr += '</mrow></mfenced>'
         return outStr
 
     def remake(self, operator, instanceVar, instanceExpression, condition):
