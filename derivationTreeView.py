@@ -316,7 +316,6 @@ class DerivationModel(SvgWidgetModel):
         if not parent_idx.isValid():
             # sort the topLevels by proofNumber
             self.topLevels = sorted(self.topLevels, key = lambda step : step.proofNumber)
-            print "sorted", [step.proofNumber for step in self.topLevels]
             return len(self.topLevels)
         return parent_idx.internalPointer().numChildren() 
         
