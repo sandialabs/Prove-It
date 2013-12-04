@@ -12,8 +12,8 @@ NOT = booleans.addLiteral('NOT')
 AND = booleans.addLiteral('AND')
 OR = booleans.addLiteral('OR')
 BOOLEANS = booleans.addLiteral('BOOLEANS', {MATHML:'<mstyle mathvariant="bold-double-struck"><mtext>&#x1D539;</mtext><mspace/></mstyle>'})
-FORALL = AND # a generalization of AND
-EXISTS = OR # a generalization of OR
+FORALL = booleans.addLiteral('FORALL')
+EXISTS = booleans.addLiteral('EXISTS')
 
 class Forall(NestableOperationOverInstances):
     def __init__(self, instanceVars, instanceExpression, conditions=None):
@@ -294,7 +294,8 @@ class Implies(BinaryOperation):
         if len(hypothesizedConditions) == 0:
             # Just use the Expression version
             return Expression.generalize(self, newForallVars, newConditions)
-        return Forall(newForallVars, expr, newConditions)
+        return Expression.generalize(expr, newForallVars, newConditions)
+        #return Forall(newForallVars, expr, newConditions)
         
     def applyTransposition(self):
         '''
