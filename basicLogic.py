@@ -609,7 +609,8 @@ def trueIsBoolDerivation():
     # [TRUE=TRUE or TRUE=FALSE] via [TRUE or TRUE=FALSE] and TRUE=TRUE
     substitute(deriveStatementEqTrue(trueEqTrue).deriveReversed(), Function(Or(X, Equals(TRUE, FALSE)), [X])).prove()
     # isBool(TRUE) via [TRUE=TRUE or TRUE=FALSE]
-    return foldInBool.specialize({A:TRUE}).qed()
+    foldInBool.specialize({A:TRUE}).prove()
+    return inBool(TRUE).qed()
 trueIsBool = trueIsBoolDerivation()
 
 # isBool(FALSE)
@@ -621,7 +622,8 @@ def falseIsBoolDerivation():
     # [FALSE=TRUE or FALSE=FALSE] via [FALSE or FALSE=FALSE] and Not(FALSE=TRUE)
     substitute(falseNotTrue.unravel().equateNegatedToFalse().deriveReversed(), Function(Or(X, Equals(FALSE, FALSE)), [X])).prove()
     # isBool(FALSE) via [FALSE=TRUE or FALSE=FALSE]
-    return foldInBool.specialize({A:FALSE}).qed()
+    foldInBool.specialize({A:FALSE}).qed()
+    return inBool(FALSE).qed()
 falseIsBool = falseIsBoolDerivation()
 
 # forall_{A, B, C | isBool(A), isBool(B), isBool(C)} (A=>C and B=>C) => ((A or B) => C)
