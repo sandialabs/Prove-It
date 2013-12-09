@@ -322,9 +322,9 @@ def foldInBoolDerivation():
 foldInBool = foldInBoolDerivation()    
 
 # TRUE = TRUE
-trueEqTrue = equalsReflexivity.specialize({A:TRUE})
+trueEqTrue = equalsReflexivity.specialize({A:TRUE}).qed()
 # FALSE = FALSE
-falseEqFalse = equalsReflexivity.specialize({A:FALSE})
+falseEqFalse = equalsReflexivity.specialize({A:FALSE}).qed()
 
 # forall_{A, B} [A != B] => Not([A = B])
 unfoldNotEquals = notEqualsDef.specialize().implicationViaEquivalence().generalize([A, B]).qed()
