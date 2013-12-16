@@ -29,10 +29,10 @@
     
     <!-- Font families -->
     <family name="STIXGeneral">
-         <font ttf="/Users/wwitzel/python_standard/matplotlib-1.0.1/build/lib.macosx-10.6-x86_64-2.7/matplotlib/mpl-data/fonts/ttf/STIXGeneral.ttf"/>
-         <font weight="bold" ttf="/Users/wwitzel/python_standard/matplotlib-1.0.1/build/lib.macosx-10.6-x86_64-2.7/matplotlib/mpl-data/fonts/ttf/STIXGeneralBol.ttf"/>
-         <font style="italic" ttf="/Users/wwitzel/python_standard/matplotlib-1.0.1/build/lib.macosx-10.6-x86_64-2.7/matplotlib/mpl-data/fonts/ttf/STIXGeneralItalic.ttf"/>
-         <font weight="bold" style="italic" ttf="/Users/wwitzel/python_standard/matplotlib-1.0.1/build/lib.macosx-10.6-x86_64-2.7/matplotlib/mpl-data/fonts/ttf/STIXGeneralBolIta.ttf"/>
+         <font ttf="fonts/STIXGeneral.ttf"/>
+         <font weight="bold" ttf="fonts/STIXGeneralBol.ttf"/>
+         <font style="italic" ttf="fonts/STIXGeneralItalic.ttf"/>
+         <font weight="bold" style="italic" ttf="fonts/STIXGeneralBolIta.ttf"/>
     </family>
 
     <family name="STIXDoubleStruck">
