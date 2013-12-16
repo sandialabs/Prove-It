@@ -1,165 +1,390 @@
-from basicLogic import *
+from proveItCore import *
+from genericOperations import *
 
 sets = Context('SETS')
 
-prevContext = Context.current
-Context.current = sets
+# set theory related literals
+IN = sets.addLiteral('IN')
+SINGLETON = sets.addLiteral('SINGLETON')
+COMPLEMENT = sets.addLiteral('COMPLEMENT')
+UNION = sets.addLiteral('UNION')
+INTERSECTION = sets.addLiteral('INTERSECTION')
+EVERYTHING = sets.addLiteral('EVERYTHING')
+NOTHING = sets.addLiteral('NOTHING')
+SUBSET = sets.addLiteral('SUBSET')
+SUPERSET = sets.addLiteral('SUPERSET')
+SET = sets.addLiteral('SET')
 
-S = Variable('S')
+A = Variable('A')
+B = Variable('B')
+C = Variable('C')
 P = Variable('P')
 x = Variable('x')
+y = Variable('y')
+X = Variable('X')
+S = Variable('S')
 Px = Operation(P, [x])
+Py = Operation(P, [y])
 
+def setAxioms():
+    """
+    Generates the set axioms.  Because of the interdependence of booleans, 
+    equality, and sets, this is executed on demand after these have all loaded.
+    """
+    from booleans import BOOLEANS, Forall, Implies, Iff, And, Or
+    from equality import Equals
+    importVars = set(locals().keys()) | {'importVars'}
+    
+    # forall_{x, S} (x in S) in BOOLEANS
+    inSetIsInBool = sets.stateAxiom(Forall([x, S], In(In(x, S), BOOLEANS)))
+    
+    # forall_{x, y} [x in Singleton(y)] = [x = y]
+    singletonDef = sets.stateAxiom(Forall([x, y], Equals(In(x, Singleton(y)), Equals(x, y))))
+    
+    # forall_{x, A, B} [x in (A union B)] <=> [(x in A) or (x in B)]
+    unionDef = sets.stateAxiom(Forall([x, A, B], Iff(In(x, Union(A, B)), Or(In(x, A), In(x, B)))))
+    
+    # forall_{x, A, B} [x in (A intersection B)] <=> [(x in A) and (x in B)]
+    intersectionDef = sets.stateAxiom(Forall([x, A, B], Iff(In(x, Intersection(A, B)), And(In(x, A), In(x, B)))))
+    
+    # forall_{A, B} [A subset B => (forall_{x} x in A => x in B)]
+    subsetDef = sets.stateAxiom(Forall([A, B], Implies(Subset(A, B), Forall([x], Implies(In(x, A), In(x, B))))))
+    
+    # forall_{A, B} [A superset B => (forall_{x} x in B => x in A)]
+    supersetDef = sets.stateAxiom(Forall([A, B], Implies(Superset(A, B), Forall([x], Implies(In(x, B), In(x, A))))))
+    
+    # forall_{P, x} {[x in {y | P(y)}] <=> P(x)}
+    setOfAllDef = sets.stateAxiom(Forall([P, x], Iff(In(x, SetOfAll([y], y, suchThat=[Py])), Px)))
 
-# Axioms related to sets that weren't introduced in basicLogic
+    allLocals = dict(locals())
+    return {key:allLocals[key] for key in (set(allLocals.keys()) - importVars)}
 
-# forall_{A, B} [A subset B => (forall_{x} x in A => x in B)]
-subsetDef = sets.stateAxiom(Forall([A, B], Implies(Subset(A, B), Forall([x], Implies(In(x, A), In(x, B))))))
+sets.axiomsOnDemand(setAxioms)
 
-# forall_{A, B} [A superset B => (forall_{x} x in B => x in A)]
-supersetDef = sets.stateAxiom(Forall([A, B], Implies(Superset(A, B), Forall([x], Implies(In(x, B), In(x, A))))))
-
-# forall_{P, x} {[x in {y | P(y)}] <=> P(x)}
-setOfAllDef = sets.stateAxiom(Forall([P, x], Iff(In(x, SetOfAll([y], y, suchThat=[Py])), Px)))
-
-"""
-# forall_{x, y} [x in Singleton(y)] <=> [x = y]
-singletonDef = sets.stateAxiom(Forall([x, y], Iff(In(x, Singleton(y)), Equals(x, y))))
-
-# forall_{x, A, B} [x in (A union B)] <=> [(x in A) or (x in B)]
-unionDef = sets.stateAxiom(Forall([x, A, B], Iff(In(x, Union(A, B)), Or(In(x, A), In(x, B)))))
-
-# forall_{x, A, B} [x in (A intersection B)] <=> [(x in A) and (x in B)]
-intersectionDef = sets.stateAxiom(Forall([x, A, B], Iff(In(x, Intersection(A, B)), And(In(x, A), In(x, B)))))
-
-# forall_{x} x in EVERYTHING
-everythingDef = sets.stateAxiom(Forall([x], In(x, EVERYTHING)))
-
-# forall_{x} not(x in NOTHING)
-nothingDef = sets.stateAxiom(Forall([x], Not(In(x, NOTHING))))
-
-# forall_{S} S union Complement(S) = EVERTHING
-complementCompletion = sets.stateAxiom(Forall([S], Equals(Union(S, Complement(S)), EVERYTHING)))
-                  
-# forall_{S} S intersection Complement(S) = NOTHING
-complementExclusion = sets.stateAxiom(Forall([S], Equals(Intersection(S, Complement(S)), NOTHING)))
-
-# forall_{A, B} [A subseteq B => (forall_{x in A} x in B)]
-subsetEqDef = sets.stateAxiom(Forall([A, B], Implies(SubsetEq(A, B), Forall([(x, A)], In(x, B)))))
-
-# forall_{x, a, Q, S} {x in [union_{a | Q(a)} S(a)] <=> exists_{a | Q(a)} [x in S(a)]}   
-unionOfSetsDef = sets.stateAxiom(Forall([x, a, Q, S], Iff(In(x, UnionOfSets([a], Sa, [Qa])), Exists([a], In(x, Sa), [Qa]))))
+class In(BinaryOperation):
+    def __init__(self, element, itsSet):
+        BinaryOperation.__init__(self, IN, element, itsSet)
+        self.element = element
+        self.itsSet = itsSet
         
-# forall_{A, B} {[forall_{x in A} P(x) and forall_{x in B} P(x)] => forall_{x in (A union B)} P(x)}
-def forallDomainUnificationDerivation():
-    # hypothesis: forall_{x in A} P(x) and forall_{x in B} P(x)
-    hypothesis = sets.state(And(Forall([(x, A)], Px), Forall([(x, B)], Px)))
-    # [x in A => P(x)] given hypothesis
-    xInA_impl_Px = hypothesis.deriveLeft().domainElimination().specialize()
-    # [x in B => P(x)] given hypothesis
-    xInB_impl_Px = hypothesis.deriveRight().domainElimination().specialize()
-    # x in A => P(x) and x in B => P(x) given hypothesis
-    compose(xInA_impl_Px, xInB_impl_Px)
-    # [x in A => P(x) and x in B => P(x)] => [(x in A or x in B) => P(x)]
-    hypotheticalDisjunction.specialize({A:In(x, A), B:In(x, B), C:Px})
-    # [x in (A union B)] => [(x in A) or (x in B)]
-    unionDef.specialize().deriveRightImplication()
-    # forall_{x in (A union B)} Px given forall_{x in A} P(x) and forall_{x in B} P(x)
-    conclusion = hypotheticallyReason(Implies(In(x, Union(A, B)), Px), assumptions={hypothesis}).generalize([x], [In(x, Union(A, B))])
-    # forall_{A, B} {[forall_{x in A} P(x) and forall_{x in B} P(x)] => forall_{x in (A union B)} P(x)}
-    return hypotheticallyReason(Implies(hypothesis, conclusion)).generalize([A, B]).prove()
-forallDomainUnification = forallDomainUnificationDerivation()
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'in'
+        else:
+            return '<mo>&#x2208;</mo>'
 
-# forall_{a} [P(a) => forall_{x in {a}} P(x}]
-def forallIntroductionDerivation():
-    # P(x), given P(a) and (x=a)
-    substitute(Equals(x, a).deriveReversed(), Function(Px, [x]))
-    # x in {a} => (x = a)
-    singletonDef.specialize({x:x, y:a}).deriveRightImplication()
-    # forall_{x in {a}} P(x), given P(a)
-    conclusion = hypotheticallyReason(Implies(In(x, Singleton(a)), Px), assumptions={Pa}).generalize([x], [In(x, Singleton(a))])
-    return hypotheticallyReason(Implies(Pa, conclusion)).generalize([a]).prove()
-forallIntroduction = forallIntroductionDerivation()
-
-# forall_{a, b} {P(a) and P(b)] => forall_{x in ({a} union {b})} P(x)}
-def forallBinaryUnificationDerivation():
-    # hypothesis: P(a) and forall_{x in B} P(x)
-    hypothesis = sets.state(And(Pa, Pb))
-    # P(a), P(b) given hypothesis
-    hypothesis.deriveEach()
-    # [forall_{x in {a}} P(x) and forall_{x in {b}} P(x)] given hypothesis
-    compose(forallIntroduction.specialize({a:a}).deriveConclusion(), forallIntroduction.specialize({a:b}).deriveConclusion())
-    # forall_{x in ({a} union {b})} P(x)} given hypothesis
-    conclusion = forallDomainUnification.specialize({A:Singleton(a), B:Singleton(b)}).deriveConclusion()
-    return hypotheticallyReason(Implies(hypothesis, conclusion)).generalize([a, b]).prove()
-forallBinaryUnification = forallBinaryUnificationDerivation()
-
-# forall_{a, B} {P(a) and forall_{x in B} P(x)] => forall_{x in ({a} union B)} P(x)}
-def forallDomainAddMemberDerivation():
-    # hypothesis: P(a) and forall_{x in B} P(x)
-    hypothesis = sets.state(And(Pa, Forall([(x, B)], Px)))
-    # P(A), forall_{x in B} P(x) given hypothesis
-    hypothesis.deriveEach()
-    # [forall_{x in {a}} P(x) and forall_{x in B} P(x) given hypothesis
-    compose(forallIntroduction.specialize().deriveConclusion(), Forall([(x, B)], Px))
-    # forall_{x in ({a} union B)} P(x)} given hypothesis
-    conclusion = forallDomainUnification.specialize({A:Singleton(a), B:B}).deriveConclusion()
-    return hypotheticallyReason(Implies(hypothesis, conclusion)).generalize([a, B]).prove()
-forallDomainAddMember = forallDomainAddMemberDerivation()
-
-# forall_{x, S} (x in S) or (x in Complement(S))
-def inSetOrInComplementDerivation():
-    # S union Complement(S) = EVERTHING
-    setUnionComplement_equal_Everything = complementCompletion.specialize()
-    # x in EVERYTHING
-    everythingDef.specialize()
-    # x in [S union Complement(S)]
-    substitute(setUnionComplement_equal_Everything.deriveReversed(), Function(In(x, X), [X]))
-    # (x in S) or (x in Complement(S))
-    return unionDef.specialize({A:S, B:Complement(S)}).deriveRight().generalize([x, S])
-inSetOrInComplement = inSetOrInComplementDerivation()
-
-
-# forall_{x, y} Not(x=y) => x in Complement({y})
-def inComplementIfNotEqualDerivation():
-    # hypothesis: Not(x=y)
-    hypothesis = NotEquals(x, y)
-    # {(x in {y}) or (x in Complement({y}))
-    xInY_or_xInCy = inSetOrInComplement.specialize({S:Singleton(y)})
-    # (x in {y}) => (x = y)
-    singletonDef.specialize().deriveRight()
-    # (x=y)=FALSE given hypothesis
-    xIsY_eq_F = hypothesis.equateNegatedToFalse()
-    # Not((x=y)=TRUE) given hypothesis (and Not(FALSE=TRUE))
-    substitute(xIsY_eq_F.deriveReversed(), Function(NotEquals(X, TRUE), [X]))
-    # [Not((x=y)=TRUE) => Not((x in {y})=TRUE)] 
-    notEq_impl_notIn = transposition.specialize({A:In(x, Singleton(y)), B:Equals(x, y)}).deriveConclusion()
-    # Not((x in {y})=TRUE)] and [{(x in {y}) or (x in Complement({y}))], given hypothesis
-    compose(notEq_impl_notIn.deriveConclusion(), xInY_or_xInCy)    
-    # x in Complement(y), given hypothesis
-    conclusion = orImpliesRightDerivation().specialize({A:xInY_or_xInCy.operands[0], B:xInY_or_xInCy.operands[1]}).deriveConclusion()
-    # Not(x=y) => x in Complement({y})
-    return hypotheticallyReason(Implies(hypothesis, conclusion)).generalize([x, y]).prove()
-inComplementIfNotEqual = inComplementIfNotEqualDerivation()
-
-
-
-# a in {b | Q(b)} <=> Q(a)
-def inSetOfAllIffConditionMetDerivation():
-    # lhs = a in {b | Q(b)}.  {b | Q(b)} is shorthand for union of singleton sets.
-    lhs = In(a, UnionOfSets([b], Singleton(b), [Qb]))
-    # a in {b | Q(b)} <=> exists_{b | Q(b)} [a in {b}]}   
-    unionOfSingletonsByDef = unionOfSetsDef.specialize({x:a, a:b, S:Function(Singleton(a), [a])})
-    # [a in {b}] = [a = b] 
-    equivBySingletonDef = ...
-    # a in {b | Q(b)} <=> exists_{b | Q(b)} [a = b]}   
-    substitute(equivBySingletonDef, Function(Iff(lhs, Exists([b], X, [Qb])), [X]))
-    # exists_{b | Q(b)} [a = b]} <=> Q(a)
+    def remake(self, operator, operands):
+        if operator == IN and len(operands) == 2:
+            return In(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)
     
-    unionOfSingletonsByDef
-    rhs = Qa
+    def unfold(self):
+        '''
+        Derive an unfolded version of some (x in S) given (x in S).
+        Examples are: (x=y) from (x in {y}), ((x in A) or (x in B)) from (x in (A union B)).
+        This may be extended to work for other types of sets by implementing
+        the unfoldElemInSet(...) method for each type [see unfoldElemInSet(..) defined
+        for Singleton or Union].
+        '''
+        return self.itsSet.unfoldElemInSet(self.element).check({self})
     
-inSetOfAllIffConditionMet = inSetOfAllIffConditionMetDerivation()
-"""
+    def proveAsFolded(self):
+        '''
+        Derive this folded version, x in S, from the unfolded version.
+        Examples are: (x in {y}) from (x=y), (x in (A union B)) from ((x in A) or (x in B)).
+        This may be extended to work for other types of sets by implementing
+        the proveElemInSet(...) method for each type [see proveElemInSet(..) defined
+        for Singleton or Union].
+        '''    
+        return self.itsSet.proveElemInSet(self.element)
+    
+    def deriveIsInExpansion(self, expandedSet):
+        '''
+        Given x in S, derive x in expandedSet via S subseteq expendedSet.
+        '''
+        #from sets import unionDef, x, A, B
+        #TODO : derive x in S => x in S or x in expandingSet
+        #return unionDef.specialize({x:self.element, A:self.itsSet, B:self.expandingSet}).deriveLeft()
+        pass
+    
+    def evaluateForall(self, forallStmt):
+        '''
+        Given a forall statement over some set, evaluate it to TRUE or FALSE if possible
+        via the set's evaluateForallInSet method.
+        '''
+        return self.itsSet.evaluateForallInSet(forallStmt)
 
-Context.current = prevContext
+class Singleton(Operation):
+    '''
+    Defines a set with only one item.
+    '''
+    def __init__(self, elem):
+        Operation.__init__(self, SINGLETON, [elem])
+        self.elem = elem
+
+    def formatted(self, formatType, fenced=False):
+        if formatType == STRING:
+            return '{' + str(self.elem) + '}'
+        else:
+            return "<mfenced open='{' close='}'>" + self.elem.formatted(formatType) + '</mfenced>'
+
+    def remake(self, operator, operands):
+        if operator == SINGLETON and len(operands) == 1:
+            return Singleton(operands[0])
+        else:
+            return Operation.remake(self, operator, operands)
+    
+    def unfoldElemInSet(self, element):
+        '''
+        From [element in {y}], derive and return (element = y).
+        '''
+        from setAxioms import singletonDef, x, y
+        return singletonDef.specialize({x:element, y:self.elem}).deriveRHSviaEquivalence()
+    
+    def proveElemInSet(self, element):
+        '''
+        From (element = y), derive and return [element in {y}] where self represents {y}.
+        '''   
+        from setAxioms import singletonDef, x, y
+        return singletonDef.specialize({x:element, y:self.elem}).deriveLHSviaEquivalence()
+
+class Complement(Operation):        
+    '''
+    The complement of a set is everything outside that set.
+    '''
+    def __init__(self, elem):
+        Operation.__init__(self, COMPLEMENT, [elem])
+        self.elem = elem
+
+    def __str__(self):
+        return 'Complement(' + str(self.elem) + ')'
+
+    def remake(self, operator, operands):
+        if operator == COMPLEMENT and len(operands) == 1:
+            return Complement(operands[0])
+        else:
+            return Operation.remake(self, operator, operands)
+        
+class Union(AssociativeBinaryOperation):
+    def __init__(self, operandsOrA, B=None):
+        '''
+        Can do Union(A, B) to get UNION{A}{B} or 
+        Union([A, B, C]) to get UNION{A}{AND{B}{C}}
+        '''
+        AssociativeBinaryOperation.__init__(self, UNION, operandsOrA, B)
+
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'union'
+        else:
+            return '<mo>&#x222A;</mo>'
+
+    def deriveCompletion(self):
+        '''
+        derive and return S union Complement(S) = EVERYTHING if
+        this is a union of that form.
+        '''
+        if self.operands[1] == Complement(self.operands[0]):
+            return complementCompletion.specialize({S:self.operands[0]})
+
+    def remake(self, operator, operands):
+        if operator == UNION and len(operands) == 2:
+            return Union(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)
+        
+    def unfoldElemInSet(self, element):
+        '''
+        From [element in (A union B)], derive and return [(element in A) or (element in B)],
+        where self represents (A union B). 
+        '''
+        from setAxioms import unionDef, x, A, B
+        return unionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
+
+    def proveElemInSet(self, element):
+        '''
+        From [(element in A) or (element in B)], derive and return [element in (A union B)]
+        where self represents (A union B).
+        '''   
+        from setAxioms import unionDef, x, A, B
+        return unionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
+
+class Intersection(AssociativeBinaryOperation):
+    def __init__(self, operandsOrA, B=None):
+        '''
+        Can do Intersection(A, B) to get INTERSECTION{A}{B} or 
+        Intersection([A, B, C]) to get INTERSECTION{A}{AND{B}{C}}
+        '''
+        AssociativeBinaryOperation.__init__(self, INTERSECTION, operandsOrA, B)
+
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'intersection'
+        else:
+            return '<mo>&#x2229;</mo>'
+
+    def remake(self, operator, operands):
+        if operator == INTERSECTION and len(operands) == 2:
+            return Intersection(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)
+
+    def unfoldElemInSet(self, element):
+        '''
+        From [element in (A intersection B)], derive and return [(element in A) and (element in B)],
+        where self represents (A intersection B). 
+        '''
+        from setAxioms import intersectionDef, x, A, B
+        return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
+
+    def proveElemInSet(self, element):
+        '''
+        From  [(element in A) and (element in B)], derive and return [element in (A intersection B)],
+        where self represents (A intersection B). 
+        '''
+        from setAxioms import intersectionDef, x, A, B
+        return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
+
+
+class Subset(BinaryOperation):
+    def __init__(self, subSet, superSet):
+        Operation.__init__(self, SUBSET, [subSet, superSet])
+        
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'subset'
+        else:
+            return '<mo>&#x2286;</mo>'
+
+    def remake(self, operator, operands):
+        if operator == SUBSET and len(operands) == 2:
+            return Subset(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)    
+
+    def unfold(self, elemInstanceVar=None):
+        '''
+        Given A subset B, returns (forall_{x} x in A => x in B) derived from self.
+        x will be relabeled if an elemInstanceVar is supplied.
+        '''        
+        unfolded = sets.subsetDef.specialize({A:self.operands[0], B:self.operands[1]}).deriveConclusion()
+        if elemInstanceVar != None:
+            unfolded = unfolded.relabeled({x:elemInstanceVar})
+        return unfolded
+
+class Superset(BinaryOperation):
+    def __init__(self, superSet, subSet):
+        Operation.__init__(self, SUPERSET, [superSet, subSet])
+        
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'superset'
+        else:
+            return '<mo>&#x2287;</mo>'
+
+    def remake(self, operator, operands):
+        if operator == SUPERSET and len(operands) == 2:
+            return Superset(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands) 
+    
+    def unfold(self, elemInstanceVar=None):
+        '''
+        Given A superset B, returns (forall_{x} x in B => x in A) derived from self.
+        x will be relabeled if an elemInstanceVar is supplied.
+        '''
+        unfolded = sets.supersetDef.specialize({A:self.operands[0], B:self.operands[1]}).deriveConclusion()
+        if elemInstanceVar != None:
+            unfolded = unfolded.relabeled({x:elemInstanceVar})
+        return unfolded
+ 
+class SetOfAll(NestableOperationOverInstances):
+    def __init__(self, instanceVars, instanceElement, suchThat=None):
+        '''
+        Nest Set OperationOverInstances' for each of the given instance variables with the given 
+        innermost instance element.  Each suchThat condition is applied as soon as the 
+        instance variables they contain are introduced.
+        '''
+        NestableOperationOverInstances.__init__(self, SET, lambda iVars, iExpr, conds: SetOfAll(iVars, iExpr, conds), instanceVars, instanceElement, suchThat)
+
+    def formatted(self, formatType, fenced=False):
+        outStr = ''
+        # go straight to the innermost instance element then list all conditions
+        conditions = []
+        innermostInstElem = self
+        while isinstance(innermostInstElem, SetOfAll):
+            conditions.append(innermostInstElem.condition)
+            innermostInstElem = innermostInstElem.instanceExpression
+        innerFenced = (len(conditions) > 0)
+        if formatType == STRING:
+            outStr += '{'
+            outStr += innermostInstElem.formatted(formatType, fenced=innerFenced)
+            if len(conditions) > 0:
+                outStr += ' s.t. ' # such that
+                if len(conditions) == 1:
+                    outStr += conditions[0].formatted(formatType, fenced=True)
+                else:
+                    outStr += ', '.join([condition.formatted(formatType, fenced=True) for condition in conditions])
+            outStr += '}'
+            if fenced: outStr += ']'
+        elif formatType == MATHML:
+            outStr += '<mfenced open="{" close="}">'
+            outStr += '<mrow>' + innermostInstElem.formatted(formatType, fenced=innerFenced)
+            if len(conditions) > 0:
+                outStr += '<mo>|</mo>'
+                outStr += '<mfenced open="" close="" separators=",">'
+                for condition in conditions:
+                    outStr += condition.formatted(formatType, fenced=True)
+                outStr += "</mfenced>"
+            outStr += '</mrow></mfenced>'
+        return outStr
+
+    def remake(self, operator, instanceVar, instanceExpression, condition):
+        if operator == SET:
+            return SetOfAll([instanceVar], instanceExpression, [condition])
+        else:
+            return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
+
+"""        
+class UnionOfSets(NestableOperationOverInstances):
+    def __init__(self, instanceVars, instanceExpression, conditions=None):
+        '''
+        Nest Union OperationOverInstances' for each of the given instance variables with the given 
+        innermost instance expression.  The optionally provided conditions are applied as soon as the 
+        instance variables they contain are introduced.  For convenience, conditions of the form 
+        In(instanceVar, domain) may be provided implicitly via tuples in the instanceVars collection.  
+        For example, instanceVars=[(a, A), (b, B)] is the same as instanceVars=[a, b] with 
+        conditions=[In(a, A), In(b, B)].  You can also provide multiple instance variables per domain 
+        as in the following: instanceVars=[([a, b], S)] is the same as instanceVars=[a, b] with 
+        conditions=[In(a, S), In(b, S)].  These implicit conditions are prepended to any explicitly 
+        given conditions as this is processed.
+        '''
+        NestableOperationOverInstances.__init__(self, UNION, lambda iVars, iExpr, conds: UnionOfSets(iVars, iExpr, conds), instanceVars, instanceExpression, conditions)
+
+    def __str__(self):
+        return '[union_{' + str(self.instanceVar) + ' in ' + str(self.domain) + '} ' + str(self.instanceExpression) + ']'
+
+    def remake(self, operator, instanceVar, instanceExpression, condition):
+        if operator == UNION:
+            return UnionOfSets([instanceVar], instanceExpression, [condition])
+        else:
+            return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
+
+class SetOfAll(UnionOfSets):
+    def __init__(self, instanceVarsAndDomains=None, instanceElement=None, suchThat=None):
+        if suchThat == None:
+            UnionOfSets.__init__(self, instanceVarsAndDomains, Singleton(instanceElement))
+        else:
+            UnionOfSets.__init__(self, instanceVarsAndDomains, IfElse(suchThat, Singleton(instanceElement), NOTHING))
+
+    def remake(self, operator, instanceVar, domain, instanceExpression):
+        if operator == UNION and isinstance(instanceExpression, Singleton):
+            return SetOfAll([(instanceVar, domain)], instanceExpression.elem)
+        elif operator == UNION and isinstance(instanceExpression, IF_ELSE) and isinstance(instanceExpression.ifTrueVal, Singleton) and instanceExpression.ifFalseVal == NOTHING:
+            return SetOfAll([(instanceVar, domain)], instanceExpression.ifTrueVal.elem, suchThat=instanceExpression.condition)
+        else:
+            return OperationOverInstances(operator, instanceVar, domain, instanceExpression)
+"""        
+
+
