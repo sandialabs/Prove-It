@@ -155,17 +155,16 @@ class Equals(BinaryOperation):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from setAxioms import singletonDef, x, y
-        singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().check({self})
+        from sets import sets
+        sets.singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().check({self})
     
     def substitution(self, function):
         '''
         From x = y, and given a function f(x), derive f(x)=f(y).
         '''
-        from equalityAxioms import substitutionAxiom, x, y, f
         assert isinstance(function, Function) or isinstance(function, Variable) or isinstance(function, Literal)
         subMap = SubstitutionMap({x:self.lhs, y:self.rhs, f:function})
-        return substitutionAxiom.specialize(subMap).deriveConclusion().check({self})
+        return equality.substitutionAxiom.specialize(subMap).deriveConclusion().check({self})
     
     def lhsStatementSubstitution(self, function):
         '''

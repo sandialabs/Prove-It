@@ -139,15 +139,13 @@ class Singleton(Operation):
         '''
         From [element in {y}], derive and return (element = y).
         '''
-        from setAxioms import singletonDef, x, y
-        return singletonDef.specialize({x:element, y:self.elem}).deriveRHSviaEquivalence()
+        return sets.singletonDef.specialize({x:element, y:self.elem}).deriveRHSviaEquivalence()
     
     def proveElemInSet(self, element):
         '''
         From (element = y), derive and return [element in {y}] where self represents {y}.
         '''   
-        from setAxioms import singletonDef, x, y
-        return singletonDef.specialize({x:element, y:self.elem}).deriveLHSviaEquivalence()
+        return sets.singletonDef.specialize({x:element, y:self.elem}).deriveLHSviaEquivalence()
 
 class Complement(Operation):        
     '''
@@ -199,16 +197,14 @@ class Union(AssociativeBinaryOperation):
         From [element in (A union B)], derive and return [(element in A) or (element in B)],
         where self represents (A union B). 
         '''
-        from setAxioms import unionDef, x, A, B
-        return unionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
+        return sets.unionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
 
     def proveElemInSet(self, element):
         '''
         From [(element in A) or (element in B)], derive and return [element in (A union B)]
         where self represents (A union B).
         '''   
-        from setAxioms import unionDef, x, A, B
-        return unionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
+        return sets.unionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
 
 class Intersection(AssociativeBinaryOperation):
     def __init__(self, operandsOrA, B=None):
@@ -235,16 +231,14 @@ class Intersection(AssociativeBinaryOperation):
         From [element in (A intersection B)], derive and return [(element in A) and (element in B)],
         where self represents (A intersection B). 
         '''
-        from setAxioms import intersectionDef, x, A, B
-        return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
+        return sets.intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
 
     def proveElemInSet(self, element):
         '''
         From  [(element in A) and (element in B)], derive and return [element in (A intersection B)],
         where self represents (A intersection B). 
         '''
-        from setAxioms import intersectionDef, x, A, B
-        return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
+        return sets.intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
 
 
 class Subset(BinaryOperation):
