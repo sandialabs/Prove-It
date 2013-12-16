@@ -61,7 +61,7 @@ class DerivationStep:
             prover = self.provers[0]
             if autoAliasChild:
                 self.stepType = prover.proverType
-                if prover.stmtToProve.wasProven() and prover.stmtToProve.getRegisteredPythonVar() != None:
+                if prover.stmtToProve.wasProven() and prover.stmtToProve.getRegisteredVar() != None:
                     # this is either the root alias with the child as the aliased statement
                     # or a theorem statement with the child as the alias.
                     self._makeChild([prover], autoAliasChild=False) # autoAliasChild as False prevents infinite recursion
@@ -112,7 +112,7 @@ class DerivationStep:
         else:
             prover = self.provers[0]                
             if self.stepType == 'alias':
-                return prover.stmtToProve.getRegisteredPythonVar()
+                return prover.stmtToProve.getRegisteredVar()
             else:
                 return prover.stmtToProve
     
@@ -158,7 +158,7 @@ class DerivationStep:
         elif name == 'How Proven':
             return self.howProven if self.howProven != None else 'N/A'
         elif name == 'Context':
-            return self.provers[0].stmtToProve.getContexts()[0]
+            return self.provers[0].stmtToProve.getRegisteredContext()
         elif name == 'Proven':
             #return self.provers[0].stmtToProve.proofNumber
             return self.wasProven()
@@ -232,7 +232,7 @@ class DerivationStep:
             return True # by axiom
         elif stmt in prover.assumptions:
             return True # by assumption
-        elif stmt.isTheorem() and stmt.getRegisteredPythonVar() != None and stmt.proofNumber < self.proofNumber:
+        elif stmt.isTheorem() and stmt.getRegisteredVar() != None and stmt.proofNumber < self.proofNumber:
             return True # aliased theorem with a lesser proof number
         return False
     
@@ -425,9 +425,7 @@ class ExpressionTreeModel(SvgWidgetModel):
             if isinstance(expr, Literal):
                 obj = expr.context
             elif expr.statement != None:
-                contexts = expr.statement.getContexts()
-                if len(contexts) > 0:
-                    obj = contexts[0]
+                obj = expr.statement.getRegisteredContext()
         if role == QtCore.Qt.UserRole:
             return obj
         if role == QtCore.Qt.DisplayRole:
@@ -529,6 +527,7 @@ def showTreeView(stmtsOrProvers, onlyEssentialSteps=True):
         showTreeView([stmtsOrProvers], onlyEssentialSteps)
 
 if __name__ == "__main__":
-    import basicLogic
-    basicLogicTheorems = {var.statement for varName, var in vars(basicLogic).iteritems() if isinstance(var, Expression) and var.statement != None and var.statement.isTheorem()}
-    showTreeView(basicLogicTheorems, True)
+    import booleans
+    booleans.booleans.deriveAll()
+    boolTheorems = {var.statement for varName, var in vars(booleans.booleans).iteritems() if isinstance(var, Expression) and var.statement != None and var.statement.isTheorem()}
+    showTreeView(boolTheorems, True)

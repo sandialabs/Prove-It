@@ -4,6 +4,8 @@ import collections
 class BinaryOperation(Operation):
     def __init__(self, operator, A, B):
         Operation.__init__(self, operator, [A, B])
+        self.leftOperand = A
+        self.rightOperand = B
         
     def formatted(self, formatType, fenced=False, subLeftFenced=True, subRightFenced=True):
         # override this default as desired
@@ -62,7 +64,7 @@ class NestableOperationOverInstances(OperationOverInstances):
         as instanceVars=[a, b] with conditions=[In(a, S), In(b, S)].  These implicit conditions are 
         prepended to any explicitly given conditions as this is processed.
         '''
-        from basicLogic import And
+        from booleans import And
         # First see if there are tuples in the instanceVars list that should be interpreted as 
         # domain conditions.
         origInstanceVars = instanceVars

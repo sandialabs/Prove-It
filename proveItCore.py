@@ -37,7 +37,19 @@ class Expression:
         Prove a step along the way to a theorem proof (or throw an error if the proof fails).
         Use the qed() method to proven the theorem itself.
         """
-        assert self.isProven(assumptions)==True, "Proof failed: " + str(self)
+        def makeAssumptionsStr(assumption):
+            return "{" + ", ".join([str(assumption) for assumption in assumptions]) + "}"
+        assert self.isProven(assumptions)==True, "Proof failed: " + str(self) + " given " + makeAssumptionsStr(assumptions)
+        return self
+    
+    def check(self, assumptions=frozenset()):
+        """
+        Check that this statement is true under the given assumptions but not for a step
+        of a theorem proof (that is, temporary provers aren't stored).
+        """
+        def makeAssumptionsStr(assumption):
+            return "{" + ", ".join([str(assumption) for assumption in assumptions]) + "}"
+        assert self.isProven(assumptions, markProof=False)==True, "Proof failed: " + str(self) + " given " + makeAssumptionsStr(assumptions)
         return self
     
     def qed(self):
@@ -48,7 +60,7 @@ class Expression:
         assert self.isProven(qedProof=True)==True, "Proof failed: " + str(self)
         return self    
     
-    def isProven(self, assumptions=frozenset(), maxDepth=float("inf"), qedProof=False):
+    def isProven(self, assumptions=frozenset(), maxDepth=float("inf"), markProof=True, qedProof=False):
         """
         Attempt to prove this statement under the given assumptions.  If a proof derivation
         is found, returns True.  If it can't be found in the number of steps indicated by
@@ -57,7 +69,7 @@ class Expression:
         """
         if self.statement == None: Context.current.state(self)
         assert isinstance(self.statement, Statement)
-        return self.statement.isProven(assumptions, maxDepth, qedProof)
+        return self.statement.isProven(assumptions, maxDepth, markProof, qedProof)
     
     def wasProven(self, assumptions=frozenset()):
         """
@@ -115,12 +127,19 @@ class Expression:
         return safeDummyVar([self])
     
     def specialize(self, subMap=None):
-        return Context.current.specialize(self, subMap)
+        (specialization, conditions) = Context.current.specialize(self, subMap)
+        return specialization.check({self} | conditions)
         
     def generalize(self, newForallVars, newConditions=None):
         if len(newForallVars) == 0 and (newConditions == None or len(newConditions) == 0):
             return self # trivial case
-        return Context.current.generalize(self, newForallVars, newConditions)        
+        return Context.current.generalize(self, newForallVars, newConditions) #.check({self})
+    
+    def evaluate(self):
+        assert False, "evaluate() not implemented for this type"
+    
+    def proveByEval(self):
+        return self.evaluate().deriveFromBooleanEquality()
 
 class Literal(Expression):
     def __init__(self, name, context, formatMap = None):
@@ -543,110 +562,40 @@ class Statement:
         # sets of assumptions for which we'll use reasoning by hypothesis to prove the statement
         self._reasonByHypothesisAssumptions = list()
 #        self._proofStepInfo = Statement.ProofStepInfo(self) # information regarding proofs for various assumption sets
-        self._registeredVar = None # (module_name, variable_name) tuple that refers to this statement and is registered
+        self._registeredVar = None # variable name that refers to this statement and is registered
+        self._registeredContext = None # Context for the registration
         self.proofNumber = float("inf") # number each proof for statements proven with no assumptions necessary
         self._prover = None # a Prover that proves this statement if it has no free variables and has been proven (theorem)
-        
-    '''
-    class ProofAssumptions:
-        def __init__(self, assumptionSet):
-            self.assumptionSet = frozenset(assumptionSet)
-            Statement.ProofCount += 1
-            self.proofNumber = Statement.ProofCount
-            
-    class ProofStepInfo:
-        def __init__(self, stmtToProve):
-            # for each set of proving statements, store the assumptions for which the statement has been proven
-            self._stmtToProve = stmtToProve
-            self._assumptionSetsForWhichProven = {tuple():[{stmtToProve}]} # any statement is proven by self assumption
-        
-        def markAsProven(self, provingStatements, assumptions):
-            if not provingStatements in self._assumptionSetsForWhichProven.keys():
-                self._assumptionSetsForWhichProven[provingStatements] = []
-            pAssumptionSets = self._assumptionSetsForWhichProven[provingStatements]
-            if any([pAssumptions.issubset(assumptions) for pAssumptions in pAssumptionSets]):
-                return # already covered by a subset of the assumptions
-            # remove any in _assumptionSetsForWhichProven that the current set of assumptions already covers
-            pAssumptionSets = [pAssumptions for pAssumptions in pAssumptionSets if not assumptions.issubset(pAssumptions)]
-            pAssumptionSets.append(assumptions)
-            self._assumptionSetsForWhichProven[provingStatements] = pAssumptionSets
-            if len(assumptions) == 0:
-                # proof without assumptions -- possibly a theorem proof
-                Statement.ProofCount += 1
-                self._stmtToProve.proofNumber = Statement.ProofCount
-
-        def provenAssumptions(self, provingStatements, assumptions):
-            """
-            Returns the smallest subset of the assumptions for which this statement was proven
-            by the given provingStatements or None if it isn't proven for these assumptions.
-            """
-            setOfProvenAssumptions = [provenAssumptions for provenAssumptions in self._assumptionSetsForWhichProven[provingStatements] if provenAssumptions.issubset(assumptions)]
-            if len(setOfProvenAssumptions) == 0:
-                return None
-            return min(setOfProvenAssumptions, key = lambda assumptions : len(assumptions))
-        
-        def provingStatements(self, assumptions):
-            """
-            Returns the set of statements that prove this statement under the given assumptions
-            or None if it hasn't been proven for these assumptions.  Any unnecessary assumptions
-            will be removed from the set of assumptions that was provided.
-            """
-            # Get set of proven assumptions for each set of proving statements
-            setOfProvenAssumptions = {pStatements:self.provenAssumptions(pStatements, assumptions) for pStatements in self._assumptionSetsForWhichProven.keys()}
-            # remove those providing no proof
-            setOfProvenAssumptions = {pStatements:pAssumptions for (pStatements, pAssumptions) in setOfProvenAssumptions.iteritems() if pAssumptions != None}
-            if len(setOfProvenAssumptions) == 0:
-                return None # no such proof
-            # get the provingStatements and provenAssumptions with the fewest proven assumptions
-            (pStatements, pAssumptions) = min(setOfProvenAssumptions.iteritems(), key = lambda stmtsAndAssumptions : len(stmtsAndAssumptions[1]))
-            assert assumptions.issuperset(pAssumptions)
-            # update assumptions -- should then be the same as provenAssumptions
-            assumptions.intersection_update(pAssumptions)
-            return pStatements
-
-    def provingStatements(self, assumptions):
-        """
-        Returns the set of statements that prove this statement under the given assumptions
-        or None if it hasn't been proven for these assumptions.  Any unnecessary assumptions
-        will be removed from the set of assumptions that was provided.
-        """
-        return self._proofStepInfo.provingStatements(assumptions)
-
-    def provenAssumptions(self, assumptions):
-        """
-        Returns the subset of assumptions for which this statement is proven
-        or None if it hasn't been proven for these assumptions.
-        """
-        pAssumptions = set(assumptions)
-        pStatements = self.provingStatements(pAssumptions)
-        return pAssumptions if pStatements != None else None
-    '''
              
     def __str__(self):
         return str(self.getExpression())
     
-    def registerPythonVar(self, pyVar):
+    def _register(self, context, varName):
         """
-        Register the statement to a given variable identified by a PythonVar.
+        Register the statement to a given Context and variable name.  Called by Context.register(..).
         """
-        assert isinstance(pyVar, PythonVar)
+        assert(isinstance(context, Context))
         assert len(self.freeVars()) == 0, 'May only register statements with no free variables (a potential theorem)'
         if not self.wasProven():
-            print 'Warning: registering an unproven theorem,', str(pyVar)
-        if self._registeredVar != None and self._registeredVar != pyVar:
-            print 'Warning: overwriting theorem registration,', str(self._registeredVar), 'now', str(pyVar)
-        self._registeredVar = pyVar
+            print 'Warning: registering an unproven theorem,', varName, "of", context.name
+        if self._registeredVar != None and self._registeredVar != varName:
+            print 'Warning: overwriting theorem registration,', self._registeredVar, "of", self._registeredContext.name, 'now', varName, "of", context.name
+        self._registeredContext = context
+        self._registeredVar = varName
         
-    def getRegisteredPythonVar(self):
+    def getRegisteredVar(self):
         """
         Returns the PythonVar identifying the variable for which this 
         Statement has been registered, or None if no variable has been registered to it.
         """
         return self._registeredVar
+    
+    def getRegisteredContext(self):
+        return self._registeredContext
         
     def getContexts(self):
         return list(self._contexts)
-    
+        
     def getExpressions(self, context):
         return [self.getExpression(varAssignments) for varAssignments in context.statementVarAssignments[self]]
         
@@ -699,7 +648,7 @@ class Statement:
         return self.wasProven() and len(self._genericExpression.freeVars()) == 0
         
     def addSpecializer(self, original, subMap, conditions):
-        self._specializers.add((original, subMap.makeImmutableForm(), tuple([asStatement(condition) for condition in conditions])))
+        self._specializers.add((original, subMap.makeImmutableForm(), tuple(conditions)))
         original._specializations.add(self)
 
     def addGeneralizer(self, original, forallVars, conditions):
@@ -822,9 +771,8 @@ class Statement:
             # Prove by specialization?  Put this at front to connect with a theorem first if possible,
             for original, subMap, conditions in stmt._specializers:
                 subMap = SubstitutionMap(subMap)
-                mappedConditions = {asStatement(condition.getExpression().substituted(subMap)) for condition in conditions}
-                generalityProver = Statement.Prover(original, self.assumptions - mappedConditions, self, "specialization")
-                corequisites = [generalityProver] + [Statement.Prover(condition, self.assumptions, self, "specialization condition") for condition in mappedConditions]
+                generalityProver = Statement.Prover(original, self.assumptions - set(conditions), self, "specialization")
+                corequisites = [generalityProver] + [Statement.Prover(condition, self.assumptions, self, "specialization condition") for condition in conditions]
                 for prover in corequisites:
                     prover.corequisites = corequisites
                 #print [corequisite.stmtToProve.getExpression() for corequisite in corequisites]
@@ -848,7 +796,7 @@ class Statement:
                 hypothesis = stmt._hypothesisOfImplication
                 breadth1stQueue.append(Statement.Prover(stmt._conclusionOfImplication, self.assumptions | {hypothesis}, self, "hypothetical reasoning"))
 
-    def isProven(self, assumptions=frozenset(), maxDepth=float("inf"), qedProof=False):
+    def isProven(self, assumptions=frozenset(), maxDepth=float("inf"), markProof=True, qedProof=False):
         """
         Attempt to prove this statement under the given assumptions.  If a proof derivation
         is found, returns True.  If it can't be found in the number of steps indicated by
@@ -865,8 +813,10 @@ class Statement:
             #print prover.stmtToProve, prover.depth, [assumption.getExpression() for assumption in prover.assumptions]
             if prover.isCircular(): continue
             if prover.completesProof():
+                print "tmpProvers", len(Statement.Prover._tmpProvers)
                 print "proven at depth", prover.depth
-                self._markAsProven(rootProver)
+                if markProof:
+                    self._markAsProven(rootProver)
                 if qedProof:
                     Statement.Prover._tmpProvers.clear() # clear temporary provers after QED
                 return True
@@ -935,14 +885,14 @@ class Statement:
         prover = self.getProver(assumptions)
         if prover == None: return None
         return prover.assumptions
-    
+
 class Context:
     # All statements for any context.  
     contexts = dict()
     statements = dict()
     current = None
 
-    def __init__(self, name, setAsCurrentContext=False):
+    def __init__(self, name):
         # map "unique" internal expression representations to corresponding statements
         # which can map to one or more equivalent expressions (that may have different
         # external representations)
@@ -954,16 +904,85 @@ class Context:
         # are used to build expressions from the generic expression (indexed variables)
         # of the statement.
         self.statementVarAssignments = dict()
-        if setAsCurrentContext:
-            Context.current = self
-        else:
-            Context.current = None # to play it safe,=
+        self._onDemandDerivations = dict()
+        self._onDemandNames = list() # in the order they were added
+        self._axiomsDictFn = None
+        self._registeredStmts = dict()
 
     def __repr__(self):
         return self.name
+    
+    def register(self, name, index=None):
+        '''
+        Register the statement that is an attribute of this Context with the given name.
+        The statement will thence refer to this Context and variable name.  If index
+        is provided then this refers to an element of a list attribute.
+        '''
+        if index == None:
+            self.__dict__[name].statement._register(self, name)
+            self._registeredStmts[name] = self.__dict__[name]
+        else:
+            nameWithIndex = name + '[' + str(index) + ']'
+            self.__dict__[name][index].statement._register(self, nameWithIndex)
+            self._registeredStmts[nameWithIndex] = self.__dict__[name][index]
+    
+    def axiomsOnDemand(self, axiomsDictFn):
+        '''
+        The first time an axiom or theorem attribute is accessed, execute
+        the axiomsDictFn and set the resulting axioms as attributes.  These
+        will automatically be registered (see the register method).
+        '''
+        self._axiomsDictFn = axiomsDictFn
+    
+    def deriveOnDemand(self, name, derivationFn):
+        '''
+        When the attribute of the given name is accessed, it will
+        be set to the result of the derivationFn.  This will automatically
+        be registered after being derived (see the register method).
+        '''
+        self._onDemandDerivations[name] = derivationFn
+        self._onDemandNames.append(name)
+    
+    def _doDerivation(self, name):
+        if not name in self._onDemandDerivations:
+            return
+        storedTmpProvers = dict(Statement.Prover._tmpProvers)
+        prevContext = Context.current
+        Context.current = self
+        self.__dict__[name] = self._onDemandDerivations.pop(name)()
+        self.register(name)
+        Context.current = prevContext
+        Statement.Prover._tmpProvers = storedTmpProvers
+        
+    def __getattr__(self, name):
+        '''
+        When accessing a "deriveOnDemand" attribute, the Derivation's
+        function is executed and the attribute is assigned the result.
+        '''
+        if name.startswith('__'): 
+            raise AttributeError # skip special Python attributes
+        if self._axiomsDictFn != None:
+            axiomsDict = self._axiomsDictFn()
+            for axiomName, axiom in axiomsDict.iteritems():
+                self.__dict__[axiomName] = self.stateAxiom(axiom)
+                self.register(axiomName)
+        self._doDerivation(name)
+        if not name in self.__dict__:
+            raise AttributeError
+        return self.__dict__[name]
+    
+    def deriveAll(self):
+        for name in self._onDemandNames:
+            self._doDerivation(name)
 
-    def addLiteral(self, name, formatMap=None):
-        if not name in self.literals:
+    def addLiteral(self, name=None, formatMap=None, literal=None):
+        if literal != None:
+            assert literal.context == self
+            assert name == None or name == literal.name
+            assert formatMap == None
+            self.literals[literal.name] = literal
+            return literal
+        elif not name in self.literals:
             self.literals[name] = Literal(name, self, formatMap)
         return self.literals[name]
     
@@ -977,7 +996,7 @@ class Context:
         equating statements that differ only by instance variable labels.  The original 
         expression will be returned, but will be linked with its corresponding statement.
         '''
-        from basicLogic import IMPLIES
+        from booleans import IMPLIES
         if isinstance(expression, Operation) and expression.operator == IMPLIES and len(expression.operands) == 2:
             # When stating an Implication, link the consequence to the
             # condition as an implicating Statement.
@@ -1013,15 +1032,15 @@ class Context:
     
     def specialize(self, original, subMap):
         '''
-        State and return a specialization of a given original statement
-        which derives from the original statement via a specialization inference
-        rule.  That is, return the specialized form of the 'original' expression 
-        by substituting one or more instance variables of outer Forall operations 
+        State and return a tuple of (specialization, conditions).  The 
+        specialization derives from the given original statement and its conditions
+        via a specialization inference rule.  It is the specialized form of the 'original' 
+        expression by substituting one or more instance variables of outer Forall operations 
         according to the given substitution map.  It may have free variables which can be 
         considered to be "arbitrary" variables used in logical reasoning.  Eventually
         they should be bound again via generalization (the counterpart to specialization).
         '''
-        from basicLogic import FORALL, Implies
+        from booleans import FORALL
         subMap = SubstitutionMap(subMap)
         substitutingVars = set(subMap.getSubstitutingVars())
         instanceVars = set()
@@ -1039,8 +1058,9 @@ class Context:
         nonRelabSubMap = SubstitutionMap({k:v for k,v in subMap.items() if k not in relabelVars})
         specializedExpr = self.state(expr.substituted(nonRelabSubMap, relabelMap = relabMap))
         if original.statement == None: self.state(original)
-        specializedExpr.statement.addSpecializer(original.statement, subMap, conditions)
-        return specializedExpr        
+        mappedConditions = {asStatement(condition.substituted(subMap)) for condition in conditions}
+        specializedExpr.statement.addSpecializer(original.statement, subMap, mappedConditions)
+        return specializedExpr, mappedConditions
                        
     def generalize(self, original, newForallVars, newConditions=None):
         '''
@@ -1054,14 +1074,11 @@ class Context:
         restriction is allowed because it only weakens the statement relative 
         to no condition.
         '''
-        from basicLogic import Forall, Implies
+        from booleans import Forall
         generalizedExpr = self.state(Forall(newForallVars, original, newConditions))
         # In order to be a valid tautology, we simply have to make sure that the expression is zero or more
         # nested Forall operations with the original as the inner instanceExpression.
         if original.statement == None: self.state(original)
-        if newConditions != None:
-            print str(generalizedExpr)
-            print "conditions", [str(condition) for condition in newConditions]
         generalizedExpr.statement.addGeneralizer(original.statement, newForallVars, newConditions)
         self._checkForallInstanceExpr(generalizedExpr, original)
         return generalizedExpr
@@ -1070,7 +1087,7 @@ class Context:
         '''
         Make sure the created implies statement is what it is supposed to be.
         '''
-        from basicLogic import IMPLIES
+        from booleans import IMPLIES
         assert isinstance(expr, Operation)
         assert expr.operator == IMPLIES
         assert len(expr.operands) == 2 and expr.operands[0] == hypothesis and expr.operands[1] == conclusion
@@ -1079,7 +1096,7 @@ class Context:
         '''
         Make sure the expr contains the instanceExpr in zero or more nested Forall operations.
         '''
-        from basicLogic import FORALL
+        from booleans import FORALL
         while expr != instanceExpr:
             assert isinstance(expr, OperationOverInstances) and expr.operator == FORALL
             expr = expr.instanceExpression
@@ -1093,7 +1110,9 @@ def statement(expr):
         Context.current.state(expr)
     return expr.statement
 
+'''
 def registerTheorems(moduleName, variables):
     for vName, v in variables.iteritems():
         if isinstance(v, Expression) and v.statement != None and len(v.freeVars()) == 0:
             v.statement.registerPythonVar(PythonVar(moduleName, vName))
+'''
