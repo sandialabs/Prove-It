@@ -40,9 +40,12 @@ class AssociativeBinaryOperation(BinaryOperation):
                 BinaryOperation.__init__(self, operator, operands[0], operands[1])
                 self.isNested = False
             else:
-                nested = AssociativeBinaryOperation(operator, operands[1:])
+                nested = self.remake(operator, operands[1:])
                 BinaryOperation.__init__(self, operator, operands[0], nested)
                 self.isNested = True
+    
+    def remake(self, operator, operands):
+        return AssociativeBinaryOperation(operator, operands)        
     
     def formatted(self, formatType, fenced=False):
         if self.isNested:
