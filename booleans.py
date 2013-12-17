@@ -28,7 +28,7 @@ class BooleanContext(Context):
             _f = Function(operation.remake(operator, [_x, dummyVar]), [dummyVar])
             evaluation = equality.unaryEvaluation.specialize({f:_f, x:_y, a:_b, c:_c}).deriveConclusion().deriveConclusion()
         elif (_y == TRUE or _y == FALSE):
-            _a = _x.evaluate().rhs, 
+            _a = _x.evaluate().rhs
             _c = baseEvalFn(_a, _y).rhs
             dummyVar = _y.safeDummyVar() # var that isn't in _y
             _f = Function(operation.remake(operator, [dummyVar, _y]), [dummyVar])
@@ -37,7 +37,7 @@ class BooleanContext(Context):
             xEval = _x.evaluate()
             yEval = _y.evaluate()
             compose(xEval, yEval)
-            _a, _b = xEval.rhs, yEval.rhs, 
+            _a, _b = xEval.rhs, yEval.rhs 
             _c = baseEvalFn(_a, _b).rhs
             _f = Function(operation.remake(operator, [a, b]), [a, b])
             # f(_x, _y) = _c
@@ -487,8 +487,8 @@ class And(AssociativeBinaryOperation):
             return '<mo>&#x2227;</mo>'
 
     def remake(self, operator, operands):
-        if operator == AND and len(operands) == 2:
-            return And(operands[0], operands[1])
+        if operator == AND:
+            return And(operands)
         else:
             return Operation.remake(self, operator, operands)
         
@@ -544,8 +544,8 @@ class Or(AssociativeBinaryOperation):
             return '<mo>&#x2228;</mo>'
 
     def remake(self, operator, operands):
-        if operator == OR and len(operands) == 2:
-            return Or(operands[0], operands[1])
+        if operator == OR:
+            return Or(operands)
         else:
             return Operation.remake(self, operator, operands)
 
