@@ -13,6 +13,7 @@ from xml import sax
 from svgmath.tools.saxtools import XMLGenerator, ContentFilter
 from svgmath.mathhandler import MathHandler, MathNS
 import StringIO
+from bisect import bisect_left
 
 renderedExpressions = dict()    
 def renderedExpr(expr):
@@ -84,6 +85,12 @@ class DerivationStep:
             elif prover.stmtToProve in prover.assumptions:
                 self.howProven = 'assumption'
                 self.children = []
+    
+    def isAliasLink(self):
+        return self.stepType == 'alias' and len(self.children) == 0
+    
+    def isRoot(self):
+        return self.parent == None
 
     def _makeDescendant(self, provers, autoAliasChild=True):
         return DerivationStep(provers, self.onlyEssentialSteps, self.proofNumber, False, autoAliasChild)
@@ -299,10 +306,26 @@ class DerivationModel(SvgWidgetModel):
     
     def __init__(self):
         SvgWidgetModel.__init__(self)
-        self.topLevels = []
+        self.topLevelProverIndices = dict()
+        self.topLevelProofNumbers = []
+        self.topLevels = [] # DerivationStep's
     
     def addTopLevel(self, prover, onlyEssentialSteps=True):
-        self.topLevels.append(DerivationStep([prover], onlyEssentialSteps))
+        '''
+        Adds a prover at the top level if it doesn't already exist.
+        Returns the row of the inserted or existing prover.
+        '''
+        if prover in self.topLevelProverIndices:
+            return self.topLevelProverIndices[prover]
+        else:
+            # sort the topLevels by proofNumber
+            row = bisect_left(self.topLevelProofNumbers, prover.stmtToProve.proofNumber)
+            self.beginInsertRows(QtCore.QModelIndex(), row, row)
+            self.topLevelProofNumbers.insert(row, prover.stmtToProve.proofNumber)
+            self.topLevels.insert(row, DerivationStep([prover], onlyEssentialSteps))
+            self.endInsertRows()
+            self.topLevelProverIndices[prover] = row
+            return row
         
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -314,12 +337,10 @@ class DerivationModel(SvgWidgetModel):
             
     def rowCount(self, parent_idx):
         if not parent_idx.isValid():
-            # sort the topLevels by proofNumber
-            self.topLevels = sorted(self.topLevels, key = lambda step : step.proofNumber)
             return len(self.topLevels)
         return parent_idx.internalPointer().numChildren() 
         
-    def index(self, row, column, parent_idx):
+    def index(self, row, column, parent_idx = QtCore.QModelIndex()):
         if not parent_idx.isValid():
             return self.createIndex(row, column, self.topLevels[row])
         step = parent_idx.internalPointer().getChild(row)
@@ -449,6 +470,25 @@ class ExpressionTreeModel(SvgWidgetModel):
         row = grandparentNode.children.index(parentNode)
         return self.createIndex(row, 0, parentNode)
 
+class DerivationTreeView(QtGui.QTreeView):
+    def __init__(self, parent, model):
+        QtGui.QTreeView.__init__(self, parent)
+        self.parent = parent
+        self.history = []
+        self.model = model
+        self.setModel(model)
+
+    def keyPressEvent(self, event):
+        selectedStep = self.parent.selection_idx.internalPointer()
+        if event.key() == QtCore.Qt.Key_Left and selectedStep.isRoot() and not self.isExpanded(self.parent.selection_idx):
+            self.setCurrentIndex(self.history.pop())
+        elif event.key() == QtCore.Qt.Key_Right and selectedStep.isAliasLink():
+            row = self.model.addTopLevel(selectedStep.parent.getStatement().getOrMakeProver())
+            self.history.append(self.currentIndex())
+            self.setCurrentIndex(self.model.index(row, 0))
+        else:
+            QtGui.QTreeView.keyPressEvent(self, event)        
+
 class DerivationTreeViewer(QtGui.QWidget):
     def __init__(self, provers, onlyEssentialSteps=True):
         QtGui.QWidget.__init__(self)
@@ -459,8 +499,7 @@ class DerivationTreeViewer(QtGui.QWidget):
         for prover in provers:
             derivationModel.addTopLevel(prover, onlyEssentialSteps=onlyEssentialSteps)
 
-        self.derivationTV = QtGui.QTreeView(self)
-        self.derivationTV.setModel(derivationModel)
+        self.derivationTV = DerivationTreeView(self, derivationModel)
         derivationModel.setView(self.derivationTV)
         self.derivationTV.setColumnWidth(0, 600)
         self.derivationTV.setColumnWidth(1, 300)
@@ -504,7 +543,6 @@ class DerivationTreeViewer(QtGui.QWidget):
         #self.selection_model = self.tv.selectionModel()
         #self.selection_model.currentRowChanged.connect(self.current_row_changed)
 
-
 qa = QtGui.QApplication(sys.argv)
 def showTreeView(stmtsOrProvers, onlyEssentialSteps=True):
     """
@@ -528,5 +566,6 @@ def showTreeView(stmtsOrProvers, onlyEssentialSteps=True):
 if __name__ == "__main__":
     import booleans
     booleans.booleans.deriveAll()
-    boolTheorems = {var.statement for varName, var in vars(booleans.booleans).iteritems() if isinstance(var, Expression) and var.statement != None and var.statement.isTheorem()}
-    showTreeView(boolTheorems, True)
+    #boolTheorems = {var.statement for varName, var in vars(booleans.booleans).iteritems() if isinstance(var, Expression) and var.statement != None and var.statement.isTheorem()}
+    #showTreeView(boolTheorems, True)
+    showTreeView(booleans.booleans.forallBoolEvalFalseViaFalse.statement, True)
