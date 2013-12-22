@@ -67,7 +67,7 @@ class Expression:
         maxDepth, returns False.  If qedProof is True, clear any temporary provers 
         (for steps along the way) after successfully proving this statement (if not already proven).
         """
-        if self.statement == None: Context.current.state(self)
+        if self.statement == None: Statement.state(self)
         assert isinstance(self.statement, Statement)
         return self.statement.isProven(assumptions, maxDepth, markProof, qedProof)
     
@@ -126,14 +126,17 @@ class Expression:
     def safeDummyVar(self):
         return safeDummyVar([self])
     
+    def state(self):
+        return Statement.state(self)
+    
     def specialize(self, subMap=None):
-        (specialization, conditions) = Context.current.specialize(self, subMap)
+        (specialization, conditions) = Statement.specialize(self, subMap)
         return specialization.check({self} | conditions)
         
     def generalize(self, newForallVars, newConditions=None):
         if len(newForallVars) == 0 and (newConditions == None or len(newConditions) == 0):
             return self # trivial case
-        return Context.current.generalize(self, newForallVars, newConditions) #.check({self})
+        return Statement.generalize(self, newForallVars, newConditions) #.check({self})
     
     def evaluate(self):
         assert False, "evaluate() not implemented for this type"
@@ -531,7 +534,7 @@ def asStatement(statementOrExpression):
     '''
     if isinstance(statementOrExpression, Statement):
         return statementOrExpression
-    return Context.current.state(statementOrExpression).statement
+    return Statement.state(statementOrExpression).statement
 
 class PythonVar:
     def __init__(self, methodName, varName):
@@ -541,13 +544,25 @@ class PythonVar:
         return self.varName + " from " + self.methodName
     
 class Statement:
+    # All Statements, mapped by "generic" Expression representation.
+    statements = dict()
+
     ProofCount = 0 # counter to number each proof
     utilizedProofNumbers = set() #  don't remove from _assumptionSetsForWhichProven of a ProofStepInfo unless it's proofnumber is not utilized
     
     def __init__(self, genericExpression):
+        '''
+        Do not use the Statement constructor externally.  Instead, do so indirectly;
+        via the state method of an Expression or other Expression methods that
+        generate new Statements from old Statements.
+        '''
         # this is the generic expression, with instance variables replaced by indices
         self._genericExpression = genericExpression
         genericExpression.statement = self
+        # set of Expressions this Statement is known to represent (instance variables may have different labels)
+        self._manifestations = {genericExpression}
+        # The default manifestation will be the first Expression represented by this Statement that was stated 
+        self._defaultManifestation = None
         # contexts in which the statement appears with named instance variables
         self._contexts = set()
         self._hypothesisOfImplication = None
@@ -559,13 +574,44 @@ class Statement:
         self._specializations = set()
         self._generalizations = set()
         self._isAxiom = False
-        # sets of assumptions for which we'll use reasoning by hypothesis to prove the statement
-        self._reasonByHypothesisAssumptions = list()
 #        self._proofStepInfo = Statement.ProofStepInfo(self) # information regarding proofs for various assumption sets
         self._registeredVar = None # variable name that refers to this statement and is registered
         self._registeredContext = None # Context for the registration
         self.proofNumber = float("inf") # number each proof for statements proven with no assumptions necessary
         self._prover = None # a Prover that proves this statement if it has no free variables and has been proven (theorem)
+
+    @staticmethod
+    def state(expression):
+        '''
+        Make a Statement from the given Expression.  All of its instance variables 
+        will be replaced with generic indices for storage in the statements database, 
+        equating statements that differ only by instance variable labels.  The original 
+        expression will be returned, but will be linked with its corresponding statement.
+        '''
+        from booleans import IMPLIES
+        if isinstance(expression, Operation) and expression.operator == IMPLIES and len(expression.operands) == 2:
+            # When stating an Implication, link the consequence to the
+            # condition as an implicating Statement.
+            implication = Statement._makeStatement(expression)
+            hypothesis = Statement.state(expression.operands[0]).statement
+            conclusion = Statement.state(expression.operands[1]).statement
+            conclusion.addImplicator(hypothesis, implication)
+        else:
+            Statement._makeStatement(expression)
+        return expression
+
+    @staticmethod
+    def _makeStatement(expression):
+        # find/add the statement and return it.
+        varAssignments = []
+        genericExpression = expression.makeGeneric(varAssignments)
+        rep = repr(genericExpression)
+        statement = Statement.statements.setdefault(rep, Statement(genericExpression))
+        statement._manifestations.add(expression)
+        if statement._defaultManifestation == None:
+            statement._defaultManifestation = expression
+        expression.statement = statement
+        return statement             
              
     def __str__(self):
         return str(self.getExpression())
@@ -596,43 +642,90 @@ class Statement:
     def getContexts(self):
         return list(self._contexts)
         
-    def getExpressions(self, context):
-        return [self.getExpression(varAssignments) for varAssignments in context.statementVarAssignments[self]]
+    def getManifestations(self):
+        '''
+        The set of Expressions that are represented by this Statement
+        (may differ only in the labeling of instance Variables).
+        '''
+        return self._manifestations
         
-    def getExpression(self, varAssignments=None):
-        if varAssignments == None:
-            # use any assignments in any context
-            context = list(self._contexts)[0]
-            varAssignments = context.statementVarAssignments[self][0]
-        varMap = {IndexVariable(n+1) : varAssignments[n] for n in xrange(len(varAssignments))}
-        return self._genericExpression.relabeled(varMap)
+    def getExpression(self):
+        '''
+        The default Expression represented by this Statement (the first one stated).
+        '''
+        return self._defaultManifestation
     
     def freeVars(self):
         return self.getExpression().freeVars()
     
     def addContext(self, context):
         self._contexts.add(context)
+
+    @staticmethod
+    def specialize(originalExpr, subMap):
+        '''
+        State and return a tuple of (specialization, conditions).  The 
+        specialization derives from the given original statement and its conditions
+        via a specialization inference rule.  It is the specialized form of the 'original' 
+        expression by substituting one or more instance variables of outer Forall operations 
+        according to the given substitution map.  It may have free variables which can be 
+        considered to be "arbitrary" variables used in logical reasoning.  Eventually
+        they should be bound again via generalization (the counterpart to specialization).
+        '''
+        from booleans import FORALL
+        subMap = SubstitutionMap(subMap)
+        substitutingVars = set(subMap.getSubstitutingVars())
+        instanceVars = set()
+        conditions = set()
+        expr = originalExpr
+        while isinstance(expr, OperationOverInstances) and expr.operator == FORALL:
+            instanceVars.add(expr.instanceVar)
+            if expr.condition != None: conditions.add(expr.condition)
+            expr = expr.instanceExpression
+        # any remaining variables may be used only for relabeling
+        relabelVars = substitutingVars.difference(instanceVars)
+        for relabelVar in relabelVars:
+            assert isinstance(subMap.getSub(relabelVar), Variable), 'May only specialize by substituting instance variables of nested forall operations or otherwise simply relabeling variables with variables.'
+        relabMap = {k:v for k,v in subMap.items() if k in relabelVars}
+        nonRelabSubMap = SubstitutionMap({k:v for k,v in subMap.items() if k not in relabelVars})
+        specializedExpr = Statement.state(expr.substituted(nonRelabSubMap, relabelMap = relabMap))
+        mappedConditions = {asStatement(condition.substituted(subMap)) for condition in conditions}
+        Statement.state(originalExpr)
+        specializedExpr.statement.addSpecializer(originalExpr.statement, subMap, mappedConditions)
+        return specializedExpr, mappedConditions
+                       
+    @staticmethod
+    def generalize(originalExpr, newForallVars, newConditions=None):
+        '''
+        State and return a generalization of a given original statement
+        which derives from the original statement via a generalization inference
+        rule.  This is the counterpart of specialization.  Where the original 
+        has free variables taken to represent any particular 'arbitrary' values, 
+        the  generalized form is a forall statement over some or all of these once
+        free variables.  That is, it is statement applied to all values of any 
+        of the once free variables under the given conditions.  Any condition 
+        restriction is allowed because it only weakens the statement relative 
+        to no condition.
+        '''
+        from booleans import Forall
+        generalizedExpr = Statement.state(Forall(newForallVars, originalExpr, newConditions))
+        # In order to be a valid tautology, we simply have to make sure that the expression is zero or more
+        # nested Forall operations with the original as the inner instanceExpression.
+        Statement.state(originalExpr)
+        generalizedExpr.statement.addGeneralizer(originalExpr.statement, newForallVars, newConditions)
+        Statement._checkForallInstanceExpr(generalizedExpr, originalExpr)
+        return generalizedExpr
     
-    def reasonByHypothesis(self, assumptions=frozenset()):
+    @staticmethod
+    def _checkForallInstanceExpr(expr, instanceExpr):
         '''
-        Indicate that we should use hypothetical reasoning to prove this statement
-        when the specified assumptions (or more) are made.
+        Make sure the expr contains the instanceExpr in zero or more nested Forall operations.
         '''
-        assumptions = {asStatement(assumption) for assumption in assumptions}
-        for assumption in assumptions:
-            assert isinstance(assumption, Statement)
-        for prevAssumptions in self._reasonByHypothesisAssumptions:
-            if prevAssumptions.issubset(assumptions):
-                return # redundant, already covered by previous assumptions
-        self._reasonByHypothesisAssumptions.append(assumptions)
-        
-    def _useHypotheticalReasoning(self, assumptions):
-        return True
-        #for qualifyingAssumptions in self._reasonByHypothesisAssumptions:
-        #    if qualifyingAssumptions.issubset(assumptions):
-        #        return True
-        #return False
-        
+        from booleans import FORALL
+        while expr != instanceExpr:
+            assert isinstance(expr, OperationOverInstances) and expr.operator == FORALL
+            expr = expr.instanceExpression
+                
     def makeAxiom(self):
         self._isAxiom = True
         self._markAsProven(Statement.Prover(self, []))
@@ -792,7 +885,7 @@ class Statement:
                 implicationProver.corequisites = hypothesisProver.corequisites = [implicationProver, hypothesisProver]
                 breadth1stQueue += (implicationProver, hypothesisProver)
             # Prove by hypothetical reasoning?
-            if stmt._useHypotheticalReasoning(self.assumptions) and stmt._hypothesisOfImplication != None:
+            if stmt._hypothesisOfImplication != None:
                 hypothesis = stmt._hypothesisOfImplication
                 breadth1stQueue.append(Statement.Prover(stmt._conclusionOfImplication, self.assumptions | {hypothesis}, self, "hypothetical reasoning"))
 
@@ -887,10 +980,8 @@ class Statement:
         return prover.assumptions
 
 class Context:
-    # All statements for any context.  
+    # All contexts, mapped by name
     contexts = dict()
-    statements = dict()
-    current = None
 
     def __init__(self, name):
         # map "unique" internal expression representations to corresponding statements
@@ -900,10 +991,6 @@ class Context:
         assert re.match('[A-Z][A-Z0-9_]*', name), 'Context names must be alphanumeric or underscore, starting with a alphabet character, and with only capitalized alphabet characters.'
         self.name = name
         Context.contexts[name] = self
-        # For each statement, we have a list of lists of Variables that
-        # are used to build expressions from the generic expression (indexed variables)
-        # of the statement.
-        self.statementVarAssignments = dict()
         self._onDemandDerivations = dict()
         self._onDemandNames = list() # in the order they were added
         self._axiomsDictFn = None
@@ -947,11 +1034,8 @@ class Context:
         if not name in self._onDemandDerivations:
             return
         storedTmpProvers = dict(Statement.Prover._tmpProvers)
-        prevContext = Context.current
-        Context.current = self
         self.__dict__[name] = self._onDemandDerivations.pop(name)()
         self.register(name)
-        Context.current = prevContext
         Statement.Prover._tmpProvers = storedTmpProvers
         
     def __getattr__(self, name):
@@ -988,25 +1072,6 @@ class Context:
     
     def getLiteral(self, name):
         return self.literals[name]
-    
-    def state(self, expression):
-        '''
-        Make a Statement from the given Expression.  All of its instance variables 
-        will be replaced with generic indices for storage in the statements database, 
-        equating statements that differ only by instance variable labels.  The original 
-        expression will be returned, but will be linked with its corresponding statement.
-        '''
-        from booleans import IMPLIES
-        if isinstance(expression, Operation) and expression.operator == IMPLIES and len(expression.operands) == 2:
-            # When stating an Implication, link the consequence to the
-            # condition as an implicating Statement.
-            implication = self._makeStatement(expression)
-            hypothesis = self.state(expression.operands[0]).statement
-            conclusion = self.state(expression.operands[1]).statement
-            conclusion.addImplicator(hypothesis, implication)
-        else:
-            self._makeStatement(expression)
-        return expression
 
     def stateAxiom(self, expression):
         '''
@@ -1015,100 +1080,10 @@ class Context:
         '''
         freeVars = expression.freeVars()
         assert len(freeVars) == 0, 'Expressions with free variable may not be converted to a statement (bind with an OperationOverInstances): ' + str(freeVars)
-        statement = self.state(expression).statement
+        statement = Statement.state(expression).statement
         statement.makeAxiom()
         return expression
 
-    def _makeStatement(self, expression):
-        # find/add the statement and return it.
-        varAssignments = []
-        genericExpression = expression.makeGeneric(varAssignments)
-        rep = repr(genericExpression)
-        statement = Context.statements.setdefault(rep, Statement(genericExpression))
-        statement.addContext(self)
-        self.statementVarAssignments.setdefault(statement, []).append(varAssignments)
-        expression.statement = statement
-        return statement
-    
-    def specialize(self, original, subMap):
-        '''
-        State and return a tuple of (specialization, conditions).  The 
-        specialization derives from the given original statement and its conditions
-        via a specialization inference rule.  It is the specialized form of the 'original' 
-        expression by substituting one or more instance variables of outer Forall operations 
-        according to the given substitution map.  It may have free variables which can be 
-        considered to be "arbitrary" variables used in logical reasoning.  Eventually
-        they should be bound again via generalization (the counterpart to specialization).
-        '''
-        from booleans import FORALL
-        subMap = SubstitutionMap(subMap)
-        substitutingVars = set(subMap.getSubstitutingVars())
-        instanceVars = set()
-        conditions = set()
-        expr = original
-        while isinstance(expr, OperationOverInstances) and expr.operator == FORALL:
-            instanceVars.add(expr.instanceVar)
-            if expr.condition != None: conditions.add(expr.condition)
-            expr = expr.instanceExpression
-        # any remaining variables may be used only for relabeling
-        relabelVars = substitutingVars.difference(instanceVars)
-        for relabelVar in relabelVars:
-            assert isinstance(subMap.getSub(relabelVar), Variable), 'May only specialize by substituting instance variables of nested forall operations or otherwise simply relabeling variables with variables.'
-        relabMap = {k:v for k,v in subMap.items() if k in relabelVars}
-        nonRelabSubMap = SubstitutionMap({k:v for k,v in subMap.items() if k not in relabelVars})
-        specializedExpr = self.state(expr.substituted(nonRelabSubMap, relabelMap = relabMap))
-        if original.statement == None: self.state(original)
-        mappedConditions = {asStatement(condition.substituted(subMap)) for condition in conditions}
-        specializedExpr.statement.addSpecializer(original.statement, subMap, mappedConditions)
-        return specializedExpr, mappedConditions
-                       
-    def generalize(self, original, newForallVars, newConditions=None):
-        '''
-        State and return a generalization of a given original statement
-        which derives from the original statement via a generalization inference
-        rule.  This is the counterpart of specialization.  Where the original 
-        has free variables taken to represent any particular 'arbitrary' values, 
-        the  generalized form is a forall statement over some or all of these once
-        free variables.  That is, it is statement applied to all values of any 
-        of the once free variables under the given conditions.  Any condition 
-        restriction is allowed because it only weakens the statement relative 
-        to no condition.
-        '''
-        from booleans import Forall
-        generalizedExpr = self.state(Forall(newForallVars, original, newConditions))
-        # In order to be a valid tautology, we simply have to make sure that the expression is zero or more
-        # nested Forall operations with the original as the inner instanceExpression.
-        if original.statement == None: self.state(original)
-        generalizedExpr.statement.addGeneralizer(original.statement, newForallVars, newConditions)
-        self._checkForallInstanceExpr(generalizedExpr, original)
-        return generalizedExpr
-    
-    def _checkImplication(self, expr, hypothesis, conclusion):
-        '''
-        Make sure the created implies statement is what it is supposed to be.
-        '''
-        from booleans import IMPLIES
-        assert isinstance(expr, Operation)
-        assert expr.operator == IMPLIES
-        assert len(expr.operands) == 2 and expr.operands[0] == hypothesis and expr.operands[1] == conclusion
-
-    def _checkForallInstanceExpr(self, expr, instanceExpr):
-        '''
-        Make sure the expr contains the instanceExpr in zero or more nested Forall operations.
-        '''
-        from booleans import FORALL
-        while expr != instanceExpr:
-            assert isinstance(expr, OperationOverInstances) and expr.operator == FORALL
-            expr = expr.instanceExpression
-    
-defaultContext = Context('DEFAULT')
-    
-def statement(expr):
-    if isinstance(expr, Statement):
-        return expr
-    if expr.statement == None:
-        Context.current.state(expr)
-    return expr.statement
 
 '''
 def registerTheorems(moduleName, variables):
