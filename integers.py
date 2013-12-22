@@ -3,9 +3,6 @@ from sets import *
 
 integers = Context('INTEGERS')
 
-prevContext = Context.current
-Context.current = integers
-
 INTEGERS = integers.addLiteral('INTEGERS', {MATHML:'<mstyle mathvariant="bold-double-struck"><mtext>&#x2124;</mtext><mspace/></mstyle>'})
 NATURALS = integers.addLiteral('NATURALS', {MATHML:'<mstyle mathvariant="bold-double-struck"><mtext>&#x2115;</mtext><mspace/></mstyle>'})
 NON_NEGATIVES = integers.addLiteral('NON_NEGATIVES')
@@ -285,5 +282,3 @@ secondOpDef = integers.stateAxiom(Forall([Op, A, B], Equals(SecondOperand(Operat
 """
 
 registerTheorems(__name__, locals())
-
-Context.current = prevContext

@@ -14,8 +14,6 @@ class BooleanContext(Context):
 
     def evaluateBooleanBinaryOperation(self, operation, baseEvalFn):
         from equality import equality, f, a, b, c, x, y
-        prevContext = Context.current
-        Context.current = booleans
         _x = operation.operands[0]
         _y = operation.operands[1]
         operator = operation.operator
@@ -42,7 +40,6 @@ class BooleanContext(Context):
             _f = Function(operation.remake(operator, [a, b]), [a, b])
             # f(_x, _y) = _c
             evaluation = equality.binaryEvaluation.specialize({f:_f, x:_x, y:_y, a:_a, b:_b, c:_c}).deriveConclusion().deriveConclusion()
-        Context.current = prevContext
         self.registerEvaluation(evaluation)
         return evaluation    
     
@@ -920,7 +917,7 @@ booleans.deriveOnDemand('eqFalseRevFromNegation', eqFalseRevFromNegationDerivati
 # forall_{A | inBool(A)} Not(Not(A)) => A
 def fromDoubleNegationDerivation():
     # hypothesis = Not(Not(A))
-    hypothesis = booleans.state(Not(Not(A)))
+    hypothesis = Not(Not(A)).state()
     # FALSE given Not(A), Not(Not(A))
     hypothesis.equateNegatedToFalse().deriveRightViaEquivalence().prove({Not(A), hypothesis})
     # [Not(A) => FALSE] => A given isBool(A)
@@ -952,7 +949,7 @@ booleans.deriveOnDemand('fromNotFalse', fromNotFalseDerivation)
 # forall_{A, B | inBool(B)} [Not(B) => Not(A)] => [A=>B] 
 def transpositionFromNegatedDerivation():
     # Contradiction proof of B given (Not(B)=>Not(A)), A, and isBool(B)
-    notBimplNotA = booleans.state(Implies(Not(B), Not(A)))
+    notBimplNotA = Implies(Not(B), Not(A)).state()
     # A=FALSE given Not(B)=>Not(A) and Not(B)
     AeqF = notBimplNotA.deriveConclusion().equateNegatedToFalse().prove({notBimplNotA, Not(B)})
     # FALSE given Not(B)=>Not(A), Not(B), and A
@@ -1138,7 +1135,7 @@ def forallBoolEvalFalseViaFalseDerivation():
     from equality import Equals
     # hypothesis = [P(FALSE) = FALSE]
     hypothesis = Equals(PofFalse, FALSE)
-    # (FALSE in BOOLEANS and Not(P(FALSE)) => Not(forall_{A in BOOLEANS} P(A))}
+    # Not(forall_{A in BOOLEANS} P(A))} given (FALSE in BOOLEANS and Not(P(FALSE))
     notForallBool = booleans.forallNegation.specialize({Q:Function(inBool(X), [X]), x:FALSE}).relabeled({y:A}).prove().conclusion
     # (FALSE in BOOLEANS and Not(P(FALSE)) given hypothesis
     compose(booleans.falseInBool, hypothesis.deriveFromBooleanEquality()).prove({hypothesis})
