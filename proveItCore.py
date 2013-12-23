@@ -138,6 +138,22 @@ class Expression:
             return self # trivial case
         return Statement.generalize(self, newForallVars, newConditions) #.check({self})
     
+    def show(self, assumptions=frozenset()):
+        '''
+        Show the derivation tree of the proof or partial proof for
+        proving the Statement of this Expression under the given
+        assumptions.
+        '''
+        from derivationTreeView import showTreeView
+        showTreeView([self.state().statement.getOrMakeProver(assumptions)])
+    
+    def proveThenShow(self, assumptions=frozenset()):
+        '''
+        First attempt to prove the Statement of this Expression, then
+        show the derivation tree of the proof.
+        '''
+        self.prove(assumptions).show(assumptions)
+    
     def evaluate(self):
         assert False, "evaluate() not implemented for this type"
     
@@ -147,7 +163,7 @@ class Expression:
 class Literal(Expression):
     def __init__(self, name, context, formatMap = None):
         Expression.__init__(self, formatMap)
-        assert re.match('[A-Za-z0-9_]*', name), 'Literals must be alphanumeric or underscore.'
+        assert re.match('[A-Za-z0-9_]+', name), 'Literals must be alphanumeric or underscore.'
         self.name = name
         self.context = context
     
@@ -166,7 +182,7 @@ class Literal(Expression):
 class Variable(Expression):
     def __init__(self, name, formatMap = None):
         Expression.__init__(self, formatMap)
-        assert re.match('[A-Za-z0-9_]*', name), 'Variables must be alphanumeric or underscore.'
+        assert re.match('[A-Za-z0-9_]+', name), 'Variables must be alphanumeric or underscore.'
         self.name = name
         
     def __repr__(self):
@@ -1050,6 +1066,7 @@ class Context:
             for axiomName, axiom in axiomsDict.iteritems():
                 self.__dict__[axiomName] = self.stateAxiom(axiom)
                 self.register(axiomName)
+            self._axiomsDictFn = None
         self._doDerivation(name)
         if not name in self.__dict__:
             raise AttributeError
