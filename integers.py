@@ -1,5 +1,4 @@
-from basicLogic import *
-from sets import *
+from basics import *
 
 integers = Context('INTEGERS')
 
@@ -105,14 +104,28 @@ class Range(Operation):
         else:
             return Operation.remake(self, operator, operands)
 
-# This definition of integers is an implicit definition, but it is important that the
-# definition ensures the minimum set that includes 0 and has closure upon adding 1 (counting).
-# forall_S {[(0 in S) and (forall_{n} n in S => n+1 in S)] => S superset NATURALS}
-integerDef = integers.stateAxiom(Forall([S], Implies(And(In(ZERO, S), Forall([n], In(Add(n, ONE), S), [In(n, S)])), Superset(S, NATURALS))))
+
+def integerAxioms():
+    """
+    Generates the integer axioms.  Because of the interdependence of booleans, 
+    equality, and sets, this is executed on demand after these have all loaded.
+    """
+    # defines what is in the set of NATURALS
+    # (0 in NATURALS) and (forall_{n in NATURALS} n+1 in NATURALS)
+    naturalsInclusivity = And(In(ZERO, NATURALS), Forall([n], In(Add(n, ONE), NATURALS), [In(n, NATURALS)]))
+    
+    # excludes what is not in the set of NATURALS
+    # forall_{S} {[(0 in S) and (forall_{n in S} n+1 in S)] => S superset NATURALS}
+    naturalsExclusivity = Forall([S], Implies(And(In(ZERO, S), Forall([n], In(Add(n, ONE), S), [In(n, S)])), Superset(S, NATURALS)))
+
+    return locals()
+
+integers.axiomsOnDemand(integerAxioms)
+
 
 # forall_P {[P(0) and forall_{n} P(n) => P(n+1)] => forall_{n in NATURALS} P(n)
 def inductionLemmaDerivation():
-    # hypothesis = [P(0) and forall_{n in NATURALS} P(n) => P(n+1)]
+    # hypothesis = [P(0) and forall_{n} P(n) => P(n+1)]
     hypothesis = And(P0, Forall([n], Implies(Pn, Operation(P, [Add(n, ONE)]))))
     # P(0) given hypothesis
     hypothesis.deriveLeft().prove({hypothesis})
@@ -121,24 +134,24 @@ def inductionLemmaDerivation():
     # setSuchThatP = {m | P(m)}
     setSuchThatP = SetOfAll([m], m, suchThat=[Pm])
     # 0 in {m | P(m)} given hypothesis
-    zeroInSetSuchThatP = setOfAllDef.specialize({x:ZERO, y:m}).deriveLeft().prove({hypothesis})
+    zeroInSetSuchThatP = sets.setOfAllDef.specialize({x:ZERO, y:m}).deriveLeft().prove({hypothesis})
     # (n in {m | P(m)}) => P(n)
-    setOfAllDef.specialize({x:n, y:m}).deriveRightImplication().prove({hypothesis})
+    sets.setOfAllDef.specialize({x:n, y:m}).deriveRightImplication().prove()
     # (n+1 in {m | P(m)}) given (n in {m | P(m)}), hypothesis
-    setOfAllDef.specialize({x:Add(n, ONE), y:m}).deriveLeft().prove({In(n, setSuchThatP), hypothesis})
+    sets.setOfAllDef.specialize({x:Add(n, ONE), y:m}).deriveLeft().prove({In(n, setSuchThatP), hypothesis})
     # [forall_{n in {m | P(m)}} (n+1 in {m | P(m)})] given hypothesis
     incrInSetSuchThatP = Implies(In(n, setSuchThatP), In(Add(n, ONE), setSuchThatP)).generalize([n], [In(n, setSuchThatP)]).prove({hypothesis})
-    # (0 in {m | P(m)}) and [forall_{n} (n in {m | P(m)}) => (n+1 in {m | P(m)})] => {m | P(m)} given hypothesis
+    # (0 in {m | P(m)}) and [forall_{n in {m | P(m)}} (n+1 in {m | P(m)})] given hypothesis
     compose(zeroInSetSuchThatP, incrInSetSuchThatP).prove({hypothesis})
     # n in NATURALS => n in {m | P(m)} given hypothesis
-    integerDef.specialize({S:setSuchThatP}).deriveConclusion().unfold(n).specialize().prove({hypothesis})
+    integers.naturalsExclusivity.specialize({S:setSuchThatP}).deriveConclusion().unfold(n).specialize(conditionAsHypothesis=True).prove({hypothesis})
     # nInNat = n in NATURALS
     nInNat = In(n, NATURALS)
     # forall_{n in NATURALS} P(n) given hypothesis
     conclusion = Implies(nInNat, Pn).generalize([n], [nInNat]).prove({hypothesis})
     # forall_P {[P(0) and forall_{n in NATURALS} P(n) => P(n+1)] => forall_{n in NATURALS} P(n)
     return Implies(hypothesis, conclusion).generalize([P]).qed()
-inductionLemma = inductionLemmaDerivation()        
+integers.deriveOnDemand('inductionLemma', inductionLemmaDerivation)
 
 # forall_P {[P(0) and forall_{n in NATURALS} P(n) => P(n+1)] => forall_{n in NATURALS} P(n)
 def inductionDerivation():
@@ -281,4 +294,3 @@ firstOpDef = integers.stateAxiom(Forall([Op, A, B], Equals(FirstOperand(Operatio
 secondOpDef = integers.stateAxiom(Forall([Op, A, B], Equals(SecondOperand(Operation(Op, [A, B])), B)))
 """
 
-registerTheorems(__name__, locals())
