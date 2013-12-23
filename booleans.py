@@ -243,6 +243,18 @@ class Forall(NestableOperationOverInstances):
         else:
             return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
 
+    def specialize(self, subMap=None, conditionAsHypothesis=False):
+        '''
+        From this Forall expression, and the condition if there is one,
+        derive and return a specialized form.  If conditionAsHypothesis is True, 
+        derive and return the implication with the condition as hypothesis 
+        and specialized form as the conclusion.
+        '''
+        specialized = Expression.specialize(self, subMap)
+        if conditionAsHypothesis and self.condition != None:
+            return Implies(self.condition, specialized).check({self})
+        return specialized
+
     def evaluate(self):
         '''
         Given a forall statement with some condition, evaluate it to TRUE or FALSE if possible
