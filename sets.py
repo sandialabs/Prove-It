@@ -19,19 +19,22 @@ A = Variable('A')
 B = Variable('B')
 C = Variable('C')
 P = Variable('P')
+f = Variable('f')
 x = Variable('x')
 y = Variable('y')
 X = Variable('X')
 S = Variable('S')
 Px = Operation(P, [x])
 Py = Operation(P, [y])
+fx = Operation(f, [x])
+fy = Operation(f, [y])
 
 def setAxioms():
     """
     Generates the set axioms.  Because of the interdependence of booleans, 
     equality, and sets, this is executed on demand after these have all loaded.
     """
-    from booleans import BOOLEANS, Forall, Implies, Iff, And, Or
+    from booleans import BOOLEANS, Forall, Exists, Implies, Iff, And, Or
     from equality import Equals
     importVars = set(locals().keys()) | {'importVars'}
     
@@ -47,14 +50,14 @@ def setAxioms():
     # forall_{x, A, B} [x in (A intersection B)] <=> [(x in A) and (x in B)]
     intersectionDef = sets.stateAxiom(Forall([x, A, B], Iff(In(x, Intersection(A, B)), And(In(x, A), In(x, B)))))
     
-    # forall_{A, B} [A subset B => (forall_{x} x in A => x in B)]
-    subsetDef = sets.stateAxiom(Forall([A, B], Implies(Subset(A, B), Forall([x], Implies(In(x, A), In(x, B))))))
+    # forall_{A, B} [A subset B <=> (forall_{x in A} x in B)]
+    subsetDef = sets.stateAxiom(Forall([A, B], Iff(Subset(A, B), Forall([x], In(x, B), [In(x, A)]))))
     
-    # forall_{A, B} [A superset B => (forall_{x} x in B => x in A)]
-    supersetDef = sets.stateAxiom(Forall([A, B], Implies(Superset(A, B), Forall([x], Implies(In(x, B), In(x, A))))))
+    # forall_{A, B} [A superset B <=> (forall_{x in B} x in A)]
+    supersetDef = sets.stateAxiom(Forall([A, B], Iff(Superset(A, B), Forall([x], In(x, A), [In(x, B)]))))
     
-    # forall_{P, x} {[x in {y | P(y)}] <=> P(x)}
-    setOfAllDef = sets.stateAxiom(Forall([P, x], Iff(In(x, SetOfAll([y], y, suchThat=[Py])), Px)))
+    # forall_{P, f, x} [x in {f(y) | P(y)}] <=> [exists_{y | P(y)} x = f(y)]
+    setOfAllDef = sets.stateAxiom(Forall([P, f, x], Iff(In(x, SetOfAll([y], fy, suchThat=[Py])), Exists([y], Equals(x, fy), [Py]))))
 
     allLocals = dict(locals())
     return {key:allLocals[key] for key in (set(allLocals.keys()) - importVars)}
@@ -257,15 +260,19 @@ class Subset(BinaryOperation):
         else:
             return Operation.remake(self, operator, operands)    
 
-    def unfold(self, elemInstanceVar=None):
+    def unfold(self, elemInstanceVar=x):
         '''
-        Given A subset B, returns (forall_{x} x in A => x in B) derived from self.
+        Given A subset B, returns (forall_{x in A} x in B) derived from self.
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
-        unfolded = sets.subsetDef.specialize({A:self.operands[0], B:self.operands[1]}).deriveConclusion()
-        if elemInstanceVar != None:
-            unfolded = unfolded.relabeled({x:elemInstanceVar})
-        return unfolded
+        return sets.unfoldSubset.specialize({A:self.operands[0], B:self.operands[1], x:elemInstanceVar}).deriveConclusion().check({self})
+    
+    def proveAsFolded(self, elemInstanceVar=x):
+        '''
+        Derive this folded version, A subset B, from the unfolded version,
+        (forall_{x in A} x in B).
+        '''
+        return sets.foldSubset.specialize({A:self.operands[0], B:self.operands[1], x:elemInstanceVar}).deriveConclusion()
 
 class Superset(BinaryOperation):
     def __init__(self, superSet, subSet):
@@ -283,15 +290,19 @@ class Superset(BinaryOperation):
         else:
             return Operation.remake(self, operator, operands) 
     
-    def unfold(self, elemInstanceVar=None):
+    def unfold(self, elemInstanceVar=x):
         '''
-        Given A superset B, returns (forall_{x} x in B => x in A) derived from self.
+        Given A superset B, returns (forall_{x in B} x in A) derived from self.
         x will be relabeled if an elemInstanceVar is supplied.
         '''
-        unfolded = sets.supersetDef.specialize({A:self.operands[0], B:self.operands[1]}).deriveConclusion()
-        if elemInstanceVar != None:
-            unfolded = unfolded.relabeled({x:elemInstanceVar})
-        return unfolded
+        return sets.unfoldSuperset.specialize({A:self.operands[0], B:self.operands[1], x:elemInstanceVar}).deriveConclusion().check({self})
+    
+    def proveAsFolded(self, elemInstanceVar=x):
+        '''
+        Derive this folded version, A superset B, from the unfolded version,
+        (forall_{x in B} x in A).
+        '''
+        return sets.foldSuperset.specialize({A:self.operands[0], B:self.operands[1], x:elemInstanceVar}).deriveConclusion()
  
 class SetOfAll(NestableOperationOverInstances):
     def __init__(self, instanceVars, instanceElement, suchThat=None):
@@ -301,6 +312,7 @@ class SetOfAll(NestableOperationOverInstances):
         instance variables they contain are introduced.
         '''
         NestableOperationOverInstances.__init__(self, SET, lambda iVars, iExpr, conds: SetOfAll(iVars, iExpr, conds), instanceVars, instanceElement, suchThat)
+        self.suchThat = suchThat
 
     def formatted(self, formatType, fenced=False):
         outStr = ''
@@ -339,6 +351,21 @@ class SetOfAll(NestableOperationOverInstances):
             return SetOfAll([instanceVar], instanceExpression, [condition])
         else:
             return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
+
+    def unfoldElemInSet(self, element):
+        '''
+        From (x in {Q(y) | P(y)}), derive and return P(x), where x is meant as the given element.
+        '''
+        PofElement = self.instanceExpression.substitute({self.instanceVar:element})
+        return sets.unfoldSetOfAll.specialize({P:Function(self.instanceExpression, [self.instanceVar]), x:element}).deriveConclusion().check({PofElement})
+    
+    def proveElemInSet(self, element):
+        '''
+        From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
+        '''   
+        PofElement = self.instanceExpression.substitute({self.instanceVar:element})
+        return sets.foldSetOfAll.specialize({P:Function(self.instanceExpression, [self.instanceVar]), x:element}).deriveConclusion().check({PofElement})
+
 
 """        
 class UnionOfSets(NestableOperationOverInstances):
@@ -382,3 +409,28 @@ class SetOfAll(UnionOfSets):
 """        
 
 
+# DERIVATIONS
+
+# forall_{A, B} [A subset B => (forall_{x in A} x in B)]
+sets.deriveOnDemand('unfoldSubset', lambda : sets.subsetDef.specialize().deriveRightImplication().generalize([A, B]).qed())
+
+# forall_{A, B} [(forall_{x in A} x in B) => (A subset B)]
+sets.deriveOnDemand('foldSubset', lambda : sets.subsetDef.specialize().deriveLeftImplication().generalize([A, B]).qed())
+
+# forall_{A, B} [A superset B => (forall_{x in B} x in A)]
+sets.deriveOnDemand('unfoldSuperset', lambda : sets.supersetDef.specialize().deriveRightImplication().generalize([A, B]).qed())
+
+# forall_{A, B} [(forall_{x in B} x in A) => (A superset B)]
+sets.deriveOnDemand('foldSuperset', lambda : sets.supersetDef.specialize().deriveLeftImplication().generalize([A, B]).qed())
+
+# forall_{P, f, x} [x in {f(y) | P(y)}] => [exists_{y | P(y)} x = f(y)]
+sets.deriveOnDemand('unfoldSetOfAll', lambda : sets.setOfAllDef.specialize().deriveRightImplication().generalize([P, f, x]).qed())
+
+# forall_{P, f, x} [exists_{y | P(y)} x = f(y)] => [x in {f(y) | P(y)}]
+sets.deriveOnDemand('foldSetOfAll', lambda : sets.setOfAllDef.specialize().deriveLeftImplication().generalize([P, f, x]).qed())
+
+# forall_{P, x} [x in {y | P(y)}] => P(x)
+def unfoldSimpleSetOfAllDerivation():
+    # forall_{P, x} [x in {y | P(y)}] => [exists_{y | P(y)} x = y]
+    sets.unfoldSetOfAll.specialize({f:Function(y, [y])})
+    
