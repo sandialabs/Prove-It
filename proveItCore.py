@@ -158,7 +158,7 @@ class Expression:
         assert False, "evaluate() not implemented for this type"
     
     def proveByEval(self):
-        return self.evaluate().deriveFromBooleanEquality()
+        return self.evaluate().deriveFromBooleanEquality().prove()
 
 class Literal(Expression):
     def __init__(self, name, context, formatMap = None):
