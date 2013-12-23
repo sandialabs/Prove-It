@@ -306,26 +306,22 @@ class DerivationModel(SvgWidgetModel):
     
     def __init__(self):
         SvgWidgetModel.__init__(self)
-        self.topLevelProverIndices = dict()
+        self.topLevelProvers = set()
         self.topLevelProofNumbers = []
         self.topLevels = [] # DerivationStep's
     
     def addTopLevel(self, prover, onlyEssentialSteps=True):
         '''
         Adds a prover at the top level if it doesn't already exist.
-        Returns the row of the inserted or existing prover.
         '''
-        if prover in self.topLevelProverIndices:
-            return self.topLevelProverIndices[prover]
-        else:
+        if not prover in self.topLevelProvers:
             # sort the topLevels by proofNumber
             row = bisect_left(self.topLevelProofNumbers, prover.stmtToProve.proofNumber)
             self.beginInsertRows(QtCore.QModelIndex(), row, row)
             self.topLevelProofNumbers.insert(row, prover.stmtToProve.proofNumber)
             self.topLevels.insert(row, DerivationStep([prover], onlyEssentialSteps))
+            self.topLevelProvers.add(prover)
             self.endInsertRows()
-            self.topLevelProverIndices[prover] = row
-            return row
         
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -345,6 +341,17 @@ class DerivationModel(SvgWidgetModel):
             return self.createIndex(row, column, self.topLevels[row])
         step = parent_idx.internalPointer().getChild(row)
         return self.createIndex(row, column, step)
+    
+    def topLevelIndex(self, prover):
+        '''
+        Returns the index of a top-level item corresponding with the given prover.
+        '''
+        row = bisect_left(self.topLevelProofNumbers, prover.stmtToProve.proofNumber)
+        while row < len(self.topLevels) and self.topLevels[row].proofNumber == prover.stmtToProve.proofNumber:
+            if self.topLevels[row].provers[0] == prover:
+                return self.index(row, 0)
+            row += 1
+        return None
         
     def getDisplayData(self, idx, step):        
         return step.getDisplayData(self.COLUMNS[idx.column()])
@@ -483,9 +490,10 @@ class DerivationTreeView(QtGui.QTreeView):
         if event.key() == QtCore.Qt.Key_Left and selectedStep.isRoot() and not self.isExpanded(self.parent.selection_idx):
             self.setCurrentIndex(self.history.pop())
         elif event.key() == QtCore.Qt.Key_Right and selectedStep.isAliasLink():
-            row = self.model.addTopLevel(selectedStep.parent.getStatement().getOrMakeProver())
+            prover = selectedStep.parent.getStatement().getOrMakeProver()
+            self.model.addTopLevel(prover)
             self.history.append(self.currentIndex())
-            self.setCurrentIndex(self.model.index(row, 0))
+            self.setCurrentIndex(self.model.topLevelIndex(prover))
         else:
             QtGui.QTreeView.keyPressEvent(self, event)        
 
@@ -496,11 +504,10 @@ class DerivationTreeViewer(QtGui.QWidget):
         self.setGeometry(x, y, w, h)
 
         derivationModel = DerivationModel()
-        for prover in provers:
-            derivationModel.addTopLevel(prover, onlyEssentialSteps=onlyEssentialSteps)
-
         self.derivationTV = DerivationTreeView(self, derivationModel)
         derivationModel.setView(self.derivationTV)
+        for prover in provers:
+            derivationModel.addTopLevel(prover, onlyEssentialSteps=onlyEssentialSteps)
         self.derivationTV.setColumnWidth(0, 600)
         self.derivationTV.setColumnWidth(1, 300)
         self.selectModel = self.derivationTV.selectionModel()
