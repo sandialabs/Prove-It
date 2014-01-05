@@ -1158,7 +1158,7 @@ booleans.deriveOnDemand('fromNotFalse', fromNotFalseDerivation)
 # forall_{A, B | inBool(B)} [Not(B) => Not(A)] => [A=>B] 
 def transpositionFromNegatedDerivation():
     # Contradiction proof of B assuming (Not(B)=>Not(A)), A, and inBool(B)
-    notBimplNotA = Implies(Not(B), Not(A)).state()
+    notBimplNotA = Implies(Not(B), Not(A))
     # A=FALSE assuming Not(B)=>Not(A) and Not(B)
     AeqF = notBimplNotA.deriveConclusion().equateNegatedToFalse().prove({notBimplNotA, Not(B)})
     # FALSE assuming Not(B)=>Not(A), Not(B), and A
