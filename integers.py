@@ -31,11 +31,17 @@ ADD = integers.addLiteral('ADD')
 SUBTRACT = integers.addLiteral('SUBTRACT')
 MULT = integers.addLiteral('MULT')
 NEGATE = integers.addLiteral('NEGATE')
+LESSER_EQ = integers.addLiteral('LESSER_EQ')
+GREATER_EQ = integers.addLiteral('GREATER_EQ')
+DIVIDES = integers.addLiteral('DIVIDES')
+GCD = integers.addLiteral('GCD')
+LCM = integers.addLiteral('LCM')
 
 RANGE = integers.addLiteral('RANGE')
 
 m = Variable('m')
 n = Variable('n')
+p = Variable('p')
 S = Variable('S')
 P = Variable('P')
 Pm = Operation(P, [m])
@@ -86,14 +92,106 @@ class Subtract(Add):
 
 class Mult(AssociativeBinaryOperation):
     def __init__(self, m, n):
-        Operation.__init__(self, MULT, m, n)
+        AssociativeBinaryOperation.__init__(self, MULT, m, n)
 
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return '*'
+        elif formatType == MATHML:
+            return '<mo>&#x00D7;</mo>'
+        
     def remake(self, operator, operands):
         if operator == MULT and len(operands) == 2:
             return Mult(operands[0], operands[1])
         else:
             return Operation.remake(self, operator, operands)
 
+class LessEq(BinaryOperation):
+    def __init__(self, n, m):
+        BinaryOperation.__init__(self, LESSER_EQ, n, m)
+
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return '<='
+        elif formatType == MATHML:
+            return '<mo>&#x2264;</mo>'
+    
+    def remake(self, operator, operands):
+        if operator == LESSER_EQ and len(operands) == 2:
+            return LessEq(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)
+
+class GtrEq(BinaryOperation):
+    def __init__(self, n, m):
+        BinaryOperation.__init__(self, GREATER_EQ, n, m)
+    
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return '>='
+        elif formatType == MATHML:
+            return '<mo>&#x2265;</mo>'
+    
+    def remake(self, operator, operands):
+        if operator == GREATER_EQ and len(operands) == 2:
+            return GtrEq(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)
+
+class Divides(BinaryOperation):
+    def __init__(self, n, p):
+        BinaryOperation.__init__(self, DIVIDES, n, p)
+    
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return '|'
+        elif formatType == MATHML:
+            return '<mo>|</mo>'
+
+    def remake(self, operator, operands):
+        if operator == DIVIDES and len(operands) == 2:
+            return Divides(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)
+
+class Gcd(BinaryOperation):
+    def __init__(self, n, m):
+        BinaryOperation.__init__(self, GCD, n, m)
+    
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'gcd'
+        elif formatType == MATHML:
+            return '<mi>gcd</mi>'    
+    
+    def formatted(self, formatType, fenced=False):
+        return Operation.formatted(self, formatType, fenced)
+        
+    def remake(self, operator, operands):
+        if operator == GCD and len(operands) == 2:
+            return Gcd(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)
+
+class Lcm(BinaryOperation):
+    def __init__(self, n, m):
+        BinaryOperation.__init__(self, LCM, n, m)
+    
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'lcm'
+        elif formatType == MATHML:
+            return '<mi>lcm</mi>'    
+    
+    def formatted(self, formatType, fenced=False):
+        return Operation.formatted(self, formatType, fenced)
+        
+    def remake(self, operator, operands):
+        if operator == LCM and len(operands) == 2:
+            return Lcm(operands[0], operands[1])
+        else:
+            return Operation.remake(self, operator, operands)
+        
 class Range(Operation):
     def __init__(self, m, n):
         Operation.__init__(self, RANGE, [m, n])
@@ -105,23 +203,44 @@ class Range(Operation):
             return Operation.remake(self, operator, operands)
 
 
-def integerAxioms():
-    """
-    Generates the integer axioms.  Because of the interdependence of booleans, 
-    equality, and sets, this is executed on demand after these have all loaded.
-    """
-    # defines what is in the set of NATURALS
-    # (0 in NATURALS) and (forall_{n in NATURALS} n+1 in NATURALS)
-    naturalsInclusivity = And(In(ZERO, NATURALS), Forall([n], In(Add(n, ONE), NATURALS), [In(n, NATURALS)]))
-    
-    # excludes what is not in the set of NATURALS
-    # forall_{S} {[(0 in S) and (forall_{n in S} n+1 in S)] => S superset NATURALS}
-    naturalsExclusivity = Forall([S], Implies(And(In(ZERO, S), Forall([n], In(Add(n, ONE), S), [In(n, S)])), Superset(S, NATURALS)))
+"""
+Generates the integer axioms.  Because of the interdependence of booleans, 
+equality, and sets, this is executed on demand after these have all loaded.
+"""
+# defines what is in the set of NATURALS
+# (0 in NATURALS) and (forall_{n in NATURALS} n+1 in NATURALS)
+integers.naturalsInclusion = integers.stateAxiom(And(In(ZERO, NATURALS), Forall([n], In(Add(n, ONE), NATURALS), [In(n, NATURALS)])))
 
-    return locals()
+# excludes what is not in the set of NATURALS
+# forall_{S} {[(0 in S) and (forall_{n in S} n+1 in S)] => S superset NATURALS}
+integers.naturalsExclusion = integers.stateAxiom(Forall([S], Implies(And(In(ZERO, S), Forall([n], In(Add(n, ONE), S), [In(n, S)])), Superset(S, NATURALS))))
 
-integers.axiomsOnDemand(integerAxioms)
+# forall_{(n, m) in NATURALS} n <= m <=> (exists_{p in NATURALS} n + p = m
+integers.lessEqDef = integers.stateAxiom(Forall([n, m], Iff(LessEq(n, m), Exists([p], Equals(Add(n, p), m), [In(p, NATURALS)])), [In(n, NATURALS), In(m, NATURALS)]))
 
+# forall_{(n, m) in NATURALS} n >= m <=> (exists_{p in NATURALS} n = m + p
+integers.gtrEqDef = integers.stateAxiom(Forall([n, m], Iff(GtrEq(n, m), Exists([p], Equals(n, Add(m, p)), [In(p, NATURALS)])), [In(n, NATURALS), In(m, NATURALS)]))
+
+# forall_{(n, p) in NATURALS} [p | n <=> exists_{m in NATURALS} p*m = n]
+integers.dividesDef = integers.stateAxiom(Forall([n, p], Iff(Divides(p, n), Exists([m], Equals(Mult(p, m), n), [In(m, NATURALS)])), [In(n, NATURALS), In(p, NATURALS)]))
+
+# forall_{(n, m) in NATURALS} gcd(n, m) in NATURALS
+integers.gcdClosure = integers.stateAxiom(Forall([n, m], In(Gcd(n, m), NATURALS), [In(n, NATURALS), In(m, NATURALS)]))
+
+# forall_{(n, m) in NATURALS} gcd(n, m) | n and gcd(n, m) | m
+integers.gcdIsCommonDivisor = integers.stateAxiom(Forall([n, m], And(Divides(Gcd(n, m), n), Divides(Gcd(n, m), m)), [In(n, NATURALS), In(m, NATURALS)]))
+
+# forall_{(n, m, p) in NATURALS} (p | n and p | m) => p <= gcd(n, m)
+integers.gcdIsGreatest = integers.stateAxiom(Forall([n, m, p], Implies(And(Divides(p, n), Divides(p, m)), LessEq(p, Gcd(n, m))), [In(n, NATURALS), In(m, NATURALS), In(p, NATURALS)]))
+
+# forall_{(n, m) in NATURALS} lcm(n, m) in NATURALS
+integers.lcmClosure = integers.stateAxiom(Forall([n, m], In(Lcm(n, m), NATURALS), [In(n, NATURALS), In(m, NATURALS)]))
+
+# forall_{(n, m) in NATURALS} n | lcm(n, m) and m | lcm(n, m)
+integers.lcmIsCommonMultiplier = integers.stateAxiom(Forall([n, m], And(Divides(n, Lcm(n, m)), Divides(m, Lcm(n, m))), [In(n, NATURALS), In(m, NATURALS)]))
+
+# forall_{(n, m, p) in NATURALS} (n | p and m | p) => p >= lcm(n, m)
+integers.lcmIsLeast = integers.stateAxiom(Forall([n, m, p], Implies(And(Divides(n, p), Divides(m, p)), GtrEq(p, Lcm(n, m))), [In(n, NATURALS), In(m, NATURALS), In(p, NATURALS)]))
 
 # forall_P {[P(0) and forall_{n} P(n) => P(n+1)] => forall_{n in NATURALS} P(n)
 def inductionLemmaDerivation():
@@ -144,7 +263,7 @@ def inductionLemmaDerivation():
     # (0 in {m | P(m)}) and [forall_{n in {m | P(m)}} (n+1 in {m | P(m)})] given hypothesis
     compose(zeroInSetSuchThatP, incrInSetSuchThatP).prove({hypothesis})
     # n in NATURALS => n in {m | P(m)} given hypothesis
-    integers.naturalsExclusivity.specialize({S:setSuchThatP}).deriveConclusion().unfold(n).specialize(conditionAsHypothesis=True).prove({hypothesis})
+    integers.naturalsExclusion.specialize({S:setSuchThatP}).deriveConclusion().unfold(n).specialize(conditionAsHypothesis=True).prove({hypothesis})
     # nInNat = n in NATURALS
     nInNat = In(n, NATURALS)
     # forall_{n in NATURALS} P(n) given hypothesis

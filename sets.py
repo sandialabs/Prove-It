@@ -1,20 +1,6 @@
 from proveItCore import *
 from genericOperations import *
 
-sets = Context('SETS')
-
-# set theory related literals
-IN = sets.addLiteral('IN')
-SINGLETON = sets.addLiteral('SINGLETON')
-COMPLEMENT = sets.addLiteral('COMPLEMENT')
-UNION = sets.addLiteral('UNION')
-INTERSECTION = sets.addLiteral('INTERSECTION')
-EVERYTHING = sets.addLiteral('EVERYTHING')
-NOTHING = sets.addLiteral('NOTHING')
-SUBSET = sets.addLiteral('SUBSET')
-SUPERSET = sets.addLiteral('SUPERSET')
-SET = sets.addLiteral('SET')
-
 A = Variable('A')
 B = Variable('B')
 C = Variable('C')
@@ -29,40 +15,52 @@ Py = Operation(P, [y])
 fx = Operation(f, [x])
 fy = Operation(f, [y])
 
-def setAxioms():
-    """
-    Generates the set axioms.  Because of the interdependence of booleans, 
-    equality, and sets, this is executed on demand after these have all loaded.
-    """
-    from booleans import BOOLEANS, Forall, Exists, Implies, Iff, And, Or
-    from equality import Equals
-    importVars = set(locals().keys()) | {'importVars'}
+class SetContext(Context):
+    def __init__(self):
+        Context.__init__(self, 'SETS')
     
-    # forall_{x, S} (x in S) in BOOLEANS
-    inSetIsInBool = sets.stateAxiom(Forall([x, S], In(In(x, S), BOOLEANS)))
-    
-    # forall_{x, y} [x in Singleton(y)] = [x = y]
-    singletonDef = sets.stateAxiom(Forall([x, y], Equals(In(x, Singleton(y)), Equals(x, y))))
-    
-    # forall_{x, A, B} [x in (A union B)] <=> [(x in A) or (x in B)]
-    unionDef = sets.stateAxiom(Forall([x, A, B], Iff(In(x, Union(A, B)), Or(In(x, A), In(x, B)))))
-    
-    # forall_{x, A, B} [x in (A intersection B)] <=> [(x in A) and (x in B)]
-    intersectionDef = sets.stateAxiom(Forall([x, A, B], Iff(In(x, Intersection(A, B)), And(In(x, A), In(x, B)))))
-    
-    # forall_{A, B} [A subset B <=> (forall_{x in A} x in B)]
-    subsetDef = sets.stateAxiom(Forall([A, B], Iff(Subset(A, B), Forall([x], In(x, B), [In(x, A)]))))
-    
-    # forall_{A, B} [A superset B <=> (forall_{x in B} x in A)]
-    supersetDef = sets.stateAxiom(Forall([A, B], Iff(Superset(A, B), Forall([x], In(x, A), [In(x, B)]))))
-    
-    # forall_{P, f, x} [x in {f(y) | P(y)}] <=> [exists_{y | P(y)} x = f(y)]
-    setOfAllDef = sets.stateAxiom(Forall([P, f, x], Iff(In(x, SetOfAll([y], fy, suchThat=[Py])), Exists([y], Equals(x, fy), [Py]))))
+    def stateAxioms(self):
+        """
+        Generates the set axioms.  Because of the interdependence of booleans, 
+        equality, and sets, this is executed on demand after these have all loaded.
+        """
+        from booleans import BOOLEANS, Forall, Exists, Iff, And, Or
+        from equality import Equals
+        
+        # forall_{x, S} (x in S) in BOOLEANS
+        self.inSetIsInBool = self.stateAxiom(Forall([x, S], In(In(x, S), BOOLEANS)))
+        
+        # forall_{x, y} [x in Singleton(y)] = [x = y]
+        self.singletonDef = self.stateAxiom(Forall([x, y], Equals(In(x, Singleton(y)), Equals(x, y))))
+        
+        # forall_{x, A, B} [x in (A union B)] <=> [(x in A) or (x in B)]
+        self.unionDef = self.stateAxiom(Forall([x, A, B], Iff(In(x, Union(A, B)), Or(In(x, A), In(x, B)))))
+        
+        # forall_{x, A, B} [x in (A intersection B)] <=> [(x in A) and (x in B)]
+        self.intersectionDef = self.stateAxiom(Forall([x, A, B], Iff(In(x, Intersection(A, B)), And(In(x, A), In(x, B)))))
+        
+        # forall_{A, B} [A subset B <=> (forall_{x in A} x in B)]
+        self.subsetDef = self.stateAxiom(Forall([A, B], Iff(Subset(A, B), Forall([x], In(x, B), [In(x, A)]))))
+        
+        # forall_{A, B} [A superset B <=> (forall_{x in B} x in A)]
+        self.supersetDef = self.stateAxiom(Forall([A, B], Iff(Superset(A, B), Forall([x], In(x, A), [In(x, B)]))))
+        
+        # forall_{P, f, x} [x in {f(y) | P(y)}] <=> [exists_{y | P(y)} x = f(y)]
+        self.setOfAllDef = self.stateAxiom(Forall([P, f, x], Iff(In(x, SetOfAll([y], fy, suchThat=[Py])), Exists([y], Equals(x, fy), [Py]))))
+        
+sets = SetContext()
 
-    allLocals = dict(locals())
-    return {key:allLocals[key] for key in (set(allLocals.keys()) - importVars)}
-
-sets.axiomsOnDemand(setAxioms)
+# set theory related literals
+IN = sets.addLiteral('IN')
+SINGLETON = sets.addLiteral('SINGLETON')
+COMPLEMENT = sets.addLiteral('COMPLEMENT')
+UNION = sets.addLiteral('UNION')
+INTERSECTION = sets.addLiteral('INTERSECTION')
+EVERYTHING = sets.addLiteral('EVERYTHING')
+NOTHING = sets.addLiteral('NOTHING')
+SUBSET = sets.addLiteral('SUBSET')
+SUPERSET = sets.addLiteral('SUPERSET')
+SET = sets.addLiteral('SET')
 
 class In(BinaryOperation):
     def __init__(self, element, itsSet):
@@ -82,9 +80,15 @@ class In(BinaryOperation):
         else:
             return Operation.remake(self, operator, operands)
     
+    def deduceInBool(self):
+        '''
+        Deduce and return that this 'in' statement is in the set of BOOLEANS.
+        '''
+        return sets.inSetIsInBool.specialize({x:self.element, S:self.itsSet}).qed()
+    
     def unfold(self):
         '''
-        Derive an unfolded version of some (x in S) given (x in S).
+        From (x in S), derive and return an unfolded version.
         Examples are: (x=y) from (x in {y}), ((x in A) or (x in B)) from (x in (A union B)).
         This may be extended to work for other types of sets by implementing
         the unfoldElemInSet(...) method for each type [see unfoldElemInSet(..) defined
@@ -92,19 +96,19 @@ class In(BinaryOperation):
         '''
         return self.itsSet.unfoldElemInSet(self.element).check({self})
     
-    def proveAsFolded(self):
+    def concludeAsFolded(self):
         '''
         Derive this folded version, x in S, from the unfolded version.
         Examples are: (x in {y}) from (x=y), (x in (A union B)) from ((x in A) or (x in B)).
         This may be extended to work for other types of sets by implementing
-        the proveElemInSet(...) method for each type [see proveElemInSet(..) defined
+        the deduceElemInSet(...) method for each type [see deduceElemInSet(..) defined
         for Singleton or Union].
         '''    
-        return self.itsSet.proveElemInSet(self.element)
+        return self.itsSet.deduceElemInSet(self.element)
     
     def deriveIsInExpansion(self, expandedSet):
         '''
-        Given x in S, derive x in expandedSet via S subseteq expendedSet.
+        From x in S, derive x in expandedSet via S subseteq expendedSet.
         '''
         #from sets import unionDef, x, A, B
         #TODO : derive x in S => x in S or x in expandingSet
@@ -117,6 +121,20 @@ class In(BinaryOperation):
         via the set's evaluateForallInSet method.
         '''
         return self.itsSet.evaluateForallInSet(forallStmt)
+    
+    def unfoldForall(self, forallStmt):
+        '''
+        Given a forall statement over some set, unfold it if possible via the set's
+        unfoldForallInSet method.
+        '''
+        return self.itsSet.unfoldForallInSet(forallStmt)
+    
+    def foldAsForall(self, forallStmt):
+        '''
+        Given a forall statement over some set, derive it from an unfolded version
+        if possible via the set's foldAsForallInSet method.
+        '''
+        return self.itsSet.foldAsForallInSet(forallStmt)
 
 class Singleton(Operation):
     '''
@@ -144,7 +162,7 @@ class Singleton(Operation):
         '''
         return sets.singletonDef.specialize({x:element, y:self.elem}).deriveRHSviaEquivalence()
     
-    def proveElemInSet(self, element):
+    def deduceElemInSet(self, element):
         '''
         From (element = y), derive and return [element in {y}] where self represents {y}.
         '''   
@@ -202,7 +220,7 @@ class Union(AssociativeBinaryOperation):
         '''
         return sets.unionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
 
-    def proveElemInSet(self, element):
+    def deduceElemInSet(self, element):
         '''
         From [(element in A) or (element in B)], derive and return [element in (A union B)]
         where self represents (A union B).
@@ -236,7 +254,7 @@ class Intersection(AssociativeBinaryOperation):
         '''
         return sets.intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
 
-    def proveElemInSet(self, element):
+    def deduceElemInSet(self, element):
         '''
         From  [(element in A) and (element in B)], derive and return [element in (A intersection B)],
         where self represents (A intersection B). 
@@ -262,12 +280,12 @@ class Subset(BinaryOperation):
 
     def unfold(self, elemInstanceVar=x):
         '''
-        Given A subset B, returns (forall_{x in A} x in B) derived from self.
+        From A subset B, derive and return (forall_{x in A} x in B).
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
         return sets.unfoldSubset.specialize({A:self.operands[0], B:self.operands[1], x:elemInstanceVar}).deriveConclusion().check({self})
     
-    def proveAsFolded(self, elemInstanceVar=x):
+    def concludeAsFolded(self, elemInstanceVar=x):
         '''
         Derive this folded version, A subset B, from the unfolded version,
         (forall_{x in A} x in B).
@@ -292,12 +310,12 @@ class Superset(BinaryOperation):
     
     def unfold(self, elemInstanceVar=x):
         '''
-        Given A superset B, returns (forall_{x in B} x in A) derived from self.
+        From A superset B, derive and return (forall_{x in B} x in A).
         x will be relabeled if an elemInstanceVar is supplied.
         '''
         return sets.unfoldSuperset.specialize({A:self.operands[0], B:self.operands[1], x:elemInstanceVar}).deriveConclusion().check({self})
     
-    def proveAsFolded(self, elemInstanceVar=x):
+    def concludeAsFolded(self, elemInstanceVar=x):
         '''
         Derive this folded version, A superset B, from the unfolded version,
         (forall_{x in B} x in A).
@@ -359,7 +377,7 @@ class SetOfAll(NestableOperationOverInstances):
         PofElement = self.instanceExpression.substitute({self.instanceVar:element})
         return sets.unfoldSetOfAll.specialize({P:Function(self.instanceExpression, [self.instanceVar]), x:element}).deriveConclusion().check({PofElement})
     
-    def proveElemInSet(self, element):
+    def deduceElemInSet(self, element):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''   

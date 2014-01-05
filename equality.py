@@ -1,14 +1,10 @@
 from proveItCore import *
 from genericOperations import *
 
-equality = Context('EQUALITY')
-
-# equality is an important core concept
-EQUALS = equality.addLiteral('EQUALS')
-NOTEQUALS = equality.addLiteral('NOTEQUALS')
-
 f = Variable('f')
+g = Variable('g')
 P = Variable('P')
+Q = Variable('Q')
 a = Variable('a')
 b = Variable('b')
 c = Variable('c')
@@ -21,38 +17,48 @@ fab = Operation(f, [a, b])
 fx = Operation(f, [x])
 fy = Operation(f, [y])
 fxy = Operation(f, [x, y])
+gx = Operation(g, [x])
 Px = Operation(P, [x])
 Py = Operation(P, [y])
+Qx = Operation(Q, [x])
 X = Variable('X')
+Upsilon = Variable('Upsilon', {MATHML:'&#x03C5;'})
 
-def equalityAxioms():
-    """
-    Generates the equality axioms.  Because of the interdependence of booleans, 
-    equality, and sets, this is executed on demand after these have all loaded.
-    """
-    from booleans import Forall, inBool, Implies, Not
-    importVars = set(locals().keys()) | {'importVars'}
+class EqualityContext(Context):
+    def __init__(self):
+        Context.__init__(self, 'EQUALITY')
 
-    # forall_{x, y} inBool(x = y)
-    equalityInBool = equality.stateAxiom(Forall([x, y], inBool(Equals(x, y))))
-    
-    # forall_{x, y, z} (x=y) => [(y=z) => (x=z)]
-    equalsTransitivity = equality.stateAxiom(Forall([x, y, z], Implies(Equals(x, y), Implies(Equals(y, z), Equals(x, z)))))
-    # forall_{x} x=x
-    equalsReflexivity = equality.stateAxiom(Forall([x], Equals(x, x)))
-    # forall_{x, y} x=y => y=x
-    equalsSymmetry = equality.stateAxiom(Forall([x, y], Implies(Equals(x, y), Equals(y, x))))
-    
-    # forall_{x, y} [x != y] = Not([x = y])
-    notEqualsDef = equality.stateAxiom(Forall([x, y], Equals(NotEquals(x, y), Not(Equals(x, y)))))
-    
-    # forall_{f, x, y} [(x=y) => f(x)=f(y)]
-    substitutionAxiom = equality.stateAxiom(Forall([f, x, y], Implies(Equals(x, y), Equals(fx, fy))))
+    def stateAxioms(self):
+        """
+        Generates the equality axioms.  Because of the interdependence of booleans, 
+        equality, and sets, this is executed on demand after these have all loaded.
+        """
+        from booleans import Forall, inBool, Implies, Not
+        
+        # forall_{x, y} inBool(x = y)
+        self.equalityInBool = self.stateAxiom(Forall([x, y], inBool(Equals(x, y))))
+        
+        # forall_{x, y, z} (x=y) => [(y=z) => (x=z)]
+        self.equalsTransitivity = self.stateAxiom(Forall([x, y, z], Implies(Equals(x, y), Implies(Equals(y, z), Equals(x, z)))))
+        # forall_{x} x=x
+        self.equalsReflexivity = self.stateAxiom(Forall([x], Equals(x, x)))
+        # forall_{x, y} x=y => y=x
+        self.equalsSymmetry = self.stateAxiom(Forall([x, y], Implies(Equals(x, y), Equals(y, x))))
+        
+        # forall_{x, y} [x != y] = Not([x = y])
+        self.notEqualsDef = self.stateAxiom(Forall([x, y], Equals(NotEquals(x, y), Not(Equals(x, y)))))
+        
+        # forall_{f, x, y} [(x=y) => f(x)=f(y)]
+        self.substitution = self.stateAxiom(Forall([f, x, y], Implies(Equals(x, y), Equals(fx, fy))))      
+        
+        # forall_{f, g, Q, Upsilon} [forall_{x | Q(x)} f(x) = g(x)] => {[Upsilon_{x | Q(x) f(x)] = [Upsilon_{x | Q(x) g(x)]}
+        self.instanceSubstitution = self.stateAxiom(Forall([f, g, Q, Upsilon], Implies(Forall([x], Equals(fx, gx), [Qx]), Equals(OperationOverInstances(Upsilon, x, fx, Qx), OperationOverInstances(Upsilon, x, gx, Qx)))))
 
-    allLocals = dict(locals())
-    return {key:allLocals[key] for key in (set(allLocals.keys()) - importVars)}
+equality = EqualityContext()
 
-equality.axiomsOnDemand(equalityAxioms)
+# equality is an important core concept
+EQUALS = equality.addLiteral('EQUALS')
+NOTEQUALS = equality.addLiteral('NOTEQUALS')
 
 class Equals(BinaryOperation):
     def __init__(self, a, b):
@@ -72,7 +78,7 @@ class Equals(BinaryOperation):
         else:
             return Operation.remake(self, operator, operands)
     
-    def proveByReflexivity(self):
+    def concludeViaReflexivity(self):
         '''
         Prove and return self of the form x = x.
         '''
@@ -87,7 +93,7 @@ class Equals(BinaryOperation):
 
     def transitivityImpl(self, otherEquality):
         '''
-        From x = y (self) and given y = z (otherEquality) derive and return 
+        From x = y (self) and the given y = z (otherEquality) derive and return 
         (y=z) => (x = z).
         Also works more generally as long as there is a common side to the equations.
         '''
@@ -115,7 +121,7 @@ class Equals(BinaryOperation):
         '''
         return self.transitivityImpl(otherEquality).deriveConclusion().check({self, otherEquality})
         
-    def deriveFromBooleanEquality(self):
+    def deriveViaBooleanEquality(self):
         '''
         From A = TRUE or TRUE = A derive A, or from A = FALSE or FALSE = A derive Not(A).
         Note, see deriveStmtEqTrue or Not.equateNegatedToFalse for the reverse process.
@@ -130,10 +136,10 @@ class Equals(BinaryOperation):
         elif self.rhs == FALSE:
             return booleans.notFromEqFalse.specialize({A:self.lhs}).deriveConclusion().check({self}) # Not(A)
     
-    def proveByBooleanEquality(self):
+    def concludeBooleanEquality(self):
         '''
-        Prove and return self of the form (A=TRUE) given A, (TRUE=A) given A, 
-        A=FALSE given Not(A), FALSE=A given Not(A), [Not(A)=FALSE] given A, or [FALSE=Not(A)] given A.
+        Prove and return self of the form (A=TRUE) assuming A, (TRUE=A) assuming A, 
+        A=FALSE assuming Not(A), FALSE=A assuming Not(A), [Not(A)=FALSE] assuming A, or [FALSE=Not(A)] assuming A.
         '''
         from booleans import booleans, TRUE, FALSE, A, Not
         if self.rhs == TRUE:
@@ -164,8 +170,8 @@ class Equals(BinaryOperation):
         '''
         assert isinstance(function, Function) or isinstance(function, Variable) or isinstance(function, Literal)
         subMap = SubstitutionMap({x:self.lhs, y:self.rhs, f:function})
-        return equality.substitutionAxiom.specialize(subMap).deriveConclusion().check({self})
-    
+        return equality.substitution.specialize(subMap).deriveConclusion().check({self})
+        
     def lhsStatementSubstitution(self, function):
         '''
         From x = y, and given a function P(x), derive P(y)=>P(x).
@@ -182,14 +188,14 @@ class Equals(BinaryOperation):
 
     def lhsSubstitute(self, function):
         '''
-        From x = y, and given a function P(x), derive P(x) given P(y)
+        From x = y, and given a function P(x), derive P(x) assuming P(y)
         '''
         substitution = self.lhsStatementSubstitution(function)
         return substitution.deriveConclusion().check({self, substitution.hypothesis})
         
     def rhsSubstitute(self, function):
         '''
-        From x = y, and given a function P(x), derive P(y) given P(x)
+        From x = y, and given a function P(x), derive P(y) assuming P(x)
         '''
         substitution = self.rhsStatementSubstitution(function)
         return substitution.deriveConclusion().check({self, substitution.hypothesis})
@@ -208,21 +214,82 @@ class Equals(BinaryOperation):
         
     def deriveRightViaEquivalence(self):
         '''
-        From A = B, derive B (the Right-Hand-Side) given A.
+        From A = B, derive B (the Right-Hand-Side) assuming A.
         '''
         return self.rhsSubstitute(Function(X, [X])).check({self, self.lhs})
 
     def deriveLeftViaEquivalence(self):
         '''
-        From A = B, derive A (the Right-Hand-Side) given B.
+        From A = B, derive A (the Right-Hand-Side) assuming B.
         '''
         return self.lhsSubstitute(Function(X, [X])).check({self, self.rhs})
     
-    def eqInBool(self):
+    def deduceInBool(self):
         '''
-        Prove and return that this equality statement is in the set of BOOLEANS.
+        Deduce and return that this equality statement is in the set of BOOLEANS.
         '''
         return equality.equalityInBool.specialize({x:self.lhs, y:self.rhs}).check()
+    
+    def inBoolViaBooleanEquality(self):
+        '''
+        From A=TRUE, A=FALSE, TRUE=A, or FALSE=A, derive and return inBool(A).
+        '''
+        from booleans import booleans, TRUE, FALSE, A
+        if self.rhs == TRUE:
+            return booleans.inBoolIfEqTrue.specialize({A:self.lhs}).deriveConclusion().prove({self})
+        if self.lhs == TRUE:
+            return booleans.inBoolIfEqTrueRev.specialize({A:self.rhs}).deriveConclusion().prove({self})
+        if self.rhs == FALSE:
+            return booleans.inBoolIfEqFalse.specialize({A:self.lhs}).deriveConclusion().prove({self})
+        if self.lhs == FALSE:
+            return booleans.inBoolIfEqFalseRev.specialize({A:self.rhs}).deriveConclusion().prove({self})
+    
+    def evaluate(self):
+        '''
+        Given operands that may be evaluated, derive and return this
+        expression equated to TRUE or FALSE.  If both sides equate to
+        the same, it will equate to TRUE.  Otherwise, it calls
+        evalEquality using the evaluated left and right hand sides
+        of the expression to determine the evaluation of the equality.
+        '''
+        from booleans import booleans, TRUE
+        def doEval():
+            '''
+            Performs the actual work if we can't simply look up the evaluation.
+            '''
+            if self.lhs == self.rhs:
+                # simple case where both sides are the same, use reflexivity
+                return Equals(self.concludeViaReflexivity(), TRUE).concludeBooleanEquality()
+            
+            # evaluate both sides and see if simplification is possible
+            lhsSimpl = self.lhs
+            rhsSimpl = self.rhs
+            try:
+                lhsEval = self.lhs.evaluate()
+                lhsSimpl = lhsEval.rhs
+            except AttributeError:
+                lhsEval = None
+            try:
+                rhsEval = self.rhs.evaluate()
+                rhsSimpl = rhsEval.rhs
+            except AttributeError:
+                rhsEval = None
+    
+            if lhsEval == None and rhsEval == None:
+                # Cannot simplify further.  Use evalEquality.
+                return lhsSimpl.evalEquality(rhsSimpl)
+            else:         
+                # evaluate the simplified version
+                simplEval = Equals(lhsSimpl, rhsSimpl).evaluate()
+                val = simplEval.rhs
+                # Using substitution, go from simplEval to self=val
+                if lhsEval != None:
+                    lhsEval.lhsSubstitute(Function(Equals(Equals(X, rhsSimpl), val), [X]))
+                if rhsEval != None:
+                    rhsEval.lhsSubstitute(Function(Equals(Equals(self.lhs, X), val), [X]))
+                return Equals(self, val)
+            
+        return booleans.evaluate(self, doEval)
         
 class NotEquals(BinaryOperation):
     def __init__(self, a, b):
@@ -248,18 +315,18 @@ class NotEquals(BinaryOperation):
         '''
         return equality.notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().check({self})
 
-    def deriveFromDoubleNegation(self):
+    def deriveViaDoubleNegation(self):
         '''
-        From A != FALSE, derive and return A given inBool(A).
+        From A != FALSE, derive and return A assuming inBool(A).
         Also see version in Not class.
         '''
         from booleans import booleans, inBool, A, FALSE
         if self.rhs == FALSE:
             return booleans.fromNotFalse.specialize({A:self.lhs}).deriveConclusion().check({self, inBool(self.lhs)})
 
-    def proveByDoubleNegation(self):
+    def concludeViaDoubleNegation(self):
         '''
-        Prove and return self of the form A != FALSE given A.
+        Prove and return self of the form A != FALSE assuming A.
         Also see version in Not class.
         '''
         from booleans import booleans, FALSE, A
@@ -278,6 +345,30 @@ class NotEquals(BinaryOperation):
         '''
         return equality.unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().check({self})
 
+    def evaluate(self):
+        '''
+        Given operands that may be evaluated, derive and return this
+        expression equated to TRUE or FALSE.  If both sides equate to
+        the same, it will equate to TRUE.  Otherwise, it calls
+        evalEquality using the evaluated left and right hand sides
+        of the expression to determine the evaluation of the equality.
+        '''
+        from booleans import booleans
+        def doEval():
+            '''
+            Performs the actual work if we can't simply look up the evaluation.
+            '''
+            unfoldedEvaluation = self.unfold().evaluate()
+            return self.definition().lhsSubstitute(Function(Equals(X, unfoldedEvaluation.rhs), [X]))
+        return booleans.evaluate(self, doEval)    
+
+    def deduceInBool(self):
+        '''
+        Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
+        '''
+        return equality.notEqualsInBool.specialize({x:self.lhs, y:self.rhs}).check()
+    
+
 # Using substitution
 
 # forall_{P, x, y} {(x=y) => [P(y) => P(x)]}
@@ -285,10 +376,10 @@ def lhsSubstitutionDerivation():
     from booleans import Implies, deriveStmtEqTrue
     # hypothesis = (x=y)
     hypothesis = Equals(x, y)
-    # P(x) = P(y) given (x=y)
+    # P(x) = P(y) assuming (x=y)
     Px_eq_Py = hypothesis.substitution(Function(Px, [x])).prove({hypothesis})
-    # P(x) given (x=y), P(y)
-    deriveStmtEqTrue(Py).applyTransitivity(Px_eq_Py).deriveFromBooleanEquality().prove({hypothesis, Py})
+    # P(x) assuming (x=y), P(y)
+    deriveStmtEqTrue(Py).applyTransitivity(Px_eq_Py).deriveViaBooleanEquality().prove({hypothesis, Py})
     # forall_{P, x, y} {(x = y) => [P(x) => P(y)]}, by (nested) hypothetical reasoning
     return Implies(Equals(x, y), Implies(Py, Px)).generalize([P, x, y]).qed()
 equality.deriveOnDemand('lhsSubstitution', lhsSubstitutionDerivation)
@@ -298,7 +389,7 @@ def rhsSubstitutionDerivation():
     from booleans import Implies
     # hypothesis = (x=y)
     hypothesis = Equals(x, y)
-    # P(x) given x=y and P(y)
+    # P(x) assuming x=y and P(y)
     hypothesis.deriveReversed().lhsSubstitute(Function(Px, [x])).prove({hypothesis, Py})
     # forall_{P, x, y} {(x=y) => [P(x) => P(y)]}
     return Implies(hypothesis, Implies(Px, Py)).generalize([P, x, y]).qed()
@@ -311,9 +402,9 @@ def unaryEvaluationDerivation():
     from booleans import Implies
     # hypothesis = (x=a)
     hypothesis = Equals(x, a)
-    # [f(x) = f(a)] given x=a
+    # [f(x) = f(a)] assuming x=a
     fx_eq_fa = hypothesis.substitution(Function(fx, [x])).prove({hypothesis})
-    # [f(a)=c] => [f(x)=c] given x=a
+    # [f(a)=c] => [f(x)=c] assuming x=a
     conclusion = fx_eq_fa.transitivityImpl(Equals(fa, c)).prove({hypothesis})
     # forall_{f, x, a, c} (x=a) => {[f(a)=c] => [f(x)=c]}
     return Implies(hypothesis, conclusion).generalize([f, x, a, c]).qed()
@@ -324,11 +415,11 @@ def binarySubstitutionDerivation():
     from booleans import And, Implies
     # hypothesis = (x=a and y=b)
     hypothesis = And(Equals(x, a), Equals(y, b))
-    # f(x, y) = f(a, y) given hypothesis
+    # f(x, y) = f(a, y) assuming hypothesis
     fxy_eq_fay = hypothesis.deriveLeft().substitution(Function(fxy, [x])).prove({hypothesis})
-    # f(a, y) = f(a, b) given hypothesis
+    # f(a, y) = f(a, b) assuming hypothesis
     fay_eq_fab = hypothesis.deriveRight().substitution(Function(fab, [b])).prove({hypothesis})
-    # f(x, y) = f(a, b) given hypothesis
+    # f(x, y) = f(a, b) assuming hypothesis
     conclusion = fxy_eq_fay.applyTransitivity(fay_eq_fab).prove({hypothesis})
     # forall_{f, x, y, a, b} (x=a and y=b) => [f(x, y) = f(a, b)]
     return Implies(hypothesis, conclusion).generalize([f, x, y, a, b]).qed()
@@ -339,9 +430,9 @@ def binaryEvaluationDerivation():
     from booleans import And, Implies
     # hypothesis = (x=a and y=b)
     hypothesis = And(Equals(x, a), Equals(y, b))
-    # [f(x, y) = f(a, b)] given hypothesis
+    # [f(x, y) = f(a, b)] assuming hypothesis
     fxy_eq_fab = equality.binarySubstitution.specialize().deriveConclusion().prove({hypothesis})
-    # [f(a, b)=c] => [f(x, y)=c] given hypothesis
+    # [f(a, b)=c] => [f(x, y)=c] assuming hypothesis
     conclusion = fxy_eq_fab.transitivityImpl(Equals(fab, c)).prove({hypothesis})
     # forall_{f, x, y, a, b, c} [x=a and y=b] => {[f(a, b)=c] => [f(x, y)=c]}
     return Implies(hypothesis, conclusion).generalize([f, x, y, a, b, c]).qed()
@@ -359,15 +450,24 @@ def notEqualsSymmetryDerivation():
     # hypothesis = (x != y)
     hypothesis = NotEquals(x, y)
     # inBool(x=y)
-    Equals(x, y).eqInBool()
+    Equals(x, y).deduceInBool()
     # inBool(y=x)
-    Equals(y, x).eqInBool()
+    Equals(y, x).deduceInBool()
     # Not(x=y) => Not(y=x)
     equality.equalsSymmetry.specialize({x:y, y:x}).transpose().prove()
-    # Not(x=y) given (x != y)
+    # Not(x=y) assuming (x != y)
     NotEquals(x, y).unfold().prove({hypothesis})
-    # (y != x) given Not(x = y)
+    # (y != x) assuming Not(x = y)
     Not(Equals(y, x)).deriveNotEquals().prove({Not(Equals(y, x))})
     # forall_{x, y} (x != y) => (y != x)
     return Implies(hypothesis, NotEquals(y, x)).generalize([x, y]).qed()
 equality.deriveOnDemand('notEqualsSymmetry', notEqualsSymmetryDerivation)
+
+# forall_{x, y} (x != y) in BOOLEANS
+def notEqualsInBoolDerivation():
+    from booleans import Not, inBool
+    # Not(x = y) in BOOLEANS
+    Not(Equals(x, y)).deduceInBool().prove()
+    # forall_{x, y} (x != y) in BOOLEANS
+    return equality.notEqualsDef.specialize().lhsSubstitute(Function(inBool(X), [X])).generalize([x, y]).qed()
+equality.deriveOnDemand('notEqualsInBool', notEqualsInBoolDerivation)
