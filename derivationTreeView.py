@@ -40,7 +40,7 @@ def renderedExpr(expr):
     return QtCore.QByteArray(renderedExpressions[expr])
 
 class DerivationStep:
-    def __init__(self, provers, onlyEssentialSteps = True, proofNumber = None, isRoot = True, autoAliasChild = True):
+    def __init__(self, provers, onlyEssentialSteps=True, compressHypReasoning=True, proofNumber=None, isRoot=True):
         self.parent = None
         self.provers = tuple(provers)
         if isRoot:
@@ -48,6 +48,7 @@ class DerivationStep:
         else:
             self.proofNumber = proofNumber
         self.onlyEssentialSteps = onlyEssentialSteps
+        self.compressHypReasoning = compressHypReasoning
         self.howProven = None
         self.children = None
         self.assumptions = None        
@@ -60,43 +61,44 @@ class DerivationStep:
                 self.howProven = 'composition'
         else:
             prover = self.provers[0]
-            if autoAliasChild:
-                self.stepType = prover.proverType
-                if prover.stmtToProve.wasProven() and prover.stmtToProve.getRegisteredVar() != None:
-                    # this is either the root alias with the child as the aliased statement
-                    # or a theorem statement with the child as the alias.
-                    self._makeChild([prover], autoAliasChild=False) # autoAliasChild as False prevents infinite recursion
-                    if isRoot:
-                        # A root alias
-                        self.stepType = 'alias'
-                        self.howProven = 'derivation'
-                        self.children[0].stepType = 'root'
+            self.stepType = prover.proverType
+            if prover.stmtToProve.wasProven() and prover.stmtToProve.getRegisteredVar() != None:
+                if isRoot:
+                    # this is a root alias with the child as the aliased statement.
+                    self._makeChild([prover])
+                    # A root alias
+                    self.stepType = 'alias'
+                    self.children[0].stepType = 'root'
+                    self.children[0].children = None
+                    if prover.stmtToProve.isAxiom():
+                        self.howProve = 'axiom'
+                        self.children[0].howProven = 'axiom'
                     else:
-                        # an aliased theorem -- make the child be the alias
-                        self.children[0].stepType = 'alias'
-                        self.children[0].howProven = self.howProven = 'theorem' # may be overridden as 'axiom'
-                        self.children[0].children = [] # no children for the theorem alias
-            if prover.stmtToProve.isAxiom():
-                self.howProven = 'axiom'
-                if self.children == None:
-                    self.children = []
+                        self.howProven = 'derivation'
+                        self.children[0].howProven = None                        
                 else:
-                    self.children[0].howProven = 'axiom'
+                    # an aliased theorem -- make the child be the alias
+                    if prover.stmtToProve.isAxiom():
+                        self.stepType = 'axiom'
+                    else:
+                        self.stepType = 'theorem'# may be overridden as 'axiom'
+                    self.howProven = prover.stmtToProve.getRegisteredVar()
+                    self.children = []
             elif prover.stmtToProve in prover.assumptions:
                 self.howProven = 'assumption'
                 self.children = []
     
     def isAliasLink(self):
-        return self.stepType == 'alias' and len(self.children) == 0
+        return (self.stepType == 'axiom' or self.stepType == 'theorem') and len(self.children) == 0
     
     def isRoot(self):
         return self.parent == None
 
-    def _makeDescendant(self, provers, autoAliasChild=True):
-        return DerivationStep(provers, self.onlyEssentialSteps, self.proofNumber, False, autoAliasChild)
+    def _makeDescendant(self, provers):
+        return DerivationStep(provers, self.onlyEssentialSteps, self.compressHypReasoning, self.proofNumber, False)
     
-    def _makeChild(self, provers, autoAliasChild=True):
-        child = self._makeDescendant(provers, autoAliasChild)
+    def _makeChild(self, provers):
+        child = self._makeDescendant(provers)
         if self.children == None:
             self.children = []
         self.children.append(child)
@@ -165,7 +167,8 @@ class DerivationStep:
         elif name == 'How Proven':
             return self.howProven if self.howProven != None else 'N/A'
         elif name == 'Context':
-            return self.provers[0].stmtToProve.getRegisteredContext()
+            context = self.provers[0].stmtToProve.getRegisteredContext()
+            return context if context != None else 'N/A'
         elif name == 'Proven':
             #return self.provers[0].stmtToProve.proofNumber
             return self.wasProven()
@@ -183,12 +186,13 @@ class DerivationStep:
             return renderedExpr(data.getExpression())
         else:
             return str(data)
-
+    
     def makeChildren(self):
         if self.children == None:
             if self.onlyEssentialSteps and len(self.provers) == 1 and self.provers[0].provers != None:
                 for childProver in self.provers[0].provers:
                     self._makeChild([childProver])
+                self.skipCompressedHypReasoning()
                 return
                 #assert self._makeProofTree(), "Statement was proven but unable to make a proof tree -- shouldn't legitimately happen"
                 #return
@@ -215,6 +219,17 @@ class DerivationStep:
                 self.children = self.children[0].children
                 for child in self.children:
                     child.parent = self
+            self.skipCompressedHypReasoning()
+
+    def skipCompressedHypReasoning(self):
+        if self.compressHypReasoning and len(self.children) == 1 and self.children[0].stepType == 'hypothetical reasoning':
+            # skip over intermediate hypothetical reasoning steps
+            child = self.children[0]
+            child.makeChildren()
+            if len(child.children) == 1 and child.children[0].stepType == 'hypothetical reasoning':
+                # skip a generation
+                self.children[0] = child.children[0] 
+                self.children[0].parent = self
                     
     def _makeProofTree(self):
         pvr2step = dict() # maps Statement.Prover to DerivationStep as the tree completes from the bottom up
@@ -310,7 +325,7 @@ class DerivationModel(SvgWidgetModel):
         self.topLevelProofNumbers = []
         self.topLevels = [] # DerivationStep's
     
-    def addTopLevel(self, prover, onlyEssentialSteps=True):
+    def addTopLevel(self, prover, onlyEssentialSteps=True, compressHypReasoning=True):
         '''
         Adds a prover at the top level if it doesn't already exist.
         '''
@@ -319,7 +334,7 @@ class DerivationModel(SvgWidgetModel):
             row = bisect_left(self.topLevelProofNumbers, prover.stmtToProve.proofNumber)
             self.beginInsertRows(QtCore.QModelIndex(), row, row)
             self.topLevelProofNumbers.insert(row, prover.stmtToProve.proofNumber)
-            self.topLevels.insert(row, DerivationStep([prover], onlyEssentialSteps))
+            self.topLevels.insert(row, DerivationStep([prover], onlyEssentialSteps, compressHypReasoning))
             self.topLevelProvers.add(prover)
             self.endInsertRows()
         
@@ -560,7 +575,7 @@ class DerivationTreeView(QtGui.QTreeView):
         if event.key() == QtCore.Qt.Key_Left and selectedStep.isRoot() and not self.isExpanded(self.parent.selection_idx):
             self.setCurrentIndex(self.history.pop())
         elif event.key() == QtCore.Qt.Key_Right and selectedStep.isAliasLink():
-            prover = selectedStep.parent.getStatement().getOrMakeProver()
+            prover = selectedStep.getStatement().getOrMakeProver()
             self.model.addTopLevel(prover)
             self.history.append(self.currentIndex())
             self.setCurrentIndex(self.model.topLevelIndex(prover))
@@ -568,7 +583,7 @@ class DerivationTreeView(QtGui.QTreeView):
             QtGui.QTreeView.keyPressEvent(self, event)        
 
 class DerivationTreeViewer(QtGui.QWidget):
-    def __init__(self, provers, onlyEssentialSteps=True, showExpressionTree=True):
+    def __init__(self, provers, onlyEssentialSteps=True, compressHypReasoning=True, showExpressionTree=True):
         QtGui.QWidget.__init__(self)
         x, y, w, h = 300, 300, 1400, 500
         self.setGeometry(x, y, w, h)
@@ -577,9 +592,11 @@ class DerivationTreeViewer(QtGui.QWidget):
         self.derivationTV = DerivationTreeView(self, derivationModel)
         derivationModel.setView(self.derivationTV)
         for prover in provers:
-            derivationModel.addTopLevel(prover, onlyEssentialSteps=onlyEssentialSteps)
-        self.derivationTV.setColumnWidth(0, 600)
+            derivationModel.addTopLevel(prover, onlyEssentialSteps=onlyEssentialSteps, compressHypReasoning=compressHypReasoning)
+        self.derivationTV.setColumnWidth(0, 500)
         self.derivationTV.setColumnWidth(1, 300)
+        self.derivationTV.setColumnWidth(2, 150)
+        self.derivationTV.setColumnWidth(3, 200)
         self.selectModel = self.derivationTV.selectionModel()
         self.selectModel.currentRowChanged.connect(self.currentRowChanged)
         self.derivationTV.doubleClicked.connect(self.doubleClick)
@@ -643,7 +660,7 @@ class AxiomTreeViewer(QtGui.QWidget):
     
     
 qa = QtGui.QApplication(sys.argv)
-def showTreeView(stmtsOrProvers, onlyEssentialSteps=True, showExpressionTree=True):
+def showTreeView(stmtsOrProvers, onlyEssentialSteps=True, compressHypReasoning=True, showExpressionTree=True):
     """
     Take in a list of statements, list of provers, single statement, or single prover
     as stmtsOrProvers.
@@ -655,12 +672,12 @@ def showTreeView(stmtsOrProvers, onlyEssentialSteps=True, showExpressionTree=Tru
                 provers.append(stmtOrProver.getOrMakeProver())
             elif isinstance(stmtOrProver, Statement.Prover):
                 provers.append(stmtOrProver)
-        app = DerivationTreeViewer(provers, onlyEssentialSteps, showExpressionTree)
+        app = DerivationTreeViewer(provers, onlyEssentialSteps, compressHypReasoning, showExpressionTree)
         app.show()
         qa.exec_()
     except TypeError:
         # handle single item passed in instead of list
-        showTreeView([stmtsOrProvers], onlyEssentialSteps)
+        showTreeView([stmtsOrProvers], onlyEssentialSteps, compressHypReasoning)
 
 def showAxioms(axioms):
     app = AxiomTreeViewer(axioms)
@@ -672,4 +689,4 @@ if __name__ == "__main__":
     booleans.booleans.deriveAll()
     #boolTheorems = {var.statement for varName, var in vars(booleans.booleans).iteritems() if isinstance(var, Expression) and var.statement != None and var.statement.isTheorem()}
     #showTreeView(boolTheorems, True)
-    showTreeView(booleans.booleans.hypotheticalDisjunction.statement, True)
+    showTreeView(booleans.booleans.transpositionFromNegated.statement, True)
