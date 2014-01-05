@@ -39,7 +39,7 @@ class Expression:
         """
         def makeAssumptionsStr(assumption):
             return "{" + ", ".join([str(assumption) for assumption in assumptions]) + "}"
-        assert self.isProven(assumptions)==True, "Proof failed: " + str(self) + " given " + makeAssumptionsStr(assumptions)
+        assert self.isProven(assumptions)==True, "Proof failed: " + str(self) + " assuming " + makeAssumptionsStr(assumptions)
         return self
     
     def check(self, assumptions=frozenset()):
@@ -49,7 +49,7 @@ class Expression:
         """
         def makeAssumptionsStr(assumption):
             return "{" + ", ".join([str(assumption) for assumption in assumptions]) + "}"
-        assert self.isProven(assumptions, markProof=False)==True, "Proof failed: " + str(self) + " given " + makeAssumptionsStr(assumptions)
+        assert self.isProven(assumptions, markProof=False)==True, "Proof failed: " + str(self) + " assuming " + makeAssumptionsStr(assumptions)
         return self
     
     def qed(self):
@@ -133,8 +133,8 @@ class Expression:
         (specialization, conditions) = Statement.specialize(self, subMap)
         return specialization.check({self} | conditions)
         
-    def generalize(self, newForallVars, newConditions=None):
-        if len(newForallVars) == 0 and (newConditions == None or len(newConditions) == 0):
+    def generalize(self, newForallVars, newConditions=tuple()):
+        if len(newForallVars) == 0 and len(newConditions) == 0:
             return self # trivial case
         return Statement.generalize(self, newForallVars, newConditions) #.check({self})
     
@@ -154,11 +154,12 @@ class Expression:
         '''
         self.prove(assumptions).show(assumptions)
     
-    def evaluate(self):
-        assert False, "evaluate() not implemented for this type"
-    
     def proveByEval(self):
-        return self.evaluate().deriveFromBooleanEquality().prove()
+        '''
+        Prove self by calling self.evaluate() if it equates the expression to TRUE.
+        The evaluate method must be implemented by the derived class.
+        '''
+        return self.evaluate().deriveViaBooleanEquality().prove()
 
 class Literal(Expression):
     def __init__(self, name, context, formatMap = None):
@@ -340,17 +341,18 @@ class Operation(Expression):
         return self.operator.freeVars().union(*[operand.freeVars() for operand in self.operands])
 
 class OperationOverInstances(Operation):
-    def __init__(self, operator, instanceVar, instanceExpression, condition=None):
+    def __init__(self, operator, instanceVar, instanceExpression, condition):
         Operation.__init__(self, operator, [instanceExpression])
         assert isinstance(instanceVar, Variable)
         self.instanceVar = instanceVar
         assert isinstance(instanceExpression, Expression)
         self.instanceExpression = instanceExpression
-        assert condition == None or isinstance(condition, Expression)
+        assert isinstance(condition, Expression)
         self.condition = condition
         
     def formatted(self, formatType, fenced=False):
         # override this default as desired
+        from booleans import NONCONDITION
         implicitIvar = self.implicitInstanceVar()
         outStr = ''
         if formatType == STRING:
@@ -358,7 +360,7 @@ class OperationOverInstances(Operation):
             outStr += self.formattedOperator(formatType) + '_{'
             if not implicitIvar:
                 outStr += str(self.instanceVar) 
-            if self.condition != None:
+            if self.condition != NONCONDITION:
                 if not implicitIvar: outStr += " | "
                 outStr += str(self.condition)
             outStr += '} ' + str(self.instanceExpression)
@@ -366,10 +368,10 @@ class OperationOverInstances(Operation):
         elif formatType == MATHML:
             if fenced: outStr += '<mfenced>'
             outStr += '<mrow><msub>' + self.formattedOperator(formatType)
-            if self.condition != None: outStr += '<mrow>'
+            if self.condition != NONCONDITION: outStr += '<mrow>'
             if not implicitIvar:
                 outStr += self.instanceVar.formatted(formatType)
-            if self.condition != None: 
+            if self.condition != NONCONDITION: 
                 if not implicitIvar:
                     outStr += '<mo>|</mo>'
                 outStr += self.condition.formatted(formatType) + '</mrow>'
@@ -401,7 +403,8 @@ class OperationOverInstances(Operation):
         return remade
         
     def express(self, subExpressFn):
-        if self.condition == None:
+        from booleans import NONCONDITION
+        if self.condition == NONCONDITION:
             instanceVarsStr = '[' + subExpressFn(self.instanceVar) + ']' 
         else:
             instanceVarsStr = '[' + subExpressFn(self.instanceVar) + '|' + subExpressFn(self.condition) + ']' 
@@ -439,9 +442,7 @@ class OperationOverInstances(Operation):
         innerRestrictions = dict(restrictions)
         innerRestrictions[instanceVar] = origInstanceVar
         # the condition with the substitution
-        subbedCondition = None
-        if self.condition != None:
-            subbedCondition = self.condition.substituted(innerSubMap, relabelMap, innerRestrictions)
+        subbedCondition = self.condition.substituted(innerSubMap, relabelMap, innerRestrictions)
         # the instanceExpression with the substitution:
         subbedInstanceExpr = self.instanceExpression.substituted(innerSubMap, relabelMap, innerRestrictions)
         return self.remakeAndCheck(operator, instanceVar, subbedInstanceExpr, subbedCondition)
@@ -457,9 +458,7 @@ class OperationOverInstances(Operation):
         varAssignments.append(self.instanceVar)
         genericInstanceVar = IndexVariable(len(varAssignments))
         varMap[self.instanceVar] = genericInstanceVar
-        genericCondition = None
-        if self.condition != None:
-            genericCondition = self.condition.makeGeneric(varAssignments, varMap)
+        genericCondition = self.condition.makeGeneric(varAssignments, varMap)
         genericInstanceExpr = self.instanceExpression.makeGeneric(varAssignments, varMap)
         return self.remakeAndCheck(genericOperator, genericInstanceVar, genericInstanceExpr, genericCondition)
 
@@ -688,7 +687,7 @@ class Statement:
         considered to be "arbitrary" variables used in logical reasoning.  Eventually
         they should be bound again via generalization (the counterpart to specialization).
         '''
-        from booleans import FORALL
+        from booleans import FORALL, NONCONDITION
         subMap = SubstitutionMap(subMap)
         substitutingVars = set(subMap.getSubstitutingVars())
         instanceVars = set()
@@ -696,7 +695,7 @@ class Statement:
         expr = originalExpr
         while isinstance(expr, OperationOverInstances) and expr.operator == FORALL:
             instanceVars.add(expr.instanceVar)
-            if expr.condition != None: conditions.add(expr.condition)
+            if expr.condition != NONCONDITION: conditions.add(expr.condition)
             expr = expr.instanceExpression
         # any remaining variables may be used only for relabeling
         relabelVars = substitutingVars.difference(instanceVars)
@@ -711,7 +710,7 @@ class Statement:
         return specializedExpr, mappedConditions
                        
     @staticmethod
-    def generalize(originalExpr, newForallVars, newConditions=None):
+    def generalize(originalExpr, newForallVars, newConditions=tuple()):
         '''
         State and return a generalization of a given original statement
         which derives from the original statement via a generalization inference
@@ -761,7 +760,6 @@ class Statement:
         original._specializations.add(self)
 
     def addGeneralizer(self, original, forallVars, conditions):
-        conditions = tuple() if conditions == None else conditions
         self._generalizers.add((original, tuple(forallVars), tuple([asStatement(condition) for condition in conditions])))
         original._generalizations.add(self)
         
@@ -1011,6 +1009,7 @@ class Context:
         self._onDemandNames = list() # in the order they were added
         self._axiomsDictFn = None
         self._registeredStmts = dict()
+        self._axioms = list() # in the order they were added
 
     def __repr__(self):
         return self.name
@@ -1029,13 +1028,28 @@ class Context:
             self.__dict__[name][index].statement._register(self, nameWithIndex)
             self._registeredStmts[nameWithIndex] = self.__dict__[name][index]
     
-    def axiomsOnDemand(self, axiomsDictFn):
+    def stateAxiom(self, expression):
         '''
-        The first time an axiom or theorem attribute is accessed, execute
-        the axiomsDictFn and set the resulting axioms as attributes.  These
-        will automatically be registered (see the register method).
+        Make a Statement in the same way as the state(..) function, but also set its
+        axiom flag.  An axiom may not have any free variables.
         '''
-        self._axiomsDictFn = axiomsDictFn
+        freeVars = expression.freeVars()
+        assert len(freeVars) == 0, 'Expressions with free variable may not be converted to a statement (bind with an OperationOverInstances): ' + str(freeVars)
+        axiomExpr = Statement.state(expression)
+        statement = axiomExpr.statement
+        statement.makeAxiom()
+        self._axioms.append(axiomExpr)
+        return expression
+    
+    def stateAxioms(self):
+        '''
+        This may be overloaded in order to state the axioms as they are needed.
+        In order to automatically register the axioms, use stateAxiom and 
+        assign them to attributes of the Context.  One can do this directly if
+        there is no need to delay it (the stateAxioms route is useful when there
+        are interdependencies.
+        '''
+        None    
     
     def deriveOnDemand(self, name, derivationFn):
         '''
@@ -1061,16 +1075,21 @@ class Context:
         '''
         if name.startswith('__'): 
             raise AttributeError # skip special Python attributes
-        if self._axiomsDictFn != None:
-            axiomsDict = self._axiomsDictFn()
-            for axiomName, axiom in axiomsDict.iteritems():
-                self.__dict__[axiomName] = self.stateAxiom(axiom)
-                self.register(axiomName)
+        if len(self._axioms) == 0:
+            self.stateAxioms()
             self._axiomsDictFn = None
         self._doDerivation(name)
         if not name in self.__dict__:
             raise AttributeError
         return self.__dict__[name]
+    
+    def __setattr__(self, name, value):
+        """
+        When assigning an attribute to an axiom, register it.
+        """
+        self.__dict__[name] = value
+        if isinstance(value, Expression) and value.statement != None and value.statement.isAxiom():
+            self.register(name)
     
     def deriveAll(self):
         for name in self._onDemandNames:
@@ -1087,20 +1106,17 @@ class Context:
             self.literals[name] = Literal(name, self, formatMap)
         return self.literals[name]
     
+    def getName(self):
+        return self.name
+    
     def getLiteral(self, name):
         return self.literals[name]
 
-    def stateAxiom(self, expression):
+    def allAxioms(self):
         '''
-        Make a Statement in the same way as the state(..) function, but also set its
-        axiom flag.  An axiom may not have any free variables.
+        Returns the list of axioms that have been stated in this Context.
         '''
-        freeVars = expression.freeVars()
-        assert len(freeVars) == 0, 'Expressions with free variable may not be converted to a statement (bind with an OperationOverInstances): ' + str(freeVars)
-        statement = Statement.state(expression).statement
-        statement.makeAxiom()
-        return expression
-
+        return self._axioms
 
 '''
 def registerTheorems(moduleName, variables):
