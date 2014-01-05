@@ -381,6 +381,76 @@ class DerivationModel(SvgWidgetModel):
         grandparent = parent_obj.parent
         row = grandparent.children.index(parent_obj)
         return self.createIndex(row, 0, parent_obj)
+
+class AxiomModel(SvgWidgetModel):
+    COLUMNS = ['Context/Name', 'Statement']
+    
+    def __init__(self):
+        SvgWidgetModel.__init__(self)
+        self._contexts = dict() # map context name to context
+        self._axioms = dict() # map context to axiom list
+
+    def addAxiom(self, axiom):
+        context = axiom.statement.getRegisteredContext()
+        self._contexts[context.getName()] = context
+        self._axioms.setdefault(context, list()).append(axiom)
+    
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return self.COLUMNS[section]
+        return None        
+
+    def columnCount(self, parent_idx):
+        return len(self.COLUMNS)
+            
+    def rowCount(self, parent_idx):
+        if not parent_idx.isValid():
+            return len(self._contexts)
+        indexPtr = parent_idx.internalPointer()
+        if isinstance(indexPtr, Context):
+            return len(self._axioms[indexPtr])
+        return 0
+        
+    def index(self, row, column, parent_idx = QtCore.QModelIndex()):
+        if not parent_idx.isValid():
+            return self.createIndex(row, column, self._contexts.values()[row])
+        context = parent_idx.internalPointer()
+        return self.createIndex(row, column, self._axioms[context][row])
+
+    def data(self, index, role = QtCore.Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        indexPtr = index.internalPointer()
+        columnName = self.COLUMNS[index.column()]
+        data = None
+        if isinstance(indexPtr, Context) and columnName != 'Statement':
+            data = indexPtr
+        elif isinstance(indexPtr, Expression):
+            if columnName == 'Statement':
+                data = indexPtr.statement
+            else:
+                data = indexPtr.statement.getRegisteredVar()
+        if role == QtCore.Qt.UserRole:
+            return data
+        elif role == QtCore.Qt.DisplayRole:
+            if self.holdsSvgWidget(index):
+                return None
+            if data == None:
+                return ''
+            if isinstance(data, Statement):
+                return renderedExpr(data.getExpression())
+            return str(data)
+        return None
+    
+    def parent(self, child_index):
+        if not child_index.isValid():
+            return QtCore.QModelIndex()
+        indexPtr = child_index.internalPointer()
+        if isinstance(indexPtr, Context):
+            return QtCore.QModelIndex()
+        elif isinstance(indexPtr, Expression):
+            context = indexPtr.statement.getRegisteredContext()
+            return self.createIndex(self._contexts.keys().index(context.getName()), 0, context)
     
 class ExpressionTreeNode:
     def __init__(self, expr, role, parent = None):
@@ -498,7 +568,7 @@ class DerivationTreeView(QtGui.QTreeView):
             QtGui.QTreeView.keyPressEvent(self, event)        
 
 class DerivationTreeViewer(QtGui.QWidget):
-    def __init__(self, provers, onlyEssentialSteps=True):
+    def __init__(self, provers, onlyEssentialSteps=True, showExpressionTree=True):
         QtGui.QWidget.__init__(self)
         x, y, w, h = 300, 300, 1400, 500
         self.setGeometry(x, y, w, h)
@@ -514,18 +584,21 @@ class DerivationTreeViewer(QtGui.QWidget):
         self.selectModel.currentRowChanged.connect(self.currentRowChanged)
         self.derivationTV.doubleClicked.connect(self.doubleClick)
 
-        exprModel = ExpressionTreeModel([])
-        self.exprTV = QtGui.QTreeView(self)
-        self.exprTV.setModel(exprModel)
-        exprModel.setView(self.exprTV)
-        self.exprTV.setColumnWidth(0, 600)
-        self.exprTV.setColumnWidth(1, 150)
-        self.exprTV.setColumnWidth(2, 150)
-        self.exprTV.setColumnWidth(3, 200)
-
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.derivationTV)
-        layout.addWidget(self.exprTV)
+
+        if showExpressionTree:
+            exprModel = ExpressionTreeModel([])
+            self.exprTV = QtGui.QTreeView(self)
+            self.exprTV.setModel(exprModel)
+            exprModel.setView(self.exprTV)
+            self.exprTV.setColumnWidth(0, 600)
+            self.exprTV.setColumnWidth(1, 150)
+            self.exprTV.setColumnWidth(2, 150)
+            self.exprTV.setColumnWidth(3, 200)
+            layout.addWidget(self.exprTV)
+        else:
+            self.exprTV = None
         
         self.setLayout(layout)
         self.selection_idx = None
@@ -536,9 +609,10 @@ class DerivationTreeViewer(QtGui.QWidget):
         stmts = [prover.stmtToProve for prover in selection.provers]
         stmtNodes = [ExpressionTreeNode(stmt.getExpression(), 'Statement') for stmt in stmts]
         assumptionNodes = [ExpressionTreeNode(assumption.getExpression(), 'Assumption') for assumption in selection.getAssumptions()]
-        exprModel = ExpressionTreeModel(stmtNodes+assumptionNodes)
-        self.exprTV.setModel(exprModel)
-        exprModel.setView(self.exprTV)
+        if self.exprTV != None:
+            exprModel = ExpressionTreeModel(stmtNodes+assumptionNodes)
+            self.exprTV.setModel(exprModel)
+            exprModel.setView(self.exprTV)
     
     def doubleClick(self):
         print "double-clicked"
@@ -550,8 +624,26 @@ class DerivationTreeViewer(QtGui.QWidget):
         #self.selection_model = self.tv.selectionModel()
         #self.selection_model.currentRowChanged.connect(self.current_row_changed)
 
+class AxiomTreeViewer(QtGui.QWidget):
+    def __init__(self, axioms):
+        QtGui.QWidget.__init__(self)
+        x, y, w, h = 300, 300, 1000, 500
+        self.setGeometry(x, y, w, h)
+
+        axiomModel = AxiomModel()
+        self.axiomTV = QtGui.QTreeView(self)
+        self.axiomTV.setModel(axiomModel)
+        axiomModel.setView(self.axiomTV)
+        for axiom in axioms:
+            axiomModel.addAxiom(axiom)
+        self.axiomTV.setColumnWidth(0, 300)
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.axiomTV)
+        self.setLayout(layout)
+    
+    
 qa = QtGui.QApplication(sys.argv)
-def showTreeView(stmtsOrProvers, onlyEssentialSteps=True):
+def showTreeView(stmtsOrProvers, onlyEssentialSteps=True, showExpressionTree=True):
     """
     Take in a list of statements, list of provers, single statement, or single prover
     as stmtsOrProvers.
@@ -563,16 +655,21 @@ def showTreeView(stmtsOrProvers, onlyEssentialSteps=True):
                 provers.append(stmtOrProver.getOrMakeProver())
             elif isinstance(stmtOrProver, Statement.Prover):
                 provers.append(stmtOrProver)
-        app = DerivationTreeViewer(provers, onlyEssentialSteps)
+        app = DerivationTreeViewer(provers, onlyEssentialSteps, showExpressionTree)
         app.show()
         qa.exec_()
     except TypeError:
         # handle single item passed in instead of list
         showTreeView([stmtsOrProvers], onlyEssentialSteps)
 
+def showAxioms(axioms):
+    app = AxiomTreeViewer(axioms)
+    app.show()
+    qa.exec_()
+
 if __name__ == "__main__":
     import booleans
     booleans.booleans.deriveAll()
     #boolTheorems = {var.statement for varName, var in vars(booleans.booleans).iteritems() if isinstance(var, Expression) and var.statement != None and var.statement.isTheorem()}
     #showTreeView(boolTheorems, True)
-    showTreeView(booleans.booleans.forallBoolEvalFalseViaFalse.statement, True)
+    showTreeView(booleans.booleans.hypotheticalDisjunction.statement, True)
