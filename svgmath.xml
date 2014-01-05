@@ -8,7 +8,7 @@
     <!-- Default values for MathML properties. -->
     <!-- Most of these are defined in the MathML Rec - change with care -->
     <defaults displaystyle="false"
-              mathsize="14pt"
+              mathsize="16pt"
               scriptminsize="8pt"
               scriptsizemultiplier="0.71"
               veryverythinmathspace="0.0555556em"
