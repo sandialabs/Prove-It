@@ -72,12 +72,6 @@ class Equals(BinaryOperation):
         else:
             return '<mo>=</mo>'
 
-    def remake(self, operator, operands):
-        if operator == EQUALS and len(operands) == 2:
-            return Equals(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
-    
     def concludeViaReflexivity(self):
         '''
         Prove and return self of the form x = x.
@@ -290,6 +284,8 @@ class Equals(BinaryOperation):
                 return Equals(self, val)
             
         return booleans.evaluate(self, doEval)
+
+Operation.registerOperation(EQUALS, lambda operators : Equals(*operators))
         
 class NotEquals(BinaryOperation):
     def __init__(self, a, b):
@@ -303,12 +299,6 @@ class NotEquals(BinaryOperation):
         elif formatType == MATHML:
             return '<mo>&#x2260;</mo>'
 
-    def remake(self, operator, operands):
-        if operator == NOTEQUALS and len(operands) == 2:
-            return NotEquals(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
-        
     def deriveReversed(self):
         '''
         From x != y derive y != x.
@@ -367,6 +357,8 @@ class NotEquals(BinaryOperation):
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
         '''
         return equality.notEqualsInBool.specialize({x:self.lhs, y:self.rhs}).check()
+
+Operation.registerOperation(NOTEQUALS, lambda operators : NotEquals(*operators))
     
 
 # Using substitution

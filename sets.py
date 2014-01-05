@@ -74,12 +74,6 @@ class In(BinaryOperation):
         else:
             return '<mo>&#x2208;</mo>'
 
-    def remake(self, operator, operands):
-        if operator == IN and len(operands) == 2:
-            return In(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
-    
     def deduceInBool(self):
         '''
         Deduce and return that this 'in' statement is in the set of BOOLEANS.
@@ -136,6 +130,8 @@ class In(BinaryOperation):
         '''
         return self.itsSet.foldAsForallInSet(forallStmt)
 
+Operation.registerOperation(IN, lambda operators : In(*operators))
+
 class Singleton(Operation):
     '''
     Defines a set with only one item.
@@ -150,12 +146,6 @@ class Singleton(Operation):
         else:
             return "<mfenced open='{' close='}'>" + self.elem.formatted(formatType) + '</mfenced>'
 
-    def remake(self, operator, operands):
-        if operator == SINGLETON and len(operands) == 1:
-            return Singleton(operands[0])
-        else:
-            return Operation.remake(self, operator, operands)
-    
     def unfoldElemInSet(self, element):
         '''
         From [element in {y}], derive and return (element = y).
@@ -168,6 +158,8 @@ class Singleton(Operation):
         '''   
         return sets.singletonDef.specialize({x:element, y:self.elem}).deriveLHSviaEquivalence()
 
+Operation.registerOperation(SINGLETON, lambda operators : Singleton(*operators))
+
 class Complement(Operation):        
     '''
     The complement of a set is everything outside that set.
@@ -179,11 +171,7 @@ class Complement(Operation):
     def __str__(self):
         return 'Complement(' + str(self.elem) + ')'
 
-    def remake(self, operator, operands):
-        if operator == COMPLEMENT and len(operands) == 1:
-            return Complement(operands[0])
-        else:
-            return Operation.remake(self, operator, operands)
+Operation.registerOperation(COMPLEMENT, lambda operators : Complement(*operators))
         
 class Union(AssociativeBinaryOperation):
     def __init__(self, operandsOrA, B=None):
@@ -207,12 +195,6 @@ class Union(AssociativeBinaryOperation):
         if self.operands[1] == Complement(self.operands[0]):
             return complementCompletion.specialize({S:self.operands[0]})
 
-    def remake(self, operator, operands):
-        if operator == UNION and len(operands) == 2:
-            return Union(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
-        
     def unfoldElemInSet(self, element):
         '''
         From [element in (A union B)], derive and return [(element in A) or (element in B)],
@@ -226,6 +208,8 @@ class Union(AssociativeBinaryOperation):
         where self represents (A union B).
         '''   
         return sets.unionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
+
+Operation.registerOperation(UNION, lambda operators : Union(*operators))
 
 class Intersection(AssociativeBinaryOperation):
     def __init__(self, operandsOrA, B=None):
@@ -241,12 +225,6 @@ class Intersection(AssociativeBinaryOperation):
         else:
             return '<mo>&#x2229;</mo>'
 
-    def remake(self, operator, operands):
-        if operator == INTERSECTION and len(operands) == 2:
-            return Intersection(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
-
     def unfoldElemInSet(self, element):
         '''
         From [element in (A intersection B)], derive and return [(element in A) and (element in B)],
@@ -261,6 +239,7 @@ class Intersection(AssociativeBinaryOperation):
         '''
         return sets.intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
 
+Operation.registerOperation(INTERSECTION, lambda operators : Intersection(*operators))
 
 class Subset(BinaryOperation):
     def __init__(self, subSet, superSet):
@@ -271,12 +250,6 @@ class Subset(BinaryOperation):
             return 'subset'
         else:
             return '<mo>&#x2286;</mo>'
-
-    def remake(self, operator, operands):
-        if operator == SUBSET and len(operands) == 2:
-            return Subset(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)    
 
     def unfold(self, elemInstanceVar=x):
         '''
@@ -292,6 +265,8 @@ class Subset(BinaryOperation):
         '''
         return sets.foldSubset.specialize({A:self.operands[0], B:self.operands[1], x:elemInstanceVar}).deriveConclusion()
 
+Operation.registerOperation(SUBSET, lambda operators : Subset(*operators))
+
 class Superset(BinaryOperation):
     def __init__(self, superSet, subSet):
         Operation.__init__(self, SUPERSET, [superSet, subSet])
@@ -302,12 +277,6 @@ class Superset(BinaryOperation):
         else:
             return '<mo>&#x2287;</mo>'
 
-    def remake(self, operator, operands):
-        if operator == SUPERSET and len(operands) == 2:
-            return Superset(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands) 
-    
     def unfold(self, elemInstanceVar=x):
         '''
         From A superset B, derive and return (forall_{x in B} x in A).
@@ -321,6 +290,8 @@ class Superset(BinaryOperation):
         (forall_{x in B} x in A).
         '''
         return sets.foldSuperset.specialize({A:self.operands[0], B:self.operands[1], x:elemInstanceVar}).deriveConclusion()
+
+Operation.registerOperation(SUPERSET, lambda operators : Superset(*operators))
  
 class SetOfAll(NestableOperationOverInstances):
     def __init__(self, instanceVars, instanceElement, suchThat=None):
@@ -364,12 +335,6 @@ class SetOfAll(NestableOperationOverInstances):
             outStr += '</mrow></mfenced>'
         return outStr
 
-    def remake(self, operator, instanceVar, instanceExpression, condition):
-        if operator == SET:
-            return SetOfAll([instanceVar], instanceExpression, [condition])
-        else:
-            return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
-
     def unfoldElemInSet(self, element):
         '''
         From (x in {Q(y) | P(y)}), derive and return P(x), where x is meant as the given element.
@@ -384,47 +349,7 @@ class SetOfAll(NestableOperationOverInstances):
         PofElement = self.instanceExpression.substitute({self.instanceVar:element})
         return sets.foldSetOfAll.specialize({P:Function(self.instanceExpression, [self.instanceVar]), x:element}).deriveConclusion().check({PofElement})
 
-
-"""        
-class UnionOfSets(NestableOperationOverInstances):
-    def __init__(self, instanceVars, instanceExpression, conditions=None):
-        '''
-        Nest Union OperationOverInstances' for each of the given instance variables with the given 
-        innermost instance expression.  The optionally provided conditions are applied as soon as the 
-        instance variables they contain are introduced.  For convenience, conditions of the form 
-        In(instanceVar, domain) may be provided implicitly via tuples in the instanceVars collection.  
-        For example, instanceVars=[(a, A), (b, B)] is the same as instanceVars=[a, b] with 
-        conditions=[In(a, A), In(b, B)].  You can also provide multiple instance variables per domain 
-        as in the following: instanceVars=[([a, b], S)] is the same as instanceVars=[a, b] with 
-        conditions=[In(a, S), In(b, S)].  These implicit conditions are prepended to any explicitly 
-        given conditions as this is processed.
-        '''
-        NestableOperationOverInstances.__init__(self, UNION, lambda iVars, iExpr, conds: UnionOfSets(iVars, iExpr, conds), instanceVars, instanceExpression, conditions)
-
-    def __str__(self):
-        return '[union_{' + str(self.instanceVar) + ' in ' + str(self.domain) + '} ' + str(self.instanceExpression) + ']'
-
-    def remake(self, operator, instanceVar, instanceExpression, condition):
-        if operator == UNION:
-            return UnionOfSets([instanceVar], instanceExpression, [condition])
-        else:
-            return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
-
-class SetOfAll(UnionOfSets):
-    def __init__(self, instanceVarsAndDomains=None, instanceElement=None, suchThat=None):
-        if suchThat == None:
-            UnionOfSets.__init__(self, instanceVarsAndDomains, Singleton(instanceElement))
-        else:
-            UnionOfSets.__init__(self, instanceVarsAndDomains, IfElse(suchThat, Singleton(instanceElement), NOTHING))
-
-    def remake(self, operator, instanceVar, domain, instanceExpression):
-        if operator == UNION and isinstance(instanceExpression, Singleton):
-            return SetOfAll([(instanceVar, domain)], instanceExpression.elem)
-        elif operator == UNION and isinstance(instanceExpression, IF_ELSE) and isinstance(instanceExpression.ifTrueVal, Singleton) and instanceExpression.ifFalseVal == NOTHING:
-            return SetOfAll([(instanceVar, domain)], instanceExpression.ifTrueVal.elem, suchThat=instanceExpression.condition)
-        else:
-            return OperationOverInstances(operator, instanceVar, domain, instanceExpression)
-"""        
+Operation.registerOperation(SET, lambda operators : SetOfAll(*operators))
 
 
 # DERIVATIONS

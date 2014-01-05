@@ -36,13 +36,13 @@ class BooleanContext(Context):
             _b = _y.evaluate().rhs
             _c = baseEvalFn(_x, _b).rhs
             dummyVar = _x.safeDummyVar() # var that isn't in _x
-            _f = Function(operation.remake(operator, [_x, dummyVar]), [dummyVar])
+            _f = Function(Operation.make(operator, [_x, dummyVar]), [dummyVar])
             evaluation = equality.unaryEvaluation.specialize({f:_f, x:_y, a:_b, c:_c}).deriveConclusion().deriveConclusion()
         elif (_y == TRUE or _y == FALSE):
             _a = _x.evaluate().rhs
             _c = baseEvalFn(_a, _y).rhs
             dummyVar = _y.safeDummyVar() # var that isn't in _y
-            _f = Function(operation.remake(operator, [dummyVar, _y]), [dummyVar])
+            _f = Function(Operation.make(operator, [dummyVar, _y]), [dummyVar])
             evaluation = equality.unaryEvaluation.specialize({f:_f, x:_x, a:_a, c:_c}).deriveConclusion().deriveConclusion()
         else:
             xEval = _x.evaluate()
@@ -50,7 +50,7 @@ class BooleanContext(Context):
             compose(xEval, yEval)
             _a, _b = xEval.rhs, yEval.rhs 
             _c = baseEvalFn(_a, _b).rhs
-            _f = Function(operation.remake(operator, [a, b]), [a, b])
+            _f = Function(Operation.make(operator, [a, b]), [a, b])
             # f(_x, _y) = _c
             evaluation = equality.binaryEvaluation.specialize({f:_f, x:_x, y:_y, a:_a, b:_b, c:_c}).deriveConclusion().deriveConclusion()
         return evaluation    
@@ -295,12 +295,6 @@ class Forall(NestableOperationOverInstances):
         from sets import In
         return isinstance(self.condition, In) and self.condition.element == self.instanceVar
 
-    def remake(self, operator, instanceVar, instanceExpression, condition):
-        if operator == FORALL:
-            return Forall([instanceVar], instanceExpression, [condition])
-        else:
-            return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
-
     def specialize(self, subMap=None, conditionAsHypothesis=False):
         '''
         From this Forall expression, and the condition if there is one,
@@ -323,7 +317,7 @@ class Forall(NestableOperationOverInstances):
         fSub = Function(self.instanceExpression.lhs, [self.instanceVar])
         gSub = Function(self.instanceExpression.rhs, [self.instanceVar])
         Qsub = Function(self.condition, [self.instanceVar])
-        operationOverInstances = OperationOverInstances(operatorOverInstance, self.instanceVar, self.instanceExpression, self.condition)
+        operationOverInstances = OperationOverInstances.make(operatorOverInstance, self.instanceVar, self.instanceExpression, self.condition)
         # [Upsilon_{x | Q(x)} f(x)] = [Upsilon_{x | Q(x)} g(x)]
         return equality.instanceSubstitution.specialize({f:fSub, g:gSub, Q:Qsub, Upsilon:operatorOverInstance}).deriveConclusion().check({self, operationOverInstances})
 
@@ -362,6 +356,8 @@ class Forall(NestableOperationOverInstances):
         # inBool(forall_{x | Q(x)} P(x))
         return inBool(self).check({prerequisite})    
 
+OperationOverInstances.registerOperation(FORALL, lambda instanceVar, instanceExpression, condition : Forall([instanceVar], instanceExpression, [condition]))
+
 class Exists(NestableOperationOverInstances):
     def __init__(self, instanceVars, instanceExpression, conditions=tuple()):
         '''
@@ -385,12 +381,6 @@ class Exists(NestableOperationOverInstances):
         '''
         from sets import In
         return isinstance(self.condition, In) and self.condition.element == self.instanceVar
-
-    def remake(self, operator, instanceVar, instanceExpression, condition):
-        if operator == EXISTS:
-            return Exists([instanceVar], instanceExpression, [condition])
-        else:
-            return OperationOverInstances(operator, instanceVar, instanceExpression, condition)  
         
     def concludeViaExample(self, exampleInstance):
         '''
@@ -455,6 +445,7 @@ class Exists(NestableOperationOverInstances):
         # inBool(exists_{x | Q(x)} P(x))
         return inBool(self).check({prerequisite})
     
+OperationOverInstances.registerOperation(EXISTS, lambda instanceVar, instanceExpression, condition : Exists([instanceVar], instanceExpression, [condition]))
 
 class Implies(BinaryOperation):
     def __init__(self, hypothesis, conclusion):
@@ -467,12 +458,6 @@ class Implies(BinaryOperation):
             return '=>'
         elif formatType == MATHML:
             return '<mo>&#x21D2;</mo>'
-
-    def remake(self, operator, operands):
-        if operator == IMPLIES and len(operands) == 2:
-            return Implies(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
 
     def deriveConclusion(self):
         '''
@@ -572,6 +557,8 @@ class Implies(BinaryOperation):
         conclusionInBool = booleans.deduceInBool(self.conclusion)
         return booleans.implicationClosure.specialize({A:self.hypothesis, B:self.conclusion}).check({hypothesisInBool, conclusionInBool})
 
+Operation.registerOperation(IMPLIES, lambda operators : Implies(*operators))
+
 class Not(Operation):
     def __init__(self, A):
         Operation.__init__(self, NOT, [A])
@@ -592,12 +579,6 @@ class Not(Operation):
             return outStr
         else:
             return Operation.formatted(self, formatType, fenced)        
-
-    def remake(self, operator, operands):
-        if operator == NOT and len(operands) == 1:
-            return Not(operands[0])
-        else:
-            return Operation.remake(self, operator, operands)    
         
     def evaluate(self):
         '''
@@ -664,9 +645,11 @@ class Not(Operation):
         '''
         From Not(A=B), derive and return A != B.
         '''
-        from equality import equality, Equals, x, y
+        from equality import equality, Equals
         if isinstance(self.operand, Equals):
             return equality.foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}).deriveConclusion().check({self})
+
+Operation.registerOperation(NOT, lambda operators : Not(*operators))
         
 class And(AssociativeBinaryOperation):
     def __init__(self, operandsOrA, B=None):
@@ -682,12 +665,6 @@ class And(AssociativeBinaryOperation):
         elif formatType == MATHML:
             return '<mo>&#x2227;</mo>'
 
-    def remake(self, operator, operands):
-        if operator == AND:
-            return And(operands)
-        else:
-            return Operation.remake(self, operator, operands)
-        
     def deriveLeft(self):
         '''
         From (A and B), derive and return A.
@@ -733,6 +710,8 @@ class And(AssociativeBinaryOperation):
         rightInBool = booleans.deduceInBool(self.rightOperand)
         return booleans.conjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion}).check({leftInBool, rightInBool})
 
+Operation.registerOperation(AND, lambda operators : And(*operators))
+
 class Or(AssociativeBinaryOperation):
     def __init__(self, operandsOrA, B=None):
         '''
@@ -746,12 +725,6 @@ class Or(AssociativeBinaryOperation):
             return 'or'
         elif formatType == MATHML:
             return '<mo>&#x2228;</mo>'
-
-    def remake(self, operator, operands):
-        if operator == OR:
-            return Or(operands)
-        else:
-            return Operation.remake(self, operator, operands)
 
     def deriveRightIfNotLeft(self):
         '''
@@ -785,6 +758,8 @@ class Or(AssociativeBinaryOperation):
         rightInBool = booleans.deduceInBool(self.rightOperand)
         return booleans.disjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion}).check({leftInBool, rightInBool})
 
+Operation.registerOperation(OR, lambda operators : Or(*operators))
+
 # if and only if: A => B and B => A
 class Iff(BinaryOperation):
     def __init__(self, A, B):
@@ -797,12 +772,6 @@ class Iff(BinaryOperation):
             return '<=>'
         elif formatType == MATHML:
             return '<mo>&#x21D4;</mo>'
-
-    def remake(self, operator, operands):
-        if operator == IFF and len(operands) == 2:
-            return Iff(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
 
     def deriveLeftImplication(self):
         '''
@@ -868,6 +837,8 @@ class Iff(BinaryOperation):
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
         return booleans.iffOverBoolImplEq.specialize({A:self.A, B:self.B}).deriveConclusion().check({self, inBool(self.A), inBool(self.B)})
+
+Operation.registerOperation(IFF, lambda operators : Iff(*operators))
 
 def deriveStmtEqTrue(statement):
     '''

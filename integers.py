@@ -58,37 +58,19 @@ class Add(AssociativeBinaryOperation):
         elif formatType == MATHML:
             return '<mo>+</mo>'
 
-    def remake(self, operator, operands):
-        if operator == ADD and len(operands) == 2:
-            return Add(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
+Operation.registerOperation(ADD, lambda operators : Add(*operators))
 
 class Negate(Operation):
     def __init__(self, n):
         Operation.__init__(self, NEGATE, [n])
 
-    def remake(self, operator, operands):
-        if operator == NEGATE and len(operands) == 1:
-            return Negate(operands[0])
-        else:
-            return Operation.remake(self, operator, operands)
+Operation.registerOperation(NEGATE, lambda operators : Negate(*operators))
 
-class Subtract(Add):
+class Subtract(BinaryOperation):
     def __init__(self, m, n):
-        if isinstance(n, Negate):
-            Add.__init__(self, m, n.operands[0])
-        else:
-            Add.__init__(self, m, Negate(n))
+        Operation.__init__(self, SUBTRACT, [m, n])
 
-    def remake(self, operator, operands):
-        if operator == Add and len(operands) == 2:
-            if isinstance(operands[1], Negate):
-                return Subtract(operands[0], operands[1].operands[0])
-            else:
-                return Add(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
+Operation.registerOperation(SUBTRACT, lambda operators : Subtract(*operators))
 
 class Mult(AssociativeBinaryOperation):
     def __init__(self, m, n):
@@ -99,12 +81,8 @@ class Mult(AssociativeBinaryOperation):
             return '*'
         elif formatType == MATHML:
             return '<mo>&#x00D7;</mo>'
-        
-    def remake(self, operator, operands):
-        if operator == MULT and len(operands) == 2:
-            return Mult(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
+
+Operation.registerOperation(MULT, lambda operators : Mult(*operators))
 
 class LessEq(BinaryOperation):
     def __init__(self, n, m):
@@ -115,12 +93,8 @@ class LessEq(BinaryOperation):
             return '<='
         elif formatType == MATHML:
             return '<mo>&#x2264;</mo>'
-    
-    def remake(self, operator, operands):
-        if operator == LESSER_EQ and len(operands) == 2:
-            return LessEq(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
+
+Operation.registerOperation(LESSER_EQ, lambda operators : LessEq(*operators))
 
 class GtrEq(BinaryOperation):
     def __init__(self, n, m):
@@ -131,12 +105,8 @@ class GtrEq(BinaryOperation):
             return '>='
         elif formatType == MATHML:
             return '<mo>&#x2265;</mo>'
-    
-    def remake(self, operator, operands):
-        if operator == GREATER_EQ and len(operands) == 2:
-            return GtrEq(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
+
+Operation.registerOperation(GREATER_EQ, lambda operators : GtrEq(*operators))
 
 class Divides(BinaryOperation):
     def __init__(self, n, p):
@@ -148,60 +118,31 @@ class Divides(BinaryOperation):
         elif formatType == MATHML:
             return '<mo>|</mo>'
 
-    def remake(self, operator, operands):
-        if operator == DIVIDES and len(operands) == 2:
-            return Divides(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
+Operation.registerOperation(DIVIDES, lambda operators : Divides(*operators))
 
 class Gcd(BinaryOperation):
     def __init__(self, n, m):
         BinaryOperation.__init__(self, GCD, n, m)
     
-    def formattedOperator(self, formatType):
-        if formatType == STRING:
-            return 'gcd'
-        elif formatType == MATHML:
-            return '<mi>gcd</mi>'    
-    
     def formatted(self, formatType, fenced=False):
         return Operation.formatted(self, formatType, fenced)
         
-    def remake(self, operator, operands):
-        if operator == GCD and len(operands) == 2:
-            return Gcd(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
+Operation.registerOperation(GCD, lambda operators : Gcd(*operators))
 
 class Lcm(BinaryOperation):
     def __init__(self, n, m):
         BinaryOperation.__init__(self, LCM, n, m)
     
-    def formattedOperator(self, formatType):
-        if formatType == STRING:
-            return 'lcm'
-        elif formatType == MATHML:
-            return '<mi>lcm</mi>'    
-    
     def formatted(self, formatType, fenced=False):
         return Operation.formatted(self, formatType, fenced)
         
-    def remake(self, operator, operands):
-        if operator == LCM and len(operands) == 2:
-            return Lcm(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
+Operation.registerOperation(LCM, lambda operators : Lcm(*operators))
         
 class Range(Operation):
     def __init__(self, m, n):
         Operation.__init__(self, RANGE, [m, n])
 
-    def remake(self, operator, operands):
-        if operator == RANGE and len(operands) == 2:
-            return Range(operands[0], operands[1])
-        else:
-            return Operation.remake(self, operator, operands)
-
+Operation.registerOperation(RANGE, lambda operators : Range(*operators))
 
 """
 Generates the integer axioms.  Because of the interdependence of booleans, 
@@ -387,21 +328,11 @@ class FirstOperand(Operation):
     def __init__(self, operand):
         Operation.__init__(self, FIRSTOPERAND, [operand])
 
-    def remake(self, operator, operands):
-        if operator == FIRSTOPERAND and len(operands) == 1:
-            return FirstOperand(operands[0])
-        else:
-            return Operation.remake(self, operator, operands)
 
 class SecondOperand(Operation):
     def __init__(self, operand):
         Operation.__init__(self, SECONDOPERAND, [operand])
 
-    def remake(self, operator, operands):
-        if operator == SECONDOPERAND and len(operands) == 1:
-            return SecondOperand(operands[0])
-        else:
-            return Operation.remake(self, operator, operands)
 
 
 # forall_{Op, A} FirstOperand(Op(A)) = A

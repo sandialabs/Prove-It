@@ -243,6 +243,26 @@ def safeDummyVar(expressions):
 
 
 class Operation(Expression):
+    # Register makers for specific Operator Literals to create an Object of the derived
+    # class rather than the generic Operation base class when created.
+    _registeredMakers = dict()
+    
+    @staticmethod
+    def registerOperation(operator, maker):
+        assert isinstance(operator, Literal)
+        Operation._registeredMakers[operator] = maker
+
+    @staticmethod
+    def make(operator, operands):
+        if operator in Operation._registeredMakers:
+            # if it is registered, use the registered "maker"
+            operation = Operation._registeredMakers[operator](operands)
+            assert isinstance(operation, Operation), 'Registered Operation maker must make an Operation type'
+            assert operation.operator == operator, 'Registered Operation maker function must make an Operation true to its given operator'
+            assert operation.operands == operands, 'Registered Operation maker function must make an Operation true to its given operands'
+            return operation
+        return Operation(operator, operands)
+    
     def __init__(self, operator, operands):
         '''
         Create an operation with the given operator and list of operands.
@@ -272,20 +292,6 @@ class Operation(Expression):
             outStr += '</mfenced></mrow>'
             return outStr
         
-    def remake(self, operator, operands):
-        '''
-        Remake the Operation with new operator and operands, overridden to
-        keep the original type where possible.
-        '''
-        return Operation(operator, operands)
-
-    def remakeAndCheck(self, operator, operands):
-        remade = self.remake(operator, operands)
-        assert isinstance(remade, Operation), 'remake function must make an Operation type'
-        assert remade.operator == operator, 'remake function must make an Operation true to its given operator'
-        assert remade.operands == operands, 'remake function must make an Operation true to its given operands'
-        return remade
-            
     def express(self, subExpressFn):
         return subExpressFn(self.operator) + ''.join(['{' + subExpressFn(operand) + '}' 
                                                       for operand in self.operands])
@@ -321,7 +327,7 @@ class Operation(Expression):
         else:
             # The operator may be relabeled
             operator = self.operator.relabeled(relabelMap, restrictions)
-        return self.remakeAndCheck(operator, subbedOperands)
+        return Operation.make(operator, subbedOperands)
             
     def makeGeneric(self, varAssignments, varMap = None):
         '''
@@ -332,7 +338,7 @@ class Operation(Expression):
             varMap = dict()
         genericOperator = self.operator.makeGeneric(varAssignments, varMap)
         genericOperands = [operand.makeGeneric(varAssignments, varMap) for operand in self.operands]
-        return self.remakeAndCheck(genericOperator, genericOperands)
+        return Operation.make(genericOperator, genericOperands)
         
     def usedVars(self):
         return self.operator.usedVars().union(*[operand.usedVars() for operand in self.operands])
@@ -341,6 +347,28 @@ class Operation(Expression):
         return self.operator.freeVars().union(*[operand.freeVars() for operand in self.operands])
 
 class OperationOverInstances(Operation):
+    # Register makers for specific operator Literals to create an Object of the derived
+    # class rather than the generic OperationOverInstances base class when created.
+    _registeredMakers = dict()
+    
+    @staticmethod
+    def registerOperation(operator, maker):
+        assert isinstance(operator, Literal)
+        OperationOverInstances._registeredMakers[operator] = maker
+
+    @staticmethod
+    def make(operator, instanceVar, instanceExpression, condition):
+        if operator in OperationOverInstances._registeredMakers:
+            # if it is registered, use the registered "maker"
+            operation = OperationOverInstances._registeredMakers[operator](instanceVar, instanceExpression, condition)
+            assert isinstance(operation, OperationOverInstances), 'Registered OperationOverInstance maker must make an OperationOverInstance type'
+            assert operation.operator == operator, 'Registered OperationOverInstance maker must make an OperationOverInstance true to its given operator'
+            assert operation.instanceVar == instanceVar, 'Registered OperationOverInstance maker must make an OperationOverInstance true to its given instanceVar'
+            assert operation.instanceExpression == instanceExpression, 'Registered OperationOverInstance maker must make an OperationOverInstance true to its given instanceExpression'
+            assert operation.condition == condition, 'Registered OperationOverInstance maker make an OperationOverInstance true to its given condition'
+            return operation
+        return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
+    
     def __init__(self, operator, instanceVar, instanceExpression, condition):
         Operation.__init__(self, operator, [instanceExpression])
         assert isinstance(instanceVar, Variable)
@@ -385,23 +413,7 @@ class OperationOverInstances(Operation):
         and doesn't need to be explicitly shown when formatted.
         '''
         return False
-    
-    def remake(self, operator, instanceVar, instanceExpression, condition):
-        '''
-        Remake the OperationOverInstances with new operator, instanceVar, instanceExpression, and condition
-        overridden to keep the original type where possible.
-        '''
-        return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
-
-    def remakeAndCheck(self, operator, instanceVar, instanceExpr, condition):
-        remade = self.remake(operator, instanceVar, instanceExpr, condition)
-        assert isinstance(remade, OperationOverInstances), 'remake function must make an OperationOverInstance type'
-        assert remade.operator == operator, 'remake function must make an OperationOverInstance true to its given operator'
-        assert remade.instanceVar == instanceVar, 'remake function must make an OperationOverInstance true to its given instanceVar'
-        assert remade.instanceExpression == instanceExpr, 'remake function must make an OperationOverInstance true to its given instanceExpression'
-        assert remade.condition == condition, 'remake function must make an OperationOverInstance true to its given condition'
-        return remade
-        
+            
     def express(self, subExpressFn):
         from booleans import NONCONDITION
         if self.condition == NONCONDITION:
@@ -445,7 +457,7 @@ class OperationOverInstances(Operation):
         subbedCondition = self.condition.substituted(innerSubMap, relabelMap, innerRestrictions)
         # the instanceExpression with the substitution:
         subbedInstanceExpr = self.instanceExpression.substituted(innerSubMap, relabelMap, innerRestrictions)
-        return self.remakeAndCheck(operator, instanceVar, subbedInstanceExpr, subbedCondition)
+        return OperationOverInstances.make(operator, instanceVar, subbedInstanceExpr, subbedCondition)
     
     def makeGeneric(self, varAssignments, varMap = None):
         '''
@@ -460,7 +472,7 @@ class OperationOverInstances(Operation):
         varMap[self.instanceVar] = genericInstanceVar
         genericCondition = self.condition.makeGeneric(varAssignments, varMap)
         genericInstanceExpr = self.instanceExpression.makeGeneric(varAssignments, varMap)
-        return self.remakeAndCheck(genericOperator, genericInstanceVar, genericInstanceExpr, genericCondition)
+        return OperationOverInstances.make(genericOperator, genericInstanceVar, genericInstanceExpr, genericCondition)
 
     def freeVars(self):
         fvars = Operation.freeVars(self)
