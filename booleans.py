@@ -4,16 +4,30 @@ from genericOperations import *
 A = Variable('A')
 B = Variable('B')
 C = Variable('C')
+multiA = MultiVariable('A') # A*
+multiB = MultiVariable('B') # B*
+multiC = MultiVariable('C') # C*
 P = Variable('P')
 Q = Variable('Q')
+R = Variable('R')
+multiQ = MultiVariable('Q')
+multiR = MultiVariable('R')
 x = Variable('x')
 y = Variable('y')
-Px = Operation(P, [x])
-Qx = Operation(Q, [x])
-Qy = Operation(Q, [y])
-Py = Operation(P, [y])
-PofA = Operation(P, [A])
+xStar = MultiVariable('x')
+yStar = MultiVariable('y')
+Px = Operation(P, x)
+Qx = Operation(Q, x)
+Qy = Operation(Q, y)
+Py = Operation(P, y)
+PofA = Operation(P, A)
+P_of_xStar = Operation(P, xStar)
+P_of_yStar = Operation(P, yStar)
+P_of_xStar_yStar = Operation(P, (xStar, yStar))
 X = Variable('X')
+multiQ_of_xStar = Operation(multiQ, xStar)
+multiQ_of_yStar = Operation(multiQ, yStar)
+multiR_of_yStar = Operation(multiR, yStar)
     
 class BooleanContext(Context):
     def __init__(self):
@@ -27,8 +41,8 @@ class BooleanContext(Context):
     
     def evaluateBooleanBinaryOperation(self, operation, baseEvalFn):
         from equality import equality, f, a, b, c, x, y
-        _x = operation.operands[0]
-        _y = operation.operands[1]
+        _x = operation.operand[0]
+        _y = operation.operand[1]
         operator = operation.operator
         if (_x == TRUE or _x == FALSE) and (_y == TRUE or _y == FALSE):
             evaluation = baseEvalFn(_x, _y)
@@ -36,23 +50,26 @@ class BooleanContext(Context):
             _b = _y.evaluate().rhs
             _c = baseEvalFn(_x, _b).rhs
             dummyVar = _x.safeDummyVar() # var that isn't in _x
-            _f = Function(Operation.make(operator, [_x, dummyVar]), [dummyVar])
-            evaluation = equality.unaryEvaluation.specialize({f:_f, x:_y, a:_b, c:_c}).deriveConclusion().deriveConclusion()
+            fOp = Operation(f, dummyVar)
+            fOpSub =  Operation.make(operator, ExpressionList(_x, dummyVar))
+            evaluation = equality.unaryEvaluation.specialize({fOp:fOpSub, x:_y, a:_b, c:_c}).deriveConclusion().deriveConclusion()
         elif (_y == TRUE or _y == FALSE):
             _a = _x.evaluate().rhs
             _c = baseEvalFn(_a, _y).rhs
             dummyVar = _y.safeDummyVar() # var that isn't in _y
-            _f = Function(Operation.make(operator, [dummyVar, _y]), [dummyVar])
-            evaluation = equality.unaryEvaluation.specialize({f:_f, x:_x, a:_a, c:_c}).deriveConclusion().deriveConclusion()
+            fOp = Operation(f, dummyVar)
+            fOpSub = Operation.make(operator, ExpressionList(dummyVar, _y))
+            evaluation = equality.unaryEvaluation.specialize({fOp:fOpSub, x:_x, a:_a, c:_c}).deriveConclusion().deriveConclusion()
         else:
             xEval = _x.evaluate()
             yEval = _y.evaluate()
             compose(xEval, yEval)
             _a, _b = xEval.rhs, yEval.rhs 
             _c = baseEvalFn(_a, _b).rhs
-            _f = Function(Operation.make(operator, [a, b]), [a, b])
+            fOp = Operation(f, (a, b))
+            fOpSub = Operation.make(operator, ExpressionList(a, b))
             # f(_x, _y) = _c
-            evaluation = equality.binaryEvaluation.specialize({f:_f, x:_x, y:_y, a:_a, b:_b, c:_c}).deriveConclusion().deriveConclusion()
+            evaluation = equality.binaryEvaluation.specialize({fOp:fOpSub, x:_x, y:_y, a:_a, b:_b, c:_c}).deriveConclusion().deriveConclusion()
         return evaluation    
     
     def evaluate(self, expr, evalFn):
@@ -96,15 +113,17 @@ class BooleanContext(Context):
         # TRUE is a true statement
         self.trueAxiom = self.stateAxiom(TRUE)
         
-        # forall_{P, Q} [exists_{x | Q(x)} P(x) <=> Not(forall_{x | Q(x)} P(x) != TRUE)]
-        self.existsDef = self.stateAxiom(Forall([P], Iff(Exists([x], Px, [Qx]), Not(Forall([x], NotEquals(Px, TRUE), [Qx])))))
-        
-        # forall_{P, Q} [forall_{x | Q(x)} inBool(P(x)) => inBool(forall_{x | Q(x)} P(x))]
-        self.forallBooleanClosure = self.stateAxiom(Forall([P, Q], Implies(Forall([x], inBool(Px), [Qx]), inBool(Forall([x], Px, [Qx])))))
+        # Forall statements are in the BOOLEAN set.  If it isn't TRUE, then it is FALSE.
+        # forall_{P, Q*} [forall_{x* | Q*(x*)} P(x*)] in BOOLEANS
+        self.forallInBool = self.stateAxiom(Forall((P, multiQ), inBool(Forall(xStar, P_of_xStar, multiQ_of_xStar))))
 
-        # forall_{P, Q} [forall_{x | Q(x)} inBool(P(x)) => inBool(exists_{x | Q(x)} P(x))]
-        self.existsBooleanClosure = self.stateAxiom(Forall([P, Q], Implies(Forall([x], inBool(Px), [Qx]), inBool(Exists([x], Px, [Qx])))))
-            
+        # If it's ever true, it can't always be not true.  (example exists = not never)
+        # forall_{P, Q*} [exists_{x* | Q*(x*)} P(x*) = not[forall_{x* | Q*(x*)} (P(x*) != TRUE)]]
+        self.existsDef = self.stateAxiom(Forall((P, multiQ), Equals(Exists(xStar, P_of_xStar, multiQ_of_xStar), Not(Forall(xStar, NotEquals(P_of_xStar, TRUE), multiQ_of_xStar)))))
+        
+        # forall_{P, Q*} notexists_{x* | Q*(x*)} P(x*) = not[exists_{x* | Q*(x*)} P(x*)]
+        self.notExistsDef = self.stateAxiom(Forall((P, multiQ), Equals(NotExists(xStar, P_of_xStar, multiQ_of_xStar), Not(Exists(xStar, P_of_xStar, multiQ_of_xStar)))))
+        
         # Truth table for NOT
         self.notF = self.stateAxiom(Equals(Not(FALSE), TRUE))
         self.notT = self.stateAxiom(Equals(Not(TRUE), FALSE))
@@ -112,43 +131,50 @@ class BooleanContext(Context):
         # Further defining property of NOT needed in addition to the truth table
         # because the truth table is ambiguous regarding inputs neither TRUE nor FALSE.
         
-        # forall_{A} not(A) => [A=FALSE]
-        self.notImpliesEqFalse = self.stateAxiom(Forall([A], Implies(Not(A), Equals(A, FALSE))))
+        # forall_{A} [Not(A) = TRUE] => [A=FALSE]
+        self.implicitNotF = self.stateAxiom(Forall(A, Implies(Equals(Not(A), TRUE), Equals(A, FALSE))))
+        # forall_{A} [Not(A) = FALSE] => [A=TRUE]
+        self.implicitNotT = self.stateAxiom(Forall(A, Implies(Equals(Not(A), FALSE), Equals(A, TRUE))))
+
         
         # Truth table for AND
         self.andTT = self.stateAxiom(Equals(And(TRUE, TRUE), TRUE))
         self.andTF = self.stateAxiom(Equals(And(TRUE, FALSE), FALSE))
         self.andFT = self.stateAxiom(Equals(And(FALSE, TRUE), FALSE))
         self.andFF = self.stateAxiom(Equals(And(FALSE, FALSE), FALSE))
+                
+        # Composition of multi-And, bypassing associativity for notational convenience:
+        # forall_{A, B, C*} A and B and C* = A and (B and C*)
+        self.andComposition = self.stateAxiom(Forall((A, B, multiC), Equals(And(A, B, multiC), And(A, And(B, multiC)))))
         
-        # Further defining properties of AND needed in addition to the truth table
-        # because the truth table is ambiguous if we don't know that inputs are TRUE or FALSE.
-        
-        # forall_{A, B} A and B => A
-        self.andImpliesLeft = self.stateAxiom(Forall([A, B], Implies(And(A, B), A)))
-        # forall_{A, B} A and B => B
-        self.andImpliesRight = self.stateAxiom(Forall([A, B], Implies(And(A, B), B)))
-        
-        
+        # A further defining property of AND is needed in addition to the truth table
+        # because the truth table is ambiguous if we don't know that inputs are TRUE or FALSE:        
+        # forall_{A*, B, C*} A* and B and C* => B
+        self.andImpliesEach = self.stateAxiom(Forall((multiA, B, multiC), Implies(And(multiA, B, multiC), B)))                
+                
         # Truth table for OR
         self.orTT = self.stateAxiom(Equals(Or(TRUE, TRUE), TRUE))
         self.orTF = self.stateAxiom(Equals(Or(TRUE, FALSE), TRUE))
         self.orFT = self.stateAxiom(Equals(Or(FALSE, TRUE), TRUE))
         self.orFF = self.stateAxiom(Equals(Or(FALSE, FALSE), FALSE))
         
+        # Composition of multi-Or, bypassing associativity for notational convenience:
+        # forall_{A, B, C*} A or B or C* = A or (B or C*)
+        self.orComposition = self.stateAxiom(Forall((A, B, multiC), Equals(Or(A, B, multiC), Or(A, Or(B, multiC)))))
+        
         # forall_{A, B} (A <=> B) = [(A => B) and (B => A)]
-        self.iffDef = self.stateAxiom(Forall([A, B], Equals(Iff(A, B), And(Implies(A, B), Implies(B, A)))))
+        self.iffDef = self.stateAxiom(Forall((A, B), Equals(Iff(A, B), And(Implies(A, B), Implies(B, A)))))
         
         # forall_{A} A => (A = TRUE)
-        self.eqTrueIntro = self.stateAxiom(Forall([A], Implies(A, Equals(A, TRUE))))
+        self.eqTrueIntro = self.stateAxiom(Forall(A, Implies(A, Equals(A, TRUE))))
         # forall_{A} (A = TRUE) => A
-        self.eqTrueElim = self.stateAxiom(Forall([A], Implies(Equals(A, TRUE), A)))
+        self.eqTrueElim = self.stateAxiom(Forall(A, Implies(Equals(A, TRUE), A)))
         
-        # forall_{A | Not(A=T)} Not(TRUE => A)
-        self.falseImplication = self.stateAxiom(Forall([A], Not(Implies(TRUE, A)), [NotEquals(A, TRUE)]))
+        # (TRUE => FALSE) = FALSE
+        self.impliesTF = self.stateAxiom(Equals(Implies(TRUE, FALSE), FALSE))
         
         # forall_{A | inBool(A)} [Not(A) => FALSE] => A
-        self.hypotheticalContraNegation = self.stateAxiom(Forall([A], Implies(Implies(Not(A), FALSE), A), [inBool(A)]))
+        self.contradictoryValidation = self.stateAxiom(Forall(A, Implies(Implies(Not(A), FALSE), A), inBool(A)))
         # Note that implies has a deriveContradiction method that applies this axiom.
     
 booleans = BooleanContext()
@@ -184,7 +210,7 @@ OR = booleans.addLiteral('OR')
 BOOLEANS = booleans.addLiteral('BOOLEANS', {MATHML:'<mstyle mathvariant="bold-double-struck"><mtext>&#x1D539;</mtext><mspace/></mstyle>'})
 FORALL = booleans.addLiteral('FORALL')
 EXISTS = booleans.addLiteral('EXISTS')
-NONCONDITION = booleans.addLiteral('NONCONDITION') # for unconditional quantifiers
+NOTEXISTS = booleans.addLiteral('NOTEXISTS')
 PofTrue = Operation(P, [TRUE])
 PofFalse = Operation(P, [FALSE])
 
@@ -221,26 +247,41 @@ class BooleanSet(Literal):
         from equality import Equals
         from sets import In
         assert(isinstance(forallStmt, Forall))
-        assert(isinstance(forallStmt.condition, In))
-        assert(forallStmt.condition.itsSet == BOOLEANS)
-        instanceFn = Function(forallStmt.instanceExpression, [forallStmt.instanceVar])
-        trueInstance = forallStmt.instanceExpression.substituted(SubstitutionMap({forallStmt.instanceVar:TRUE}))
-        falseInstance = forallStmt.instanceExpression.substituted(SubstitutionMap({forallStmt.instanceVar:FALSE}))
+        firstCondition = forallStmt.condition.first()
+        assert(isinstance(firstCondition, In))
+        assert(firstCondition.itsSet == BOOLEANS)
+        varInBool = firstCondition.element
+        assert varInBool in set(forallStmt.instanceVar), "To evaluate a forall statement given a condition of being in booleans, the element in question must be one of the forall instance variables."
+        instanceExpr = forallStmt.instanceExpression
+        P_op = Operation(P, varInBool)
+        trueInstance = instanceExpr.substituted({varInBool:TRUE})
+        falseInstance = instanceExpr.substituted({varInBool:FALSE})
         if trueInstance == TRUE and falseInstance == FALSE:
             # special case of Forall_{A in BOOLEANS} A
             booleans.falseEqFalse # FALSE = FALSE
-            evaluation = booleans.forallBoolEvalFalseViaFalse.specialize({P:instanceFn}).deriveConclusion()
+            booleans.trueEqTrue # TRUE = TRUE
+            evaluation = booleans.forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr}).deriveConclusion()
         else:
+            # must evaluate for the TRUE and FALSE case separately
             evalTrueInstance = trueInstance.evaluate()
             evalFalseInstance = falseInstance.evaluate()
-            if isinstance(evalTrueInstance, Equals) and evalTrueInstance.rhs == FALSE:
-                evaluation = booleans.forallBoolEvalFalseViaTrue.specialize({P:instanceFn}).deriveConclusion()
-            elif isinstance(evalFalseInstance, Equals) and evalFalseInstance.rhs == FALSE:
-                evaluation = booleans.forallBoolEvalFalseViaFalse.specialize({P:instanceFn}).deriveConclusion()
-            elif isinstance(evalTrueInstance, Equals) and isinstance(evalFalseInstance, Equals):
-                if evalTrueInstance.rhs == TRUE and evalFalseInstance.rhs == TRUE:
+            if isinstance(evalTrueInstance, Equals) and isinstance(evalFalseInstance, Equals):
+                # proper evaluations for both cases (TRUE and FALSE)
+                trueCaseVal = evalTrueInstance.rhs
+                falseCaseVal = evalFalseInstance.rhs
+                if trueCaseVal == TRUE and falseCaseVal == TRUE:
+                    # both cases are TRUE, so the forall over booleans is TRUE
                     compose(evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality())
-                    evaluation = booleans.forallBoolEvalTrue.specialize({P:instanceFn}).deriveConclusion()
+                    evaluation = booleans.forallBoolEvalTrue.specialize({P_op:instanceExpr}).deriveConclusion()
+                else:
+                    # one case is FALSE, so the forall over booleans is FALSE
+                    compose(evalTrueInstance, evalFalseInstance)
+                    if trueCaseVal == FALSE and falseCaseVal == FALSE:
+                        evaluation = booleans.forallBoolEvalFalseViaFF.specialize({P_op:instanceExpr}).deriveConclusion()
+                    elif trueCaseVal == FALSE and falseCaseVal == TRUE:
+                        evaluation = booleans.forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr}).deriveConclusion()
+                    elif trueCaseVal == TRUE and falseCaseVal == FALSE:
+                        evaluation = booleans.forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr}).deriveConclusion()
         return evaluation
     
     def unfoldForallInSet(self, forallStmt):
@@ -251,7 +292,7 @@ class BooleanSet(Literal):
         assert(isinstance(forallStmt, Forall))
         assert(isinstance(forallStmt.condition, In))
         assert(forallStmt.condition.itsSet == BOOLEANS)
-        return booleans.unfoldForallOverBool.specialize({P:Function(forallStmt.instanceExpression, [forallStmt.instanceVar]), A:forallStmt.instanceVar}).deriveConclusion().check({forallStmt})
+        return booleans.unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVar): forallStmt.instanceExpression, A:forallStmt.instanceVar}).deriveConclusion().check({forallStmt})
 
     def foldAsForallInSet(self, forallStmt):
         '''
@@ -264,36 +305,29 @@ class BooleanSet(Literal):
         assert(isinstance(forallStmt, Forall))
         assert(isinstance(forallStmt.condition, In))
         assert(forallStmt.condition.itsSet == BOOLEANS)
-        folding = booleans.foldForallOverBool.specialize({P:Function(forallStmt.instanceExpression, [forallStmt.instanceVar]), A:forallStmt.instanceVar})
+        # [P(TRUE) and P(FALSE)] => forall_{A in BOOLEANS} P(A)
+        folding = booleans.foldForallOverBool.specialize({Operation(P, forallStmt.instanceVar):forallStmt.instanceExpression, A:forallStmt.instanceVar})
         folding.hypothesis.concludeViaComposition()
         return folding.deriveConclusion()
 
 BOOLEANS = booleans.addLiteral(literal = BooleanSet())
 
-    
-class Forall(NestableOperationOverInstances):
-    def __init__(self, instanceVars, instanceExpression, conditions=tuple()):
+class Forall(OperationOverInstances):
+    def __init__(self, instanceVars, instanceExpression, conditions = None):
         '''
-        Nest Forall OperationOverInstances' for each of the given instance variables with the given 
-        innermost instance expression.  The optionally provided conditions are applied as soon as the 
-        instance variables they contain are introduced.
+        Create a Forall expression:
+        forall_{instanceVar | condition} instanceExpression.
+        This expresses that the instanceExpression is true for all values of the instanceVar(s)
+        given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
+        may be singular or plural (iterable).
         '''
-        NestableOperationOverInstances.__init__(self, FORALL, lambda iVars, iExpr, conds: Forall(iVars, iExpr, conds), instanceVars, instanceExpression, conditions, NONCONDITION)
-
+        OperationOverInstances.__init__(self, FORALL, instanceVars, instanceExpression, conditions)
+        
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return 'forall'
         elif formatType == MATHML:
             return '<mo>&#x2200;</mo>'
-
-    def implicitInstanceVar(self):
-        '''
-        If the condition is that the instance variable is in some set, then
-        the instance variable is implicit (stating the condition indicates
-        the instance variable).
-        '''
-        from sets import In
-        return isinstance(self.condition, In) and self.condition.element == self.instanceVar
 
     def specialize(self, subMap=None, conditionAsHypothesis=False):
         '''
@@ -303,24 +337,26 @@ class Forall(NestableOperationOverInstances):
         and specialized form as the conclusion.
         '''
         specialized = Expression.specialize(self, subMap)
-        if conditionAsHypothesis and self.condition != NONCONDITION:
+        if conditionAsHypothesis and self.hasCondition():
             return Implies(self.condition, specialized).check({self})
         return specialized
     
-    def instanceSubstitution(self, operatorOverInstance):
+    def equateMaps(self):
         '''
-        From forall_{x | Q(x)} f(x) = g(x) and given an Upsilon (operator over instances), 
-        derive and return Upsilon_{x | Q(x)} f(x) = Upsilon_{x | Q(x)} g(x)
+        From forall_{x | Q(x)} f(x) = g(x) derive and return 
+        [x -> f(x) | Q(x)] = [x -> g(x) | Q(x)]
         '''
-        from equality import equality, Equals, f, g, Upsilon
-        assert isinstance(self.instanceExpression, Equals)
-        fSub = Function(self.instanceExpression.lhs, [self.instanceVar])
-        gSub = Function(self.instanceExpression.rhs, [self.instanceVar])
-        Qsub = Function(self.condition, [self.instanceVar])
-        operationOverInstances = OperationOverInstances.make(operatorOverInstance, self.instanceVar, self.instanceExpression, self.condition)
-        # [Upsilon_{x | Q(x)} f(x)] = [Upsilon_{x | Q(x)} g(x)]
-        return equality.instanceSubstitution.specialize({f:fSub, g:gSub, Q:Qsub, Upsilon:operatorOverInstance}).deriveConclusion().check({self, operationOverInstances})
-
+        from mapping import mapping, f, g
+        from equality import Equals
+        assert isinstance(self.instanceExpression, Equals), "Instance expression must be an equality to use mapSubstitution"
+        fOp, fOpSub = Operation(f, self.instanceVar), self.instanceExpression.lhs
+        gOp, gOpSub = Operation(g, self.instanceVar), self.instanceExpression.rhs
+        Q_op, Q_op_sub = Operation(Q, self.instanceVar), self.condition
+        if self.hasCondition():
+            return mapping.mapSubstitution.specialize({fOp:fOpSub, gOp:gOpSub, Q_op:Q_op_sub, x:self.instanceVar, y:self.instanceVar}).deriveConclusion().check({self})
+        else:
+            return mapping.mapOverAllSubstitution.specialize({fOp:fOpSub, gOp:gOpSub}).deriveConclusion().check({self})
+    
     def unfold(self):
         '''
         From this forall statement, derive an "unfolded" version dependent upon the condition of the forall,
@@ -328,6 +364,9 @@ class Forall(NestableOperationOverInstances):
         For example, from forall_{A in BOOLEANS} P(A), derives P(TRUE) and P(FALSE).
         '''    
         return self.condition.unfoldForall(self)
+    
+    def equateWithUnfolded(self):
+        pass
         
     def concludeAsFolded(self):
         '''
@@ -336,36 +375,99 @@ class Forall(NestableOperationOverInstances):
         For example, conclude forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
         '''    
         return self.condition.foldAsForall(self)
+    
+    def deriveBundled(self):
+        '''
+        From a nested forall statement, derive the bundled forall statement.  For example,
+        forall_{x | Q(x)} forall_{y | R(y)} P(x, y) becomes forall_{x, y | Q(x), R(y)} P(x, y).
+        '''
+        assert isinstance(self.instanceExpression, Forall), "Can only bundle nested forall statements"
+        innerForall = self.instanceExpression
+        composedInstanceVars = ExpressionList([self.instanceVar, innerForall.instanceVar])
+        P_op, P_op_sub = Operation(P, composedInstanceVars), innerForall.instanceExpression
+        multiQ_op, multiQ_op_sub = Operation(multiQ, self.instanceVar), self.condition
+        multiR_op, multiR_op_sub = Operation(multiR, innerForall.instanceVar), innerForall.condition
+        return booleans.forallBundling.specialize({xStar:self.instanceVar, yStar:innerForall.instanceVar, P_op:P_op_sub, multiQ_op:multiQ_op_sub, multiR_op:multiR_op_sub}).deriveConclusion().check({self})
 
+    def _specializeUnravellingTheorem(self, theorem, *instanceVarLists):
+        print instanceVarLists
+        assert len(self.instanceVar) > 1, "Can only unravel a forall statement with multiple instance variables"
+        if len(instanceVarLists) == 1:
+            raise ValueError("instanceVarLists should be a list of 2 or more Variable lists")
+        if len(instanceVarLists) > 2:
+            return self.deriveUnravelled(ExpressionList(instanceVarLists[:-1]), instanceVarLists[-1]).deriveUnravelled(*instanceVarLists[:-1]).check({self})
+        outerVars, innerVars = instanceVarLists
+        outerVarSet, innerVarSet = set(outerVars), set(innerVars)
+        assert innerVarSet | outerVarSet == set(self.instanceVar), "outerVars and innterVars must combine to the full set of instance variables"
+        assert innerVarSet.isdisjoint(outerVarSet), "outerVars and innterVars must be disjoint sets"
+        innerConditions = []
+        outerConditions = []
+        for condition in self.condition:
+            if condition.freeVars().isdisjoint(innerVars):
+                outerConditions.append(condition)
+            else: innerConditions.append(condition)
+        P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
+        multiQ_op, multiQ_op_sub = Operation(multiQ, outerVars), outerConditions
+        multiR_op, multiR_op_sub = Operation(multiR, innerVars), innerConditions
+        print P_op_sub
+        print multiQ_op_sub
+        print multiR_op_sub
+        return theorem.specialize({xStar:outerVars, yStar:innerVars, P_op:P_op_sub, multiQ_op:multiQ_op_sub, multiR_op:multiR_op_sub}) 
+           
+    def deriveUnravelled(self, *instanceVarLists):
+        '''
+        From a multi-variable forall statement, derive the nested, unravelled forall statement.  For example,
+        forall_{x, y | Q(x), R(y)} P(x, y) becomes forall_{x | Q(x)} forall_{y | R(y)} P(x, y).
+        The instanceVarLists should be a list of lists of instanceVars, in the same order as the original
+        instanceVars, to indicate how to break up the nested forall statements.
+        '''
+        return self._specializeUnravellingTheorem(booleans.forallUnravelling, *instanceVarLists).deriveConclusion().check({self})
+
+    def deriveUnravelledEquiv(self, *instanceVarLists):
+        '''
+        From a multi-variable forall statement, derive its equivalence with a nested, unravelled forall statement.
+        For example, forall_{x, y | Q(x), R(y)} P(x, y) = forall_{x | Q(x)} forall_{y | R(y)} P(x, y).
+        The instanceVarLists should be a list of lists of instanceVars, in the same order as the original
+        instanceVars, to indicate how to break up the nested forall statements.
+        '''
+        return self._specializeUnravellingTheorem(booleans.forallBundledEquiv, *instanceVarLists).check()
+        
     def evaluate(self):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if possible
         by calling the condition's evaluateForall method
         '''
-        return booleans.evaluate(self, lambda : self.condition.evaluateForall(self))    
+        assert self.hasCondition(), "Cannot evaluate a forall statement with no conditions"
+        if len(self.instanceVar) == 1:
+            # start with the first condition which may then nest over subsequent conditions
+            return booleans.evaluate(self, lambda : self.condition.evaluateForall(self))
+        else:
+            # Evaluate an unravelled version
+            unravelledEquiv = self.deriveUnravelledEquiv(*[condition.freeVars() for condition in self.condition]).check()
+            unravelledEval = unravelledEquiv.rhs.evaluate()
+            return unravelledEquiv.applyTransitivity(unravelledEval).check()            
 
     def deduceInBool(self):
         '''
         Attempt to deduce, then return, that this forall expression is in the set of BOOLEANS,
-        possibly through recursive deduceInBool method calls.
+        as all forall expressions are (they are taken to be false when not true).
         '''
-        # forall_{x | Q(x)} inBool(P(x)) => inBool(forall_{x | Q(x)} P(x)), with proper Q and P
-        booleans.forallBooleanClosure.specialize({P:Function(self.instanceExpression, [self.instanceVar]), Q:Function(self.condition, [self.instanceVar]), x:self.instanceVar}).check()
-        # deduce forall_{x | Q(x)} inBool(P(x)) via recursion
-        prerequisite = booleans.deduceInBool(self.instanceExpression).generalize([self.instanceVar], [self.condition])
-        # inBool(forall_{x | Q(x)} P(x))
-        return inBool(self).check({prerequisite})    
+        P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
+        multiQ_op, multiQ_op_sub = Operation(multiQ, self.instanceVar), self.condition
+        return booleans.forallInBool.specialize({P_op:P_op_sub, multiQ_op:multiQ_op_sub, xStar:self.instanceVar}).check()
 
-OperationOverInstances.registerOperation(FORALL, lambda instanceVar, instanceExpression, condition : Forall([instanceVar], instanceExpression, [condition]))
+Operation.registerOperation(FORALL, lambda operand : Forall(operand.argument, operand.expression, operand.domainCondition))
 
-class Exists(NestableOperationOverInstances):
-    def __init__(self, instanceVars, instanceExpression, conditions=tuple()):
+class Exists(OperationOverInstances):
+    def __init__(self, instanceVars, instanceExpression, conditions=None):
         '''
-        Nest Exists OperationOverInstances' for each of the given instance variables with the given 
-        innermost instance expression.  The optionally provided conditions are applied as soon as the 
-        instance variables they contain are introduced.
+        Create a exists (there exists) expression:
+        exists_{instanceVar | condition} instanceExpression
+        This expresses that there exists a value of the instanceVar(s) for which the optional condition(s)
+        is/are satisfied and the instanceExpression is true.  The instanceVar(s) and condition(s) may be 
+        singular or plural (iterable).
         '''
-        NestableOperationOverInstances.__init__(self, EXISTS, lambda iVars, iExpr, conds: Exists(iVars, iExpr, conds), instanceVars, instanceExpression, conditions, NONCONDITION)
+        OperationOverInstances.__init__(self, EXISTS, instanceVars, instanceExpression, conditions)
 
     def formattedOperator(self, formatType):
         if formatType == STRING:
@@ -373,80 +475,94 @@ class Exists(NestableOperationOverInstances):
         elif formatType == MATHML:
             return '<mo>&#x2203;</mo>'
 
-    def implicitInstanceVar(self):
-        '''
-        If the condition is that the instance variable is in some set, then
-        the instance variable is implicit (stating the condition indicates
-        the instance variable).
-        '''
-        from sets import In
-        return isinstance(self.condition, In) and self.condition.element == self.instanceVar
-        
     def concludeViaExample(self, exampleInstance):
         '''
-        Conclude and return this [exists_{y | Q(x)} P(y)] from P(x), where x is the given exampleInstance.
+        Conclude and return this [exists_{y | Q(x)} P(y)] from P(x) and Q(x), where x is the given exampleInstance.
         '''
+        # P(x) where x is the given exampleInstance
+        exampleExpr = self.instanceExpression.substituted({self.instanceVar:exampleInstance})
+        # Q(x) where x is the given exampleInstance
+        exampleCondition = self.condition.substituted({self.instanceVar:exampleInstance})
         # forall_{P, Q} forall_{x | Q(x)} [P(x) => exists_{y | Q(x)} P(y)]
-        return booleans.existenceByExample.specialize({P:Function(self.instanceExpression, [self.instanceVar]), Q:Function(self.condition, [self.instanceVar]), x:exampleInstance, y:self.instanceVar}).deriveConclusion()       
+        return booleans.existenceByExample.specialize({Operation(P, self.instanceVar): self.instanceExpression, Operation(multiQ, self.instanceVar): self.condition, yStar:self.instanceVar}).specialize({xStar:exampleInstance}).deriveConclusion().check({exampleExpr, exampleCondition})
 
-    def unfold(self, assumeBoolStmts=True):
+    def deriveNegatedForall(self):
         '''
-        If assumeBoolStmts is True, then:
-        From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)) assuming 
-        forall_{x | Q(x)} [P(x) in BOOLEANS].
-        From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} Not(P(x))) assuming
-        forall_{x | Q(x)} [P(x) in BOOLEANS].
-        If assumeBoolStmts is False, from [exists_{x | Q(x)} P(x)], derive and return
-        Not(forall_{x | Q(x)} P(x) != TRUE).
+        From [exists_{x* | Q*(x*)} Not(P(x*))], derive and return Not(forall_{x* | Q*(x*)} P(x*)).
+        From [exists_{x* | Q*(x*)} P(x*)], derive and return Not(forall_{x* | Q*(x*)} (P(x*) != TRUE)).
         '''
-        Qfn = Function(self.condition, [self.instanceVar])
-        if assumeBoolStmts:
-            if isinstance(self.instanceExpression, Not):
-                Pfn = Function(self.instanceExpression.operand, [self.instanceVar])
-                assumption = Forall([self.instanceVar], inBool(self.instanceExpression.operand), [self.condition])
-                return booleans.existenceOverNegated.specialize({P:Pfn, Q:Qfn, x:self.instanceVar}).deriveConclusion().deriveRight().check({self, assumption})
-            else:
-                Pfn = Function(self.instanceExpression, [self.instanceVar])
-                assumption = Forall([self.instanceVar], inBool(self.instanceExpression), [self.condition])
-                return booleans.existenceOverBoolStmts.specialize({P:Pfn, Q:Qfn, x:self.instanceVar}).deriveConclusion().deriveRight().check({self, assumption})
-        return booleans.existsDef.specialize({P:Pfn, Q:Qfn, x:self.instanceVar}).deriveRight().check({self})
+        multiQ_op, multiQ_op_sub = Operation(multiQ, self.instanceVar), self.condition
+        if isinstance(self.instanceExpression, Not):
+            P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression.operand
+            return booleans.existsNotImpliesNotForall.specialize({P_op:P_op_sub, multiQ_op:multiQ_op_sub, xStar:self.instanceVar}).deriveConclusion().check({self})
+        else:
+            P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
+            return booleans.existsDef.specialize({P_op:P_op_sub, multiQ_op:multiQ_op_sub, xStar:self.instanceVar}).deriveRightViaEquivalence().check({self})
     
-    def concludeAsFolded(self, assumeBoolStmts=True):
-        '''
-        If assumeBoolStmts is True, then:
-        Conclude and return [exists_{x | Q(x)} Not(P(x))] from Not(forall_{x | Q(x)} P(x)) assuming 
-        forall_{x | Q(x)} [P(x) in BOOLEANS],
-        or conclude and return [exists_{x | Q(x)} P(x)] from Not(forall_{x | Q(x)} Not(P(x))) assuming
-        forall_{x | Q(x)} [P(x) in BOOLEANS].
-        If assumeBoolStmts is False, conclude and return [exists_{x | Q(x)} P(x)] from
-        Not(forall_{x | Q(x)} P(x) != TRUE).
-        '''
-        Pfn = Function(self.instanceExpression, [self.instanceVar])
-        Qfn = Function(self.condition, [self.instanceVar])
-        if assumeBoolStmts:
-            assumption = Forall([self.instanceVar], inBool(self.instanceExpression), [self.condition])
-            if isinstance(self.instanceExpression, Not):
-                specialized = booleans.existenceOverNegated.specialize({P:Pfn, Q:Qfn, x:self.instanceVar}).deriveConclusion()
-            else:
-                specialized = booleans.existenceOverBoolStmts.specialize({P:Pfn, Q:Qfn, x:self.instanceVar}).deriveConclusion()
-            return specialized.deriveLeft().check({specialized.B, assumption})
-        specialized = booleans.existsDef.specialize({P:Pfn, Q:Qfn, x:self.instanceVar})
-        return specialized.deriveLeft().check({specialized.B})
-
     def deduceInBool(self):
         '''
-        Derive and return that this exists expression is in the set of BOOLEANS,
-        possibly through recursive deduceInBool method calls.
+        Deduce, then return, that this exists expression is in the set of BOOLEANS as
+        all exists expressions are (they are taken to be false when not true).
         '''
-        # forall_{x | Q(x)} inBool(P(x)) => inBool(exists_{x | Q(x)} P(x)), with proper Q and P
-        booleans.existsBooleanClosure.specialize({P:Function(self.instanceExpression, [self.instanceVar]), Q:Function(self.condition, [self.instanceVar]), x:self.instanceVar})
-        # deduce forall_{x | Q(x)} inBool(P(x)) via recursion
-        prerequisite = booleans.deduceInBool(self.instanceExpression).generalize([x], [self.condition])
-        # inBool(exists_{x | Q(x)} P(x))
-        return inBool(self).check({prerequisite})
-    
-OperationOverInstances.registerOperation(EXISTS, lambda instanceVar, instanceExpression, condition : Exists([instanceVar], instanceExpression, [condition]))
+        P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
+        multiQ_op, multiQ_op_sub = Operation(multiQ, self.instanceVar), self.condition
+        return booleans.existsInBool.specialize({P_op:P_op_sub, multiQ_op:multiQ_op_sub, xStar:self.instanceVar}).check()
 
+Operation.registerOperation(EXISTS, lambda operand : Exists(operand.argument, operand.expression, operand.domainCondition))
+
+class NotExists(OperationOverInstances):
+    def __init__(self, instanceVars, instanceExpression, conditions=None):
+        '''
+        Create a exists (there exists) expression:
+        exists_{instanceVar | condition} instanceExpression
+        This expresses that there exists a value of the instanceVar(s) for which the optional condition(s)
+        is/are satisfied and the instanceExpression is true.  The instanceVar(s) and condition(s) may be 
+        singular or plural (iterable).
+        '''
+        OperationOverInstances.__init__(self, NOTEXISTS, instanceVars, instanceExpression, conditions)
+
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'notexist'
+        elif formatType == MATHML:
+            return '<mo>&#x2204;</mo>'
+        
+    def unfold(self):
+        '''
+        Deduce and return Not(Exists_{x* | Q*(x*)} P(x*)) from NotExists_{x* | Q*(x*)} P(x*)
+        '''
+        Q_op, Q_op_sub = Operation(multiQ, self.instanceVar), self.condition
+        P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
+        return booleans.notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xStar:self.instanceVar}).deriveConclusion().check({self})
+    
+    def concludeAsFolded(self):
+        '''
+        Prove and return some NotExists_{x* | Q*(x*)} P(x*) assuming Not(Exists_{x* | Q*(x*)} P(x*)).
+        '''
+        Q_op, Q_op_sub = Operation(multiQ, self.instanceVar), self.condition
+        P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
+        folding = booleans.notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xStar:self.instanceVar})
+        return folding.deriveConclusion().check({self.unfold()})
+    
+    def concludeViaForall(self):
+        '''
+        Prove and return either some NotExists_{x* | Q*(x*)} Not(P(x*)) or NotExists_{x* | Q*(x*)} P(x*)
+        assumint forall_{x* | Q*(x*)} P(x*) or assuming forall_{x* | Q*(x*)} (P(x) != TRUE) respectively.
+        '''
+        from equality import NotEquals
+        multiQ_op, multiQ_op_sub = Operation(multiQ, self.instanceVar), self.condition
+        operand = self.operand
+        if isinstance(self.instanceExpression, Not):
+            P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression.operand
+            assumption = Forall(operand.argument, operand.expression.operand, operand.domainCondition)
+            return booleans.forallImpliesNotExistsNot.specialize({P_op:P_op_sub, multiQ_op:multiQ_op_sub, xStar:self.instanceVar}).deriveConclusion().check({assumption})
+        else:
+            P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
+            assumption = Forall(operand.argument, NotEquals(operand.expression, TRUE), operand.domainCondition)
+            return booleans.existsDefNegation.specialize({P_op:P_op_sub, multiQ_op:multiQ_op_sub, xStar:self.instanceVar}).deriveLeftViaEquivalence().check({assumption})
+
+Operation.registerOperation(NOTEXISTS, lambda operand : NotExists(operand.argument, operand.expression, operand.domainCondition))
+    
 class Implies(BinaryOperation):
     def __init__(self, hypothesis, conclusion):
         BinaryOperation.__init__(self, IMPLIES, hypothesis, conclusion)
@@ -483,9 +599,9 @@ class Implies(BinaryOperation):
         assert self.conclusion == FALSE
         if isinstance(self.hypothesis, Not):
             stmt = self.hypothesis.operand
-            return booleans.hypotheticalContraNegation.specialize({A:stmt}).deriveConclusion().check({self, inBool(stmt)})
+            return booleans.contradictoryValidation.specialize({A:stmt}).deriveConclusion().check({self, inBool(stmt)})
         else:
-            return booleans.hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion().check({self})
+            return booleans.hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion().check({self, inBool(self.hypothesis)})
     
     def generalize(self, newForallVars, newConditions=tuple()):
         '''
@@ -557,11 +673,11 @@ class Implies(BinaryOperation):
         conclusionInBool = booleans.deduceInBool(self.conclusion)
         return booleans.implicationClosure.specialize({A:self.hypothesis, B:self.conclusion}).check({hypothesisInBool, conclusionInBool})
 
-Operation.registerOperation(IMPLIES, lambda operators : Implies(*operators))
+Operation.registerOperation(IMPLIES, lambda operands : Implies(*operands))
 
 class Not(Operation):
     def __init__(self, A):
-        Operation.__init__(self, NOT, [A])
+        Operation.__init__(self, NOT, A)
         self.operand = A
 
     def formattedOperator(self, formatType):
@@ -594,7 +710,7 @@ class Not(Operation):
                 val = booleans.notT.rhs
             elif operandEval.rhs == FALSE: 
                 val = booleans.notF.rhs
-            return operandEval.lhsSubstitute(Function(Equals(Not(A), val), [A]))
+            return operandEval.lhsSubstitute(A, Equals(Not(A), val))
         return booleans.evaluate(self, doEval)
 
     def deduceInBool(self):
@@ -649,33 +765,63 @@ class Not(Operation):
         if isinstance(self.operand, Equals):
             return equality.foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}).deriveConclusion().check({self})
 
-Operation.registerOperation(NOT, lambda operators : Not(*operators))
+    def deriveNotExists(self):
+        '''
+        From Not(exists_{x* | Q*(x*)} P(x*)), derive and return NotExists_{x* | Q*(x*)} P(x*).
+        '''
+        operand = self.operand
+        if isinstance(operand, Exists):
+            exOperand = operand.operand # Exist's operand
+            notExistsExpr = NotExists(exOperand.argument, exOperand.expression, exOperand.domainCondition)
+            return notExistsExpr.concludeAsFolded().check({self})
         
-class And(AssociativeBinaryOperation):
-    def __init__(self, operandsOrA, B=None):
+    def deduceDoubleNegationEquiv(self):
         '''
-        Can do And(A, B) to get AND{A}{B} or 
-        And([A, B, C]) to get AND{A}{AND{B}{C}}, etc.
+        For some Not(Not(A)), derive and return A = Not(Not(A)) assuming A in BOOLEANS.
         '''
-        AssociativeBinaryOperation.__init__(self, AND, operandsOrA, B)
+        if isinstance(self.operand, Not):
+            Asub = self.operand.operand
+            return booleans.doubleNegationEquiv.specialize({A:Asub}).check({inBool(Asub)})
+
+Operation.registerOperation(NOT, lambda operand : Not(operand))
+        
+class And(AssociativeOperation):
+    def __init__(self, *operands):
+        '''
+        And together any number of operands: A and B and C
+        '''
+        AssociativeOperation.__init__(self, AND, *operands)
 
     def formattedOperator(self, formatType):
+        '''
+        Formatted operator when there are 2 or more operands.
+        '''
         if formatType == STRING:
             return 'and'
         elif formatType == MATHML:
             return '<mo>&#x2227;</mo>'
-
+        
+    def deriveInPart(self, indexOrExpr):
+        '''
+        From (A and ... and X and ... and Z) derive X.  indexOrExpr specifies 
+        X either by index or the Expression.
+        '''
+        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operand).index(indexOrExpr)
+        return booleans.andImpliesEach.specialize({multiA:self.operands[:idx], B:self.operands[idx], multiC:self.operands[idx+1:]}).deriveConclusion().check({self})
+        
     def deriveLeft(self):
         '''
         From (A and B), derive and return A.
         '''
-        return booleans.andImpliesLeft.specialize({A:self.operands[0], B: self.operands[1]}).deriveConclusion().check({self})
+        assert len(self.operands) == 2
+        return self.deriveInPart(0)
 
     def deriveRight(self):
         '''
         From (A and B), derive and return B.
         '''
-        return booleans.andImpliesRight.specialize({A:self.operands[0], B: self.operands[1]}).deriveConclusion().check({self})
+        assert len(self.operands) == 2
+        return self.deriveInPart(1)
         
     def decompose(self):
         '''
@@ -688,13 +834,18 @@ class And(AssociativeBinaryOperation):
         Prove and return some (A and B) assuming A, B.  See also the compose method to
         do this constructively.
         '''
-        compose(self.leftOperand, self.rightOperand)
+        compose(*self.operands)
             
     def evaluate(self):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
+        if len(self.operands) >= 3:
+            # A and B and C* = A and (B and C*)
+            compositionEquiv = booleans.andComposition.specialize({A:self.operands[0], B:self.operands[1], multiC:self.operands[2:]})
+            decomposedEval = compositionEquiv.rhs.evaluate()
+            return compositionEquiv.applyTransitivity(decomposedEval)
         def baseEvalFn(A, B):
             if A == TRUE and B == TRUE: return booleans.andTT
             elif A == TRUE and B == FALSE: return booleans.andTF
@@ -710,17 +861,19 @@ class And(AssociativeBinaryOperation):
         rightInBool = booleans.deduceInBool(self.rightOperand)
         return booleans.conjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion}).check({leftInBool, rightInBool})
 
-Operation.registerOperation(AND, lambda operators : And(*operators))
+Operation.registerOperation(AND, lambda operands : And(*operands))
 
-class Or(AssociativeBinaryOperation):
-    def __init__(self, operandsOrA, B=None):
+class Or(AssociativeOperation):
+    def __init__(self, *operands):
         '''
-        Can do Or(A, B) to get Or{A}{B} or 
-        Or([A, B, C]) to get OR{A}{OR{B}{C}}, etc.
+        Or together any number of operands: A or B or C
         '''
-        AssociativeBinaryOperation.__init__(self, OR, operandsOrA, B)
-
+        AssociativeOperation.__init__(self, OR, *operands)
+    
     def formattedOperator(self, formatType):
+        '''
+        Formatted operator when there are 2 or more operands.
+        '''
         if formatType == STRING:
             return 'or'
         elif formatType == MATHML:
@@ -730,19 +883,41 @@ class Or(AssociativeBinaryOperation):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
         '''
-        return booleans.orImpliesRightIfNotLeft.specialize({A:self.leftOperand, B:self.rightOperand}).deriveConclusion().check({self, Not(self.leftOperand), inBool(self.rightOperand)})
+        assert len(self.operands) == 2
+        leftOperand, rightOperand = self.operands
+        return booleans.orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}).deriveConclusion().check({self, Not(leftOperand), inBool(rightOperand)})
 
     def deriveLeftIfNotRight(self):
         '''
         From (A or B) derive and return A assuming inBool(A), Not(B).
         '''
-        return booleans.orImpliesLeftIfNotRight.specialize({A:self.leftOperand, B:self.rightOperand}).deriveConclusion().check({self, Not(self.rightOperand), inBool(self.leftOperand)})
+        assert len(self.operands) == 2
+        leftOperand, rightOperand = self.operands
+        return booleans.orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}).deriveConclusion().check({self, Not(rightOperand), inBool(leftOperand)})
+        
+    def deriveCommonConclusion(self, conclusion):
+        '''
+        From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.
+        '''
+        # forall_{A in Bool, B in Bool, C in Bool} (A=>C and B=>C) => ((A or B) => C)
+        assert len(self.operands) == 2
+        leftOperand, rightOperand = self.operands
+        leftImplConclusion = Implies(leftOperand, conclusion)
+        rightImplConclusion = Implies(rightOperand, conclusion)
+        # (A=>C and B=>C) assuming A=>C, B=>C
+        compose(leftImplConclusion, rightImplConclusion)
+        return booleans.hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}).deriveConclusion().deriveConclusion().check({self, leftImplConclusion, rightImplConclusion, inBool(A), inBool(B), inBool(C)})
         
     def evaluate(self):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
+        if len(self.operands) >= 3:
+            # A or B or C* = A or (B or C*)
+            compositionEquiv = booleans.orComposition.specialize({A:self.operands[0], B:self.operands[1], multiC:self.operands[2:]})
+            decomposedEval = compositionEquiv.rhs.evaluate()
+            return compositionEquiv.applyTransitivity(decomposedEval)
         def baseEvalFn(A, B):
             if A == TRUE and B == TRUE: return booleans.orTT
             elif A == TRUE and B == FALSE: return booleans.orTF
@@ -758,7 +933,7 @@ class Or(AssociativeBinaryOperation):
         rightInBool = booleans.deduceInBool(self.rightOperand)
         return booleans.disjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion}).check({leftInBool, rightInBool})
 
-Operation.registerOperation(OR, lambda operators : Or(*operators))
+Operation.registerOperation(OR, lambda operands : Or(*operands))
 
 # if and only if: A => B and B => A
 class Iff(BinaryOperation):
@@ -797,6 +972,35 @@ class Iff(BinaryOperation):
         '''
         return self.deriveRightImplication().deriveConclusion().check({self, self.A})
     
+    def deriveReversed(self):
+        '''
+        From (A<=>B) derive and return (B<=>A).
+        '''
+        return booleans.iffSymmetry.specialize({A:self.A, B:self.B}).deriveConclusion().check({self})
+    
+    def applyTransitivity(self, otherIff):
+        '''
+        From A <=> B (self) and the given B <=> C (otherIff) derive and return 
+        (A <=> C) assuming self and otherIff.
+        Also works more generally as long as there is a common side to the equations.
+        '''
+        assert isinstance(otherIff, Iff)
+        if self.B == otherIff.A:
+            # from A <=> B, B <=> C, derive A <=> C
+            compose(self, otherIff).check({self, otherIff}) # A <=> B and B <=> C
+            return booleans.iffTransitivity.specialize({A:self.A, B:self.B, C:otherIff.B}).deriveConclusion().check({self, otherIff})
+        elif self.A == otherIff.A:
+            # from y = x and y = z, derive x = z
+            return self.deriveReversed().applyTransitivity(otherIff)
+        elif self.A == otherIff.B:
+            # from y = x and z = y, derive x = z
+            return self.deriveReversed().applyTransitivity(otherIff.deriveReversed())
+        elif self.B == otherIff.B:
+            # from x = y and z = y, derive x = z
+            return self.applyTransitivity(otherIff.deriveReversed())
+        else:
+            assert False, 'transitivity cannot be applied unless there is something in common in the equalities'
+        
     def definition(self):
         '''
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
@@ -838,7 +1042,7 @@ class Iff(BinaryOperation):
         '''
         return booleans.iffOverBoolImplEq.specialize({A:self.A, B:self.B}).deriveConclusion().check({self, inBool(self.A), inBool(self.B)})
 
-Operation.registerOperation(IFF, lambda operators : Iff(*operators))
+Operation.registerOperation(IFF, lambda operands : Iff(*operands))
 
 def deriveStmtEqTrue(statement):
     '''
@@ -847,11 +1051,26 @@ def deriveStmtEqTrue(statement):
     from equality import Equals
     return Equals(statement, TRUE).concludeBooleanEquality()
 
-def compose(exprA, exprB):
+def compose(*expressions):
     '''
-    Returns [exprA and exprB] derived from each separately.
+    Returns [A and B and ...], the And operator applied to the collection of given arguments,
+    derived from each separately.
     '''
-    return booleans.conjunctionIntro.specialize({A:exprA, B:exprB}).check({exprA, exprB})
+    print len(expressions)
+    if len(expressions) == 2:
+        exprA, exprB = expressions
+        return booleans.conjunctionIntro.specialize({A:exprA, B:exprB}).check({exprA, exprB})
+    else:
+        assert len(expressions) > 2, "Compose 2 or more expressions, but not less than 2."
+        rightComposition = compose(*expressions[1:])
+        # A and (B and C*) = TRUE, given A, B, C*
+        nestedAndEqT = deriveStmtEqTrue(compose(expressions[0], rightComposition)).check(expressions)
+        # A and B and C* = A and (B and C*)
+        compositionEquality = booleans.andComposition.specialize({A:expressions[0], B:rightComposition.operands[0], multiC:rightComposition.operands[1:]}).check(expressions)
+        print nestedAndEqT
+        print compositionEquality
+        # [A and B and C*] given A, B, C*
+        return compositionEquality.applyTransitivity(nestedAndEqT).deriveViaBooleanEquality().check(expressions)
 
 
 # DERIVATIONS
@@ -885,26 +1104,49 @@ booleans.deriveOnDemand('falseEqFalse', falseEqFalseDerivation)
 
 # forall_{A} A => (TRUE = A)
 def eqTrueRevIntroDerivation():
-    return Implies(A, deriveStmtEqTrue(A).concludeBooleanEquality().deriveReversed()).generalize([A]).qed()
+    return Implies(A, deriveStmtEqTrue(A).concludeBooleanEquality().deriveReversed()).generalize(A).qed()
 booleans.deriveOnDemand('eqTrueRevIntro', eqTrueRevIntroDerivation)
 
 # forall_{A} (TRUE = A) => A
 def eqTrueRevElimDerivation():
     from equality import Equals
     hypothesis = Equals(TRUE, A)
-    return Implies(hypothesis, hypothesis.deriveReversed().deriveViaBooleanEquality()).generalize([A]).qed()
+    return Implies(hypothesis, hypothesis.deriveReversed().deriveViaBooleanEquality()).generalize(A).qed()
 booleans.deriveOnDemand('eqTrueRevElim', eqTrueRevElimDerivation)
+
+# forall_{A} Not(A) => [A=FALSE]
+def notImpliesEqFalseDerivation():
+    from equality import Equals
+    # [Not(A) = TRUE] => [A = FALSE]
+    booleans.implicitNotF.specialize().prove()
+    # [Not(A) = TRUE] assuming Not(A)
+    deriveStmtEqTrue(Not(A)).prove({Not(A)})
+    # forall_{A} Not(A) => [A=FALSE]
+    return Implies(Not(A), Equals(A, FALSE)).generalize(A).qed()
+booleans.deriveOnDemand('notImpliesEqFalse', notImpliesEqFalseDerivation)
 
 # forall_{A} Not(A) => (FALSE = A)
 def notImpliesEqFalseRevDerivation():
-    return Implies(Not(A), Not(A).equateNegatedToFalse().deriveReversed()).generalize([A]).qed()
+    return Implies(Not(A), Not(A).equateNegatedToFalse().deriveReversed()).generalize(A).qed()
 booleans.deriveOnDemand('notImpliesEqFalseRev', notImpliesEqFalseRevDerivation)
 
+# forall_{A} Not(Not(A)) => A
+def fromDoubleNegationDerivation():
+    # [Not(Not(A)) = TRUE] => [Not(A) = FALSE]
+    booleans.implicitNotF.specialize({A:Not(A)}).prove()
+    # [Not(A) = FALSE] => [A = TRUE]
+    booleans.implicitNotT.specialize().prove()
+    # [Not(Not(A)) = TRUE] assuming Not(Not(A))
+    deriveStmtEqTrue(Not(Not(A))).prove({Not(Not(A))})
+    # forall_{A} Not(Not(A)) => A
+    return Implies(Not(Not(A)), A).generalize(A).qed()
+booleans.deriveOnDemand('fromDoubleNegation', fromDoubleNegationDerivation)
+
 # forall_{A} A => TRUE, by a trivial hypothetical reasoning
-booleans.deriveOnDemand('trueConclusion', lambda : Implies(A, TRUE).generalize([A]).qed())
+booleans.deriveOnDemand('trueConclusion', lambda : Implies(A, TRUE).generalize(A).qed())
 
 # forall_{A} A => A, by a trivial hypothetical reasoning
-booleans.deriveOnDemand('selfImplication', lambda : Implies(A, A).generalize([A]).qed())
+booleans.deriveOnDemand('selfImplication', lambda : Implies(A, A).generalize(A).qed())
 
 # (TRUE => TRUE) = TRUE
 booleans.deriveOnDemand('impliesTT', lambda : deriveStmtEqTrue(booleans.trueConclusion.specialize({A:TRUE})).qed())
@@ -915,14 +1157,41 @@ booleans.deriveOnDemand('impliesFT', lambda : deriveStmtEqTrue(booleans.trueConc
 # (FALSE => FALSE) = TRUE
 booleans.deriveOnDemand('impliesFF', lambda : deriveStmtEqTrue(booleans.selfImplication.specialize({A:FALSE})).qed())
 
-# (TRUE => FALSE) = FALSE
-booleans.deriveOnDemand('impliesTF', lambda : booleans.falseImplication.specialize({A:FALSE}).equateNegatedToFalse().qed())
-
 # forall_{A, B} (A <=> B) => (A => B)
-booleans.deriveOnDemand('iffImpliesRight', lambda : Implies(Iff(A, B), Iff(A, B).definition().deriveRightViaEquivalence().deriveLeft()).generalize([A, B]).qed())
+booleans.deriveOnDemand('iffImpliesRight', lambda : Implies(Iff(A, B), Iff(A, B).definition().deriveRightViaEquivalence().deriveLeft()).generalize((A, B)).qed())
 
 # forall_{A, B} (A <=> B) => (B => A)
-booleans.deriveOnDemand('iffImpliesLeft', lambda : Implies(Iff(A, B), Iff(A, B).definition().deriveRightViaEquivalence().deriveRight()).generalize([A, B]).qed())
+booleans.deriveOnDemand('iffImpliesLeft', lambda : Implies(Iff(A, B), Iff(A, B).definition().deriveRightViaEquivalence().deriveRight()).generalize((A, B)).qed())
+
+# forall_{A, B} (A <=> B) => (B <=> A)
+def iffSymmetryDerivation():
+    hypothesis = Iff(A, B) # hypothesis = (A <=> B)
+    # A => B given hypothesis
+    hypothesis.deriveRightImplication().prove({hypothesis})
+    # B => A given hypothesis
+    hypothesis.deriveLeftImplication().prove({hypothesis})
+    # forall_{A, B} (A <=> B) => (B <=> A)
+    return Implies(hypothesis, Iff(B, A).concludeViaComposition()).generalize((A, B)).qed()
+booleans.deriveOnDemand('iffSymmetry', iffSymmetryDerivation)
+
+# forall_{A, B, C} (A <=> B and B <=> C) => (A <=> C)
+def iffTransitivityDerivation():    
+    # hypothesis = (A <=> B) and (B <=> C)
+    hypothesis = And(Iff(A, B), Iff(B, C))
+    AiffB, BiffC = hypothesis.decompose() 
+    # B assuming A <=> B and A
+    AiffB.deriveRight().prove({AiffB, A}) 
+    # A => C assuming A <=> B, B <=> C
+    Implies(A, BiffC.deriveRight()).prove({hypothesis})      
+    # C assuming B <=> C and C
+    BiffC.deriveLeft().prove({BiffC, C})
+    # C => A assuming A <=> B, B <=> C
+    Implies(C, AiffB.deriveLeft()).prove({hypothesis})   
+    # A <=> C assuming hypothesis
+    AiffC = Iff(A, C).concludeViaComposition().prove({hypothesis})
+    # forall_{A, B, C} (A <=> B and B <=> C) => (A <=> C)
+    return Implies(hypothesis, AiffC).generalize((A, B, C)).qed()
+booleans.deriveOnDemand('iffTransitivity', iffTransitivityDerivation)
 
 # Not(TRUE) => FALSE
 booleans.deriveOnDemand('notTimpliesF', lambda : booleans.notT.rightImplViaEquivalence().qed())
@@ -932,7 +1201,7 @@ def iffTTderivation():
     # (TRUE <=> TRUE) = (TRUE => TRUE) and (TRUE => TRUE)
     iffSpecTT = Iff(TRUE, TRUE).definition()
     # [(TRUE => TRUE) and (TRUE => TRUE)] = TRUE, via (TRUE and TRUE) = TRUE
-    rhsEqT = booleans.impliesTT.substitution(Function(And(X, X), [X])).applyTransitivity(booleans.andTT).prove()
+    rhsEqT = booleans.impliesTT.substitution(X, And(X, X)).applyTransitivity(booleans.andTT).prove()
     # (TRUE <=> TRUE) = TRUE
     return iffSpecTT.applyTransitivity(rhsEqT).qed()
 booleans.deriveOnDemand('iffTT', iffTTderivation)
@@ -942,7 +1211,7 @@ def iffFFderivation():
     # (FALSE <=> FALSE) = (FALSE => FALSE) and (FALSE => FALSE)
     iffSpecFF = Iff(FALSE, FALSE).definition()
     # [(FALSE => FALSE) and (FALSE => FALSE)] = TRUE, via (TRUE and TRUE) = TRUE
-    rhsEqT = booleans.impliesFF.substitution(Function(And(X, X), [X])).applyTransitivity(booleans.andTT).prove()
+    rhsEqT = booleans.impliesFF.substitution(X, And(X, X)).applyTransitivity(booleans.andTT).prove()
     # (FALSE <=> FALSE) = TRUE
     return iffSpecFF.applyTransitivity(rhsEqT).qed()
 booleans.deriveOnDemand('iffFF', iffFFderivation)
@@ -952,9 +1221,9 @@ def iffTFderivation():
     # (TRUE <=> FALSE) = (TRUE => FALSE) and (FALSE => TRUE)
     iffSpecTF = Iff(TRUE, FALSE).definition()
     # [(TRUE => FALSE) and (FALSE => TRUE)] = [FALSE and (FALSE => TRUE)]
-    rhsEqFandFimplT = booleans.impliesTF.substitution(Function(And(X, booleans.impliesFT.lhs), [X])).prove()
+    rhsEqFandFimplT = booleans.impliesTF.substitution(X, And(X, booleans.impliesFT.lhs)).prove()
     # [(TRUE => FALSE) and (FALSE => TRUE)] = [FALSE and TRUE]
-    rhsEqFandT = rhsEqFandFimplT.applyTransitivity(booleans.impliesFT.substitution(Function(And(FALSE, X), [X]))).prove()
+    rhsEqFandT = rhsEqFandFimplT.applyTransitivity(booleans.impliesFT.substitution(X, And(FALSE, X))).prove()
     # [(TRUE => FALSE) and (FALSE => TRUE)] = FALSE
     rhsEqF = rhsEqFandT.applyTransitivity(booleans.andFT).prove()
     # (TRUE <=> FALSE) = FALSE
@@ -966,9 +1235,9 @@ def iffFTderivation():
     # (FALSE <=> TRUE) = (FALSE => TRUE) and (TRUE => FALSE)
     iffSpecFT = Iff(FALSE, TRUE).definition()
     # [(FALSE => TRUE) and (TRUE => FALSE)] = [(FALSE => TRUE) and FALSE]
-    rhsEqFimplTandF = booleans.impliesTF.substitution(Function(And(booleans.impliesFT.lhs, X), [X])).prove()
+    rhsEqFimplTandF = booleans.impliesTF.substitution(X, And(booleans.impliesFT.lhs, X)).prove()
     # [(FALSE => TRUE) and (TRUE => FALSE)] = [TRUE and FALSE]
-    rhsEqTandF = rhsEqFimplTandF.applyTransitivity(booleans.impliesFT.substitution(Function(And(X, FALSE), [X]))).prove()
+    rhsEqTandF = rhsEqFimplTandF.applyTransitivity(booleans.impliesFT.substitution(X, And(X, FALSE))).prove()
     # [(FALSE => TRUE) and (TRUE => FALSE)] = FALSE
     rhsEqF = rhsEqTandF.applyTransitivity(booleans.andTF).prove()
     # (TRUE <=> FALSE) = FALSE
@@ -984,11 +1253,11 @@ def conjunctionIntroDerivation():
     # TRUE AND TRUE
     booleans.trueAndTrue
     # (TRUE and B) assuming B via (TRUE and TRUE)
-    BeqT.lhsSubstitute(Function(And(TRUE, X), [X])).prove({B})
+    BeqT.lhsSubstitute(X, And(TRUE, X)).prove({B})
     # (A and B) assuming A, B via (TRUE and TRUE)
-    AeqT.lhsSubstitute(Function(And(X, B), [X])).prove({A, B})
+    AeqT.lhsSubstitute(X, And(X, B)).prove({A, B})
     # forall_{A | A, B | B} (A and B)
-    return And(A, B).generalize([A, B], [A, B]).qed()
+    return And(A, B).generalize((A, B), (A, B)).qed()
 booleans.deriveOnDemand('conjunctionIntro', conjunctionIntroDerivation)
 
 # forall_{A} inBool(A) => (A=TRUE or A=FALSE)
@@ -996,15 +1265,15 @@ def unfoldInBoolDerivation():
     from sets import sets, In, Singleton
     from equality import Equals
     # [A in ({TRUE} union {FALSE})] assuming inBool(A)
-    AinTunionF = booleans.boolsDef.rhsSubstitute(Function(In(A, X), [X])).prove({inBool(A)})
+    AinTunionF = booleans.boolsDef.rhsSubstitute(X, In(A, X)).prove({inBool(A)})
     # (A in {TRUE}) or (A in {FALSE}) assuming inBool(A)
     AinTunionF.unfold().prove({inBool(A)})
     # A=TRUE or (A in {FALSE}) assuming inBool(A)
-    sets.singletonDef.specialize({x:A, y:TRUE}).rhsSubstitute(Function(Or(X, In(A, Singleton(FALSE))), [X])).prove({inBool(A)})
+    sets.singletonDef.specialize({x:A, y:TRUE}).rhsSubstitute(X, Or(X, In(A, Singleton(FALSE)))).prove({inBool(A)})
     # A=TRUE or A=FALSE assuming inBool(A)
-    conclusion = sets.singletonDef.specialize({x:A, y:FALSE}).rhsSubstitute(Function(Or(Equals(A, TRUE), X), [X])).prove({inBool(A)})
+    conclusion = sets.singletonDef.specialize({x:A, y:FALSE}).rhsSubstitute(X, Or(Equals(A, TRUE), X)).prove({inBool(A)})
     # forall_{A} inBool(A) => (A=TRUE or A=FALSE)
-    return Implies(inBool(A), conclusion).generalize([A]).qed()
+    return Implies(inBool(A), conclusion).generalize(A).qed()
 booleans.deriveOnDemand('unfoldInBool', unfoldInBoolDerivation)
 
 # forall_{A} (A=TRUE or A=FALSE) => inBool(A)
@@ -1014,22 +1283,22 @@ def foldInBoolDerivation():
     # hypothesis = (A=TRUE or A=FALSE)
     hypothesis = Or(Equals(A, TRUE), Equals(A, FALSE))
     # (A=TRUE) or (A in {FALSE}) assuming hypothesis
-    sets.singletonDef.specialize({x:A, y:FALSE}).lhsSubstitute(Function(Or(Equals(A, TRUE), X), [X])).prove({hypothesis})
+    sets.singletonDef.specialize({x:A, y:FALSE}).lhsSubstitute(X, Or(Equals(A, TRUE), X)).prove({hypothesis})
     # (A in {TRUE}) or (A in {FALSE}) assuming hypothesis
-    sets.singletonDef.specialize({x:A, y:TRUE}).lhsSubstitute(Function(Or(X, In(A, Singleton(FALSE))), [X])).prove({hypothesis})
+    sets.singletonDef.specialize({x:A, y:TRUE}).lhsSubstitute(X, Or(X, In(A, Singleton(FALSE)))).prove({hypothesis})
     # [A in ({TRUE} union {FALSE})] assuming hypothesis
     In(A, Union(Singleton(TRUE), Singleton(FALSE))).concludeAsFolded()
     # (A in BOOLEANS) assuming hypothesis
-    booleans.boolsDef.lhsSubstitute(Function(In(A, X), [X])).prove({hypothesis})
+    booleans.boolsDef.lhsSubstitute(X, In(A, X)).prove({hypothesis})
     # forall_{A} (A=TRUE or A=FALSE) => inBool(A)
-    return Implies(hypothesis, inBool(A)).generalize([A]).qed()
+    return Implies(hypothesis, inBool(A)).generalize(A).qed()
 booleans.deriveOnDemand('foldInBool', foldInBoolDerivation)    
     
 # forall_{A} Not(A) => [A => FALSE]
 def contradictionFromNegationDerivation():
     # FALSE assuming Not(A) and A
     Not(A).equateNegatedToFalse().deriveRightViaEquivalence().prove({Not(A), A})
-    return Implies(Not(A), Implies(A, FALSE)).generalize([A]).qed()
+    return Implies(Not(A), Implies(A, FALSE)).generalize(A).qed()
 booleans.deriveOnDemand('contradictionFromNegation', contradictionFromNegationDerivation)
 
 # forall_{A} (A=FALSE) => Not(A)
@@ -1040,8 +1309,8 @@ def notFromEqFalseDerivation():
     # Not(FALSE)
     booleans.notFalse
     # Not(A) assuming A=FALSE because Not(FALSE)
-    notA = AeqF.lhsSubstitute(Function(Not(X), [X])).prove({AeqF})
-    return Implies(AeqF, notA).generalize([A]).qed()
+    notA = AeqF.lhsSubstitute(X, Not(X)).prove({AeqF})
+    return Implies(AeqF, notA).generalize(A).qed()
 booleans.deriveOnDemand('notFromEqFalse', notFromEqFalseDerivation)
 
 # forall_{A} (FALSE=A) => Not(A)
@@ -1051,30 +1320,30 @@ def notFromEqFalseRevDerivation():
     FeqA = Equals(FALSE, A)
     # Not(A) assuming FeqA
     notA = FeqA.deriveReversed().deriveViaBooleanEquality().prove({FeqA})
-    return Implies(FeqA, notA).generalize([A]).qed()
+    return Implies(FeqA, notA).generalize(A).qed()
 booleans.deriveOnDemand('notFromEqFalseRev', notFromEqFalseRevDerivation)
 
 # forall_{A, B} Not(A) => [Not(B) => Not(A or B)]
 def notOrFromNeitherDerivation():
     # Not(A or B) = Not(F or B) assuming Not(A)
-    notAorB_eq_notForB = Not(A).equateNegatedToFalse().substitution(Function(Not(Or(X, B)), [X])).prove({Not(A)})
+    notAorB_eq_notForB = Not(A).equateNegatedToFalse().substitution(X, Not(Or(X, B))).prove({Not(A)})
     # Not(A or B) = Not(F or F) assuming Not(A), Not(B)
-    notAorB_eq_notForF = notAorB_eq_notForB.applyTransitivity(Not(B).equateNegatedToFalse().substitution(Function(Not(Or(FALSE, X)), [X]))).prove({Not(A), Not(B)})
+    notAorB_eq_notForF = notAorB_eq_notForB.applyTransitivity(Not(B).equateNegatedToFalse().substitution(X, Not(Or(FALSE, X)))).prove({Not(A), Not(B)})
     #  Not(A or B) = Not(F) assuming Not(A), Not(B)
-    notAorB_eq_notF = notAorB_eq_notForF.applyTransitivity(booleans.orFF.substitution(Function(Not(X), [X]))).prove({Not(A), Not(B)})
+    notAorB_eq_notF = notAorB_eq_notForF.applyTransitivity(booleans.orFF.substitution(X, Not(X))).prove({Not(A), Not(B)})
     # Not(FALSE)
     booleans.notFalse
     # Not(A or B) assuming Not(A), Not(B)
     notAorB = notAorB_eq_notF.deriveLeftViaEquivalence().prove({Not(A), Not(B)})
     # forall_{A, B} Not(A) => [Not(B) => Not(A or B)]
-    return Implies(Not(A), Implies(Not(B), notAorB)).generalize([A, B]).qed()
+    return Implies(Not(A), Implies(Not(B), notAorB)).generalize((A, B)).qed()
 booleans.deriveOnDemand('notOrFromNeither', notOrFromNeitherDerivation)
 
 # forall_{A, B | Not(A), Not(B)} (A or B) => FALSE
 def orContradictionDerivation():
     # (A or B) => FALSE assuming Not(A), Not(B)
     AorB_impl_F = booleans.notOrFromNeither.specialize().deriveConclusion().deriveConclusion().deriveContradiction().deriveConclusion()
-    return AorB_impl_F.generalize([A, B], [Not(A), Not(B)]).qed()    
+    return AorB_impl_F.generalize((A, B), (Not(A), Not(B))).qed()    
 booleans.deriveOnDemand('orContradiction', orContradictionDerivation)
 
 # forall_{A, B | inBool(A), Not(B)} (A or B) => A
@@ -1084,7 +1353,7 @@ def orImpliesLeftIfNotRightDerivation():
     # By contradiction: A assuming inBool(A), A or B, Not(B)
     Implies(Not(A), FALSE).deriveViaContradiction().prove({inBool(A), Or(A, B), Not(B)})
     # forall_{A, B | inBool(A), Not(B)} (A or B) => A
-    return Implies(Or(A, B), A).generalize([A, B], [inBool(A), Not(B)]).qed()
+    return Implies(Or(A, B), A).generalize((A, B), (inBool(A), Not(B))).qed()
 booleans.deriveOnDemand('orImpliesLeftIfNotRight', orImpliesLeftIfNotRightDerivation)
 
 # forall_{A, B | Not(A), inBool(B)} (A or B) => B
@@ -1094,7 +1363,7 @@ def orImpliesRightIfNotLeftDerivation():
     # By contradiction: B assuming inBool(B), (A or B), Not(A)
     Implies(Not(B), FALSE).deriveViaContradiction().prove({inBool(B), Or(A, B), Not(A)})
     # forall_{A, B | Not(A), inBool(B)} (A or B) => B
-    return Implies(Or(A, B), B).generalize([A, B], [Not(A), inBool(B)]).qed()
+    return Implies(Or(A, B), B).generalize((A, B), (Not(A), inBool(B))).qed()
 booleans.deriveOnDemand('orImpliesRightIfNotLeft', orImpliesRightIfNotLeftDerivation)
 
 # forall_{A} A => Not(Not(A))
@@ -1102,27 +1371,28 @@ def doubleNegationDerivation():
     # A=TRUE assuming A
     AeqT = deriveStmtEqTrue(A)
     # [Not(A)=FALSE] assuming A=TRUE
-    AeqT.substitution(Function(Not(X), [X])).applyTransitivity(booleans.notT).prove({AeqT})
+    AeqT.substitution(X, Not(X)).applyTransitivity(booleans.notT).prove({AeqT})
     # [Not(A)=FALSE] => Not(Not(A))
     booleans.notFromEqFalse.specialize({A:Not(A)}).prove()
     # forall_{A} A => Not(Not(A))
-    return Implies(A, Not(Not(A))).generalize([A]).qed()
+    return Implies(A, Not(Not(A))).generalize(A).qed()
 booleans.deriveOnDemand('doubleNegation', doubleNegationDerivation)
 
 # forall_{A} A => [Not(A)=FALSE]
 def eqFalseFromNegationDerivation():
     # Not(Not(A)) assuming A
     notNotA = Not(Not(A)).concludeViaDoubleNegation()
-    return Implies(A, notNotA.equateNegatedToFalse()).generalize([A]).qed()
+    return Implies(A, notNotA.equateNegatedToFalse()).generalize(A).qed()
 booleans.deriveOnDemand('eqFalseFromNegation', eqFalseFromNegationDerivation)
 
 # forall_{A} A => [FALSE=Not(A)]
 def eqFalseRevFromNegationDerivation():
     # Not(Not(A)) assuming A
     notNotA = Not(Not(A)).concludeViaDoubleNegation()
-    return Implies(A, notNotA.equateNegatedToFalse().deriveReversed()).generalize([A]).qed()
+    return Implies(A, notNotA.equateNegatedToFalse().deriveReversed()).generalize(A).qed()
 booleans.deriveOnDemand('eqFalseRevFromNegation', eqFalseRevFromNegationDerivation)
 
+"""
 # forall_{A | inBool(A)} Not(Not(A)) => A
 def fromDoubleNegationDerivation():
     # hypothesis = Not(Not(A))
@@ -1130,10 +1400,11 @@ def fromDoubleNegationDerivation():
     # FALSE assuming Not(A), Not(Not(A))
     hypothesis.equateNegatedToFalse().deriveRightViaEquivalence().prove({Not(A), hypothesis})
     # [Not(A) => FALSE] => A assuming inBool(A)
-    booleans.hypotheticalContraNegation.specialize().prove({inBool(A)})
+    booleans.contradictoryValidation.specialize().prove({inBool(A)})
     # inBool(A) => [Not(Not(A)) => A] via hypothetical reasoning
-    return Implies(hypothesis, A).generalize([A], [inBool(A)]).qed()
+    return Implies(hypothesis, A).generalize(A, inBool(A)).qed()
 booleans.deriveOnDemand('fromDoubleNegation', fromDoubleNegationDerivation)
+"""
 
 # forall_{A | inBool(A)} (A != FALSE) => A
 def fromNotFalseDerivation():
@@ -1152,23 +1423,23 @@ def fromNotFalseDerivation():
     # A assuming inBool(A), Not(A=FALSE)
     AeqT_or_AeqF.deriveLeftIfNotRight().deriveViaBooleanEquality().prove({inBool(A), AnotF})
     # forall_{A | inBool(A)} Not(A=FALSE) => A
-    return Implies(AnotF, A).generalize([A], [inBool(A)]).qed()
+    return Implies(AnotF, A).generalize(A, inBool(A)).qed()
 booleans.deriveOnDemand('fromNotFalse', fromNotFalseDerivation)
 
 # forall_{A, B | inBool(B)} [Not(B) => Not(A)] => [A=>B] 
 def transpositionFromNegatedDerivation():
-    # Contradiction proof of B assuming (Not(B)=>Not(A)), A, and inBool(B)
-    notBimplNotA = Implies(Not(B), Not(A))
+    # hypothesis = [Not(B) => Not(A)]
+    hypothesis = Implies(Not(B), Not(A))
     # A=FALSE assuming Not(B)=>Not(A) and Not(B)
-    AeqF = notBimplNotA.deriveConclusion().equateNegatedToFalse().prove({notBimplNotA, Not(B)})
+    AeqF = Not(A).equateNegatedToFalse().prove({hypothesis, Not(B)})
     # FALSE assuming Not(B)=>Not(A), Not(B), and A
-    AeqF.deriveRightViaEquivalence().prove({notBimplNotA, Not(B), A})
+    AeqF.deriveRightViaEquivalence().prove({hypothesis, Not(B), A})
     # B assuming inBool(B), (Not(B)=>Not(A)), A
-    Implies(Not(B), FALSE).deriveViaContradiction().prove({inBool(B), notBimplNotA, A})
+    Implies(Not(B), FALSE).deriveViaContradiction().prove({inBool(B), hypothesis, A})
     # [Not(B) => Not(A)] => [A => B] by nested hypothetical reasoning assuming inBool(B)
-    transpositionExpr = Implies(notBimplNotA, Implies(A, B)).prove({inBool(B)})
+    transpositionExpr = Implies(hypothesis, Implies(A, B)).prove({inBool(B)})
     # forall_{A, B | inBool(B)} [A => B] => [Not(B) => Not(A)]
-    return transpositionExpr.generalize([A, B], [inBool(B)]).qed()
+    return transpositionExpr.generalize((A, B), inBool(B)).qed()
 booleans.deriveOnDemand('transpositionFromNegated', transpositionFromNegatedDerivation)
 
 # forall_{A, B | inBool(B)}  [A=>B] => [A => Not(Not(B))]
@@ -1178,7 +1449,7 @@ def doubleNegateConclusionDerivation():
     # [A=>B] => [A => Not(Not(B))] assuming inBool(B)
     innerExpr = Implies(Implies(A, B), Implies(A, notNotB)).prove({inBool(B)})
     # forall_{A, B | inBool(B)}  [A=>B] => [A => Not(Not(B))]
-    return innerExpr.generalize([A, B], [inBool(B)]).qed()
+    return innerExpr.generalize((A, B), inBool(B)).qed()
 booleans.deriveOnDemand('doubleNegateConclusion', doubleNegateConclusionDerivation)
 
 # forall_{A, B | inBool(A), inBool(B)} [Not(B) => A] => [Not(A)=>B] 
@@ -1190,7 +1461,7 @@ def transpositionFromNegatedHypothesisDerivation():
     # [Not(B) => A] => [Not(A)=>B] assuming inBool(A) and inBool(B)
     transpositionExpr = fromHyp.applySyllogism(toConclusion).prove({inBool(A), inBool(B)})
     # forall_{A, B | inBool(A), inBool(B)} [Not(B) => A] => [Not(A)=>B] 
-    return transpositionExpr.generalize([A, B], [inBool(A), inBool(B)]).qed()
+    return transpositionExpr.generalize((A, B), (inBool(A), inBool(B))).qed()
 booleans.deriveOnDemand('transpositionFromNegatedHypothesis', transpositionFromNegatedHypothesisDerivation)
 
 # forall_{A, B | inBool(B)} [B => Not(A)] => [A=>Not(B)] 
@@ -1201,7 +1472,7 @@ def transpositionFromNegatedConclusionDerivation():
     # [Not(B=FALSE) => Not(A)] => [A => (B=FALSE)], using inBool(B=FALSE)
     midPointBackHalf = Implies(Not(Equals(B, FALSE)), Not(A)).transposition()
     # [(B != FALSE) => Not(A)] => [Not(B=FALSE) => Not(A)]
-    midPointFrontHalf = NotEquals(B, FALSE).definition().rhsStatementSubstitution(Function(Implies(X, Not(A)), [X])).prove()
+    midPointFrontHalf = NotEquals(B, FALSE).definition().rhsStatementSubstitution(X, Implies(X, Not(A))).prove()
     # [(B != FALSE) => Not(A)] => [A => (B=FALSE)]
     midPoint = midPointFrontHalf.applySyllogism(midPointBackHalf).prove()
     # B assuming (B != FALSE) and inBool(B)
@@ -1217,7 +1488,7 @@ def transpositionFromNegatedConclusionDerivation():
     # [B => Not(A)] => [A=>Not(B)] assuming inBool(B)
     transpositionExpr = fromHyp.applySyllogism(midPoint).applySyllogism(toConclusion).prove({inBool(B)})
     # forall_{A, B | inBool(B)} [B => Not(A)] => [A=>Not(B)] 
-    return transpositionExpr.generalize([A, B], [inBool(B)]).qed()
+    return transpositionExpr.generalize((A, B), inBool(B)).qed()
 booleans.deriveOnDemand('transpositionFromNegatedConclusion', transpositionFromNegatedConclusionDerivation)
 
 # forall_{A, B | inBool(A), inBool(B)} [B=>A] => [Not(A) => Not(B)] 
@@ -1229,7 +1500,7 @@ def transpositionToNegatedDerivation():
     # [B => A] => [Not(A)=>Not(B)] assuming inBool(A), inBool(B)
     transpositionExpr = fromHyp.applySyllogism(toConclusion).prove({inBool(A), inBool(B)})
     # forall_{A, B | inBool(A), inBool(B)} [B=>A] => [Not(A) => Not(B)] 
-    return transpositionExpr.generalize([A, B], [inBool(A), inBool(B)]).qed()
+    return transpositionExpr.generalize((A, B), (inBool(A), inBool(B))).qed()
 booleans.deriveOnDemand('transpositionToNegated', transpositionToNegatedDerivation)
 
 # TRUE != FALSE
@@ -1243,9 +1514,9 @@ def notEqualsFalseDerivation():
     # TRUE != FALSE
     booleans.trueNotFalse
     # (A != FALSE) assuming A
-    AnotF = AeqT.lhsSubstitute(Function(NotEquals(X, FALSE), [X])).prove({A})
+    AnotF = AeqT.lhsSubstitute(X, NotEquals(X, FALSE)).prove({A})
     # forall_{A} A => (A != FALSE)
-    return Implies(A, AnotF).generalize([A]).qed()
+    return Implies(A, AnotF).generalize(A).qed()
 booleans.deriveOnDemand('notEqualsFalse', notEqualsFalseDerivation)
 
 # inBool(TRUE)
@@ -1254,9 +1525,9 @@ def trueInBoolDerivation():
     # [TRUE or FALSE] 
     booleans.orTF.deriveViaBooleanEquality().prove()
     # [TRUE or TRUE=FALSE] via [TRUE or FALSE] and TRUE != FALSE
-    booleans.trueNotFalse.unfold().equateNegatedToFalse().lhsSubstitute(Function(Or(TRUE, X), [X])).prove()
+    booleans.trueNotFalse.unfold().equateNegatedToFalse().lhsSubstitute(X, Or(TRUE, X)).prove()
     # [TRUE=TRUE or TRUE=FALSE] via [TRUE or TRUE=FALSE] and TRUE=TRUE
-    deriveStmtEqTrue(booleans.trueEqTrue).lhsSubstitute(Function(Or(X, Equals(TRUE, FALSE)), [X])).prove()
+    deriveStmtEqTrue(booleans.trueEqTrue).lhsSubstitute(X, Or(X, Equals(TRUE, FALSE))).prove()
     # inBool(TRUE) via [TRUE=TRUE or TRUE=FALSE]
     return inBool(TRUE).concludeAsFolded().qed()
 booleans.deriveOnDemand('trueInBool', trueInBoolDerivation)
@@ -1267,9 +1538,9 @@ def falseInBoolDerivation():
     # [FALSE or TRUE] 
     booleans.orFT.deriveViaBooleanEquality().prove()
     # [FALSE or FALSE=FALSE] via [FALSE or TRUE] and FALSE=FALSE
-    deriveStmtEqTrue(booleans.falseEqFalse).lhsSubstitute(Function(Or(FALSE, X), [X])).prove()
+    deriveStmtEqTrue(booleans.falseEqFalse).lhsSubstitute(X, Or(FALSE, X)).prove()
     # [FALSE=TRUE or FALSE=FALSE] via [FALSE or FALSE=FALSE] and Not(FALSE=TRUE)
-    booleans.falseNotTrue.unfold().equateNegatedToFalse().lhsSubstitute(Function(Or(X, Equals(FALSE, FALSE)), [X])).prove()
+    booleans.falseNotTrue.unfold().equateNegatedToFalse().lhsSubstitute(X, Or(X, Equals(FALSE, FALSE))).prove()
     # inBool(FALSE) via [FALSE=TRUE or FALSE=FALSE]
     return inBool(FALSE).concludeAsFolded().qed()
 booleans.deriveOnDemand('falseInBool', falseInBoolDerivation)
@@ -1277,13 +1548,13 @@ booleans.deriveOnDemand('falseInBool', falseInBoolDerivation)
 # forall_{P} [forall_{A in BOOLEANS} P(A)] => [P(TRUE) and P(FALSE)]
 def unfoldForallOverBoolDerivation():
     # hypothesis = [forall_{A in BOOLEANS} P(A)]
-    hypothesis = Forall([A], PofA, [inBool(A)])
+    hypothesis = Forall(A, PofA, inBool(A))
     # TRUE in BOOLEANS, FALSE in BOOLEANS
     booleans.trueInBool, booleans.falseInBool
     # P(TRUE) and P(FALSE) assuming hypothesis
     conclusion = compose(hypothesis.specialize({A:TRUE}), hypothesis.specialize({A:FALSE})).prove({hypothesis})
     # forall_{P} [forall_{A in BOOLEANS} P(A)] => [P(TRUE) and P(FALSE)]
-    return Implies(hypothesis, conclusion).generalize([P]).qed()
+    return Implies(hypothesis, conclusion).generalize(P).qed()
 booleans.deriveOnDemand('unfoldForallOverBool', unfoldForallOverBoolDerivation)
 
 # forall_{A} A=TRUE => inBool(A)
@@ -1294,9 +1565,9 @@ def inBoolIfEqTrueDerivation():
     # inBool(TRUE)
     booleans.trueInBool.prove()
     # inBool(A) assuming hypothesis
-    conclusion = hypothesis.lhsSubstitute(Function(inBool(X), [X])).prove({hypothesis})
+    conclusion = hypothesis.lhsSubstitute(X, inBool(X)).prove({hypothesis})
     # forall_{A} A=TRUE => inBool(A)
-    return Implies(hypothesis, conclusion).generalize([A]).qed()
+    return Implies(hypothesis, conclusion).generalize(A).qed()
 booleans.deriveOnDemand('inBoolIfEqTrue', inBoolIfEqTrueDerivation)
 
 # forall_{A} TRUE=A => inBool(A)
@@ -1307,9 +1578,9 @@ def inBoolIfEqTrueRevDerivation():
     # inBool(TRUE)
     booleans.trueInBool.prove()
     # inBool(A) assuming hypothesis
-    conclusion = hypothesis.rhsSubstitute(Function(inBool(X), [X])).prove({hypothesis})
+    conclusion = hypothesis.rhsSubstitute(X, inBool(X)).prove({hypothesis})
     # forall_{A} (TRUE=A) => inBool(A)
-    return Implies(hypothesis, conclusion).generalize([A]).qed()
+    return Implies(hypothesis, conclusion).generalize(A).qed()
 booleans.deriveOnDemand('inBoolIfEqTrueRev', inBoolIfEqTrueRevDerivation)
 
 # forall_{A} A=FALSE => inBool(A)
@@ -1320,9 +1591,9 @@ def inBoolIfEqFalseDerivation():
     # inBool(FALSE)
     booleans.falseInBool.prove()
     # inBool(A) assuming hypothesis
-    conclusion = hypothesis.lhsSubstitute(Function(inBool(X), [X])).prove({hypothesis})
+    conclusion = hypothesis.lhsSubstitute(X, inBool(X)).prove({hypothesis})
     # forall_{A} A=FALSE => inBool(A)
-    return Implies(hypothesis, conclusion).generalize([A]).qed()
+    return Implies(hypothesis, conclusion).generalize(A).qed()
 booleans.deriveOnDemand('inBoolIfEqFalse', inBoolIfEqFalseDerivation)
 
 # forall_{A} FALSE=A => inBool(A)
@@ -1333,9 +1604,9 @@ def inBoolIfEqFalseRevDerivation():
     # inBool(FALSE)
     booleans.falseInBool.prove()
     # inBool(A) assuming hypothesis
-    conclusion = hypothesis.rhsSubstitute(Function(inBool(X), [X])).prove({hypothesis})
+    conclusion = hypothesis.rhsSubstitute(X, inBool(X)).prove({hypothesis})
     # forall_{A} (FALSE=A) => inBool(A)
-    return Implies(hypothesis, conclusion).generalize([A]).qed()
+    return Implies(hypothesis, conclusion).generalize(A).qed()
 booleans.deriveOnDemand('inBoolIfEqFalseRev', inBoolIfEqFalseRevDerivation)
 
 # forall_{A in Bool, B in Bool, C in Bool} (A=>C and B=>C) => ((A or B) => C)
@@ -1351,12 +1622,12 @@ def hypotheticalDisjunctionDerivation():
     # B assuming inBool(A, B, C), (A=>C and B=>C), (A or B), Not(C)
     AorB.deriveRightIfNotLeft().prove(ABCareBool | {hypothesis, AorB, Not(C)})
     # Not(TRUE) assuming inBool(A, B, C), (A=>C and B=>C), (A or B), Not(C)
-    deriveStmtEqTrue(C).rhsSubstitute(Function(Not(X), [X])).prove(ABCareBool | {hypothesis, AorB, Not(C)})
+    deriveStmtEqTrue(C).rhsSubstitute(X, Not(X)).prove(ABCareBool | {hypothesis, AorB, Not(C)})
     # FALSE assuming inBool(A, B, C), (A=>C and B=>C), (A or B), Not(C)
     booleans.notT.deriveRightViaEquivalence().prove(ABCareBool | {hypothesis, AorB, Not(C)})
     # Contradiction proof of C assuming (A=>C and B=>C), (A or B), inBool(A), and inBool(B)
     Implies(Not(C), FALSE).deriveViaContradiction().prove(ABCareBool | {hypothesis, AorB})
-    return Implies(hypothesis, Implies(AorB, C)).generalize([A, B, C], ABCareBoolInOrder).qed()
+    return Implies(hypothesis, Implies(AorB, C)).generalize((A, B, C), ABCareBoolInOrder).qed()
 booleans.deriveOnDemand('hypotheticalDisjunction', hypotheticalDisjunctionDerivation)
 
 # forall_{P} [P(TRUE) and P(FALSE)] => [forall_{A in BOOLEANS} P(A)]
@@ -1372,81 +1643,173 @@ def foldForallOverBoolDerivation():
         eqExpr.deduceInBool()
     # P(TRUE), P(FALSE) assuming hypothesis
     for case in hypothesis.decompose(): case.prove({hypothesis})
-    # [A=TRUE => P(A)=TRUE and A=FALSE => P(A)=TRUE] => [(A=TRUE or A=FALSE) => P(A)=TRUE]
-    specDisj = booleans.hypotheticalDisjunction.specialize({A:AeqT, B:AeqF, C:PofAeqT}).prove()
     # A=TRUE => P(A)=TRUE assuming hypothesis
-    AeqTimplPofA = Implies(AeqT, deriveStmtEqTrue(AeqT.lhsSubstitute(Function(PofA, [A])))).prove({hypothesis})
+    Implies(AeqT, deriveStmtEqTrue(AeqT.lhsSubstitute(A, PofA))).prove({hypothesis})
     # A=FALSE => P(A)=TRUE assuming hypothesis
-    AeqFimplPofA = Implies(AeqF, deriveStmtEqTrue(AeqF.lhsSubstitute(Function(PofA, [A])))).prove({hypothesis})
-    # [A=TRUE => P(A) and A=FALSE => P(A)=TRUE] assuming hypothesis
-    compose(AeqTimplPofA, AeqFimplPofA).prove({hypothesis})
-    # [(A=TRUE or A=FALSE) => P(A)=TRUE] assuming hypothesis
-    AeqTorAeqFimplPofAeqT = specDisj.deriveConclusion().prove({hypothesis})
-    # (A=TRUE or A=FALSE) => P(A)
-    Implies(AeqTorAeqFimplPofAeqT.hypothesis, AeqTorAeqFimplPofAeqT.deriveConclusion().deriveViaBooleanEquality()).prove({hypothesis})
-    # forall_{A in BOOLEANS} P(A) assuming hypothesis
-    conclusion = PofA.generalize([A], [inBool(A).concludeAsFolded()]).prove({hypothesis})
+    Implies(AeqF, deriveStmtEqTrue(AeqF.lhsSubstitute(A, PofA))).prove({hypothesis})
+    # P(A) assuming hypothesis, (A in BOOLEANS)
+    inBool(A).unfold().deriveCommonConclusion(PofAeqT).deriveViaBooleanEquality().prove({hypothesis, inBool(A)})
     # forall_{P} P(TRUE) and P(FALSE) => forall_{A in BOOLEANS} P(A)
-    return Implies(hypothesis, conclusion).generalize([P]).qed()
+    return Implies(hypothesis, PofA.generalize(A, inBool(A))).generalize(P).qed()
 booleans.deriveOnDemand('foldForallOverBool', foldForallOverBoolDerivation)
 
-# forall_{P} [P(TRUE) and P(FALSE)] => {forall_{A in BOOLEANS} P(A) = TRUE}
+# forall_{P} [P(TRUE) and P(FALSE)] => {[forall_{A in BOOLEANS} P(A)] = TRUE}
 def forallBoolEvalTrueDerivation():
     # P(TRUE) and P(FALSE) => forall_{A in BOOLEANS} P(A)
     folding = booleans.foldForallOverBool.specialize()
-    # forall_{P} [P(TRUE) and P(FALSE)] => {forall_{A in BOOLEANS} P(A) = TRUE}
-    return Implies(folding.hypothesis, deriveStmtEqTrue(folding.deriveConclusion())).generalize([P]).qed()
+    # forall_{P} [P(TRUE) and P(FALSE)] => {[forall_{A in BOOLEANS} P(A)] = TRUE}
+    return Implies(folding.hypothesis, deriveStmtEqTrue(folding.deriveConclusion())).generalize(P).qed()
 booleans.deriveOnDemand('forallBoolEvalTrue', forallBoolEvalTrueDerivation)
+
+# forall_{P, Q*, R*} forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x*, y*) => forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*)
+def forallBundlingDerivation():
+    hypothesis = Forall(xStar, Forall(yStar, P_of_xStar_yStar, multiR_of_yStar), multiQ_of_xStar)
+    conclusion = hypothesis.specialize().specialize().generalize((xStar, yStar), (multiQ_of_xStar, multiR_of_yStar)).prove({hypothesis})
+    return Implies(hypothesis, conclusion).generalize((P, multiQ, multiR)).qed()
+booleans.deriveOnDemand('forallBundling', forallBundlingDerivation)
+
+# forall_{P, Q*, R*} forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*) => forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x, y*) 
+def forallUnravellingDerivation():
+    hypothesis = Forall((xStar, yStar), P_of_xStar_yStar, (multiQ_of_xStar, multiR_of_yStar))
+    conclusion = hypothesis.specialize().generalize(yStar, multiR_of_yStar).generalize(xStar, multiQ_of_xStar).prove({hypothesis})
+    return Implies(hypothesis, conclusion).generalize((P, multiQ, multiR)).qed()
+booleans.deriveOnDemand('forallUnravelling', forallUnravellingDerivation)
 
 # forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) => (A = B)
 def iffOverBoolImplEqDerivation():
     from equality import Equals
-    return Forall([A, B], Implies(Iff(A, B), Equals(A, B)), [inBool(A), inBool(B)]).proveByEval()
+    # Note that proveByEval doesn't work for bundled Forall yet, 
+    # but later we'll be able to do this kind of thing in one step.
+    # forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) => (A = B)
+    nestedVersion = Forall(A, Forall(B, Implies(Iff(A, B), Equals(A, B)), inBool(B)), inBool(A)).proveByEval()
+    # forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) => (A = B)
+    return nestedVersion.specialize().specialize().generalize((A, B), (inBool(A), inBool(B))).qed()
 booleans.deriveOnDemand('iffOverBoolImplEq', iffOverBoolImplEqDerivation)
+
+# forall_{A in booleans} A = Not(Not(A))
+def doubleNegationEquivDerivation():
+    # A => Not(Not(A))
+    doubleNegationImplied = booleans.doubleNegation.specialize().prove()
+    # Not(Not(A)) => A
+    impliesDoubleNegation = booleans.fromDoubleNegation.specialize().prove()
+    # [A => Not(Not(A))] in BOOLEANS if A in BOOLEANS
+    doubleNegationImplied.deduceInBool().prove({inBool(A)})
+    # [Not(Not(A)) => A] in BOOLEANS if A in BOOLEANS
+    impliesDoubleNegation.deduceInBool().prove({inBool(A)})
+    # forall_{A} A = Not(Not(A))
+    return Iff(A, Not(Not(A))).concludeViaComposition().deriveEquality().generalize(A, inBool(A)).qed()
+booleans.deriveOnDemand('doubleNegationEquiv', doubleNegationEquivDerivation)
+
+# forall_{P, Q*, R*} forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*) = forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x, y*) 
+def forallBundledEquivDerivation():
+    # forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x*, y*) => forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*)
+    forallBundlingSpec = booleans.forallBundling.specialize().prove()
+    # forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*) => forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x, y*) 
+    booleans.forallUnravelling.specialize().prove()
+    # lhs = forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x*, y*)
+    # rhs = forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*)
+    lhs, rhs = forallBundlingSpec.conclusion, forallBundlingSpec.hypothesis
+    # lhs in BOOLEANS, rhs in BOOLEANS
+    for expr in (lhs, rhs): expr.deduceInBool().prove()
+    # lhs = rhs
+    equiv = Iff(lhs, rhs).concludeViaComposition().deriveEquality().prove()
+    return equiv.generalize((P, multiQ, multiR)).qed()
+booleans.deriveOnDemand('forallBundledEquiv', forallBundledEquivDerivation)
+
+"""
+# forall_{P, Q*, R*} [forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x*, y*) = val] => [forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*) = val]
+def forallEvalBundlingDerivation(val):
+    # forall_{y* | R*(y*)} P(x*, y*) => forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*)
+    booleans.forallBundling.specialize()
+    
+    hypothesis = Forall(xStar, Forall(yStar, P_of_xStar_yStar, multiR_of_yStar), multiQ_of_xStar)
+    conclusion = hypothesis.specialize().specialize().generalize((xStar, yStar), (multiQ_of_xStar, multiR_of_yStar)).prove({hypothesis})
+    return Implies(hypothesis, conclusion).generalize((P, multiQ, multiR)).qed()
+booleans.deriveOnDemand('forallEvalTrueBundling', forallEvalBundlingDerivation(TRUE))
+booleans.deriveOnDemand('forallEvalFalseBundling', forallEvalBundlingDerivation(FALSE))
+"""
+
+"""
+# forall_{P, Q*} [forall_{x* | Q*(x*)} P(TRUE, x*) and forall_{x* | Q(x*)} P(FALSE, x*)] => {[forall_{A in BOOLEANS, x* | Q(x*)} P(A, x*)] = TRUE}
+def forallBoolEtcEvalTrueDerivation():
+    P_of_T_xStar = Operation(P, (TRUE, xStar))
+    P_of_F_xStar = Operation(P, (FALSE, xStar))
+    P_of_A_xStar = Operation(P, (A, xStar))
+    # hypothesis = [forall_{x* | Q*(x*)} P(TRUE, x*) and forall_{x* | Q*(x*)} P(FALSE, x*)]
+    hypothesis = And(Forall(xStar, P_of_T_xStar, multiQ_of_xStar), Forall(xStar, P_of_F_xStar, multiQ_of_xStar))
+    # unbundled = [forall_{A in BOOLEANS} forall_{x* | Q*(x*)} P(A, x)] assuming hypothesis
+    unbundled = Forall(A, Forall(xStar, P_of_A_xStar, multiQ_of_xStar), inBool(A)).concludeAsFolded().prove({hypothesis})
+    # forall_{A in BOOLEANS, x* | Q*(x*)} P(A, x) = TRUE assuming hypothesis
+    conclusion = deriveStmtEqTrue(unbundled.deriveBundled()).prove({hypothesis})
+    # forall_{P} [forall_{x* | Q*(x*)} P(TRUE, x*) and forall_{x* | Q(x*)} P(FALSE, x*)] => {[forall_{A in BOOLEANS, x* | Q(x*)} P(A, x*)] = TRUE}
+    return Implies(hypothesis, conclusion).generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('forallBoolEtcEvalTrue', forallBoolEtcEvalTrueDerivation)
+"""
+  
+# forall_{P, Q*} [forall_{x* | Q*(x*)} P(x*)] = [forall_{x* | Q*(x*)} {P(x*)=TRUE}]
+def forallEqTrueEquivDerivation():
+    from equality import Equals
+    # forallPx = [forall_{x* | Q*(x*)} P(x*)]
+    forallPx = Forall(xStar, P_of_xStar, multiQ_of_xStar)
+    # forallPxEqT = [forall_{x* | Q*(x*)} {P(x*)=TRUE}]
+    forallPxEqT = Forall(xStar, Equals(P_of_xStar, TRUE), multiQ_of_xStar)
+    # forallPxEqT assuming forallPx
+    deriveStmtEqTrue(forallPx.specialize()).generalize(xStar, multiQ_of_xStar).prove({forallPx})
+    # forallPx assuming forallPxEqT
+    forallPxEqT.specialize().deriveViaBooleanEquality().generalize(xStar, multiQ_of_xStar).prove({forallPxEqT})
+    # [forall_{x* | Q*(x*)} P(x*)] <=> [forall_{x* | Q*(x*)} {P(x*)=TRUE}]
+    iffForalls = Iff(forallPx, forallPxEqT).concludeViaComposition().prove()
+    # forallPx in BOOLEANS, forallPxEqT in BOOLEANS
+    for expr in (forallPx, forallPxEqT):
+        expr.deduceInBool()
+    # forall_{P, Q*} [forall_{x* | Q*(x*)} P(x*)] = [forall_{x* | Q*(x*)} {P(x*)=TRUE}]
+    return iffForalls.deriveEquality().generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('forallEqTrueEquiv', forallEqTrueEquivDerivation)
 
 # forall_{A in BOOLEANS, B in BOOLEANS} (A => B) in BOOLEANS                                                                                                        
 def implicationClosureDerivation():
     from equality import Equals
     # [(A=>B) = TRUE] or [(A=>B) = FALSE] assuming A, B in BOOLEANS
-    Forall([A, B], Or(Equals(Implies(A, B), TRUE), Equals(Implies(A, B), FALSE)), [inBool(A), inBool(B)]).proveByEval().specialize().prove({inBool(A), inBool(B)})
+    Forall((A, B), Or(Equals(Implies(A, B), TRUE), Equals(Implies(A, B), FALSE)), (inBool(A), inBool(B))).proveByEval().specialize().prove({inBool(A), inBool(B)})
     # forall_{A in BOOLEANS} (A => B) in BOOLEANS  
-    return inBool(Implies(A, B)).concludeAsFolded().generalize([A, B], [inBool(A), inBool(B)]).qed()
+    return inBool(Implies(A, B)).concludeAsFolded().generalize((A, B), (inBool(A), inBool(B))).qed()
 booleans.deriveOnDemand('implicationClosure', implicationClosureDerivation)
+
 
 # forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) in BOOLEANS                                                                                                        
 def iffClosureDerivation():
     from equality import Equals
     # [(A<=>B) = TRUE] or [(A<=>B) = FALSE] assuming A, B in BOOLEANS
-    Forall([A, B], Or(Equals(Iff(A, B), TRUE), Equals(Iff(A, B), FALSE)), [inBool(A), inBool(B)]).proveByEval().specialize().prove({inBool(A), inBool(B)})
+    Forall((A, B), Or(Equals(Iff(A, B), TRUE), Equals(Iff(A, B), FALSE)), (inBool(A), inBool(B))).proveByEval().specialize().prove({inBool(A), inBool(B)})
     # forall_{A in BOOLEANS} (A <=> B) in BOOLEANS  
-    return inBool(Iff(A, B)).concludeAsFolded().generalize([A, B], [inBool(A), inBool(B)]).qed()
+    return inBool(Iff(A, B)).concludeAsFolded().generalize((A, B), (inBool(A), inBool(B))).qed()
 booleans.deriveOnDemand('implicationClosure', implicationClosureDerivation)
 
 # forall_{A in BOOLEANS, B in BOOLEANS} (A and B) in BOOLEANS                                                                                                        
 def conjunctionClosureDerivation():
     from equality import Equals
     # [(A and B) = TRUE] or [(A and B) = FALSE] assuming A, B in BOOLEANS
-    Forall([A, B], Or(Equals(And(A, B), TRUE), Equals(And(A, B), FALSE)), [inBool(A), inBool(B)]).proveByEval().specialize().prove({inBool(A), inBool(B)})
+    Forall((A, B), Or(Equals(And(A, B), TRUE), Equals(And(A, B), FALSE)), (inBool(A), inBool(B))).proveByEval().specialize().prove({inBool(A), inBool(B)})
     # forall_{A in BOOLEANS} (A and  B) in BOOLEANS  
-    return inBool(And(A, B)).concludeAsFolded().generalize([A, B], [inBool(A), inBool(B)]).qed()
+    return inBool(And(A, B)).concludeAsFolded().generalize((A, B), (inBool(A), inBool(B))).qed()
 booleans.deriveOnDemand('conjunctionClosure', conjunctionClosureDerivation)
 
-# forall_{A in BOOLEANS, B in BOOLEANS} (A of B) in BOOLEANS                                                                                                        
+# forall_{A in BOOLEANS, B in BOOLEANS} (A or B) in BOOLEANS                                                                                                        
 def disjunctionClosureDerivation():
     from equality import Equals
     # [(A or B) = TRUE] or [(A or B) = FALSE] assuming A, B in BOOLEANS
-    Forall([A, B], Or(Equals(Or(A, B), TRUE), Equals(Or(A, B), FALSE)), [inBool(A), inBool(B)]).proveByEval().specialize().prove({inBool(A), inBool(B)})
+    Forall((A, B), Or(Equals(Or(A, B), TRUE), Equals(Or(A, B), FALSE)), (inBool(A), inBool(B))).proveByEval().specialize().prove({inBool(A), inBool(B)})
     # forall_{A in BOOLEANS} (A or  B) in BOOLEANS  
-    return inBool(Or(A, B)).concludeAsFolded().generalize([A, B], [inBool(A), inBool(B)]).qed()
+    return inBool(Or(A, B)).concludeAsFolded().generalize((A, B), (inBool(A), inBool(B))).qed()
 booleans.deriveOnDemand('disjunctionClosure', disjunctionClosureDerivation)
 
 # forall_{A in BOOLEANS} Not(A) in BOOLEANS                                                                                                        
 def negationClosureDerivation():
     from equality import Equals
     # Not(A) = TRUE or Not(A) = FALSE assuming A in BOOLEANS
-    Forall([A], Or(Equals(Not(A), TRUE), Equals(Not(A), FALSE)), [inBool(A)]).proveByEval().specialize().prove({inBool(A)})
+    Forall(A, Or(Equals(Not(A), TRUE), Equals(Not(A), FALSE)), inBool(A)).proveByEval().specialize().prove({inBool(A)})
     # forall_{A in BOOLEANS} Not(A) in BOOLEANS  
-    return inBool(Not(A)).concludeAsFolded().generalize([A], [inBool(A)]).qed()
+    return inBool(Not(A)).concludeAsFolded().generalize(A, inBool(A)).qed()
 booleans.deriveOnDemand('negationClosure', negationClosureDerivation)
 
 # forall_{A in BOOLEANS} [A => FALSE] => Not(A)                                            
@@ -1454,106 +1817,195 @@ def hypotheticalContradictionDerivation():
     # inBool(Not(A)) assuming inBool(A)    
     Not(A).deduceInBool().prove({inBool(A)})
     # [Not(Not(A)) => FALSE] => Not(A) assuming inBool(A)                                     
-    booleans.hypotheticalContraNegation.specialize({A:Not(A)}).prove({inBool(A)})
+    booleans.contradictoryValidation.specialize({A:Not(A)}).prove({inBool(A)})
     # A assuming Not(Not(A)) and inBool(A)                                                    
     Not(Not(A)).deriveViaDoubleNegation().prove({inBool(A), Not(Not(A))})
     # forall_{A in BOOLEANS} [A => FALSE] => Not(A)                                        
-    return Implies(Implies(A, FALSE), Not(A)).generalize([A], [inBool(A)]).qed()
-booleans.deriveOnDemand('hypotheticalContradiction', hypotheticalContradictionDerivation)
+    return Implies(Implies(A, FALSE), Not(A)).generalize(A, inBool(A)).qed()
+booleans.deriveOnDemand('hypotheticalContradiction', hypotheticalContradictionDerivation)    
 
-# forall_{P, Q} forall_{x | Q(x)} [P(x) => exists_{y | Q(x)} P(y)]
+# forall_{P, Q*} [notexists_{x* | Q*(x*)} P(x*) = forall_{x* | Q*(x*)} (P(x*) != TRUE)]
+def existsDefNegationDerivation():
+    from equality import NotEquals
+    # [exists_{x* | Q*(x*)} P(x*)] = not(forall_{x* | Q*(x*)} (P(x*) != TRUE))
+    existsDefSpec = booleans.existsDef.specialize().prove()
+    # notexists_{x* | Q*(x*)} P(x*) = not[exists_{x* | Q*(x*)} P(x*)]
+    notExistsDefSpec = booleans.notExistsDef.specialize().prove()
+    # rhs = forall_{x* | Q*(x*)} (P(x*) != TRUE)
+    rhs = Forall(xStar, NotEquals(P_of_xStar, TRUE), multiQ_of_xStar)
+    # [forall_{x* | Q*(x*)} (P(x*) != TRUE)] in BOOLEANS
+    rhs.deduceInBool().prove()
+    # not(not(forall_{x* | Q*(x*)} (P(x*) != TRUE))) = forall_{x* | Q*(x*)} (P(x*) != TRUE))
+    doubleNegatedForall = Not(Not(rhs)).deduceDoubleNegationEquiv().deriveReversed().prove()
+    # notexists_{x* | Q*(x*)} P(x*) = forall_{x* | Q*(x*)} (P(x*) != TRUE))
+    equiv = notExistsDefSpec.applyTransitivity(existsDefSpec.substitution(X, Not(X))).applyTransitivity(doubleNegatedForall).prove()
+    # forall_{P, Q*} [notexists_{x* | Q*(x*)} P(x*) = forall_{x* | Q*(x*)} (P(x*) != TRUE)]
+    return equiv.generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('existsDefNegation', existsDefNegationDerivation)    
+
+# forall_{P, Q*} NotExists_{x* | Q*(x*)} P(x*) => Not(Exists_{x* | Q*(x*)} P(x*))
+def notExistsUnfoldingDerivation():
+    return booleans.notExistsDef.specialize().rightImplViaEquivalence().generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('notExistsUnfolding', notExistsUnfoldingDerivation)
+
+# forall_{P, Q*} Not(Exists_{x* | Q*(x*)} P(x*)) => NotExists_{x* | Q*(x*)} P(x*)
+def notExistsFoldingDerivation():
+    return booleans.notExistsDef.specialize().leftImplViaEquivalence().generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('notExistsFolding', notExistsFoldingDerivation)
+
+# forall_{P, Q*} [exists_{x* | Q*(x*)} P(x*)] in BOOLEANS
+def existsInBoolDerivation():
+    from equality import Equals
+    # exists_{x* | Q*(x*)} P(x*) = not(forall_{x* | Q*(x*)} P(x*) != TRUE)
+    existsDefSpec = booleans.existsDef.specialize().prove()
+    # [not(forall_{x* | Q*(x*)} P(x*) != TRUE) = TRUE] or [not(forall_{x* | Q*(x*)} P(x*) != TRUE) = FALSE]
+    rhsTrue, rhsFalse = existsDefSpec.rhs.deduceInBool().unfold().prove().operands
+    # exists_{x* | Q*(x*)} P(x*) in BOOLEANS assuming [not(forall_{x* | Q*(x*)} P(x*) != TRUE) = TRUE]
+    existsInBoolSpec = rhsTrue.rhsSubstitute(X, Equals(existsDefSpec.lhs, X)).inBoolViaBooleanEquality().prove({rhsTrue})
+    # exists_{x* | Q*(x*)} P(x*) in BOOLEANS assuming [not(forall_{x* | Q*(x*)} P(x*) != TRUE) = FALSE]
+    rhsFalse.rhsSubstitute(X, Equals(existsDefSpec.lhs, X)).inBoolViaBooleanEquality().prove({rhsFalse})
+    # deduce rhsTrue, rhsFals, existsInBoolSpec all in BOOLEANS
+    for expr in (rhsTrue, rhsFalse, existsInBoolSpec): expr.deduceInBool()
+    # forall_{P, Q*} exists_{x* | Q*(x*)} P(x*) in BOOLEANS
+    return Or(rhsTrue, rhsFalse).deriveCommonConclusion(existsInBoolSpec).generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('existsInBool', existsInBoolDerivation)
+
+# forall_{P, Q*} forall_{x* | Q*(x*)} [P(x*) => exists_{y* | Q(y*)} P(y*)]
 def existenceByExampleDerivation():
     from equality import NotEquals
-    # PyNeverTrue = (forall_{y | Q(y)} P(y) != TRUE)
-    PyNeverTrue = Forall([y], NotEquals(Py, TRUE), [Qy])
-    # P(x) != TRUE assuming Q(x), PyNeverTrue
-    PyNeverTrue.specialize({y:x}).prove({Qx, PyNeverTrue})
-    # Not(TRUE = TRUE) assuming Q(x), P(x), PyNeverTrue
-    notTeqT = deriveStmtEqTrue(Px).rhsSubstitute(Function(NotEquals(X, TRUE), [X])).unfold().prove({Qx, Px, PyNeverTrue})
-    # FALSE assuming Q(x), P(x), PyNeverTrue
-    notTeqT.evaluate().deriveRightViaEquivalence().prove({Qx, Px, PyNeverTrue})
-    # inBool(forall_{y | Q(y)} P(y) != TRUE)
-    PyNeverTrue.deduceInBool().prove()
-    # Not(forall_{y | Q(y)} P(y) != TRUE) assuming Q(x), P(x)
-    Implies(PyNeverTrue, FALSE).deriveViaContradiction().prove({Qx, Px})
-    # exists_{y | Q(y)} P(y) assuming Q(x), P(x)
-    existence = booleans.existsDef.specialize({x:y}).deriveLeft().prove({Qx, Px})
-    # forall_{P, Q} forall_{x | Q(x)} [P(x) => exists_{y | Q(y)} P(y)]
-    return Implies(Px, existence).generalize([P, Q, x], [Qx]).qed()
+    # neverPy = [forall_{y* | Q*(y*)} (P(y*) != TRUE)]
+    neverPy = Forall(yStar, NotEquals(P_of_yStar, TRUE), multiQ_of_yStar)
+    # (P(x*) != TRUE) assuming Q*(x*), neverPy
+    neverPy.specialize({yStar:xStar}).prove({multiQ_of_xStar, neverPy})
+    # (TRUE != TRUE) assuming Q*(x*), P(x*), neverPy
+    trueNotEqTrue = deriveStmtEqTrue(P_of_xStar).rhsSubstitute(X, NotEquals(X, TRUE)).prove({multiQ_of_xStar, P_of_xStar, neverPy})
+    # FALSE assuming Q*(x*), P(x*), neverPy
+    trueNotEqTrue.evaluate().deriveContradiction().deriveConclusion().prove({multiQ_of_xStar, P_of_xStar, neverPy})
+    # [forall_{y* | Q*(y*)} (P(y*) != TRUE)] in BOOLEANS
+    neverPy.deduceInBool().prove()
+    # Not(forall_{y* | Q*(y*)} (P(y*) != TRUE) assuming Q*(x*), P(x*)
+    Implies(neverPy, FALSE).deriveViaContradiction().prove({multiQ_of_xStar, P_of_xStar})
+    # exists_{y* | Q*(y*)} P(y*) assuming Q*(x*), P(x*)
+    existence = booleans.existsDef.specialize({xStar:yStar}).deriveLeftViaEquivalence().prove({multiQ_of_xStar, P_of_xStar})
+    # forall_{P, Q*} forall_{x* | Q*(x*)} [P(*x) => exists_{y* | Q*(y*)} P(y*)]
+    return Implies(P_of_xStar, existence).generalize(xStar, multiQ_of_xStar).generalize((P, multiQ)).qed()
 booleans.deriveOnDemand('existenceByExample', existenceByExampleDerivation)
 
-# forall_{P, Q} forall_{x | Q(x)} [P(x) in BOOLEANS] => [exists_{x | Q(x)} P(x) <=> Not(forall_{x | Q(x)} Not(P(x))]
-def existenceOverBoolStmtsDerivation():
-    from equality import Equals, NotEquals
-    # hypothesis = forall_{x | Q(x)} [P(x) in BOOLEANS]
-    hypothesis = Forall([x], inBool(Px), [Qx])
-    # P(x) in BOOLEANS assuming hypothesis, Q(x)
-    hypothesis.specialize().prove({hypothesis, Qx})
-    # forall_{x | Q(x)} {[P(x) != TRUE] = Not(P(x))} assuming hypothesis
-    PxNotT_eq_NotPx = Forall([A], Equals(NotEquals(A, TRUE), Not(A)), [inBool(A)]).evaluate().deriveViaBooleanEquality().specialize({A:Px}).generalize([x], [Qx]).prove({hypothesis})
-    # [forall_{x | Q(x)} (P(x) != TRUE)] = [forall_{x | Q(x)} Not(P(x))] assuming hypothesis
-    PxNeverT_eq_AlwaysNotPx = PxNotT_eq_NotPx.instanceSubstitution(FORALL).prove({hypothesis})
-    # exists_{x | Q(x)} P(x) <=> Not[forall_{x | Q(x)} (P(x) != TRUE)]
-    existsDefSpec = booleans.existsDef.specialize().prove()
-    # exists_{x | Q(x)} P(x) <=> Not[forall_{x | Q(x)} Not(P(x))] assuming hypothesis    
-    conclusion = PxNeverT_eq_AlwaysNotPx.rhsSubstitute(Function(Iff(existsDefSpec.A, Not(X)), [X])).prove({hypothesis})
-    # forall_{P, Q} forall_{x | Q(x)} [P(x) in BOOLEANS] => [exists_{x | Q(x)} P(x) <=> Not(forall_{x | Q(x)} Not(P(x))]
-    return Implies(hypothesis, conclusion).generalize([P, Q]).qed()
-booleans.deriveOnDemand('existenceOverBoolStmts', existenceOverBoolStmtsDerivation)
+# forall_{P, Q*} [exists_{x* | Q*(x*)} Not(P(x*))] => [Not(forall_{x* | Q*(x*)} P(x*)]
+def existsNotImpliesNotForallDerivation():
+    from equality import NotEquals
+    # existsNot = [exists_{x* | Q*(x*)} Not(P(x*))]
+    existsNot = Exists(xStar, Not(P_of_xStar), multiQ_of_xStar)
+    # [Not(forall_{x* | Q(x*)} Not(P(x*)) != TRUE] assuming existsNot
+    booleans.existsDef.specialize({Operation(P, xStar):Not(P_of_xStar)}).deriveRightViaEquivalence().prove({existsNot})
+    # forall_{x* | Q(x*)} P(x*)
+    forallPx = Forall(xStar, P_of_xStar, multiQ_of_xStar)
+    # forall_{x* | Q(x*)} Not(P(x*)) != TRUE
+    forallNotPxNotTrue = Forall(xStar, NotEquals(Not(P_of_xStar), TRUE), multiQ_of_xStar)
+    # forallPx in BOOLEANS, forallNotPxNotTrue in BOOLEANS
+    for expr in (forallPx, forallNotPxNotTrue):
+        expr.deduceInBool().prove()
+    # Not(TRUE) != TRUE
+    NotEquals(Not(TRUE), TRUE).proveByEval()
+    # forallNotPxNotTrue assuming forallPx, Q*(x*)
+    deriveStmtEqTrue(forallPx.specialize()).lhsStatementSubstitution(X, NotEquals(Not(X), TRUE)).deriveConclusion().generalize(xStar, multiQ_of_xStar).prove({forallPx})
+    # Not(forallNotPxNotTrue) => Not(forallPx)
+    Implies(forallPx, forallNotPxNotTrue).transpose().prove()
+    # forall_{P, Q*} [exists_{x* | Q*(x*)} Not(P(x*))] => [Not(forall_{x* | Q*(x*)} P(x*)]
+    return Implies(existsNot, Not(forallPx)).generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('existsNotImpliesNotForall', existsNotImpliesNotForallDerivation)
 
-# forall_{P, Q} forall_{x | Q(x)} [P(x) in BOOLEANS] => [exists_{x | Q(x)} Not(P(x)) <=> Not(forall_{x | Q(x)} P(x)]
-def existenceOverNegatedDerivation():
-    from equality import Equals, NotEquals
-    # hypothesis = forall_{x | Q(x)} [P(x) in BOOLEANS]
-    hypothesis = Forall([x], inBool(Px), [Qx])
-    # P(x) in BOOLEANS assuming hypothesis, Q(x)
-    hypothesis.specialize().prove({hypothesis, Qx})
-    # forall_{x | Q(x)} [Not(P(x)) != TRUE] = P(x) assuming hypothesis
-    NotPxNotT_eq_Px = Forall([A], Equals(NotEquals(Not(A), TRUE), A), [inBool(A)]).evaluate().deriveViaBooleanEquality().specialize({A:Px}).generalize([x], [Qx]).prove({hypothesis})
-    # [forall_{x | Q(x)} Not(P(x)) != TRUE] = [forall_{x | Q(x)} P(x)] assuming hypothesis
-    NotPxNeverT_eq_AlwaysPx = NotPxNotT_eq_Px.instanceSubstitution(FORALL).prove({hypothesis})
-    # exists_{x | Q(x)} Not(P(x)) <=> Not[forall_{x | Q(x)} (Not(P(x)) != TRUE)]
-    existsDefSpec = booleans.existsDef.specialize({P:Function(Not(Px), [x])}).prove()
-    # exists_{x | Q(x)} Not(P(x)) <=> Not[forall_{x | Q(x)} P(x)] assuming hypothesis    
-    conclusion = NotPxNeverT_eq_AlwaysPx.rhsSubstitute(Function(Iff(existsDefSpec.A, Not(X)), [X])).prove({hypothesis})
-    # forall_{P, Q} forall_{x | Q(x)} [P(x) in BOOLEANS] => [exists_{x | Q(x)} P(x) <=> Not(forall_{x | Q(x)} Not(P(x))]
-    return Implies(hypothesis, conclusion).generalize([P, Q]).qed()
-booleans.deriveOnDemand('existenceOverNegated', existenceOverNegatedDerivation)
+# forall_{P, Q*} forall_{x* | Q*(x*)} P(x*) => NotExists_{x* | Q*(x*)} Not(P(x*))
+def forallImpliesNotExistsNotDerivation():
+    # hypothesis = forall_{x* | Q*(x*)} P(x*)
+    hypothesis = Forall(xStar, P_of_xStar, multiQ_of_xStar)
+    # [exists_{x* | Q*(x*)} Not(P(x*))] => [Not(forall_{x* | Q*(x*)} P(x*)]
+    existsNotImpliesNotForallSpec = booleans.existsNotImpliesNotForall.specialize().prove()
+    # exists_{x* | Q*(x*)} Not(P(x*)) in BOOLEANS
+    existsNotImpliesNotForallSpec.hypothesis.deduceInBool()
+    # forall_{x* | Q*(x*)} P(x*) in BOOLEANS
+    existsNotImpliesNotForallSpec.conclusion.operand.deduceInBool()
+    # NotExists_{x* | Q*(x*)} Not(P(x*))
+    conclusion = existsNotImpliesNotForallSpec.transpose().deriveConclusion().deriveNotExists().prove({hypothesis})
+    # forall_{P, Q*} NotExists_{x* | Q*(x*)} Not(P(x*)) => forall_{x* | Q*(x*)} P(x*)
+    return Implies(hypothesis, conclusion).generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('forallImpliesNotExistsNot', forallImpliesNotExistsNotDerivation)
 
-# forall_{P} [(P(TRUE) = FALSE) and (P(FALSE) in BOOLEANS)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}
-def forallBoolEvalFalseViaTrueDerivation():
+# forall_{P} [(P(TRUE) = PofTrueVal) and (P(FALSE) = PofFalseVal)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}, assuming PofTrueVal=FALSE or PofFalseVal=FALSE
+def forallBoolEvalFalseDerivation(PofTrueVal, PofFalseVal):
     from equality import Equals
-    # hypothesis = [P(TRUE) = FALSE] and (P(FALSE) in BOOLEANS)
-    hypothesis = And(Equals(PofTrue, FALSE), inBool(PofFalse))
+    # hypothesis = [P(TRUE) = PofTrueVal] and [P(FALSE) in PofFalseVal]
+    hypothesis = And(Equals(PofTrue, PofTrueVal), Equals(PofFalse, PofFalseVal))
     # P(TRUE) in BOOLEANS assuming hypothesis
     hypothesis.deriveLeft().inBoolViaBooleanEquality().prove({hypothesis})
     # P(FALSE) in BOOLEANS assuming hypothesis
-    hypothesis.deriveRight().prove({hypothesis})
+    hypothesis.deriveRight().inBoolViaBooleanEquality().prove({hypothesis})
     # forall_{A in BOOLEANS} P(A) in BOOLEANS assuming hypothesis
-    Forall([A], inBool(PofA), [inBool(A)]).concludeAsFolded().prove({hypothesis})
-    # Not(P(TRUE) assuming hypothesis
-    hypothesis.deriveLeft().deriveViaBooleanEquality().prove({hypothesis})
-    # [forall_{A in BOOLEANS} P(A) = FALSE] assuming hypothesis
-    conclusion = Exists([A], Not(PofA), [inBool(A)]).concludeViaExample(TRUE).unfold().equateNegatedToFalse().prove({hypothesis})
+    Forall(A, inBool(PofA), inBool(A)).concludeAsFolded().prove({hypothesis})
+    if PofTrueVal == FALSE:
+        # Not(P(TRUE)) assuming hypothesis
+        hypothesis.deriveLeft().deriveViaBooleanEquality().prove({hypothesis})
+        example = TRUE
+        # TRUE in BOOLEANS
+        booleans.trueInBool
+    elif PofFalseVal == FALSE:
+        # Not(P(FALSE)) assuming hypothesis
+        hypothesis.deriveRight().deriveViaBooleanEquality().prove({hypothesis})
+        example = FALSE    
+        # FALSE in BOOLEANS
+        booleans.trueInBool
+    # [forall_{A in BOOLEANS} P(A)] = FALSE assuming hypothesis
+    conclusion = Exists(A, Not(PofA), inBool(A)).concludeViaExample(example).deriveNegatedForall().equateNegatedToFalse().prove({hypothesis})
     # forall_{P} [(P(TRUE) = FALSE) and (P(FALSE) in BOOLEANS)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}
-    return Implies(hypothesis, conclusion).generalize([P]).qed()
-booleans.deriveOnDemand('forallBoolEvalFalseViaTrue', forallBoolEvalFalseViaTrueDerivation)
+    return Implies(hypothesis, conclusion).generalize(P).qed()
+booleans.deriveOnDemand('forallBoolEvalFalseViaFF', lambda : forallBoolEvalFalseDerivation(FALSE, FALSE))
+booleans.deriveOnDemand('forallBoolEvalFalseViaFT', lambda : forallBoolEvalFalseDerivation(FALSE, TRUE))
+booleans.deriveOnDemand('forallBoolEvalFalseViaTF', lambda : forallBoolEvalFalseDerivation(TRUE, FALSE))
 
-# forall_{P} [(P(FALSE) = FALSE) and (P(TRUE) in BOOLEANS)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}
-def forallBoolEvalFalseViaFalseDerivation():
+
+"""
+# forall_{P, Q*} [{forall_{x* | Q*(x*)} P(TRUE, x*)} = PofTrueVal and {forall_{x* | Q(x*)} P(FALSE, x*)} = PofFalseVal] => {[forall_{A in BOOLEANS, x* | Q(x*)} P(A, x*)] = FALSE}
+def forallBoolEtcEvalFalseDerivation(PofTrueVal, PofFalseVal, forallBoolEvalFalseViaXX):
     from equality import Equals
-    # hypothesis = [(P(FALSE) = FALSE) and (P(TRUE) in BOOLEANS)]
-    hypothesis = And(Equals(PofFalse, FALSE), inBool(PofTrue))
-    # P(FALSE) in BOOLEANS assuming hypothesis
+    P_of_T_xStar = Operation(P, (TRUE, xStar))
+    P_of_F_xStar = Operation(P, (FALSE, xStar))
+    P_of_A_xStar = Operation(P, (A, xStar))
+    # [{forall_{x* | Q*(x*)} P(TRUE, x*)} = PofTrueVal and {forall_{x* | Q(x*)} P(FALSE, x*)} = PofFalseVal] => {[forall_{A in BOOLEANS} forall_{x* | Q(x*)} P(A, x*)] = FALSE}
+    nestedVersion = forallBoolEvalFalseViaXX.specialize({Operation(P, A): Forall(xStar, P_of_A_xStar, multiQ_of_xStar)}).prove()
+    # hypothesis = {forall_{x* | Q*(x*)} P(TRUE, x*)} = PofTrueVal and {forall_{x* | Q(x*)} P(FALSE, x*)} = forall_{x* | Q*(x*)} P(TRUE, x*)} = PofFalseVal
+    hypothesis = nestedVersion.hypothesis
+    # [forall_{A in BOOLEANS} forall_{x* | Q(x*)} P(A, x*)] => FALSE, assuming hypothesis
+    nestedVersion.deriveConclusion().deriveContradiction().prove({hypothesis})
+    # negatedConclusion = [forall_{A in BOOLEANS, x* | Q*(x*)} P(A, x*)]
+    negatedConclusion = Forall((A, xStar), P_of_A_xStar, (inBool(A), multiQ_of_xStar))
+    
+    
+    # [forall_{x* | Q*(x*)} P(TRUE, x*)] in BOOLEANS, assuming hypothesis
     hypothesis.deriveLeft().inBoolViaBooleanEquality().prove({hypothesis})
-    # P(TRUE) in BOOLEANS assuming hypothesis
-    hypothesis.deriveRight().prove({hypothesis})
-    # forall_{A in BOOLEANS} P(A) in BOOLEANS assuming hypothesis
-    Forall([A], inBool(PofA), [inBool(A)]).concludeAsFolded().prove({hypothesis})
-    # Not(P(FALSE) assuming hypothesis
-    hypothesis.deriveLeft().deriveViaBooleanEquality().prove({hypothesis})
-    # [forall_{A in BOOLEANS} P(A) = FALSE] assuming hypothesis
-    conclusion = Exists([A], Not(PofA), [inBool(A)]).concludeViaExample(FALSE).unfold().equateNegatedToFalse().prove({hypothesis})
-    # forall_{P} [(P(FALSE) = FALSE) and (P(TRUE) in BOOLEANS)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}
-    return Implies(hypothesis, conclusion).generalize([P]).qed()
-booleans.deriveOnDemand('forallBoolEvalFalseViaFalse', forallBoolEvalFalseViaFalseDerivation)
+    # [forall_{x* | Q*(x*)} P(FALSE, x*)] in BOOLEANS, assuming hypothesis
+    hypothesis.deriveRight().inBoolViaBooleanEquality().prove({hypothesis})
+
+    # forall_{x* | Q*(x*)} [P(TRUE, x*) in BOOLEANS], assuming hypothesis   ??
+    # forall_{x* | Q*(x*)} [P(FALSE, x*) in BOOLEANS], assuming hypothesis   ??
+
+    
+    # [forall_{A in BOOLEANS, x* | Q*(x*)} P(A, x*)] in BOOLEANS, assuming hypothesis
+    inBool(negatedConclusion)
+
+    
+    # forall_{A in BOOLEANS, x* | Q*(x*)} P(A, x*) in BOOLEANS, assuming hypothesis    
+    
+    # [forall_{A in BOOLEANS, x* | Q*(x*)} P(A, x*)] in BOOLEANS, assuming hypothesis
+    negatedConclusion.deduceInBool().prove({hypothesis})
+    
+    
+    # [forall_{A in BOOLEANS} forall_{x* | Q(x*)} P(A, x*)] given negatedConclusion
+    negatedConclusion.deriveUnravelled(A, xStar).prove({negatedConclusion})
+    # [forall_{A in BOOLEANS, x* | Q*(x*)} P(A, x*)] = FALSE given hypothesis
+    conclusion = Implies(negatedConclusion, FALSE).deriveViaContradiction().equateNegatedToFalse().prove({hypothesis})
+    # forall_{P, Q*} [{forall_{x* | Q*(x*)} P(TRUE, x*)} = PofTrueVal and {forall_{x* | Q(x*)} P(FALSE, x*)} = PofFalseVal] => {[forall_{A in BOOLEANS, x* | Q(x*)} P(A, x*)] = FALSE}
+    return Implies(hypothesis, conclusion).generalize((P, multiQ)).qed()
+booleans.deriveOnDemand('forallBoolEtcEvalFalseViaFF', lambda : forallBoolEtcEvalFalseDerivation(FALSE, FALSE, booleans.forallBoolEvalFalseViaFF))
+booleans.deriveOnDemand('forallBoolEtcEvalFalseViaFT', lambda : forallBoolEtcEvalFalseDerivation(FALSE, TRUE, booleans.forallBoolEvalFalseViaFT))
+booleans.deriveOnDemand('forallBoolEtcEvalFalseViaTF', lambda : forallBoolEtcEvalFalseDerivation(TRUE, FALSE, booleans.forallBoolEvalFalseViaTF))
+"""

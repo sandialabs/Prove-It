@@ -81,25 +81,27 @@ class Expression:
             assert isinstance(self.statement, Statement)            
             return self.statement.wasProven(assumptions)
         
-    def substituted(self, subMap, relabelMap = None, restrictions = None):
+    def substituted(self, varMap, operationMap, relabelMap = None, reservedVars = None):
         '''
-        Return this expression with the variables substituted 
-        according to subMap (a SubstitutionMap) and/or relabeled according to 
+        Returns this expression with the variables substituted 
+        according to varMap (Variable:Expression dictionary) and/or operations
+        with variable operators substituted according to operationMap
+        (Variable:Lambda dictionary) and/or relabeled according to  
         relabelMap (Variable:Variable dictionary).
-        If supplied, restrictions is a dictionary that maps restricted Variable's
+        If supplied, reservedVars is a dictionary that maps reserved Variable's
         to relabeling exceptions.  You cannot substitute with an expression that
         uses a restricted variable and you can only relabel the exception to the
-        restricted variable.  This is used to protect an instance variable's 
-        "scope" within an OperationOverInstances.
+        restricted variable.  This is used to protect an Lambda function's "scope".
         '''
         return self
     
-    def relabeled(self, relabelMap, restrictions=None):
+    def relabeled(self, relabelMap, reservedVars=None):
         '''
         A watered down version of substitution in which only variable labels are
-        changed.
+        changed.  This may also involve substituting a MultiVariable with a list
+        of Variables.
         '''
-        return self.substituted(subMap=SubstitutionMap(), relabelMap=relabelMap, restrictions=restrictions)
+        return self.substituted(varSubMap=dict(), operationSubMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
     
     def _validateRelabelMap(self, relabelMap):
         assert len(relabelMap) == len(set(relabelMap.values())), "Cannot relabel different Variables to the same Variable."
@@ -130,11 +132,12 @@ class Expression:
         return Statement.state(self)
     
     def specialize(self, subMap=None):
+        if subMap is None: subMap = dict()
         (specialization, conditions) = Statement.specialize(self, subMap)
         return specialization.check({self} | conditions)
         
-    def generalize(self, newForallVars, newConditions=tuple()):
-        if len(newForallVars) == 0 and len(newConditions) == 0:
+    def generalize(self, newForallVars, newConditions=None):
+        if len(newForallVars) == 0 and newConditions is None:
             return self # trivial case
         return Statement.generalize(self, newForallVars, newConditions) #.check({self})
     
@@ -160,8 +163,140 @@ class Expression:
         The evaluate method must be implemented by the derived class.
         '''
         return self.evaluate().deriveViaBooleanEquality().prove()
+    
+    def _restrictionChecked(self, subbedExpr, reservedVars):
+        '''
+        Check that the substituted expression does not use any reserved variables
+        (arguments of a Lambda function Expression).
+        '''
+        if not reservedVars is None and not subbedExpr.freeVars().isdisjoint(reservedVars.keys()):
+            print "substituted free variables", subbedExpr.freeVars()
+            print "reserved variables", reservedVars.keys()
+            raise ValueError("Must not make substitution with reserved variables  (i.e., arguments of a Lambda function)")
+        return subbedExpr
+    
+    def __len__(self):
+        '''
+        A singular Expression has length of 1.  An ExpressionList has a length that
+        is the number of Expressions in the list.
+        '''
+        return 1
+    
+    def __iter__(self):
+        '''
+        Iterating over a singular Expression just yields the Expression itself.
+        Iterating over an ExpressionList will iterate over each Expression in the list.
+        '''
+        yield self
+        
+    def first(self):
+        '''
+        The "first" item of a singular Expression is itself.  For an ExpressionList, it is
+        the first Expression in the list.
+        '''
+        return self
 
+class ExpressionList(Expression):
+    """
+    An ExpressionList is a composite Expression composed of an ordered list of member
+    Expression's.  It can play different roles depending upon where it is used:
+    operandS of an Operation, argumentS or conditionS or expressionS of a Lambda expression
+    (the capitolized 'S' here signifies the role of the ExpressionList to make multiple
+    sub-expressions in one).
+    An ExpressionList is always flattened and never nested.  To represent a list of lists
+    type expression, they must be explicitly nested as Operations.
+    """
+    def __init__(self, *expressions):
+        '''
+        Initialize an ExpressionList from one or more Expression arguments.  When
+        this includes any ExpressionList arguments, they flattened by expanding the
+        sub-expressions.
+        '''
+        if len(expressions) == 1:
+            # this allows one to pass an explicit list/tuple to the ExpressionList constructor 
+            # as a single argument rather than a list of arguments.
+            expressions = tuple(expressions[0]) 
+        for expr in expressions:
+            if not isinstance(expr, Expression):
+                raise TypeError('ExpressionList must be created out of Expressions')
+        def genSubExpr(expr):
+            if isinstance(expr, ExpressionList):
+                for subExpr in expr.expressions: yield subExpr
+            else: yield expr
+        self.expressions = tuple(sum([[subExpr for subExpr in genSubExpr(expr)] for expr in expressions], []))
+    
+    def __repr__(self):
+        return ','.join([repr(expr) for expr in self.expressions])
+    
+    def formatted(self, formatType, fenced=False):
+        if formatType == STRING:
+            # the parent expression will do the "fencing" with parenthesis
+            return ','.join([expr.formatted(formatType) for expr in self.expressions])
+        elif formatType == MATHML:
+            # the parent expression will do the fencing and indicate the delimiter
+            return ''.join([expr.formatted(formatType) for expr in self.expressions])
+    
+    def __getitem__(self, index):
+        '''
+        Returns the sub-Expression of the given index.
+        '''
+        return self.expressions[index]
+    
+    def __iter__(self):
+        '''
+        Returns the sub-Expression iterator.
+        '''
+        return self.expressions.__iter__()
+    
+    def __len__(self):
+        '''
+        Returns the number of sub-Expressions.
+        '''
+        return len(self.expressions)
+    
+    def first(self):
+        '''
+        Returns the first Expression in the list.
+        '''
+        return self.expressions[0]
+
+    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+        '''
+        Returns this expression with the variables substituted 
+        according to subMap and/or relabeled according to relabelMap.
+        '''
+        return ExpressionList([expr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars) for expr in self.expressions])
+                
+    def makeGeneric(self, varAssignments, varMap = None):
+        '''
+        A generic relabeling in which bound variables are replaced with indices in the
+        order they appear.
+        '''
+        return ExpressionList([expr.makeGeneric(varAssignments, varMap) for expr in self.expressions])
+        
+    def usedVars(self):
+        '''
+        Returns the union of the used Variables of the sub-Expressions.
+        '''
+        return set().union(*[expr.usedVars() for expr in self.expressions])
+        
+    def freeVars(self):
+        '''
+        Returns the union of the free Variable sof the sub-Expressions.
+        '''
+        return set().union(*[expr.freeVars() for expr in self.expressions])
+
+def _expressionOrList(expressions):
+    '''
+    From one or more expressions, return the flattened ExpressionList or single Expression.
+    '''
+    expressionList = ExpressionList(*expressions)
+    return expressionList.first() if len(expressionList) == 1 else expressionList
+        
 class Literal(Expression):
+    """
+    A Literal expresses contextual meaning and they are not interchangeable.
+    """
     def __init__(self, name, context, formatMap = None):
         Expression.__init__(self, formatMap)
         assert re.match('[A-Za-z0-9_]+', name), 'Literals must be alphanumeric or underscore.'
@@ -181,6 +316,11 @@ class Literal(Expression):
             return '<mi>' + self.name + '</mi>'
 
 class Variable(Expression):
+    """
+    A Variable is an interchangeable label.  They may be relabeled Variable to Variable.
+    Through specialization of a Forall statement over one or more Variables, those Variables
+    may each be substituted with a general Expression.
+    """    
     def __init__(self, name, formatMap = None):
         Expression.__init__(self, formatMap)
         assert re.match('[A-Za-z0-9_]+', name), 'Variables must be alphanumeric or underscore.'
@@ -198,18 +338,26 @@ class Variable(Expression):
         elif formatType == MATHML:
             return '<mi>' + self.name + '</mi>'
     
-    def substituted(self, subMap, relabelMap = None, restrictions = None):
+    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
-        Return this expression with the variables substituted 
+        Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        if (subMap != None) and (self in subMap):
-            return subMap.getSub(self, restrictions)
+        if (varSubMap != None) and (self in varSubMap):
+            sub = varSubMap[self]
+            if not isinstance(sub, Expression):
+                raise TypeError('Must substitute a Variable with an Expression')                
+            if isinstance(sub, ExpressionList):
+                raise TypeError('May not substitute a Variable with an ExpressionList.  Only MultiVariables may be substituted with an ExpressionList.') 
+            return self._restrictionChecked(sub, reservedVars)
         elif relabelMap != None:
-            subbed = relabelMap.get(self, self)
-            assert isinstance(subbed, Variable), "May only relabel Variable to Variable"
-            if restrictions != None and subbed in restrictions.keys():
-                assert self == restrictions[subbed], "Relabeling in violation of Variable restriction."
+            subbed = relabelMap.get(self, self)            
+            if not isinstance(subbed, Variable):
+                raise TypeError('May only relabel Variable to Variable')
+            if isinstance(subbed, MultiVariable):
+                raise TypeError('May not relabel a Variable to a MultiVariable')
+            if reservedVars != None and subbed in reservedVars.keys():
+                assert self == reservedVars[subbed], "Relabeling in violation of Variable restriction."
             return subbed
         return self
                 
@@ -229,6 +377,7 @@ class Variable(Expression):
         
     def freeVars(self):
         return {self}
+
     
 class IndexVariable(Variable):
     def __init__(self, n):
@@ -241,93 +390,195 @@ def safeDummyVar(expressions):
         i += 1
     return IndexVariable(i)
 
+class MultiVariable(Variable):
+    '''
+    A MultiVariable is a stand-in for any number (zero or more) of Variables as Lambda 
+    arguments or Operation operands.  They may be relabeled MultiVariable to MultiVariable.
+    Through statement specialization, they may be substituted with a list of Variables in any
+    scope (Lambda expressions define scopes).
+    '''
+    def __init__(self, name, formatMap = None):
+        Variable.__init__(self, name, formatMap)
+        self.name = name
+        
+    def __repr__(self):
+        return '\\' + self.name + '*'
 
+    def formatted(self, formatType, fenced=False):
+        # override this default as desired
+        fromFormatMap = Expression.formatted(self, formatType)
+        if fromFormatMap != '': return fromFormatMap
+        if formatType == STRING:
+            return self.name + '*'
+        elif formatType == MATHML:
+            return '<msup><mi>' + self.name + '</mi><mo>*</mo></msup>'
+    
+    def _substitutedGenerator(self, varSubMap, relabelMap = None, reservedVars = None):
+        '''
+        Yield the substitution of this MultiVariable according to subMap
+        and/or relabeled according to relabelMap.
+        '''
+        if (varSubMap != None) and (self in varSubMap):
+            substitutionList = ExpressionList(varSubMap[self]).expressions
+            for expr in substitutionList:
+                if not isinstance(expr, Expression): raise TypeError('Must substitute with an Expression or list of Expressions')
+                yield self._restrictionChecked(expr, reservedVars)
+        elif relabelMap != None:
+            subbed = relabelMap.get(self, self)            
+            for subVar in subbed:
+                if not isinstance(subVar, Variable):
+                    raise TypeError('Must relabel a MultiVariable with a MultiVariable or list of Variables')
+                if reservedVars != None and subVar in reservedVars.keys():
+                    assert self == reservedVars[subVar], "Relabeling in violation of Variable restriction."
+                yield subVar
+        else:
+            yield self
+    
+    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+        '''
+        Return this expression with the MultiVariable substituted 
+        according to subMap and/or relabeled according to relabelMap.
+        May expand to an ExpressionList.
+        '''
+        return _expressionOrList([expr for expr in self._substitutedGenerator(varSubMap, relabelMap, reservedVars)])
+        
+    def makeGeneric(self, varAssignments, varMap = None):
+        '''
+        A generic relabeling in which bound variables are replaced with indices in the
+        order they appear.
+        '''
+        if varMap != None and self in varMap:
+            subbed = varMap[self]
+            assert isinstance(subbed, MultiVariable), "May only relabel MultiVariable to MultiVariable"
+            return subbed
+        return self
+    
+    def usedVars(self):
+        return {self}
+        
+    def freeVars(self):
+        return {self}    
+
+class MultiIndexVariable(MultiVariable):
+    def __init__(self, n):
+        MultiVariable.__init__(self, '_' + str(n) + '_')
+
+"""
+class Operator(Expression):
+    '''
+    An Operator wraps the label or function of an operator that may be used in an Operation.
+    For the label case, it wraps a Literal or Variable naming the operator.  For the function
+    case, it wraps a Lambda function that defines the map of the Operation.
+    '''
+    def __init__(self, labelOrFn):
+        '''
+        Create an Operator that is identified with a Literal or Variable label or an explicit
+        Lambda function.
+        '''
+        assert isinstance(labelOrFn, Literal) or isinstance(labelOrFn, Variable) or isinstance(labelOrFn, Lambda)
+        self.labelOrFn = labelOrFn
+    
+    def substituted(self, subMap, relabelMap = None, reservedVars = None):
+        '''
+        Return this Operator with the variables substituted 
+        according to subMap and/or relabeled according to relabelMap.
+        '''
+        subbedLabelOrFn = self.labelOrFn.substituted(subMap, relabelMap, reservedVars)
+        if isinstance(subbedLabelOrFn, ExpressionList):
+            return subbedLabelOrFn # pass back the ExpressionList direction
+        return Operator(subbedLabelOrFn)  
+"""        
+    
 class Operation(Expression):
     # Register makers for specific Operator Literals to create an Object of the derived
     # class rather than the generic Operation base class when created.
     _registeredMakers = dict()
     
     @staticmethod
-    def registerOperation(operator, maker):
-        assert isinstance(operator, Literal)
-        Operation._registeredMakers[operator] = maker
+    def registerOperation(operatorLabel, maker):
+        assert isinstance(operatorLabel, Literal)
+        Operation._registeredMakers[operatorLabel] = maker
 
     @staticmethod
-    def make(operator, operands):
+    def make(operator, operand):
         if operator in Operation._registeredMakers:
             # if it is registered, use the registered "maker"
-            operation = Operation._registeredMakers[operator](operands)
+            operation = Operation._registeredMakers[operator](operand)
             assert isinstance(operation, Operation), 'Registered Operation maker must make an Operation type'
-            assert operation.operator == operator, 'Registered Operation maker function must make an Operation true to its given operator'
-            assert operation.operands == operands, 'Registered Operation maker function must make an Operation true to its given operands'
+            assert operation.operator == operator, 'Registered Operation maker function must make an Operation true to its given operator: ' + str(operator)
+            assert operation.operand == operand, 'Registered Operation maker function must make an Operation true to its given operand.  Operator: ' + str(operator) + '; Operand: ' + str(operand)
             return operation
-        return Operation(operator, operands)
+        return Operation(operator, operand)
     
     def __init__(self, operator, operands):
         '''
-        Create an operation with the given operator and list of operands.
+        Create an operation with the given operator and operand(s).  The operator can be a 
+        Literal, Variable, or Lambda function.  The operand(s) may be singular or plural (iterable).
         '''
         Expression.__init__(self)
-        assert isinstance(operator, Literal) or isinstance(operator, Variable)
+        if not (isinstance(operator, Literal) or isinstance(operator, Variable) or isinstance(operator, Lambda)):
+            raise TypeError('operator must be a Literal, Variable, or a Lambda function')
         self.operator = operator
-        assert len(operands) >= 1
-        for operand in operands:
-            assert isinstance(operand, Expression)
-        self.operands = [operand for operand in operands]
+        self.operand = _expressionOrList(operands)
+        assert isinstance(self.operand, Expression)
+        if isinstance(operator, Lambda):
+            if len(self.operand) != len(operator.argument):
+                raise ValueError("Number of arguments and number of operands must match.")
 
     def __repr__(self):
-        return self.express(repr)
+        return repr(self.operator) + '(' + repr(self.operand) +')'
     
     def formattedOperator(self, formatType):
         # override this default as desired
-        return self.operator.formatted(formatType)
+        return self.operator.formatted(formatType, fenced=True)
     
     def formatted(self, formatType, fenced=False):
         # override this default as desired
         if formatType == STRING:
-            return self.formattedOperator(formatType) +  '(' + ','.join([str(operand) for operand in self.operands]) + ')'
+            return self.formattedOperator(formatType) +  '(' + self.operand.formatted(formatType) + ')'
         elif formatType == MATHML:
             outStr = '<mrow>' + self.formattedOperator(formatType) + '<mfenced>'
-            for operand in self.operands: outStr += operand.formatted(formatType)
+            outStr += self.operand.formatted(formatType)
             outStr += '</mfenced></mrow>'
             return outStr
         
-    def express(self, subExpressFn):
-        return subExpressFn(self.operator) + ''.join(['{' + subExpressFn(operand) + '}' 
-                                                      for operand in self.operands])
-    def substituted(self, subMap, relabelMap = None, restrictions = None):
+    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
         Return this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        if restrictions == None:
-            restrictions = dict()
         operator = self.operator
-        subbedOperands = [operand.substituted(subMap, relabelMap, restrictions) for operand in self.operands]
-        operatorSub = subMap.getSub(self.operator, restrictions)
-        if operatorSub != self.operator:
-            # May substitute the operator with another Literal or Variable,
-            # or may substitute the entire operation.
-            if isinstance(operatorSub, Literal) or isinstance(operatorSub, Variable):
-                operator = operatorSub
-            else:
-                # Substitute the entire operation.
-                # For example \f{\x}{\y} -> \INTEGERS.ADD{\x}{\y} has \f{\x}{\y}
-                # as the instanceOperator and \INTEGERS.ADD{\x}{\y} as the newExpr
-                # and will return the newExpr with x, y replaced with the
-                # substituted respective operands of the original operator.
-                newExpr, arguments = operatorSub.expression, operatorSub.arguments
-                operandSubMap = SubstitutionMap()
-                assert isinstance(newExpr, Expression), 'Improper operation substitution'
-                assert len(subbedOperands) == len(arguments), 'Cannot substitute an operation with the wrong number of arguments'
-                for i in xrange(len(subbedOperands)):
-                    assert isinstance(arguments[i], Variable), 'Improper operation substitution'
-                    operandSubMap.substitute(arguments[i], subbedOperands[i])
-                return newExpr.substituted(operandSubMap)
+        subbedOperand = self.operand.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+        if not operationSubMap is None and isinstance(operator, Variable) and operator in operationSubMap:
+            # Substitute the entire operation(s) via Lambda expression(s)
+            operatorSubs = [operationSubMap[operator]]
+            if isinstance(self.operator, MultiVariable):
+                # A MultiVariable operator may be substituted by an ExpressionList of 
+                # multiple operator substitutions resulting in a list of operations for the substitution.
+                operatorSubs = ExpressionList(operationSubMap[operator]) 
+            subbedOperations = []
+            for operatorSub in operatorSubs:
+                if not isinstance(operatorSub, Lambda):
+                    raise TypeError("Operation substitution requires a Lambda function to define the new operation.")
+                # Substitute the entire operation via a lambda expression
+                # For example, f(x, y) -> x + y.
+                if len(subbedOperand) != len(operatorSub.argument):
+                    raise ValueError('Cannot substitute an Operation with the wrong number of arguments')
+                operandSubMap = {argument:operand for argument, operand in zip(operatorSub.argument, subbedOperand)}
+                if not reservedVars is None:
+                    # the reserved variables of the lambda expression excludes the lambda arguments
+                    # (i.e., the arguments mask externally reserved variables).
+                    labmdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if k not in operatorSub.argument}
+                else: labmdaExprReservedVars = None
+                subbedOperations.append(self._restrictionChecked(operatorSub.expression, labmdaExprReservedVars).substituted(operandSubMap))
+            return _expressionOrList(subbedOperations)
         else:
-            # The operator may be relabeled
-            operator = self.operator.relabeled(relabelMap, restrictions)
-        return Operation.make(operator, subbedOperands)
+            # Can perform substitutions within the Operator 
+            subbedOperator = self.operator.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+            if isinstance(subbedOperator, ExpressionList):
+                # must have substituted an ExpressionList for a MultiVariable operator
+                return _expressionOrList([Operation.make(operator, subbedOperand) for operator in subbedOperator])
+            return Operation.make(subbedOperator, subbedOperand)
             
     def makeGeneric(self, varAssignments, varMap = None):
         '''
@@ -337,128 +588,124 @@ class Operation(Expression):
         if varMap == None:
             varMap = dict()
         genericOperator = self.operator.makeGeneric(varAssignments, varMap)
-        genericOperands = [operand.makeGeneric(varAssignments, varMap) for operand in self.operands]
-        return Operation.make(genericOperator, genericOperands)
+        genericOperand = self.operand.makeGeneric(varAssignments, varMap)
+        return Operation.make(genericOperator, genericOperand)
         
     def usedVars(self):
-        return self.operator.usedVars().union(*[operand.usedVars() for operand in self.operands])
+        '''
+        Returns the union of the operator and operand used variables.
+        '''
+        return self.operator.usedVars().union(self.operand.usedVars())
         
     def freeVars(self):
-        return self.operator.freeVars().union(*[operand.freeVars() for operand in self.operands])
+        '''
+        Returns the union of the operator and operand free variables.
+        '''
+        return self.operator.freeVars().union(self.operand.freeVars())
 
-class OperationOverInstances(Operation):
-    # Register makers for specific operator Literals to create an Object of the derived
-    # class rather than the generic OperationOverInstances base class when created.
-    _registeredMakers = dict()
+class Lambda(Expression):
+    '''
+    A lambda-function Expression.  A lambda function maps an argument to
+    an expression.  The argument is a Variable in the expression or an
+    ExpressionList of Variables in the expression.  For example,
+    (x, y) -> sin(x^2 + y).
+    Optionally, it also has a domain condition that determine when the arguments
+    are in the valid domain of the map.  If the domain condition is an
+    ExpressionList, all conditions must be true for the conditions to be satisfied.
+    '''
+    def __init__(self, arguments, expressions, domainConditions=None):
+        '''
+        Initialize a Lambda expression given an argument(s), expression(s), and optional domainCondition(s).
+        These may be singular or plural (iterable).
+        '''
+        self.argument = _expressionOrList(arguments)
+        for var in self.argument:
+            if not isinstance(var, Variable): 
+                raise TypeError('Lambda argument must be a Variable or an ExpressionList of Variables')
+        if len(set(self.argument)) != len(self.argument):
+            raise ValueError('Lambda arguments must be unique with respect to each other.')
+        self.expression = _expressionOrList(expressions)
+        hasNoConditions = domainConditions is None or len(domainConditions) == 0
+        self.domainCondition = ExpressionList() if hasNoConditions else _expressionOrList(domainConditions)
+        if not isinstance(self.expression, Expression):
+            raise TypeError("A Lambda expression must have Expression type")
+        if not isinstance(self.domainCondition, Expression):
+            raise TypeError("A Lambda domainCondition must have Expression type")
     
-    @staticmethod
-    def registerOperation(operator, maker):
-        assert isinstance(operator, Literal)
-        OperationOverInstances._registeredMakers[operator] = maker
-
-    @staticmethod
-    def make(operator, instanceVar, instanceExpression, condition):
-        if operator in OperationOverInstances._registeredMakers:
-            # if it is registered, use the registered "maker"
-            operation = OperationOverInstances._registeredMakers[operator](instanceVar, instanceExpression, condition)
-            assert isinstance(operation, OperationOverInstances), 'Registered OperationOverInstance maker must make an OperationOverInstance type'
-            assert operation.operator == operator, 'Registered OperationOverInstance maker must make an OperationOverInstance true to its given operator'
-            assert operation.instanceVar == instanceVar, 'Registered OperationOverInstance maker must make an OperationOverInstance true to its given instanceVar'
-            assert operation.instanceExpression == instanceExpression, 'Registered OperationOverInstance maker must make an OperationOverInstance true to its given instanceExpression'
-            assert operation.condition == condition, 'Registered OperationOverInstance maker make an OperationOverInstance true to its given condition'
-            return operation
-        return OperationOverInstances(operator, instanceVar, instanceExpression, condition)
+    def hasCondition(self):
+        '''
+        Returns true if this Lambda Expression has a domain condition.
+        '''
+        return len(self.domainCondition) > 0
     
-    def __init__(self, operator, instanceVar, instanceExpression, condition):
-        Operation.__init__(self, operator, [instanceExpression])
-        assert isinstance(instanceVar, Variable)
-        self.instanceVar = instanceVar
-        assert isinstance(instanceExpression, Expression)
-        self.instanceExpression = instanceExpression
-        assert isinstance(condition, Expression)
-        self.condition = condition
-        
+    def __repr__(self):
+        repStr = '[(' + ','.join(repr(var) for var in self.argument) + ')->' + repr(self.expression)
+        if self.hasCondition():
+            repStr += '|' +  repr(self.domainCondition)
+        repStr += ']'
+        return repStr
+    
     def formatted(self, formatType, fenced=False):
-        # override this default as desired
-        from booleans import NONCONDITION
-        implicitIvar = self.implicitInstanceVar()
-        outStr = ''
+        '''
+        The default Lambda formatting is of the form "(x, y) -> f(x, y)".
+        '''
         if formatType == STRING:
-            if fenced: outStr += '['
-            outStr += self.formattedOperator(formatType) + '_{'
-            if not implicitIvar:
-                outStr += str(self.instanceVar) 
-            if self.condition != NONCONDITION:
-                if not implicitIvar: outStr += " | "
-                outStr += str(self.condition)
-            outStr += '} ' + str(self.instanceExpression)
+            outStr = '[' if fenced else ''
+            outStr += '(' + ', '.join([var.formatted(formatType) for var in self.argument]) + ') -> '
+            outStr += self.expression.formatted(formatType)
+            if self.hasCondition():
+                outStr += '|' + self.domainCondition.formatted(formatType)
             if fenced: outStr += ']'
         elif formatType == MATHML:
-            if fenced: outStr += '<mfenced>'
-            outStr += '<mrow><msub>' + self.formattedOperator(formatType)
-            if self.condition != NONCONDITION: outStr += '<mrow>'
-            if not implicitIvar:
-                outStr += self.instanceVar.formatted(formatType)
-            if self.condition != NONCONDITION: 
-                if not implicitIvar:
-                    outStr += '<mo>|</mo>'
-                outStr += self.condition.formatted(formatType) + '</mrow>'
-            outStr += '</msub>' + self.instanceExpression.formatted(formatType) + '</mrow>'
+            outStr = "<mfenced open='[' close=']'>" if fenced else ''
+            outStr += '<mrow><mfenced>'
+            for var in self.argument:
+                outStr += var.formatted(formatType)
+            outStr += '</mfenced>'
+            if self.hasCondition():
+                outStr += '<munder><mo>&#x21A6;</mo><mfenced open="" closed="">'
+                outStr += self.domainCondition.formatted(formatType)
+                outStr += '</mfenced></munder>'
+            else:
+                outStr += '<mo>&#x21A6;</mo>'
+            outStr += self.expression.formatted(formatType)
+            outStr += '</mrow>'
             if fenced: outStr += '</mfenced>'
         return outStr
-    
-    def implicitInstanceVar(self):
+        
+    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
-        Overloading and returning True means that the instance variable is implicit in the condition
-        and doesn't need to be explicitly shown when formatted.
-        '''
-        return False
-            
-    def express(self, subExpressFn):
-        from booleans import NONCONDITION
-        if self.condition == NONCONDITION:
-            instanceVarsStr = '[' + subExpressFn(self.instanceVar) + ']' 
-        else:
-            instanceVarsStr = '[' + subExpressFn(self.instanceVar) + '|' + subExpressFn(self.condition) + ']' 
-        operandsStr = '{' + subExpressFn(self.instanceExpression) + '}' 
-        return subExpressFn(self.operator) + instanceVarsStr + operandsStr
-    
-    def substituted(self, subMap, relabelMap = None, restrictions = None):
-        '''
-        Return this expression with the variables substituted 
+        Return this expression with its variables substituted 
         according to subMap and/or relabeled according to relabelMap.
-        An instance variable has its own scope within the 
-        OperationOverInstance and does not get substituted.
-        It may be relabeled, however.
+        The Lambda argument(s) have their own scope within the Lambda 
+        expression or domainCondition and do not get substituted.  They may be
+        relabeled, however.  Substitutions within the Lambda expression are 
+        restricted to exclude the Lambda argument(s) themselves (these Variables 
+        are reserved), consistent with any relabeling.
         '''
-        if restrictions == None:
-            restrictions = dict()
-        operator = self.operator
-        operatorSub = subMap.getSub(self.operator, restrictions)
-        if operatorSub != operator:
-            # May only substitute the operator with another Literal or Variable.
-            assert isinstance(operatorSub, Literal) or isinstance(operatorSub, Variable)
-            operator = operatorSub
-        else:
-            # Or we may relabel it
-            operator = operator.relabeled(relabelMap, restrictions)
-        innerSubMap = subMap
-        if self.instanceVar in subMap.getSubstitutingVars():
-            # can't substitute the instanceVar; it's in a new scope.
-            innerSubMap = subMap.copy()
-            innerSubMap.pop(self.instanceVar)
-        # we can relabel the instanceVar, however
-        origInstanceVar = self.instanceVar
-        instanceVar = self.instanceVar.relabeled(relabelMap, restrictions)
-        # the instance variable is restricted in the scope of the condition and instance expression
-        innerRestrictions = dict(restrictions)
-        innerRestrictions[instanceVar] = origInstanceVar
-        # the condition with the substitution
-        subbedCondition = self.condition.substituted(innerSubMap, relabelMap, innerRestrictions)
-        # the instanceExpression with the substitution:
-        subbedInstanceExpr = self.instanceExpression.substituted(innerSubMap, relabelMap, innerRestrictions)
-        return OperationOverInstances.make(operator, instanceVar, subbedInstanceExpr, subbedCondition)
-    
+        # Can't substitute the lambda argument variables; they are in a new scope.
+        lambdaArgSet = set(self.argument)
+        innerVarSubMap = {key:value for (key, value) in varSubMap.iteritems() if key not in lambdaArgSet}
+        if operationSubMap is None: operationSubMap = dict()
+        innerOperationSubMap = {key:value for (key, value) in operationSubMap.iteritems() if key not in lambdaArgSet}
+        # Handle relabeling and variable reservations consistent with relabeling.
+        innerReservations = dict() if reservedVars is None else dict(reservedVars)
+        newArgs = []
+        for arg in self.argument:
+            newArg = arg.relabeled(relabelMap, reservedVars)
+            newArgs += list(newArg)
+            # Here we enable an exception of relabeling to a reserved variable as
+            # long as we are relabeling the Lambda argument and internal variable together.
+            # For example, we can relabel y to z in (x, y) -> f(x, y), but not f to x. 
+            # Also works with MultiVariables: (x, y*) -> f(x, y*) relabeled to (x, y, z) -> f(x, y, z).
+            for x in newArg: innerReservations[x] = arg
+        # the lambda expression with the substitution:
+        subbedExpr = self.expression.substituted(innerVarSubMap, innerOperationSubMap, relabelMap, innerReservations)
+        if self.hasCondition():
+            subbedCondition = self.domainCondition.substituted(innerVarSubMap, innerOperationSubMap, relabelMap, innerReservations)
+        else: subbedCondition = None
+        return Lambda(newArgs, subbedExpr, subbedCondition)
+
     def makeGeneric(self, varAssignments, varMap = None):
         '''
         A generic relabeling in which bound variables are replaced with indices in the
@@ -466,93 +713,41 @@ class OperationOverInstances(Operation):
         '''
         if varMap == None:
             varMap = dict()
-        genericOperator = self.operator.makeGeneric(varAssignments, varMap)
-        varAssignments.append(self.instanceVar)
-        genericInstanceVar = IndexVariable(len(varAssignments))
-        varMap[self.instanceVar] = genericInstanceVar
-        genericCondition = self.condition.makeGeneric(varAssignments, varMap)
-        genericInstanceExpr = self.instanceExpression.makeGeneric(varAssignments, varMap)
-        return OperationOverInstances.make(genericOperator, genericInstanceVar, genericInstanceExpr, genericCondition)
-
-    def freeVars(self):
-        fvars = Operation.freeVars(self)
-        # the instance variable is not free
-        fvars.discard(self.instanceVar)
-        return fvars
-
-class Function:
-    '''
-    A function is defined by an expression and zero or more argument variables
-    that are in the expression.  For example, f(x, y) = sin(x^2 + y), would be defined
-    by the expression sin(x^2 + y) and [x, y] as the argument variables. 
-    '''
-    def __init__(self, expression, arguments):
-        assert isinstance(expression, Expression)
-        for arg in arguments:
-            assert isinstance(arg, Variable)
-        self.expression = expression
-        self.arguments = tuple(arguments)
-        
-    def __str__(self):
-        return "{" + ", ".join([str(argument) for argument in self.arguments]) + "} -> " + str(self.expression)
-
-    def __repr__(self):
-        return "{" + ", ".join([repr(argument) for argument in self.arguments]) + "} -> " + repr(self.expression)
-    def __eq__(self, other):
-        return repr(self) == repr(other)
-    def __ne__(self, other):
-        return not self.__eq__(other)
-    def __hash__(self):
-        return hash(repr(self))
+        genericVariables = []
+        for var in self.argument:
+            varAssignments.append(var)
+            if isinstance(var, MultiVariable):
+                varMap[var] = MultiIndexVariable(len(varAssignments))                
+            else:
+                varMap[var] = IndexVariable(len(varAssignments))
+            genericVariables.append(varMap[var])
+        genericExpression = self.expression.makeGeneric(varAssignments, varMap)
+        if self.hasCondition():
+            genericCondition = self.domainCondition.makeGeneric(varAssignments, varMap)
+        else: genericCondition = None
+        return Lambda(genericVariables, genericExpression, genericCondition)
         
     def usedVars(self):
-        return self.expression.usedVars() | set(self.arguments)
-
-class SubstitutionMap(dict):
-    def __init__(self, subMap = None):
-        if subMap != None:
-            dict.__init__(self, subMap)
+        '''
+        The used variables the lambda function are the used variables of the expression
+        plus the lambda argument variables.
+        '''
+        usedVs = self.expression.usedVars().union(set(self.argument))
+        if self.hasCondition():
+            for condition in self.domainCondition:
+                usedVs |= condition.usedVars()
+        return usedVs
         
-    def substitute(self, variable, value):
+    def freeVars(self):
         '''
-        Indicate that the given variable should be replaced by the
-        given value for the substitution. 
+        The free variables the lambda function are the free variables of the expression
+        minus the lambda argument variables.  The lambda function binds those variables.
         '''
-        assert isinstance(variable, Variable)
-        assert isinstance(value, Expression)
-        self[variable] = value
-        
-    def substituteOp(self, operator, function):
-        '''
-        Indicate that any operation using the given operator variable
-        should be replaced by the given function, taking the operation's
-        operands as the arguments passed in to the function.
-        '''
-        assert isinstance(operator, Variable)
-        assert isinstance(function, Function)
-        self[operator] = function
-        
-    def getSubstitutingVars(self):
-        return self.keys()
-    
-    def getSub(self, var, restrictions = None):
-        if var in self.keys():
-            subbed = self[var]
-            if isinstance(subbed, Function):
-                # this is an operation substitution
-                introducedVars = subbed.expression.freeVars()
-                introducedVars.difference_update(subbed.arguments)
-                assert restrictions == None or introducedVars.isdisjoint(restrictions.keys()), 'Must not make substitution with reserved variables (i.e. an instance variable)'
-            else:
-                assert restrictions == None or subbed.freeVars().isdisjoint(restrictions.keys()), 'Must not make substitution with reserved variables (i.e. an instance variable)'
-            return subbed
-        return var
-    
-    def makeImmutableForm(self):
-        return tuple(self.items())
-    
-    def copy(self):
-        return SubstitutionMap(self)
+        innerFreeVs = set(self.expression.freeVars())
+        if self.hasCondition():
+            for condition in self.domainCondition:
+                innerFreeVs |= condition.freeVars()
+        return innerFreeVs - set(self.argument)    
             
 def asStatement(statementOrExpression):
     '''
@@ -616,12 +811,12 @@ class Statement:
         expression will be returned, but will be linked with its corresponding statement.
         '''
         from booleans import IMPLIES
-        if isinstance(expression, Operation) and expression.operator == IMPLIES and len(expression.operands) == 2:
+        if isinstance(expression, Operation) and expression.operator == IMPLIES and len(expression.operand) == 2:
             # When stating an Implication, link the consequence to the
             # condition as an implicating Statement.
             implication = Statement._makeStatement(expression)
-            hypothesis = Statement.state(expression.operands[0]).statement
-            conclusion = Statement.state(expression.operands[1]).statement
+            hypothesis = Statement.state(expression.operand[0]).statement
+            conclusion = Statement.state(expression.operand[1]).statement
             conclusion.addImplicator(hypothesis, implication)
         else:
             Statement._makeStatement(expression)
@@ -695,34 +890,57 @@ class Statement:
         specialization derives from the given original statement and its conditions
         via a specialization inference rule.  It is the specialized form of the 'original' 
         expression by substituting one or more instance variables of outer Forall operations 
-        according to the given substitution map.  It may have free variables which can be 
-        considered to be "arbitrary" variables used in logical reasoning.  Eventually
-        they should be bound again via generalization (the counterpart to specialization).
+        according to the given substitution map.  Remaining variables in the map may
+        be included for simultaneous relabelling.  There may end up being free variables
+        which can be considered to be "arbitrary" variables used in logical reasoning.  
+        Eventually they should be bound again via generalization (the counterpart to 
+        specialization).
         '''
-        from booleans import FORALL, NONCONDITION
-        subMap = SubstitutionMap(subMap)
-        substitutingVars = set(subMap.getSubstitutingVars())
-        instanceVars = set()
-        conditions = set()
-        expr = originalExpr
-        while isinstance(expr, OperationOverInstances) and expr.operator == FORALL:
-            instanceVars.add(expr.instanceVar)
-            if expr.condition != NONCONDITION: conditions.add(expr.condition)
-            expr = expr.instanceExpression
+        from booleans import FORALL
+        substitutingVars = set()
+        operationSubMap = dict()
+        for subVar in subMap.keys():
+            if isinstance(subVar, Operation): 
+                operation = subVar
+                subVar = operation.operator
+                operationSubMap[subVar] = Lambda(operation.operand, _expressionOrList(subMap[operation]))
+            if not isinstance(subVar, Variable):
+                raise TypeError("Substitution map must map either Variable types or Operations with Variable operators")
+            substitutingVars.add(subVar)
+        varSubMap = {var:_expressionOrList(expr) for var, expr in subMap.iteritems() if isinstance(var, Variable)}
+        assert originalExpr.operator == FORALL, "May only specialize a FORALL expression"
+        assert  isinstance(originalExpr.operand, Lambda), "FORALL expression must have 1 Lambda operand"
+        # extract the forall expression and instance variables from the lambda expression operand
+        lambdaExpr = originalExpr.operand
+        expr, instanceVars = lambdaExpr.expression, set(lambdaExpr.argument)
+        # the condition over which the forall is restricted is determined by the domain of the lambda expression operand
+        conditions = lambdaExpr.domainCondition if lambdaExpr.hasCondition() else tuple()
         # any remaining variables may be used only for relabeling
         relabelVars = substitutingVars.difference(instanceVars)
         for relabelVar in relabelVars:
-            assert isinstance(subMap.getSub(relabelVar), Variable), 'May only specialize by substituting instance variables of nested forall operations or otherwise simply relabeling variables with variables.'
-        relabMap = {k:v for k,v in subMap.items() if k in relabelVars}
-        nonRelabSubMap = SubstitutionMap({k:v for k,v in subMap.items() if k not in relabelVars})
-        specializedExpr = Statement.state(expr.substituted(nonRelabSubMap, relabelMap = relabMap))
-        mappedConditions = {asStatement(condition.substituted(subMap)) for condition in conditions}
+            if relabelVar in operationSubMap:
+                raise ValueError('May only perform Operation specialization by substituting instance variables of forall operations')
+            if isinstance(relabelVar, MultiVariable):
+                for v in varSubMap[relabelVar]:
+                    if not isinstance(v, Variable):
+                        raise ValueError('May only specialize by substituting instance variables of forall operations or otherwise simply relabeling MultiVariables with lists of Variables.')
+            else:
+                if not isinstance(varSubMap[relabelVar], Variable):
+                    raise ValueError('May only specialize by substituting instance variables of forall operations or otherwise simply relabeling variables with variables.')
+        relabMap = {k:v for k,v in varSubMap.items() if k in relabelVars}
+        nonRelabSubMap = {k:v for k,v in varSubMap.items() if k not in relabelVars}
+        # make and state the specialized expression with appropriate substitutions
+        specializedExpr = Statement.state(expr.substituted(nonRelabSubMap, operationSubMap, relabelMap = relabMap))
+        # make substitutions in the condition
+        subbedConditions = {asStatement(condition.substituted(nonRelabSubMap, operationSubMap, relabelMap = relabMap)) for condition in conditions}
         Statement.state(originalExpr)
-        specializedExpr.statement.addSpecializer(originalExpr.statement, subMap, mappedConditions)
-        return specializedExpr, mappedConditions
+        # add the specializer link
+        specializedExpr.statement.addSpecializer(originalExpr.statement, subMap, subbedConditions)
+        # return the specialized expression and the 
+        return specializedExpr, subbedConditions
                        
     @staticmethod
-    def generalize(originalExpr, newForallVars, newConditions=tuple()):
+    def generalize(originalExpr, newForallVars, newConditions=None):
         '''
         State and return a generalization of a given original statement
         which derives from the original statement via a generalization inference
@@ -730,28 +948,30 @@ class Statement:
         has free variables taken to represent any particular 'arbitrary' values, 
         the  generalized form is a forall statement over some or all of these once
         free variables.  That is, it is statement applied to all values of any 
-        of the once free variables under the given conditions.  Any condition 
+        of the once free variable(s) under the given condition(s).  Any condition 
         restriction is allowed because it only weakens the statement relative 
-        to no condition.
+        to no condition.  The newForallVar(s) and newCondition(s) may be singular
+        or plural (iterable).
         '''
         from booleans import Forall
         generalizedExpr = Statement.state(Forall(newForallVars, originalExpr, newConditions))
-        # In order to be a valid tautology, we simply have to make sure that the expression is zero or more
-        # nested Forall operations with the original as the inner instanceExpression.
         Statement.state(originalExpr)
         generalizedExpr.statement.addGeneralizer(originalExpr.statement, newForallVars, newConditions)
-        Statement._checkForallInstanceExpr(generalizedExpr, originalExpr)
+        # In order to be a valid tautology, we have to make sure that the expression is
+        # a generalization of the original.
+        Statement._checkGeneralization(generalizedExpr, originalExpr)
         return generalizedExpr
     
     @staticmethod
-    def _checkForallInstanceExpr(expr, instanceExpr):
+    def _checkGeneralization(expr, instanceExpr):
         '''
-        Make sure the expr contains the instanceExpr in zero or more nested Forall operations.
+        Make sure the expr is a generalize of the instanceExpr.
         '''
         from booleans import FORALL
-        while expr != instanceExpr:
-            assert isinstance(expr, OperationOverInstances) and expr.operator == FORALL
-            expr = expr.instanceExpression
+        assert isinstance(expr, Operation) and expr.operator == FORALL
+        assert isinstance(expr.operand, Lambda)
+        expr = expr.operand.expression
+        assert expr == instanceExpr
                 
     def makeAxiom(self):
         self._isAxiom = True
@@ -766,12 +986,17 @@ class Statement:
         Our definition of a theorem is a statement known to be true that has no free variables.
         '''
         return self.wasProven() and len(self._genericExpression.freeVars()) == 0
-        
+    
+    def _tupleOfExpressions(self, expressions):
+        return tuple(_expressionOrList(x) for x in expressions)
+    
     def addSpecializer(self, original, subMap, conditions):
-        self._specializers.add((original, subMap.makeImmutableForm(), tuple(conditions)))
+        subMap = {key:_expressionOrList(val) for key, val in subMap.iteritems()}
+        self._specializers.add((original, tuple(subMap.items()), tuple(conditions)))
         original._specializations.add(self)
 
     def addGeneralizer(self, original, forallVars, conditions):
+        if conditions is None: conditions = tuple()
         self._generalizers.add((original, tuple(forallVars), tuple([asStatement(condition) for condition in conditions])))
         original._generalizations.add(self)
         
@@ -888,8 +1113,7 @@ class Statement:
             '''
             stmt = self.stmtToProve
             # Prove by specialization?  Put this at front to connect with a theorem first if possible,
-            for original, subMap, conditions in stmt._specializers:
-                subMap = SubstitutionMap(subMap)
+            for original, _, conditions in stmt._specializers:
                 generalityProver = Statement.Prover(original, self.assumptions - set(conditions), self, "specialization")
                 corequisites = [generalityProver] + [Statement.Prover(condition, self.assumptions, self, "specialization condition") for condition in conditions]
                 for prover in corequisites:
