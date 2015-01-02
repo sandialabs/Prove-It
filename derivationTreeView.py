@@ -104,7 +104,9 @@ class DerivationStep:
         self.children.append(child)
         child.parent = self
         if child.wasProven() and self.howProven == None:
-            self.howProven = child.stepType
+            self.howProven = child.provers[0].proverType
+            if self.howProven == 'implication':
+                self.howProven = 'modus ponens'
         return child
     
     def _setChildren(self, children):
