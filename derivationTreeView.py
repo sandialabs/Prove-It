@@ -8,7 +8,7 @@ import sys
 import collections
 
 from PySide import QtGui, QtCore, QtSvg
-from proveItCore import *
+from context import *
 from xml import sax
 from svgmath.tools.saxtools import XMLGenerator, ContentFilter
 from svgmath.mathhandler import MathHandler, MathNS
@@ -404,8 +404,8 @@ class AxiomModel(SvgWidgetModel):
     
     def __init__(self):
         SvgWidgetModel.__init__(self)
-        self._contexts = dict() # map context name to context
-        self._axioms = dict() # map context to axiom list
+        self._contexts = dict() # map prover name to prover
+        self._axioms = dict() # map prover to axiom list
 
     def addAxiom(self, axiom):
         context = axiom.statement.getRegisteredContext()
@@ -486,7 +486,6 @@ class ExpressionTreeNode:
             for operand in expr.operands:
                 self.children.append(ExpressionTreeNode(operand, 'Operand', self))        
         
-class ExpressionTreeModel(SvgWidgetModel):
     COLUMNS = ['Expression', 'Role', 'Type', 'Core Type', 'Context']
     
     def __init__(self, exprNodes):
