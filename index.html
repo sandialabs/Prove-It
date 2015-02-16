@@ -1,0 +1,57 @@
+<html>
+<body>
+<h1>ProveIt Database of Proofs</h1>
+Created by Wayne Witzel, Sandia National Laboratories
+<h2>Packages and Contexts</h2>
+<ul>
+<li>basiclogic</li>
+<ul>
+<li><a href='basiclogic/_booleans_/_context_.html'>booleans</a></li>
+<li><a href='basiclogic/_sets_/_context_.html'>sets</a></li>
+<li><a href='basiclogic/_equality_/_context_.html'>equality</a></li>
+<li><a href='basiclogic/_mapping_/_context_.html'>mapping</a></li>
+</ul>
+<li>numbers</li>
+<ul><li>To Do</li></ul>
+<li>abstract algebra</li>
+<ul><li>To Do</li></ul>
+<li>linear algebra</li>
+<ul><li>To Do</li></ul>
+<li>etc...</li>
+</ul>
+
+<h2>About Packages, Modules, Contexts</h2>
+Python is organized using packages and modules.  Packages follow the directory structure of your file systems, and modules are individual python files.  A Context is a concept of the ProveIt system.  It forms a collection of literals (mathematical objects with contextual meaning), axioms, and theorems.  My convention so far, which is subject to change), is to create each context in a module of the same name.  That module is in a package which organizes the Context as well as the module it is contained within.
+
+<h2>About the Contexts Shown Above</h2>
+The Contexts and theorems that we have now were designed mainly to build, from very base axioms, a system for automatically evaluating any boolean expression involving Forall (over booleans), Exists/NotExists (over booleans), Implies, Not, And, Or, and Iff (if and only if).  It isn't claimed that this will be done particularly efficiently (it isn't designed to be an optimized SAT solver).  Of course, it would be fairly simply to write a program that is solely designed for this purpose.  The point, though, is that we build up to this point in a way that demonstrates the versatility of this system.  We can truly, I believe, build up this system to treat any known mathematical framework because of the flexibility we have in expressing statements and deriving theorems.
+
+<h2>About Expression Trees</h2>
+When you click on one of the Context links above, it will take you to the list of axioms and theorems contained in the Context.  When you click on any of the mathematical expression shown there (or shown in a derivation tree which is discussed below), you will see the expression tree structure.  Each node of the tree is one of the following types: Literal (a mathematical object with contextual meaning), Variable (a label with no contextual meaning), MultiVariable (represents one or more variables and denoted with a '*' at the end of the variable name), ExpressionList (an ordered list of expressions used whenever you which a sub-expression to represent many expressions in one)), Operation (has operator and operand sub-expressions), Lambda (expresses how some argument is mapped to an expression that is a function of that argument and may specify a condition for the domain of the argument).  The ProveIt system uses an object-oriented approach where an Expression may be an object of a class derived from one of these basic expression types.  This is particularly useful for Operation expressions where the derived class can customize the when the expression is formatted and have methods for conveniently applying theorems pertaining to the operation.
+
+<h2>About Derivation Trees</h2>
+When you click on one of the Context links above and then click on the name of a theorem in the theorems list, you will be shown the derivation tree that proves this theorem.  At the root of a derivation tree is the theorem to be proven.  The leaves are axioms, theorems, or statements that are true by assumption.  Each step along the way is one of these types: specialization/conditions (substitutes particular expressions in a "forall" statement subject to meeting any conditions of the "forall" statement), generalization (forms a "forall" statement from a statement with "free" variables that are taken to be arbitrary), implication/hypothesis (coming as a pair to prove the conclusion of the implication), hypothetical reasoning (proving an implication by assuming a hypothesis).  Statements on the interior of the tree may carry a set of assumption (via hypothetical reasoning).
+
+Viewing a derivation tree in this manner takes getting used to because it reversed the top-down order that mathematical derivations are generally displayed.  This starts with the theorem to be proved at the top and works down to things that are previously known.  The reason is that this follows the legitimate computer science tree structure in which each node may have multiple children but only one parent node, and these tree structures are typically displayed in this way (for showing directories of a file system for example).  If you prefer, read it from bottom to top.  But there is some advantage to the top-down approach.  It takes you from a high level view of the derivation down into the gritty details as you go down.
+
+<h2>About named and unnamed theorems</h2>
+In the ProveIt system, any statement that is proven without free variables or assumptions is recognized as a theorem (and there is no distinction between theorem and lemma).  A theorem may have a name and be attached to a Context and be ready to by applied in multiple context.  Or a theorem may be unnamed.  An unnamed theorem is proven by the first named theorem where it is used.  (As a to-do item, this will then be stored and remembered in the future so it doesn't have to be re-derived -- but this isn't quite implemented).  An example of where this comes up is when you are evaluating an expression in an automated procedure.  Many sub-evaluations are proven along the way without giving them a name.
+
+<h2>About Proof Scripts</h2>
+When looking at the derivation tree of a named axiom, you can click on its name at the top of the web page to view the python code that generated the proof.  One thing to note, when looking at these, is the use of object-oriented programming.  Operations use derived classes that have methods which can be used to conveniently apply theorems that pertain directly to the operation.  In these proofs, it is rare that theorems are refered to by name.  Rather, Operation class methods are called which apply the named theorem as appropriate.  In this way, the library of theorems play more of a background role to generating mathematical structures (Operations) that can be conveniently manipulated.  I believe this is a descent reflection to the way that people think about mathematical concepts -- organized by the kind of expression and the kind of transformation that is desired.
+
+<h2>Some ToDos</h2>
+<ul>
+<li>Make more elegant web pages (possibly using Sphinx)</li>
+<li>Integrate the theorem/axiom/proof-script pages here with documentation pages of the ProveIt and library code</li>
+<li>Mark proofs as either fully proven (dependent axioms are fully proven) or tentatively proven.  Currently theorems declarations are simply accepted when proving other theorems.  I know how I want to do this, it's just a matter of getting to it.</li>
+<li>Show the axioms uses in each theorem (the Contexts where they come from at least)</li>
+<li>Add axiom-to-assumption demotion as a derivation step.  In this system, every definition is an explicit axiom.  Sometimes one uses a definition only for convenience but the theorem doesn't actually dependent upon it.  Axiom demotion would allow you to show that the theorem doesn't depend upon that axiom defitinition even though it was used as a convenience for the proof.
+<li>Build on to the library</li>
+<li>Get publicity and release this as open-source.  Let others build on to the library</li>
+<li><b>Long term vision:</b> wikiQED on-line where people all over can contribute theorems and build the library in a wikipedia-like manner and make elegant and educational front-end pages to their theorems.
+</ul>
+
+
+</body>
+</html>
