@@ -108,7 +108,7 @@ class HypertextGenerator:
 
     def linkedUnnamedTheorem(self, fromPath, context, prover):            
         expr = prover.stmtToProve.getExpression()
-        return '<a class="exprLink" href="' + self.unnamedTheoremPage(fromPath, context, prover) + '"><math>' + expr.formatted(MATHML) + '</math></a>'
+        return '<a href="' + self.unnamedTheoremPage(fromPath, context, prover) + '">unnamed theorem</a>'
         
     def genDerivationTreeHTML(self, path, context, prover, onlyEssentialSteps=True, isRoot=True):
         stmt = prover.stmtToProve            
@@ -134,10 +134,8 @@ class HypertextGenerator:
                 outStr += 'by theorem: '
                 outStr += self.linkedTheorem(path, linkContext, stmtName)
             outStr += '</li></ul>'
-        elif not isRoot and stmt.isProvenTheorem():
-            outStr += '<ul><li class="unnamedTheorem">by unnamed theorem: '
-            outStr += self.linkedUnnamedTheorem(path, context, prover)
-            outStr += '</li></ul>'
+        elif not isRoot and stmt.isProvenTheorem() and not prover.provers is None and not all(subProver.provers is None for subProver in prover.provers):
+            outStr += '<ul><li class="unnamedTheorem">by ' + self.linkedUnnamedTheorem(path, context, prover) + '</li></ul>'
         elif not prover.provers is None:            
             outStr += '<ul class="subDerivation">'
             for i, subProver in enumerate(prover.provers):
