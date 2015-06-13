@@ -1,6 +1,6 @@
 import sys
-from statement import *
-from context import Context
+from proveit.statement import *
+from proveit.context import Context
 from genericOperations import *
 from variables import *
 
@@ -79,7 +79,7 @@ class Equals(BinaryOperation):
         self.rhs = b
 
     def formattedOperator(self, formatType):
-        if formatType == STRING:
+        if formatType == STRING or formatType == LATEX:
             return '='
         else:
             return '<mo>=</mo>'
@@ -324,6 +324,8 @@ class NotEquals(BinaryOperation):
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return '!='
+        elif formatType == LATEX:
+            return r'\neq'
         elif formatType == MATHML:
             return '<mo>&#x2260;</mo>'
 
@@ -385,6 +387,18 @@ class NotEquals(BinaryOperation):
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
         '''
         return equality.notEqualsInBool.specialize({x:self.lhs, y:self.rhs}).check()
+
+class EquationChain:
+    def __init__(self):
+        self.eqns = []
+    
+    def append(self, eqn):
+        if len(self.eqns) > 0:
+            assert self.eqns[-1].rhs == eqn.lhs, 'Left-hand side of new equation should match the right-hand side of the last equation in the equation chain'
+        self.eqns.append(eqn)
+        
+    
+    
 
 Operation.registerOperation(NOTEQUALS, lambda operands : NotEquals(*operands))
     
