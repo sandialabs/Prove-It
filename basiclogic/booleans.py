@@ -1,12 +1,12 @@
 import sys
-from statement import *
-from context import Context
+from proveit.statement import *
+from proveit.context import Context
 from genericOperations import *
 from variables import *
 
 class BooleanSet(Literal):
     def __init__(self):
-        Literal.__init__(self, 'BOOLEANS', {MATHML:'<mstyle mathvariant="bold-double-struck"><mtext>&#x1D539;</mtext><mspace/></mstyle>'})
+        Literal.__init__(self, 'BOOLEANS', {MATHML:'<mstyle mathvariant="bold-double-struck"><mtext>&#x1D539;</mtext><mspace/></mstyle>', LATEX:r'\cal{B}'})
 
     def unfoldElemInSet(self, element):
         '''
@@ -104,7 +104,7 @@ class BooleanSet(Literal):
 
 class TrueLiteral(Literal):
     def __init__(self):
-        Literal.__init__(self, 'TRUE', formatMap = {MATHML:'<mstyle mathvariant="normal"><mi>true</mi></mstyle>'})
+        Literal.__init__(self, 'TRUE', formatMap = {LATEX:r'\mathtt{TRUE}', MATHML:'<mstyle mathvariant="normal"><mi>true</mi></mstyle>'})
     
     def evalEquality(self, other):
         if other == TRUE:
@@ -114,7 +114,7 @@ class TrueLiteral(Literal):
         
 class FalseLiteral(Literal):
     def __init__(self):
-        Literal.__init__(self, 'FALSE', formatMap = {MATHML:'<mstyle mathvariant="normal"><mi>false</mi></mstyle>'})
+        Literal.__init__(self, 'FALSE', formatMap = {LATEX:r'\mathtt{FALSE}', MATHML:'<mstyle mathvariant="normal"><mi>false</mi></mstyle>'})
     
     def evalEquality(self, other):
         if other == FALSE:
@@ -151,14 +151,14 @@ def _defineAxioms():
     falseNotTrue = NotEquals(FALSE, TRUE)
         
     # Forall statements are in the BOOLEAN set.  If it isn't TRUE, then it is FALSE.
-    # forall_{P, Q*} [forall_{x* | Q*(x*)} P(x*)] in BOOLEANS
+    # forall_{P, Q**} [forall_{x** | Q**(x**)} P(x**)] in BOOLEANS
     forallInBool = Forall((P, multiQ), inBool(Forall(xStar, P_of_xStar, multiQ_of_xStar)))
     
     # If it's ever true, it can't always be not true.  (example exists = not never)
-    # forall_{P, Q*} [exists_{x* | Q*(x*)} P(x*) = not[forall_{x* | Q*(x*)} (P(x*) != TRUE)]]
+    # forall_{P, Q**} [exists_{x** | Q**(x**)} P(x**) = not[forall_{x** | Q**(x**)} (P(x**) != TRUE)]]
     existsDef = Forall((P, multiQ), Equals(Exists(xStar, P_of_xStar, multiQ_of_xStar), Not(Forall(xStar, NotEquals(P_of_xStar, TRUE), multiQ_of_xStar))))
     
-    # forall_{P, Q*} notexists_{x* | Q*(x*)} P(x*) = not[exists_{x* | Q*(x*)} P(x*)]
+    # forall_{P, Q**} notexists_{x** | Q**(x**)} P(x**) = not[exists_{x** | Q**(x**)} P(x**)]
     notExistsDef = Forall((P, multiQ), Equals(NotExists(xStar, P_of_xStar, multiQ_of_xStar), Not(Exists(xStar, P_of_xStar, multiQ_of_xStar))))
     
     # Truth table for NOT
@@ -181,12 +181,12 @@ def _defineAxioms():
     andFF = Equals(And(FALSE, FALSE), FALSE)
     
     # Composition of multi-And, bypassing associativity for notational convenience:
-    # forall_{A, B, C*} A and B and C* = A and (B and C*)
+    # forall_{A, B, C**} A and B and C** = A and (B and C**)
     andComposition = Forall((A, B, multiC), Equals(And(A, B, multiC), And(A, And(B, multiC))))
     
     # A further defining property of AND is needed in addition to the truth table
     # because the truth table is ambiguous if we don't know that inputs are TRUE or FALSE:        
-    # forall_{A*, B, C*} A* and B and C* => B
+    # forall_{A**, B, C**} A** and B and C** => B
     andImpliesEach = Forall((multiA, B, multiC), Implies(And(multiA, B, multiC), B))
     
     # Truth table for OR
@@ -196,7 +196,7 @@ def _defineAxioms():
     orFF = Equals(Or(FALSE, FALSE), FALSE)
     
     # Composition of multi-Or, bypassing associativity for notational convenience:
-    # forall_{A, B, C*} A or B or C* = A or (B or C*)
+    # forall_{A, B, C**} A or B or C** = A or (B or C**)
     orComposition = Forall((A, B, multiC), Equals(Or(A, B, multiC), Or(A, Or(B, multiC))))
     
     # forall_{A, B} (A <=> B) = [(A => B) and (B => A)]
@@ -391,10 +391,10 @@ def _defineTheorems():
     # forall_{P} [P(TRUE) and P(FALSE)] => {[forall_{A in BOOLEANS} P(A)] = TRUE}
     forallBoolEvalTrue = Forall(P, Implies(And(PofTrue, PofFalse), Equals(Forall(A, PofA, inBool(A)), TRUE)))
 
-    # forall_{P, Q*, R*} [forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x*, y*)] => forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*)
+    # forall_{P, Q**, R**} [forall_{x** | Q**(x)} forall_{y** | R**(y**)} P(x**, y**)] => forall_{x**, y** | Q**(x), R**(y**)} P(x**, y**)
     forallBundling = Forall((P, multiQ, multiR), Implies(Forall(xStar, Forall(yStar, P_of_xStar_yStar, multiR_of_yStar), multiQ_of_xStar), Forall((xStar, yStar), P_of_xStar_yStar, (multiQ_of_xStar, multiR_of_yStar))))
 
-    # forall_{P, Q*, R*} forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*) => forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x, y*) 
+    # forall_{P, Q**, R**} forall_{x**, y** | Q**(x), R**(y**)} P(x**, y**) => forall_{x** | Q**(x)} forall_{y** | R**(y**)} P(x, y**) 
     forallUnravelling = Forall((P, multiQ, multiR), Implies(Forall((xStar, yStar), P_of_xStar_yStar, (multiQ_of_xStar, multiR_of_yStar)), Forall(xStar, Forall(yStar, P_of_xStar_yStar, multiR_of_yStar), multiQ_of_xStar)))
 
     # forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) => (A = B)
@@ -403,10 +403,10 @@ def _defineTheorems():
     # forall_{A in booleans} A = Not(Not(A))
     doubleNegationEquiv = Forall(A, Equals(A, Not(Not(A))), inBool(A))
 
-    # forall_{P, Q*, R*} forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*) = forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x, y*) 
+    # forall_{P, Q**, R**} forall_{x**, y** | Q**(x), R**(y**)} P(x**, y**) = forall_{x** | Q**(x)} forall_{y** | R**(y**)} P(x, y**) 
     forallBundledEquiv = Forall((P, multiQ, multiR), Equals(Forall((xStar, yStar), P_of_xStar_yStar, (multiQ_of_xStar, multiR_of_yStar)), Forall(xStar, Forall(yStar, P_of_xStar_yStar, multiR_of_yStar), multiQ_of_xStar)))
 
-    # forall_{P, Q*} [forall_{x* | Q*(x*)} P(x*)] = [forall_{x* | Q*(x*)} {P(x*)=TRUE}]
+    # forall_{P, Q**} [forall_{x** | Q**(x**)} P(x**)] = [forall_{x** | Q**(x**)} {P(x**)=TRUE}]
     forallEqTrueEquiv = Forall((P, multiQ), Equals(Forall(xStar, P_of_xStar, multiQ_of_xStar), Forall(xStar, Equals(P_of_xStar, TRUE), multiQ_of_xStar)))
     
     # forall_{A in BOOLEANS, B in BOOLEANS} (A => B) in BOOLEANS                                                                                                        
@@ -427,25 +427,25 @@ def _defineTheorems():
     # forall_{A in BOOLEANS} [A => FALSE] => Not(A)                                            
     hypotheticalContradiction = Forall(A, Implies(Implies(A, FALSE), Not(A)), inBool(A)) 
 
-    # forall_{P, Q*} [notexists_{x* | Q*(x*)} P(x*) = forall_{x* | Q*(x*)} (P(x*) != TRUE)]
+    # forall_{P, Q**} [notexists_{x** | Q**(x**)} P(x**) = forall_{x** | Q**(x**)} (P(x**) != TRUE)]
     existsDefNegation = Forall((P, multiQ), Equals(NotExists(xStar, P_of_xStar, multiQ_of_xStar), Forall(xStar, NotEquals(P_of_xStar, TRUE), multiQ_of_xStar)))
     
-    # forall_{P, Q*} notexists_{x* | Q*(x*)} P(x*) => Not(exists_{x* | Q*(x*)} P(x*))
+    # forall_{P, Q**} notexists_{x** | Q**(x**)} P(x**) => Not(exists_{x** | Q**(x**)} P(x**))
     notExistsUnfolding = Forall((P, multiQ), Implies(NotExists(xStar, P_of_xStar, multiQ_of_xStar), Not(Exists(xStar, P_of_xStar, multiQ_of_xStar))))
     
-    # forall_{P, Q*} Not(Exists_{x* | Q*(x*)} P(x*)) => NotExists_{x* | Q*(x*)} P(x*)
+    # forall_{P, Q**} Not(Exists_{x** | Q**(x**)} P(x**)) => NotExists_{x** | Q**(x**)} P(x**)
     notExistsFolding = Forall((P, multiQ), Implies(Not(Exists(xStar, P_of_xStar, multiQ_of_xStar)), NotExists(xStar, P_of_xStar, multiQ_of_xStar)))
 
-    # forall_{P, Q*} [exists_{x* | Q*(x*)} P(x*)] in BOOLEANS
+    # forall_{P, Q**} [exists_{x** | Q**(x**)} P(x**)] in BOOLEANS
     existsInBool = Forall((P, multiQ), inBool(Exists(xStar, P_of_xStar, multiQ_of_xStar)))
 
-    # forall_{P, Q*} forall_{x* | Q*(x*)} [P(x*) => exists_{y* | Q(y*)} P(y*)]
+    # forall_{P, Q**} forall_{x** | Q**(x**)} [P(x**) => exists_{y** | Q(y**)} P(y**)]
     existenceByExample = Forall((P, multiQ), Forall(xStar, Implies(P_of_xStar, Exists(yStar, P_of_yStar, multiQ_of_yStar)), multiQ_of_xStar))
     
-    # forall_{P, Q*} [exists_{x* | Q*(x*)} Not(P(x*))] => [Not(forall_{x* | Q*(x*)} P(x*)]
+    # forall_{P, Q**} [exists_{x** | Q**(x**)} Not(P(x**))] => [Not(forall_{x** | Q**(x**)} P(x**)]
     existsNotImpliesNotForall = Forall((P, multiQ), Implies(Exists(xStar, Not(P_of_xStar), multiQ_of_xStar), Not(Forall(xStar, P_of_xStar, multiQ_of_xStar))))
     
-    # forall_{P, Q*} forall_{x* | Q*(x*)} P(x*) => NotExists_{x* | Q*(x*)} Not(P(x*))
+    # forall_{P, Q**} forall_{x** | Q**(x**)} P(x**) => NotExists_{x** | Q**(x**)} Not(P(x**))
     forallImpliesNotExistsNot = Forall((P, multiQ), Implies(Forall(xStar, P_of_xStar, multiQ_of_xStar), NotExists(xStar, Not(P_of_xStar), multiQ_of_xStar)))
 
     # forall_{P} [(P(TRUE) = PofTrueVal) and (P(FALSE) = PofFalseVal)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}, assuming PofTrueVal=FALSE or PofFalseVal=FALSE
@@ -476,6 +476,8 @@ class Forall(OperationOverInstances):
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return 'forall'
+        elif formatType == LATEX:
+            return r'\forall'
         elif formatType == MATHML:
             return '<mo>&#x2200;</mo>'
 
@@ -621,7 +623,9 @@ class Exists(OperationOverInstances):
 
     def formattedOperator(self, formatType):
         if formatType == STRING:
-            return 'exist'
+            return 'exists'
+        elif formatType == LATEX:
+            return r'\exists'
         elif formatType == MATHML:
             return '<mo>&#x2203;</mo>'
 
@@ -638,8 +642,8 @@ class Exists(OperationOverInstances):
 
     def deriveNegatedForall(self):
         '''
-        From [exists_{x* | Q*(x*)} Not(P(x*))], derive and return Not(forall_{x* | Q*(x*)} P(x*)).
-        From [exists_{x* | Q*(x*)} P(x*)], derive and return Not(forall_{x* | Q*(x*)} (P(x*) != TRUE)).
+        From [exists_{x** | Q**(x**)} Not(P(x**))], derive and return Not(forall_{x** | Q**(x**)} P(x**)).
+        From [exists_{x** | Q**(x**)} P(x**)], derive and return Not(forall_{x** | Q**(x**)} (P(x**) != TRUE)).
         '''
         multiQ_op, multiQ_op_sub = Operation(multiQ, self.instanceVar), self.condition
         if isinstance(self.instanceExpression, Not):
@@ -674,12 +678,14 @@ class NotExists(OperationOverInstances):
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return 'notexist'
+        elif formatType == LATEX:
+            return r'\nexists'
         elif formatType == MATHML:
             return '<mo>&#x2204;</mo>'
         
     def unfold(self):
         '''
-        Deduce and return Not(Exists_{x* | Q*(x*)} P(x*)) from NotExists_{x* | Q*(x*)} P(x*)
+        Deduce and return Not(Exists_{x** | Q**(x**)} P(x**)) from NotExists_{x** | Q**(x**)} P(x**)
         '''
         Q_op, Q_op_sub = Operation(multiQ, self.instanceVar), self.condition
         P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
@@ -687,7 +693,7 @@ class NotExists(OperationOverInstances):
     
     def concludeAsFolded(self):
         '''
-        Prove and return some NotExists_{x* | Q*(x*)} P(x*) assuming Not(Exists_{x* | Q*(x*)} P(x*)).
+        Prove and return some NotExists_{x** | Q**(x**)} P(x**) assuming Not(Exists_{x** | Q**(x**)} P(x**)).
         '''
         Q_op, Q_op_sub = Operation(multiQ, self.instanceVar), self.condition
         P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpression
@@ -696,8 +702,8 @@ class NotExists(OperationOverInstances):
     
     def concludeViaForall(self):
         '''
-        Prove and return either some NotExists_{x* | Q*(x*)} Not(P(x*)) or NotExists_{x* | Q*(x*)} P(x*)
-        assumint forall_{x* | Q*(x*)} P(x*) or assuming forall_{x* | Q*(x*)} (P(x) != TRUE) respectively.
+        Prove and return either some NotExists_{x** | Q**(x**)} Not(P(x**)) or NotExists_{x** | Q**(x**)} P(x**)
+        assumint forall_{x** | Q**(x**)} P(x**) or assuming forall_{x** | Q**(x**)} (P(x) != TRUE) respectively.
         '''
         from equality import NotEquals
         multiQ_op, multiQ_op_sub = Operation(multiQ, self.instanceVar), self.condition
@@ -722,18 +728,20 @@ class Implies(BinaryOperation):
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return '=>'
+        elif formatType == LATEX:
+            return r'\Rightarrow'
         elif formatType == MATHML:
             return '<mo>&#x21D2;</mo>'
 
     def deriveConclusion(self):
-        '''
-        From (A=>B) derive and return B assuming A.
+        r'''
+        From :math:`(A \Rightarrow B)` derive and return :math:`B` assuming :math:`A`.
         '''
         return self.conclusion.check({self, self.hypothesis})
                 
     def applySyllogism(self, otherImpl):
         '''
-        From A=>B (self) and a given B=>C (otherImpl), derive and return A=>C.
+        From :math:`A \Rightarrow B` (self) and a given :math:`B \Rightarrow C` (otherImpl), derive and return :math:`A \Rightarrow C`.
         '''
         assert isinstance(otherImpl, Implies), "expected an Implies object"
         if self.conclusion == otherImpl.hypothesis:
@@ -742,9 +750,9 @@ class Implies(BinaryOperation):
             return Implies(otherImpl.hypothesis, self.conclusion).check({self, otherImpl})
     
     def deriveViaContradiction(self):
-        '''
-        From [Not(A)=>FALSE], derive and return A assuming inBool(A).
-        Or from (A=>FALSE), derive and return Not(A) assuming inBool(A).
+        r'''
+        From :math:`[\lnot A \Rightarrow \mathtt{FALSE}]`, derive and return :math:`A` assuming :math:`A \in \mathcal{B}`.
+        Or from :math:`[A \Rightarrow \mathtt{FALSE}]`, derive and return :math:`\lnot A` assuming :math:`A \in \mathcal{B}`.
         '''
         assert self.conclusion == FALSE
         if isinstance(self.hypothesis, Not):
@@ -754,13 +762,14 @@ class Implies(BinaryOperation):
             return booleans.hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion().check({self, inBool(self.hypothesis)})
     
     def generalize(self, newForallVars, newConditions=tuple()):
-        '''
+        r'''
         This makes a generalization of this expression, prepending Forall 
         operations according to newForallVars and newConditions that will bind
         'arbitrary' free variables.  This overrides the Expression version
         to absorb hypothesis into conditions if they match.  For example, 
-        [A(x) => [B(x, y) => P(x, y)]] generalized forall_{x, y | A(x), B(x, y)}
-        becomes forall_{x | A(x)} forall_{y | B(x, y)} P(x, y),
+        :math:`[A(x) \Rightarrow [B(x, y) \Rightarrow P(x, y)]]` generalized 
+        forall :math:`x, y` such that :math:`A(x), B(x, y)`
+        becomes :math:`\forall_{x, y | A(x), B(x, y)} P(x, y)`,
         '''
         hypothesizedConditions = set()
         newConditionsSet = set(newConditions)
@@ -775,13 +784,14 @@ class Implies(BinaryOperation):
         #return Forall(newForallVars, expr, newConditions)
 
     def transposition(self):
-        '''
+        r'''
         Depending upon the form of self with respect to negation of the hypothesis and/or conclusion,
-        will derive from self and return as follows:
-        For [Not(A) => Not(B)], derive [Not(A) => Not(B)] => [B => A] assuming inBool(A).
-        For [Not(A) => B], derive [Not(A) => B] => [Not(B) => A] assuming inBool(A), inBool(B).
-        For [A => Not(B)], derive [A => Not(B)] => [B => Not(A)] assuming inBool(A).
-        For [A => B], derive [A => B] => [Not(B) => Not(A)] assuming inBool(A), inBool(B)
+        will prove and return as follows:
+        
+        * For :math:`[\lnot A  \Rightarrow \lnot B]`, prove :math:`[\lnot A \Rightarrow \lnot B] \Rightarrow [B \Rightarrow A]` assuming :math:`A \in \mathcal{B}`.
+        * For :math:`[\lnot A \Rightarrow B]`, prove :math:`[\lnot A \Rightarrow B] \Rightarrow [\lnot B \Rightarrow A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
+        * For :math:`[A  \Rightarrow \lnot B]`, prove :math:`[A \Rightarrow \lnot B] \Rightarrow [B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`.
+        * For :math:`[A  \Rightarrow B]`, prove :math:`[A \Rightarrow B] \Rightarrow [\lnot B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
         '''
         if isinstance(self.hypothesis, Not) and isinstance(self.conclusion, Not):
             return booleans.transpositionFromNegated.specialize({B:self.hypothesis.operand, A:self.conclusion.operand}).check({inBool(self.hypothesis.operand)})
@@ -795,11 +805,12 @@ class Implies(BinaryOperation):
     def transpose(self):
         '''
         Depending upon the form of self with respect to negation of the hypothesis and/or conclusion,
-        will derive from self and return as follows.
-        From Not(A) => Not(B), derive and return B => A assuming inBool(A).
-        From Not(A) => B, derive Not(B) => A assuming inBool(A), inBool(B).
-        From A => Not(B), derive B => Not(A) assuming inBool(A).
-        From A => B, derive Not(B) => Not(A) assuming inBool(A), inBool(B).
+        will derive from self and return as follows:
+        
+        * From :math:`[\lnot A  \Rightarrow \lnot B]`, derive :math:`[B \Rightarrow A]` assuming :math:`A \in \mathcal{B}`.
+        * From :math:`[\lnot A \Rightarrow B]`, derive :math:`[\lnot B \Rightarrow A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
+        * From :math:`[A  \Rightarrow \lnot B]`, derive :math:`[B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`.
+        * From :math:`[A  \Rightarrow B]`, derive :math:`[\lnot B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
         '''
         return self.transposition().deriveConclusion()
         
@@ -833,18 +844,26 @@ class Not(Operation):
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return 'not'
+        if formatType == LATEX:
+            return r'\lnot'
         elif formatType == MATHML:
             return '<mo>&#x00AC;</mo>'
 
     def formatted(self, formatType, fenced=False):
-        if formatType == MATHML:
+        if formatType == STRING:
+            return Operation.formatted(self, formatType, fenced)                    
+        elif formatType == LATEX:
+            outStr = ''
+            if fenced: outStr += "("
+            outStr += self.formattedOperator(formatType) + ' ' + self.operand.formatted(formatType, fenced=True)
+            if fenced: outStr += ')'
+            return outStr            
+        elif formatType == MATHML:
             outStr = ''
             if fenced: outStr += "<mfenced separators=''>"
             outStr += '<mrow>' + self.formattedOperator(formatType) + self.operand.formatted(formatType, fenced=True) + '</mrow>'
             if fenced: outStr += '</mfenced>'
             return outStr
-        else:
-            return Operation.formatted(self, formatType, fenced)        
         
     def evaluate(self):
         '''
@@ -871,53 +890,53 @@ class Not(Operation):
         return booleans.negationClosure.specialize({A:self.operand}).check({operandInBool})
    
     def equateNegatedToFalse(self):
-        '''
-        From Not(A), derive and return [A = FALSE].
+        r'''
+        From :math:`\lnot A`, derive and return :math:`A = \mathtt{FALSE}`.
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         return booleans.notImpliesEqFalse.specialize({A:self.operand}).deriveConclusion().check({self})
 
     def equateFalseToNegated(self):
-        '''
-        From Not(A), derive and return [FALSE = A].
+        r'''
+        From :math:`\lnot A`, derive and return :math:`\mathtt{FALSE} = A`.
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         return booleans.notImpliesEqFalseRev.specialize({A:self.operand}).deriveConclusion().check({self})
     
     def deriveViaDoubleNegation(self):
-        '''
-        From Not(Not(A)), return A assuming inBool(A).
-        Also see version in NotEquals for A != FALSE.
+        r'''
+        From :math:`\lnot \lnot A`, derive and return :math:`A` assuming :math:`A \in \mathcal{B}`.
+        Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         if isinstance(self.operand, Not):
             return booleans.fromDoubleNegation.specialize({A:self.operand.operand}).deriveConclusion().check({self, inBool(A)})
 
     def concludeViaDoubleNegation(self):
-        '''
-        Prove and return self of the form Not(Not(A)) assuming A.
-        Also see version in NotEquals for A != FALSE.
+        r'''
+        Prove and return self of the form :math:`\lnot \lnot A` assuming :math:`A`.
+        Also see version in NotEquals for :math:`A \neq \mathtt{FALSE}`.
         '''
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
             return booleans.doubleNegation.specialize({A:stmt}).deriveConclusion().check({stmt})
             
     def deriveContradiction(self):
-        '''
-        From Not(A), derive and return A=>FALSE.
+        r'''
+        From :math:`\lnot A`, derive and return :math:`A \Rightarrow \mathtt{FALSE}`.
         '''
         return booleans.contradictionFromNegation.specialize({A:self.operand}).check({self})
     
     def deriveNotEquals(self):
-        '''
-        From Not(A=B), derive and return A != B.
+        r'''
+        From :math:`\lnot(A = B)`, derive and return :math:`A \neq B`.
         '''
         from equality import equality, Equals
         if isinstance(self.operand, Equals):
             return equality.foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}).deriveConclusion().check({self})
 
     def deriveNotExists(self):
-        '''
-        From Not(exists_{x* | Q*(x*)} P(x*)), derive and return NotExists_{x* | Q*(x*)} P(x*).
+        r'''
+        From :math:`\lnot \exists_{x** | Q**(x**)} P(x**)`, derive and return :math:`\nexists_{x** | Q**(x**)} P(x**)`
         '''
         operand = self.operand
         if isinstance(operand, Exists):
@@ -937,8 +956,8 @@ Operation.registerOperation(NOT, lambda operand : Not(operand))
         
 class And(AssociativeOperation):
     def __init__(self, *operands):
-        '''
-        And together any number of operands: A and B and C
+        r'''
+        And together any number of operands: :math:`A \land B \land C`
         '''
         AssociativeOperation.__init__(self, AND, *operands)
 
@@ -950,11 +969,13 @@ class And(AssociativeOperation):
             return 'and'
         elif formatType == MATHML:
             return '<mo>&#x2227;</mo>'
+        elif formatType == LATEX:
+            return r'\land'
         
     def deriveInPart(self, indexOrExpr):
-        '''
-        From (A and ... and X and ... and Z) derive X.  indexOrExpr specifies 
-        X either by index or the Expression.
+        r'''
+        From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
+        :math:`X` either by index or the Expression.
         '''
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operand).index(indexOrExpr)
         return booleans.andImpliesEach.specialize({multiA:self.operands[:idx], B:self.operands[idx], multiC:self.operands[idx+1:]}).deriveConclusion().check({self})
@@ -992,7 +1013,7 @@ class And(AssociativeOperation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         if len(self.operands) >= 3:
-            # A and B and C* = A and (B and C*)
+            # A and B and C** = A and (B and C**)
             compositionEquiv = booleans.andComposition.specialize({A:self.operands[0], B:self.operands[1], multiC:self.operands[2:]})
             decomposedEval = compositionEquiv.rhs.evaluate()
             return compositionEquiv.applyTransitivity(decomposedEval)
@@ -1026,6 +1047,8 @@ class Or(AssociativeOperation):
         '''
         if formatType == STRING:
             return 'or'
+        if formatType == LATEX:
+            return r'\lor'
         elif formatType == MATHML:
             return '<mo>&#x2228;</mo>'
 
@@ -1064,7 +1087,7 @@ class Or(AssociativeOperation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         if len(self.operands) >= 3:
-            # A or B or C* = A or (B or C*)
+            # A or B or C** = A or (B or C**)
             compositionEquiv = booleans.orComposition.specialize({A:self.operands[0], B:self.operands[1], multiC:self.operands[2:]})
             decomposedEval = compositionEquiv.rhs.evaluate()
             return compositionEquiv.applyTransitivity(decomposedEval)
@@ -1095,6 +1118,8 @@ class Iff(BinaryOperation):
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return '<=>'
+        elif formatType == LATEX:
+            return '\Rightleftarrow'
         elif formatType == MATHML:
             return '<mo>&#x21D4;</mo>'
 
@@ -1213,13 +1238,13 @@ def compose(*expressions):
     else:
         assert len(expressions) > 2, "Compose 2 or more expressions, but not less than 2."
         rightComposition = compose(*expressions[1:])
-        # A and (B and C*) = TRUE, given A, B, C*
+        # A and (B and C**) = TRUE, given A, B, C**
         nestedAndEqT = deriveStmtEqTrue(compose(expressions[0], rightComposition)).check(expressions)
-        # A and B and C* = A and (B and C*)
+        # A and B and C** = A and (B and C**)
         compositionEquality = booleans.andComposition.specialize({A:expressions[0], B:rightComposition.operands[0], multiC:rightComposition.operands[1:]}).check(expressions)
         print nestedAndEqT
         print compositionEquality
-        # [A and B and C*] given A, B, C*
+        # [A and B and C**] given A, B, C**
         return compositionEquality.applyTransitivity(nestedAndEqT).deriveViaBooleanEquality().check(expressions)
 
 def inBool(X):

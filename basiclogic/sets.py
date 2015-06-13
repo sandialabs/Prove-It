@@ -1,6 +1,6 @@
 import sys
-from statement import *
-from context import *
+from proveit.statement import *
+from proveit.context import *
 from genericOperations import *
 from variables import *
 
@@ -14,8 +14,8 @@ UNION = literals.add('UNION')
 INTERSECTION = literals.add('INTERSECTION')
 EVERYTHING = literals.add('EVERYTHING')
 NOTHING = literals.add('NOTHING')
-SUBSET = literals.add('SUBSET')
-SUPERSET = literals.add('SUPERSET')
+SUBSET_EQ = literals.add('SUBSET_EQ')
+SUPERSET_EQ = literals.add('SUPERSET_EQ')
 SET = literals.add('SET')
 
 def _defineAxioms():
@@ -36,18 +36,18 @@ def _defineAxioms():
     intersectionDef = Forall((x, A, B), Iff(In(x, Intersection(A, B)), And(In(x, A), In(x, B))))
             
     # Composition of multi-Union, bypassing associativity for notational convenience:
-    # forall_{A, B, C*} A union B union C* = A union (B union C*)
+    # forall_{A, B, C**} A union B union C** = A union (B union C**)
     unionComposition = Forall((A, B, multiC), Equals(Union(A, B, multiC), Union(A, Union(B, multiC))))
     
     # Composition of multi-Intersection, bypassing associativity for notational convenience:
-    # forall_{A, B, C*} A intersect B intersect C* = A intersect (B intersect C*)
+    # forall_{A, B, C**} A intersect B intersect C** = A intersect (B intersect C**)
     intersectionComposition = Forall((A, B, multiC), Equals(Intersection(A, B, multiC), Intersection(A, Intersection(B, multiC))))
             
-    # forall_{A, B} [A subset B <=> (forall_{x in A} x in B)]
-    subsetDef = Forall((A, B), Iff(Subset(A, B), Forall(x, In(x, B), In(x, A))))
+    # forall_{A, B} [A subseteq B <=> (forall_{x in A} x in B)]
+    subsetDef = Forall((A, B), Iff(SubsetEq(A, B), Forall(x, In(x, B), In(x, A))))
     
-    # forall_{A, B} [A superset B <=> (forall_{x in B} x in A)]
-    supersetDef = Forall((A, B), Iff(Superset(A, B), Forall(x, In(x, A), In(x, B))))
+    # forall_{A, B} [A superseteq B <=> (forall_{x in B} x in A)]
+    supersetDef = Forall((A, B), Iff(SupersetEq(A, B), Forall(x, In(x, A), In(x, B))))
     
     # forall_{P, f, x} [x in {f(y) | P(y)}] <=> [exists_{y | P(y)} x = f(y)]
     setOfAllDef = Forall((P, f, x), Iff(In(x, SetOfAll(y, fy, conditions=Py)), Exists(y, Equals(x, fy), Py)))
@@ -67,18 +67,18 @@ def _defineTheorems():
     from booleans import Forall, Exists, Implies, Iff, And, Or, inBool, BOOLEANS
     from equality import Equals
     
-    # forall_{A, B} [A subset B => (forall_{x in A} x in B)]
+    # forall_{A, B} [A subseteq B => (forall_{x in A} x in B)]
     _firstTheorem=\
-    unfoldSubset = Forall((A, B), Implies(Subset(A, B), Forall(x, In(x, B), In(x, A))))
+    unfoldSubsetEq = Forall((A, B), Implies(SubsetEq(A, B), Forall(x, In(x, B), In(x, A))))
 
-    # forall_{A, B} [(forall_{x in A} x in B) => (A subset B)]
-    foldSubset = Forall((A, B), Implies(Forall(x, In(x, B), In(x, A)), Subset(A, B)))
+    # forall_{A, B} [(forall_{x in A} x in B) => (A subseteq B)]
+    foldSubsetEq = Forall((A, B), Implies(Forall(x, In(x, B), In(x, A)), SubsetEq(A, B)))
 
-    # forall_{A, B} [A superset B => (forall_{x in B} x in A)]
-    unfoldSuperset = Forall((A, B), Implies(Superset(A, B), Forall(x, In(x, A), In(x, B))))
+    # forall_{A, B} [A superseteq B => (forall_{x in B} x in A)]
+    unfoldSupersetEq = Forall((A, B), Implies(SupersetEq(A, B), Forall(x, In(x, A), In(x, B))))
 
-    # forall_{A, B} [(forall_{x in B} x in A) => (A superset B)]
-    foldSuperset = Forall((A, B), Implies(Forall(x, In(x, A), In(x, B)), Superset(A, B)))
+    # forall_{A, B} [(forall_{x in B} x in A) => (A superseteq B)]
+    foldSupersetEq = Forall((A, B), Implies(Forall(x, In(x, A), In(x, B)), SupersetEq(A, B)))
 
     # forall_{P, f, x} [x in {f(y) | P(y)}] => [exists_{y | P(y)} x = f(y)]
     unfoldSetOfAll = Forall((P, f, x), Implies(In(x, SetOfAll(y, fy, Py)), Exists(y, Equals(x, fy), Py)))
@@ -102,6 +102,8 @@ class In(BinaryOperation):
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return 'in'
+        elif formatType == LATEX:
+            return r'\in'        
         else:
             return '<mo>&#x2208;</mo>'
 
@@ -173,6 +175,8 @@ class NotIn(BinaryOperation):
     def formattedOperator(self, formatType):
         if formatType == STRING:
             return 'not in'
+        elif formatType == LATEX:
+            return r'\notin'        
         else:
             return '<mo>&#x2209;</mo>'
 
@@ -189,6 +193,8 @@ class Singleton(Operation):
     def formatted(self, formatType, fenced=False):
         if formatType == STRING:
             return '{' + str(self.elem) + '}'
+        elif formatType == LATEX:
+            return '{' + self.elem.formatted(formatType) + '}'        
         else:
             return "<mfenced open='{' close='}'>" + self.elem.formatted(formatType) + '</mfenced>'
 
@@ -232,6 +238,8 @@ class Union(AssociativeOperation):
         '''
         if formatType == STRING:
             return 'union'
+        elif formatType == LATEX:
+            return r'\bigcup'
         elif formatType == MATHML:
             return '<mo>&#x222A;</mo>'
 
@@ -280,6 +288,8 @@ class Intersection(AssociativeOperation):
         '''
         if formatType == STRING:
             return 'intersection'
+        elif formatType == LATEX:
+            return r'\bigcap'
         elif formatType == MATHML:
             return '<mo>&#x2229;</mo>'
 
@@ -299,13 +309,15 @@ class Intersection(AssociativeOperation):
 
 Operation.registerOperation(INTERSECTION, lambda operands : Intersection(*operands))
 
-class Subset(BinaryOperation):
+class SubsetEq(BinaryOperation):
     def __init__(self, subSet, superSet):
-        BinaryOperation.__init__(self, SUBSET, subSet, superSet)
+        BinaryOperation.__init__(self, SUBSET_EQ, subSet, superSet)
         
     def formattedOperator(self, formatType):
         if formatType == STRING:
-            return 'subset'
+            return 'subseteq'
+        elif formatType == LATEX:
+            return r'\subseteq'
         else:
             return '<mo>&#x2286;</mo>'
 
@@ -323,15 +335,17 @@ class Subset(BinaryOperation):
         '''
         return sets.foldSubset.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
 
-Operation.registerOperation(SUBSET, lambda operands : Subset(*operands))
+Operation.registerOperation(SUBSET_EQ, lambda operands : SubsetEq(*operands))
 
-class Superset(BinaryOperation):
+class SupersetEq(BinaryOperation):
     def __init__(self, superSet, subSet):
-        BinaryOperation.__init__(self, SUPERSET, superSet, subSet)
+        BinaryOperation.__init__(self, SUPERSET_EQ, superSet, subSet)
         
     def formattedOperator(self, formatType):
         if formatType == STRING:
-            return 'superset'
+            return 'superseteq'
+        elif formatType == LATEX:
+            return r'\superseteq'
         else:
             return '<mo>&#x2287;</mo>'
 
@@ -349,7 +363,7 @@ class Superset(BinaryOperation):
         '''
         return sets.foldSuperset.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
 
-Operation.registerOperation(SUPERSET, lambda operands : Superset(*operands))
+Operation.registerOperation(SUPERSET_EQ, lambda operands : SupersetEQ(*operands))
  
 class SetOfAll(OperationOverInstances):
     def __init__(self, instanceVars, instanceElement, conditions=None):
