@@ -1,3 +1,3 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 sets.qed('foldSubset', sets.subsetDef.specialize().deriveLeftImplication().generalize((A, B)))
