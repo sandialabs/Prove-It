@@ -1,9 +1,10 @@
-from statement import *
+from proveit.statement import *
 import collections
 
 class BinaryOperation(Operation):
     def __init__(self, operator, A, B):
         Operation.__init__(self, operator, (A, B))
+        assert len(A) == 1 and len(B) == 1, 'Cannot have ExpressionLists in Binary operation because it can lead to ambiguity since ExpressionLists cannot nest.'
         self.leftOperand = A
         self.rightOperand = B
         
@@ -12,14 +13,16 @@ class BinaryOperation(Operation):
         outStr = ''
         formattedLeft = self.leftOperand.formatted(formatType, fenced=subLeftFenced)
         formattedRight = self.rightOperand.formatted(formatType, fenced=subRightFenced)
-        if formatType == STRING:
+        formattedOp = self.formattedOperator(formatType)
+        assert not formattedOp is None, 'formattedOperator needs to be implemented for ' + str(self.__class__)
+        if formatType == STRING or formatType == LATEX:
             if fenced: outStr += '('
-            outStr += formattedLeft + ' ' + self.formattedOperator(formatType) + ' ' + formattedRight
+            outStr += formattedLeft + ' ' + formattedOp + ' ' + formattedRight
             if fenced: outStr += ')'
         elif formatType == MATHML:
             if fenced: outStr += '<mfenced>'
             outStr += '<mrow>' + formattedLeft
-            outStr += self.formattedOperator(formatType)
+            outStr += formattedOp
             outStr += formattedRight + '</mrow>'            
             if fenced: outStr += '</mfenced>'
         return outStr
@@ -42,7 +45,7 @@ class AssociativeOperation(Operation):
         '''
         outStr = ''
         formattedOperands = [operand.formatted(formatType, fenced=subFenced) for operand in self.operands]
-        if formatType == STRING:
+        if formatType == STRING or formatType == LATEX:
             if fenced: outStr += '('
             outStr += (' ' + self.formattedOperator(formatType) + ' ').join(formattedOperands)
             if fenced: outStr += ')'
@@ -71,16 +74,31 @@ class OperationOverInstances(Operation):
         self.instanceExpression = lambdaOperand.expression
         self.condition = lambdaOperand.domainCondition
 
-    def implicitInstanceVar(self):
+    def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
         '''
-        If the conditions are that the instance variables are in some set, then
-        the instance variables are implicit (stating conditions indicates
-        the instance variable).
+        Return instance variables that need not be shown explicitly in the
+        list of instance variables in the formatting.  By default,
+        this will be all instance variables if all instance variables 
+        have conditions of being in sets, or none of them (all or nothing).
+        Use overriddenImplicitVars to declare extra implicit instance variables
+        (all or just the overridden ones).
         '''
         from sets import In
         if self.condition is None: return False
         inSetElements = {condition.element for condition in self.condition if isinstance(condition, In)}
-        return all(var in inSetElements for var in self.instanceVar)
+        if overriddenImplicitVars is None: overriddenImplicitVars = set()
+        inSetVars = {var for var in self.instanceVar if var in inSetElements or var in overriddenImplicitVars}
+        if len(inSetVars) == len(self.instanceVar):
+            return inSetVars # all
+        else:
+            return overriddenImplicitVars # or nothing / overriddens
+
+    def implicitConditions(self, formatType):
+        '''
+        Returns conditions that need not be shown explicitly in the formatting.
+        By default, this is empty (all conditions are shown).
+        '''
+        return set()
     
     def hasCondition(self):
         '''
@@ -90,29 +108,33 @@ class OperationOverInstances(Operation):
 
     def formatted(self, formatType, fenced=False):
         # override this default as desired
-        implicitIvar = self.implicitInstanceVar()
+        implicitIvars = self.implicitInstanceVars(formatType)
+        hasExplicitIvars = (len(implicitIvars) < len(self.instanceVar))
+        implicitConditions = self.implicitConditions(formatType)
+        hasExplicitConditions = self.hasCondition() and (len(implicitConditions) < len(self.condition))
         outStr = ''        
-        if formatType == STRING:
+        if formatType == STRING or formatType == LATEX:
             if fenced: outStr += '['
             outStr += self.formattedOperator(formatType) + '_{'
-            if not implicitIvar:
-                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVar])
-            if self.hasCondition():
-                if not implicitIvar: outStr += " | "
-                outStr += ', '.join(condition.formatted(formatType) for condition in self.condition) 
+            if hasExplicitIvars:
+                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVar if var not in implicitIvars])
+            if hasExplicitConditions:
+                if hasExplicitIvars: outStr += " | "
+                outStr += ', '.join(condition.formatted(formatType) for condition in self.condition if condition not in implicitConditions) 
             outStr += '} ' + self.instanceExpression.formatted(formatType)
             if fenced: outStr += ']'
         elif formatType == MATHML:        
             if fenced: outStr += '<mfenced>'
             outStr += '<mrow><msub>' + self.formattedOperator(formatType)
             outStr += '<mrow><mfenced open="" close="">'
-            if not implicitIvar:
-                for var in self.instanceVar: outStr += var.formatted(formatType)
-            if self.hasCondition(): 
-                if not implicitIvar:
+            if hasExplicitIvars:
+                for var in self.instanceVar: 
+                    if var not in implicitIvars: outStr += var.formatted(formatType)
+            if hasExplicitConditions: 
+                if hasExplicitIvars:
                     outStr += '</mfenced><mo>&#x2223;</mo><mfenced open="" close="">'
                 for condition in self.condition: 
-                    outStr += condition.formatted(formatType) 
+                    if condition not in implicitConditions: outStr += condition.formatted(formatType) 
             outStr += '</mfenced></mrow>'
             outStr += '</msub>' + self.instanceExpression.formatted(formatType)
             if fenced: outStr += '</mfenced>'
