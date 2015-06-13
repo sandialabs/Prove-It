@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = [Not(B) => Not(A)]
 hypothesis = Implies(Not(B), Not(A))

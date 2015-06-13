@@ -1,3 +1,3 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 booleans.qed('notTimpliesF', booleans.notT.rightImplViaEquivalence())

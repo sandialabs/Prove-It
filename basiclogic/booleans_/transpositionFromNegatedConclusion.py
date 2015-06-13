@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # inBool(B=FALSE)
 Equals(B, FALSE).deduceInBool()

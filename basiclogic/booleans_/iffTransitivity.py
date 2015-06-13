@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = (A <=> B) and (B <=> C)
 hypothesis = And(Iff(A, B), Iff(B, C))

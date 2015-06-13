@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 AorB = Or(A, B)
 hypothesis = And(Implies(A, C), Implies(B, C))

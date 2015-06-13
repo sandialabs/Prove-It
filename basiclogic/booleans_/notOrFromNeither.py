@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # Not(A or B) = Not(F or B) assuming Not(A)
 notAorB_eq_notForB = Not(A).equateNegatedToFalse().substitution(X, Not(Or(X, B))).prove({Not(A)})

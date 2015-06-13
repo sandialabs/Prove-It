@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # A=TRUE assuming A
 AeqT = deriveStmtEqTrue(A)

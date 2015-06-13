@@ -1,3 +1,3 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 booleans.qed('trueOrFalse', booleans.orTF.deriveViaBooleanEquality())

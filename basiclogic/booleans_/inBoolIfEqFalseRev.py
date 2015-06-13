@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = (FALSE=A)
 hypothesis = Equals(FALSE, A)

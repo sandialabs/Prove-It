@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = (A=TRUE or A=FALSE)
 hypothesis = Or(Equals(A, TRUE), Equals(A, FALSE))

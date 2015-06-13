@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # [Not(A) = TRUE] => [A = FALSE]
 booleans.implicitNotF.specialize().prove()

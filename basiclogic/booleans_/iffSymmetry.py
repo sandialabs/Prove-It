@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 hypothesis = Iff(A, B) # hypothesis = (A <=> B)
 # A => B given hypothesis

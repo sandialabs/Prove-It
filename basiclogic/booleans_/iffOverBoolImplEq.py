@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # Note that proveByEval doesn't work for bundled Forall yet,
 # but later we'll be able to do this kind of thing in one step.

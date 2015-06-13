@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # P(TRUE) and P(FALSE) => forall_{A in BOOLEANS} P(A)
 folding = booleans.foldForallOverBool.specialize()

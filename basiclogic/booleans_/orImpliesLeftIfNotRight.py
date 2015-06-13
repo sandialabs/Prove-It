@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # (A or B) => FALSE assuming Not(A), Not(B)
 booleans.orContradiction.specialize().prove({Not(A), Not(B)})

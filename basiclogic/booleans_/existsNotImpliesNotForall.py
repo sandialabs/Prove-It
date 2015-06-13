@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # existsNot = [exists_{x* | Q*(x*)} Not(P(x*))]
 existsNot = Exists(xStar, Not(P_of_xStar), multiQ_of_xStar)

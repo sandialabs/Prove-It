@@ -1,3 +1,3 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 booleans.qed('eqTrueRevIntro', Implies(A, deriveStmtEqTrue(A).concludeBooleanEquality().deriveReversed()).generalize(A))

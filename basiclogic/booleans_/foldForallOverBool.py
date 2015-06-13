@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = [P(TRUE) and P(FALSE)]
 hypothesis = And(PofTrue, PofFalse)

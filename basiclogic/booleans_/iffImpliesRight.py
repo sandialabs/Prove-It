@@ -1,3 +1,3 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 booleans.qed('iffImpliesRight', Implies(Iff(A, B), Iff(A, B).definition().deriveRightViaEquivalence().deriveLeft()).generalize((A, B)))

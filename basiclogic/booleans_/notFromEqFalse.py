@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # AeqF := (A=F)
 AeqF = Equals(A, FALSE)

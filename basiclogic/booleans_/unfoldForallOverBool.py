@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = [forall_{A in BOOLEANS} P(A)]
 hypothesis = Forall(A, PofA, inBool(A))

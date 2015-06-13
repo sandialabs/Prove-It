@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # [(A=>B) = TRUE] or [(A=>B) = FALSE] assuming A, B in BOOLEANS
 Forall((A, B), Or(Equals(Implies(A, B), TRUE), Equals(Implies(A, B), FALSE)), (inBool(A), inBool(B))).proveByEval().specialize().prove({inBool(A), inBool(B)})

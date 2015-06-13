@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # AnotF = (A != FALSE)
 AnotF = NotEquals(A, FALSE)

@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # Not(Not(B)) assuming B and inBool(B)
 notNotB = Not(Not(B)).concludeViaDoubleNegation()

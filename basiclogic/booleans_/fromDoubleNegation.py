@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis: Not(Not(A))
 hypothesis = Not(Not(A))

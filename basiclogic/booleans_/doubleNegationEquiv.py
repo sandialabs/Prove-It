@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # A => Not(Not(A))
 doubleNegationImplied = booleans.doubleNegation.specialize().prove()

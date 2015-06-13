@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # [TRUE or FALSE]
 booleans.orTF.deriveViaBooleanEquality().prove()

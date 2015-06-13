@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # forall_{x* | Q*(x)} forall_{y* | R*(y*)} P(x*, y*) => forall_{x*, y* | Q*(x), R*(y*)} P(x*, y*)
 forallBundlingSpec = booleans.forallBundling.specialize().prove()

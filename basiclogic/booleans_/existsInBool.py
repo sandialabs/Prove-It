@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # exists_{x* | Q*(x*)} P(x*) = not(forall_{x* | Q*(x*)} P(x*) != TRUE)
 existsDefSpec = booleans.existsDef.specialize().prove()

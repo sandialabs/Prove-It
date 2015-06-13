@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # inBool(Not(A)) assuming inBool(A)
 Not(A).deduceInBool().prove({inBool(A)})

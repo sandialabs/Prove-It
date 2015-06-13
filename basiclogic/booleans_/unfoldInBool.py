@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # [A in ({TRUE} union {FALSE})] assuming inBool(A)
 AinTunionF = booleans.boolsDef.rhsSubstitute(X, In(A, X)).prove({inBool(A)})

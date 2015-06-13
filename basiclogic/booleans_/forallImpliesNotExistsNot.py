@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = forall_{x* | Q*(x*)} P(x*)
 hypothesis = Forall(xStar, P_of_xStar, multiQ_of_xStar)

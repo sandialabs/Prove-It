@@ -1,3 +1,3 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 booleans.qed('selfImplication', Implies(A, A).generalize(A))

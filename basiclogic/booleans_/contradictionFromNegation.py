@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # FALSE assuming Not(A) and A
 Not(A).equateNegatedToFalse().deriveRightViaEquivalence().prove({Not(A), A})

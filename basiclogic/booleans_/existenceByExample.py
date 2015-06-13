@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # neverPy = [forall_{y* | Q*(y*)} (P(y*) != TRUE)]
 neverPy = Forall(yStar, NotEquals(P_of_yStar, TRUE), multiQ_of_yStar)

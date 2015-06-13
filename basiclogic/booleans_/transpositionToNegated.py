@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # [B => Not(Not(A))] => [Not(A)=>Not(B)] assuming inBool(A), inBool(B)
 toConclusion = Implies(B, Not(Not(A))).transposition()
