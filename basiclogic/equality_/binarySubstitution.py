@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = (x=a and y=b)
 hypothesis = And(Equals(x, a), Equals(y, b))

@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # Not(x = y) in BOOLEANS
 Not(Equals(x, y)).deduceInBool().prove()

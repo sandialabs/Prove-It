@@ -1,3 +1,3 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 equality.qed('foldNotEquals', equality.notEqualsDef.specialize().leftImplViaEquivalence().generalize((x, y)))

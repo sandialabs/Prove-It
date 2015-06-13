@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = (x != y)
 hypothesis = NotEquals(x, y)
