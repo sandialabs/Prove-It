@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # y in Domain((x | Q(x)) -> f(x)) <=> Q(y)
 y_in_fmap_iff_Qy = mapping.lambdaDomainDef.specialize().specialize().prove()

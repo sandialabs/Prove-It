@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 # hypothesis = forall_{x} [f(x) = g(x)]
 hypothesis = Forall([x], fx_eq_gx)

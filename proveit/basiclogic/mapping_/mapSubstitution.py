@@ -1,4 +1,4 @@
-from basiclogic import *
+from proveit.basiclogic import *
 
 fyGivenQyMap = Lambda([y], fy, [Qy]) # (x | Q(x)) -> f(x)
 gyGivenQyMap = Lambda([y], gy, [Qy]) # (x | Q(x)) -> g(x)
