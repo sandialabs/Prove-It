@@ -5,7 +5,7 @@ from statement import Statement, Expression, ExpressionList, Literal, Variable, 
 from prover import Prover
 from array import array
 import xml.etree.ElementTree as ET
-from HypertextGenerator import HypertextGenerator
+from qedDocumentGenerator import DocumentGenerator
 
 class Context:
     def __init__(self, contextModule, literals, axiomDefFn, theoremDefFn):
@@ -23,6 +23,7 @@ class Context:
         self.package = contextModule.__package__
         assert not self.package is None
         self.name = contextModule.__name__
+        if self.name[:8] == 'proveit.': self.name = self.name[8:]
         print self.package
         print self.name
         for _, literal in literals.iteritems():
@@ -34,7 +35,7 @@ class Context:
         self._theoremDict = None
         self._axioms = None
         self._theorems = None
-        self._htmlGen = HypertextGenerator()
+        self._docGen = DocumentGenerator()
         
     def getName(self):
         return self.name
@@ -81,12 +82,14 @@ class Context:
         theoremExpr.prove()
         print "Theorem " + self.name + '.' + theoremName + " has been proven."
         Prover.clearTemporaryProvers()
-        self._htmlGen.makeTheoremPage(self, theoremName, theoremExpr)
+        self._docGen.makeTheoremRST(self, theoremName, theoremExpr)
     
     def __repr__(self):
         return self.name
     
-    def _exprDefDictionary(self, firstExpr, definitions):
+    def _exprDefDictionary(self, firstExprAndDefinitions):
+        if firstExprAndDefinitions is None: return # nothing defined
+        firstExpr, definitions = firstExprAndDefinitions
         firstExprNum = firstExpr.creationNum
         for name, definition in definitions.iteritems():
             if isinstance(definition, Expression) and not name.startswith('_') and definition.creationNum >= firstExprNum:
@@ -96,12 +99,12 @@ class Context:
     
     def _defineAxioms(self):
         if self._axioms is None:
-            self._axiomDict = {name:axiom for name, axiom in self._exprDefDictionary(*self._axiomDefFn())}
+            self._axiomDict = {name:axiom for name, axiom in self._exprDefDictionary(self._axiomDefFn())}
             self._axioms = set(self._axiomDict.values())
 
     def _defineTheorems(self):
         if self._theorems is None:
-            self._theoremDict = {name:theorem for name, theorem in self._exprDefDictionary(*self._theoremDefFn())}
+            self._theoremDict = {name:theorem for name, theorem in self._exprDefDictionary(self._theoremDefFn())}
             self._theorems = set(self._theoremDict.values())
 
     def __getattr__(self, name):
