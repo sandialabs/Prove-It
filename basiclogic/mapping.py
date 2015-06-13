@@ -1,7 +1,7 @@
 import sys
-from statement import *
-from context import Context
-from basiclogic import *
+from proveit.statement import *
+from proveit.context import Context
+from proveit.basiclogic import *
 from variables import *
 
 literals = Literals()
