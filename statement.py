@@ -1,8 +1,13 @@
+"""
+This is the statement module.
+"""
+
 import re
 from sre_constants import LITERAL
 
 STRING = 1
 MATHML = 2
+LATEX = 3
 
 class Expression:
     lastCreationNum = 0
@@ -229,7 +234,8 @@ class ExpressionList(Expression):
     
     def formatted(self, formatType, fenced=False):
         outStr = ''
-        if formatType == STRING:
+        if len(self.expressions) == 0: fenced = True # for an empty list, show the parenthesis to show something.
+        if formatType == STRING or formatType == LATEX:
             if fenced: outStr += '('
             outStr += ','.join([expr.formatted(formatType) for expr in self.expressions])
             if fenced: outStr += ')'
@@ -320,7 +326,7 @@ class Literal(Expression):
         # override this default as desired
         fromFormatMap = Expression.formatted(self, formatType)
         if fromFormatMap != '': return fromFormatMap
-        if formatType == STRING:
+        if formatType == STRING or formatType == LATEX:
             return self.name
         elif formatType == MATHML:
             return '<mi>' + self.name + '</mi>'
@@ -364,7 +370,7 @@ class Variable(Expression):
         # override this default as desired
         fromFormatMap = Expression.formatted(self, formatType)
         if fromFormatMap != '': return fromFormatMap
-        if formatType == STRING:
+        if formatType == STRING or formatType == LATEX:
             return self.name
         elif formatType == MATHML:
             return '<mi>' + self.name + '</mi>'
@@ -442,9 +448,11 @@ class MultiVariable(Variable):
         fromFormatMap = Expression.formatted(self, formatType)
         if fromFormatMap != '': return fromFormatMap
         if formatType == STRING:
-            return self.name + '*'
+            return self.name + '**'
+        elif formatType == LATEX:
+            return self.name + '^{**}'
         elif formatType == MATHML:
-            return '<msup><mi>' + self.name + '</mi><mo>*</mo></msup>'
+            return '<msup><mi>' + self.name + '</mi><mo>**</mo></msup>'
     
     def _substitutedGenerator(self, varSubMap, relabelMap = None, reservedVars = None):
         '''
@@ -573,7 +581,7 @@ class Operation(Expression):
     
     def formatted(self, formatType, fenced=False):
         # override this default as desired
-        if formatType == STRING:
+        if formatType == STRING or formatType == LATEX:
             return self.formattedOperator(formatType) +  '(' + self.operand.formatted(formatType) + ')'
         elif formatType == MATHML:
             outStr = '<mrow>' + self.formattedOperator(formatType) + '<mfenced>'
@@ -697,6 +705,13 @@ class Lambda(Expression):
                 outStr += '|' + self.domainCondition.formatted(formatType)
             outStr += ') -> ' + self.expression.formatted(formatType)
             if fenced: outStr += ']'
+        elif formatType == LATEX:
+            outStr = r'\left[' if fenced else ''
+            outStr += r'\left(' + ', '.join([var.formatted(formatType) for var in self.argument])
+            if self.hasCondition():
+                outStr += '|' + self.domainCondition.formatted(formatType)
+            outStr += r'\right) \rightarrow ' + self.expression.formatted(formatType)
+            if fenced: outStr += r'\right]'
         elif formatType == MATHML:
             outStr = "<mfenced open='[' close=']'>" if fenced else ''
             if self.hasCondition():
