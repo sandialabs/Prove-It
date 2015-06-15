@@ -1,8 +1,9 @@
 import sys
 from proveit.statement import Literals, Operation, Variable, MultiVariable, Lambda, ExpressionList, STRING, LATEX
 from proveit.context import Context
-from basiclogic import Forall, In, List, Equals
-from computer_science.regular_expressions import KleeneRepetition
+from proveit.basiclogic import Forall, In, List, Equals
+from proveit.computer_science.regular_expressions import KleeneRepetition
+from Carbon import ControlAccessor
 
 # quantum circuit literals
 literals = Literals()
@@ -42,11 +43,18 @@ def areIdentities(gates):
 # some Variable labels
 multiA = MultiVariable('A')
 multiB = MultiVariable('B')
+multiB1 = MultiVariable('B1')
+multiB2 = MultiVariable('B2')
+multiB3 = MultiVariable('B3')
 multiC = MultiVariable('C')
+multiC1 = MultiVariable('C1')
+multiC2 = MultiVariable('C2')
+multiC3 = MultiVariable('C3')
 multiD = MultiVariable('D')
 # for implicit identity gates
 Is = ImplicitIdentities('I') 
-
+IsB = ImplicitIdentities('IB') 
+IsC = ImplicitIdentities('IC') 
 
 def _defineAxioms():
     return None # For now, we're just asserting the theorems without proof.
@@ -58,7 +66,12 @@ def _defineTheorems():
                                                                                             Circuit(multiA, Gates(multiB, CTRL_DN, Is, Z, multiC), multiD)))
     reverseCzUp = ForallWithImplicitIdentities([multiA, multiB, multiC, multiD, Is], Equals(Circuit(multiA, Gates(multiB, CTRL_DN, Is, Z, multiC), multiD), 
                                                                                             Circuit(multiA, Gates(multiB, Z, Is, CTRL_UP, multiC), multiD)))
-                                                                                              
+    reverseCnotDnToUp = ForallWithImplicitIdentities([multiA, multiB, multiC, multiD, Is], 
+                                                     Equals(Circuit(multiA, Gates(multiB, CTRL_DN, Is, X, multiC), multiD), 
+                                                            Circuit(multiA, Gates(IsB, H, Is, H, IsC), Gates(multiB, X, Is, CTRL_UP, multiC2), Gates(IsB, H, Is, H, IsC), multiD)))
+    reverseCnotUpToDn = ForallWithImplicitIdentities([multiA, multiB, multiC, multiD, Is], 
+                                                     Equals(Circuit(multiA, Gates(multiB, X, Is, CTRL_UP, multiC), multiD), 
+                                                            Circuit(multiA, Gates(IsB, H, Is, H, IsC), Gates(multiB, CTRL_DN, Is, X, multiC2), Gates(IsB, H, Is, H, IsC), multiD)))
     return _firstTheorem, locals()
 
 circuit = Context(sys.modules[__name__], literals, _defineAxioms, _defineTheorems)
@@ -73,10 +86,13 @@ class Gates(Operation):
         self.gates = gates = self.operand
         self.gate_min_widths = [gate.size if hasattr(gate, 'width') else 1 for gate in gates]
         self.min_nrows = sum(self.gate_min_widths)
-        multivar_binary = [1 if isinstance(gate, MultiVariable) else 0 for gate in gates]
-        num_multivars = sum(multivar_binary)
-        self.multivar_row = multivar_binary.index(1) if num_multivars == 1 else None
+        self.multivar_rows = {row for row, gate in enumerate(gates) if isinstance(gate, MultiVariable)}        
+        num_multivars = len(self.multivar_rows)
+        # a row may only be expandable if it is the only MultiVariable of the column
+        self.expandable = (num_multivars == 1)
+        self.expandable_row = list(self.multivar_rows)[0] if self.expandable else None
         self.gate_by_minrow = [gate for gate, min_width in zip(self.gates, self.gate_min_widths) for _ in xrange(min_width)]
+        self.expandable_gate = self.gate_by_minrow[self.expandable_row] if self.expandable_row is not None else None
 
     def containsType(self, gate_type):
         '''
@@ -87,49 +103,57 @@ class Gates(Operation):
                 return True
         return False
     
-    def formatted(self, formatType, fenced=False, circuit=None, row=None):
+    def gate_and_type(self, circuit, row):
+        multivar_width = circuit.nrows - self.min_nrows + 1 # there may not be a multi-variable, that's ok
+        assert multivar_width > 0, 'Should have been prevented by making the circuit nrows be the maximum of column min_nrows'
+        if multivar_width > 1 and row >= self.expandable_row:
+            if row < self.multivar_row+multivar_width:
+                # row is within the multi-variable
+                if isinstance(self.expandable_gate, ImplicitIdentities):
+                    return self.expandable_gate, 'qw'
+                #r'\qw {\ar @{~} [0,-1]} {\ar @{~} [0,1]}' # special case of implicit identities: squigglies
+                if row == self.multivar_row: 
+                    # row is at beginning of multi-variable gate
+                    return self.expandable_gate, 'multigate{' + str(multivar_width-1) + '}' 
+                else: return self.expandable_gate, 'ghost' # row past the multi-variable gate start
+            else:
+                idx = row-multivar_width+1 # row is past the mult-variable
+        else:
+            idx = row
+        gate = self.gate_by_minrow[idx]
+        if isinstance(gate, ImplicitIdentities):
+            return gate, 'qw'
+        if gate == CTRL_DN or gate == CTRL_UP:
+            direction = 1 if gate == CTRL_DN else -1
+            target_idx = idx+direction
+            while self.gate_by_minrow[target_idx] == I or isinstance(self.gate_by_minrow[target_idx], ImplicitIdentities):
+                target_idx += direction
+            if gate == CTRL_DN and self.gate_by_minrow[target_idx] == CTRL_UP:
+                return gate, 'control' # one end of a CPhase with control at either end (equivalent, but not represented the same as, a controlled-Z)
+            else:
+                return gate, 'ctrl{' + str(target_idx - idx) + '}'
+        if hasattr(gate, 'width') and gate.width > 1:
+            if idx > 0 and self.gate_by_minrow[idx-1] == gate:
+                return gate, 'ghost' 
+            else: return gate, 'multigate{' + str(gate.width-1) + '}'
+        elif gate == I: return gate, '\qw' # Identity is just a quantum wire
+        else: return gate, 'gate'
+         
+    def formatted(self, formatType, fenced=False, circuit=None, row=None, column=None, multivar_row=False):
         if formatType == LATEX:
             if row is None:
                 # present the whole -- as if it were a circuit with one column
                 return Circuit([self]).formatted(formatType, fenced)
             else:
-                multivar_width = circuit.nrows - self.min_nrows + 1 # there may not be a multi-variable, that's ok
-                assert multivar_width > 0, 'Should have been prevented by making the circuit nrows be the maximum of column min_nrows'
-                startstr = None
-                if multivar_width > 1 and row >= self.multivar_row:
-                    if row < self.multivar_row+multivar_width:
-                        # row is within the multi-variable
-                        if isinstance(self.gate_by_minrow[self.multivar_row], ImplicitIdentities):
-                            return r'\qw {\ar @{~} [0,-1]} {\ar @{~} [0,1]}' # special case of implicit identities: squigglies
-                        idx = self.multivar_row
-                        if row == self.multivar_row: 
-                            # row is at beginning of multi-variable gate
-                            startstr = r'\multigate{' + str(multivar_width-1) + '}' 
-                        else: startstr = r'\ghost' # row past the multi-variable gate start
-                    else:
-                        idx = row-multivar_width+1 # row is past the mult-variable
+                gate, gate_type = self.gate_and_type(circuit, row)
+                if multivar_row: 
+                    if column == 0: gate_type = gate_type + 'NoIn' # No incoming wires for a first-column multi-variable
+                    else: gate_type = gate_type + 's' # a multi-variable gate with a squiggly wire
+                if gate_type[:4] == 'gate' or gate_type[:9] == 'multigate' or gate_type[:5] == 'ghost':
+                    # for these gate types, we need that gate name included in the latex
+                    return ' \\' + gate_type + '{' + gate.formatted(formatType, False) + '}'
                 else:
-                    idx = row
-                gate = self.gate_by_minrow[idx]
-                if isinstance(gate, ImplicitIdentities):
-                    return r'\qw {\ar @{~} [0,-1]} {\ar @{~} [0,1]}' # special case of implicit identities: squigglies
-                if gate == CTRL_DN or gate == CTRL_UP:
-                    direction = 1 if gate == CTRL_DN else -1
-                    target_idx = idx+direction
-                    while self.gate_by_minrow[target_idx] == I or isinstance(self.gate_by_minrow[target_idx], ImplicitIdentities):
-                        target_idx += direction
-                    if gate == CTRL_DN and self.gate_by_minrow[target_idx] == CTRL_UP:
-                        return r'\control' # one end of a CPhase with control at either end (equivalent, but not represented the same as, a controlled-Z)
-                    else:
-                        return r'\ctrl{' + str(target_idx - idx) + '}'
-                gatestr = gate.formatted(formatType, False)
-                if startstr is None and hasattr(gate, 'width') and gate.width > 1:
-                    if idx > 0 and self.gate_by_minrow[idx-1] == gate:
-                        startstr = r'\ghost' 
-                    else: startstr = r'\multigate{' + str(gate.width-1) + '}'
-                elif gate == I: return r'\qw' # Identity is just a quantum wire
-                else: startstr = r'\gate'
-                return startstr + '{' + gatestr + '}'
+                    return ' \\' + gate_type # e.g., \qw, \control, \ctrl{#}
         else:
             return Operation.formatted(self, formatType, fenced)
         
@@ -163,6 +187,7 @@ class Circuit(Operation):
             self.width = widths[0] # has a fixed width
         # MultiVariables expand to fill to the maximum of the # of rows
         self.nrows = max([1 if isinstance(column, MultiVariable) else column.min_nrows for column in self.columns]) 
+        self.multivar_rows = {row for row in xrange(self.nrows) if all(row in column.multivar_rows for column in self.columns if isinstance(column, Gates))}
     
     def hasFixedWidth(self):
         return hasattr(self, 'width')
@@ -176,20 +201,50 @@ class Circuit(Operation):
                 if row > 0: outStr += r'\\' + '\n'
                 for k, column in enumerate(self.columns):
                     if isinstance(column, MultiVariable):
+                        postfix = 'NoIn' if k == 0 else ''
+                        if row in self.multivar_rows and k > 0: postfix = 's'
                         if self.nrows == 1:
-                            outStr += r'& \gate' # A multi-variable column on just one row
+                            outStr += r'& \gate' + postfix # A multi-variable column on just one row
                         else:
-                            outStr += '&' + (r'\multigate{' + str(self.nrows-1) + '}' if row == 0 else r'\ghost')
+                            outStr += '& ' + (r'\multigate' + postfix + '{' + str(self.nrows-1) + '}' if row == 0 else r'\ghost' + postfix)
                         outStr += '{' + column.formatted(formatType, fenced) + '} '
                         # Draw a dotted box around MultiVariable columns to distinguish them from a Gates with a solo MultiVariable.
                         #outStr += r'\gategroup{1}{' + str(k+1) + '}{'+ str(self.nrows) + '}{' + str(k+2) + '}{.}{.5em}'
                     else:
-                        outStr += '&' + column.formatted(LATEX, circuit=self, row=row)
+                        outStr += '&' + column.formatted(LATEX, circuit=self, row=row, column=k, multivar_row=(row in self.multivar_rows))
             outStr += '}\n' + r'\end{array}' + '\n'
             if fenced: outStr += r'\right]'
             return outStr
         else:
             return Operation.formatted(self, formatType, fenced)
+        
+    def controlReversal(self, row, col):
+        '''
+        Given the row and column (zero-based) of a control operation of this quantum circuit,
+        derive and return an equivalence with this circuit on the left and a
+        circuit with an intelligently reversed control on the right.
+        '''
+        column = self.columns[col]
+        control_type = column.gates[row]
+        assert control_type == CTRL_DN or control_type == CTRL_UP
+        direction = 1 if control_type == CTRL_DN else -1
+        target_row = row + direction
+        while column.gates[target_row] == I or isinstance(column.gates[target_row], ImplicitIdentities):
+            target_row += direction
+        multiA_val = self.columns[:col]
+        multiC_val = self.columns[col+1:]
+        multiB_val = column.gates[:min(row, target_row)]
+        multiD_val = column.gates[max(row, target_row):]
+        target = column.gates[target_row]
+        if target == Z and control_type == CTRL_DN:
+            return circuit.reverseCzDn.specialize({multiA:multiA_val, multiB:multiB_val, multiC:multiC_val, multiD:multiD_val})
+        elif target == Z and control_type == CTRL_UP:
+            return circuit.reverseCzUp.specialize({multiA:multiA_val, multiB:multiB_val, multiC:multiC_val, multiD:multiD_val})
+        elif target == X and control_type == CTRL_DN:
+            return circuit.reverseCnotDnToUp.specialize({multiA:multiA_val, multiB:multiB_val, multiC:multiC_val, multiD:multiD_val})
+        elif target == X and control_type == CTRL_UP:
+            return circuit.reverseCnotUpToDn.specialize({multiA:multiA_val, multiB:multiB_val, multiC:multiC_val, multiD:multiD_val})
+        
 
 Operation.registerOperation(CIRCUIT, lambda operands : Circuit(*operands))
 
