@@ -1,8 +1,8 @@
 import sys
 from proveit.statement import *
 from proveit.context import Context
-from genericOperations import AssociativeOperation, BinaryOperation
-from variables import *
+from proveit.basiclogic.genericOperations import AssociativeOperation, BinaryOperation
+from variables import a, b, cStar
 
 literals = Literals()
 literals.add('ADD')
@@ -16,9 +16,9 @@ literals.add('PRODUCT')
 
 def _defineAxioms():  
     # Composition of multi-Add, bypassing associativity for notational convenience:
-    # forall_{A, B, C**} A + B + C** = A + (B + C**)
+    # forall_{a, b, c**} a + b + c** = a + (b + c**)
     _firstAxiom =\
-    addComposition = Forall((A, B, multiC), Equals(Add(A, B, multiC), Add(A, Add(B, multiC))))
+    addComposition = Forall((a, b, cStar), Equals(Add(a, b, cStar), Add(a, Add(b, cStar))))
   
     return _firstAxiom, locals()
 
