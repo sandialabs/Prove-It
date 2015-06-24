@@ -9,7 +9,8 @@ class DocumentGenerator:
     proof derivations and expression trees.
     """
     def __init__(self):
-        self.basePath = os.path.join(os.path.dirname(statement.__file__), 'qed-doc')
+#        self.basePath = os.path.join(os.path.dirname(statement.__file__), 'qed-doc')
+        self.basePath = os.path.join(os.path.dirname(statement.__file__), '../qed-doc')
     
     def expressionCategoryClass(self, expr):
         '''
