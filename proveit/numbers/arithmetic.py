@@ -1,19 +1,62 @@
 import sys
 from proveit.statement import *
 from proveit.context import Context
-from proveit.basiclogic.genericOperations import AssociativeOperation, BinaryOperation
+from proveit.basiclogic.genericOperations import AssociativeOperation, BinaryOperation, OperationOverInstances
 #from variables import *
 from variables import a, b, cStar
 
 literals = Literals()
-literals.add('ADD')
-literals.add('SUBTRACT')
-literals.add('MULTIPY')
-literals.add('DIVIDE')
-literals.add('FRACTION')
-literals.add('EXPONENTIATE')
-literals.add('SUMMATION')
-literals.add('PRODUCT')
+LESSTHANEQUALS = literals.add('LESSTHANEQUALS')#Add to a different script in numbers?
+GREATERTHANEQUALS = literals.add('GREATERTHANEQUALS')#Add to a different script in numbers?
+PR = literals.add('PR')#Add to a different script in numbers?
+ABS = literals.add('ABS')#Add to a different script in numbers?
+ADD = literals.add('ADD')
+SUBTRACT = literals.add('SUBTRACT')
+MULTIPLY = literals.add('MULTIPY')
+DIVIDE = literals.add('DIVIDE')
+FRACTION = literals.add('FRACTION')
+EXPONENTIATE = literals.add('EXPONENTIATE')
+SUMMATION = literals.add('SUMMATION')
+PRODUCT = literals.add('PRODUCT')
+
+
+m = Variable('m')
+n = Variable('n')
+t = Variable('t')
+eps = Variable('eps',{LATEX:r'\varepsilon'})
+#e = Variable('e')
+phi = Variable('phi',{LATEX:r'\phi'})
+
+U   = Variable('U')
+SUm = Variable('SU(m)')
+C2m = Variable('C^(2^m)',{LATEX:r'C^{2^m}'})
+
+u = Variable('ket_u',{LATEX:r'|u\rangle'})
+
+e = literals.add('e')
+i = literals.add('i')
+pi = Variable('pi',{LATEX:r'\pi'})
+
+one = literals.add('1')
+two = literals.add('2')
+minusOne = literals.add('minusOne',{LATEX:r'-1'})
+
+Zp  = literals.add('Z^+',{LATEX:r'\mathbb{Z}^+'})
+zeroToOne = literals.add('zeroToOne',{LATEX:r'[0,1]'})
+
+tFunc = literals.add('tFunc')
+tFunc_n_eps = Operation(tFunc, (n, eps))
+
+QPE = literals.add('QPE')
+QPEfunc = Operation(QPE,(U,u,t))
+
+
+
+#ZPLUS = literal.add('ZPLUS')
+
+#QPE should be literal
+#Can't have unbound variables.
+
 
 def _defineAxioms():  
     # Composition of multi-Add, bypassing associativity for notational convenience:
@@ -27,6 +70,58 @@ def _defineTheorems():
     return None
 
 arithmetic = Context(sys.modules[__name__], literals, _defineAxioms, _defineTheorems)
+
+
+
+class LessThanEquals(BinaryOperation):
+    def __init__(self, operandA, operandB):
+        r'''
+        See if second number is at least as big as first.
+        '''
+        BinaryOperation.__init__(self, LESSTHANEQUALS,operandA,operandB)
+        
+    def formattedOperator(self, formatType):
+        '''
+        Formated operator when there are 2 or operands (can't be more).
+        '''
+        if formatType == STRING:
+            return r'<='
+        elif formatType == LATEX:
+            return r'\leq'
+
+class GreaterThanEquals(BinaryOperation):
+    def __init__(self, operandA, operandB):
+        r'''
+        See if first number is at least as big as second.
+        '''
+        BinaryOperation.__init__(self, GREATERTHANEQUALS,operandA,operandB)
+        
+    def formattedOperator(self, formatType):
+        '''
+        Formated operator when there are 2 or operands (can't be more).
+        '''
+        if formatType == STRING:
+            return r'>='
+        elif formatType == LATEX:
+            return r'\geq'
+
+
+class Pr(Operation):
+    def __init__(self, A):
+        Operation.__init__(self, PR, A)
+        self.operand = A
+    
+    def formatted(self, formatType, fenced=False):
+        return 'Pr['+self.operand.formatted(formatType, fenced=True)+']'
+
+class Abs(Operation):
+    def __init__(self, A):
+        Operation.__init__(self, ABS, A)
+        self.operand = A
+
+    def formatted(self, formatType, fenced=False):
+
+        return '|'+self.operand.formatted(formatType, fenced=True)+'|'
 
 class Add(AssociativeOperation):
     def __init__(self, *operands):
@@ -50,7 +145,7 @@ class Subtract(BinaryOperation):
         
     def formattedOperator(self, formatType):
         '''
-        Formated operator when there are 2 or more operands.
+        Formated operator when there are 2 or operands (can't be more).
         '''
         return '-'
 
@@ -100,3 +195,33 @@ class Fraction(BinaryOperation):
         '''
         pass
 
+class Exponentiate(BinaryOperation):
+    def __init__(self, base, exponent):
+        r'''
+        Raise base to exponent power.
+        '''
+        BinaryOperation.__init__(self,EXPONENTIATE, base, exponent)
+        
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return r'**'
+        elif formatType == LATEX:
+            return r'^'
+
+class Summation(OperationOverInstances):
+#    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
+    def __init__(self, indices, summand, domains):
+        r'''
+        Sum summand over indices over domains.
+        Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
+        indices: instance vars
+        summand: instanceExpressions
+        domains: conditions (except no longer optional)
+        '''
+        OperationOverInstances.__init__(self, SUMMATION, indices, summand, domains)
+
+    def formattedOperator(self, formatType):
+        if formatType == STRING:
+            return 'Summation'
+        elif formatType == LATEX:
+            return '\sum'
