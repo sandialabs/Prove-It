@@ -1,4 +1,7 @@
-from statement import Statement, asStatement
+from proveit.statement import Statement, asStatement
+from proveit.expression import Operation
+from proveit.inLiteral import IN
+from proveit.everythingLiteral import EVERYTHING
 
 class Prover:
     # Temporary provers: mapping a statement to a list of provers (for various assumption sets).
@@ -32,7 +35,7 @@ class Prover:
 #            if self.stmtToProve.provingStatements(self.provingAssumptions) == None:
 #                self.provingAssumptions = None
         # For keeping the order of the new assumptions
-        if newAssumptionsInOrder == None:
+        if newAssumptionsInOrder is None:
             self.newAssumptionsInOrder = tuple()
         else:
             self.newAssumptionsInOrder = tuple(newAssumptionsInOrder) 
@@ -115,7 +118,9 @@ class Prover:
             #print [corequisite.stmtToProve.getExpression() for corequisite in corequisites]
             breadth1stQueue += corequisites
         # Prove by generalization?
-        for original, forallVars, conditions in stmt._generalizers:
+        for original, forallVars, conditions, domain in stmt._generalizers:
+            if domain != EVERYTHING:
+                conditions = [asStatement(Operation(IN, (var, domain))) for var in forallVars] + list(conditions)
             # we cannot allow assumptions that have any of the forallVars as free variables
             subAssumptions = {assumption for assumption in self.assumptions if len(assumption.freeVars() & set(forallVars)) == 0}            
             # add assumptions for any of the conditions of the generalizer
