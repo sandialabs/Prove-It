@@ -1,97 +1,11 @@
-import sys
-from proveit.statement import *
-from proveit.context import *
-from genericOperations import *
-from variables import *
+from proveit.basiclogic.genericOperations import BinaryOperation, AssociativeOperation, OperationOverInstances
+from proveit.expression import Literal, Operation, Lambda, STRING, LATEX
+from proveit.basiclogic.variables import A, B, S, P, x, y
 
-# set theory related literals
-literals = Literals()
-IN = literals.add('IN')
-NOTIN = literals.add('NOTIN')
-SINGLETON = literals.add('SINGLETON')
-COMPLEMENT = literals.add('COMPLEMENT')
-UNION = literals.add('UNION')
-INTERSECTION = literals.add('INTERSECTION')
-EVERYTHING = literals.add('EVERYTHING')
-NOTHING = literals.add('NOTHING')
-SUBSET_EQ = literals.add('SUBSET_EQ')
-SUPERSET_EQ = literals.add('SUPERSET_EQ')
-SET = literals.add('SET')
+pkg = __package__
 
-def _defineAxioms():
-    from booleans import Forall, Exists, Implies, Iff, And, Or, inBool, BOOLEANS
-    from equality import Equals
-    
-    # forall_{x, S} (x in S) in BOOLEANS
-    _firstAxiom =\
-    inSetIsInBool = Forall((x, S), In(In(x, S), BOOLEANS))
-    
-    # forall_{x, y} [x in Singleton(y)] = [x = y]
-    singletonDef = Forall((x, y), Equals(In(x, Singleton(y)), Equals(x, y)))
-    
-    # forall_{x, A, B} [x in (A union B)] <=> [(x in A) or (x in B)]
-    unionDef = Forall((x, A, B), Iff(In(x, Union(A, B)), Or(In(x, A), In(x, B))))
-    
-    # forall_{x, A, B} [x in (A intersection B)] <=> [(x in A) and (x in B)]
-    intersectionDef = Forall((x, A, B), Iff(In(x, Intersection(A, B)), And(In(x, A), In(x, B))))
-            
-    # Composition of multi-Union, bypassing associativity for notational convenience:
-    # forall_{A, B, C**} A union B union C** = A union (B union C**)
-    unionComposition = Forall((A, B, multiC), Equals(Union(A, B, multiC), Union(A, Union(B, multiC))))
-    
-    # Composition of multi-Intersection, bypassing associativity for notational convenience:
-    # forall_{A, B, C**} A intersect B intersect C** = A intersect (B intersect C**)
-    intersectionComposition = Forall((A, B, multiC), Equals(Intersection(A, B, multiC), Intersection(A, Intersection(B, multiC))))
-            
-    # forall_{A, B} [A subseteq B <=> (forall_{x in A} x in B)]
-    subsetDef = Forall((A, B), Iff(SubsetEq(A, B), Forall(x, In(x, B), In(x, A))))
-    
-    # forall_{A, B} [A superseteq B <=> (forall_{x in B} x in A)]
-    supersetDef = Forall((A, B), Iff(SupersetEq(A, B), Forall(x, In(x, A), In(x, B))))
-    
-    # forall_{P, f, x} [x in {f(y) | P(y)}] <=> [exists_{y | P(y)} x = f(y)]
-    setOfAllDef = Forall((P, f, x), Iff(In(x, SetOfAll(y, fy, conditions=Py)), Exists(y, Equals(x, fy), Py)))
-    
-    # forall_{A, B} [forall_{x} x in A <=> x in B] => [A=B]
-    setIsAsSetContains = Forall((A, B), Implies(Forall(x, Iff(In(x, A), In(x, B))), Equals(A, B)))
-    
-    # forall_{x} x in EVERYTHING
-    allInEverything = Forall(x, In(x, EVERYTHING))
-
-    # forall_{x} x notin EVERYTHING
-    allNotInNothing = Forall(x, NotIn(x, NOTHING))
-        
-    return _firstAxiom, locals()
-
-def _defineTheorems():
-    from booleans import Forall, Exists, Implies, Iff, And, Or, inBool, BOOLEANS
-    from equality import Equals
-    
-    # forall_{A, B} [A subseteq B => (forall_{x in A} x in B)]
-    _firstTheorem=\
-    unfoldSubsetEq = Forall((A, B), Implies(SubsetEq(A, B), Forall(x, In(x, B), In(x, A))))
-
-    # forall_{A, B} [(forall_{x in A} x in B) => (A subseteq B)]
-    foldSubsetEq = Forall((A, B), Implies(Forall(x, In(x, B), In(x, A)), SubsetEq(A, B)))
-
-    # forall_{A, B} [A superseteq B => (forall_{x in B} x in A)]
-    unfoldSupersetEq = Forall((A, B), Implies(SupersetEq(A, B), Forall(x, In(x, A), In(x, B))))
-
-    # forall_{A, B} [(forall_{x in B} x in A) => (A superseteq B)]
-    foldSupersetEq = Forall((A, B), Implies(Forall(x, In(x, A), In(x, B)), SupersetEq(A, B)))
-
-    # forall_{P, f, x} [x in {f(y) | P(y)}] => [exists_{y | P(y)} x = f(y)]
-    unfoldSetOfAll = Forall((P, f, x), Implies(In(x, SetOfAll(y, fy, Py)), Exists(y, Equals(x, fy), Py)))
-    
-    # forall_{P, f, x} [exists_{y | P(y)} x = f(y)] => [x in {f(y) | P(y)}]
-    foldSetOfAll = Forall((P, f, x), Implies(Exists(y, Equals(x, fy), Py), In(x, SetOfAll(y, fy, Py))))
-
-    # forall_{P, x} [x in {y | P(y)}] => P(x)
-    unfoldSimpleSetOfAll = Forall((P, x), Implies(In(x, SetOfAll(y, y, Py)), Px))
-    
-    return _firstTheorem, locals()
-        
-sets = Context(sys.modules[__name__], literals, _defineAxioms, _defineTheorems)
+EVERYTHING = Literal('EVERYTHING')
+NOTHING = Literal('NOTHING', {STRING:'NOTHING', LATEX:r'\emptyset'})
 
 class In(BinaryOperation):
     def __init__(self, element, itsSet):
@@ -99,19 +13,12 @@ class In(BinaryOperation):
         self.element = element
         self.itsSet = itsSet
         
-    def formattedOperator(self, formatType):
-        if formatType == STRING:
-            return 'in'
-        elif formatType == LATEX:
-            return r'\in'        
-        else:
-            return '<mo>&#x2208;</mo>'
-
     def deduceInBool(self):
         '''
         Deduce and return that this 'in' statement is in the set of BOOLEANS.
         '''
-        return sets.inSetIsInBool.specialize({x:self.element, S:self.itsSet}).check()
+        from axioms import inSetIsInBool
+        return inSetIsInBool.specialize({x:self.element, S:self.itsSet}).check()
     
     def unfold(self):
         '''
@@ -163,8 +70,7 @@ class In(BinaryOperation):
         '''
         return self.itsSet.foldAsForallInSet(forallStmt)
 
-Operation.registerOperation(IN, lambda operands : In(*operands))
-
+IN = Literal(pkg, 'IN', {STRING:'in', LATEX:r'\in'}, lambda operands : In(*operands))
 
 class NotIn(BinaryOperation):
     def __init__(self, element, theSet):
@@ -177,10 +83,8 @@ class NotIn(BinaryOperation):
             return 'not in'
         elif formatType == LATEX:
             return r'\notin'        
-        else:
-            return '<mo>&#x2209;</mo>'
 
-Operation.registerOperation(NOTIN, lambda operands : NotIn(*operands))
+NOTIN = Literal(pkg, 'NOTIN', {STRING:'not in', LATEX:r'\notin'}, lambda operands : NotIn(*operands))
 
 class Singleton(Operation):
     '''
@@ -202,15 +106,17 @@ class Singleton(Operation):
         '''
         From [element in {y}], derive and return (element = y).
         '''
-        return sets.singletonDef.specialize({x:element, y:self.elem}).deriveRightViaEquivalence()
+        from axioms import singletonDef
+        return singletonDef.specialize({x:element, y:self.elem}).deriveRightViaEquivalence()
     
     def deduceElemInSet(self, element):
         '''
         From (element = y), derive and return [element in {y}] where self represents {y}.
         '''   
-        return sets.singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence()
+        from axioms import singletonDef
+        return singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence()
 
-Operation.registerOperation(SINGLETON, lambda operand : Singleton(operand))
+SINGLETON = Literal(pkg, 'SINGLETON', lambda operand : Singleton(operand))
 
 class Complement(Operation):        
     '''
@@ -223,7 +129,7 @@ class Complement(Operation):
     def __str__(self):
         return 'Complement(' + str(self.elem) + ')'
 
-Operation.registerOperation(COMPLEMENT, lambda operand : Complement(operand))
+COMPLEMENT = Literal(pkg, 'COMPLEMENT', lambda operand : Complement(operand))
         
 class Union(AssociativeOperation):
     def __init__(self, *operands):
@@ -232,22 +138,12 @@ class Union(AssociativeOperation):
         '''
         AssociativeOperation.__init__(self, UNION, *operands)
 
-    def formattedOperator(self, formatType):
-        '''
-        Formatted operator when there are 2 or more operands.
-        '''
-        if formatType == STRING:
-            return 'union'
-        elif formatType == LATEX:
-            return r'\bigcup'
-        elif formatType == MATHML:
-            return '<mo>&#x222A;</mo>'
-
     def deriveCompletion(self):
         '''
         derive and return S union Complement(S) = EVERYTHING or
         Complement(S) union S = EVERYTHING if this is a union of either or these forms.
         ''' 
+        from theorems import complementCompletion, complementCompletionReversed
         if len(self.operand) == 2:
             leftOperand, rightOperand = self.operand       
             if leftOperand == Complement(rightOperand):
@@ -260,20 +156,22 @@ class Union(AssociativeOperation):
         From [element in (A union B)], derive and return [(element in A) or (element in B)],
         where self represents (A union B). 
         '''
+        from axioms import unionDef
         if len(self.operand) == 2:
             leftOperand, rightOperand = self.operand       
-            return sets.unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveRight()
+            return unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveRight()
 
     def deduceElemInSet(self, element):
         '''
         From [(element in A) or (element in B)], derive and return [element in (A union B)]
         where self represents (A union B).
         ''' 
+        from axioms import unionDef
         if len(self.operand) == 2:
             leftOperand, rightOperand = self.operand                 
-            return sets.unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveLeft()
+            return unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveLeft()
 
-Operation.registerOperation(UNION, lambda operands : Union(*operands))
+UNION = Literal(pkg, 'UNION', {STRING:'union', LATEX:r'\bigcup'}, lambda operands : Union(*operands))
 
 class Intersection(AssociativeOperation):
     def __init__(self, *operands):
@@ -281,89 +179,68 @@ class Intersection(AssociativeOperation):
         Intersect any number of set: A intersect B intersect C
         '''
         AssociativeOperation.__init__(self, INTERSECTION, *operands)
-            
-    def formattedOperator(self, formatType):
-        '''
-        Formatted operator when there are 2 or more operands.
-        '''
-        if formatType == STRING:
-            return 'intersection'
-        elif formatType == LATEX:
-            return r'\bigcap'
-        elif formatType == MATHML:
-            return '<mo>&#x2229;</mo>'
 
     def unfoldElemInSet(self, element):
         '''
         From [element in (A intersection B)], derive and return [(element in A) and (element in B)],
         where self represents (A intersection B). 
         '''
-        return sets.intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
+        from axioms import intersectionDef
+        return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
 
     def deduceElemInSet(self, element):
         '''
         From  [(element in A) and (element in B)], derive and return [element in (A intersection B)],
         where self represents (A intersection B). 
         '''
-        return sets.intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
+        from axioms import intersectionDef
+        return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
 
-Operation.registerOperation(INTERSECTION, lambda operands : Intersection(*operands))
+INTERSECTION = Literal(pkg, 'INTERSECTION', {STRING:'intersection', LATEX:r'\bigcap'}, lambda operands : Intersection(*operands))
 
 class SubsetEq(BinaryOperation):
     def __init__(self, subSet, superSet):
         BinaryOperation.__init__(self, SUBSET_EQ, subSet, superSet)
         
-    def formattedOperator(self, formatType):
-        if formatType == STRING:
-            return 'subseteq'
-        elif formatType == LATEX:
-            return r'\subseteq'
-        else:
-            return '<mo>&#x2286;</mo>'
-
     def unfold(self, elemInstanceVar=x):
         '''
         From A subset B, derive and return (forall_{x in A} x in B).
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
-        return sets.unfoldSubset.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().check({self})
+        from theorems import unfoldSubsetEq
+        return unfoldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().check({self})
     
     def concludeAsFolded(self, elemInstanceVar=x):
         '''
         Derive this folded version, A subset B, from the unfolded version,
         (forall_{x in A} x in B).
         '''
-        return sets.foldSubset.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
+        from theorems import foldSubsetEq
+        return foldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
 
-Operation.registerOperation(SUBSET_EQ, lambda operands : SubsetEq(*operands))
+SUBSET_EQ = Literal(pkg, 'SUBSET_EQ', {STRING:'subseteq', LATEX:r'\subseteq'}, lambda operands : SubsetEq(*operands))
 
 class SupersetEq(BinaryOperation):
     def __init__(self, superSet, subSet):
         BinaryOperation.__init__(self, SUPERSET_EQ, superSet, subSet)
         
-    def formattedOperator(self, formatType):
-        if formatType == STRING:
-            return 'superseteq'
-        elif formatType == LATEX:
-            return r'\superseteq'
-        else:
-            return '<mo>&#x2287;</mo>'
-
     def unfold(self, elemInstanceVar=x):
         '''
         From A superset B, derive and return (forall_{x in B} x in A).
         x will be relabeled if an elemInstanceVar is supplied.
         '''
-        return sets.unfoldSuperset.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().check({self})
+        from theorems import unfoldSupersetEq
+        return unfoldSupersetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().check({self})
     
     def concludeAsFolded(self, elemInstanceVar=x):
         '''
         Derive this folded version, A superset B, from the unfolded version,
         (forall_{x in B} x in A).
         '''
-        return sets.foldSuperset.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
+        from theorems import foldSupersetEq
+        return foldSupersetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
 
-Operation.registerOperation(SUPERSET_EQ, lambda operands : SupersetEQ(*operands))
+SUPERSET_EQ = Literal(pkg, 'SUPERSET_EQ', {STRING:'superseteq', LATEX:r'\superseteq'}, lambda operands : SupersetEq(*operands))
  
 class SetOfAll(OperationOverInstances):
     def __init__(self, instanceVars, instanceElement, conditions=None):
@@ -388,31 +265,23 @@ class SetOfAll(OperationOverInstances):
                     outStr += ', '.join([condition.formatted(formatType, fenced=True) for condition in self.condition])
             outStr += '}'
             if fenced: outStr += ']'
-        elif formatType == MATHML:
-            outStr += '<mfenced open="{" close="}">'
-            outStr += '<mrow>' + self.instanceElement.formatted(formatType, fenced=innerFenced)
-            if len(self.condition) > 0:
-                outStr += '<mo>|</mo>'
-                outStr += '<mfenced open="" close="" separators=",">'
-                for condition in self.condition:
-                    outStr += condition.formatted(formatType, fenced=True)
-                outStr += "</mfenced>"
-            outStr += '</mrow></mfenced>'
         return outStr
 
     def unfoldElemInSet(self, element):
         '''
         From (x in {Q(y) | P(y)}), derive and return P(x), where x is meant as the given element.
         '''
+        from theorems import unfoldSetOfAll
         PofElement = self.instanceExpression.substitute({self.instanceVar:element})
-        return sets.unfoldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpression), x:element}).deriveConclusion().check({PofElement})
+        return unfoldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpression), x:element}).deriveConclusion().check({PofElement})
     
     def deduceElemInSet(self, element):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''   
+        from theorems import foldSetOfAll
         PofElement = self.instanceExpression.substitute({self.instanceVar:element})
-        return sets.foldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpression), x:element}).deriveConclusion().check({PofElement})
+        return foldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpression), x:element}).deriveConclusion().check({PofElement})
 
-Operation.registerOperation(SET, lambda operand : SetOfAll(operand.argument, operand.expression, operand.domainCondition))
+SET = Literal(pkg, 'SET', lambda operand : SetOfAll(operand.argument, operand.expression, operand.domainCondition))
 
