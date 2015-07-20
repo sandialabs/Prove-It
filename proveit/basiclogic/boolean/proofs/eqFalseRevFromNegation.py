@@ -1,5 +1,6 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Implies, Not
+from proveit.basiclogic.variables import A
 
 # Not(Not(A)) assuming A
 notNotA = Not(Not(A)).concludeViaDoubleNegation()
-booleans.qed('eqFalseRevFromNegation', Implies(A, notNotA.equateNegatedToFalse().deriveReversed()).generalize(A))
+Implies(A, notNotA.equateNegatedToFalse().deriveReversed()).generalize(A).qed(__file__)

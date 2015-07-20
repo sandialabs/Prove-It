@@ -1,4 +1,4 @@
-from proveit.statement import Variable, MultiVariable, Operation, Lambda
+from proveit.expression import Variable
 
 a = Variable('a')
 b = Variable('b')
@@ -6,42 +6,14 @@ c = Variable('c')
 A = Variable('A')
 B = Variable('B')
 C = Variable('C')
-multiA = MultiVariable('A') # A**
-multiB = MultiVariable('B') # B**
-multiC = MultiVariable('C') # C**
 P = Variable('P')
 Q = Variable('Q')
 R = Variable('R')
 S = Variable('S')
 X = Variable('X') 
-multiQ = MultiVariable('Q')
-multiR = MultiVariable('R')
 f = Variable('f')
 g = Variable('g')
 x = Variable('x')
 y = Variable('y')
 z = Variable('z')
-fa = Operation(f, a)
-fb = Operation(f, b)
-fab = Operation(f, (a, b))
-fx = Operation(f, [x]) # f(x)
-fy = Operation(f, [y]) # f(y)
-fxy = Operation(f, (x, y)) # f(x, y)
-gx = Operation(g, x) # g(x)
-gy = Operation(g, [y]) # g(y)
-xStar = MultiVariable('x') # x**
-yStar = MultiVariable('y') # y**
-Px = Operation(P, x) # P(x)
-Py = Operation(P, y) # P(y)
-Qx = Operation(Q, x) # Q(x)
-Qy = Operation(Q, y) # Q(y)
-PofA = Operation(P, A) # P(A)
-P_of_xStar = Operation(P, xStar) # P(x**)
-P_of_yStar = Operation(P, yStar) # P(y**)
-P_of_xStar_yStar = Operation(P, (xStar, yStar)) # P(x**, y**)
-multiQ_of_xStar = Operation(multiQ, xStar) # Q**(x**)
-multiQ_of_yStar = Operation(multiQ, yStar) # Q**(y**)
-multiR_of_yStar = Operation(multiR, yStar) # R**(y**)
-fxMap = Lambda(x, fx) # x -> f(x)
-fxGivenQxMap = Lambda(x, fx, Qx) # x -> f(x) | Q(x)
-gxGivenQxMap = Lambda(x, gx, Qx) # x -> g(x) | Q(x)
+

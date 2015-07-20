@@ -1,3 +1,3 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.axioms import notT
 
-booleans.qed('notTimpliesF', booleans.notT.rightImplViaEquivalence())
+notT.rightImplViaEquivalence().qed(__file__)

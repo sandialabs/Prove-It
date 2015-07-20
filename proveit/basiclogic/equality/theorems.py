@@ -5,17 +5,9 @@ from proveit.basiclogic.boolean.boolOps import Implies, Not, And
 from proveit.basiclogic.boolean.quantifiers import Forall
 from proveit.basiclogic.boolean.boolSet import TRUE, FALSE, inBool
 from proveit.basiclogic.variables import A, a, b, c, x, y, z, f, P
+from proveit.basiclogic.simpleExpr import fa, fb, fab, fx, fy, fxy, Px, Py
 
-fa = Operation(f, a) # f(a)
-fb = Operation(f, b) # f(b)
-fab = Operation(f, (a, b)) # f(a, b)
-fx = Operation(f, x) # f(x)
-fy = Operation(f, y) # f(y)
-fxy = Operation(f, (x, y)) # f(x, y)
-Px = Operation(P, x) # P(x)
-Py = Operation(P, y) # P(y)
-
-equalityTheorems = Theorems(__package__)
+equalityTheorems = Theorems(__package__, locals())
 
 # forall_{P, x, y} {(x=y) => [P(y) => P(x)]}
 lhsSubstitution = Forall((P, x, y), Implies(Equals(x, y), Implies(Py, Px)))

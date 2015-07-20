@@ -1,3 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.axioms import trueAxiom
+from proveit.basiclogic import Implies
+from proveit.basiclogic.variables import A
 
-booleans.qed('trueConclusion', Implies(A, booleans.trueAxiom).generalize(A))
+Implies(A, trueAxiom).generalize(A).qed(__file__)

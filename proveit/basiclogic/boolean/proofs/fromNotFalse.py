@@ -1,4 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Implies, BOOLEANS, FALSE, inBool, compose, NotEquals
+from proveit.basiclogic.variables import A
 
 # AnotF = (A != FALSE)
 AnotF = NotEquals(A, FALSE)
@@ -13,5 +14,5 @@ compose(notAeqF, AeqT_or_AeqF).prove({AnotF, AeqT_or_AeqF})
 AeqT.deduceInBool()
 # A assuming inBool(A), Not(A=FALSE)
 AeqT_or_AeqF.deriveLeftIfNotRight().deriveViaBooleanEquality().prove({inBool(A), AnotF})
-# forall_{A | inBool(A)} Not(A=FALSE) => A
-booleans.qed('fromNotFalse', Implies(AnotF, A).generalize(A, inBool(A)))
+# forall_{A in BOOLEANS} Not(A=FALSE) => A
+Implies(AnotF, A).generalize(A, domain=BOOLEANS).qed(__file__)

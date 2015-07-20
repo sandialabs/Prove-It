@@ -1,4 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import And, Implies, Iff
+from proveit.basiclogic.variables import A, B, C
 
 # hypothesis = (A <=> B) and (B <=> C)
 hypothesis = And(Iff(A, B), Iff(B, C))
@@ -14,4 +15,4 @@ Implies(C, AiffB.deriveLeft()).prove({hypothesis})
 # A <=> C assuming hypothesis
 AiffC = Iff(A, C).concludeViaComposition().prove({hypothesis})
 # forall_{A, B, C} (A <=> B and B <=> C) => (A <=> C)
-booleans.qed('iffTransitivity', Implies(hypothesis, AiffC).generalize((A, B, C)))
+Implies(hypothesis, AiffC).generalize((A, B, C)).qed(__file__)

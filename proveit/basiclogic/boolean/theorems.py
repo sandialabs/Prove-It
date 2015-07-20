@@ -1,24 +1,15 @@
 from proveit.statement import Theorems
 from proveit.expression import Operation
-from proveit.multiExpression import Etcetera
 from quantifiers import Forall, Exists, NotExists
-from boolSet import TRUE, FALSE, inBool
+from boolSet import BOOLEANS, TRUE, FALSE, inBool
 from boolOps import Not, And, Or, Implies, Iff
 from proveit.basiclogic import Equals, NotEquals
-from proveit.basiclogic.variables import A, B, C, P, Q, R, x, y
+from proveit.basiclogic.variables import A, B, C, P, Q, R, S, x, y
+from proveit.basiclogic.simpleExpr import PofA, PofTrue, PofFalse, Px, Py, Pxy, Qx, Ry, etcQ, etcR, xEtc, yEtc, PxEtc, PyEtc, PxyEtc, etc_QxEtc, etc_QyEtc, etc_RyEtc
 
-PofA = Operation(P, A)
-PofTrue = Operation(P, TRUE)
-PofFalse = Operation(P, FALSE)
-P_of_x = Operation(P, x)
-P_of_y = Operation(P, y)
-P_of_xy = Operation(P, (x, y))
-Q_of_x = Operation(Q, x)
-Q_of_y = Operation(Q, y)
-R_of_y = Operation(R, y)
+booleanTheorems = Theorems(__package__, locals())
 
-booleanTheorems = Theorems(__package__)
-
+# Not(FALSE)
 notFalse = Not(FALSE)
 
 # TRUE and TRUE
@@ -69,6 +60,18 @@ impliesFT = Equals(Implies(FALSE, TRUE), TRUE)
 # (FALSE => FALSE) = TRUE
 impliesFF = Equals(Implies(FALSE, FALSE), TRUE)
 
+# (TRUE <=> TRUE) = TRUE
+iffTT = Equals(Iff(TRUE, TRUE), TRUE)
+
+# (FALSE <=> FALSE) = TRUE
+iffFF = Equals(Iff(FALSE, FALSE), TRUE)
+
+# (TRUE <=> FALSE) = FALSE
+iffTF = Equals(Iff(TRUE, FALSE), FALSE)
+
+# (FALSE <=> TRUE) = FALSE
+iffFT = Equals(Iff(FALSE, TRUE), FALSE)
+
 # forall_{A, B} (A <=> B) => (A => B)
 iffImpliesRight = Forall((A, B), Implies(Iff(A, B), Implies(A, B)))
 
@@ -84,19 +87,7 @@ iffTransitivity = Forall((A, B, C), Implies(And(Iff(A, B), Iff(B, C)), Iff(A, C)
 # Not(TRUE) => FALSE
 notTimpliesF = Implies(Not(TRUE), FALSE)
 
-# (TRUE <=> TRUE) = TRUE
-iffTT = Equals(Iff(TRUE, TRUE), TRUE)
-
-# (FALSE <=> FALSE) = TRUE
-iffFF = Equals(Iff(FALSE, FALSE), TRUE)
-
-# (TRUE <=> FALSE) = FALSE
-iffTF = Equals(Iff(TRUE, FALSE), FALSE)
-
-# (FALSE <=> TRUE) = FALSE
-iffFT = Equals(Iff(FALSE, TRUE), FALSE)
-
-# forall_{A | A, B | B} (A and B)
+# forall_{A, B | A, B} (A and B)
 conjunctionIntro = Forall((A, B), And(A, B), (A, B))
 
 # forall_{A} inBool(A) => (A=TRUE or A=FALSE)
@@ -135,8 +126,8 @@ eqFalseFromNegation = Forall(A, Implies(A, Equals(Not(A), FALSE)))
 # forall_{A} A => [FALSE=Not(A)]
 eqFalseRevFromNegation = Forall(A, Implies(A, Equals(FALSE, Not(A))))
 
-# forall_{A | inBool(A)} (A != FALSE) => A
-fromNotFalse = Forall(A, Implies(NotEquals(A, FALSE), A), inBool(A))
+# forall_{A in BOOLEANS} (A != FALSE) => A
+fromNotFalse = Forall(A, Implies(NotEquals(A, FALSE), A), domain=BOOLEANS)
 
 # forall_{A, B | inBool(B)} [Not(B) => Not(A)] => [A=>B] 
 transpositionFromNegated = Forall((A, B), Implies(Implies(Not(B), Not(A)), Implies(A, B)), inBool(B))
@@ -144,14 +135,14 @@ transpositionFromNegated = Forall((A, B), Implies(Implies(Not(B), Not(A)), Impli
 # forall_{A, B | inBool(B)}  [A=>B] => [A => Not(Not(B))]
 doubleNegateConclusion = Forall((A, B), Implies(Implies(A, B), Implies(A, Not(Not(B)))), inBool(B))
 
-# forall_{A, B | inBool(A), inBool(B)} [Not(B) => A] => [Not(A)=>B] 
-transpositionFromNegatedHypothesis = Forall((A, B), Implies(Implies(Not(B), A), Implies(Not(A), B)), (inBool(A), inBool(B)))
+# forall_{A, B in BOOLEANS} [Not(B) => A] => [Not(A)=>B] 
+transpositionFromNegatedHypothesis = Forall((A, B), Implies(Implies(Not(B), A), Implies(Not(A), B)), domain=BOOLEANS)
 
 # forall_{A, B | inBool(B)} [B => Not(A)] => [A=>Not(B)] 
 transpositionFromNegatedConclusion = Forall((A, B), Implies(Implies(B, Not(A)), Implies(A, Not(B))), inBool(B))
 
-# forall_{A, B | inBool(A), inBool(B)} [B=>A] => [Not(A) => Not(B)] 
-transpositionToNegated = Forall((A, B), Implies(Implies(B, A), Implies(Not(A), Not(B))), (inBool(A), inBool(B)))
+# forall_{A, B in BOOLEANS} [B=>A] => [Not(A) => Not(B)] 
+transpositionToNegated = Forall((A, B), Implies(Implies(B, A), Implies(Not(A), Not(B))), domain=BOOLEANS)
 
 # TRUE != FALSE
 trueNotFalse = NotEquals(TRUE, FALSE)
@@ -166,7 +157,7 @@ trueInBool = inBool(TRUE)
 falseInBool = inBool(FALSE)
 
 # forall_{P} [forall_{A in BOOLEANS} P(A)] => [P(TRUE) and P(FALSE)]
-unfoldForallOverBool = Forall(P, Implies(Forall(A, PofA, inBool(A)), And(PofTrue, PofFalse)))
+unfoldForallOverBool = Forall(P, Implies(Forall(A, PofA, domain=BOOLEANS), And(PofTrue, PofFalse)))
 
 # forall_{A} A=TRUE => inBool(A)
 inBoolIfEqTrue = Forall(A, Implies(Equals(A, TRUE), inBool(A)))
@@ -180,75 +171,76 @@ inBoolIfEqFalse = Forall(A, Implies(Equals(A, FALSE), inBool(A)))
 # forall_{A} FALSE=A => inBool(A)
 inBoolIfEqFalseRev = Forall(A, Implies(Equals(FALSE, A), inBool(A)))
 
-# forall_{A in Bool, B in Bool, C in Bool} (A=>C and B=>C) => ((A or B) => C)
-hypotheticalDisjunction = Forall((A, B, C), Implies(And(Implies(A, C), Implies(B, C)), Implies(Or(A, B), C)), (inBool(A), inBool(B), inBool(C)))
+# forall_{A, B, C in BOOLEANS} (A=>C and B=>C) => ((A or B) => C)
+hypotheticalDisjunction = Forall((A, B, C), Implies(And(Implies(A, C), Implies(B, C)), Implies(Or(A, B), C)), domain=BOOLEANS)
 
 # forall_{P} [P(TRUE) and P(FALSE)] => [forall_{A in BOOLEANS} P(A)]
-foldForallOverBool = Forall(P, Implies(And(PofTrue, PofFalse), Forall(A, PofA, inBool(A))))
+foldForallOverBool = Forall(P, Implies(And(PofTrue, PofFalse), Forall(A, PofA, domain = BOOLEANS)))
 
 # forall_{P} [P(TRUE) and P(FALSE)] => {[forall_{A in BOOLEANS} P(A)] = TRUE}
-forallBoolEvalTrue = Forall(P, Implies(And(PofTrue, PofFalse), Equals(Forall(A, PofA, inBool(A)), TRUE)))
+forallBoolEvalTrue = Forall(P, Implies(And(PofTrue, PofFalse), Equals(Forall(A, PofA, domain=BOOLEANS), TRUE)))
 
-# forall_{P, Q, R} [forall_{x | Q(x)} forall_{y | R(y)} P(x, y)] => forall_{x, y | Q(x), R(y)} P(x, y)
-forallBundling = Forall((P, Q, R), Implies(Forall(x, Forall(y, P_of_xy, R_of_y), Q_of_x), Forall((x, y), P_of_xy, (Q_of_x, R_of_y))))
+# forall_{P, ..Q.., ..R.., S} [forall_{..x.. in S | ..Q(..x..)..} forall_{..y.. in S | ..R(..y..)..} P(..x.., ..y..)]
+#   => forall_{..x.., ..y..  in S| ..Q(..x..).., ..R(..y..)..} P(..x.., ..y..)
+forallBundling = Forall((P, etcQ, etcR, S), Implies(Forall(xEtc, Forall(yEtc, PxyEtc, etc_RyEtc, domain=S), etc_QxEtc, domain=S), Forall((xEtc, yEtc), PxyEtc, (etc_QxEtc, etc_RyEtc), domain=S)))
 
-# forall_{P, Q, R} forall_{x, y | Q(x), R(y)} P(x, y) => forall_{x | Q(x)} forall_{y | R(y)} P(x, y) 
-forallUnravelling = Forall((P, Q, R), Implies(Forall((x, y), P_of_xy, (Q_of_x, R_of_y)), Forall(x, Forall(y, P_of_xy, R_of_y), Q_of_x)))
+# forall_{P, ..Q.., ..R.., S} forall_{..x.., ..y.. in S | ..Q(..x..).., ..R(..y..)..} P(..x.., ..y..) => forall_{..x.. in S | ..Q(..x..)..} forall_{..y.. in S | ..R(..y..)..} P(..x.., ..y..) 
+forallUnraveling = Forall((P, etcQ, etcR, S), Implies(Forall((xEtc, yEtc), PxyEtc, (etc_QxEtc, etc_RyEtc), domain=S), Forall(xEtc, Forall(yEtc, PxyEtc, etc_RyEtc, domain=S), etc_QxEtc, domain=S)))
 
-# forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) => (A = B)
-iffOverBoolImplEq = Forall((A, B), Implies(Iff(A, B), Equals(A, B)), (inBool(A), inBool(B)))
+# forall_{A, B in BOOLEANS} (A <=> B) => (A = B)
+iffOverBoolImplEq = Forall((A, B), Implies(Iff(A, B), Equals(A, B)), domain=BOOLEANS)
 
 # forall_{A in booleans} A = Not(Not(A))
-doubleNegationEquiv = Forall(A, Equals(A, Not(Not(A))), inBool(A))
+doubleNegationEquiv = Forall(A, Equals(A, Not(Not(A))), domain=BOOLEANS)
 
-# forall_{P, Q, R} forall_{x, y | Q(x), R(y)} P(x, y) = forall_{x | Q(x)} forall_{y | R(y)} P(x, y) 
-forallBundledEquiv = Forall((P, Q, R), Equals(Forall((x, y), P_of_xy, (Q_of_x, R_of_y)), Forall(x, Forall(y, P_of_xy, R_of_y), Q_of_x)))
+# forall_{P, ..Q.., ..R.., S} [forall_{..x.., ..y.. in S | ..Q(..x..).., ..R(..y..)..} P(..x.., ..y..) = forall_{..x.. in S | ..Q(..x..)..} forall_{..y.. in S | ..R(..y..)..} P(..x.., ..y..)]
+forallBundledEquiv = Forall((P, etcQ, etcR, S), Equals(Forall((xEtc, yEtc), PxyEtc, (etc_QxEtc, etc_RyEtc), domain=S), Forall(xEtc, Forall(yEtc, PxyEtc, etc_RyEtc, domain=S), etc_QxEtc, domain=S)))
 
-# forall_{P, Q} [forall_{x | Q(x)} P(x)] = [forall_{x | Q(x)} {P(x)=TRUE}]
-forallEqTrueEquiv = Forall((P, Q), Equals(Forall(x, P_of_x, Q_of_x), Forall(x, Equals(P_of_x, TRUE), Q_of_x)))
+# forall_{P, ..Q.., S} [forall_{..x.. in S | ..Q(..x..)..} P(..x..)] = [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
+forallEqTrueEquiv = Forall((P, etcQ, S), Equals(Forall(xEtc, Px, etc_QxEtc, domain=S), Forall(xEtc, Equals(PxEtc, TRUE), etc_QxEtc, domain=S)))
 
-# forall_{A in BOOLEANS, B in BOOLEANS} (A => B) in BOOLEANS                                                                                                        
-implicationClosure = Forall((A, B), inBool(Implies(A, B)), (inBool(A), inBool(B)))
+# forall_{A, B in BOOLEANS} (A => B) in BOOLEANS                                                                                                        
+implicationClosure = Forall((A, B), inBool(Implies(A, B)), domain=BOOLEANS)
 
-# forall_{A in BOOLEANS, B in BOOLEANS} (A <=> B) in BOOLEANS                                                                                                        
-iffClosure = Forall((A, B), inBool(Iff(A, B)), (inBool(A), inBool(B)))
+# forall_{A, B in BOOLEANS} (A <=> B) in BOOLEANS                                                                                                        
+iffClosure = Forall((A, B), inBool(Iff(A, B)), domain=BOOLEANS)
 
-# forall_{A in BOOLEANS, B in BOOLEANS} (A and B) in BOOLEANS                                                                                                        
-conjunctionClosure = Forall((A, B), inBool(And(A, B)), (inBool(A), inBool(B)))
+# forall_{A, B in BOOLEANS} (A and B) in BOOLEANS                                                                                                        
+conjunctionClosure = Forall((A, B), inBool(And(A, B)), domain=BOOLEANS)
 
-# forall_{A in BOOLEANS, B in BOOLEANS} (A or B) in BOOLEANS                                                                                                        
-disjunctionClosure = Forall((A, B), inBool(Or(A, B)), (inBool(A), inBool(B)))
+# forall_{A, B in BOOLEANS} (A or B) in BOOLEANS                                                                                                        
+disjunctionClosure = Forall((A, B), inBool(Or(A, B)), domain=BOOLEANS)
 
 # forall_{A in BOOLEANS} Not(A) in BOOLEANS                                                                                                        
-negationClosure = Forall(A, inBool(Not(A)), inBool(A))
+negationClosure = Forall(A, inBool(Not(A)), domain=BOOLEANS)
 
 # forall_{A in BOOLEANS} [A => FALSE] => Not(A)                                            
-hypotheticalContradiction = Forall(A, Implies(Implies(A, FALSE), Not(A)), inBool(A)) 
+hypotheticalContradiction = Forall(A, Implies(Implies(A, FALSE), Not(A)), domain=BOOLEANS) 
 
-# forall_{P, Q} [notexists_{x | Q(x)} P(x) = forall_{x | Q(x)} (P(x) != TRUE)]
-existsDefNegation = Forall((P, Q), Equals(NotExists(x, P_of_x, Q_of_x), Forall(x, NotEquals(P_of_x, TRUE), Q_of_x)))
+# forall_{P, ..Q.., S} [notexists_{..x.. in S | ..Q(..x..)..} P(..x..) = forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE)]
+existsDefNegation = Forall((P, etcQ, S), Equals(NotExists(xEtc, PxEtc, etc_QxEtc, domain=S), Forall(xEtc, NotEquals(PxEtc, TRUE), etc_QxEtc, domain=S)))
 
-# forall_{P, Q} notexists_{x | Q(x)} P(x) => Not(exists_{x | Q(x)} P(x))
-notExistsUnfolding = Forall((P, Q), Implies(NotExists(x, P_of_x, Q_of_x), Not(Exists(x, P_of_x, Q_of_x))))
+# forall_{P, ..Q.., S} notexists_{..x.. in S | ..Q(..x..)..} P(..x..) => Not(exists_{..x.. in S | ..Q(..x..)..} P(..x..))
+notExistsUnfolding = Forall((P, etcQ, S), Implies(NotExists(xEtc, PxEtc, etc_QxEtc, domain=S), Not(Exists(xEtc, PxEtc, etc_QxEtc, domain=S))))
 
-# forall_{P, Q} Not(Exists_{x | Q(x)} P(x)) => NotExists_{x | Q(x)} P(x)
-notExistsFolding = Forall((P, Q), Implies(Not(Exists(x, P_of_x, Q_of_x)), NotExists(x, P_of_x, Q_of_x)))
+# forall_{P, ..Q.., S} Not(Exists_{..x.. in S | ..Q(..x..)..} P(..x..)) => NotExists_{..x.. in S | ..Q(..x..)..} P(..x..)
+notExistsFolding = Forall((P, etcQ, S), Implies(Not(Exists(xEtc, PxEtc, etc_QxEtc, domain=S)), NotExists(xEtc, PxEtc, etc_QxEtc, domain=S)))
 
-# forall_{P, Q} [exists_{x | Q(x)} P(x)] in BOOLEANS
-existsInBool = Forall((P, Q), inBool(Exists(x, P_of_x, Q_of_x)))
+# forall_{P, ..Q.., S} [exists_{x in S | ..Q(..x..)..} P(..x..)] in BOOLEANS
+existsInBool = Forall((P, etcQ, S), inBool(Exists(xEtc, PxEtc, etc_QxEtc, domain=S)))
 
-# forall_{P, Q} forall_{x | Q(x)} [P(x) => exists_{y | Q(y)} P(y)]
-existenceByExample = Forall((P, Q), Forall(x, Implies(P_of_x, Exists(y, P_of_y, Q_of_y)), Q_of_x))
+# forall_{P, ..Q.., S} forall_{x in S | ..Q(..x..)..} [P(..x..) => exists_{..y.. | ..Q(..y..)..} P(..y..)]
+existenceByExample = Forall((P, etcQ, S), Forall(xEtc, Implies(PxEtc, Exists(yEtc, PyEtc, etc_QyEtc, domain=S)), etc_QxEtc, domain=S))
 
-# forall_{P, Q} [exists_{x | Q(x)} Not(P(x))] => [Not(forall_{x | Q(x)} P(x)]
-existsNotImpliesNotForall = Forall((P, Q), Implies(Exists(x, Not(P_of_x), Q_of_x), Not(Forall(x, P_of_x, Q_of_x))))
+# forall_{P, ..Q.., S} [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))] => [Not(forall_{..x.. in S | ..Q(..x..)..} P(..x..)]
+existsNotImpliesNotForall = Forall((P, etcQ, S), Implies(Exists(xEtc, Not(PxEtc), etc_QxEtc, domain=S), Not(Forall(xEtc, PxEtc, etc_QxEtc, domain=S))))
 
-# forall_{P, Q} forall_{x | Q(x)} P(x) => NotExists_{x | Q(x)} Not(P(x))
-forallImpliesNotExistsNot = Forall((P, Q), Implies(Forall(x, P_of_x, Q_of_x), NotExists(x, Not(P_of_x), Q_of_x)))
+# forall_{P, ..Q.., S} forall_{..x.. in S | ..Q(..x..)..} P(..x..) => NotExists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))
+forallImpliesNotExistsNot = Forall((P, etcQ, S), Implies(Forall(xEtc, PxEtc, etc_QxEtc, domain=S), NotExists(xEtc, Not(PxEtc), etc_QxEtc, domain=S)))
 
 # forall_{P} [(P(TRUE) = PofTrueVal) and (P(FALSE) = PofFalseVal)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}, assuming PofTrueVal=FALSE or PofFalseVal=FALSE
 def _forallBoolEvalFalse(PofTrueVal, PofFalseVal):
-    return Forall(P, Implies(And(Equals(PofTrue, PofTrueVal), Equals(PofFalse, PofFalseVal)), Equals(Forall(A, PofA, inBool(A)), FALSE)))
+    return Forall(P, Implies(And(Equals(PofTrue, PofTrueVal), Equals(PofFalse, PofFalseVal)), Equals(Forall(A, PofA, domain=BOOLEANS), FALSE)))
 forallBoolEvalFalseViaFF = _forallBoolEvalFalse(FALSE, FALSE)
 forallBoolEvalFalseViaFT = _forallBoolEvalFalse(FALSE, TRUE)
 forallBoolEvalFalseViaTF = _forallBoolEvalFalse(TRUE, FALSE)

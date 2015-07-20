@@ -1,6 +1,7 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Forall, Or, Equals, TRUE, FALSE, BOOLEANS, inBool
+from proveit.basiclogic.variables import A, B
 
 # [(A or B) = TRUE] or [(A or B) = FALSE] assuming A, B in BOOLEANS
-Forall((A, B), Or(Equals(Or(A, B), TRUE), Equals(Or(A, B), FALSE)), (inBool(A), inBool(B))).proveByEval().specialize().prove({inBool(A), inBool(B)})
+Forall((A, B), Or(Equals(Or(A, B), TRUE), Equals(Or(A, B), FALSE)), domain=BOOLEANS).proveByEval().specialize().prove({inBool(A), inBool(B)})
 # forall_{A in BOOLEANS} (A or  B) in BOOLEANS
-booleans.qed('disjunctionClosure', inBool(Or(A, B)).concludeAsFolded().generalize((A, B), (inBool(A), inBool(B))))
+inBool(Or(A, B)).concludeAsFolded().generalize((A, B), domain=BOOLEANS).qed(__file__)

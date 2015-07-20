@@ -1,3 +1,3 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.axioms import orTF
 
-booleans.qed('trueOrFalse', booleans.orTF.deriveViaBooleanEquality())
+orTF.deriveViaBooleanEquality().qed(__file__)

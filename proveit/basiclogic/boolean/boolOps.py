@@ -1,7 +1,8 @@
 from proveit.expression import Expression, Literal, STRING, LATEX, Operation
-from proveit.multiExpression import ExpressionList
-from proveit.basiclogic.genericOperations import BinaryOperation, AssociativeOperation
+from proveit.multiExpression import ExpressionList, multiExpression
+from proveit.basiclogic.genericOps import BinaryOperation, AssociativeOperation
 from proveit.impliesLiteral import IMPLIES
+from proveit.everythingLiteral import EVERYTHING
 from boolSet import TRUE, FALSE, inBool, deduceInBool
 from quantifiers import Exists, NotExists
 from proveit.basiclogic.variables import A, B, C, x, y, f, a, b, c
@@ -44,26 +45,31 @@ class Implies(BinaryOperation):
         else:
             return hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion().check({self, inBool(self.hypothesis)})
     
-    def generalize(self, newForallVars, newConditions=tuple()):
+    def generalize(self, forallVars, conditions=tuple(), domain=EVERYTHING):
         r'''
         This makes a generalization of this expression, prepending Forall 
-        operations according to newForallVars and newConditions that will bind
-        'arbitrary' free variables.  This overrides the Expression version
-        to absorb hypothesis into conditions if they match.  For example, 
+        operations according to newForallVars and newConditions and/or newDomain
+        that will bind 'arbitrary' free variables.  This overrides the Expression 
+        version to absorb hypothesis into conditions if they match.  For example, 
         :math:`[A(x) \Rightarrow [B(x, y) \Rightarrow P(x, y)]]` generalized 
         forall :math:`x, y` such that :math:`A(x), B(x, y)`
         becomes :math:`\forall_{x, y | A(x), B(x, y)} P(x, y)`,
         '''
+        from proveit.basiclogic import In
         hypothesizedConditions = set()
-        newConditionsSet = set(newConditions)
+        conditionsSet = set(multiExpression(conditions))
+        if domain is not None:
+            # add in the effective conditions from the domain
+            for var in multiExpression(forallVars):
+                conditionsSet.add(In(var, domain))
         expr = self
-        while isinstance(expr, Implies) and expr.hypothesis in newConditionsSet:
+        while isinstance(expr, Implies) and expr.hypothesis in conditionsSet:
             hypothesizedConditions.add(expr.hypothesis)
             expr = expr.conclusion
         if len(hypothesizedConditions) == 0:
             # Just use the Expression version
-            return Expression.generalize(self, newForallVars, newConditions)
-        return Expression.generalize(expr, newForallVars, newConditions)
+            return Expression.generalize(self, forallVars, conditions, domain)
+        return Expression.generalize(expr, forallVars, conditions, domain)
         #return Forall(newForallVars, expr, newConditions)
 
     def transposition(self):
@@ -130,14 +136,14 @@ class Not(Operation):
         Operation.__init__(self, NOT, A)
         self.operand = A
 
-    def formatted(self, formatType, fenced=False):
+    def formatted(self, formatType, fence=False):
         if formatType == STRING:
-            return Operation.formatted(self, formatType, fenced)                    
+            return Operation.formatted(self, formatType, fence)                    
         elif formatType == LATEX:
             outStr = ''
-            if fenced: outStr += "("
-            outStr += self.operator.formatted(formatType) + ' ' + self.operand.formatted(formatType, fenced=True)
-            if fenced: outStr += ')'
+            if fence: outStr += "("
+            outStr += self.operator.formatted(formatType) + ' ' + self.operand.formatted(formatType, fence=True)
+            if fence: outStr += ')'
             return outStr            
         
     def evaluate(self):
@@ -219,7 +225,7 @@ class Not(Operation):
 
     def deriveNotExists(self):
         r'''
-        From :math:`\lnot \exists_{x** | Q**(x**)} P(x**)`, derive and return :math:`\nexists_{x** | Q**(x**)} P(x**)`
+        From :math:`\lnot \exists_{x | Q(x)} P(x)`, derive and return :math:`\nexists_{x | Q(x)} P(x)`
         '''
         operand = self.operand
         if isinstance(operand, Exists):
@@ -236,7 +242,7 @@ class Not(Operation):
             Asub = self.operand.operand
             return doubleNegationEquiv.specialize({A:Asub}).check({inBool(Asub)})
 
-NOT = Literal(pkg, 'NOT', {STRING:'not', LATEX:r'\lnot'}, lambda operand : Not(operand))
+NOT = Literal(pkg, 'NOT', {STRING:'not', LATEX:r'\lnot'}, lambda operands : Not(*operands))
 
 class And(AssociativeOperation):
     def __init__(self, *operands):
@@ -250,9 +256,9 @@ class And(AssociativeOperation):
         From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
         :math:`X` either by index or the Expression.
         '''
-        from axioms import andImpliesEach
-        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operand).index(indexOrExpr)
-        return andImpliesEach.specialize({A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}).deriveConclusion().check({self})
+        from axioms import andImpliesEach, etcA, etcC
+        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
+        return andImpliesEach.specialize({etcA:self.operands[:idx], B:self.operands[idx], etcC:self.operands[idx+1:]}).deriveConclusion().check({self})
         
     def deriveLeft(self):
         '''
@@ -288,7 +294,7 @@ class And(AssociativeOperation):
         '''
         from axioms import andComposition, andTT, andTF, andFT, andFF
         if len(self.operands) >= 3:
-            # A and B and C** = A and (B and C**)
+            # A and B and ..C.. = A and (B and ..C..)
             compositionEquiv = andComposition.specialize({A:self.operands[0], B:self.operands[1], C:self.operands[2:]})
             decomposedEval = compositionEquiv.rhs.evaluate()
             return compositionEquiv.applyTransitivity(decomposedEval)
@@ -356,7 +362,7 @@ class Or(AssociativeOperation):
         '''
         from axioms import orComposition, orTT, orTF, orFT, orFF
         if len(self.operands) >= 3:
-            # A or B or C** = A or (B or C**)
+            # A or B or ..C.. = A or (B or ..C..)
             compositionEquiv = orComposition.specialize({A:self.operands[0], B:self.operands[1], C:self.operands[2:]})
             decomposedEval = compositionEquiv.rhs.evaluate()
             return compositionEquiv.applyTransitivity(decomposedEval)
@@ -510,19 +516,19 @@ def compose(*expressions):
     else:
         assert len(expressions) > 2, "Compose 2 or more expressions, but not less than 2."
         rightComposition = compose(*expressions[1:])
-        # A and (B and C**) = TRUE, given A, B, C**
+        # A and (B and ..C..) = TRUE, given A, B, ..C..
         nestedAndEqT = deriveStmtEqTrue(compose(expressions[0], rightComposition)).check(expressions)
-        # A and B and C** = A and (B and C**)
+        # A and B and ..C.. = A and (B and ..C..)
         compositionEquality = andComposition.specialize({A:expressions[0], B:rightComposition.operands[0], C:rightComposition.operands[1:]}).check(expressions)
         print nestedAndEqT
         print compositionEquality
-        # [A and B and C**] given A, B, C**
+        # [A and B and ..C..] given A, B, ..C..
         return compositionEquality.applyTransitivity(nestedAndEqT).deriveViaBooleanEquality().check(expressions)
 
 def _evaluateBooleanBinaryOperation(operation, baseEvalFn):
     from proveit.basiclogic.equality.theorems import unaryEvaluation, binaryEvaluation
-    _x = operation.operand[0]
-    _y = operation.operand[1]
+    _x = operation.operands[0]
+    _y = operation.operands[1]
     operator = operation.operator
     if (_x == TRUE or _x == FALSE) and (_y == TRUE or _y == FALSE):
         evaluation = baseEvalFn(_x, _y)

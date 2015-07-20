@@ -1,4 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Implies, Not, FALSE, inBool
+from proveit.basiclogic.variables import A, B
 
 # hypothesis = [Not(B) => Not(A)]
 hypothesis = Implies(Not(B), Not(A))
@@ -11,4 +12,4 @@ Implies(Not(B), FALSE).deriveViaContradiction().prove({inBool(B), hypothesis, A}
 # [Not(B) => Not(A)] => [A => B] by nested hypothetical reasoning assuming inBool(B)
 transpositionExpr = Implies(hypothesis, Implies(A, B)).prove({inBool(B)})
 # forall_{A, B | inBool(B)} [A => B] => [Not(B) => Not(A)]
-booleans.qed('transpositionFromNegated', transpositionExpr.generalize((A, B), inBool(B)))
+transpositionExpr.generalize((A, B), inBool(B)).qed(__file__)

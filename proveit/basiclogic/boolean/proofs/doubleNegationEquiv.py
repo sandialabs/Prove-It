@@ -1,12 +1,14 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.theorems import doubleNegation, fromDoubleNegation
+from proveit.basiclogic import BOOLEANS, inBool, Not, Iff
+from proveit.basiclogic.variables import A
 
 # A => Not(Not(A))
-doubleNegationImplied = booleans.doubleNegation.specialize().prove()
+doubleNegationImplied = doubleNegation.specialize().prove()
 # Not(Not(A)) => A
-impliesDoubleNegation = booleans.fromDoubleNegation.specialize().prove()
+impliesDoubleNegation = fromDoubleNegation.specialize().prove()
 # [A => Not(Not(A))] in BOOLEANS if A in BOOLEANS
 doubleNegationImplied.deduceInBool().prove({inBool(A)})
 # [Not(Not(A)) => A] in BOOLEANS if A in BOOLEANS
 impliesDoubleNegation.deduceInBool().prove({inBool(A)})
 # forall_{A} A = Not(Not(A))
-booleans.qed('doubleNegationEquiv', Iff(A, Not(Not(A))).concludeViaComposition().deriveEquality().generalize(A, inBool(A)))
+Iff(A, Not(Not(A))).concludeViaComposition().deriveEquality().generalize(A, domain=BOOLEANS).qed(__file__)

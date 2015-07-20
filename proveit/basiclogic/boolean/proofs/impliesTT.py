@@ -1,3 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.theorems import trueConclusion
+from proveit.basiclogic import deriveStmtEqTrue, TRUE
+from proveit.basiclogic.variables import A
 
-booleans.qed('impliesTT', deriveStmtEqTrue(booleans.trueConclusion.specialize({A:TRUE})))
+deriveStmtEqTrue(trueConclusion.specialize({A:TRUE})).qed(__file__)

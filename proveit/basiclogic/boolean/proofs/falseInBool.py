@@ -1,10 +1,13 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.axioms import orFT, falseNotTrue
+from proveit.basiclogic.boolean.theorems import falseEqFalse
+from proveit.basiclogic import FALSE, inBool, Or, Equals, deriveStmtEqTrue
+from proveit.basiclogic.variables import X
 
 # [FALSE or TRUE]
-booleans.orFT.deriveViaBooleanEquality().prove()
+orFT.deriveViaBooleanEquality().prove()
 # [FALSE or FALSE=FALSE] via [FALSE or TRUE] and FALSE=FALSE
-deriveStmtEqTrue(booleans.falseEqFalse).lhsSubstitute(X, Or(FALSE, X)).prove()
+deriveStmtEqTrue(falseEqFalse).lhsSubstitute(X, Or(FALSE, X)).prove()
 # [FALSE=TRUE or FALSE=FALSE] via [FALSE or FALSE=FALSE] and Not(FALSE=TRUE)
-booleans.falseNotTrue.unfold().equateNegatedToFalse().lhsSubstitute(X, Or(X, Equals(FALSE, FALSE))).prove()
+falseNotTrue.unfold().equateNegatedToFalse().lhsSubstitute(X, Or(X, Equals(FALSE, FALSE))).prove()
 # inBool(FALSE) via [FALSE=TRUE or FALSE=FALSE]
-booleans.qed('falseInBool', inBool(FALSE).concludeAsFolded())
+inBool(FALSE).concludeAsFolded().qed(__file__)

@@ -3,12 +3,8 @@ from proveit.statement import Axioms
 from proveit.basiclogic import Forall, Equals, In, TRUE, Iff, Implies, And
 from mappingOps import Domain, CoDomain
 from proveit.basiclogic.variables import f, g, x, y, Q
+from proveit.basiclogic.simpleExpr import fx, fy, gx, Qx, Qy
 
-fx = Operation(f, x) # f(x)
-fy = Operation(f, y) # f(y)
-gx = Operation(g, x) # g(x)
-Qx = Operation(Q, x) # Q(x)
-Qy = Operation(Q, y) # Q(y)
 fxMap = Lambda(x, fx) # x -> f(x)
 fxGivenQxMap = Lambda(x, fx, Qx) # x -> f(x) | Q(x)
 gxGivenQxMap = Lambda(x, gx, Qx) # x -> g(x) | Q(x)
@@ -17,7 +13,7 @@ fx_eq_gx = Equals(fx, gx) # f(x) = g(x)
 x_in_fDomain = In(x, Domain(f)) # x in Domain(f)
 f_eq_g = Equals(f, g) # f = g
 
-mappingAxioms = Axioms(__package__)
+mappingAxioms = Axioms(__package__, locals())
 
 mapApplication = Forall((f, Q), Forall(y, Equals(Operation(fxGivenQxMap, y), fy), Qy))
 

@@ -1,5 +1,5 @@
 import sys
-from proveit.statement import *
+from proveit.expression import *
 from proveit.context import *
 from genericOperations import *
 from variables import *
@@ -26,6 +26,6 @@ class List(Operation):
         Operation.__init__(self, LIST, items)
 
     def formatted(self, formatType, fenced=False):
-        return '[' + self.operand.formatted(formatType, fenced=False) + ']'
+        return '[' + self.etcExpr.formatted(formatType, fenced=False) + ']'
 
 Operation.registerOperation(LIST, lambda operands : List(*operands))

@@ -1,4 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Implies, Not, FALSE, inBool, Equals, NotEquals
+from proveit.basiclogic.variables import A, B, X
 
 # inBool(B=FALSE)
 Equals(B, FALSE).deduceInBool()
@@ -21,4 +22,4 @@ toConclusion = Implies(Implies(A, BeqF), Implies(A, Not(B))).prove({inBool(B)})
 # [B => Not(A)] => [A=>Not(B)] assuming inBool(B)
 transpositionExpr = fromHyp.applySyllogism(midPoint).applySyllogism(toConclusion).prove({inBool(B)})
 # forall_{A, B | inBool(B)} [B => Not(A)] => [A=>Not(B)]
-booleans.qed('transpositionFromNegatedConclusion', transpositionExpr.generalize((A, B), inBool(B)))
+transpositionExpr.generalize((A, B), inBool(B)).qed(__file__)

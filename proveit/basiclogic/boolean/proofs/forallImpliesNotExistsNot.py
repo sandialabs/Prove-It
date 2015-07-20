@@ -7,7 +7,7 @@ existsNotImpliesNotForallSpec = booleans.existsNotImpliesNotForall.specialize().
 # exists_{x* | Q*(x*)} Not(P(x*)) in BOOLEANS
 existsNotImpliesNotForallSpec.hypothesis.deduceInBool()
 # forall_{x* | Q*(x*)} P(x*) in BOOLEANS
-existsNotImpliesNotForallSpec.conclusion.operand.deduceInBool()
+existsNotImpliesNotForallSpec.conclusion.etcExpr.deduceInBool()
 # NotExists_{x* | Q*(x*)} Not(P(x*))
 conclusion = existsNotImpliesNotForallSpec.transpose().deriveConclusion().deriveNotExists().prove({hypothesis})
 # forall_{P, Q*} NotExists_{x* | Q*(x*)} Not(P(x*)) => forall_{x* | Q*(x*)} P(x*)

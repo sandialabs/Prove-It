@@ -3,7 +3,7 @@ from proveit.basiclogic.variables import A, P
 
 class BooleanSet(Literal):
     def __init__(self):
-        Literal.__init__(self, 'BOOLEANS', {LATEX:r'\cal{B}'})
+        Literal.__init__(self, __package__, 'BOOLEANS', {LATEX:r'\cal{B}'})
 
     def unfoldElemInSet(self, element):
         '''
@@ -24,24 +24,22 @@ class BooleanSet(Literal):
         # [element in BOOLEANS] assuming prerequisite
         return foldInBool.specialize({A:element}).deriveConclusion().check({prerequisite})
 
-    def evaluateForallInSet(self, forallStmt):
+    def evaluateForall(self, forallStmt):
         '''
-        Given a forall statement over the set of Booleans, evaluate to TRUE or FALSE
+        Given a forall statement over the BOOLEANS domain, evaluate to TRUE or FALSE
         if possible.
         '''        
-        from proveit.basiclogic import Forall, Equals, In
+        from proveit.basiclogic import Forall, Equals
         from theorems import falseEqFalse, trueEqTrue, forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
         from boolOps import compose
-        assert(isinstance(forallStmt, Forall))
-        firstCondition = forallStmt.condition.first()
-        assert(isinstance(firstCondition, In))
-        assert(firstCondition.itsSet == BOOLEANS)
-        varInBool = firstCondition.element
-        assert varInBool in set(forallStmt.instanceVar), "To evaluate a forall statement given a condition of being in booleans, the element in question must be one of the forall instance variables."
-        instanceExpr = forallStmt.instanceExpression
-        P_op = Operation(P, varInBool)
-        trueInstance = instanceExpr.substituted({varInBool:TRUE})
-        falseInstance = instanceExpr.substituted({varInBool:FALSE})
+        assert(isinstance(forallStmt, Forall)), "May only apply evaluateForall method of BOOLEANS to a forall statement"
+        assert(forallStmt.domain == BOOLEANS), "May only apply evaluateForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
+        assert(len(forallStmt.instanceVars) == 1), "May only apply evaluateForall method of BOOLEANS to a forall statement with 1 instance variable"
+        instanceVar = forallStmt.instanceVars[0]
+        instanceExpr = forallStmt.instanceExpr
+        P_op = Operation(P, instanceVar)
+        trueInstance = instanceExpr.substituted({instanceVar:TRUE})
+        falseInstance = instanceExpr.substituted({instanceVar:FALSE})
         if trueInstance == TRUE and falseInstance == FALSE:
             # special case of Forall_{A in BOOLEANS} A
             falseEqFalse # FALSE = FALSE
@@ -49,64 +47,58 @@ class BooleanSet(Literal):
             evaluation = forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr}).deriveConclusion()
         else:
             # must evaluate for the TRUE and FALSE case separately
-            evalTrueInstance = trueInstance.evaluate()
-            evalFalseInstance = falseInstance.evaluate()
-            print "evalTrueInstance", evalTrueInstance.check()
-            print "evalFalseInstance", evalFalseInstance.check()
+            evalTrueInstance = trueInstance.evaluate().check()
+            evalFalseInstance = falseInstance.evaluate().check()
             if isinstance(evalTrueInstance, Equals) and isinstance(evalFalseInstance, Equals):
                 # proper evaluations for both cases (TRUE and FALSE)
                 trueCaseVal = evalTrueInstance.rhs
                 falseCaseVal = evalFalseInstance.rhs
-                iVar = forallStmt.instanceVar
                 if trueCaseVal == TRUE and falseCaseVal == TRUE:
                     # both cases are TRUE, so the forall over booleans is TRUE
-                    print evalTrueInstance.deriveViaBooleanEquality().check()
-                    print evalFalseInstance.deriveViaBooleanEquality().check()
-                    print compose(evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality()).check()
-                    print forallBoolEvalTrue.specialize({P_op:instanceExpr, A:iVar})
-                    evaluation = forallBoolEvalTrue.specialize({P_op:instanceExpr, A:iVar}).deriveConclusion()
+                    evalTrueInstance.deriveViaBooleanEquality().check()
+                    evalFalseInstance.deriveViaBooleanEquality().check()
+                    compose(evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality()).check()
+                    forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar})
+                    evaluation = forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
                 else:
                     # one case is FALSE, so the forall over booleans is FALSE
                     compose(evalTrueInstance, evalFalseInstance)
                     if trueCaseVal == FALSE and falseCaseVal == FALSE:
-                        evaluation = forallBoolEvalFalseViaFF.specialize({P_op:instanceExpr, A:iVar}).deriveConclusion()
+                        evaluation = forallBoolEvalFalseViaFF.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
                     elif trueCaseVal == FALSE and falseCaseVal == TRUE:
-                        evaluation = forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr, A:iVar}).deriveConclusion()
+                        evaluation = forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
                     elif trueCaseVal == TRUE and falseCaseVal == FALSE:
-                        evaluation = forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:iVar}).deriveConclusion()
+                        evaluation = forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
         return evaluation.check()
     
-    def unfoldForallInSet(self, forallStmt):
+    def unfoldForall(self, forallStmt):
         '''
         Given forall_{A in BOOLEANS} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
-        from proveit.basiclogic import In, Forall
+        from proveit.basiclogic import Forall
         from theorems import unfoldForallOverBool
-        assert(isinstance(forallStmt, Forall))
-        assert(isinstance(forallStmt.condition, In))
-        assert(forallStmt.condition.itsSet == BOOLEANS)
-        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVar): forallStmt.instanceExpression, A:forallStmt.instanceVar}).deriveConclusion().check({forallStmt})
+        assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of BOOLEANS to a forall statement"
+        assert(forallStmt.domain == BOOLEANS), "May only apply unfoldForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
+        assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of BOOLEANS to a forall statement with 1 instance variable"
+        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]): forallStmt.instanceExpr, A:forallStmt.instanceVars[0]}).deriveConclusion().check({forallStmt})
 
-    def foldAsForallInSet(self, forallStmt):
+    def foldAsForall(self, forallStmt):
         '''
         Given forall_{A in BOOLEANS} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
-        assert(isinstance(forallStmt, Forall))
-        assert(isinstance(forallStmt.condition, In))
-        assert(forallStmt.condition.itsSet == BOOLEANS)
         '''
-        from proveit.basiclogic import Forall, In
+        from proveit.basiclogic import Forall
         from theorems import foldForallOverBool
-        assert(isinstance(forallStmt, Forall))
-        assert(isinstance(forallStmt.condition, In))
-        assert(forallStmt.condition.itsSet == BOOLEANS)
+        assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of BOOLEANS to a forall statement"
+        assert(forallStmt.domain == BOOLEANS), "May only apply foldAsForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
+        assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of BOOLEANS to a forall statement with 1 instance variable"
         # [P(TRUE) and P(FALSE)] => forall_{A in BOOLEANS} P(A)
-        folding = foldForallOverBool.specialize({Operation(P, forallStmt.instanceVar):forallStmt.instanceExpression, A:forallStmt.instanceVar})
+        folding = foldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]):forallStmt.instanceExpr, A:forallStmt.instanceVars[0]})
         folding.hypothesis.concludeViaComposition()
         return folding.deriveConclusion()
 
 class TrueLiteral(Literal):
     def __init__(self):
-        Literal.__init__(self, 'TRUE', formatMap = {STRING:'TRUE', LATEX:r'\mathtt{TRUE}'})
+        Literal.__init__(self, __package__, 'TRUE', formatMap = {STRING:'TRUE', LATEX:r'\mathtt{TRUE}'})
     
     def evalEquality(self, other):
         from boolOps import deriveStmtEqTrue
@@ -118,7 +110,7 @@ class TrueLiteral(Literal):
         
 class FalseLiteral(Literal):
     def __init__(self):
-        Literal.__init__(self, 'FALSE', formatMap = {STRING:'FALSE', LATEX:r'\mathtt{FALSE}'})
+        Literal.__init__(self, __package__, 'FALSE', formatMap = {STRING:'FALSE', LATEX:r'\mathtt{FALSE}'})
     
     def evalEquality(self, other):
         from boolOps import deriveStmtEqTrue

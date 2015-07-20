@@ -1,3 +1,4 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Implies, deriveStmtEqTrue
+from proveit.basiclogic.variables import A
 
-booleans.qed('eqTrueRevIntro', Implies(A, deriveStmtEqTrue(A).concludeBooleanEquality().deriveReversed()).generalize(A))
+Implies(A, deriveStmtEqTrue(A).concludeBooleanEquality().deriveReversed()).generalize(A).qed(__file__)

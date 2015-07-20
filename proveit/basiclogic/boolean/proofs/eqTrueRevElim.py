@@ -1,4 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Implies, Equals, TRUE
+from proveit.basiclogic.variables import A
 
 hypothesis = Equals(TRUE, A)
-booleans.qed('eqTrueRevElim', Implies(hypothesis, hypothesis.deriveReversed().deriveViaBooleanEquality()).generalize(A))
+Implies(hypothesis, hypothesis.deriveReversed().deriveViaBooleanEquality()).generalize(A).qed(__file__)

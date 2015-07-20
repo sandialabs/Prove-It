@@ -1,4 +1,6 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import BOOLEANS, TRUE, FALSE, inBool, Implies, And, deriveStmtEqTrue, Equals
+from proveit.basiclogic.variables import A, P
+from proveit.basiclogic.simpleExpr import PofA, PofTrue, PofFalse
 
 # hypothesis = [P(TRUE) and P(FALSE)]
 hypothesis = And(PofTrue, PofFalse)
@@ -17,4 +19,4 @@ Implies(AeqF, deriveStmtEqTrue(AeqF.lhsSubstitute(A, PofA))).prove({hypothesis})
 # P(A) assuming hypothesis, (A in BOOLEANS)
 inBool(A).unfold().deriveCommonConclusion(PofAeqT).deriveViaBooleanEquality().prove({hypothesis, inBool(A)})
 # forall_{P} P(TRUE) and P(FALSE) => forall_{A in BOOLEANS} P(A)
-booleans.qed('foldForallOverBool', Implies(hypothesis, PofA.generalize(A, inBool(A))).generalize(P))
+Implies(hypothesis, PofA.generalize(A, domain=BOOLEANS)).generalize(P).qed(__file__)

@@ -5,12 +5,11 @@ from proveit.basiclogic.boolean.boolOps import Implies, Not
 from proveit.basiclogic.boolean.quantifiers import Forall
 from proveit.basiclogic.boolean.boolSet import inBool
 from proveit.basiclogic.variables import x, y, z, f
+from proveit.basiclogic.simpleExpr import fx, fy
 
-fx = Operation(f, x) # f(x)
-fy = Operation(f, y) # f(y)
+equalityAxioms = Axioms(__package__, locals())
 
-equalityAxioms = Axioms(__package__)
-
+# forall_{x, y} (x=y) in BOOLEANS
 equalityInBool = Forall((x, y), inBool(Equals(x, y)))
 
 # forall_{x, y, z} (x=y) => [(y=z) => (x=z)]

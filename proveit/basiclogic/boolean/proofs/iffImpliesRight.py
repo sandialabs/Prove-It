@@ -1,3 +1,4 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Implies, Iff
+from proveit.basiclogic.variables import A, B
 
-booleans.qed('iffImpliesRight', Implies(Iff(A, B), Iff(A, B).definition().deriveRightViaEquivalence().deriveLeft()).generalize((A, B)))
+Implies(Iff(A, B), Iff(A, B).definition().deriveRightViaEquivalence().deriveLeft()).generalize((A, B)).qed(__file__)

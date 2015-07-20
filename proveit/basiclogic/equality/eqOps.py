@@ -1,4 +1,4 @@
-from proveit.basiclogic.genericOperations import BinaryOperation
+from proveit.basiclogic.genericOps import BinaryOperation
 from proveit.expression import Variable, Literal, Operation, STRING, LATEX
 from proveit.basiclogic.variables import A, P, X, f, x, y, z
 
@@ -96,14 +96,14 @@ class Equals(BinaryOperation):
             return eqTrueIntro.specialize({A:self.lhs}).deriveConclusion().check({self.lhs})
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
-                return eqFalseFromNegation.specialize({A:self.lhs.operand}).deriveConclusion().check({self.lhs.operand})
+                return eqFalseFromNegation.specialize({A:self.lhs.operands}).deriveConclusion().check({self.lhs.operands})
             else:
                 return Not(self.lhs).equateNegatedToFalse()
         elif self.lhs == TRUE:
             return eqTrueRevIntro.specialize({A:self.rhs}).deriveConclusion().check({self.rhs})
         elif self.lhs == FALSE:
             if isinstance(self.rhs, Not):
-                return eqFalseRevFromNegation.specialize({A:self.rhs.operand}).deriveConclusion().check({self.rhs.operand})
+                return eqFalseRevFromNegation.specialize({A:self.rhs.operands}).deriveConclusion().check({self.rhs.operands})
             else:
                 return Not(self.rhs).equateFalseToNegated()
     
@@ -215,7 +215,6 @@ class Equals(BinaryOperation):
             '''
             Performs the actual work if we can't simply look up the evaluation.
             '''
-            print "equal eval", self
             if self.lhs == self.rhs:
                 # simple case where both sides are the same, use reflexivity
                 return Equals(self.concludeViaReflexivity(), TRUE).concludeBooleanEquality()
@@ -233,9 +232,6 @@ class Equals(BinaryOperation):
                 rhsSimpl = rhsEval.rhs
             except AttributeError:
                 rhsEval = None
-    
-            print "lhsEval", lhsEval
-            print "rhsEval", rhsEval
     
             if lhsEval == None and rhsEval == None:
                 # Cannot simplify further.  Use evalEquality.
@@ -336,3 +332,14 @@ class EquationChain:
         if len(self.eqns) > 0:
             assert self.eqns[-1].rhs == eqn.lhs, 'Left-hand side of new equation should match the right-hand side of the last equation in the equation chain'
         self.eqns.append(eqn)
+    
+    def equateEnds(self, assumptions):
+        '''
+        Prove that the lhs of the first equation equals the rhs of the
+        last equation under the given assumptions.
+        '''
+        eqn = self.eqns[0]
+        for nextEq in self.eqns[1:]:
+            eqn = eqn.applyTransitivity(nextEq).prove(assumptions)
+        return eqn
+    

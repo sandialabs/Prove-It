@@ -4,13 +4,11 @@ from proveit.multiExpression import Etcetera
 from proveit.basiclogic import BOOLEANS, Forall, Exists, And, Or, Implies, Iff, Equals
 from setOps import In, NotIn, Singleton, Union, Intersection, SubsetEq, SupersetEq, SetOfAll
 from proveit.basiclogic.variables import f, x, y, A, B, C, S, P
+from proveit.basiclogic.simpleExpr import fy, Px, Py
 
-fy = Operation(f, y) # f(y)
-Px = Operation(P, x) # P(x)
-Py = Operation(P, y) # P(y)
+setTheorems = Theorems(__package__, locals())
 
-setTheorems = Theorems(__package__)
-
+# forall_{A, B} [(A subseteq B) => (forall_{x in A} x in B)]
 unfoldSubsetEq = Forall((A, B), Implies(SubsetEq(A, B), Forall(x, In(x, B), In(x, A))))
 
 # forall_{A, B} [(forall_{x in A} x in B) => (A subseteq B)]

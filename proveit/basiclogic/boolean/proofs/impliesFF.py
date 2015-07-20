@@ -1,3 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.theorems import selfImplication
+from proveit.basiclogic import deriveStmtEqTrue, FALSE
+from proveit.basiclogic.variables import A
 
-booleans.qed('impliesFF', deriveStmtEqTrue(booleans.selfImplication.specialize({A:FALSE})))
+deriveStmtEqTrue(selfImplication.specialize({A:FALSE})).qed(__file__)

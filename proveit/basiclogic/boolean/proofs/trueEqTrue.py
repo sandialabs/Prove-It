@@ -1,3 +1,3 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import Equals, TRUE
 
-booleans.qed('trueEqTrue', Equals(TRUE, TRUE).concludeViaReflexivity())
+Equals(TRUE, TRUE).concludeViaReflexivity().qed(__file__)

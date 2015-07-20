@@ -1,11 +1,13 @@
-from proveit.basiclogic.genericOperations import BinaryOperation, AssociativeOperation, OperationOverInstances
+from proveit.basiclogic.genericOps import BinaryOperation, AssociativeOperation, OperationOverInstances
 from proveit.expression import Literal, Operation, Lambda, STRING, LATEX
+from proveit.inLiteral import IN
+from proveit.everythingLiteral import EVERYTHING
 from proveit.basiclogic.variables import A, B, S, P, x, y
 
 pkg = __package__
 
-EVERYTHING = Literal('EVERYTHING')
-NOTHING = Literal('NOTHING', {STRING:'NOTHING', LATEX:r'\emptyset'})
+EVERYTHING.formatMap = {STRING:'EVERYTHING', LATEX:r'EVERYTHING'}
+NOTHING = Literal(pkg, 'NOTHING', {STRING:'NOTHING', LATEX:r'\emptyset'})
 
 class In(BinaryOperation):
     def __init__(self, element, itsSet):
@@ -40,6 +42,7 @@ class In(BinaryOperation):
         '''    
         return self.itsSet.deduceElemInSet(self.element)
     
+    """
     def deriveIsInExpansion(self, expandedSet):
         '''
         From x in S, derive x in expandedSet via S subseteq expendedSet.
@@ -48,29 +51,11 @@ class In(BinaryOperation):
         #TODO : derive x in S => x in S or x in expandingSet
         #return unionDef.specialize({x:self.element, A:self.itsSet, B:self.expandingSet}).deriveLeft()
         pass
+    """
     
-    def evaluateForall(self, forallStmt):
-        '''
-        Given a forall statement over some set, evaluate it to TRUE or FALSE if possible
-        via the set's evaluateForallInSet method.
-        '''
-        return self.itsSet.evaluateForallInSet(forallStmt)
-    
-    def unfoldForall(self, forallStmt):
-        '''
-        Given a forall statement over some set, unfold it if possible via the set's
-        unfoldForallInSet method.
-        '''
-        return self.itsSet.unfoldForallInSet(forallStmt)
-    
-    def foldAsForall(self, forallStmt):
-        '''
-        Given a forall statement over some set, derive it from an unfolded version
-        if possible via the set's foldAsForallInSet method.
-        '''
-        return self.itsSet.foldAsForallInSet(forallStmt)
-
-IN = Literal(pkg, 'IN', {STRING:'in', LATEX:r'\in'}, lambda operands : In(*operands))
+# The IN Literal is defined at the top level of prove-it, but its operationMaker must be set here.
+IN.formatMap = {STRING:'in', LATEX:r'\in'}
+IN.operationMaker = lambda operands : In(*operands)
 
 class NotIn(BinaryOperation):
     def __init__(self, element, theSet):
@@ -94,14 +79,12 @@ class Singleton(Operation):
         Operation.__init__(self, SINGLETON, elem)
         self.elem = elem
 
-    def formatted(self, formatType, fenced=False):
+    def formatted(self, formatType, fence=False):
         if formatType == STRING:
             return '{' + str(self.elem) + '}'
         elif formatType == LATEX:
             return '{' + self.elem.formatted(formatType) + '}'        
-        else:
-            return "<mfenced open='{' close='}'>" + self.elem.formatted(formatType) + '</mfenced>'
-
+ 
     def unfoldElemInSet(self, element):
         '''
         From [element in {y}], derive and return (element = y).
@@ -116,7 +99,7 @@ class Singleton(Operation):
         from axioms import singletonDef
         return singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence()
 
-SINGLETON = Literal(pkg, 'SINGLETON', lambda operand : Singleton(operand))
+SINGLETON = Literal(pkg, 'SINGLETON', lambda operands : Singleton(operands[0]))
 
 class Complement(Operation):        
     '''
@@ -129,7 +112,7 @@ class Complement(Operation):
     def __str__(self):
         return 'Complement(' + str(self.elem) + ')'
 
-COMPLEMENT = Literal(pkg, 'COMPLEMENT', lambda operand : Complement(operand))
+COMPLEMENT = Literal(pkg, 'COMPLEMENT', lambda operands : Complement(operands[0]))
         
 class Union(AssociativeOperation):
     def __init__(self, *operands):
@@ -144,8 +127,8 @@ class Union(AssociativeOperation):
         Complement(S) union S = EVERYTHING if this is a union of either or these forms.
         ''' 
         from theorems import complementCompletion, complementCompletionReversed
-        if len(self.operand) == 2:
-            leftOperand, rightOperand = self.operand       
+        if len(self.operands) == 2:
+            leftOperand, rightOperand = self.operands       
             if leftOperand == Complement(rightOperand):
                 return complementCompletion.specialize({S:leftOperand})
             elif Complement(leftOperand) == rightOperand:
@@ -157,8 +140,8 @@ class Union(AssociativeOperation):
         where self represents (A union B). 
         '''
         from axioms import unionDef
-        if len(self.operand) == 2:
-            leftOperand, rightOperand = self.operand       
+        if len(self.operands) == 2:
+            leftOperand, rightOperand = self.operands       
             return unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveRight()
 
     def deduceElemInSet(self, element):
@@ -167,8 +150,8 @@ class Union(AssociativeOperation):
         where self represents (A union B).
         ''' 
         from axioms import unionDef
-        if len(self.operand) == 2:
-            leftOperand, rightOperand = self.operand                 
+        if len(self.operands) == 2:
+            leftOperand, rightOperand = self.operands              
             return unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveLeft()
 
 UNION = Literal(pkg, 'UNION', {STRING:'union', LATEX:r'\bigcup'}, lambda operands : Union(*operands))
@@ -243,28 +226,30 @@ class SupersetEq(BinaryOperation):
 SUPERSET_EQ = Literal(pkg, 'SUPERSET_EQ', {STRING:'superseteq', LATEX:r'\superseteq'}, lambda operands : SupersetEq(*operands))
  
 class SetOfAll(OperationOverInstances):
-    def __init__(self, instanceVars, instanceElement, conditions=None):
+    def __init__(self, instanceVars, instanceElement, conditions=tuple(), domain=EVERYTHING):
         '''
         Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
         {instanceElement | conditions}_{instanceVar}
         '''
-        OperationOverInstances.__init__(self, SET, instanceVars, instanceElement, conditions)
+        OperationOverInstances.__init__(self, SET, instanceVars, instanceElement, conditions, domain)
         self.instanceElement = instanceElement
 
-    def formatted(self, formatType, fenced=False):
+    def formatted(self, formatType, fence=False):
         outStr = ''
-        innerFenced = (len(self.condition) > 0)
+        innerFence = (len(self.condition) > 0)
         if formatType == STRING:
             outStr += '{'
-            outStr += self.instanceElement.formatted(formatType, fenced=innerFenced)
+            outStr += self.instanceElement.formatted(formatType, fence=innerFence)
+            if self.domain is not None:
+                outStr += ' in ' + self.domain.formatted(formatType)
             if len(self.condition) > 0:
                 outStr += ' s.t. ' # such that
                 if len(self.condition) == 1:
-                    outStr += self.condition.formatted(formatType, fenced=True)
+                    outStr += self.condition.formatted(formatType, fence=True)
                 else:
-                    outStr += ', '.join([condition.formatted(formatType, fenced=True) for condition in self.condition])
+                    outStr += ', '.join([condition.formatted(formatType, fence=True) for condition in self.condition])
             outStr += '}'
-            if fenced: outStr += ']'
+            if fence: outStr += ']'
         return outStr
 
     def unfoldElemInSet(self, element):
@@ -272,16 +257,16 @@ class SetOfAll(OperationOverInstances):
         From (x in {Q(y) | P(y)}), derive and return P(x), where x is meant as the given element.
         '''
         from theorems import unfoldSetOfAll
-        PofElement = self.instanceExpression.substitute({self.instanceVar:element})
-        return unfoldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpression), x:element}).deriveConclusion().check({PofElement})
+        PofElement = self.instanceExpr.substitute({self.instanceVar:element})
+        return unfoldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().check({PofElement})
     
     def deduceElemInSet(self, element):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''   
         from theorems import foldSetOfAll
-        PofElement = self.instanceExpression.substitute({self.instanceVar:element})
-        return foldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpression), x:element}).deriveConclusion().check({PofElement})
+        PofElement = self.instanceExpr.substitute({self.instanceVar:element})
+        return foldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().check({PofElement})
 
-SET = Literal(pkg, 'SET', lambda operand : SetOfAll(operand.argument, operand.expression, operand.domainCondition))
+SET = Literal(pkg, 'SET', lambda operands : SetOfAll(*OperationOverInstances.extractParameters(operands)))
 
