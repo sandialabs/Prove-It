@@ -70,6 +70,7 @@ class Statement:
         if _isAxiom or _isNamedTheorem:
             # Mark as proven up to axioms and theorems. The proof won't be really complete until required
             # theorems are completely proven, but the proof steps will be in place in any case. 
+            assert len(expression.freeVars()) == 0, "Axioms and theorems may not have free variables: " + _name + ', ' + str(expression.freeVars())
             Prover._markAsProven(statement, Prover(statement, []))
             
         # When stating an implication, link together the implication, hypothesis and conclusion
