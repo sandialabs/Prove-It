@@ -1,7 +1,7 @@
 from proveit.basiclogic.boolean.axioms import iffDef
 from proveit.basiclogic.boolean.theorems import impliesTT
 from proveit.basiclogic import compose, TRUE, deriveStmtEqTrue
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 # TRUE => TRUE
 TimplT = impliesTT.deriveViaBooleanEquality()

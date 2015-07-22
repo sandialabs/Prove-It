@@ -1,7 +1,6 @@
 from proveit.basiclogic.boolean.theorems import forallBundling, forallUnraveling
 from proveit.basiclogic import Iff
-from proveit.basiclogic.variables import P, S
-from proveit.basiclogic.simpleExpr import etcQ, etcR
+from proveit.common import P, S, Qetc, Retc
 
 # forall_{..x.. in S | ..Q(..x..)..} forall_{..y.. in S | ..R(..y..)..} P(..x.., ..y..) => forall_{..x.., ..y.. in S | ..Q(..x..).., ..R(..y..)..} P(..x.., ..y..)
 forallBundlingSpec = forallBundling.specialize().prove()
@@ -15,4 +14,4 @@ for expr in (lhs, rhs): expr.deduceInBool().prove()
 # lhs = rhs
 equiv = Iff(lhs, rhs).concludeViaComposition().deriveEquality().prove()
 # forall_{P, ..Q.., ..R.., S} [forall_{..x.., ..y.. in S | ..Q(..x..).., ..R(..y..)..} P(..x.., ..y..) = forall_{..x.. in S | ..Q(..x..)..} forall_{..y.. in S | ..R(..y..)..} P(..x.., ..y..)]
-equiv.generalize((P, etcQ, etcR, S)).qed(__file__)
+equiv.generalize((P, Qetc, Retc, S)).qed(__file__)

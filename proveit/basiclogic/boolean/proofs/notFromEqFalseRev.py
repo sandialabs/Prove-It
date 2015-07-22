@@ -1,5 +1,5 @@
 from proveit.basiclogic import Implies, Equals, FALSE
-from proveit.basiclogic.variables import A
+from proveit.common import A
 
 # FeqA := (F=A)
 FeqA = Equals(FALSE, A)

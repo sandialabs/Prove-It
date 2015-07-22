@@ -1,5 +1,5 @@
 from proveit.basiclogic import Implies, Not, FALSE, inBool
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 # hypothesis = [Not(B) => Not(A)]
 hypothesis = Implies(Not(B), Not(A))

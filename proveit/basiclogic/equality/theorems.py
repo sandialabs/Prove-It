@@ -4,8 +4,7 @@ from eqOps import Equals, NotEquals
 from proveit.basiclogic.boolean.boolOps import Implies, Not, And
 from proveit.basiclogic.boolean.quantifiers import Forall
 from proveit.basiclogic.boolean.boolSet import TRUE, FALSE, inBool
-from proveit.basiclogic.variables import A, a, b, c, x, y, z, f, P
-from proveit.basiclogic.simpleExpr import fa, fb, fab, fx, fy, fxy, Px, Py
+from proveit.common import A, a, b, c, x, y, z, f, P, fa, fb, fab, fx, fy, fxy, Px, Py
 
 equalityTheorems = Theorems(__package__, locals())
 

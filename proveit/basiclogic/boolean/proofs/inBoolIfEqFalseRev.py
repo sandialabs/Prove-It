@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.theorems import falseInBool
 from proveit.basiclogic import FALSE, inBool, Implies, Equals
-from proveit.basiclogic.variables import A, X
+from proveit.common import A, X
 
 # hypothesis = (FALSE=A)
 hypothesis = Equals(FALSE, A)

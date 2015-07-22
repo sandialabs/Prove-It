@@ -1,7 +1,7 @@
 from proveit.basiclogic.boolean.axioms import boolsDef
 from proveit.basiclogic.set.axioms import singletonDef
 from proveit.basiclogic import Implies, In, inBool, Singleton, Union, Equals, TRUE, FALSE, Or
-from proveit.basiclogic.variables import x, y, A, X
+from proveit.common import x, y, A, X
 
 # hypothesis = (A=TRUE or A=FALSE)
 hypothesis = Or(Equals(A, TRUE), Equals(A, FALSE))

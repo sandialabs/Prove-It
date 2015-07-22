@@ -1,5 +1,5 @@
 from proveit.expression import Operation, Literal, STRING, LATEX
-from proveit.basiclogic.variables import A, P
+from proveit.common import A, P
 
 class BooleanSet(Literal):
     def __init__(self):

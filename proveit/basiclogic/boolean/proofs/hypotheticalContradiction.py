@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.axioms import contradictoryValidation
 from proveit.basiclogic import Implies, Not, FALSE, inBool, BOOLEANS
-from proveit.basiclogic.variables import A
+from proveit.common import A
 
 # inBool(Not(A)) assuming inBool(A)
 Not(A).deduceInBool().prove({inBool(A)})

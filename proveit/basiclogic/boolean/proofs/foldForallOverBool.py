@@ -1,6 +1,6 @@
 from proveit.basiclogic import BOOLEANS, TRUE, FALSE, inBool, Implies, And, deriveStmtEqTrue, Equals
-from proveit.basiclogic.variables import A, P
-from proveit.basiclogic.simpleExpr import PofA, PofTrue, PofFalse
+from proveit.common import A, P, PofA
+from proveit.basiclogic.common import PofTrue, PofFalse
 
 # hypothesis = [P(TRUE) and P(FALSE)]
 hypothesis = And(PofTrue, PofFalse)

@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.theorems import foldForallOverBool
 from proveit.basiclogic import Implies, deriveStmtEqTrue
-from proveit.basiclogic.variables import P
+from proveit.common import P
 
 # P(TRUE) and P(FALSE) => forall_{A in BOOLEANS} P(A)
 folding = foldForallOverBool.specialize()

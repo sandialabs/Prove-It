@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.axioms import implicitNotF
 from proveit.basiclogic import Not, Implies, Equals, FALSE, deriveStmtEqTrue
-from proveit.basiclogic.variables import A
+from proveit.common import A
 
 # [Not(A) = TRUE] => [A = FALSE]
 implicitNotF.specialize().prove()

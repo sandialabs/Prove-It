@@ -1,7 +1,6 @@
 from proveit.basiclogic.boolean.theorems import trueInBool, falseInBool
 from proveit.basiclogic import TRUE, FALSE, BOOLEANS, Implies, Forall, compose
-from proveit.basiclogic.variables import A, P
-from proveit.basiclogic.simpleExpr import PofA
+from proveit.common import A, P, PofA
 
 # hypothesis = [forall_{A in BOOLEANS} P(A)]
 hypothesis = Forall(A, PofA, domain=BOOLEANS)

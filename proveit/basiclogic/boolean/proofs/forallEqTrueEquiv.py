@@ -1,6 +1,5 @@
 from proveit.basiclogic import Forall, Iff, Equals, TRUE, deriveStmtEqTrue
-from proveit.basiclogic.variables import P, S
-from proveit.basiclogic.simpleExpr import xEtc, PxEtc, etcQ, etc_QxEtc
+from proveit.common import P, S, xEtc, PxEtc, Qetc, etc_QxEtc
 
 # forallPx = [forall_{..x.. in S | ..Q(..x..)..} P(..x..)]
 forallPx = Forall(xEtc, PxEtc, S, etc_QxEtc)
@@ -16,4 +15,4 @@ iffForalls = Iff(forallPx, forallPxEqT).concludeViaComposition().prove()
 for expr in (forallPx, forallPxEqT):
     expr.deduceInBool()
 # forall_{P, ..Q.., S} [forall_{..x.. in S | ..Q(..x..)..} P(..x..)] = [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
-iffForalls.deriveEquality().generalize((P, etcQ, S)).qed(__file__)
+iffForalls.deriveEquality().generalize((P, Qetc, S)).qed(__file__)

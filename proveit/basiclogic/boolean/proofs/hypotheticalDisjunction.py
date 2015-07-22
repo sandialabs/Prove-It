@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.axioms import notT
 from proveit.basiclogic import BOOLEANS, FALSE, inBool, Implies, And, Or, Not, deriveStmtEqTrue
-from proveit.basiclogic.variables import A, B, C, X
+from proveit.common import A, B, C, X
 
 AorB = Or(A, B)
 hypothesis = And(Implies(A, C), Implies(B, C))

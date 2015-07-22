@@ -1,5 +1,5 @@
 from proveit.basiclogic import Forall, Or, Equals, TRUE, FALSE, BOOLEANS, inBool
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 # [(A or B) = TRUE] or [(A or B) = FALSE] assuming A, B in BOOLEANS
 Forall((A, B), Or(Equals(Or(A, B), TRUE), Equals(Or(A, B), FALSE)), domain=BOOLEANS).proveByEval().specialize().prove({inBool(A), inBool(B)})

@@ -1,5 +1,5 @@
 from proveit.basiclogic import Implies, Not, FALSE, inBool, Equals, NotEquals
-from proveit.basiclogic.variables import A, B, X
+from proveit.common import A, B, X
 
 # inBool(B=FALSE)
 Equals(B, FALSE).deduceInBool()

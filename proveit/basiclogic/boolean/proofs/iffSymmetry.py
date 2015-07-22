@@ -1,5 +1,5 @@
 from proveit.basiclogic import Implies, Iff
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 hypothesis = Iff(A, B) # hypothesis = (A <=> B)
 # A => B given hypothesis

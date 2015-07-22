@@ -1,7 +1,6 @@
 from proveit.basiclogic.boolean.axioms import existsDef
 from proveit.basiclogic import Exists, Forall, Not, NotEquals, Implies, In, TRUE, deriveStmtEqTrue
-from proveit.basiclogic.variables import P, S, X
-from proveit.basiclogic.simpleExpr import xEtc, PxEtc, etc_QxEtc, etcQ
+from proveit.common import P, S, X, xEtc, PxEtc, etc_QxEtc, Qetc
 
 inDomain = In(xEtc, S) # ..x.. in S
 # existsNot = [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))]
@@ -22,4 +21,4 @@ deriveStmtEqTrue(forallPx.specialize()).lhsStatementSubstitution(X, NotEquals(No
 # Not(forallNotPxNotTrue) => Not(forallPx)
 Implies(forallPx, forallNotPxNotTrue).transpose().prove()
 # forall_{P, ..Q.., S} [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))] => [Not(forall_{..x.. in S | ..Q(..x..)..} P(..x..)]
-Implies(existsNot, Not(forallPx)).generalize((P, etcQ, S)).qed(__file__)
+Implies(existsNot, Not(forallPx)).generalize((P, Qetc, S)).qed(__file__)

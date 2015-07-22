@@ -2,7 +2,7 @@ import sys
 from proveit.expression import *
 from proveit.context import *
 from genericOperations import *
-from variables import *
+from proveit.common import *
 
 # set theory related literals
 literals = Literals()

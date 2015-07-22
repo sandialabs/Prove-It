@@ -1,7 +1,7 @@
 from proveit.basiclogic.boolean.axioms import notT
 from proveit.basiclogic.boolean.theorems import notFromEqFalse
 from proveit.basiclogic import Implies, Not, deriveStmtEqTrue
-from proveit.basiclogic.variables import A, X
+from proveit.common import A, X
 
 # A=TRUE assuming A
 AeqT = deriveStmtEqTrue(A)

@@ -1,5 +1,5 @@
 from proveit.basiclogic import BOOLEANS, Forall, Iff, Implies, Equals
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 # Note that proveByEval doesn't work for bundled Forall yet,
 # but later we'll be able to do this kind of thing in one step.

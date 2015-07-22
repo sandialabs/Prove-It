@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.theorems import orContradiction
 from proveit.basiclogic import Implies, Not, Or, FALSE, inBool
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 # (A or B) => FALSE assuming Not(A), Not(B)
 orContradiction.specialize().prove({Not(A), Not(B)})

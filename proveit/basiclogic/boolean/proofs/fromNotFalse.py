@@ -1,5 +1,5 @@
 from proveit.basiclogic import Implies, BOOLEANS, FALSE, inBool, compose, NotEquals
-from proveit.basiclogic.variables import A
+from proveit.common import A
 
 # AnotF = (A != FALSE)
 AnotF = NotEquals(A, FALSE)

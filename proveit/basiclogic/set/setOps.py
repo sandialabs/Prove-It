@@ -3,8 +3,7 @@ from proveit.expression import Literal, Operation, Lambda, STRING, LATEX
 from proveit.multiExpression import multiExpression
 from proveit.inLiteral import IN
 from proveit.everythingLiteral import EVERYTHING
-from proveit.basiclogic.variables import A, B, S, P, x, y
-from proveit.basiclogic.simpleExpr import xEtc
+from proveit.common import A, B, S, P, x, y, xEtc
 
 pkg = __package__
 

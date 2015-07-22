@@ -1,6 +1,6 @@
 from proveit.basiclogic import Implies, Not, Equals, NotEquals
 from proveit.basiclogic.equality.axioms import equalsSymmetry
-from proveit.basiclogic.variables import x, y
+from proveit.common import x, y
 
 # hypothesis = (x != y)
 hypothesis = NotEquals(x, y)

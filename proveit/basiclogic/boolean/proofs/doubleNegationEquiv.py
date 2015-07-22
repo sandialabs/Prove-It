@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.theorems import doubleNegation, fromDoubleNegation
 from proveit.basiclogic import BOOLEANS, inBool, Not, Iff
-from proveit.basiclogic.variables import A
+from proveit.common import A
 
 # A => Not(Not(A))
 doubleNegationImplied = doubleNegation.specialize().prove()

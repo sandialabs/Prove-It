@@ -1,6 +1,6 @@
 from proveit.basiclogic.genericOps import BinaryOperation
 from proveit.expression import Variable, Literal, Operation, STRING, LATEX
-from proveit.basiclogic.variables import A, P, X, f, x, y, z
+from proveit.common import A, P, X, f, x, y, z
 
 pkg = __package__
 

@@ -1,7 +1,6 @@
 from proveit.expression import Operation, Lambda, STRING, LATEX
 from proveit.multiExpression import multiExpression
 from proveit.everythingLiteral import EVERYTHING
-from variables import X
 
 class BinaryOperation(Operation):
     def __init__(self, operator, A, B):

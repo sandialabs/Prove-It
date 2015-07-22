@@ -1,6 +1,5 @@
 from proveit.basiclogic import Implies, And, Equals
-from proveit.basiclogic.variables import a, b, f, x, y
-from proveit.basiclogic.simpleExpr import fxy, fab
+from proveit.common import a, b, f, x, y, fxy, fab
 
 # hypothesis = (x=a and y=b)
 hypothesis = And(Equals(x, a), Equals(y, b))

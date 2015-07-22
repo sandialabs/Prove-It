@@ -1,7 +1,7 @@
 from proveit.basiclogic.boolean.theorems import trueInBool, falseInBool
 from proveit.basiclogic import Forall, Exists, Not, Implies, Equals, And, TRUE, FALSE, inBool, BOOLEANS
-from proveit.basiclogic.variables import A, P
-from proveit.basiclogic.simpleExpr import PofA, PofTrue, PofFalse
+from proveit.common import A, P, PofA
+from proveit.basiclogic.common import PofTrue, PofFalse
 
 # forall_{P} [(P(TRUE) = PofTrueVal) and (P(FALSE) = PofFalseVal)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}, assuming PofTrueVal=FALSE or PofFalseVal=FALSE
 def forallBoolEvalFalseDerivation(PofTrueVal, PofFalseVal):

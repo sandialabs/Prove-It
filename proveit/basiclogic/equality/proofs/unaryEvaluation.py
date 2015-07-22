@@ -1,6 +1,5 @@
 from proveit.basiclogic import Implies, Equals
-from proveit.basiclogic.variables import a, c, f, x
-from proveit.basiclogic.simpleExpr import fx, fa
+from proveit.common import a, c, f, x, fx, fa
 
 # hypothesis = (x=a)
 hypothesis = Equals(x, a)

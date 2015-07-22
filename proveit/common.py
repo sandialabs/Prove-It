@@ -1,12 +1,30 @@
-from proveit.expression import Operation
+'''
+common.py
+
+Commonly used Variables and simple expressions involving them.
+'''
+
+from proveit.expression import Variable, Operation
 from proveit.multiExpression import Etcetera
-from boolean.boolSet import TRUE, FALSE
-from equality.eqOps import Equals
-from variables import a, b, f, g, x, y, z, A, C, P, Q, R
+
+a = Variable('a')
+b = Variable('b')
+c = Variable('c')
+A = Variable('A')
+B = Variable('B')
+C = Variable('C')
+P = Variable('P')
+Q = Variable('Q')
+R = Variable('R')
+S = Variable('S')
+X = Variable('X') 
+f = Variable('f')
+g = Variable('g')
+x = Variable('x')
+y = Variable('y')
+z = Variable('z')
 
 PofA = Operation(P, A) # P(A)
-PofTrue = Operation(P, TRUE) # P(TRUE)
-PofFalse = Operation(P, FALSE) # P(TRUE)
 Px = Operation(P, x) # P(x)
 Py = Operation(P, y) # P(y)
 Pxy = Operation(P, (x, y)) # P(x, y)
@@ -21,12 +39,11 @@ fy = Operation(f, y) # f(y)
 fxy = Operation(f, (x, y)) # f(x, y)
 gx = Operation(g, x) # g(x)
 gy = Operation(g, y) # g(y)
-fx_eq_gx = Equals(fx, gx) # f(x) = g(x)
 
-etcA = Etcetera(A) # ..A..
-etcC = Etcetera(C) # ..C..
-etcQ = Etcetera(Q) # ..Q..
-etcR = Etcetera(R) # ..R..
+Aetc = Etcetera(A) # ..A..
+Cetc = Etcetera(C) # ..C..
+Qetc = Etcetera(Q) # ..Q..
+Retc = Etcetera(R) # ..R..
 xEtc = Etcetera(x) # ..x..
 yEtc = Etcetera(y) # ..y..
 zEtc = Etcetera(z) # ..z..

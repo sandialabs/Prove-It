@@ -1,7 +1,6 @@
 from proveit.basiclogic.boolean.axioms import existsDef
 from proveit.basiclogic import Forall, NotEquals, Implies, TRUE, FALSE, deriveStmtEqTrue, In
-from proveit.basiclogic.variables import X, P, S
-from proveit.basiclogic.simpleExpr import xEtc, yEtc, PxEtc, PyEtc, etcQ, etc_QxEtc, etc_QyEtc
+from proveit.common import X, P, S, xEtc, yEtc, PxEtc, PyEtc, Qetc, etc_QxEtc, etc_QyEtc
 
 inDomain = In(xEtc, S) # ..x.. in S
 
@@ -20,4 +19,4 @@ Implies(neverPy, FALSE).deriveViaContradiction().prove({etc_QxEtc, PxEtc, inDoma
 # exists_{..y.. in S | ..Q(..y..)..} P(..y..) assuming Q(..x..), P(..x..)
 existence = existsDef.specialize({xEtc:yEtc}).deriveLeftViaEquivalence().prove({etc_QxEtc, PxEtc, inDomain})
 # forall_{P, ..Q.., S} forall_{..x.. in S | ..Q(..x..)..} [P(..x..) => exists_{..y.. in S | ..Q(..y..)..} P(..y..)]
-Implies(PxEtc, existence).generalize(xEtc, S, etc_QxEtc).generalize((P, etcQ, S)).qed(__file__)
+Implies(PxEtc, existence).generalize(xEtc, S, etc_QxEtc).generalize((P, Qetc, S)).qed(__file__)

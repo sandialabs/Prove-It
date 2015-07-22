@@ -1,7 +1,7 @@
 from proveit.basiclogic.boolean.axioms import orTF
 from proveit.basiclogic.boolean.theorems import trueNotFalse, trueEqTrue
 from proveit.basiclogic import TRUE, FALSE, inBool, Or, Equals, deriveStmtEqTrue
-from proveit.basiclogic.variables import X
+from proveit.common import X
 
 # [TRUE or FALSE]
 orTF.deriveViaBooleanEquality().prove()

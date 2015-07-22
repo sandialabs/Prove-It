@@ -3,8 +3,7 @@ from proveit.expression import Literal, Operation, STRING, LATEX
 from proveit.multiExpression import Etcetera
 from proveit.basiclogic import BOOLEANS, Forall, Exists, And, Or, Implies, Iff, Equals
 from setOps import In, NotIn, Singleton, Union, Intersection, SubsetEq, SupersetEq, SetOfAll
-from proveit.basiclogic.variables import f, x, y, A, B, C, S, P
-from proveit.basiclogic.simpleExpr import fy, Px, Py
+from proveit.common import f, x, y, A, B, C, S, P, fy, Px, Py
 
 setTheorems = Theorems(__package__, locals())
 

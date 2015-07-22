@@ -3,8 +3,7 @@ from proveit.expression import Literal, Operation, STRING, LATEX
 from proveit.multiExpression import Etcetera
 from proveit.basiclogic import BOOLEANS, Forall, Exists, And, Or, Implies, Iff, Equals
 from setOps import In, NotIn, Singleton, Union, Intersection, SubsetEq, SupersetEq, SetOfAll, EVERYTHING, NOTHING
-from proveit.basiclogic.variables import x, y, z, A, B, C, S, f, P
-from proveit.basiclogic.simpleExpr import etcC, xEtc, zEtc, fy, Py
+from proveit.common import x, y, z, A, B, C, S, f, P, Cetc, xEtc, zEtc, fy, Py
 
 setAxioms = Axioms(__package__, locals())
 
@@ -28,11 +27,11 @@ intersectionDef = Forall((x, A, B), Iff(In(x, Intersection(A, B)), And(In(x, A),
         
 # Composition of multi-Union, bypassing associativity for notational convenience:
 # forall_{A, B, ..C..} A union B union ..C.. = A union (B union ..C..)
-unionComposition = Forall((A, B, etcC), Equals(Union(A, B, etcC), Union(A, Union(B, etcC))))
+unionComposition = Forall((A, B, Cetc), Equals(Union(A, B, Cetc), Union(A, Union(B, Cetc))))
 
 # Composition of multi-Intersection, bypassing associativity for notational convenience:
 # forall_{A, B, ..C..} A intersect B intersect ..C.. = A intersect (B intersect ..C..)
-intersectionComposition = Forall((A, B, etcC), Equals(Intersection(A, B, etcC), Intersection(A, Intersection(B, etcC))))
+intersectionComposition = Forall((A, B, Cetc), Equals(Intersection(A, B, Cetc), Intersection(A, Intersection(B, Cetc))))
         
 # forall_{A, B} [A subseteq B <=> (forall_{x in A} x in B)]
 subsetDef = Forall((A, B), Iff(SubsetEq(A, B), Forall(x, In(x, B), A)))

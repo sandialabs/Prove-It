@@ -1,5 +1,5 @@
 from proveit.basiclogic import Implies, Not, inBool
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 # Not(Not(B)) assuming B and inBool(B)
 notNotB = Not(Not(B)).concludeViaDoubleNegation()

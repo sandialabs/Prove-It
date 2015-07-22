@@ -1,5 +1,5 @@
 from proveit.basiclogic import And, Implies, Iff
-from proveit.basiclogic.variables import A, B, C
+from proveit.common import A, B, C
 
 # hypothesis = (A <=> B) and (B <=> C)
 hypothesis = And(Iff(A, B), Iff(B, C))

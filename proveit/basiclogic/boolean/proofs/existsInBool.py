@@ -1,7 +1,6 @@
 from proveit.basiclogic.boolean.axioms import existsDef
 from proveit.basiclogic import Equals, Or
-from proveit.basiclogic.variables import P, S, X
-from proveit.basiclogic.simpleExpr import etcQ
+from proveit.common import P, S, X, Qetc
 
 # exists_{..x.. in S | ..Q(..x..)..} P(..x..) = not(forall_{..x.. | ..Q(..x..)..} P(..x..) != TRUE)
 existsDefSpec = existsDef.specialize().prove()
@@ -14,4 +13,4 @@ rhsFalse.rhsSubstitute(X, Equals(existsDefSpec.lhs, X)).inBoolViaBooleanEquality
 # deduce rhsTrue, rhsFals, existsInBoolSpec all in BOOLEANS
 for expr in (rhsTrue, rhsFalse, existsInBoolSpec): expr.deduceInBool()
 # forall_{P, ..Q.., S} exists_{..x.. | ..Q(..x..)..} P(..x..) in BOOLEANS
-Or(rhsTrue, rhsFalse).deriveCommonConclusion(existsInBoolSpec).generalize((P, etcQ, S)).qed(__file__)
+Or(rhsTrue, rhsFalse).deriveCommonConclusion(existsInBoolSpec).generalize((P, Qetc, S)).qed(__file__)

@@ -1,7 +1,7 @@
 from proveit.basiclogic.boolean.axioms import orFF
 from proveit.basiclogic.boolean.theorems import notFalse
 from proveit.basiclogic import Implies, Not, Or, FALSE
-from proveit.basiclogic.variables import A, B, X
+from proveit.common import A, B, X
 
 # Not(A or B) = Not(F or B) assuming Not(A)
 notAorB_eq_notForB = Not(A).equateNegatedToFalse().substitution(X, Not(Or(X, B))).prove({Not(A)})

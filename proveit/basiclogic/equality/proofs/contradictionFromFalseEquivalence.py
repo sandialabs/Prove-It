@@ -1,5 +1,5 @@
 from proveit.basiclogic import FALSE, Equals, Implies
-from proveit.basiclogic.variables import A
+from proveit.common import A
 
 # A = FALSE
 AeqF = Equals(A, FALSE)

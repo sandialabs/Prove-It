@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.axioms import implicitNotF, implicitNotT
 from proveit.basiclogic import Implies, Not, deriveStmtEqTrue
-from proveit.basiclogic.variables import A
+from proveit.common import A
 
 # hypothesis: Not(Not(A))
 hypothesis = Not(Not(A))

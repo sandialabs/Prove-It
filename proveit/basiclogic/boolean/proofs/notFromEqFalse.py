@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.theorems import notFalse
 from proveit.basiclogic import Implies, Not, Equals, FALSE
-from proveit.basiclogic.variables import A, X
+from proveit.common import A, X
 
 # AeqF := (A=F)
 AeqF = Equals(A, FALSE)

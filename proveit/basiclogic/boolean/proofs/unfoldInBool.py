@@ -1,7 +1,7 @@
 from proveit.basiclogic.boolean.axioms import boolsDef
 from proveit.basiclogic.set.axioms import singletonDef
 from proveit.basiclogic import Implies, In, inBool, Singleton, Equals, TRUE, FALSE, Or
-from proveit.basiclogic.variables import x, y, A, X
+from proveit.common import x, y, A, X
 
 # [A in ({TRUE} union {FALSE})] assuming inBool(A)
 AinTunionF = boolsDef.rhsSubstitute(X, In(A, X)).prove({inBool(A)})

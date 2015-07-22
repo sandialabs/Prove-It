@@ -2,8 +2,7 @@ from proveit.expression import Operation, Lambda
 from proveit.statement import Axioms
 from proveit.basiclogic import Forall, Equals, In, TRUE, Iff, Implies, And
 from mappingOps import Domain, CoDomain
-from proveit.basiclogic.variables import f, g, x, y, Q
-from proveit.basiclogic.simpleExpr import fx, fy, gx, Qx, Qy
+from proveit.common import f, g, x, y, Q, fx, fy, gx, Qx, Qy
 
 fxMap = Lambda(x, fx) # x -> f(x)
 fxGivenQxMap = Lambda(x, fx, Qx) # x -> f(x) | Q(x)

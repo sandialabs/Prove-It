@@ -1,4 +1,4 @@
 from proveit.basiclogic import Implies
-from proveit.basiclogic.variables import A
+from proveit.common import A
 
 Implies(A, A).generalize(A).qed(__file__)

@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.theorems import trueAndTrue
 from proveit.basiclogic import deriveStmtEqTrue, And, TRUE
-from proveit.basiclogic.variables import A, B, X
+from proveit.common import A, B, X
 
 # A=TRUE assuming A
 AeqT = deriveStmtEqTrue(A).prove({A})

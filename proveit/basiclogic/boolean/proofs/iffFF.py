@@ -1,7 +1,7 @@
 from proveit.basiclogic.boolean.axioms import iffDef
 from proveit.basiclogic.boolean.theorems import impliesFF
 from proveit.basiclogic import compose, FALSE, deriveStmtEqTrue
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 # FALSE => FALSE
 FimplF = impliesFF.deriveViaBooleanEquality()

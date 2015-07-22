@@ -5,7 +5,7 @@ from proveit.impliesLiteral import IMPLIES
 from proveit.everythingLiteral import EVERYTHING
 from boolSet import TRUE, FALSE, inBool, deduceInBool
 from quantifiers import Exists, NotExists
-from proveit.basiclogic.variables import A, B, C, x, y, f, a, b, c
+from proveit.common import A, B, C, x, y, f, a, b, c
 
 pkg = __package__
 
@@ -256,9 +256,9 @@ class And(AssociativeOperation):
         From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
         :math:`X` either by index or the Expression.
         '''
-        from axioms import andImpliesEach, etcA, etcC
+        from axioms import andImpliesEach, Aetc, Cetc
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
-        return andImpliesEach.specialize({etcA:self.operands[:idx], B:self.operands[idx], etcC:self.operands[idx+1:]}).deriveConclusion().check({self})
+        return andImpliesEach.specialize({Aetc:self.operands[:idx], B:self.operands[idx], Cetc:self.operands[idx+1:]}).deriveConclusion().check({self})
         
     def deriveLeft(self):
         '''

@@ -4,8 +4,7 @@ from eqOps import Equals, NotEquals
 from proveit.basiclogic.boolean.boolOps import Implies, Not
 from proveit.basiclogic.boolean.quantifiers import Forall
 from proveit.basiclogic.boolean.boolSet import inBool
-from proveit.basiclogic.variables import x, y, z, f
-from proveit.basiclogic.simpleExpr import fx, fy
+from proveit.common import x, y, z, f, fx, fy
 
 equalityAxioms = Axioms(__package__, locals())
 

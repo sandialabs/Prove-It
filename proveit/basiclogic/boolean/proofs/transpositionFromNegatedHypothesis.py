@@ -1,6 +1,6 @@
 from proveit.basiclogic.boolean.theorems import doubleNegateConclusion
 from proveit.basiclogic import Implies, Not, BOOLEANS, inBool
-from proveit.basiclogic.variables import A, B
+from proveit.common import A, B
 
 # [Not(B) => Not(Not(A))] => [Not(A) => B)]  assuming inBool(B)
 toConclusion = Implies(Not(B), Not(Not(A))).transposition()

@@ -1,7 +1,6 @@
 from proveit.basiclogic.equality.theorems import binarySubstitution
 from proveit.basiclogic import Implies, And, Equals
-from proveit.basiclogic.variables import a, b, c, f, x, y
-from proveit.basiclogic.simpleExpr import fab
+from proveit.common import a, b, c, f, x, y, fab
 
 # hypothesis = (x=a and y=b)
 hypothesis = And(Equals(x, a), Equals(y, b))
