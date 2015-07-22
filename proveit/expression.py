@@ -51,8 +51,20 @@ class Expression:
         return self
     
     def qed(self, filename):
+        import os
+        import os.path as path
+        import proveit
+        proofsdir, thmname = path.split(filename)
+        # remove the file extension, and any optional suffix after a space
+        thmname = thmname.split('.')[0].split()[0]
+        theorems_abspath = path.abspath(path.join(proofsdir, '../theorems'))
+        theorems_relpath =  path.relpath(theorems_abspath, start=path.join(path.split(proveit.__file__)[0], '..'))
+        thm_import = __import__(theorems_relpath.replace(os.sep, '.'), fromlist=[thmname])
+        thm = thm_import.__dict__[thmname]
+        if not thm == self:
+            raise ProofFailure('Theorem statement does not match qed expression:\n' + str(thm) + ' vs\n' + str(self))
         self.prove()
-        print 'proved', filename
+        print thmname, 'proven:'
         print self
     
     def check(self, assumptions=frozenset()):

@@ -11,7 +11,7 @@ setAxioms = Axioms(__package__, locals())
 # forall_{..x.., y, ..z.., S} [..x.., y, ..z.. in S] => (y in S)
 multiInImpliesEachIn = Forall((xEtc, y, zEtc, S), Implies(In([xEtc, y, zEtc], S), In(y, S)))
 
-# forall_{..x.., y, , S} [(..x.. in S) and (y in S)] => (..x.., y in S)
+# forall_{..x.., y, S} [(..x.. in S) and (y in S)] => (..x.., y in S)
 multiInComposition = Forall((xEtc, y, S), Implies(And(In(xEtc, S), In(y, S)), In([xEtc, y], S)))
 
 # forall_{..x.., S} [..x.. in S] in BOOLEANS
@@ -35,13 +35,13 @@ unionComposition = Forall((A, B, etcC), Equals(Union(A, B, etcC), Union(A, Union
 intersectionComposition = Forall((A, B, etcC), Equals(Intersection(A, B, etcC), Intersection(A, Intersection(B, etcC))))
         
 # forall_{A, B} [A subseteq B <=> (forall_{x in A} x in B)]
-subsetDef = Forall((A, B), Iff(SubsetEq(A, B), Forall(x, In(x, B), In(x, A))))
+subsetDef = Forall((A, B), Iff(SubsetEq(A, B), Forall(x, In(x, B), A)))
 
 # forall_{A, B} [A superseteq B <=> (forall_{x in B} x in A)]
-supersetDef = Forall((A, B), Iff(SupersetEq(A, B), Forall(x, In(x, A), In(x, B))))
+supersetDef = Forall((A, B), Iff(SupersetEq(A, B), Forall(x, In(x, A), B)))
 
 # forall_{P, f, x} [x in {f(y) | P(y)}] <=> [exists_{y | P(y)} x = f(y)]
-setOfAllDef = Forall((P, f, x), Iff(In(x, SetOfAll(y, fy, conditions=Py)), Exists(y, Equals(x, fy), Py)))
+setOfAllDef = Forall((P, f, x), Iff(In(x, SetOfAll(y, fy, conditions=Py)), Exists(y, Equals(x, fy), conditions=Py)))
 
 # forall_{A, B} [forall_{x} x in A <=> x in B] => [A=B]
 setIsAsSetContains = Forall((A, B), Implies(Forall(x, Iff(In(x, A), In(x, B))), Equals(A, B)))

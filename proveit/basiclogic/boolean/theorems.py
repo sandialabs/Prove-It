@@ -197,7 +197,7 @@ doubleNegationEquiv = Forall(A, Equals(A, Not(Not(A))), domain=BOOLEANS)
 forallBundledEquiv = Forall((P, etcQ, etcR, S), Equals(Forall((xEtc, yEtc), PxyEtc, S, (etc_QxEtc, etc_RyEtc)), Forall(xEtc, Forall(yEtc, PxyEtc, S, etc_RyEtc), S, etc_QxEtc)))
 
 # forall_{P, ..Q.., S} [forall_{..x.. in S | ..Q(..x..)..} P(..x..)] = [forall_{..x.. in S | ..Q(..x..)..} {P(..x..)=TRUE}]
-forallEqTrueEquiv = Forall((P, etcQ, S), Equals(Forall(xEtc, Px, S, etc_QxEtc), Forall(xEtc, Equals(PxEtc, TRUE), S, etc_QxEtc)))
+forallEqTrueEquiv = Forall((P, etcQ, S), Equals(Forall(xEtc, PxEtc, S, etc_QxEtc), Forall(xEtc, Equals(PxEtc, TRUE), S, etc_QxEtc)))
 
 # forall_{A, B in BOOLEANS} (A => B) in BOOLEANS                                                                                                        
 implicationClosure = Forall((A, B), inBool(Implies(A, B)), domain=BOOLEANS)
