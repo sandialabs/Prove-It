@@ -7,34 +7,41 @@ x = Variable('x')
 y = Variable('y')
 Q = Variable('Q')
 P = Variable('P')
-etcQ = Etcetera(Q)
-etcP = Etcetera(P)
-xEtc = Etcetera(x)
-yEtc = Etcetera(y)
+A = Variable('A')
 R = Variable('R')
 S = Variable('S')
 y = Variable('y')
 z = Variable('z')
+Aetc = Etcetera(A)
+Qetc = Etcetera(Q)
+etcP = Etcetera(P)
+xEtc = Etcetera(x)
+yEtc = Etcetera(y)
 
 def specToStr(spec):
     return '{' + ', '.join(str(key) + ' : ' + singleOrMultiExpression(val).formatted(LATEX) for key, val in spec.iteritems()) + '}'
 
-expr = Forall(P, Forall(etcQ, Forall(xEtc, Operation(P, xEtc), Etcetera(Operation(Q, xEtc)))))
-print "Initial expression:"
-print expr.formatted(LATEX)
-
-spec = {etcQ: [R, S]}
-print "\Relabeling via ", specToStr(spec), ':'
-print expr.relabel(spec).formatted(LATEX)
-
-spec = {P: etcP}
-print "\nSpecializing via ", specToStr(spec), ':'
-print 'SHOULD NOT BE ALLOWED'
-print expr.specialize(spec).formatted(LATEX)
-
-expr = Forall((etcQ, P), Forall(xEtc, Operation(P, xEtc), Etcetera(Operation(Q, xEtc))))
+expr = Forall((Qetc, P, A), Forall(xEtc, Operation(P, ExpressionList(xEtc, A)), Etcetera(Operation(Q, xEtc))))
 print "\nInitial expression:"
 print expr.formatted(LATEX)
+
+spec = {Qetc: [R, S]}
+print "\nRelabeling via ", specToStr(spec), ':'
+print expr.relabel(spec).formatted(LATEX)
+
+spec = {A: Aetc}
+print "\nSpecializing via ", specToStr(spec), ':'
+try:
+    print expr.specialize(spec).formatted(LATEX)
+except ImproperSpecialization as e:
+    print "Gives anticipated ImproperSpecialization exception: " + e.message
+except Exception as e:
+    print "Unexpected error"
+    raise e
+
+spec = {xEtc: x}
+print "\nRelabeling via ", specToStr(spec), ':'
+print expr.relabel(spec).formatted(LATEX)
     
 spec = {Etcetera(Operation(Q, xEtc)): Operation(R, xEtc)}
 print "\nSpecializing via ", specToStr(spec), ':'
@@ -44,7 +51,7 @@ spec = {Etcetera(Operation(Q, xEtc)): [Operation(R, xEtc), Operation(S, xEtc)]}
 print "\nSpecializing via ", specToStr(spec), ':'
 print expr.specialize(spec).formatted(LATEX)
 
-spec = {etcQ: [R, S]}
+spec = {Qetc: [R, S]}
 print "\nSpecializing via ", specToStr(spec), ':'
 print expr.specialize(spec).formatted(LATEX)
 

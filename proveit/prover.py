@@ -17,6 +17,7 @@ class Prover:
         self.assumptions = frozenset(assumptions)
         self.proverType = proverType
         self.subMap = None # set for specialization provers (substitution map)
+        self.relabelMap = None # set for specialization provers (relabeling map)
         if impliedParent == None:
             self.depth = 0
         else:
@@ -110,9 +111,10 @@ class Prover:
         '''
         stmt = self.stmtToProve
         # Prove by specialization?  Put this at front to connect with a theorem first if possible,
-        for original, substitutionMap, conditions in stmt._specializers:
+        for original, substitutionMap, relabelMap, conditions in stmt._specializers:
             generalityProver = Prover(original, self.assumptions - set(conditions), self, "specializing")
             generalityProver.subMap = substitutionMap
+            generalityProver.relabelMap = relabelMap
             corequisites = [generalityProver] + [Prover(condition, self.assumptions, self, "condition") for condition in conditions]
             for prover in corequisites:
                 prover.corequisites = corequisites

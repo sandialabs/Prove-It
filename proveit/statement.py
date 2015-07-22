@@ -125,83 +125,104 @@ class Statement:
         return self.getExpression().freeVars()
     
     @staticmethod
-    def specialize(originalExpr, subMap):
+    def specialize(originalExpr, subMap, relabelMap):
         '''
         State and return a tuple of (specialization, conditions).  The 
         specialization derives from the given original statement and its conditions
         via a specialization inference rule.  It is the specialized form of the 'original' 
         expression by substituting one or more instance variables of outer Forall operations 
-        according to the given substitution map.  Remaining variables in the map may
-        be included for simultaneous relabelling.  There may end up being free variables
-        which can be considered to be "arbitrary" variables used in logical reasoning.  
-        Eventually they should be bound again via generalization (the counterpart to 
-        specialization).
+        according to the substitution map (subMap) and/or relabeling variables 
+        according to the relabeling map (relabelMap).  Unless subMap is empty,
+        the outer Forall is eliminated in the process and as a result there may end 
+        up being free variables which can be considered to be "arbitrary" variables 
+        used in logical reasoning.  Eventually they should be bound again via 
+        generalization (the counterpart to specialization).
         '''
+        # Check the relabelMap and convert Etcetera-wrapped relabelMap keys to Variable keys
+        origRelabelItems = list(relabelMap.iteritems())
+        relabelMap = dict()
+        for key, sub in origRelabelItems:
+            if isinstance(key, Variable):
+                if not isinstance(sub, Variable):
+                    raise ImproperSpecialization('May only relabel a Variable to a Variable.')
+                relabelVar = key
+            elif isEtcVar(key):                
+                sub = multiExpression(sub)
+                for v in sub:
+                    if not isEtcVarOrVar(v):
+                        raise ImproperSpecialization('May only relabel an Etcetera-wrapped Variable to a list of (Etcetera-wrapped) Variables')
+                # change ..x..:expression_or_expressions to x:expressions
+                relabelVar = key.etcExpr
+            else:
+                raise ImproperSpecialization("May only relabel a Variable or Etcetera-wrapped Variable")   
+            relabelMap[relabelVar] = sub
+        # Process the substitution map, performming conversions of Operations and Etcetera-wrapped Operations/Variables
         substitutingVars = set()
         operationSubMap = dict()
-        # the k==v cases are implicit, so remove them
-        subMap = {k:v for k, v in subMap.iteritems() if k != v}
-        for subVar in subMap.keys():
-            try:
-                if isinstance(subVar, Operation):
-                    # convert f(x):expression in subMap to f:(x->expression) in operationSubMap
-                    # for substituting an operation via a variable operator
-                    operation = subVar
-                    subVar = operation.operator
-                    lambdaExpr = singleOrMultiExpression(subMap[operation])
-                    if isinstance(lambdaExpr, ExpressionList):
-                        raise ImproperSpecialization('Only Etcetera operations may be specialized to lists of expressions')
-                    operationSubMap[subVar] = Lambda(operation.operands, lambdaExpr)
-                elif isEtcOperation(subVar):
-                    # convert ..Q(..x..)..:expressions in subMap to ..Q..:(..x..->expressions) in operationSubMap
-                    # for substituting an etcetera operation via a variable operator
-                    operation = subVar.etcExpr
-                    lambdaExpr = multiExpression(subMap[subVar])
-                    subVar = Etcetera(operation.operator)
-                    operationSubMap[subVar] = Lambda(operation.operands, lambdaExpr)
-            except TypeError as e:
-                raise ImproperSpecialization("Improper Operation substitution, error transforming to Lambda: " + e.message)
-            except ValueError as e:
-                raise ImproperSpecialization("Improper Operation substitution, error transforming to Lambda: " + e.message)
-            if not isinstance(subVar, Variable) and not isEtcVar(subVar):
+        nonOpSubMap = dict()
+        for subKey, sub in subMap.iteritems():
+            if isinstance(subKey, Variable):
+                # substitute a simple Variable
+                if not isinstance(sub, Expression) or isinstance(sub, Etcetera) or isinstance(sub, ExpressionList):
+                    raise ImproperSpecialization('May only specialize an Etcetera-wrapped Variable to a list of Expressions or Etcetera-wrapped Expression')
+                subVar = subKey
+                nonOpSubMap[subVar] = sub
+            elif isEtcVar(subKey):
+                # substitute an Etcetera-wrapped Variable -- sub in an ExpressionList
+                subVar = subKey.etcExpr
+                nonOpSubMap[subVar] = multiExpression(sub)
+            elif isinstance(subKey, Operation) or isEtcOperation(subKey):
+                # Substitute an Operation, f(x):expression, or an Etcetera-wrapped operation,
+                # ..Q(x)..:expressions.
+                # These get converted in the operationSubMap to a map of the operator Variable
+                # to a lambda, e.g. f:(x->expression) or Q:(x->expressions)
+                operation = subKey if isinstance(subKey, Operation) else subKey.etcExpr
+                if isinstance(subKey, Operation):
+                    operation = subKey
+                    if not isinstance(sub, Expression) or isinstance(sub, Etcetera) or isinstance(sub, ExpressionList):
+                        raise ImproperSpecialization('Only Etcetera operations may be specialized to lists of Expressions or Etcetera-wrapped Expression')                    
+                    lambdaExpr = sub
+                else: 
+                    operation = subKey.etcExpr
+                    lambdaExpr = multiExpression(sub)
+                try:
+                    opSub = Lambda(operation.operands, lambdaExpr)
+                except TypeError as e:
+                    raise ImproperSpecialization("Improper Operation substitution, error transforming to Lambda: " + e.message)
+                except ValueError as e:
+                    raise ImproperSpecialization("Improper Operation substitution, error transforming to Lambda: " + e.message)
+                subVar = operation.operator
+                operationSubMap[subVar] = opSub
+            else:
                 raise ImproperSpecialization("Substitution map must map either Variable types or Operations that have Variable operators or Etcetera-wrapped versions of these")
             substitutingVars.add(subVar)
-        varSubMap = {var:singleOrMultiExpression(expr) for var, expr in subMap.iteritems() if isEtcVarOrVar(var)}
-        for var,sub in varSubMap.iteritems():
-            if not isEtcVar(var) and isinstance(sub, ExpressionList):
-                raise ImproperSpecialization('May only specialize an Etcetera-wrapped Variable to a list of Expressions')
-        assert originalExpr.operator == FORALL, "May only specialize a FORALL expression"
-        expr = originalExpr.operands
-        lambdaExpr = expr['instance_mapping']
-        domain = expr['domain']
-        assert isinstance(lambdaExpr, Lambda), "FORALL Operation etcExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
-        # extract the instance expression and instance variables from the lambda expression        
-        instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], list(lambdaExpr.expression['conditions'])
-        if domain != EVERYTHING:
-            conditions += [IN.operationMaker({'elements':[var], 'domain':domain}) for var in instanceVars]
-        for arg in lambdaExpr.arguments:
-            if isinstance(arg, Variable) and arg in substitutingVars and isinstance(substitutingVars, ExpressionList):
-                raise ImproperSpecialization("May only specialize a Forall instance variable with an ExpressionList if it is wrapped in Etcetera")
-        # any remaining variables may be used only for relabeling
-        relabelVars = substitutingVars.difference(instanceVars)
-        for relabelVar in relabelVars:
-            if relabelVar in operationSubMap:
-                raise ImproperSpecialization('May only perform Operation specialization by substituting instance variables of forall operations')
-            sub = varSubMap[relabelVar]
-            for v in sub if isinstance(sub, ExpressionList) else [sub]:
-                if isinstance(relabelVar, Variable) and not isinstance(v, Variable):
-                    raise ImproperSpecialization('May only specialize by substituting instance variables of forall operations or otherwise simply relabeling variables.  A Variable may be relabeled to another Variable.')
-                elif isEtcVar(relabelVar) and not isEtcVarOrVar(v):
-                    raise ImproperSpecialization('May only specialize by substituting instance variables of forall operations or otherwise simply relabeling variables.  An Etcetera-wrapped Variable may be relabeled to a list of (Etcetera-wrapped) Variables')
-        relabMap = {k:v for k,v in varSubMap.items() if k in relabelVars}
-        nonRelabSubMap = {k:v for k,v in varSubMap.items() if k not in relabelVars}
+        if len(subMap) > 0:
+            # an actual Forall specialization
+            assert originalExpr.operator == FORALL, 'May only perform substitution specialization on Forall Expressions (relabeling would be okay)'
+            expr = originalExpr.operands
+            lambdaExpr = expr['instance_mapping']
+            domain = expr['domain']
+            assert isinstance(lambdaExpr, Lambda), "FORALL Operation etcExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
+            # extract the instance expression and instance variables from the lambda expression        
+            instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], list(lambdaExpr.expression['conditions'])
+            iVarSet = set().union(*[iVar.freeVars() for iVar in instanceVars])
+            assert substitutingVars == iVarSet, 'The set of substituting variables must be that same as the set of Forall instance variables'
+            if domain != EVERYTHING:
+                conditions += [IN.operationMaker({'elements':[var], 'domain':domain}) for var in instanceVars]
+            for arg in lambdaExpr.arguments:
+                if isinstance(arg, Variable) and arg in substitutingVars and isinstance(substitutingVars, ExpressionList):
+                    raise ImproperSpecialization("May only specialize a Forall instance variable with an ExpressionList if it is wrapped in Etcetera")
+        else:
+            # just a relabeling
+            expr = originalExpr
+            conditions = []
         # make and state the specialized expression with appropriate substitutions
-        specializedExpr = Statement.state(expr.substituted(nonRelabSubMap, operationSubMap, relabelMap = relabMap))
+        specializedExpr = Statement.state(expr.substituted(nonOpSubMap, operationSubMap, relabelMap))
         # make substitutions in the condition
-        subbedConditions = {asStatement(condition.substituted(nonRelabSubMap, operationSubMap, relabelMap = relabMap)) for condition in conditions}
+        subbedConditions = {asStatement(condition.substituted(nonOpSubMap, operationSubMap, relabelMap)) for condition in conditions}
         Statement.state(originalExpr)
         # add the specializer link
-        specializedExpr.statement.addSpecializer(originalExpr.statement, subMap, subbedConditions)
+        specializedExpr.statement.addSpecializer(originalExpr.statement, nonOpSubMap, relabelMap, subbedConditions)
         # return the specialized expression and the 
         return specializedExpr, subbedConditions
                        
@@ -258,9 +279,9 @@ class Statement:
     def getGroupAndName(self):
         return self._group, self._name
         
-    def addSpecializer(self, original, subMap, conditions):
+    def addSpecializer(self, original, subMap, relabelMap, conditions):
         subMap = {key:singleOrMultiExpression(val) for key, val in subMap.iteritems()}
-        self._specializers.add((original, tuple(subMap.items()), tuple(conditions)))
+        self._specializers.add((original, tuple(subMap.items()), tuple(relabelMap.items()), tuple(conditions)))
         original._specializations.add(self)
 
     def addGeneralizer(self, original, forallVars, domain, conditions):

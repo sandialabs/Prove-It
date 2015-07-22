@@ -141,21 +141,12 @@ class Etcetera(Expression):
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        if relabelMap is not None and self in relabelMap:
-            # relabel the Etcetera Variable as a whole: e.g., ..x.. becoming [x, y, z]
-            return self.etcExpr.substituted(dict(), None, {self.etcExpr:relabelMap[self]}, reservedVars) # does proper restriction check
-        elif relabelMap is not None and self.etcExpr in relabelMap:
-            # just relabel the Etcetera Variable, keeping it as an Etcetera Variable            
-            # e.g., ..Q.. becoming ..R..
-            return Etcetera(self.etcExpr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)) # does proper restriction check
-        elif varSubMap is not None and self in varSubMap:
-            # substitute the Etcetera Variable as a whole: e.g., ..x.. becoming [x+1, y+5, z-2]
-            return self.etcExpr.substituted({self.etcExpr:varSubMap[self]}, None, relabelMap, reservedVars) # does proper restriction check
-        elif operationSubMap is not None and isinstance(self.etcExpr, Operation) and Etcetera(self.etcExpr.operator) in operationSubMap:
-            # relabel the Etcetera Operation as a whole: e.g., ..Q(x).. becomming [R(x), S(x)]
-            return self.etcExpr.substituted(dict(), {self.etcExpr.operator:operationSubMap[Etcetera(self.etcExpr.operator)]}, relabelMap, reservedVars) # does proper restriction check
-        # otherwise, just perform the substitution on the innards and keep it wrapped with Etcetera
-        return Etcetera(self.etcExpr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars))
+        subbed = self.etcExpr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+        if isinstance(subbed, ExpressionList):
+            # substituting the entire Etcetera-wrapped expression with an ExpressionList to be merged with an outer ExpressionList
+            return subbed 
+        else:
+            return Etcetera(subbed)
         
     def usedVars(self):
         '''

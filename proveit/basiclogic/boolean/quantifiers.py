@@ -23,10 +23,32 @@ class Forall(OperationOverInstances):
         From this Forall expression, and the condition if there is one,
         derive and return a specialized form.  If conditionAsHypothesis is True, 
         derive and return the implication with the condition as hypothesis 
-        and specialized form as the conclusion.
+        and specialized form as the conclusion.  Any instance variables
+        excluded from subMap will default to themselves.  For items in
+        subMap that do not pertain to instance variables, an attempt to
+        relabel them will be made.
         '''
         from boolOps import Implies
-        specialized = Expression.specialize(self, subMap)
+        # Note that we use freeVars to deal with Etcetera-wrapped Variables
+        iVarSet = set().union(*[iVar.freeVars() for iVar in self.instanceVars])
+        explicitlySubbed = set()
+        if subMap is None: subMap = dict()
+        # move subMap items into relabelMap for non-instance variables
+        origSubMapItems = list(subMap.iteritems())
+        subMap, relabelMap = dict(), dict()
+        subVars = set()
+        for key, val in origSubMapItems:
+            keyVars = key.freeVars()
+            subVars.update(keyVars)
+            if iVarSet.isdisjoint(keyVars):
+                relabelMap[key] = val
+            else:
+                subMap[key] = val
+                explicitlySubbed.update(keyVars)
+        # default instance variables to themselves
+        for var in iVarSet:
+            if var not in subVars: subMap[var] = var 
+        specialized = Expression.specialize(self, subMap, relabelMap)
         if conditionAsHypothesis and self.hasCondition():
             return Implies(self.conditions[0], specialized).check({self})
         return specialized
@@ -214,7 +236,7 @@ class Exists(OperationOverInstances):
         from proveit.common import xEtc        
         Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
         if isinstance(self.instanceExpr, Not):
-            P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr.operands
+            P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr.operand
             return existsNotImpliesNotForall.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion().check({self})
         else:
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr

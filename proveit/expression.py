@@ -146,11 +146,19 @@ class Expression:
     def state(self):
         from statement import Statement
         return Statement.state(self)
+
+    def relabel(self, relabelMap=None):
+        return self._specialize_or_relabel(subMap=None, relabelMap=relabelMap)
     
-    def specialize(self, subMap=None):
+    def specialize(self, subMap=None, relabelMap=None):
+        # Can be overridden by the Forall implementation
+        return self._specialize_or_relabel(subMap=subMap, relabelMap=relabelMap)
+
+    def _specialize_or_relabel(self, subMap=None, relabelMap=None):
         from statement import Statement
         if subMap is None: subMap = dict()
-        (specialization, conditions) = Statement.specialize(self, subMap)
+        if relabelMap is None: relabelMap = dict()
+        (specialization, conditions) = Statement.specialize(self, subMap, relabelMap)
         return specialization.check({self} | conditions)
         
     def generalize(self, forallVars, domain=None, conditions=tuple()):
@@ -327,7 +335,7 @@ class Operation(Expression):
         Return this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        from multiExpression import ExpressionList, extractVar, Etcetera
+        from multiExpression import ExpressionList, extractVar, multiExpression
         operator = self.operator
         subbedOperands = self.operands.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
         if operationSubMap is not None and isinstance(operator, Variable) and operator in operationSubMap:
@@ -348,19 +356,17 @@ class Operation(Expression):
                     lambdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if extractVar(k) not in operatorSub.argVarSet}
                 else: lambdaExprReservedVars = None
                 subbedOperations.append(operatorSub.expression._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, None))
-            if len(subbedOperations) == 1:
+            if isinstance(operatorSubs, ExpressionList):
+                return multiExpression(subbedOperations)
+            else:
                 return subbedOperations[0]
-            else: return ExpressionList(subbedOperations)
         else:
             # Can perform substitutions within the Operator
-            etcOperator = Etcetera(self.operator)
-            if etcOperator in varSubMap or (relabelMap is not None and etcOperator in relabelMap):
-                subbedOperator = etcOperator.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
-                if isinstance(subbedOperator, ExpressionList):
-                    # substituting the single operation with multiple operations as an ExpressionList
-                    return ExpressionList([Operation.make(operator, subbedOperands) for operator in subbedOperator])
-            else:
-                subbedOperator = self.operator.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+            subbedOperator = operator.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+            if isinstance(subbedOperator, ExpressionList):
+                # substituting the single operation with multiple operations as an ExpressionList
+                return ExpressionList([Operation.make(operator, subbedOperands) for operator in subbedOperator])
+            else:                   
                 return Operation.make(subbedOperator, subbedOperands)
         
     def usedVars(self):
