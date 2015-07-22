@@ -1,7 +1,7 @@
 import os
 import re
-import statement
-from statement import Statement, Expression, ExpressionList, Literal, Variable, MultiVariable, Operation, Lambda
+from proveit import expression
+from proveit.expression import Statement, Expression, ExpressionList, Literal, Variable, MultiVariable, Operation, Lambda
 from prover import Prover
 from array import array
 import xml.etree.ElementTree as ET
@@ -142,8 +142,8 @@ class Context:
                 dt.text = name
                 mathml = ET.SubElement(dd, 'math')
                 parser = ET.XMLParser()
-                print definition.formatted(statement.MATHML)
-                parser.feed(definition.formatted(statement.MATHML))
+                print definition.formatted(expression.MATHML)
+                parser.feed(definition.formatted(expression.MATHML))
                 mathml.append(parser.close())
                 if name in self._axioms:
                     # check that an axiom definition is consistent with what is already in the database
@@ -176,6 +176,6 @@ class Context:
 '''
 def registerTheorems(moduleName, variables):
     for vName, v in variables.iteritems():
-        if isinstance(v, Expression) and v.statement != None and len(v.freeVars()) == 0:
-            v.statement.registerPythonVar(PythonVar(moduleName, vName))
+        if isinstance(v, Expression) and v.expression != None and len(v.freeVars()) == 0:
+            v.expression.registerPythonVar(PythonVar(moduleName, vName))
 '''

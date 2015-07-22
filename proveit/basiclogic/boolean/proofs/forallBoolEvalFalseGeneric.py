@@ -1,4 +1,7 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.theorems import trueInBool, falseInBool
+from proveit.basiclogic import Forall, Exists, Not, Implies, Equals, And, TRUE, FALSE, inBool, BOOLEANS
+from proveit.basiclogic.variables import A, P
+from proveit.basiclogic.simpleExpr import PofA, PofTrue, PofFalse
 
 # forall_{P} [(P(TRUE) = PofTrueVal) and (P(FALSE) = PofFalseVal)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}, assuming PofTrueVal=FALSE or PofFalseVal=FALSE
 def forallBoolEvalFalseDerivation(PofTrueVal, PofFalseVal):
@@ -9,20 +12,20 @@ def forallBoolEvalFalseDerivation(PofTrueVal, PofFalseVal):
     # P(FALSE) in BOOLEANS assuming hypothesis
     hypothesis.deriveRight().inBoolViaBooleanEquality().prove({hypothesis})
     # forall_{A in BOOLEANS} P(A) in BOOLEANS assuming hypothesis
-    Forall(A, inBool(PofA), inBool(A)).concludeAsFolded().prove({hypothesis})
+    Forall(A, inBool(PofA), domain=BOOLEANS).concludeAsFolded().prove({hypothesis})
     if PofTrueVal == FALSE:
         # Not(P(TRUE)) assuming hypothesis
         hypothesis.deriveLeft().deriveViaBooleanEquality().prove({hypothesis})
         example = TRUE
         # TRUE in BOOLEANS
-        booleans.trueInBool
+        trueInBool
     elif PofFalseVal == FALSE:
         # Not(P(FALSE)) assuming hypothesis
         hypothesis.deriveRight().deriveViaBooleanEquality().prove({hypothesis})
         example = FALSE    
         # FALSE in BOOLEANS
-        booleans.falseInBool
+        falseInBool
     # [forall_{A in BOOLEANS} P(A)] = FALSE assuming hypothesis
-    conclusion = Exists(A, Not(PofA), inBool(A)).concludeViaExample(example).deriveNegatedForall().equateNegatedToFalse().prove({hypothesis})
+    conclusion = Exists(A, Not(PofA), domain=BOOLEANS).concludeViaExample(example).deriveNegatedForall().equateNegatedToFalse().prove({hypothesis})
     # forall_{P} [(P(TRUE) = FALSE) and (P(FALSE) in BOOLEANS)] => {[forall_{A in BOOLEANS} P(A)] = FALSE}
     return Implies(hypothesis, conclusion).generalize(P)

@@ -1,26 +1,44 @@
 from proveit.basiclogic.genericOps import BinaryOperation, AssociativeOperation, OperationOverInstances
 from proveit.expression import Literal, Operation, Lambda, STRING, LATEX
+from proveit.multiExpression import multiExpression
 from proveit.inLiteral import IN
 from proveit.everythingLiteral import EVERYTHING
 from proveit.basiclogic.variables import A, B, S, P, x, y
+from proveit.basiclogic.simpleExpr import xEtc
 
 pkg = __package__
 
 EVERYTHING.formatMap = {STRING:'EVERYTHING', LATEX:r'EVERYTHING'}
 NOTHING = Literal(pkg, 'NOTHING', {STRING:'NOTHING', LATEX:r'\emptyset'})
 
-class In(BinaryOperation):
-    def __init__(self, element, itsSet):
-        BinaryOperation.__init__(self, IN, element, itsSet)
-        self.element = element
-        self.itsSet = itsSet
-        
+class In(Operation):
+    def __init__(self, elements, domain):
+        Operation.__init__(self, IN, {'elements':multiExpression(elements), 'domain':domain})
+        self.elements = self.operands['elements']
+        assert len(self.elements) > 0, "An In operation with 0 elements is not allowed"
+        self.domain = self.operands['domain']
+    
+    def formatted(self, formatType, fence=False):
+        formattedOperator = self.operator.formatted(formatType)
+        formattedDomain = self.domain.formatted(formatType)
+        if len(self.elements) == 1:
+            innerStr = self.elements[0].formatted(formatType, fence=False) + ' ' + formattedOperator + ' ' + formattedDomain
+        elif len(self.elements) > 1:
+            andStr = ' and ' if len(self.elements) == 2 else ', and '
+            innerStr = ', '.join(elem.formatted(formatType, fence=False) for elem in self.elements[:-1]) + andStr +  self.elements[-1].formatted(formatType, fence=False) + ' ' + formattedOperator + ' ' + formattedDomain
+        if fence: 
+            if formatType == LATEX:
+                return '\left(' + innerStr + '\right)'
+            else:
+                return '(' + innerStr + ')'
+        else: return innerStr
+    
     def deduceInBool(self):
         '''
         Deduce and return that this 'in' statement is in the set of BOOLEANS.
         '''
         from axioms import inSetIsInBool
-        return inSetIsInBool.specialize({x:self.element, S:self.itsSet}).check()
+        return inSetIsInBool.specialize({xEtc:self.elements[0], S:self.domain}).check()
     
     def unfold(self):
         '''
@@ -30,7 +48,8 @@ class In(BinaryOperation):
         the unfoldElemInSet(...) method for each type [see unfoldElemInSet(..) defined
         for Singleton or Union].
         '''
-        return self.itsSet.unfoldElemInSet(self.element).check({self})
+        assert(len(self.elements) == 1), 'Unfold currently implemented for just 1 element at a time'
+        return self.domain.unfoldElemInSet(self.elements[0]).check({self})
     
     def concludeAsFolded(self):
         '''
@@ -40,7 +59,8 @@ class In(BinaryOperation):
         the deduceElemInSet(...) method for each type [see deduceElemInSet(..) defined
         for Singleton or Union].
         '''    
-        return self.itsSet.deduceElemInSet(self.element)
+        assert(len(self.elements) == 1), 'Unfold currently implemented for just 1 element at a time'
+        return self.domain.deduceElemInSet(self.elements[0])
     
     """
     def deriveIsInExpansion(self, expandedSet):
@@ -49,13 +69,13 @@ class In(BinaryOperation):
         '''
         #from sets import unionDef, x, A, B
         #TODO : derive x in S => x in S or x in expandingSet
-        #return unionDef.specialize({x:self.element, A:self.itsSet, B:self.expandingSet}).deriveLeft()
+        #return unionDef.specialize({x:self.element, A:self.domain, B:self.expandingSet}).deriveLeft()
         pass
     """
     
 # The IN Literal is defined at the top level of prove-it, but its operationMaker must be set here.
 IN.formatMap = {STRING:'in', LATEX:r'\in'}
-IN.operationMaker = lambda operands : In(*operands)
+IN.operationMaker = lambda operands : In(operands['elements'], operands['domain'])
 
 class NotIn(BinaryOperation):
     def __init__(self, element, theSet):
@@ -226,28 +246,28 @@ class SupersetEq(BinaryOperation):
 SUPERSET_EQ = Literal(pkg, 'SUPERSET_EQ', {STRING:'superseteq', LATEX:r'\superseteq'}, lambda operands : SupersetEq(*operands))
  
 class SetOfAll(OperationOverInstances):
-    def __init__(self, instanceVars, instanceElement, conditions=tuple(), domain=EVERYTHING):
+    def __init__(self, instanceVars, instanceElement, domain=EVERYTHING, conditions=tuple()):
         '''
         Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
         {instanceElement | conditions}_{instanceVar}
         '''
-        OperationOverInstances.__init__(self, SET, instanceVars, instanceElement, conditions, domain)
+        OperationOverInstances.__init__(self, SET, instanceVars, instanceElement, domain, conditions)
         self.instanceElement = instanceElement
 
     def formatted(self, formatType, fence=False):
         outStr = ''
-        innerFence = (len(self.condition) > 0)
+        innerFence = (len(self.conditions) > 0)
         if formatType == STRING:
             outStr += '{'
             outStr += self.instanceElement.formatted(formatType, fence=innerFence)
-            if self.domain is not None:
+            if self.domain is not EVERYTHING:
                 outStr += ' in ' + self.domain.formatted(formatType)
-            if len(self.condition) > 0:
+            if len(self.conditions) > 0:
                 outStr += ' s.t. ' # such that
-                if len(self.condition) == 1:
-                    outStr += self.condition.formatted(formatType, fence=True)
+                if len(self.conditions) == 1:
+                    outStr += self.conditions.formatted(formatType, fence=True)
                 else:
-                    outStr += ', '.join([condition.formatted(formatType, fence=True) for condition in self.condition])
+                    outStr += ', '.join([condition.formatted(formatType, fence=True) for condition in self.conditions])
             outStr += '}'
             if fence: outStr += ']'
         return outStr
@@ -268,5 +288,8 @@ class SetOfAll(OperationOverInstances):
         PofElement = self.instanceExpr.substitute({self.instanceVar:element})
         return foldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().check({PofElement})
 
-SET = Literal(pkg, 'SET', lambda operands : SetOfAll(*OperationOverInstances.extractParameters(operands)))
+def setOfAllMaker(operands):
+    params = OperationOverInstances.extractParameters(operands)
+    return SetOfAll(params['instanceVars'], params['instanceExpr'], params['domain'], params['conditions'])
+SET = Literal(pkg, 'SET', operationMaker=setOfAllMaker)
 

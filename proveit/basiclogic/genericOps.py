@@ -11,15 +11,16 @@ class BinaryOperation(Operation):
         
     def formatted(self, formatType, fence=False, subLeftFence=True, subRightFence=True):
         # override this default as desired
-        outStr = ''
         formattedLeft = self.leftOperand.formatted(formatType, fence=subLeftFence)
         formattedRight = self.rightOperand.formatted(formatType, fence=subRightFence)
         formattedOp = self.operator.formatted(formatType)
-        if formatType == STRING or formatType == LATEX:
-            if fence: outStr += '('
-            outStr += formattedLeft + ' ' + formattedOp + ' ' + formattedRight
-            if fence: outStr += ')'
-        return outStr
+        innerStr = formattedLeft + ' ' + formattedOp + ' ' + formattedRight
+        if fence:
+            if formatType == LATEX:
+                return '\left(' + innerStr + '\right)'
+            else:
+                return '(' + innerStr + ')'
+        else: return innerStr
 
 class AssociativeOperation(Operation):
     def __init__(self, operator, *operands):
@@ -45,7 +46,7 @@ class AssociativeOperation(Operation):
         return outStr           
 
 class OperationOverInstances(Operation):
-    def __init__(self, operator, instanceVars, instanceExpr, conditions=tuple(), domain=EVERYTHING):
+    def __init__(self, operator, instanceVars, instanceExpr, domain=EVERYTHING, conditions=tuple()):
         '''
         Create an Operation for the given operator over instances of the given instance Variables,
         instanceVars, for the given instance Expression, instanceExpr under the given conditions
@@ -57,11 +58,15 @@ class OperationOverInstances(Operation):
         (where '->' represents a Lambda and {...} represents an ExpressionDict):
           {'instance_mapping' : instanceVars -> {'expression':instanceExpr, 'conditions':conditions}, 'domain':domain}
         '''
-        Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, conditions, domain))
-        self.instanceVars, self.instanceExpr, self.conditions, self.domain = OperationOverInstances.extractParameters(self.operands)
+        Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain, conditions))
+        params = OperationOverInstances.extractParameters(self.operands)
+        self.instanceVars = params['instanceVars']
+        self.instanceExpr = params['instanceExpr']
+        self.domain = params['domain']
+        self.conditions = params['conditions']
     
     @staticmethod
-    def _createOperand(instanceVars, instanceExpr, conditions, domain):
+    def _createOperand(instanceVars, instanceExpr, domain, conditions):
         lambdaFn = Lambda(instanceVars, {'instance_expression':instanceExpr, 'conditions':multiExpression(conditions)})
         return {'instance_mapping':lambdaFn, 'domain':domain}
     
@@ -76,7 +81,7 @@ class OperationOverInstances(Operation):
         instanceVars = lambdaFn.arguments
         conditions = lambdaFn.expression['conditions']
         instanceExpr = lambdaFn.expression['instance_expression']
-        return instanceVars, instanceExpr, conditions, domain
+        return {'instanceVars':instanceVars, 'instanceExpr':instanceExpr, 'domain':domain, 'conditions':conditions}
         
     def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
         '''
@@ -98,7 +103,6 @@ class OperationOverInstances(Operation):
         '''
         Returns True if this OperationOverInstances has a domain restriction.
         '''
-        from proveit.basiclogic.set.setOps import EVERYTHING        
         return self.domain != EVERYTHING
         
     def hasCondition(self):
@@ -129,6 +133,9 @@ class OperationOverInstances(Operation):
             if fence: outStr += ']'
         return outStr        
 
+    """
+    #    OUT OF DATA
+    
     def instanceSubstitution(self, equivalenceForallInstances):
         '''
         Equate this OperationOverInstances, O(x -> f(x) | Q(x)),
@@ -164,4 +171,4 @@ class OperationOverInstances(Operation):
             return equatedMaps.rhsSubstitute(X, Operation(self.operator, [X]))
         else:
             return equatedMaps.lhsSubstitute(X, Operation(self.operator, [X]))
-        
+    """

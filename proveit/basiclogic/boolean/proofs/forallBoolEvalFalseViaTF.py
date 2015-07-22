@@ -1,4 +1,4 @@
-from proveit.basiclogic import *
+from proveit.basiclogic import TRUE, FALSE
 from forallBoolEvalFalseGeneric import forallBoolEvalFalseDerivation
 
-booleans.qed('forallBoolEvalFalseViaTF', forallBoolEvalFalseDerivation(TRUE, FALSE))
+forallBoolEvalFalseDerivation(TRUE, FALSE).qed(__file__)

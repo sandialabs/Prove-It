@@ -22,14 +22,14 @@ falseNotTrue = NotEquals(FALSE, TRUE)
     
 # Forall statements are in the BOOLEAN set.  If it isn't TRUE, then it is FALSE.
 # forall_{P, ..Q.., S} [forall_{..x.. in S | ..Q(..x..)..} P(..x..)] in BOOLEANS
-forallInBool = Forall((P, etcQ, S), inBool(Forall(xEtc, PxEtc, etc_QxEtc, domain=S)))
+forallInBool = Forall((P, etcQ, S), inBool(Forall(xEtc, PxEtc, S, etc_QxEtc)))
 
 # If it's ever true, it can't always be not true.  (example exists = not never)
 # forall_{P, ..Q.., S} [exists_{..x.. in S | ..Q(..x..)..} P(..x..) = not[forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE)]]
-existsDef = Forall((P, etcQ, S), Equals(Exists(xEtc, PxEtc, etc_QxEtc, domain=S), Not(Forall(xEtc, NotEquals(PxEtc, TRUE), etc_QxEtc, domain=S))))
+existsDef = Forall((P, etcQ, S), Equals(Exists(xEtc, PxEtc, S, etc_QxEtc), Not(Forall(xEtc, NotEquals(PxEtc, TRUE), S, etc_QxEtc))))
 
 # forall_{P, ..Q.., S} notexists_{..x.. in S | ..Q(..x..)..} P(..x..) = not[exists_{..x.. in S | ..Q(..x..)..} P(..x..)]
-notExistsDef = Forall((P, etcQ, S), Equals(NotExists(xEtc, PxEtc, etc_QxEtc, domain=S), Not(Exists(xEtc, PxEtc, etc_QxEtc, domain=S))))
+notExistsDef = Forall((P, etcQ, S), Equals(NotExists(xEtc, PxEtc, S, etc_QxEtc), Not(Exists(xEtc, PxEtc, S, etc_QxEtc))))
 
 # Truth table for NOT
 notF = Equals(Not(FALSE), TRUE)

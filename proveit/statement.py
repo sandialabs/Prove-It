@@ -177,7 +177,7 @@ class Statement:
         # extract the instance expression and instance variables from the lambda expression        
         instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], list(lambdaExpr.expression['conditions'])
         if domain != EVERYTHING:
-            conditions += [IN.operationMaker((var, domain)) for var in instanceVars]
+            conditions += [IN.operationMaker({'elements':[var], 'domain':domain}) for var in instanceVars]
         for arg in lambdaExpr.arguments:
             if isinstance(arg, Variable) and arg in substitutingVars and isinstance(substitutingVars, ExpressionList):
                 raise ImproperSpecialization("May only specialize a Forall instance variable with an ExpressionList if it is wrapped in Etcetera")
@@ -205,7 +205,7 @@ class Statement:
         return specializedExpr, subbedConditions
                        
     @staticmethod
-    def generalize(originalExpr, newForallVars, newConditions=tuple(), newDomain=EVERYTHING):
+    def generalize(originalExpr, newForallVars, newDomain=EVERYTHING, newConditions=tuple()):
         '''
         State and return a generalization of a given original statement
         which derives from the original statement via a generalization inference
@@ -219,9 +219,9 @@ class Statement:
         may be singular or plural (iterable).
         '''
         forallMaker = FORALL.operationMaker
-        generalizedExpr = Statement.state(forallMaker(instanceVars=newForallVars, instanceExpr=originalExpr, conditions=newConditions, domain=newDomain))
+        generalizedExpr = Statement.state(forallMaker(instanceVars=newForallVars, instanceExpr=originalExpr, domain=newDomain, conditions=newConditions))
         Statement.state(originalExpr)
-        generalizedExpr.statement.addGeneralizer(originalExpr.statement, newForallVars, newConditions, newDomain)
+        generalizedExpr.statement.addGeneralizer(originalExpr.statement, newForallVars, newDomain, newConditions)
         # In order to be a valid tautology, we have to make sure that the expression is
         # a generalization of the original.
         Statement._checkGeneralization(generalizedExpr, originalExpr)
@@ -262,9 +262,9 @@ class Statement:
         self._specializers.add((original, tuple(subMap.items()), tuple(conditions)))
         original._specializations.add(self)
 
-    def addGeneralizer(self, original, forallVars, conditions, domain):
+    def addGeneralizer(self, original, forallVars, domain, conditions):
         if conditions is None: conditions = tuple()
-        self._generalizers.add((original, tuple(forallVars), tuple([asStatement(condition) for condition in multiExpression(conditions)]), domain))
+        self._generalizers.add((original, tuple(forallVars), domain, tuple([asStatement(condition) for condition in multiExpression(conditions)])))
         original._generalizations.add(self)
         
     def addImplicator(self, hypothesis, implication):

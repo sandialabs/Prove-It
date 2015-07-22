@@ -8,6 +8,7 @@ y = Variable('y')
 Q = Variable('Q')
 P = Variable('P')
 etcQ = Etcetera(Q)
+etcP = Etcetera(P)
 xEtc = Etcetera(x)
 yEtc = Etcetera(y)
 R = Variable('R')
@@ -16,31 +17,36 @@ y = Variable('y')
 z = Variable('z')
 
 def specToStr(spec):
-    return '{' + ', '.join(str(key) + ' : ' + str(singleOrMultiExpression(val)) for key, val in spec.iteritems()) + '}'
+    return '{' + ', '.join(str(key) + ' : ' + singleOrMultiExpression(val).formatted(LATEX) for key, val in spec.iteritems()) + '}'
 
 expr = Forall(P, Forall(etcQ, Forall(xEtc, Operation(P, xEtc), Etcetera(Operation(Q, xEtc)))))
 print "Initial expression:"
-print expr
+print expr.formatted(LATEX)
 
 spec = {etcQ: [R, S]}
+print "\Relabeling via ", specToStr(spec), ':'
+print expr.relabel(spec).formatted(LATEX)
+
+spec = {P: etcP}
 print "\nSpecializing via ", specToStr(spec), ':'
-print expr.specialize(spec)
+print 'SHOULD NOT BE ALLOWED'
+print expr.specialize(spec).formatted(LATEX)
 
 expr = Forall((etcQ, P), Forall(xEtc, Operation(P, xEtc), Etcetera(Operation(Q, xEtc))))
 print "\nInitial expression:"
-print expr
+print expr.formatted(LATEX)
     
 spec = {Etcetera(Operation(Q, xEtc)): Operation(R, xEtc)}
 print "\nSpecializing via ", specToStr(spec), ':'
-print expr.specialize(spec)
+print expr.specialize(spec).formatted(LATEX)
 
 spec = {Etcetera(Operation(Q, xEtc)): [Operation(R, xEtc), Operation(S, xEtc)]}
 print "\nSpecializing via ", specToStr(spec), ':'
-print expr.specialize(spec)
+print expr.specialize(spec).formatted(LATEX)
 
 spec = {etcQ: [R, S]}
 print "\nSpecializing via ", specToStr(spec), ':'
-print expr.specialize(spec)
+print expr.specialize(spec).formatted(LATEX)
 
 spec = {P: [R, S]}
 print "\nSpecializing via ", specToStr(spec), ':'

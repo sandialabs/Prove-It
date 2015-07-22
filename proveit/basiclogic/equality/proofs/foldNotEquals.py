@@ -1,3 +1,4 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.equality.axioms import notEqualsDef
+from proveit.basiclogic.variables import x, y
 
-equality.qed('foldNotEquals', equality.notEqualsDef.specialize().leftImplViaEquivalence().generalize((x, y)))
+notEqualsDef.specialize().leftImplViaEquivalence().generalize((x, y)).qed(__file__)

@@ -1,3 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.boolean.axioms import notExistsDef
+from proveit.basiclogic.variables import P
+from proveit.basiclogic.simpleExpr import etcQ
 
-booleans.qed('notExistsUnfolding', booleans.notExistsDef.specialize().rightImplViaEquivalence().generalize((P, multiQ)))
+notExistsDef.specialize().rightImplViaEquivalence().generalize((P, etcQ)).qed(__file__)

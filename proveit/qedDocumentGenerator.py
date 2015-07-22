@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
-import statement
-from statement import *
+from proveit import expression
+from proveit.expression import *
 import os
 
 class DocumentGenerator:
@@ -9,8 +9,8 @@ class DocumentGenerator:
     proof derivations and expression trees.
     """
     def __init__(self):
-#        self.basePath = os.path.join(os.path.dirname(statement.__file__), 'qed-doc')
-        self.basePath = os.path.join(os.path.dirname(statement.__file__), '../qed-doc')
+#        self.basePath = os.path.join(os.path.dirname(expression.__file__), 'qed-doc')
+        self.basePath = os.path.join(os.path.dirname(expression.__file__), '../qed-doc')
     
     def expressionCategoryClass(self, expr):
         '''
@@ -33,7 +33,7 @@ class DocumentGenerator:
         '''
         Returns the Sphinx references to the type of the given expression and its catagorical inherited type.
         '''
-        if expr.__class__.__module__ == statement.__name__:
+        if expr.__class__.__module__ == expression.__name__:
             return ':py:class:`' + str(self.expressionCategoryClass(expr)) + '`' # one of the standard expression types
         else:
             return ':py:class:`' + str(expr.__class__) + r'` \:\: :py:class:`' + str(self.expressionCategoryClass(expr))  + '`'
@@ -59,7 +59,7 @@ class DocumentGenerator:
         if isinstance(expr, ExpressionList):
             subExpressionsAndRoles = [(subExpr, None) for subExpr in expr.expressions]
         elif isinstance(expr, Operation):
-            subExpressionsAndRoles = ((expr.operator, 'operator'), (expr.operand, 'operand'))
+            subExpressionsAndRoles = ((expr.operator, 'operator'), (expr.etcExpr, 'etcExpr'))
         elif isinstance(expr, Lambda):
             subExpressionsAndRoles = ((expr.argument, 'argument'), (expr.expression, 'expression'), (expr.domainCondition, 'condition'))
         if not subExpressionsAndRoles is None:

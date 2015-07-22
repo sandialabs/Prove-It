@@ -4,4 +4,4 @@ from proveit.basiclogic.variables import A, B
 
 # (A or B) => FALSE assuming Not(A), Not(B)
 AorB_impl_F = notOrFromNeither.specialize().deriveConclusion().deriveConclusion().deriveContradiction().deriveConclusion()
-AorB_impl_F.generalize((A, B), (Not(A), Not(B))).qed(__file__)
+AorB_impl_F.generalize((A, B), conditions=(Not(A), Not(B))).qed(__file__)

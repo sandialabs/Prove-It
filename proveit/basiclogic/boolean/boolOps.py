@@ -45,7 +45,7 @@ class Implies(BinaryOperation):
         else:
             return hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion().check({self, inBool(self.hypothesis)})
     
-    def generalize(self, forallVars, conditions=tuple(), domain=EVERYTHING):
+    def generalize(self, forallVars, domain=EVERYTHING, conditions=tuple()):
         r'''
         This makes a generalization of this expression, prepending Forall 
         operations according to newForallVars and newConditions and/or newDomain
@@ -68,8 +68,8 @@ class Implies(BinaryOperation):
             expr = expr.conclusion
         if len(hypothesizedConditions) == 0:
             # Just use the Expression version
-            return Expression.generalize(self, forallVars, conditions, domain)
-        return Expression.generalize(expr, forallVars, conditions, domain)
+            return Expression.generalize(self, forallVars, domain, conditions)
+        return Expression.generalize(expr, forallVars, domain, conditions)
         #return Forall(newForallVars, expr, newConditions)
 
     def transposition(self):
@@ -86,11 +86,11 @@ class Implies(BinaryOperation):
         if isinstance(self.hypothesis, Not) and isinstance(self.conclusion, Not):
             return transpositionFromNegated.specialize({B:self.hypothesis.operand, A:self.conclusion.operand}).check({inBool(self.hypothesis.operand)})
         elif isinstance(self.hypothesis, Not):
-            return transpositionFromNegatedHypothesis.specialize({B:self.hypothesis.operand, A:self.conclusion}).check({inBool(self.hypothesis.operand), inBool(self.conclusion)})
+            return transpositionFromNegatedHypothesis.specialize({B:self.hypothesis.operand, A:self.conclusion}).check({inBool(self.conclusion), inBool(self.hypothesis.operand)})
         elif isinstance(self.conclusion, Not):
             return transpositionFromNegatedConclusion.specialize({B:self.hypothesis, A:self.conclusion.operand}).check({inBool(self.hypothesis)})
         else:
-            return transpositionToNegated.specialize({B:self.hypothesis, A:self.conclusion}).check({inBool(self.hypothesis), inBool(self.conclusion)})
+            return transpositionToNegated.specialize({B:self.hypothesis, A:self.conclusion}).check({inBool(self.conclusion), inBool(self.hypothesis)})
         
     def transpose(self):
         '''
@@ -229,8 +229,8 @@ class Not(Operation):
         '''
         operand = self.operand
         if isinstance(operand, Exists):
-            exOperand = operand.operand # Exist's operand
-            notExistsExpr = NotExists(exOperand.argument, exOperand.expression, exOperand.domainCondition)
+            existsExpr = operand
+            notExistsExpr = NotExists(existsExpr.instanceVars, existsExpr.instanceExpr, domain=existsExpr.domain, conditions=existsExpr.conditions)
             return notExistsExpr.concludeAsFolded().check({self})
         
     def deduceDoubleNegationEquiv(self):

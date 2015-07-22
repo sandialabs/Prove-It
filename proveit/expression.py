@@ -141,7 +141,7 @@ class Expression:
         (specialization, conditions) = Statement.specialize(self, subMap)
         return specialization.check({self} | conditions)
         
-    def generalize(self, forallVars, conditions=tuple(), domain=None):
+    def generalize(self, forallVars, domain=None, conditions=tuple()):
         from statement import Statement
         from multiExpression import multiExpression
         from everythingLiteral import EVERYTHING
@@ -149,7 +149,7 @@ class Expression:
         # Note that the prover will not pass this "check" in its current implementation
         # because it will not allow assumptions with variables in the newly created scope.
         # The solution for now is not to bother calling "check" here.
-        return Statement.generalize(self, multiExpression(forallVars), conditions, domain)#.check({self})
+        return Statement.generalize(self, multiExpression(forallVars), domain, conditions)#.check({self})
     
     """
     def show(self, assumptions=frozenset()):
@@ -294,11 +294,11 @@ class Operation(Expression):
         if isinstance(operator, Literal) and operator.operationMaker is not None:
             operation = operator.operationMaker(operands)
             if not isinstance(operation, Operation):
-                raise OperationMakerViolation('Registered Operation maker must make an Operation type')
+                raise OperationMakerViolation(operator, 'Registered Operation maker must make an Operation type')
             if operation.operator != operator:
-                raise OperationMakerViolation('Registered Operation maker function must make an Operation true to its given operator: ' + str(operator))
+                raise OperationMakerViolation(operator, 'Registered Operation maker function must make an Operation true to its given operator: ' + str(operator))
             if operation.operands != operands:
-                raise OperationMakerViolation('Registered Operation maker function must make an Operation true to its given operand.  Operator: ' + str(operator) + '; Operands: ' + str(operands))
+                raise OperationMakerViolation(operator, 'Registered Operation maker function must make an Operation true to its given operand.  Operator: ' + str(operator) + '; Operands: ' + str(operands))
             return operation
         return Operation(operator, operands)
 
@@ -486,10 +486,11 @@ class ScopingViolation(Exception):
         return self.message
 
 class OperationMakerViolation(Exception):
-    def __init__(self, message):
+    def __init__(self, operator, message):
+        self.operator = operator
         self.message = message
     def __str__(self):
-        return self.message
+        return self.message + ' for operator ' + self.operator.name
     
 class ProofFailure(Exception):
     def __init__(self, message):

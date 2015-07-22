@@ -1,9 +1,8 @@
 from proveit.expression import Operation
 from proveit.multiExpression import Etcetera
 from boolean.boolSet import TRUE, FALSE
-from boolean.boolOps import Iff
 from equality.eqOps import Equals
-from variables import a, b, f, g, x, y, A, C, P, Q, R
+from variables import a, b, f, g, x, y, z, A, C, P, Q, R
 
 PofA = Operation(P, A) # P(A)
 PofTrue = Operation(P, TRUE) # P(TRUE)
@@ -30,6 +29,7 @@ etcQ = Etcetera(Q) # ..Q..
 etcR = Etcetera(R) # ..R..
 xEtc = Etcetera(x) # ..x..
 yEtc = Etcetera(y) # ..y..
+zEtc = Etcetera(z) # ..z..
 PxEtc = Operation(P, xEtc) # P(..x..)
 PyEtc = Operation(P, yEtc) # P(..y..)
 PxyEtc = Operation(P, (xEtc, yEtc)) # P(..x.., ..y..)

@@ -3,12 +3,19 @@ from proveit.expression import Literal, Operation, STRING, LATEX
 from proveit.multiExpression import Etcetera
 from proveit.basiclogic import BOOLEANS, Forall, Exists, And, Or, Implies, Iff, Equals
 from setOps import In, NotIn, Singleton, Union, Intersection, SubsetEq, SupersetEq, SetOfAll, EVERYTHING, NOTHING
-from proveit.basiclogic.variables import x, y, A, B, C, S, f, P
-from proveit.basiclogic.simpleExpr import etcC, fy, Py
+from proveit.basiclogic.variables import x, y, z, A, B, C, S, f, P
+from proveit.basiclogic.simpleExpr import etcC, xEtc, zEtc, fy, Py
 
 setAxioms = Axioms(__package__, locals())
 
-inSetIsInBool = Forall((x, S), In(In(x, S), BOOLEANS))
+# forall_{..x.., y, ..z.., S} [..x.., y, ..z.. in S] => (y in S)
+multiInImpliesEachIn = Forall((xEtc, y, zEtc, S), Implies(In([xEtc, y, zEtc], S), In(y, S)))
+
+# forall_{..x.., y, , S} [(..x.. in S) and (y in S)] => (..x.., y in S)
+multiInComposition = Forall((xEtc, y, S), Implies(And(In(xEtc, S), In(y, S)), In([xEtc, y], S)))
+
+# forall_{..x.., S} [..x.. in S] in BOOLEANS
+inSetIsInBool = Forall((xEtc, S), In(In(xEtc, S), BOOLEANS))
 
 # forall_{x, y} [x in Singleton(y)] = [x = y]
 singletonDef = Forall((x, y), Equals(In(x, Singleton(y)), Equals(x, y)))

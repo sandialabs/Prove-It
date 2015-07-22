@@ -22,4 +22,4 @@ toConclusion = Implies(Implies(A, BeqF), Implies(A, Not(B))).prove({inBool(B)})
 # [B => Not(A)] => [A=>Not(B)] assuming inBool(B)
 transpositionExpr = fromHyp.applySyllogism(midPoint).applySyllogism(toConclusion).prove({inBool(B)})
 # forall_{A, B | inBool(B)} [B => Not(A)] => [A=>Not(B)]
-transpositionExpr.generalize((A, B), inBool(B)).qed(__file__)
+transpositionExpr.generalize((A, B), conditions=inBool(B)).qed(__file__)

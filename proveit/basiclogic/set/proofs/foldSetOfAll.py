@@ -1,3 +1,5 @@
-from proveit.basiclogic import *
+from proveit.basiclogic.set.axioms import setOfAllDef
+from proveit.basiclogic.variables import P, f, x
 
-sets.qed('foldSetOfAll', sets.setOfAllDef.specialize().deriveLeftImplication().generalize((P, f, x)))
+# forall_{P, f, x} [exists_{y | P(y)} x = f(y)] => [x in {f(y) | P(y)}]
+setOfAllDef.specialize().deriveLeftImplication().generalize((P, f, x)).qed(__file__)

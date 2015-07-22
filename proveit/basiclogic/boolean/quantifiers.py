@@ -3,12 +3,12 @@ from proveit.expression import Expression, Literal, Operation, STRING, LATEX
 from proveit.multiExpression import ExpressionList, Etcetera
 from proveit.forallLiteral import FORALL
 from proveit.everythingLiteral import EVERYTHING
-from proveit.basiclogic.variables import P, Q, R, S, f, g, x, y
+from proveit.basiclogic.variables import P, Q, R, S
 
 pkg = __package__
 
 class Forall(OperationOverInstances):
-    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
+    def __init__(self, instanceVars, instanceExpr, domain=EVERYTHING, conditions = tuple()):
         '''
         Create a Forall expression:
         forall_{instanceVars | conditions} instanceExpr.
@@ -16,7 +16,7 @@ class Forall(OperationOverInstances):
         given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
         may be singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, FORALL, instanceVars, instanceExpr, conditions, domain)
+        OperationOverInstances.__init__(self, FORALL, instanceVars, instanceExpr, domain, conditions)
         
     def specialize(self, subMap=None, conditionAsHypothesis=False):
         '''
@@ -31,6 +31,8 @@ class Forall(OperationOverInstances):
             return Implies(self.conditions[0], specialized).check({self})
         return specialized
     
+    """
+    # out of data
     def equateMaps(self):
         '''
         From forall_{x | Q(x)} f(x) = g(x) derive and return 
@@ -46,6 +48,7 @@ class Forall(OperationOverInstances):
             return mapSubstitution.specialize({fOp:fOpSub, gOp:gOpSub, Q_op:Q_op_sub, x:self.instanceVars, y:self.instanceVars}).deriveConclusion().check({self})
         else:
             return mapOverAllSubstitution.specialize({fOp:fOpSub, gOp:gOpSub}).deriveConclusion().check({self})
+    """
     
     def unfold(self):
         '''
@@ -78,13 +81,14 @@ class Forall(OperationOverInstances):
         forall_{x | Q(x)} forall_{y | R(y)} P(x, y) becomes forall_{x, y | Q(x), R(y)} P(x, y).
         '''
         from theorems import forallBundling
+        from proveit.basiclogic.simpleExpr import xEtc, yEtc
         assert isinstance(self.instanceExpr, Forall), "Can only bundle nested forall statements"
         innerForall = self.instanceExpr
         composedInstanceVars = ExpressionList([self.instanceVars, innerForall.instanceVars])
         P_op, P_op_sub = Operation(P, composedInstanceVars), innerForall.instanceExpr
-        multiQ_op, multiQ_op_sub = Operation(Q, self.instanceVars), self.conditions
-        multiR_op, multiR_op_sub = Operation(R, innerForall.instanceVars), innerForall.conditions
-        return forallBundling.specialize({x:self.instanceVars, y:innerForall.instanceVars, P_op:P_op_sub, multiQ_op:multiQ_op_sub, multiR_op:multiR_op_sub}).deriveConclusion().check({self})
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        R_op, R_op_sub = Etcetera(Operation(R, innerForall.instanceVars)), innerForall.conditions
+        return forallBundling.specialize({xEtc:self.instanceVars, yEtc:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion().check({self})
 
     def _specializeUnravelingTheorem(self, theorem, *instanceVarLists):
         from proveit.basiclogic.simpleExpr import xEtc, yEtc
@@ -106,10 +110,7 @@ class Forall(OperationOverInstances):
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(Q, outerVars)), outerConditions
         R_op, R_op_sub = Etcetera(Operation(R, innerVars)), innerConditions
-        if self.domain is None:
-            return theorem.specialize({xEtc:outerVars, yEtc:innerVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub}) 
-        else:
-            return theorem.specialize({xEtc:outerVars, yEtc:innerVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}) 
+        return theorem.specialize({xEtc:outerVars, yEtc:innerVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}) 
            
     def deriveUnraveled(self, *instanceVarLists):
         '''
@@ -164,15 +165,16 @@ class Forall(OperationOverInstances):
 
 # The FORALL Literal is defined at the top level of prove-it, but its operationMaker must be set here.
 FORALL.formatMap = {STRING:'forall', LATEX:r'\forall'}
-def forallMaker(operands=None, instanceVars=None, instanceExpr=None, conditions=None, domain=EVERYTHING):
+def forallMaker(operands=None, instanceVars=None, instanceExpr=None, domain=EVERYTHING, conditions=None):
     if operands is not None:
-        return Forall(*OperationOverInstances.extractParameters(operands))
+        params = OperationOverInstances.extractParameters(operands)
+        return Forall(params['instanceVars'], params['instanceExpr'], params['domain'], params['conditions'])
     else:
-        return Forall(instanceVars, instanceExpr, conditions, domain)
+        return Forall(instanceVars, instanceExpr, domain, conditions)
 FORALL.operationMaker = forallMaker
 
 class Exists(OperationOverInstances):
-    def __init__(self, instanceVars, instanceExpr, conditions=tuple(), domain=EVERYTHING):
+    def __init__(self, instanceVars, instanceExpr, domain=EVERYTHING, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
         exists_{instanceVars | condition} instanceExpr
@@ -180,19 +182,26 @@ class Exists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, EXISTS, instanceVars, instanceExpr, conditions, domain)
+        OperationOverInstances.__init__(self, EXISTS, instanceVars, instanceExpr, domain, conditions)
 
     def concludeViaExample(self, exampleInstance):
         '''
-        Conclude and return this [exists_{y | Q(x)} P(y)] from P(x) and Q(x), where x is the given exampleInstance.
+        Conclude and return this [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] from P(..x..) and Q(..x..) and ..x.. in S, where ..x.. is the given exampleInstance.
         '''
         from theorems import existenceByExample
-        # P(x) where x is the given exampleInstance
+        from proveit.basiclogic import In
+        from proveit.basiclogic.simpleExpr import xEtc, yEtc
+        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        # P(..x..) where ..x.. is the given exampleInstance
         exampleExpr = self.instanceExpr.substituted({self.instanceVars:exampleInstance})
-        # Q(x) where x is the given exampleInstance
+        # ..Q(..x..).. where ..x.. is the given exampleInstance
         exampleConditions = self.conditions.substituted({self.instanceVars:exampleInstance})
-        # forall_{P, Q} forall_{x | Q(x)} [P(x) => exists_{y | Q(x)} P(y)]
-        return existenceByExample.specialize({Operation(P, self.instanceVars): self.instanceExpr, Operation(Q, self.instanceVars): self.conditions, y:self.instanceVars}).specialize({x:exampleInstance}).deriveConclusion().check({exampleExpr, exampleConditions})
+        if self.domain != EVERYTHING:
+            for iVar in self.instanceVars:
+                exampleConditions.append(In(iVar, self.domain))
+        # exists_{..y.. | ..Q(..x..)..} P(..y..)]
+        return existenceByExample.specialize({P_op:P_op_sub, Q_op:Q_op_sub, yEtc:self.instanceVars, S:self.domain}).specialize({xEtc:exampleInstance}).deriveConclusion().check({exampleExpr, exampleConditions})
 
     def deriveNegatedForall(self):
         '''
@@ -202,13 +211,14 @@ class Exists(OperationOverInstances):
         from axioms import existsDef
         from theorems import existsNotImpliesNotForall
         from boolOps import Not
-        Q_op, Q_op_sub = Operation(Q, self.instanceVars), self.conditions
+        from proveit.basiclogic.simpleExpr import xEtc        
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
         if isinstance(self.instanceExpr, Not):
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr.operands
-            return existsNotImpliesNotForall.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveConclusion().check({self})
+            return existsNotImpliesNotForall.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion().check({self})
         else:
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-            return existsDef.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveRightViaEquivalence().check({self})
+            return existsDef.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveRightViaEquivalence().check({self})
     
     def deduceInBool(self):
         '''
@@ -216,14 +226,18 @@ class Exists(OperationOverInstances):
         all exists expressions are (they are taken to be false when not true).
         '''
         from theorems import existsInBool
+        from proveit.basiclogic.simpleExpr import xEtc        
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Operation(Q, self.instanceVars), self.conditions
-        return existsInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).check()
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        return existsInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).check()
 
-EXISTS = Literal(pkg, 'EXISTS', {STRING:'exists', LATEX:r'\exists'}, lambda operands : Exists(*OperationOverInstances.extractParameters(operands)))
+def existsMaker(operands):
+    params = OperationOverInstances.extractParameters(operands)
+    return Exists(params['instanceVars'], params['instanceExpr'], params['domain'], params['conditions'])
+EXISTS = Literal(pkg, 'EXISTS', {STRING:'exists', LATEX:r'\exists'}, existsMaker)
 
 class NotExists(OperationOverInstances):
-    def __init__(self, instanceVars, instanceExpr, conditions=tuple(), domain=EVERYTHING):
+    def __init__(self, instanceVars, instanceExpr, domain=EVERYTHING, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
         exists_{instanceVars | conditions} instanceExpr
@@ -231,25 +245,27 @@ class NotExists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, NOTEXISTS, instanceVars, instanceExpr, conditions, domain)
+        OperationOverInstances.__init__(self, NOTEXISTS, instanceVars, instanceExpr, domain, conditions)
         
     def unfold(self):
         '''
         Deduce and return Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x)
         '''
         from theorems import notExistsUnfolding
-        Q_op, Q_op_sub = Operation(Q, self.instanceVars), self.conditions
+        from proveit.basiclogic.simpleExpr import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveConclusion().check({self})
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion().check({self})
     
     def concludeAsFolded(self):
         '''
         Prove and return some NotExists_{x | Q(x)} P(x) assuming Not(Exists_{x | Q(x)} P(x)).
         '''
         from theorems import notExistsFolding
-        Q_op, Q_op_sub = Operation(Q, self.instanceVars), self.conditions
+        from proveit.basiclogic.simpleExpr import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars})
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain})
         return folding.deriveConclusion().check({self.unfold()})
 
     """
@@ -275,5 +291,7 @@ class NotExists(OperationOverInstances):
             return existsDefNegation.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveLeftViaEquivalence().check({assumption})
     """
 
-
-NOTEXISTS = Literal(pkg, 'NOTEXISTS', {STRING:'notexists', LATEX:r'\nexists'}, lambda operands : NotExists(*OperationOverInstances.extractParameters(operands)))
+def notExistsMaker(operands):
+    params = OperationOverInstances.extractParameters(operands)
+    return NotExists(params['instanceVars'], params['instanceExpr'], params['domain'], params['conditions'])
+NOTEXISTS = Literal(pkg, 'NOTEXISTS', {STRING:'notexists', LATEX:r'\nexists'}, notExistsMaker)

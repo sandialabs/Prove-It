@@ -8,7 +8,7 @@ existsDefSpec = existsDef.specialize().prove()
 # notexists_{..x.. in S | ..Q..(..x..)} P(..x..) = not[exists_{..x.. in S | ..Q(..x..)..} P(..x..)]
 notExistsDefSpec = notExistsDef.specialize().prove()
 # rhs = forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE)
-rhs = Forall(xEtc, NotEquals(PxEtc, TRUE), etc_QxEtc, domain=S)
+rhs = Forall(xEtc, NotEquals(PxEtc, TRUE), S, etc_QxEtc)
 # [forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE)] in BOOLEANS
 rhs.deduceInBool().prove()
 # not(not(forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE))) = forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE))

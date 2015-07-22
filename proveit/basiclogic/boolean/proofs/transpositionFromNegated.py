@@ -12,4 +12,4 @@ Implies(Not(B), FALSE).deriveViaContradiction().prove({inBool(B), hypothesis, A}
 # [Not(B) => Not(A)] => [A => B] by nested hypothetical reasoning assuming inBool(B)
 transpositionExpr = Implies(hypothesis, Implies(A, B)).prove({inBool(B)})
 # forall_{A, B | inBool(B)} [A => B] => [Not(B) => Not(A)]
-transpositionExpr.generalize((A, B), inBool(B)).qed(__file__)
+transpositionExpr.generalize((A, B), conditions=inBool(B)).qed(__file__)
