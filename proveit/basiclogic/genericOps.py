@@ -17,7 +17,7 @@ class BinaryOperation(Operation):
         innerStr = formattedLeft + ' ' + formattedOp + ' ' + formattedRight
         if fence:
             if formatType == LATEX:
-                return '\left(' + innerStr + '\right)'
+                return r'\left(' + innerStr + r'\right)'
             else:
                 return '(' + innerStr + ')'
         else: return innerStr
@@ -39,10 +39,14 @@ class AssociativeOperation(Operation):
         '''
         outStr = ''
         formattedOperands = [operand.formatted(formatType, fence=subFence) for operand in self.operands]
-        if formatType == STRING or formatType == LATEX:
+        if formatType == STRING:
             if fence: outStr += '('
             outStr += (' ' + self.operator.formatted(formatType) + ' ').join(formattedOperands)
             if fence: outStr += ')'
+        elif formatType == LATEX:
+            if fence: outStr += r'\left('
+            outStr += (' ' + self.operator.formatted(formatType) + ' ').join(formattedOperands)
+            if fence: outStr += r'\right)'
         return outStr           
 
 class OperationOverInstances(Operation):
@@ -118,7 +122,7 @@ class OperationOverInstances(Operation):
         implicitConditions = self.implicitConditions(formatType)
         hasExplicitConditions = self.hasCondition() and (len(implicitConditions) < len(self.conditions))
         outStr = ''        
-        if formatType == STRING or formatType == LATEX:
+        if formatType == STRING :
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
             if hasExplicitIvars:
@@ -129,8 +133,22 @@ class OperationOverInstances(Operation):
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
                 outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
-            outStr += '} ' + self.instanceExpr.formatted(formatType)
+            outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += ']'
+        if formatType == LATEX:
+            if fence: outStr += r'\left['
+            outStr += self.operator.formatted(formatType) + '_{'
+            if hasExplicitIvars:
+                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
+            if self.hasDomain():
+                outStr += ' in ' if formatType == STRING else ' \in '
+                outStr += self.domain.formatted(formatType)
+            if hasExplicitConditions:
+                if hasExplicitIvars: outStr += " | "
+                outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
+            outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
+            if fence: outStr += r'\right]'
+
         return outStr        
 
     """
