@@ -204,6 +204,17 @@ class Expression:
         if not reservedVars is None and not self.freeVars().isdisjoint(reservedVars.keys()):
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., arguments of a Lambda function)")
         return self
+    
+    def latex(self):
+        '''
+        If running IPython notebook, this will display the expression generated via latex;
+        otherwise returns the latex formatting.
+        '''
+        try:
+            from IPython.display import display, Math
+            display(Math(self.formatted(LATEX)))
+        except:
+            return self.formatted(LATEX)
         
 class Literal(Expression):
     """
