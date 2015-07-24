@@ -3,7 +3,7 @@ This is the statement module.
 """
 
 from proveit.expression import Expression, Variable, Operation, Lambda
-from proveit.multiExpression import ExpressionDict, ExpressionList, Etcetera, isEtcVar, isEtcVarOrVar, isEtcOperation, multiExpression, singleOrMultiExpression
+from proveit.multiExpression import MultiExpression, NamedExpressions, ExpressionList, ExpressionTensor, Bundle, isBundledVar, isBundledVarOrVar, isBundledOperation, multiExpression, singleOrMultiExpression
 from proveit.impliesLiteral import IMPLIES
 from proveit.forallLiteral import FORALL
 from proveit.inLiteral import IN
@@ -146,15 +146,17 @@ class Statement:
                 if not isinstance(sub, Variable):
                     raise ImproperSpecialization('May only relabel a Variable to a Variable.')
                 relabelVar = key
-            elif isEtcVar(key):                
+            elif isBundledVar(key):                
                 sub = multiExpression(sub)
+                if not isinstance(sub, ExpressionList):
+                    raise ImproperSpecialization('May only relabel a Bundled Variable to a single (Bundled) Variable or list of (Bundled) Variables')
                 for v in sub:
-                    if not isEtcVarOrVar(v):
-                        raise ImproperSpecialization('May only relabel an Etcetera-wrapped Variable to a list of (Etcetera-wrapped) Variables')
+                    if not isBundledVarOrVar(v) or (isBundledVar(v) and v.multiExprType != key.multiExprType):
+                        raise ImproperSpecialization('May only relabel a Bundled Variable to Bundled Variables of the same type')
                 # change ..x..:expression_or_expressions to x:expressions
-                relabelVar = key.etcExpr
+                relabelVar = key.bundledExpr
             else:
-                raise ImproperSpecialization("May only relabel a Variable or Etcetera-wrapped Variable")   
+                raise ImproperSpecialization("May only relabel a Variable or a Bundled Variable")   
             relabelMap[relabelVar] = sub
         # Process the substitution map, performming conversions of Operations and Etcetera-wrapped Operations/Variables
         substitutingVars = set()
@@ -163,27 +165,35 @@ class Statement:
         for subKey, sub in subMap.iteritems():
             if isinstance(subKey, Variable):
                 # substitute a simple Variable
-                if not isinstance(sub, Expression) or isinstance(sub, Etcetera) or isinstance(sub, ExpressionList):
-                    raise ImproperSpecialization('May only specialize an Etcetera-wrapped Variable to a list of Expressions or Etcetera-wrapped Expression')
+                if not isinstance(sub, Expression) or isinstance(sub, MultiExpression):
+                    raise ImproperSpecialization('A normal Variable may be not be specialized to a MultiExpression (only a Bundled Variable may be)')
                 subVar = subKey
                 nonOpSubMap[subVar] = sub
-            elif isEtcVar(subKey):
+            elif isBundledVar(subKey):
                 # substitute an Etcetera-wrapped Variable -- sub in an ExpressionList
-                subVar = subKey.etcExpr
-                nonOpSubMap[subVar] = multiExpression(sub)
-            elif isinstance(subKey, Operation) or isEtcOperation(subKey):
-                # Substitute an Operation, f(x):expression, or an Etcetera-wrapped operation,
+                subVar = subKey.bundledExpr
+                sub = multiExpression(sub)
+                if sub.__class__ != subKey.multiExprType:
+                    if subKey.multiExprType == ExpressionList:
+                        raise ImproperSpecialization('Etcetera Variables may only be specialized to a list of Expressions')
+                    elif subKey.multiExprType == Expression:
+                        raise ImproperSpecialization('Block Variables may only be specialized to a tensor of Expressions')
+                    else:
+                        raise ImproperSpecialization('Unknown Bundle type:' + str(subKey.multiExprType))
+                nonOpSubMap[subVar] = sub
+            elif isinstance(subKey, Operation) or isBundledOperation(subKey):
+                # Substitute an Operation, f(x):expression, or a Bundled operation like
                 # ..Q(x)..:expressions.
                 # These get converted in the operationSubMap to a map of the operator Variable
                 # to a lambda, e.g. f:(x->expression) or Q:(x->expressions)
-                operation = subKey if isinstance(subKey, Operation) else subKey.etcExpr
+                operation = subKey if isinstance(subKey, Operation) else subKey.bundledExpr
                 if isinstance(subKey, Operation):
                     operation = subKey
-                    if not isinstance(sub, Expression) or isinstance(sub, Etcetera) or isinstance(sub, ExpressionList):
-                        raise ImproperSpecialization('Only Etcetera operations may be specialized to lists of Expressions or Etcetera-wrapped Expression')                    
+                    if not isinstance(sub, Expression) or isinstance(sub, MultiExpression):
+                        raise ImproperSpecialization('A normal operations may be not be specialized to a MultiExpression (only a Bundled Operation may be)')                    
                     lambdaExpr = sub
                 else: 
-                    operation = subKey.etcExpr
+                    operation = subKey.bundledExpr
                     lambdaExpr = multiExpression(sub)
                 try:
                     opSub = Lambda(operation.operands, lambdaExpr)
@@ -194,7 +204,7 @@ class Statement:
                 subVar = operation.operator
                 operationSubMap[subVar] = opSub
             else:
-                raise ImproperSpecialization("Substitution map must map either Variable types or Operations that have Variable operators or Etcetera-wrapped versions of these")
+                raise ImproperSpecialization("Substitution may only map (Bundled) Variable types or (Bundled) Operations that have Variable operators")
             substitutingVars.add(subVar)
         if len(subMap) > 0:
             # an actual Forall specialization
@@ -202,7 +212,7 @@ class Statement:
             expr = originalExpr.operands
             lambdaExpr = expr['instance_mapping']
             domain = expr['domain']
-            assert isinstance(lambdaExpr, Lambda), "FORALL Operation etcExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
+            assert isinstance(lambdaExpr, Lambda), "FORALL Operation bundledExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
             # extract the instance expression and instance variables from the lambda expression        
             instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], list(lambdaExpr.expression['conditions'])
             iVarSet = set().union(*[iVar.freeVars() for iVar in instanceVars])
