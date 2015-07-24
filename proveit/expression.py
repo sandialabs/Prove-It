@@ -105,10 +105,10 @@ class Expression:
     def substituted(self, varMap, operationMap, relabelMap = None, reservedVars = None):
         '''
         Returns this expression with the variables substituted 
-        according to varMap (Variable:Expression dictionary) and/or operations
-        with variable operators substituted according to operationMap
-        (Variable:Lambda dictionary) and/or relabeled according to  
-        relabelMap (Variable:[Variable(s) or Etcetera-wrapped Variables(s)] dictionary).
+        according to the varMap dictionary (mapping Variables to Expressions)
+        and/or operations with variable operators substituted according to operationMap
+        dictionary (mapping Variables to either individual Lambda functions 
+        or MultiExpressions containing Lambda functions).
         If supplied, reservedVars is a dictionary that maps reserved Variable's
         to relabeling exceptions.  You cannot substitute with an expression that
         uses a restricted variable and you can only relabel the exception to the
@@ -269,14 +269,14 @@ class Variable(Expression):
         according to subMap and/or relabeled according to relabelMap.
         May expand to an ExpressionList.
         '''
-        from multiExpression import ExpressionList, isEtcVar
+        from multiExpression import ExpressionList, isBundledVar
         if (varSubMap != None) and (self in varSubMap):
             return varSubMap[self]._restrictionChecked(reservedVars)
         elif relabelMap != None:
             subbed = relabelMap.get(self, self)
             for subVar in (subbed if isinstance(subbed, ExpressionList) else [subbed]):
-                if not isinstance(subVar, Variable) and not isEtcVar(subVar):
-                    raise ImproperRelabeling('Must relabel a Variable with Variable(s) and/or Etcetera-wrapped Variable(s)')
+                if not isinstance(subVar, Variable) and not isBundledVar(subVar):
+                    raise ImproperRelabeling('May only relabel a Variable with Variable(s) and/or Bundled Variable(s)')
                 if reservedVars != None and subVar in reservedVars.keys():
                     if self != reservedVars[subVar]:
                         raise ScopingViolation("Relabeling in violation of Variable scoping restrictions.")
@@ -308,14 +308,12 @@ class Operation(Expression):
         Literal, Variable, or Lambda function.  The operands may be single expression that
         will be then be wrapped by ExpressionList.
         '''
-        from multiExpression import multiExpression, Block
+        from multiExpression import multiExpression
         Expression.__init__(self)
         if not (isinstance(operator, Literal) or isinstance(operator, Variable) or isinstance(operator, Lambda)):
             raise TypeError('operator must be a Literal, Variable, or a Lambda function')
         self.operator = operator
         self.operands = multiExpression(operands)
-        if isinstance(operator, Block):
-            raise TypeError('A Block Expression must be within an ExpressionTensor or ExpressionList, not directly as an operand of an Operation')
         if isinstance(operator, Lambda):
             if len(self.operands) != len(operator.arguments):
                 raise ValueError("Number of arguments and number of operands must match.")
@@ -396,30 +394,29 @@ class Lambda(Expression):
     '''
     A lambda-function Expression.  A lambda function maps arguments to
     an expression.  The arguments is an ExpressionList with each of its
-    expressions being either a Variable or a Variable wrapped in
-    Etcetera (see multiExpression.py).  For example,
-    (x, y) -> sin(x^2 + y).
+    expressions being either a Variable or a Bundled Variable 
+    (see multiExpression.py).  For example, (x, y) -> sin(x^2 + y).
     '''
     def __init__(self, arguments, expression):
         '''
         Initialize a Lambda expression given arguments and an expression.
-        Each argument in arguments must be a Variable or a Variable
-        wrapped in Etcetera.  arguments may be an iterable of these
-        or a single one that will be wrapped by ExpressionList.
+        Each argument in arguments must be a Variable or a Bundled Variable.
+        arguments may be an iterable of these or a single one that will be 
+        wrapped by ExpressionList.
         '''
-        from multiExpression import ExpressionList, Block, isEtcVarOrVar, extractVar, singleOrMultiExpression
+        from multiExpression import ExpressionList, Bundle, isBundledVarOrVar, extractVar, singleOrMultiExpression
         self.arguments = arguments if isinstance(arguments, ExpressionList) else ExpressionList(arguments)
         for var in self.arguments:
-            if not isEtcVarOrVar(var):
-                raise TypeError('Each element of the Lambda arguments must be a Variable or Variable wrapped in Etcetera')
+            if not isBundledVarOrVar(var):
+                raise TypeError('Each element of the Lambda arguments must be a Variable or Bundled Variable')
         self.argVarSet = {extractVar(arg) for arg in self.arguments}
         if len(self.argVarSet) != len(self.arguments):
             raise ValueError('Lambda argument Variables must be unique with respect to each other.')
         expression = singleOrMultiExpression(expression)
         if not isinstance(expression, Expression):
             raise TypeError('A Lambda expression must be of type Expression')
-        if isinstance(expression, Block):
-            raise TypeError('A Block Expression must be within an ExpressionTensor or ExpressionList, not directly as a Lambda expression')
+        if isinstance(expression, Bundle):
+            raise TypeError('A Bundle must be within an ExpressionTensor or ExpressionList, not directly as a Lambda expression')
         self.expression = expression
         
     def __repr__(self):
@@ -451,7 +448,7 @@ class Lambda(Expression):
         restricted to exclude the Lambda argument(s) themselves (these Variables 
         are reserved), consistent with any relabeling.
         '''
-        from multiExpression import ExpressionList, extractVar, NestedExpressionListsError
+        from multiExpression import ExpressionList, extractVar, NestedMultiExpressionError
         # Can't substitute the lambda argument variables; they are in a new scope.
         innerVarSubMap = {key:value for (key, value) in varSubMap.iteritems() if extractVar(key) not in self.argVarSet}
         if operationSubMap is None: operationSubMap = dict()
@@ -460,8 +457,8 @@ class Lambda(Expression):
         innerReservations = dict() if reservedVars is None else dict(reservedVars)
         try:
             newArgs = self.arguments.relabeled(relabelMap, reservedVars)
-        except NestedExpressionListsError:
-            raise ImproperRelabeling('May only relabel a Lambda argument with an ExpressionList if it was wrapped in Etcetera')
+        except NestedMultiExpressionError as e:
+            raise ImproperRelabeling('May only relabel a Lambda argument with a MultiExpression if it was wrapped in the appropriate Bundle: ' + e.msg)
         for arg in self.arguments:
             # Here we enable an exception of relabeling to a reserved variable as
             # long as we are relabeling the Lambda argument and internal variable together.

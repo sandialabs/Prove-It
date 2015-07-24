@@ -2,8 +2,8 @@
 multiExpression.py
 
 The internal logic of Prove-It knows about a few special types of Expression classes
-that contain multiple Expressions: ExpressionDict, ExpressionList, and ExpressionTensor.
-An ExpressionDict maps string identifiers to Expressions.  An ExpressionList is a linear
+that contain multiple Expressions: NamedExpressions, ExpressionList, and ExpressionTensor.
+An NamedExpressions maps string identifiers to Expressions.  An ExpressionList is a linear
 list of Expressions with special substitution rules regarding Etcetera list elements.
 When an ExpressionList is substituted for an Etcetera Expression, its elements will be 
 absorbed into the parent ExpressionList.  An ExpressionTensor maps lists of integers
@@ -15,7 +15,17 @@ will be absorbed into the parent ExpressionTensor.
 from proveit.expression import Expression, Variable, Operation, STRING, LATEX
 import itertools
 
-class ExpressionDict(Expression, dict):
+class MultiExpression(Expression):
+    """
+    The base class for NamedExpressions, ExpressionList, ExpressionTensor, and Bundle.
+    """
+    def __init__(self):
+        Expression.__init__(self)
+        
+class NamedExpressions(MultiExpression, dict):
+    """
+    An NamedExpressions is a composite Expression that maps strings to Expressions.
+    """
     def __init__(self, expr_dict):
         dict.__init__(self, expr_dict)
         Expression.__init__(self)
@@ -36,7 +46,7 @@ class ExpressionDict(Expression, dict):
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        return ExpressionDict({key:expr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars) for key, expr in self.iteritems()})
+        return NamedExpressions({key:expr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars) for key, expr in self.iteritems()})
 
     def usedVars(self):
         '''
@@ -50,7 +60,7 @@ class ExpressionDict(Expression, dict):
         '''
         return set().union(*[expr.freeVars() for expr in self.values()])
 
-class ExpressionList(Expression, list):
+class ExpressionList(MultiExpression, list):
     """
     An ExpressionList is a composite Expression composed of an ordered list of member
     Expressions.  An ExpressionList is may not be nested.  Use of Etcetera can allow
@@ -68,7 +78,7 @@ class ExpressionList(Expression, list):
             expressions = expressions[0] # allowed to pass in a single list argument
         for expr in expressions:
             if isinstance(expr, ExpressionList):
-                raise NestedExpressionListsError()
+                raise NestedMultiExpressionError('May not nest ExpressionLists (do you need to use Etcetera? or ExpressionTensor?)')
             if not isinstance(expr, Expression):
                 raise TypeError('ExpressionList must be created out of Expressions)')
             if isinstance(expr, Block):
@@ -116,65 +126,7 @@ class ExpressionList(Expression, list):
         '''
         return set().union(*[expr.freeVars() for expr in self])
 
-def _expressionOrList(expressions):
-    '''
-    From one or more expressions, return the flattened ExpressionList or single Expression.
-    '''
-    expressionList = ExpressionList(*expressions)
-    return expressionList.first() if len(expressionList) == 1 else expressionList
-
-class Etcetera(Expression):
-    def __init__(self, expr):
-        Expression.__init__(self)
-        self.etcExpr = expr
-    
-    def __repr__(self):
-        return '..' + repr(self.etcExpr) + '..'
-    
-    def formatted(self, formatType, fence=False):
-        # override this default as desired
-        if formatType == STRING or formatType == LATEX:
-            return '..' + self.etcExpr.formatted(formatType, fence=False) + '..'
-    
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
-        '''
-        Returns this expression with the variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
-        '''
-        subbed = self.etcExpr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
-        if isinstance(subbed, ExpressionList):
-            # substituting the entire Etcetera-wrapped expression with an ExpressionList to be merged with an outer ExpressionList
-            return subbed 
-        else:
-            return Etcetera(subbed)
-        
-    def usedVars(self):
-        '''
-        Returns the union of the used Variables of the etcExpr.
-        '''
-        return self.etcExpr.usedVars()
-        
-    def freeVars(self):
-        '''
-        Returns the union of the free Variable sof the etcExpr.
-        '''
-        return self.etcExpr.freeVars()
-
-def isEtcVar(expr):
-    return isinstance(expr, Etcetera) and isinstance(expr.etcExpr, Variable)
-
-def isEtcVarOrVar(expr):
-    return isinstance(expr, Variable) or isEtcVar(expr)
-
-def extractVar(expr):
-    # Return expr if it is a Variable, extract the Variable out of an Etcetera Variable
-    # if it is one, or return None.
-    return expr.etcExpr if isEtcVar(expr) else (expr if isinstance(expr, Variable) else None)
-
-def isEtcOperation(expr):
-    return isinstance(expr, Etcetera) and isinstance(expr.etcExpr, Operation)
-
-class ExpressionTensor(Expression, dict): 
+class ExpressionTensor(MultiExpression, dict): 
     '''
     An Expression tensor is a composite Expression represented as a dictionary mapping indices
     (as tuples of integers) to Expression elements or blocks.  It can be a sparse tensor but
@@ -197,6 +149,10 @@ class ExpressionTensor(Expression, dict):
                 # Check for correct types and consistent dimension
                 if not isinstance(block_or_element, Expression):
                     raise TypeError('Elements or blocks of the ExpressionTensor must be Expressions')
+                if isinstance(block_or_element, ExpressionList):
+                    raise NestedMultiExpressionError('May not embed an ExpressionList directly inside of an ExpressionTensor')
+                if isinstance(block_or_element, ExpressionTensor):
+                    raise NestedMultiExpressionError('May not nest an ExpressionTensor directly inside of another ExpressionTensor (do you require a Block instead?)')
                 if not all(isinstance(i, int) for i in idx):
                     raise TypeError('ExpressionTensor dictionary must be use integer sequences as indices')
                 if len(used_indices) > 1:
@@ -232,8 +188,24 @@ class ExpressionTensor(Expression, dict):
         return '{' + ', '.join(str(key) + ':' + repr(expr) for key, expr in self.iteritems()) + '}'
     
     def formatted(self, formatType, fence=False):
-        return '{' + ', '.join(str(key) + ':' + expr.formatted(formatType, fence=True) for key, expr in self.iteritems()) + '}'
-
+        if formatType == STRING:
+            return '{' + ', '.join(str(key) + ':' + expr.formatted(formatType, fence=True) for key, expr in self.iteritems()) + '}'
+        elif formatType == LATEX:
+            outStr = r'\begin{array}[' + ''.join(['c']*self.ncolumns) + ']'
+            current_row = 0
+            current_col = 0
+            for (r, c) in sorted(self.keys()):
+                if r > current_row:
+                    outStr += r'\\'
+                    current_row += 1
+                    current_col = 0
+                while c > current_col:
+                    outStr += ' & '
+                    current_col += 1
+                outStr += self[(r, c)].formatted(formatType, fence=True)
+            outStr += r'\end{array}'
+            return outStr
+        
     def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
         Returns this expression with the variables substituted 
@@ -249,8 +221,12 @@ class ExpressionTensor(Expression, dict):
             if isinstance(element_or_block, Block):
                 block = element_or_block
                 block_sub = block.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
-                for k, (i, orig_ex, sub_ex) in enumerate(zip(idx, block.extent, block_sub.extent)):
-                    shifts[k][i+orig_ex] = (sub_ex - orig_ex)
+                if isinstance(block_sub, ExpressionTensor):
+                    # The Block is replaced with an ExpressionTensor that must be embedded in this ExpressionTensor.
+                    # For now, we'll just compute index shifts and store the entire tensor for the Block in its original index.
+                    for k, (i, orig_ex, sub_ex) in enumerate(zip(idx, block.extent, block_sub.shape)):
+                        shifts[k][i+orig_ex] = (sub_ex - orig_ex)
+                subbed_tensor[idx] = block_sub
             else:
                 element_sub = element_or_block.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
                 subbed_tensor[idx] = element_sub
@@ -259,8 +235,14 @@ class ExpressionTensor(Expression, dict):
         # re-map indices
         subbed_and_shifted_tensor = dict()
         for idx in sorted(subbed_tensor.keys()):
-            subbed_and_shifted_tensor[tuple([idx_mapping[k] for k in idx])] = subbed_tensor[idx]
-        return ExpressionTensor(subbed_tensor)
+            if isinstance(subbed_tensor[idx], ExpressionTensor):
+                # Expand a tensor-replaced Block into the full tensor
+                for block_idx in subbed_tensor[idx].keys():
+                    subbed_and_shifted_tensor[tuple([idx_mapping[k] + block_idx[k] for k in idx])] = subbed_tensor[idx][block_idx]
+            else:
+                subbed_and_shifted_tensor[tuple([idx_mapping[k] for k in idx])] = subbed_tensor[idx]
+        # Return the ExpressionTensor with its substitutions
+        return ExpressionTensor(subbed_and_shifted_tensor)
         
     def usedVars(self):
         '''
@@ -274,17 +256,103 @@ class ExpressionTensor(Expression, dict):
         '''
         return set().union(*[expr.freeVars() for expr in self.values()])
 
-class Block(Expression):
-    def __init__(self, expr, extent, flexible):
-        self.expr = expr
-        self.extent = extent
-        self.flexible = flexible
+class Bundle(MultiExpression):
+    def __init__(self, multiExprType, bundledExpr, maker):
+        Expression.__init__(self)
+        assert multiExprType == ExpressionList or multiExprType == ExpressionTensor, "Unrecognized multi-Expression type for Bundle"
+        self.multiExprType = multiExprType
+        self.bundledExpr = bundledExpr
+        self.maker = maker
+
+    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+        '''
+        Returns this Expression with the variables substituted according to subMap 
+        and/or relabeled according to relabelMap.  If the substituted bundledExpr
+        if of the multiExprType, it will be extracted from the Bundle wrapping and 
+        incorporated into the multi-Expression which contains it.
+        '''
+        subbed = self.bundledExpr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+        if isinstance(subbed, self.multiExprType):
+            # substituting the entire Bundles expression with an ExpressionList to be merged with an outer multi-Expression
+            return subbed 
+        else:
+            return self.maker(subbed)
+
+    def usedVars(self):
+        '''
+        Returns the union of the used Variables of the bundledExpr.
+        '''
+        return self.bundledExpr.usedVars()
         
+    def freeVars(self):
+        '''
+        Returns the union of the free Variable sof the bundledExpr.
+        '''
+        return self.bundledExpr.freeVars()
+
+def isBundledVar(expr):
+    # Is the expression a Bundled Variable (Variable wrapped in Bundle)?
+    return isinstance(expr, Bundle) and isinstance(expr.bundledExpr, Variable)
+
+def isBundledVarOrVar(expr):
+    # Is the expression either a Variable a Bundled Variable (Variable wrapped in Bundle)?
+    return isinstance(expr, Variable) or isBundledVar(expr)
+
+def extractVar(expr):
+    # Return expr if it is a Variable, extract the Variable out of a Bundled Variable
+    # if it is one, or return None.
+    return expr.bundledExpr if isBundledVar(expr) else (expr if isinstance(expr, Variable) else None)
+
+def isBundledOperation(expr):
+    # Is the expression a Bundled Ooperation (Operation wrapped in Bundle)?
+    return isinstance(expr, Etcetera) and isinstance(expr.bundledExpr, Operation)
+        
+class Etcetera(Bundle):
+    def __init__(self, expr):
+        Bundle.__init__(self, ExpressionList, expr, lambda expr : Etcetera(expr))
+    
+    def __repr__(self):
+        return '..' + repr(self.bundledExpr) + '..'
+    
+    def formatted(self, formatType, fence=False):
+        # override this default as desired
+        if formatType == STRING or formatType == LATEX:
+            return '..' + self.bundledExpr.formatted(formatType, fence=False) + '..'
+    
+class Block(Bundle):
+    def __init__(self, expr, extent, flexible):
+        self.extent = tuple(extent)
+        self.flexible = flexible
+        Bundle.__init__(self, ExpressionTensor, expr, lambda expr : Block(expr, self.extent, self.flexible))
+
+    def __repr__(self):
+        if self.flexible:
+            return '[..' + repr(self.bundledExpr) + '..]_' + self.extent
+        else:
+            return '[' + repr(self.bundledExpr) + ']_' + self.extent
+    
+    def formatted(self, formatType, fence=True):
+        # override this default as desired
+        innerFormatted = self.bundledExpr.formatted(formatType, fence=False)
+        if formatType == STRING:
+            if self.flexible:
+                return '[..' + innerFormatted + '..]'
+            else:
+                return '[' + innerFormatted + ']'
+        elif formatType == LATEX:
+            if self.flexible:
+                return '\left[..' + innerFormatted + '..\right]'
+            else:
+                return '\left[' + innerFormatted + '\right]'
+
     def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
+        subbed = Bundle.substituted(self, varSubMap, operationSubMap, relabelMap, reservedVars)
+        if not self.flexible and isinstance(subbed, ExpressionTensor) and subbed.shape != self.extent:
+            raise ExpressionTensorReshapingError("May not change the shape of a Block that is not flexible")
         inner_sub = self.expr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars) 
         if isinstance(inner_sub, ExpressionList) or isinstance(inner_sub, ExpressionTensor):
             assert self.flexible or (inner_sub.shape == self.extent), 'The Block extent cannot change unless the Block was created to be flexible'
@@ -292,36 +360,24 @@ class Block(Expression):
         else:
             return Block(inner_sub, self.extent, self.flexible)
 
-    def usedVars(self):
-        '''
-        Returns the used Variables of this Block Expression.
-        '''
-        return self.expr.usedVars()
-        
-    def freeVars(self):
-        '''
-        Returns the free Variables of this Block Expression.
-        '''
-        return self.expr.freeVars()
-
 def multiExpression(expressions):
     '''
     Put the appropriate multi-Expression wrapper around expressions.  
-    Dictionaries with string keys will be wrapped in an ExpressionDict.  
+    Dictionaries with string keys will be wrapped in an NamedExpressions.  
     Other dictionaries will be wrapped in an ExpressionTensor.  
     A single Expression or iterable over only Expressions will be wrapped 
     in an ExpressionList.
     '''
-    if isinstance(expressions, ExpressionList) or isinstance(expressions, ExpressionDict) or isinstance(expressions, ExpressionTensor):
+    if isinstance(expressions, ExpressionList) or isinstance(expressions, NamedExpressions) or isinstance(expressions, ExpressionTensor):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
         return ExpressionList(expressions) # a single expression that we will wrap in an ExpressionLIst
     elif isinstance(expressions, dict):
         if len(expressions) > 0 and isinstance(expressions.keys()[0], str):
-            # when there is a string key, it must be an ExpressionDict
-            return ExpressionDict(expressions)
+            # when there is a string key, it must be an NamedExpressions
+            return NamedExpressions(expressions)
         else:
-            # if dict is not an ExpressionDict, it must be an ExpressionTensor 
+            # if dict is not an NamedExpressions, it must be an ExpressionTensor 
             return ExpressionTensor(expressions)
     else:
         if all(isinstance(subExpr, Expression) for subExpr in expressions):
@@ -340,8 +396,14 @@ def singleOrMultiExpression(exprOrExprs):
         return exprOrExprs
     else: return multiExpression(exprOrExprs)
 
-class NestedExpressionListsError(Exception):
-    def __init__(self):
-        pass
+class NestedMultiExpressionError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
     def __str__(self):
-        return "May not nest ExpressionLists (do you need to use Etcetera? or ExpressionTensor?)"
+        return self.msg
+
+class ExpressionTensorReshapingError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg
