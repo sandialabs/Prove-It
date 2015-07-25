@@ -1,2 +1,2 @@
-from arithmetic import *
+#from arithmetic import *
 #from integers import *

@@ -4,6 +4,7 @@ pkg = __package__
 
 A = Variable('A')
 B = Variable('B')
+C = Variable('C')
 
 a = Variable('a')
 b = Variable('b')
@@ -30,7 +31,7 @@ u = Variable('ket_u',{LATEX:r'|u\rangle'})
 
 e = Literal(pkg,'e')
 i = Literal(pkg,'i')
-pi = Variable('pi',{LATEX:r'\pi'})
+pi = Literal(pkg,'pi',{LATEX:r'\pi'})
 
 k = Variable('k')
 l = Variable('l')
@@ -47,9 +48,17 @@ Zp  = Literal(pkg,'Z^+',{LATEX:r'\mathbb{Z}^+'})
 R   = Literal(pkg,'R',{LATEX:r'\mathbb{R}'})
 zeroToOne = Literal(pkg,'zeroToOne',{LATEX:r'[0,1]'})
 
+Reals = Literal(pkg,'Reals',{LATEX:r'\mathbb{R}'})
+Integers = Literal(pkg,'Integers',{LATEX:r'\mathbb{Z}'})
+Naturals = Literal(pkg,'Naturals',{LATEX:r'\mathbb{N}'})
+Complexes = Literal(pkg,'Complexes',{LATEX:r'\mathbb{C}'})
+
 x = Variable('x')
 y = Variable('y')
 z = Variable('z')
+
+theta = Variable('theta',{LATEX:r'\theta'})
+delta = Variable('delta',{LATEX:r'\delta'})
 
 tFunc = Literal(pkg,'tFunc')
 tFunc_n_eps = Operation(tFunc, (n, eps))
@@ -58,3 +67,7 @@ QPE = Literal(pkg,'QPE')
 QPEfunc = Operation(QPE,(U,u,t))
 
 Am = Operation(A,m)
+Bm = Operation(B,m)
+Cn = Operation(C,n)
+
+f = Variable('f')
