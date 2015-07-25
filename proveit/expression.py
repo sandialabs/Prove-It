@@ -205,16 +205,16 @@ class Expression:
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., arguments of a Lambda function)")
         return self
     
-    def latex(self):
+    def latex(self,fence=False):
         '''
         If running IPython notebook, this will display the expression generated via latex;
         otherwise returns the latex formatting.
         '''
         try:
             from IPython.display import display, Math
-            display(Math(self.formatted(LATEX)))
+            display(Math(self.formatted(LATEX,fence=fence)))
         except:
-            return self.formatted(LATEX)
+            return self.formatted(LATEX,fence=fence)
         
 class Literal(Expression):
     """
