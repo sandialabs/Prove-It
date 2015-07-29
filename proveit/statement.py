@@ -176,7 +176,7 @@ class Statement:
                 if sub.__class__ != subKey.multiExprType:
                     if subKey.multiExprType == ExpressionList:
                         raise ImproperSpecialization('Etcetera Variables may only be specialized to a list of Expressions')
-                    elif subKey.multiExprType == Expression:
+                    elif subKey.multiExprType == ExpressionTensor:
                         raise ImproperSpecialization('Block Variables may only be specialized to a tensor of Expressions')
                     else:
                         raise ImproperSpecialization('Unknown Bundle type:' + str(subKey.multiExprType))

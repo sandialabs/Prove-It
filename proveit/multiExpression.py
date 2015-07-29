@@ -13,7 +13,6 @@ will be absorbed into the parent ExpressionTensor.
 '''
 
 from proveit.expression import Expression, Variable, Operation, STRING, LATEX
-import itertools
 
 class MultiExpression(Expression):
     """
@@ -36,10 +35,10 @@ class NamedExpressions(MultiExpression, dict):
                 raise TypeError("Values of an expression dictionary must be Expressions")
 
     def __repr__(self):
-        return '{' + ', '.join(repr(key) + ':' + repr(expr) for key, expr in self.iteritems()) + '}'
+        return '{' + ', '.join(repr(key) + ':' + repr(self[key]) for key in sorted(self.keys())) + '}'
     
     def formatted(self, formatType, fence=False):
-        return '{' + ', '.join(repr(key) + ':' + expr.formatted(formatType, fence=True) for key, expr in self.iteritems()) + '}'
+        return '{' + ', '.join(repr(key) + ':' + self[key].formatted(formatType, fence=True) for key in sorted(self.keys())) + '}'
     
     def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
@@ -81,8 +80,8 @@ class ExpressionList(MultiExpression, list):
                 raise NestedMultiExpressionError('May not nest ExpressionLists (do you need to use Etcetera? or ExpressionTensor?)')
             if not isinstance(expr, Expression):
                 raise TypeError('ExpressionList must be created out of Expressions)')
-            if isinstance(expr, Block):
-                raise TypeError('A Block expression may only be used in an ExpressionTensor (you may use an Etcetera Operation in an ExpressionList)')
+            #if isinstance(expr, Block):
+            #    raise TypeError('A Block expression may only be used in an ExpressionTensor (you may use an Etcetera Operation in an ExpressionList)')
             self.append(expr)
         self.shape = (len(self),)
     
@@ -132,117 +131,173 @@ class ExpressionTensor(MultiExpression, dict):
     (as tuples of integers) to Expression elements or blocks.  It can be a sparse tensor but
     must not have overlapping blocks.
     '''
-    def __init__(self, tensor):
+    def __init__(self, tensor, shape=None):
         '''
         Create an ExpressionTensor either with a simple, dense tensor (list of lists ... of lists) or
         with a dictionary mapping indices (as tuples of integers) to Expression elements or blocks.
         '''
         dict.__init__(self)
-        Expression.__init__(self)        
-        if isinstance(tensor, dict):
-            # Supplied a dictionary mapping indices (as tuples of integers) to Exrepssion elements or blocks.
-            self.update(tensor)
-            used_indices = set()
-            self.dim = None
-            # for each dictionary item
-            for idx, block_or_element in tensor.iteritems():
-                # Check for correct types and consistent dimension
-                if not isinstance(block_or_element, Expression):
-                    raise TypeError('Elements or blocks of the ExpressionTensor must be Expressions')
-                if isinstance(block_or_element, ExpressionList):
-                    raise NestedMultiExpressionError('May not embed an ExpressionList directly inside of an ExpressionTensor')
-                if isinstance(block_or_element, ExpressionTensor):
-                    raise NestedMultiExpressionError('May not nest an ExpressionTensor directly inside of another ExpressionTensor (do you require a Block instead?)')
-                if not all(isinstance(i, int) for i in idx):
-                    raise TypeError('ExpressionTensor dictionary must be use integer sequences as indices')
-                if len(used_indices) > 1:
-                    if self.dim != len(idx):
-                        raise ValueError('Inconsistent dimension for the indices')
-                self.dim = len(idx)
-                # Check for overlapping Block/element
-                if isinstance(block_or_element, Block):
-                    block = block_or_element
-                    if len(block.extent) != self.dim:
-                        raise ValueError('Block extent is not consistent with ExpressionTensor dimension (indicated by indices)')
-                    for block_idx in itertools.product([xrange(k) for k in block.extent]):
-                        inner_idx = [i + j for i, j in zip(idx, block_idx)]
-                        if inner_idx in used_indices:
-                            raise ValueError('ExpressionTensor must not have overlapping blocks/elements')
-                        used_indices.add(inner_idx)
+        if not isinstance(tensor, dict):
+            tensor, _ = ExpressionTensor._tensor_from_iterables(tensor)
+        self.shape = shape
+        fixed_shape = (shape is not None)
+        for idx, element in tensor.iteritems():
+            for i in idx:
+                if not isinstance(i, int) or i < 0:
+                    raise ExpressionTensorIndexError('ExpressionTensor indices must be an iterable set of non-negative integers')                
+            if self.shape is None:
+                self.shape = [0]*len(idx)
+            elif len(idx) != len(self.shape):
+                if fixed_shape:
+                    raise ExpressionTensorShapeError('ExpressionTensor indices must have the same dimensionality as the specified shape')
                 else:
-                    if idx in used_indices:
-                        raise ValueError('ExpressionTensor must not have overlapping blocks/elements')
-                    used_indices.add(idx)
-            # the shape is the maximum for the used indices in each of the dimensions
-            self.shape = [0]*self.dim 
-            for idx in used_indices:
-                self.shape = [max(i, j) for i, j in zip(self.shape, idx)]
-        else:
-            from numpy import array
-            a = array(tensor)
-            for idx in itertools.product([xrange(k) for k in a.shape]):
-                self.__setitem__(idx, a[idx])
-            self.shape = a.shape
+                    raise ExpressionTensorShapeError('ExpressionTensor indices must have consistent dimensionality')
+            if fixed_shape:
+                if any(idx[d] >= self.shape[d] for d in xrange(len(idx))):
+                    raise ExpressionTensorShapeError('ExpressionTensor index out the specified shape bounds')
+            else:
+                for k, i in enumerate(idx):
+                    self.shape[k] = max(self.shape[k], i+1)
+            if not isinstance(element, Expression):
+                try:
+                    element = ExpressionTensor(element)
+                except TypeError:
+                    raise TypeError('Each ExpressionTensor element must be an Expression or transformable to a nested ExpressionTensor')                
+            if isinstance(element, ExpressionTensor) and element.shape==(1, 1):
+                element = element[(0, 0)] # no need for a sub-tensor with just 1 element
+            self[idx] = element
+        self.shape = tuple(self.shape)
+        # Regularize the tensor for a unique form with respect to blocks.
+        self._regularize()
+
+    @staticmethod
+    def _tensor_from_iterables(tensor, pre_idx=tuple()):
+        try:
+            sub_tensors = []
+            sub_shapes = []
+            for i, element in enumerate(tensor):
+                if isinstance(element, Expression):
+                    sub_shapes.append(tuple())
+                else:
+                    sub_tensor, sub_shape = ExpressionTensor._tensor_from_iterables(element, pre_idx+(i,))
+                    sub_tensors.append(sub_tensor)
+                    sub_shapes.append(sub_shape)
+            if len(sub_shapes) == 0:
+                raise ExpressionTensorShapeError('An ExpressionTensor may not have zero extent in any dimension')
+            if all(sub_shape == sub_shapes[0] for sub_shape in sub_shapes) and len(sub_shapes[0]) > 0:
+                # consistent sub-tensor shapes -- take as higher dimensional tensor
+                shape = tuple((len(tensor),) + sub_shapes[0])
+                tensor_dict = {tuple(pre_idx+(i,)+sub_idx):element for i, sub_tensor in enumerate(sub_tensors) for sub_idx, element in sub_tensor.iteritems()}
+                return tensor_dict, shape
+            else:
+                # 1-D tensor 
+                return {(i,):element for i, element in enumerate(tensor)}, (len(tensor),)
+        except TypeError:
+            raise TypeError('An ExpressionTensor must be a dictionary of indices to elements or a nested iterables of Expressions')
+            
+    def _regularize(self):
+        # For each nested tensor in the hierarchy, regularize it and
+        # then track its extent in each dimension according to its shape.
+        ndims = len(self.shape)
+        extents_by_dim = [[set() for _ in xrange(self.shape[d])] for d in xrange(ndims)]
+        for idx, element in self.iteritems():
+            if isinstance(element, ExpressionTensor):
+                if len(element.shape) != len(self.shape):
+                    raise ExpressionTensorShapeError('Dimension of sub-tensor inconsistent with top-level tensor')
+                sub_shape = element.shape
+            else: sub_shape = (1, 1, 1)
+            for d in xrange(ndims):
+                extents_by_dim[d][idx[d]].add(sub_shape[d])
+        # There may only be one extent besides unity in each extent set
+        # for a regularizable tensor.
+        for d in xrange(ndims):
+            for i in xrange(self.shape[d]):
+                if len(extents_by_dim[d][i] - {1}) > 1:
+                    raise ExpressionTensorShapeError('Ambiguous tensor blocks: nested tensors must have the same extent in a line along an axis')
+        # If there is no unity in any particular extent set, 
+        # the corresponding nested tensor may be promoted up in the hierarchy,
+        # shifting down indices at the higher level.
+        index_remap = [[i for i in xrange(self.shape[d]+1)] for d in xrange(ndims)]
+        for d in xrange(ndims):
+            new_i = 0
+            for i in xrange(self.shape[d]):
+                index_remap[d][i] = new_i
+                extents = extents_by_dim[d][i]
+                if len(extents) == 1 and ({1} not in extents):
+                    new_i += next(iter(extents))
+                else: new_i += 1
+            index_remap[d][self.shape[d]] = new_i
+        new_shape = [index_remap[d][-1] for d in xrange(ndims)]
+        if self.shape == new_shape:
+            return # No change -- in the original shape
+        # Make appropriate promotions/regularization up the ranks.
+        orig_iteritems = list(self.iteritems()) # wrapping in list will copy the original
+        self.clear()
+        self.shape = new_shape
+        for idx, element in orig_iteritems:
+            new_idx = tuple(index_remap[d][idx[d]] for d in xrange(ndims))
+            if isinstance(element, ExpressionTensor):
+                for sub_idx, sub_element in element.iteritems():
+                    top_idx = list(new_idx)
+                    sub_idx = list(sub_idx)
+                    full_promotion = True
+                    for d in xrange(ndims):
+                        if index_remap[d][idx[d]+1]-index_remap[d][idx[d]] > 1:
+                            top_idx[d] += sub_idx[d]
+                            sub_idx[d] = 0
+                        else:
+                            full_promotion = False
+                    top_idx, sub_idx = tuple(top_idx), tuple(sub_idx)
+                    if full_promotion:
+                        self[top_idx] = sub_element
+                    else:
+                        if top_idx not in self:
+                            self[top_idx] = dict()
+                        self[top_idx][sub_idx] = sub_element
+            else:
+                self[new_idx] = element
+        # Transform any new sub-tensors created as dictionaries into ExpressionTensors
+        for idx, element in self.iteritems():
+            if isinstance(element, dict):
+                if len(element) == 1: self[idx] = element[(0, 0)]
+                else: self[idx] = ExpressionTensor(element)
                 
     def __repr__(self):
-        return '{' + ', '.join(str(key) + ':' + repr(expr) for key, expr in self.iteritems()) + '}'
+        return '{' + ', '.join(str(key) + ':' + repr(self[key]) for key in sorted(self.keys())) + '}'
     
     def formatted(self, formatType, fence=False):
-        if formatType == STRING:
-            return '{' + ', '.join(str(key) + ':' + expr.formatted(formatType, fence=True) for key, expr in self.iteritems()) + '}'
-        elif formatType == LATEX:
-            outStr = r'\begin{array}[' + ''.join(['c']*self.ncolumns) + ']'
+        if formatType == LATEX and len(self.shape) == 2:
+            _, ncolumns = self.shape
+            outStr = r'\begin{array}{' + ''.join(['c']*ncolumns) + '}\n'
             current_row = 0
             current_col = 0
             for (r, c) in sorted(self.keys()):
+                element = self[(r, c)]
                 if r > current_row:
-                    outStr += r'\\'
+                    outStr += r' \\' + '\n'
                     current_row += 1
                     current_col = 0
                 while c > current_col:
                     outStr += ' & '
                     current_col += 1
-                outStr += self[(r, c)].formatted(formatType, fence=True)
-            outStr += r'\end{array}'
-            return outStr
+                outStr += element.formatted(formatType, fence=True)
+            outStr += '\n' + r'\end{array}' + '\n'
+            return outStr            
+        else:
+            return '{' + ', '.join(str(key) + ':' + self[key].formatted(formatType, fence=True) for key in sorted(self.keys())) + '}'
         
     def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        from numpy import cumsum
         subbed_tensor = dict()
         # substitute elements/blocks of the ExpressionTensor and
         # establish shifts coming from resized Blocks in the ExpressionTensor
-        shifts = [[0 for k in xrange(l)] for l in self.shape]
-        for idx in sorted(self.keys()):
-            element_or_block = self.get(idx)
-            if isinstance(element_or_block, Block):
-                block = element_or_block
-                block_sub = block.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
-                if isinstance(block_sub, ExpressionTensor):
-                    # The Block is replaced with an ExpressionTensor that must be embedded in this ExpressionTensor.
-                    # For now, we'll just compute index shifts and store the entire tensor for the Block in its original index.
-                    for k, (i, orig_ex, sub_ex) in enumerate(zip(idx, block.extent, block_sub.shape)):
-                        shifts[k][i+orig_ex] = (sub_ex - orig_ex)
-                subbed_tensor[idx] = block_sub
-            else:
-                element_sub = element_or_block.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
-                subbed_tensor[idx] = element_sub
-        # obtain index mapping, for each tensor dimension, from the shifts
-        idx_mapping = [cumsum(shifts[l]) for l in self.shape]
-        # re-map indices
-        subbed_and_shifted_tensor = dict()
-        for idx in sorted(subbed_tensor.keys()):
-            if isinstance(subbed_tensor[idx], ExpressionTensor):
-                # Expand a tensor-replaced Block into the full tensor
-                for block_idx in subbed_tensor[idx].keys():
-                    subbed_and_shifted_tensor[tuple([idx_mapping[k] + block_idx[k] for k in idx])] = subbed_tensor[idx][block_idx]
-            else:
-                subbed_and_shifted_tensor[tuple([idx_mapping[k] for k in idx])] = subbed_tensor[idx]
-        # Return the ExpressionTensor with its substitutions
-        return ExpressionTensor(subbed_and_shifted_tensor)
+        for idx, element in self.iteritems():
+            subbed_element = element.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+            subbed_tensor[idx] = subbed_element
+        return ExpressionTensor(subbed_tensor)
         
     def usedVars(self):
         '''
@@ -320,45 +375,19 @@ class Etcetera(Bundle):
             return '..' + self.bundledExpr.formatted(formatType, fence=False) + '..'
     
 class Block(Bundle):
-    def __init__(self, expr, extent, flexible):
-        self.extent = tuple(extent)
-        self.flexible = flexible
-        Bundle.__init__(self, ExpressionTensor, expr, lambda expr : Block(expr, self.extent, self.flexible))
+    def __init__(self, expr):
+        Bundle.__init__(self, ExpressionTensor, expr, lambda expr : Block(expr))
 
     def __repr__(self):
-        if self.flexible:
-            return '[..' + repr(self.bundledExpr) + '..]_' + self.extent
-        else:
-            return '[' + repr(self.bundledExpr) + ']_' + self.extent
+        return '[..' + repr(self.bundledExpr) + '..]'
     
     def formatted(self, formatType, fence=True):
         # override this default as desired
         innerFormatted = self.bundledExpr.formatted(formatType, fence=False)
         if formatType == STRING:
-            if self.flexible:
-                return '[..' + innerFormatted + '..]'
-            else:
-                return '[' + innerFormatted + ']'
+            return '[..' + innerFormatted + '..]'
         elif formatType == LATEX:
-            if self.flexible:
-                return '\left[..' + innerFormatted + '..\right]'
-            else:
-                return '\left[' + innerFormatted + '\right]'
-
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
-        '''
-        Returns this expression with the variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
-        '''
-        subbed = Bundle.substituted(self, varSubMap, operationSubMap, relabelMap, reservedVars)
-        if not self.flexible and isinstance(subbed, ExpressionTensor) and subbed.shape != self.extent:
-            raise ExpressionTensorReshapingError("May not change the shape of a Block that is not flexible")
-        inner_sub = self.expr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars) 
-        if isinstance(inner_sub, ExpressionList) or isinstance(inner_sub, ExpressionTensor):
-            assert self.flexible or (inner_sub.shape == self.extent), 'The Block extent cannot change unless the Block was created to be flexible'
-            return Block(inner_sub, inner_sub.shape, self.flexible)
-        else:
-            return Block(inner_sub, self.extent, self.flexible)
+            return r'\left[..' + innerFormatted + r'..\right]'
 
 def multiExpression(expressions):
     '''
@@ -373,12 +402,8 @@ def multiExpression(expressions):
     elif isinstance(expressions, Expression):
         return ExpressionList(expressions) # a single expression that we will wrap in an ExpressionLIst
     elif isinstance(expressions, dict):
-        if len(expressions) > 0 and isinstance(expressions.keys()[0], str):
-            # when there is a string key, it must be an NamedExpressions
-            return NamedExpressions(expressions)
-        else:
-            # if dict is not an NamedExpressions, it must be an ExpressionTensor 
-            return ExpressionTensor(expressions)
+        # A dictionary must be an NamedExpressions
+        return NamedExpressions(expressions)
     else:
         if all(isinstance(subExpr, Expression) for subExpr in expressions):
             # An iterable over only Expressions must be an ExpressionList
@@ -402,6 +427,18 @@ class NestedMultiExpressionError(Exception):
     def __str__(self):
         return self.msg
 
+class ExpressionTensorIndexError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg
+    
+class ExpressionTensorShapeError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg
+    
 class ExpressionTensorReshapingError(Exception):
     def __init__(self, msg):
         self.msg = msg
