@@ -16,6 +16,7 @@ from proveit.basiclogic import Forall, Exists, Equals
 
 from proveit.number.variables import A, a,b,c,m,n,r, t,eps,phi,U,SUm,C2m,H,Hm,u,e,i,pi,k,l,r,zero,one,two,infinity
 from proveit.number.variables import minusOne, minusTwo,Z,Zp,R,zeroToOne,tFunc,tFunc_n_eps,QPE,QPEfunc, Am
+from proveit.number.variables import Reals, Integers
 
 #from proveit.basiclogic.boolean.quantifiers import Forall, Exists, Equals
 from proveit.basiclogic.set.setOps import In
@@ -23,28 +24,35 @@ from proveit.basiclogic.set.setOps import In
 
 setTheorems = Theorems(__package__, locals())
 
+
+commAdd = Forall([a,b],Equals(Add(a,b),Add(b,a)))
+
+
 #Formula for infinite geometric sum
 infGeomSum = Forall(r,Equals(Summation(m,Exponentiate(r,m),DiscreteContiguousSet(zero,infinity)), 
              Fraction(one,Subtract(one,r))),
-              domain=R
+              domain=Reals
               )
 
-#Formula for finitie geometric sum              
+#Formula for finite geometric sum              
 finGeomSum = Forall([r,k,l],
                 Equals(Summation(m,Exponentiate(r,m),DiscreteContiguousSet(k,l)), 
                  Fraction(Subtract(Exponentiate(r,Add(l,one)),Exponentiate(r,k)),Subtract(r,one))),
-                 conditions=[In(k,Z),
-                  In(l,Z),
-                  In(r,R),
+                 conditions=[In(k,Integers),
+                  In(l,Integers),
+                  In(r,Reals),
                   LessThan(k,l)])
-
-#addComm = 
 #Sum of f(x) from a to c equals sum of f(x) from a to b plus sum of f(x) from b+1 to c
 splitSum = Forall([a,b,c,A],
                   Equals(Summation(m,Am,DiscreteContiguousSet(a,c)),
                          Add(Summation(m,Am,DiscreteContiguousSet(a,b)),
                              Summation(m,Am,DiscreteContiguousSet(Add(b,one),c)))),
-                  conditions=[In(a,Z),In(b,Z),In(c,Z),LessThanEquals(a,b),LessThanEquals(b,c)])
+                  conditions=[In(a,Integers),In(b,Integers),In(c,Integers),LessThanEquals(a,b),LessThanEquals(b,c)])
+
+#shiftSum = Forall([a,b,c,A],
+#                  Equals(
+#                        Summation(m,Am,DiscreteContiguousSet(a,b)),
+#                        Summation(m,A
 
 setTheorems.finish(locals())
 

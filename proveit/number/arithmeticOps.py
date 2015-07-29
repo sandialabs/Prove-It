@@ -7,7 +7,7 @@ from proveit.everythingLiteral import EVERYTHING
 #from variables import a, b
 #import variables as var
 from simpleExpr import cEtc
-from proveit.number.variables import zero, infinity,a,b,c,A,r,m,k,l
+from proveit.number.variables import zero, infinity,a,b,c,A,r,m,k,l, Am
 
 pkg = __package__
 
@@ -104,6 +104,14 @@ class Add(AssociativeOperation):
         Add together any number of operands.
         '''
         AssociativeOperation.__init__(self, ADD, *operands)
+#    def commute(self,index0,index1):
+    def commute(self):#Only works at present for two-place addition
+        if len(self.operands)!=2:
+            raise ValueError('This method can only commute two-place addition.')
+        else:
+            from proveit.number.theorems import commAdd
+            return commAdd.specialize({a:self.operands[0],b:self.operands[1]})
+
 
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
 
@@ -222,7 +230,11 @@ class Summation(OperationOverInstances):
                 return finGeomSum.specialize({r:self.r, m:self.m, k:self.k, l:self.l})
 #        else:
 #            print "Not a geometric sum!"
-    def splitSum(self,splitIndex):
+    def splitSumApart(self,splitIndex):
+    #Something is not right here- e.g.:
+#        zz = Summation(x,Bm,DiscreteContiguousSet(k,l))
+#        zz.splitSumApart(t)
+##       replaces B(m) with B(x), which is... not right.
         r'''
         Splits sum over one DiscreteContiguousSet into sum over two, splitting at splitIndex. 
         r'''
@@ -231,7 +243,8 @@ class Summation(OperationOverInstances):
         self.a = self.domain.lowerBound
         self.c = self.domain.upperBound
         self.b = splitIndex
-        return splitSum.specialize({m:self.m,a:self.a,b:self.b,c:self.c,Am:self.summand})
+        self.Aselfm = Operation(A,self.m)
+        return splitSum.specialize({m:self.m,a:self.a,b:self.b,c:self.c,self.Aselfm:self.summand})
 
 
 def summationMaker(operands):
@@ -242,13 +255,24 @@ def summationMaker(operands):
 #SUMMATION = Literal(pkg, "SUMMATION", {STRING: r'Summation', LATEX: r'\sum'}, operationMaker = lambda operands : Summation(*OperationOverInstances.extractParameters(operands)))
 
 SUMMATION = Literal(pkg, "SUMMATION", {STRING: r'Summation', LATEX: r'\sum'}, operationMaker = summationMaker)
+'''
+class Abs(Operation):
+    def __init__(self, A):
+        Operation.__init__(self, ABS, A)
+        self.operand = A
+
+    def formatted(self, formatType, fence=False):
+
+        return '|'+self.operand.formatted(formatType, fence=fence)+'|'
+
+ABS = Literal(pkg, 'ABS', operationMaker = lambda operands : Abs(*operands))
+'''
+class Neg(Operation):
+    def __init__(self,A):
+        Operation.__init__(self, NEG, A)
+        self.operand = A
+    
+    def formatted(self, formatType, fence=False):
+        return '-'+self.operand.formatted(formatType, fence=fence)
         
-#        OperationOverInstances.__init__(self, FORALL, instanceVars, instanceExpr, conditions, domain)
-
-#    def formattedOperator(self, formatType):
-#        if formatType == STRING:
-#            return 'Summation'
-
-
-#        elif formatType == LATEX:
-#            return '\sum'
+NEG = Literal(pkg, 'NEG', operationMaker = lambda operands : Neg(*operands))

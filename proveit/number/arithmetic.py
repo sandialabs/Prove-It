@@ -323,3 +323,5 @@ class Summation(OperationOverInstances):
             return 'Summation'
         elif formatType == LATEX:
             return '\sum'
+    
+

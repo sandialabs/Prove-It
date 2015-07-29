@@ -27,7 +27,7 @@ class In(Operation):
             innerStr = ', '.join(elem.formatted(formatType, fence=False) for elem in self.elements[:-1]) + andStr +  self.elements[-1].formatted(formatType, fence=False) + ' ' + formattedOperator + ' ' + formattedDomain
         if fence: 
             if formatType == LATEX:
-                return '\left(' + innerStr + '\right)'
+                return r'\left(' + innerStr + r'\right)'
             else:
                 return '(' + innerStr + ')'
         else: return innerStr
