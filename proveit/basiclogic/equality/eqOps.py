@@ -323,23 +323,4 @@ class NotEquals(BinaryOperation):
         return notEqualsInBool.specialize({x:self.lhs, y:self.rhs}).check()
 
 NOTEQUALS = Literal(pkg, 'NOTEQUALS', {STRING:'!=', LATEX:r'\neq'}, lambda operands : NotEquals(*operands))
-    
-class EquationChain:
-    def __init__(self):
-        self.eqns = []
-    
-    def append(self, eqn):
-        if len(self.eqns) > 0:
-            assert self.eqns[-1].rhs == eqn.lhs, 'Left-hand side of new equation should match the right-hand side of the last equation in the equation chain'
-        self.eqns.append(eqn)
-    
-    def equateEnds(self, assumptions):
-        '''
-        Prove that the lhs of the first equation equals the rhs of the
-        last equation under the given assumptions.
-        '''
-        eqn = self.eqns[0]
-        for nextEq in self.eqns[1:]:
-            eqn = eqn.applyTransitivity(nextEq).prove(assumptions)
-        return eqn
-    
+
