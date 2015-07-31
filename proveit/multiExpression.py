@@ -196,8 +196,8 @@ class ExpressionTensor(MultiExpression, dict):
             raise TypeError('An ExpressionTensor must be a dictionary of indices to elements or a nested iterables of Expressions')
             
     def _regularize(self):
-        # For each nested tensor in the hierarchy, regularize it and
-        # then track its extent in each dimension according to its shape.
+        # For each nested tensor in the hierarchy, track its extent 
+        # in each dimension according to its shape.
         ndims = len(self.shape)
         extents_by_dim = [[set() for _ in xrange(self.shape[d])] for d in xrange(ndims)]
         for idx, element in self.iteritems():
@@ -205,16 +205,18 @@ class ExpressionTensor(MultiExpression, dict):
                 if len(element.shape) != len(self.shape):
                     raise ExpressionTensorShapeError('Dimension of sub-tensor inconsistent with top-level tensor')
                 sub_shape = element.shape
+            elif isinstance(element, Block):
+                sub_shape = ('B', 'B', 'B') # Use 'B' as a special Block extent (flexible)
             else: sub_shape = (1, 1, 1)
             for d in xrange(ndims):
                 extents_by_dim[d][idx[d]].add(sub_shape[d])
-        # There may only be one extent besides unity in each extent set
+        # There may only be one extent besides 'B' (Block) in each extent set
         # for a regularizable tensor.
         for d in xrange(ndims):
             for i in xrange(self.shape[d]):
-                if len(extents_by_dim[d][i] - {1}) > 1:
+                if len(extents_by_dim[d][i] - {'B'}) > 1:
                     raise ExpressionTensorShapeError('Ambiguous tensor blocks: nested tensors must have the same extent in a line along an axis')
-        # If there is no unity in any particular extent set, 
+        # If there is no unity or 'B' (Block) in any particular extent set, 
         # the corresponding nested tensor may be promoted up in the hierarchy,
         # shifting down indices at the higher level.
         index_remap = [[i for i in xrange(self.shape[d]+1)] for d in xrange(ndims)]
@@ -223,7 +225,7 @@ class ExpressionTensor(MultiExpression, dict):
             for i in xrange(self.shape[d]):
                 index_remap[d][i] = new_i
                 extents = extents_by_dim[d][i]
-                if len(extents) == 1 and ({1} not in extents):
+                if len(extents) == 1 and (1 not in extents) and ('B' not in extents):
                     new_i += next(iter(extents))
                 else: new_i += 1
             index_remap[d][self.shape[d]] = new_i
@@ -379,15 +381,15 @@ class Block(Bundle):
         Bundle.__init__(self, ExpressionTensor, expr, lambda expr : Block(expr))
 
     def __repr__(self):
-        return '[..' + repr(self.bundledExpr) + '..]'
+        return '[[' + repr(self.bundledExpr) + ']]'
     
     def formatted(self, formatType, fence=True):
         # override this default as desired
         innerFormatted = self.bundledExpr.formatted(formatType, fence=False)
         if formatType == STRING:
-            return '[..' + innerFormatted + '..]'
+            return '[[' + innerFormatted + ']]'
         elif formatType == LATEX:
-            return r'\left[..' + innerFormatted + r'..\right]'
+            return r'\left[\left[' + innerFormatted + r'\right]\right]'
 
 def multiExpression(expressions):
     '''
