@@ -6,33 +6,33 @@ class Equation:
     new equations that involve A or B, deriving each new equation from
     the previous equations.
     '''
-    def __init__(self, eqn):
+    def __init__(self, eqExpr):
         '''
         Initialize the Equation with an Equals expression.
         '''
-        if not isinstance(eqn, Equals):
+        if not isinstance(eqExpr, Equals):
             raise EquationException('Equation must be initialized with an Equals expression')
-        self.eqn = eqn
+        self.eqExpr = eqExpr
     
-    def update(self, next_eqn):
+    def update(self, nextEqExpr):
         '''
-        Update the old equation via next_eqn to a new equation that is
-        derived from the old equation and next_eqn.  This new equation
+        Update the old equation via nextEqExpr to a new equation that is
+        derived from the old equation and nextEqExpr.  This new equation
         is then stored as "the equation" and returned.  For example, if 
-        the old equation is A=B and next_eqn is B=C, then update derives, 
+        the old equation is A=B and nextEqExpr is B=C, then update derives, 
         stores (ready for the next update), and returns A=C.
         '''
-        if not isinstance(next_eqn, Equals):
+        if not isinstance(nextEqExpr, Equals):
             raise EquationException('Equation may only be updated with an Equals expression')
-        self.eqn = self.eqn.applyTransitivity(next_eqn).check({self.eqn, next_eqn})
-        return self.eqn
+        self.eqExpr = self.eqExpr.applyTransitivity(nextEqExpr).check({self.eqExpr, nextEqExpr})
+        return self.eqExpr
     
     def prove(self, assumptions=frozenset()):
         '''
         Forwards this prove "command" to the wrapped equation Expression but
         then returns this Equation wrapper.
         '''
-        self.eqn.prove(assumptions)
+        self.eqExpr.prove(assumptions)
         return self
 
     def qed(self, filename):
@@ -40,8 +40,8 @@ class Equation:
         Forwards this qed "command" to the wrapped equation Expression but
         then returns this Equation wrapper.
         '''
-        self.eqn.qed(filename)
-        return self.eqn
+        self.eqExpr.qed(filename)
+        return self.eqExpr
 
 class EquationException(Exception):
     def __init__(self, message):
