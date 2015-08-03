@@ -493,8 +493,7 @@ class Iff(BinaryOperation):
         from theorems import iffOverBoolImplEq
         return iffOverBoolImplEq.specialize({A:self.A, B:self.B}).deriveConclusion().check({self, inBool(self.A), inBool(self.B)})
 
-#IFF = Literal(pkg, 'IFF', {STRING:'<=>', LATEX:r'\Rightleftarrow'}, lambda operands : Iff(*operands))
-IFF = Literal(pkg, 'IFF', {STRING:'<=>', LATEX:r'\leftrightarrow'}, lambda operands : Iff(*operands))
+IFF = Literal(pkg, 'IFF', {STRING:'<=>', LATEX:r'\Leftrightarrow'}, lambda operands : Iff(*operands))
 
 def deriveStmtEqTrue(statement):
     '''
