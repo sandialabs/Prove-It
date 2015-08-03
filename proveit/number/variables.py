@@ -71,3 +71,4 @@ Bm = Operation(B,m)
 Cn = Operation(C,n)
 
 f = Variable('f')
+MonDecFuncs = Literal(__package__,'MonDecFuncs')

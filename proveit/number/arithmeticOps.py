@@ -255,18 +255,7 @@ def summationMaker(operands):
 #SUMMATION = Literal(pkg, "SUMMATION", {STRING: r'Summation', LATEX: r'\sum'}, operationMaker = lambda operands : Summation(*OperationOverInstances.extractParameters(operands)))
 
 SUMMATION = Literal(pkg, "SUMMATION", {STRING: r'Summation', LATEX: r'\sum'}, operationMaker = summationMaker)
-'''
-class Abs(Operation):
-    def __init__(self, A):
-        Operation.__init__(self, ABS, A)
-        self.operand = A
 
-    def formatted(self, formatType, fence=False):
-
-        return '|'+self.operand.formatted(formatType, fence=fence)+'|'
-
-ABS = Literal(pkg, 'ABS', operationMaker = lambda operands : Abs(*operands))
-'''
 class Neg(Operation):
     def __init__(self,A):
         Operation.__init__(self, NEG, A)
@@ -276,3 +265,31 @@ class Neg(Operation):
         return '-'+self.operand.formatted(formatType, fence=fence)
         
 NEG = Literal(pkg, 'NEG', operationMaker = lambda operands : Neg(*operands))
+
+class Integrate(OperationOverInstances):
+#    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
+#    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
+#
+    def __init__(self, indices, integrand, domain, conditions = tuple()):
+        r'''
+        Sum summand over indices over domains.
+        Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
+        indices: instance vars
+        summand: instanceExpressions
+        domains: conditions (except no longer optional)
+        '''
+        OperationOverInstances.__init__(self, INTEGRATE, indices, integrand, domain=domain, conditions=conditions)
+        self.indices = self.instanceVars
+        self.integrand = self.instanceExpr
+        
+#    def formatted(self, formatType, fence=False):
+#
+#        return r'\int'+self.operand.formatted(formatType, fence=fence)+indices
+        
+        
+def integrateMaker(operands):
+    params = OperationOverInstances.extractParameters(operands)
+    return Integrate(params['instanceVars'],params['instanceExpr'],params['domain'],params['conditions'])
+
+
+INTEGRATE = Literal(pkg, "INTEGRATE", {STRING: r'Integrate', LATEX: r'\int'}, operationMaker = summationMaker)
