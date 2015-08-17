@@ -18,8 +18,8 @@ class MultiExpression(Expression):
     """
     The base class for NamedExpressions, ExpressionList, ExpressionTensor, and Bundle.
     """
-    def __init__(self):
-        Expression.__init__(self)
+    def __init__(self, coreInfo, subExpressions):
+        Expression.__init__(self, coreInfo, subExpressions)
         
 class NamedExpressions(MultiExpression, dict):
     """
@@ -27,18 +27,15 @@ class NamedExpressions(MultiExpression, dict):
     """
     def __init__(self, expr_dict):
         dict.__init__(self, expr_dict)
-        Expression.__init__(self)
         for key, val in expr_dict.iteritems():
             if not isinstance(key, str): 
                 raise TypeError("Keywords of an expression dictionary may only be strings")
             if not isinstance(val, Expression): 
                 raise TypeError("Values of an expression dictionary must be Expressions")
+        MultiExpression.__init__(self, 'NamedExpressions ' + ','.join(sorted(self.keys())), [self[key] for key in sorted(self.keys())])
 
-    def __repr__(self):
-        return '{' + ', '.join(repr(key) + ':' + repr(self[key]) for key in sorted(self.keys())) + '}'
-    
     def formatted(self, formatType, fence=False):
-        return '{' + ', '.join(repr(key) + ':' + self[key].formatted(formatType, fence=True) for key in sorted(self.keys())) + '}'
+        return '{' + ', '.join(key + ':' + self[key].formatted(formatType, fence=True) for key in sorted(self.keys())) + '}'
     
     def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
@@ -72,7 +69,6 @@ class ExpressionList(MultiExpression, list):
         Initialize an ExpressionList from one or more Expression arguments.
         '''
         list.__init__(self)
-        Expression.__init__(self)
         if len(expressions) == 1 and not isinstance(expressions[0], Expression): 
             expressions = expressions[0] # allowed to pass in a single list argument
         for expr in expressions:
@@ -84,9 +80,7 @@ class ExpressionList(MultiExpression, list):
             #    raise TypeError('A Block expression may only be used in an ExpressionTensor (you may use an Etcetera Operation in an ExpressionList)')
             self.append(expr)
         self.shape = (len(self),)
-    
-    def __repr__(self):
-        return ','.join([repr(expr) for expr in self])
+        MultiExpression.__init__(self, 'ExpressionList', self)
     
     def formatted(self, formatType, fence=True):
         outStr = ''
@@ -169,6 +163,7 @@ class ExpressionTensor(MultiExpression, dict):
         self.shape = tuple(self.shape)
         # Regularize the tensor for a unique form with respect to blocks.
         self._regularize()
+        MultiExpression.__init__(self, 'ExpressionTensor ' + ','.join(sorted(self.keys())), [self[key] for key in sorted(self.keys())])        
 
     @staticmethod
     def _tensor_from_iterables(tensor, pre_idx=tuple()):
@@ -264,9 +259,6 @@ class ExpressionTensor(MultiExpression, dict):
                 if len(element) == 1: self[idx] = element[(0, 0)]
                 else: self[idx] = ExpressionTensor(element)
                 
-    def __repr__(self):
-        return '{' + ', '.join(str(key) + ':' + repr(self[key]) for key in sorted(self.keys())) + '}'
-    
     def formatted(self, formatType, fence=False):
         if formatType == LATEX and len(self.shape) == 2:
             _, ncolumns = self.shape
@@ -315,11 +307,11 @@ class ExpressionTensor(MultiExpression, dict):
 
 class Bundle(MultiExpression):
     def __init__(self, multiExprType, bundledExpr, maker):
-        Expression.__init__(self)
         assert multiExprType == ExpressionList or multiExprType == ExpressionTensor, "Unrecognized multi-Expression type for Bundle"
         self.multiExprType = multiExprType
         self.bundledExpr = bundledExpr
         self.maker = maker
+        MultiExpression.__init__(self, 'Bundle ' + str(multiExprType), [self.bundledExpr])
 
     def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
         '''
@@ -368,9 +360,6 @@ class Etcetera(Bundle):
     def __init__(self, expr):
         Bundle.__init__(self, ExpressionList, expr, lambda expr : Etcetera(expr))
     
-    def __repr__(self):
-        return '..' + repr(self.bundledExpr) + '..'
-    
     def formatted(self, formatType, fence=False):
         # override this default as desired
         if formatType == STRING or formatType == LATEX:
@@ -380,9 +369,6 @@ class Block(Bundle):
     def __init__(self, expr):
         Bundle.__init__(self, ExpressionTensor, expr, lambda expr : Block(expr))
 
-    def __repr__(self):
-        return '[[' + repr(self.bundledExpr) + ']]'
-    
     def formatted(self, formatType, fence=True):
         # override this default as desired
         innerFormatted = self.bundledExpr.formatted(formatType, fence=False)
