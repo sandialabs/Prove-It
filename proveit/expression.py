@@ -3,29 +3,71 @@ This is the expression module.
 """
 
 import re
+import os
 
 STRING = 1
 LATEX = 2
 
 class Expression:
-    lastCreationNum = 0
+    unique_id_map = dict() # map unique_id's to unique_rep's
     
-    def __init__(self, formatMap=None):
+    def __init__(self, coreInfo, subExpressions=tuple(), formatMap=None):
         # Will be the associated Statement if the Expression is
         # ever 'stated' in a particular prover.
         self.statement = None
         self.formatMap = formatMap
-        Expression.lastCreationNum += 1
-        self.creationNum = Expression.lastCreationNum
+        # unique_rep is a unique representation based upon unique_id's of sub-Expressions
+        self._coreInfo, self._subExpressions = coreInfo, subExpressions
+        self._unique_rep = self._coreInfo + ' ' + ', '.join(hex(expr._unique_id) for expr in subExpressions)
+        # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
+        self._unique_id = hash(self._unique_rep)
+        while self._unique_id in Expression.unique_id_map and Expression.unique_id_map[self._unique_id] != self._unique_rep:
+            self._unique_id += 1
+        Expression.unique_id_map[self._unique_id] = self._unique_rep
         
     def __repr__(self):
-        return ''
+        return str(self) # just use the string representation
+    
     def __eq__(self, other):
-        return repr(self) == repr(other)
+        if isinstance(other, Expression):
+            return self._unique_id == other._unique_id
+        else: return False # other must be an Expression to be equal to self
     def __ne__(self, other):
         return not self.__eq__(other)
     def __hash__(self):
-        return hash(repr(self))
+        return self._unique_id
+    
+    def _export_pvit(self, directory):
+        '''
+        Export the expression and sub-expressions into the given directory
+        for the purposes of proof certification.  Returns the identifier of
+        this expression, unique within the directory.  This occurs behind-the-
+        scenes (and is therefore not a "public" method).
+        '''
+        import hashlib
+        # export sub expressions and obtain their directory-unique ids
+        sub_ids = [sub_expr._export_pvit(directory) for sub_expr in self._subExpressions]
+        # generate a directory-unique representation for this expression
+        unique_rep = self._coreInfo + ' ' + ', '.join(sub_id for sub_id in sub_ids) + '\n'
+        # hash the unique representation and make a sub-directory of this hash value
+        rep_hash = hashlib.sha1(unique_rep).hexdigest()
+        hash_dir = os.path.join(directory, rep_hash)
+        if not os.path.exists(hash_dir):
+            os.mkdir(hash_dir)
+        # check for existing files in this hash value sub-directory (it may be there already)
+        for expr_file in os.listdir(hash_dir):
+            if expr_file[-6:] == '.pv_it':
+                with open(os.path.join(hash_dir, expr_file), 'r') as f:
+                    if f.read() == unique_rep:
+                        # an existing file contains the exported expression
+                        return rep_hash + '/' + expr_file[:-6]
+        # does not exist, create a new file (checking against an unlikely collision)
+        k = 0
+        while os.path.exists(os.path.join(hash_dir, str(k) + '.pv_it')):
+            k += 1
+        with open(os.path.join(hash_dir, str(k) + '.pv_it'), 'w') as f:
+            f.write(unique_rep)
+        return rep_hash + '/' + str(k) # unique id
     
     def __str__(self):
         return self.formatted(STRING)
@@ -40,9 +82,10 @@ class Expression:
             return self.formatMap[formatType]
         return ''
     
-    def prove(self, assumptions=frozenset()):
+    def proven(self, assumptions=frozenset()):
         """
         Prove a step along the way to a theorem proof (or throw an error if the proof fails).
+        Returns this proven statement expression.
         """
         def makeAssumptionsStr(assumption):
             return "{" + ", ".join([str(assumption) for assumption in assumptions]) + "}"
@@ -51,26 +94,41 @@ class Expression:
         return self
     
     def qed(self, filename):
-        import os
-        import os.path as path
         import proveit
-        proofsdir, thmname = path.split(filename)
-        # remove the file extension, and any optional suffix after a space
-        thmname = thmname.split('.')[0].split()[0]
-        theorems_abspath = path.abspath(path.join(proofsdir, '../theorems'))
-        theorems_relpath =  path.relpath(theorems_abspath, start=path.join(path.split(proveit.__file__)[0], '..'))
+        proofsdir, proofname = os.path.split(filename)
+        # remove the file extension for the proof name
+        proofname = os.path.splitext(proofname)[0]
+        # remove any optional suffix after a space to go from the proof name to the theorem name
+        thmname = os.path.splitext(proofname)[0].split()[0]
+        theorems_abspath = os.path.abspath(os.path.join(proofsdir, '../theorems'))
+        theorems_relpath =  os.path.relpath(theorems_abspath, start=os.path.join(os.path.split(proveit.__file__)[0], '..'))
         thm_import = __import__(theorems_relpath.replace(os.sep, '.'), fromlist=[thmname])
-        thm = thm_import.__dict__[thmname]
+        try:
+            thm = thm_import.__getattr__(thmname)
+        except AttributeError:
+            raise ProofFailure('Theorem named ' + thmname + ' does not exist')
         if not thm == self:
             raise ProofFailure('Theorem statement does not match qed expression:\n' + str(thm) + ' vs\n' + str(self))
-        self.prove()
-        print thmname, 'proven:'
-        print self
+        # forget that this is a theorem expression so that we generate a non-trivial proof:
+        self.state()
+        self.statement._prover = None
+        self.proven()
+        pvit_path = os.path.join(os.path.split(filename)[0], '..', '__pv_it__')
+        pvit_proofs_path = os.path.join(pvit_path, 'proofs')
+        if not os.path.exists(pvit_proofs_path):
+            os.mkdir(pvit_proofs_path)
+        expressions_dir = os.path.join(pvit_path, 'expressions')
+        if not os.path.exists(expressions_dir):
+            os.mkdir(expressions_dir)
+        pvit_proof_filename = os.path.join(pvit_proofs_path, proofname + '.pv_it')
+        with open(pvit_proof_filename, 'w') as pvit_proof_file:
+            self.statement.getProver()._export_pvit(pvit_proofs_path, pvit_proof_file, expressions_dir)
     
-    def check(self, assumptions=frozenset()):
+    def checked(self, assumptions=frozenset()):
         """
         Check that this statement is true under the given assumptions but not for a step
-        of a theorem proof (that is, temporary provers aren't stored).
+        of a theorem proof (that is, temporary provers aren't stored).  Returns
+        this checked statement expression.
         """
         def makeAssumptionsStr(assumption):
             return "{" + ", ".join([str(assumption) for assumption in assumptions]) + "}"
@@ -80,7 +138,7 @@ class Expression:
         
     def isProven(self, assumptions=frozenset(), maxDepth=float("inf"), markProof=True):
         """
-        Attempt to prove this statement under the given assumptions.  If a proof derivation
+        Attempt to proven this statement under the given assumptions.  If a proof derivation
         is found, returns True.  If it can't be found in the number of steps indicated by
         maxDepth, returns False.
         """
@@ -159,17 +217,17 @@ class Expression:
         if subMap is None: subMap = dict()
         if relabelMap is None: relabelMap = dict()
         (specialization, conditions) = Statement.specialize(self, subMap, relabelMap)
-        return specialization.check({self} | conditions)
+        return specialization.checked({self} | conditions)
         
     def generalize(self, forallVars, domain=None, conditions=tuple()):
         from statement import Statement
         from multiExpression import multiExpression
         from everythingLiteral import EVERYTHING
         if domain is None: domain = EVERYTHING # default is an unrestricted domain of EVERYTHING
-        # Note that the prover will not pass this "check" in its current implementation
+        # Note that the prover will not pass this "checked" in its current implementation
         # because it will not allow assumptions with variables in the newly created scope.
-        # The solution for now is not to bother calling "check" here.
-        return Statement.generalize(self, multiExpression(forallVars), domain, conditions)#.check({self})
+        # The solution for now is not to bother calling "checked" here.
+        return Statement.generalize(self, multiExpression(forallVars), domain, conditions)#.checked({self})
     
     """
     def show(self, assumptions=frozenset()):
@@ -183,10 +241,10 @@ class Expression:
     
     def proveThenShow(self, assumptions=frozenset()):
         '''
-        First attempt to prove the Statement of this Expression, then
+        First attempt to proven the Statement of this Expression, then
         show the derivation tree of the proof.
         '''
-        self.prove(assumptions).show(assumptions)
+        self.proven(assumptions).show(assumptions)
     """
     
     def proveByEval(self):
@@ -194,7 +252,7 @@ class Expression:
         Prove self by calling self.evaluate() if it equates the expression to TRUE.
         The evaluate method must be implemented by the derived class.
         '''
-        return self.evaluate().deriveViaBooleanEquality().prove()
+        return self.evaluate().deriveViaBooleanEquality().proven()
     
     def _restrictionChecked(self, reservedVars):
         '''
@@ -218,15 +276,12 @@ class Literal(Expression):
     with these Operations).
     """
     def __init__(self, package, name, formatMap = None, operationMaker = None):
-        Expression.__init__(self, formatMap)
+        Expression.__init__(self, 'Literal ' + str(package) + '.' + name, formatMap=formatMap)
         assert re.match('[A-Za-z0-9_]+', name), 'Literals must be alphanumeric or underscore.'
         self.package = package
         self.name = name
         self.operationMaker = operationMaker
-        
-    def __repr__(self):
-        return str(self.package) + '.' + self.name
-    
+            
     def formatted(self, formatType, fence=False):
         # override this default as desired
         fromFormatMap = Expression.formatted(self, formatType)
@@ -241,13 +296,10 @@ class Variable(Expression):
     may each be substituted with a general Expression.
     """    
     def __init__(self, name, formatMap = None):
-        Expression.__init__(self, formatMap)
+        Expression.__init__(self, 'Variable ' + name, formatMap=formatMap)
         assert re.match('[A-Za-z0-9_]+', name), 'Variables must be alphanumeric or underscore.'
         self.name = name
         
-    def __repr__(self):
-        return '\\' + self.name
-
     def formatted(self, formatType, fence=False):
         # override this default as desired
         fromFormatMap = Expression.formatted(self, formatType)
@@ -301,7 +353,6 @@ class Operation(Expression):
         will be then be wrapped by ExpressionList.
         '''
         from multiExpression import multiExpression
-        Expression.__init__(self)
         if not (isinstance(operator, Literal) or isinstance(operator, Variable) or isinstance(operator, Lambda)):
             raise TypeError('operator must be a Literal, Variable, or a Lambda function')
         self.operator = operator
@@ -309,6 +360,7 @@ class Operation(Expression):
         if isinstance(operator, Lambda):
             if len(self.operands) != len(operator.arguments):
                 raise ValueError("Number of arguments and number of operands must match.")
+        Expression.__init__(self, 'Operation', [self.operator, self.operands])
 
     @staticmethod
     def make(operator, operands):
@@ -322,9 +374,6 @@ class Operation(Expression):
                 raise OperationMakerViolation(operator, 'Registered Operation maker function must make an Operation true to its given operand.  Operator: ' + str(operator) + '; Operands: ' + str(operands))
             return operation
         return Operation(operator, operands)
-
-    def __repr__(self):
-        return repr(self.operator) + '(' + repr(self.operands) +')'
         
     def formatted(self, formatType, fence=False):
         # override this default as desired
@@ -410,10 +459,8 @@ class Lambda(Expression):
         if isinstance(expression, Bundle):
             raise TypeError('A Bundle must be within an ExpressionTensor or ExpressionList, not directly as a Lambda expression')
         self.expression = expression
+        Expression.__init__(self, 'Lambda', [self.arguments, self.expression])
         
-    def __repr__(self):
-        return '[(' + ','.join(repr(var) for var in self.arguments) + ')->' + repr(self.expression) + ']'
-    
     def formatted(self, formatType, fence=False):
         '''
         The default Lambda formatting is of the form "(x, y) -> f(x, y)".
