@@ -309,6 +309,8 @@ class Bundle(MultiExpression):
     def __init__(self, multiExprType, bundledExpr, maker):
         assert multiExprType == ExpressionList or multiExprType == ExpressionTensor, "Unrecognized multi-Expression type for Bundle"
         self.multiExprType = multiExprType
+        if not isinstance(self.bundledExpr, Expression):
+            raise TypeError("The 'bundled' expression should be an Expression")
         self.bundledExpr = bundledExpr
         self.maker = maker
         MultiExpression.__init__(self, 'Bundle ' + str(multiExprType), [self.bundledExpr])
