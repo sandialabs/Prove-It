@@ -2,6 +2,7 @@
 This is the statement module.
 """
 
+import proveit
 from proveit.expression import Expression, Variable, Operation, Lambda
 from proveit.multiExpression import MultiExpression, NamedExpressions, ExpressionList, ExpressionTensor, Bundle, isBundledVar, isBundledVarOrVar, isBundledOperation, multiExpression, singleOrMultiExpression
 from proveit.impliesLiteral import IMPLIES
@@ -19,20 +20,20 @@ def asStatement(statementOrExpression):
     return Statement.state(statementOrExpression).statement
 
 class Statement:
-    # All Statements, mapped by "generic" Expression representation.
+    # All Statements, mapped by Expression ids.
     statements = dict()
 
     ProofCount = 0 # counter to number each proof
     utilizedProofNumbers = set() #  don't remove from _assumptionSetsForWhichProven of a ProofStepInfo unless it's proofnumber is not utilized
     
-    def __init__(self, expression, _group=None, _name=None, _isAxiom=False, _isNamedTheorem=False):
+    def __init__(self, expression, _package=None, _name=None, _isAxiom=False, _isNamedTheorem=False):
         '''
         Do not use the Statement constructor externally.  Instead, do so indirectly;
         via the state method of an Expression or other Expression methods that
         generate new Statements from old Statements.
         '''
         self._expression = expression
-        self._group = _group
+        self._package = _package
         self._name = _name
         self._hypothesisOfImplication = None
         self._conclusionOfImplication = None
@@ -48,24 +49,17 @@ class Statement:
         self._prover = None # a Prover that proves this statement if it has no free variables and has been proven (theorem)
 
     @staticmethod
-    def state(expression, _group=None, _name=None, _isAxiom=False, _isNamedTheorem=False):
+    def state(expression, _package=None, _name=None, _isAxiom=False, _isNamedTheorem=False):
         '''
         Make a Statement from the given Expression and return the Expression.
         '''
         from prover import Prover
         
-        statement = Statement(expression, _group, _name)
-        statement = Statement.statements.setdefault(repr(expression), statement)
-        expression.statement = statement
-        
-        if _group is not None:
-            assert expression == _group[_name], "A named statement is not consistently contained in its group of " + str(_group.__class__)
-        if _isAxiom:
-            assert isinstance(_group, Axioms), "An axiom may only be defined in within an Axioms statement group"
-            statement._isAxiom = True
-        if _isNamedTheorem:
-            assert isinstance(_group, Theorems), "A theorem may only be defined in within an Theorems statement group"
-            statement._isNamedTheorem = True
+        statement = Statement(expression, _package, _name, _isAxiom, _isNamedTheorem)
+        statement = Statement.statements.setdefault(expression._unique_id, statement)
+        if _isAxiom or _isNamedTheorem:
+            assert _package is not None and _name is not None, "Theorems and Axioms must have a package and name"
+        expression.statement = statement        
         
         if _isAxiom or _isNamedTheorem:
             # Mark as proven up to axioms and theorems. The proof won't be really complete until required
@@ -314,7 +308,7 @@ class Statement:
         this statement; otherwise, returns None.
         '''
         from prover import Prover
-        if self._prover != None:
+        if self._prover is not None:
             return self._prover # proof requiring no assumptions
         if len(assumptions) > 0:
             assumptions = frozenset(assumptions)
@@ -362,41 +356,3 @@ class ImproperSpecialization(Exception):
     def __str__(self):
         return self.message
 
-class StatementGroup(dict):
-    def __init__(self, package, exclusions):
-        assert isinstance(package, str), "The package of a StatementGroup must be a string representation of a Python package"
-        self.package = package
-        self.exclusions = dict(exclusions)
-    
-    def finish(self, defs):
-        for name, expr in defs.iteritems():
-            if name not in self.exclusions and isinstance(expr, Expression):
-                self.__setitem__(name, expr)
-
-class Axioms(StatementGroup):
-    # maps packages to Axioms objects to ensure uniqueness by package
-    AxiomGroups = dict()
-    
-    def __init__(self, package, exclusions):
-        StatementGroup.__init__(self, package, exclusions)
-        assert package not in Axioms.AxiomGroups, 'May only declay one Axioms object per package'
-        Axioms.AxiomGroups[package] = self
-    
-    def finish(self, defs):
-        StatementGroup.finish(self, defs)
-        for name, expr in self.iteritems():
-            Statement.state(expr, _group=self, _name=name, _isAxiom=True)
-
-class Theorems(StatementGroup):
-    # maps packages to Theorems objects to ensure uniqueness by package
-    TheoremGroups = dict()
-    
-    def __init__(self, package, exclusions):
-        StatementGroup.__init__(self, package, exclusions)
-        assert package not in Theorems.TheoremGroups, 'May only declay one Theorems object per package'
-        Theorems.TheoremGroups[package] = self
-
-    def finish(self, defs):
-        StatementGroup.finish(self, defs)
-        for name, expr in self.iteritems():
-            Statement.state(expr, _group=self, _name=name, _isNamedTheorem=True)
