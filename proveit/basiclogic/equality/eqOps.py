@@ -16,14 +16,14 @@ class Equals(BinaryOperation):
         '''
         from axioms import equalsReflexivity
         assert self.lhs == self.rhs
-        return equalsReflexivity.specialize({x:self.lhs}).check()
+        return equalsReflexivity.specialize({x:self.lhs}).checked()
             
     def deriveReversed(self):
         '''
         From x = y derive y = x.
         '''
         from axioms import equalsSymmetry
-        return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().check({self})
+        return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
 
     def transitivityImpl(self, otherEquality):
         '''
@@ -36,7 +36,7 @@ class Equals(BinaryOperation):
         if self.rhs == otherEquality.lhs:
             # from x = y, y = z, derive y = z => x = z assuing x = y
             result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConclusion()
-            return result.check({self})
+            return result.checked({self})
         elif self.lhs == otherEquality.lhs:
             # from y = x and y = z, derive y = z => x = z assuing x = y
             return self.deriveReversed().transitivityImpl(otherEquality)
@@ -54,7 +54,7 @@ class Equals(BinaryOperation):
         From x = y (self) and y = z (otherEquality) derive and return x = z.
         Also works more generally as long as there is a common side to the equations.
         '''
-        return self.transitivityImpl(otherEquality).deriveConclusion().check({self, otherEquality})
+        return self.transitivityImpl(otherEquality).deriveConclusion().checked({self, otherEquality})
         
     def deriveViaBooleanEquality(self):
         '''
@@ -65,13 +65,13 @@ class Equals(BinaryOperation):
         from proveit.basiclogic.boolean.axioms import eqTrueElim
         from proveit.basiclogic.boolean.theorems import eqTrueRevElim, notFromEqFalse, notFromEqFalseRev
         if self.lhs == TRUE:
-            return eqTrueRevElim.specialize({A:self.rhs}).deriveConclusion().check({self}) # A
+            return eqTrueRevElim.specialize({A:self.rhs}).deriveConclusion().checked({self}) # A
         elif self.rhs == TRUE:
-            return eqTrueElim.specialize({A:self.lhs}).deriveConclusion().check({self}) # A
+            return eqTrueElim.specialize({A:self.lhs}).deriveConclusion().checked({self}) # A
         elif self.lhs == FALSE:
-            return notFromEqFalseRev.specialize({A:self.rhs}).deriveConclusion().check({self}) # Not(A)            
+            return notFromEqFalseRev.specialize({A:self.rhs}).deriveConclusion().checked({self}) # Not(A)            
         elif self.rhs == FALSE:
-            return notFromEqFalse.specialize({A:self.lhs}).deriveConclusion().check({self}) # Not(A)
+            return notFromEqFalse.specialize({A:self.lhs}).deriveConclusion().checked({self}) # Not(A)
         
     def deriveContradiction(self):
         '''
@@ -80,9 +80,9 @@ class Equals(BinaryOperation):
         from proveit.basiclogic import FALSE        
         from theorems import contradictionFromFalseEquivalence, contradictionFromFalseEquivalenceReversed
         if self.rhs == FALSE:
-            return contradictionFromFalseEquivalence.specialize({A:self.lhs}).deriveConclusion().check({self})
+            return contradictionFromFalseEquivalence.specialize({A:self.lhs}).deriveConclusion().checked({self})
         elif self.lhs == FALSE:
-            return contradictionFromFalseEquivalenceReversed.specialize({A:self.rhs}).deriveConclusion().check({self})
+            return contradictionFromFalseEquivalenceReversed.specialize({A:self.rhs}).deriveConclusion().checked({self})
     
     def concludeBooleanEquality(self):
         '''
@@ -93,17 +93,17 @@ class Equals(BinaryOperation):
         from proveit.basiclogic.boolean.axioms import eqTrueIntro
         from proveit.basiclogic.boolean.theorems import eqTrueRevIntro, eqFalseFromNegation, eqFalseRevFromNegation
         if self.rhs == TRUE:
-            return eqTrueIntro.specialize({A:self.lhs}).deriveConclusion().check({self.lhs})
+            return eqTrueIntro.specialize({A:self.lhs}).deriveConclusion().checked({self.lhs})
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
-                return eqFalseFromNegation.specialize({A:self.lhs.operands}).deriveConclusion().check({self.lhs.operands})
+                return eqFalseFromNegation.specialize({A:self.lhs.operands}).deriveConclusion().checked({self.lhs.operands})
             else:
                 return Not(self.lhs).equateNegatedToFalse()
         elif self.lhs == TRUE:
-            return eqTrueRevIntro.specialize({A:self.rhs}).deriveConclusion().check({self.rhs})
+            return eqTrueRevIntro.specialize({A:self.rhs}).deriveConclusion().checked({self.rhs})
         elif self.lhs == FALSE:
             if isinstance(self.rhs, Not):
-                return eqFalseRevFromNegation.specialize({A:self.rhs.operands}).deriveConclusion().check({self.rhs.operands})
+                return eqFalseRevFromNegation.specialize({A:self.rhs.operands}).deriveConclusion().checked({self.rhs.operands})
             else:
                 return Not(self.rhs).equateFalseToNegated()
     
@@ -112,7 +112,7 @@ class Equals(BinaryOperation):
         From (x = y), derive (x in {y}).
         '''
         from proveit.basiclogic.set.axioms import singletonDef
-        singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().check({self})
+        singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().checked({self})
     
     def substitution(self, fnArg, fnExpr):
         '''
@@ -121,7 +121,7 @@ class Equals(BinaryOperation):
         '''
         from axioms import substitution
         assert isinstance(fnArg, Variable)
-        return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion().check({self})
+        return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion().checked({self})
         
     def lhsStatementSubstitution(self, fnArg, fnExpr):
         '''
@@ -130,7 +130,7 @@ class Equals(BinaryOperation):
         '''
         from theorems import lhsSubstitution
         assert isinstance(fnArg, Variable)
-        return lhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().check({self})
+        return lhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().checked({self})
     
     def rhsStatementSubstitution(self, fnArg, fnExpr):
         '''
@@ -139,52 +139,52 @@ class Equals(BinaryOperation):
         '''
         from theorems import rhsSubstitution
         assert isinstance(fnArg, Variable)
-        return rhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().check({self})
+        return rhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().checked({self})
 
     def lhsSubstitute(self, fnArg, fnExpr):
         '''
         From x = y, and given a lambda function P(x), derive P(x) assuming P(y)
         '''
         substitution = self.lhsStatementSubstitution(fnArg, fnExpr)
-        return substitution.deriveConclusion().check({self, substitution.hypothesis})
+        return substitution.deriveConclusion().checked({self, substitution.hypothesis})
         
     def rhsSubstitute(self, fnArg, fnExpr):
         '''
         From x = y, and given a lambda function P(x), derive P(y) assuming P(x)
         '''
         substitution = self.rhsStatementSubstitution(fnArg, fnExpr)
-        return substitution.deriveConclusion().check({self, substitution.hypothesis})
+        return substitution.deriveConclusion().checked({self, substitution.hypothesis})
 
     def leftImplViaEquivalence(self):
         '''
         From A = B, derive B=>A
         '''
-        return self.lhsStatementSubstitution(X, X).check({self})
+        return self.lhsStatementSubstitution(X, X).checked({self})
 
     def rightImplViaEquivalence(self):
         '''
         From A = B, derive A=>B
         '''
-        return self.rhsStatementSubstitution(X, X).check({self})
+        return self.rhsStatementSubstitution(X, X).checked({self})
         
     def deriveRightViaEquivalence(self):
         '''
         From A = B, derive B (the Right-Hand-Side) assuming A.
         '''
-        return self.rhsSubstitute(X, X).check({self, self.lhs})
+        return self.rhsSubstitute(X, X).checked({self, self.lhs})
 
     def deriveLeftViaEquivalence(self):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.
         '''
-        return self.lhsSubstitute(X, X).check({self, self.rhs})
+        return self.lhsSubstitute(X, X).checked({self, self.rhs})
     
     def deduceInBool(self):
         '''
         Deduce and return that this equality statement is in the set of BOOLEANS.
         '''
         from axioms import equalityInBool
-        return equalityInBool.specialize({x:self.lhs, y:self.rhs}).check()
+        return equalityInBool.specialize({x:self.lhs, y:self.rhs}).checked()
     
     def inBoolViaBooleanEquality(self):
         '''
@@ -193,13 +193,13 @@ class Equals(BinaryOperation):
         from proveit.basiclogic import TRUE, FALSE
         from proveit.basiclogic.boolean.theorems import inBoolIfEqTrue, inBoolIfEqTrueRev, inBoolIfEqFalse, inBoolIfEqFalseRev
         if self.rhs == TRUE:
-            return inBoolIfEqTrue.specialize({A:self.lhs}).deriveConclusion().prove({self})
+            return inBoolIfEqTrue.specialize({A:self.lhs}).deriveConclusion().proven({self})
         if self.lhs == TRUE:
-            return inBoolIfEqTrueRev.specialize({A:self.rhs}).deriveConclusion().prove({self})
+            return inBoolIfEqTrueRev.specialize({A:self.rhs}).deriveConclusion().proven({self})
         if self.rhs == FALSE:
-            return inBoolIfEqFalse.specialize({A:self.lhs}).deriveConclusion().prove({self})
+            return inBoolIfEqFalse.specialize({A:self.lhs}).deriveConclusion().proven({self})
         if self.lhs == FALSE:
-            return inBoolIfEqFalseRev.specialize({A:self.rhs}).deriveConclusion().prove({self})
+            return inBoolIfEqFalseRev.specialize({A:self.rhs}).deriveConclusion().proven({self})
     
     def evaluate(self):
         '''
@@ -233,7 +233,7 @@ class Equals(BinaryOperation):
             except AttributeError:
                 rhsEval = None
     
-            if lhsEval == None and rhsEval == None:
+            if lhsEval is None and rhsEval is None:
                 # Cannot simplify further.  Use evalEquality.
                 return lhsSimpl.evalEquality(rhsSimpl)
             else:         
@@ -241,9 +241,9 @@ class Equals(BinaryOperation):
                 simplEval = Equals(lhsSimpl, rhsSimpl).evaluate()
                 val = simplEval.rhs
                 # Using substitution, go from simplEval to self=val
-                if lhsEval != None:
+                if lhsEval is not None:
                     lhsEval.lhsSubstitute(X, Equals(Equals(X, rhsSimpl), val))
-                if rhsEval != None:
+                if rhsEval is not None:
                     rhsEval.lhsSubstitute(X, Equals(Equals(self.lhs, X), val))
                 return Equals(self, val)
             
@@ -262,7 +262,7 @@ class NotEquals(BinaryOperation):
         From x != y derive y != x.
         '''
         from theorems import notEqualsSymmetry
-        return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().check({self})
+        return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
 
     def deriveViaDoubleNegation(self):
         '''
@@ -272,7 +272,7 @@ class NotEquals(BinaryOperation):
         from proveit.basiclogic import FALSE, inBool
         from proveit.basiclogic.boolean.theorems import fromNotFalse
         if self.rhs == FALSE:
-            return fromNotFalse.specialize({A:self.lhs}).deriveConclusion().check({self, inBool(self.lhs)})
+            return fromNotFalse.specialize({A:self.lhs}).deriveConclusion().checked({self, inBool(self.lhs)})
 
     def concludeViaDoubleNegation(self):
         '''
@@ -282,21 +282,21 @@ class NotEquals(BinaryOperation):
         from proveit.basiclogic import FALSE
         from proveit.basiclogic.boolean.theorems import notEqualsFalse
         if self.rhs == FALSE:
-            return notEqualsFalse.specialize({A:self.lhs}).deriveConclusion().check({self.lhs})
+            return notEqualsFalse.specialize({A:self.lhs}).deriveConclusion().checked({self.lhs})
 
     def definition(self):
         '''
         Return (x != y) = Not(x=y) where self represents (x != y).
         '''
         from axioms import notEqualsDef
-        return notEqualsDef.specialize({x:self.lhs, y:self.rhs}).check()
+        return notEqualsDef.specialize({x:self.lhs, y:self.rhs}).checked()
 
     def unfold(self):
         '''
         From (x != y), derive and return Not(x=y).
         '''
         from theorems import unfoldNotEquals
-        return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().check({self})
+        return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
 
     def evaluate(self):
         '''
@@ -320,7 +320,7 @@ class NotEquals(BinaryOperation):
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
         '''
         from theorems import notEqualsInBool
-        return notEqualsInBool.specialize({x:self.lhs, y:self.rhs}).check()
+        return notEqualsInBool.specialize({x:self.lhs, y:self.rhs}).checked()
 
 NOTEQUALS = Literal(pkg, 'NOTEQUALS', {STRING:'!=', LATEX:r'\neq'}, lambda operands : NotEquals(*operands))
 
