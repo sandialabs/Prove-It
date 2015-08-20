@@ -37,12 +37,15 @@ class NamedExpressions(MultiExpression, dict):
     def formatted(self, formatType, fence=False):
         return '{' + ', '.join(key + ':' + self[key].formatted(formatType, fence=True) for key in sorted(self.keys())) + '}'
     
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
         '''
-        Returns this expression with the variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
+        Returns this expression with the substitutions made 
+        according to exprMap/operationMap and/or relabeled according to relabelMap.
         '''
-        return NamedExpressions({key:expr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars) for key, expr in self.iteritems()})
+        if (exprMap is not None) and (self in exprMap):
+            return exprMap[self]._restrictionChecked(reservedVars)
+        else:
+            return NamedExpressions({key:expr.substituted(exprMap, operationMap, relabelMap, reservedVars) for key, expr in self.iteritems()})
 
     def usedVars(self):
         '''
@@ -91,15 +94,17 @@ class ExpressionList(MultiExpression, list):
             if fence: outStr += ')'
         return outStr
     
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
         '''
-        Returns this expression with the variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
+        Returns this expression with the substitutions made 
+        according to exprMap/operationMap and/or relabeled according to relabelMap.
         Flattens nested ExpressionLists that arise from Etcetera substitutions.
         '''
+        if (exprMap is not None) and (self in exprMap):
+            return exprMap[self]._restrictionChecked(reservedVars)
         def subbedGen():
             for expr in self:
-                subbed_expr = expr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+                subbed_expr = expr.substituted(exprMap, operationMap, relabelMap, reservedVars)
                 if isinstance(expr, Etcetera):
                     # expand the Etcetera substitution              
                     for etc_expr in subbed_expr if isinstance(subbed_expr, ExpressionList) else [subbed_expr]:
@@ -163,7 +168,7 @@ class ExpressionTensor(MultiExpression, dict):
         self.shape = tuple(self.shape)
         # Regularize the tensor for a unique form with respect to blocks.
         self._regularize()
-        MultiExpression.__init__(self, 'ExpressionTensor ' + ','.join(sorted(self.keys())), [self[key] for key in sorted(self.keys())])        
+        MultiExpression.__init__(self, 'ExpressionTensor ' + ','.join(str(key) for key in sorted(self.keys())), [self[key] for key in sorted(self.keys())])        
 
     @staticmethod
     def _tensor_from_iterables(tensor, pre_idx=tuple()):
@@ -280,16 +285,18 @@ class ExpressionTensor(MultiExpression, dict):
         else:
             return '{' + ', '.join(str(key) + ':' + self[key].formatted(formatType, fence=True) for key in sorted(self.keys())) + '}'
         
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
         '''
-        Returns this expression with the variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
+        Returns this expression with the substitutions made 
+        according to exprMap/operationMap and/or relabeled according to relabelMap.
         '''
+        if (exprMap is not None) and (self in exprMap):
+            return exprMap[self]._restrictionChecked(reservedVars)
         subbed_tensor = dict()
         # substitute elements/blocks of the ExpressionTensor and
         # establish shifts coming from resized Blocks in the ExpressionTensor
         for idx, element in self.iteritems():
-            subbed_element = element.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+            subbed_element = element.substituted(exprMap, operationMap, relabelMap, reservedVars)
             subbed_tensor[idx] = subbed_element
         return ExpressionTensor(subbed_tensor)
         
@@ -315,14 +322,16 @@ class Bundle(MultiExpression):
         self.maker = maker
         MultiExpression.__init__(self, 'Bundle ' + str(multiExprType), [self.bundledExpr])
 
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
         '''
-        Returns this Expression with the variables substituted according to subMap 
-        and/or relabeled according to relabelMap.  If the substituted bundledExpr
-        if of the multiExprType, it will be extracted from the Bundle wrapping and 
-        incorporated into the multi-Expression which contains it.
+        Returns this expression with the substitutions made 
+        according to exprMap/operationMap and/or relabeled according to relabelMap.
+        If the substituted bundledExpr is of the multiExprType, it will be extracted 
+        from the Bundle wrapping and incorporated into the multi-Expression which contains it.
         '''
-        subbed = self.bundledExpr.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+        if (exprMap is not None) and (self in exprMap):
+            return exprMap[self]._restrictionChecked(reservedVars)
+        subbed = self.bundledExpr.substituted(exprMap, operationMap, relabelMap, reservedVars)
         if isinstance(subbed, self.multiExprType):
             # substituting the entire Bundles expression with an ExpressionList to be merged with an outer multi-Expression
             return subbed 
@@ -391,7 +400,7 @@ def multiExpression(expressions):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
         return ExpressionList(expressions) # a single expression that we will wrap in an ExpressionLIst
-    elif isinstance(expressions, dict):
+    elif isinstance(expressions, dict) and len(expressions.keys()) > 0 and isinstance(expressions.keys()[0], str):
         # A dictionary must be an NamedExpressions
         return NamedExpressions(expressions)
     else:

@@ -24,6 +24,7 @@ class Expression:
         while self._unique_id in Expression.unique_id_map and Expression.unique_id_map[self._unique_id] != self._unique_rep:
             self._unique_id += 1
         Expression.unique_id_map[self._unique_id] = self._unique_rep
+        self.png = None # if a png is generate, it is stored for future reference
         
     def __repr__(self):
         return str(self) # just use the string representation
@@ -160,10 +161,11 @@ class Expression:
                 raise TypeError('Expression statement must be of Statement type')
             return self.statement.wasProven(assumptions)
         
-    def substituted(self, varMap, operationMap, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, operationMap, relabelMap = None, reservedVars = None):
         '''
-        Returns this expression with the variables substituted 
-        according to the varMap dictionary (mapping Variables to Expressions)
+        Returns this expression with the expressions substituted 
+        according to the exprMap dictionary (mapping Expressions to Expressions --
+        for specialize, this may only map Variables to Expressions)
         and/or operations with variable operators substituted according to operationMap
         dictionary (mapping Variables to either individual Lambda functions 
         or MultiExpressions containing Lambda functions).
@@ -172,7 +174,10 @@ class Expression:
         uses a restricted variable and you can only relabel the exception to the
         restricted variable.  This is used to protect an Lambda function's "scope".
         '''
-        return self
+        if (exprMap is not None) and (self in exprMap):
+            return exprMap[self]._restrictionChecked(reservedVars)
+        else:
+            return self
     
     def relabeled(self, relabelMap, reservedVars=None):
         '''
@@ -180,7 +185,7 @@ class Expression:
         changed.  This may also involve substituting a MultiVariable with a list
         of Variables.
         '''
-        return self.substituted(varSubMap=dict(), operationSubMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
+        return self.substituted(exprMap=dict(), operationMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
     
     def _validateRelabelMap(self, relabelMap):
         if len(relabelMap) != len(set(relabelMap.values())):
@@ -199,7 +204,7 @@ class Expression:
         return set()    
 
     def safeDummyVar(self):
-        return safeDummyVar([self])
+        return safeDummyVar(self)
     
     def state(self):
         from statement import Statement
@@ -262,9 +267,28 @@ class Expression:
         if not reservedVars is None and not self.freeVars().isdisjoint(reservedVars.keys()):
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., arguments of a Lambda function)")
         return self
+
+    # THIS USES MATHJAX WHICH IS LESS FLEXIBLE THAN DVIPNG (BELOW)    
+    #def _repr_latex_(self):
+    #    return '$' + self.formatted(LATEX) + '$'
     
-    def _repr_latex_(self):
-        return '$' + self.formatted(LATEX) + '$'
+    def _repr_png_(self):
+        from IPython.lib.latextools import latex_to_png, LaTeXTool
+        if self.png is None:
+            LaTeXTool.clear_instance()
+            lt = LaTeXTool.instance()
+            lt.use_breqn = False
+            self._config_latex_tool(lt)
+            self.png = latex_to_png(self.formatted(LATEX), backend='dvipng', wrap=True)
+        return self.png
+    
+    def _config_latex_tool(self, lt):
+        '''
+        Configure the LaTeXTool from IPython.lib.latextools as required by all
+        sub-expressions.
+        '''
+        for sub_expr in self._subExpressions:
+            sub_expr._config_latex_tool(lt)
         
 class Literal(Expression):
     """
@@ -307,15 +331,15 @@ class Variable(Expression):
         if formatType == STRING or formatType == LATEX:
             return self.name
 
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
         '''
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         May expand to an ExpressionList.
         '''
         from multiExpression import ExpressionList, isBundledVar
-        if (varSubMap != None) and (self in varSubMap):
-            return varSubMap[self]._restrictionChecked(reservedVars)
+        if (exprMap is not None) and (self in exprMap):
+            return exprMap[self]._restrictionChecked(reservedVars)
         elif relabelMap != None:
             subbed = relabelMap.get(self, self)
             for subVar in (subbed if isinstance(subbed, ExpressionList) else [subbed]):
@@ -338,7 +362,7 @@ class IndexVariable(Variable):
     def __init__(self, n):
         Variable.__init__(self, '_' + str(n) + '_')
 
-def safeDummyVar(expressions):
+def safeDummyVar(*expressions):
     usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])
     i = 0
     while IndexVariable(i) in usedVs:
@@ -380,17 +404,19 @@ class Operation(Expression):
         if formatType == STRING or formatType == LATEX:
             return self.operator.formatted(formatType, fence=True) +  '(' + self.operands.formatted(formatType, fence=False) + ')'
         
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
         '''
         Return this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
         from multiExpression import ExpressionList, extractVar, multiExpression
+        if (exprMap is not None) and (self in exprMap):
+            return exprMap[self]._restrictionChecked(reservedVars)        
         operator = self.operator
-        subbedOperands = self.operands.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
-        if operationSubMap is not None and isinstance(operator, Variable) and operator in operationSubMap:
+        subbedOperands = self.operands.substituted(exprMap, operationMap, relabelMap, reservedVars)
+        if operationMap is not None and isinstance(operator, Variable) and operator in operationMap:
             # Substitute the entire operation via a Lambda expression
-            operatorSubs = operationSubMap[operator]
+            operatorSubs = operationMap[operator]
             subbedOperations = []
             for operatorSub in (operatorSubs if isinstance(operatorSubs, ExpressionList) else [operatorSubs]):
                 if not isinstance(operatorSub, Lambda):
@@ -412,7 +438,7 @@ class Operation(Expression):
                 return subbedOperations[0]
         else:
             # Can perform substitutions within the Operator
-            subbedOperator = operator.substituted(varSubMap, operationSubMap, relabelMap, reservedVars)
+            subbedOperator = operator.substituted(exprMap, operationMap, relabelMap, reservedVars)
             if isinstance(subbedOperator, ExpressionList):
                 # substituting the single operation with multiple operations as an ExpressionList
                 return ExpressionList([Operation.make(operator, subbedOperands) for operator in subbedOperator])
@@ -477,7 +503,7 @@ class Lambda(Expression):
             if fence: outStr += r'\right]'
         return outStr
         
-    def substituted(self, varSubMap, operationSubMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
         '''
         Return this expression with its variables substituted 
         according to subMap and/or relabeled according to relabelMap.
@@ -488,10 +514,12 @@ class Lambda(Expression):
         are reserved), consistent with any relabeling.
         '''
         from multiExpression import ExpressionList, extractVar, NestedMultiExpressionError
+        if (exprMap is not None) and (self in exprMap):
+            return exprMap[self]._restrictionChecked(reservedVars)        
         # Can't substitute the lambda argument variables; they are in a new scope.
-        innerVarSubMap = {key:value for (key, value) in varSubMap.iteritems() if extractVar(key) not in self.argVarSet}
-        if operationSubMap is None: operationSubMap = dict()
-        innerOperationSubMap = {key:value for (key, value) in operationSubMap.iteritems() if extractVar(key) not in self.argVarSet}
+        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if extractVar(key) not in self.argVarSet}
+        if operationMap is None: operationMap = dict()
+        innerOperationMap = {key:value for (key, value) in operationMap.iteritems() if extractVar(key) not in self.argVarSet}
         # Handle relabeling and variable reservations consistent with relabeling.
         innerReservations = dict() if reservedVars is None else dict(reservedVars)
         try:
@@ -508,7 +536,7 @@ class Lambda(Expression):
                 for x in newArg: innerReservations[extractVar(x)] = extractVar(arg)
             else: innerReservations[extractVar(newArg)] = extractVar(arg)
         # the lambda expression with the substitution:
-        subbedExpr = self.expression.substituted(innerVarSubMap, innerOperationSubMap, relabelMap, innerReservations)
+        subbedExpr = self.expression.substituted(innerExprMap, innerOperationMap, relabelMap, innerReservations)
         try:
             newLambda = Lambda(newArgs, subbedExpr)
         except TypeError as e:
