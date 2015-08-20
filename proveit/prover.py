@@ -23,7 +23,7 @@ class Prover:
         else:
             self.depth = impliedParent.depth+1
         self.corequisites = [self]
-        self.provers = None # when proven, what Prover's prover the proof for this one
+        self.provers = None # when proven, what Prover's provide the proof for this one
         # subset of the assumptions which proves self.stmtToProve
         self.provingAssumptions = None
         if self.stmtToProve.isAxiom():
@@ -41,6 +41,46 @@ class Prover:
             self.newAssumptionsInOrder = tuple()
         else:
             self.newAssumptionsInOrder = tuple(newAssumptionsInOrder) 
+    
+    def _export_pvit(self, path, pvit_file, expressions_dir, indentation = ''):
+        '''
+        Export the proof information to .pv_it files for the purpose of proof
+        certification.  This occurs behind-the-scenes when the qed() method of
+        an expression is called (and is therefore not a "public" method).
+        '''
+        import os
+        expr_id = self.stmtToProve.getExpression()._export_pvit(expressions_dir)
+        pvit_file.write(indentation + self.proverType + ' ' + expr_id)
+        if self.proverType == 'specializing':
+            pvit_file.write(' via')
+            if self.subMap is not None and len(self.subMap) > 0:
+                pvit_file.write(' substituting ' + str({key._export_pvit(expressions_dir):val._export_pvit(expressions_dir) for key, val in self.subMap}))
+            if self.relabelMap is not None and len(self.relabelMap) > 0:
+                pvit_file.write(' relabeling ' + str({key._export_pvit(expressions_dir):val._export_pvit(expressions_dir) for key, val in self.relabelMap}))
+        if self.provingAssumptions is not None and len(self.provingAssumptions) > 0:
+            assumption_ids = [assumption.getExpression()._export_pvit(expressions_dir) for assumption in self.provingAssumptions]
+            pvit_file.write(' assuming ' + ', '.join(assumption_ids))
+        pvit_file.write('\n')
+        indentation += '\t'
+        if self.stmtToProve.isAxiom():
+            pvit_file.write(indentation + 'by axiom ' + self.stmtToProve._package + '.' + self.stmtToProve._name + '\n')
+        elif self.stmtToProve.isNamedTheorem():
+            pvit_file.write(indentation + 'by theorem ' + self.stmtToProve._package + '.' + self.stmtToProve._name + '\n')
+        elif self.proverType != 'root' and self.stmtToProve.isProvenTheorem():
+            pvit_file.write(indentation + 'by unnamed theorem\n')
+            # export the unnamed theorem
+            expr_sub_dirs = expr_id.split('/')
+            unnamed_proof_dir = os.path.join(path, '__unnamed__', expr_sub_dirs[0])
+            if not os.path.exists(unnamed_proof_dir):
+                os.makedirs(unnamed_proof_dir)
+            with open(os.path.join(unnamed_proof_dir, expr_sub_dirs[1] + '.pv_it'), 'w') as unnamed_theorem_proof_file:
+                storeType = self.proverType
+                self.proverType = 'root'
+                self._export_pvit(path, unnamed_theorem_proof_file, expressions_dir)
+                self.proverType = storeType
+        elif self.provers is not None:
+            for prover in self.provers:
+                prover._export_pvit(path, pvit_file, expressions_dir, indentation)
     
     def isCircular(self, assumptions=None):
         '''
@@ -97,13 +137,13 @@ class Prover:
         '''
         prover = self
         if prover.wasProven(): return True
-        while prover.impliedParent != None:
+        while prover.impliedParent is not None:
             prover = prover.impliedParent
             if prover.wasProven(): return True
         return False
 
     def wasProven(self):
-        return self.provingAssumptions != None 
+        return self.provingAssumptions is not None 
         
     def appendProvers(self, breadth1stQueue):
         '''
@@ -198,7 +238,8 @@ class Prover:
         this statement; otherwise, returns None.
         '''
         noAssumptionProver = stmt.getProver()
-        if not noAssumptionProver is None: return noAssumptionProver
+        if not noAssumptionProver is None: 
+            return noAssumptionProver
         if not stmt in Prover._tmpProvers: 
             return None # no temporary provers that may prove this
         for prover in Prover._tmpProvers[stmt]:
