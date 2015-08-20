@@ -7,6 +7,6 @@ AeqT = deriveStmtEqTrue(A)
 # TRUE != FALSE
 trueNotFalse
 # (A != FALSE) assuming A
-AnotF = AeqT.lhsSubstitute(X, NotEquals(X, FALSE)).prove({A})
+AnotF = AeqT.lhsSubstitute(X, NotEquals(X, FALSE)).proven({A})
 # forall_{A} A => (A != FALSE)
 Implies(A, AnotF).generalize(A).qed(__file__)

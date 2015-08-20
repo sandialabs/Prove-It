@@ -4,12 +4,12 @@ from proveit.basiclogic import Implies, In, inBool, Singleton, Equals, TRUE, FAL
 from proveit.common import x, y, A, X
 
 # [A in ({TRUE} union {FALSE})] assuming inBool(A)
-AinTunionF = boolsDef.rhsSubstitute(X, In(A, X)).prove({inBool(A)})
+AinTunionF = boolsDef.rhsSubstitute(X, In(A, X)).proven({inBool(A)})
 # (A in {TRUE}) or (A in {FALSE}) assuming inBool(A)
-AinTunionF.unfold().prove({inBool(A)})
+AinTunionF.unfold().proven({inBool(A)})
 # A=TRUE or (A in {FALSE}) assuming inBool(A)
-singletonDef.specialize({x:A, y:TRUE}).rhsSubstitute(X, Or(X, In(A, Singleton(FALSE)))).prove({inBool(A)})
+singletonDef.specialize({x:A, y:TRUE}).rhsSubstitute(X, Or(X, In(A, Singleton(FALSE)))).proven({inBool(A)})
 # A=TRUE or A=FALSE assuming inBool(A)
-conclusion = singletonDef.specialize({x:A, y:FALSE}).rhsSubstitute(X, Or(Equals(A, TRUE), X)).prove({inBool(A)})
+conclusion = singletonDef.specialize({x:A, y:FALSE}).rhsSubstitute(X, Or(Equals(A, TRUE), X)).proven({inBool(A)})
 # forall_{A} inBool(A) => (A=TRUE or A=FALSE)
 Implies(inBool(A), conclusion).generalize(A).qed(__file__)

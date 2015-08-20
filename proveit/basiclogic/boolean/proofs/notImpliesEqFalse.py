@@ -3,8 +3,8 @@ from proveit.basiclogic import Not, Implies, Equals, FALSE, deriveStmtEqTrue
 from proveit.common import A
 
 # [Not(A) = TRUE] => [A = FALSE]
-implicitNotF.specialize().prove()
+implicitNotF.specialize().proven()
 # [Not(A) = TRUE] assuming Not(A)
-deriveStmtEqTrue(Not(A)).prove({Not(A)})
+deriveStmtEqTrue(Not(A)).proven({Not(A)})
 # forall_{A} Not(A) => [A=FALSE]
 Implies(Not(A), Equals(A, FALSE)).generalize(A).qed(__file__)

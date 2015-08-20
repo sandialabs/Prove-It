@@ -5,8 +5,8 @@ from proveit.common import A, X
 # hypothesis = (A=TRUE)
 hypothesis = Equals(A, TRUE)
 # inBool(TRUE)
-trueInBool.prove()
+trueInBool.proven()
 # inBool(A) assuming hypothesis
-conclusion = hypothesis.lhsSubstitute(X, inBool(X)).prove({hypothesis})
+conclusion = hypothesis.lhsSubstitute(X, inBool(X)).proven({hypothesis})
 # forall_{A} A=TRUE => inBool(A)
 Implies(hypothesis, conclusion).generalize(A).qed(__file__)

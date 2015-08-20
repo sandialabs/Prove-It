@@ -3,14 +3,14 @@ from proveit.basiclogic import deriveStmtEqTrue, And, TRUE
 from proveit.common import A, B, X
 
 # A=TRUE assuming A
-AeqT = deriveStmtEqTrue(A).prove({A})
+AeqT = deriveStmtEqTrue(A).proven({A})
 # B=TRUE assuming B
-BeqT = deriveStmtEqTrue(B).prove({B})
+BeqT = deriveStmtEqTrue(B).proven({B})
 # TRUE AND TRUE
 trueAndTrue
 # (TRUE and B) assuming B via (TRUE and TRUE)
-BeqT.lhsSubstitute(X, And(TRUE, X)).prove({B})
+BeqT.lhsSubstitute(X, And(TRUE, X)).proven({B})
 # (A and B) assuming A, B via (TRUE and TRUE)
-AeqT.lhsSubstitute(X, And(X, B)).prove({A, B})
+AeqT.lhsSubstitute(X, And(X, B)).proven({A, B})
 # forall_{A | A, B | B} (A and B)
 And(A, B).generalize((A, B), conditions=(A, B)).qed(__file__)

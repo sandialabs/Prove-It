@@ -9,10 +9,10 @@ notAeqF = AnotF.unfold()
 AeqT_or_AeqF = inBool(A).unfold()
 AeqT = AeqT_or_AeqF.operands[0]
 # Not(A=FALSE) and (A=TRUE or A=FALSE) assuming each
-compose(notAeqF, AeqT_or_AeqF).prove({AnotF, AeqT_or_AeqF})
+compose(notAeqF, AeqT_or_AeqF).proven({AnotF, AeqT_or_AeqF})
 # inBool(A=TRUE)
 AeqT.deduceInBool()
 # A assuming inBool(A), Not(A=FALSE)
-AeqT_or_AeqF.deriveLeftIfNotRight().deriveViaBooleanEquality().prove({inBool(A), AnotF})
+AeqT_or_AeqF.deriveLeftIfNotRight().deriveViaBooleanEquality().proven({inBool(A), AnotF})
 # forall_{A in BOOLEANS} Not(A=FALSE) => A
 Implies(AnotF, A).generalize(A, domain=BOOLEANS).qed(__file__)

@@ -11,12 +11,12 @@ PofAeqT = Equals(PofA, TRUE)
 for eqExpr in (AeqT, AeqF, PofAeqT):
     eqExpr.deduceInBool()
 # P(TRUE), P(FALSE) assuming hypothesis
-for case in hypothesis.decompose(): case.prove({hypothesis})
+for case in hypothesis.decompose(): case.proven({hypothesis})
 # A=TRUE => P(A)=TRUE assuming hypothesis
-Implies(AeqT, deriveStmtEqTrue(AeqT.lhsSubstitute(A, PofA))).prove({hypothesis})
+Implies(AeqT, deriveStmtEqTrue(AeqT.lhsSubstitute(A, PofA))).proven({hypothesis})
 # A=FALSE => P(A)=TRUE assuming hypothesis
-Implies(AeqF, deriveStmtEqTrue(AeqF.lhsSubstitute(A, PofA))).prove({hypothesis})
+Implies(AeqF, deriveStmtEqTrue(AeqF.lhsSubstitute(A, PofA))).proven({hypothesis})
 # P(A) assuming hypothesis, (A in BOOLEANS)
-inBool(A).unfold().deriveCommonConclusion(PofAeqT).deriveViaBooleanEquality().prove({hypothesis, inBool(A)})
+inBool(A).unfold().deriveCommonConclusion(PofAeqT).deriveViaBooleanEquality().proven({hypothesis, inBool(A)})
 # forall_{P} P(TRUE) and P(FALSE) => forall_{A in BOOLEANS} P(A)
 Implies(hypothesis, PofA.generalize(A, domain=BOOLEANS)).generalize(P).qed(__file__)
