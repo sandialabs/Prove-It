@@ -9,7 +9,8 @@ from proveit.everythingLiteral import EVERYTHING
 #from variables import a, b
 #import variables as var
 from simpleExpr import cEtc
-from proveit.number.variables import zero, infinity,a,b,c,A,r,m,k,l,x,y,z, Am, Reals, Integers, Naturals
+#from proveit.number.variables import zero, one, infinity,a,b,c,A,r,m,k,l,x,y,z, Am, Reals, Integers, Naturals
+from proveit.number.common import *
 
 pkg = __package__
 
@@ -330,8 +331,11 @@ class Abs(Operation):
         self.operand = A
 
     def formatted(self, formatType, fence=False):
-
-        return '|'+self.operand.formatted(formatType, fence=fence)+'|'
+        if formatType == STRING:
+            return '|'+self.operand.formatted(formatType, fence=fence)+'|'
+        elif formatType == LATEX:
+            return r'\left|'+self.operand.formatted(formatType, fence=fence)+r'\right|'
+        
 
 ABS = Literal(pkg, 'ABS', operationMaker = lambda operands : Abs(*operands))
 
@@ -367,6 +371,26 @@ class Multiply(AssociativeOperation):
         Multiply together any number of operands from first operand.
         '''
         AssociativeOperation.__init__(self, MULTIPLY, *operands)
+    def factor(self,operand,pull="left"):
+        from proveit.number.complex.theorems import multComm
+        if operand not in self.operands:
+            raise ValueError("Trying to factor out absent expression!")
+        else:
+            newOperands = []
+            for op in self.operands:
+                if op != operand:
+                    newOperands.append(op)
+            if pull == "left":
+                return multComm.specialize(
+                    {Etcetera(v):operand,Etcetera(w):newOperands,Etcetera(x):[],Etcetera(y):[],Etcetera(z):[]}
+                                            ).deriveRightViaEquivalence()
+            elif pull == "right":
+                return multComm.specialize(
+                    {Etcetera(v):newOperands,Etcetera(w):operand,Etcetera(x):[],Etcetera(y):[],Etcetera(z):[]}
+                                            ).deriveRightViaEquivalence()
+            else:
+                raise ValueError("Invalid pull arg. provided!  (Acceptable values are \"left\" and \"right\".)")
+
 
 MULTIPLY = Literal(pkg, 'MULTIPLY', {STRING: r'*', LATEX: r'\cdot'}, operationMaker = lambda operands : Multiply(*operands))
 
