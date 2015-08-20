@@ -1,5 +1,7 @@
 import sys
-from proveit.expression import Literal, LATEX, STRING, Operation
+from proveit.expression import Literal, LATEX, STRING, Operation, Variable, safeDummyVar
+from proveit.basiclogic import Equals
+#from proveit.number import axioms
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
 from proveit.everythingLiteral import EVERYTHING
@@ -7,7 +9,7 @@ from proveit.everythingLiteral import EVERYTHING
 #from variables import a, b
 #import variables as var
 from simpleExpr import cEtc
-from proveit.number.variables import zero, infinity,a,b,c,A,r,m,k,l, Am
+from proveit.number.variables import zero, infinity,a,b,c,A,r,m,k,l,x,y,z, Am, Reals, Integers, Naturals
 
 pkg = __package__
 
@@ -28,6 +30,70 @@ class DiscreteContiguousSet(BinaryOperation):
 
 DISCRETECONTIGUOUSSET = Literal(pkg, 'DISCRETECONTIGUOUSSET', operationMaker = lambda operands : DiscreteContiguousSet(*operands))
 
+class Interval(BinaryOperation):
+    r'''
+    Base class for all permutations of closed and open intervals.  
+    Do not construct an object of this class directly!  Instead, use IntervalOO or IntervalOC etc.
+    '''
+    def __init__(self,operator,lowerBound,upperBound):
+        BinaryOperation.__init__(self,operator,lowerBound,upperBound)
+        self.lowerBound = lowerBound
+        self.upperBound = upperBound
+        
+class IntervalOO(Interval):
+
+    def __init__(self,lowerBound,upperBound):
+        Interval.__init__(self,INTERVALOO,lowerBound,upperBound)
+        
+    def formatted(self, formatType, fence=False):
+        if formatType == LATEX:
+            return r'\left('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right)'
+        else:
+            return r'('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r')'
+
+INTERVALOO = Literal(pkg, 'INTERVALOO', operationMaker = lambda operands : IntervalOO(*operands))
+
+
+class IntervalOC(Interval):
+
+    def __init__(self,lowerBound,upperBound):
+        Interval.__init__(self,INTERVALOC,lowerBound,upperBound)
+        
+    def formatted(self, formatType, fence=False):
+        if formatType == LATEX:
+            return r'\left('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right]'
+        else:
+            return r'('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r']'
+
+INTERVALOC = Literal(pkg, 'INTERVALOC', operationMaker = lambda operands : IntervalOC(*operands))
+
+class IntervalCO(Interval):
+
+    def __init__(self,lowerBound,upperBound):
+        Interval.__init__(self,INTERVALCO,lowerBound,upperBound)
+        
+    def formatted(self, formatType, fence=False):
+        if formatType == LATEX:
+            return r'\left['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right)'
+        else:
+            return r'['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r')'
+
+INTERVALCO = Literal(pkg, 'INTERVALCO', operationMaker = lambda operands : IntervalCO(*operands))
+
+class IntervalCC(Interval):
+
+    def __init__(self,lowerBound,upperBound):
+        Interval.__init__(self,INTERVALCC,lowerBound,upperBound)
+        
+    def formatted(self, formatType, fence=False):
+        if formatType == LATEX:
+            return r'\left['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right]'
+        else:
+            return r'['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r']'
+
+INTERVALCC = Literal(pkg, 'INTERVALCC', operationMaker = lambda operands : IntervalCC(*operands))
+
+
 class Ket(Operation):
     def __init__(self, A):
         Operation.__init__(self, KET, A)
@@ -41,41 +107,212 @@ class Ket(Operation):
 
 KET = Literal(pkg, 'KET', operationMaker = lambda operands : Ket(*operands))
 
-class LessThanEquals(BinaryOperation):
-    def __init__(self, operandA, operandB):
-        r'''
-        See if second number is at least as big as first.
-        '''
-        BinaryOperation.__init__(self, LESSTHANEQUALS,operandA,operandB)
-        
-LESSTHANEQUALS = Literal(pkg,'LESSTHANEQUALS', {STRING: r'<=', LATEX:r'\leq'}, operationMaker = lambda operands : LessThanEquals(*operands))
+class OrderingRelation(BinaryOperation):
+    r'''
+    Base class for all strict and non-strict inequalities.
+    Do not construct an object of this class directly!  Instead, use LessThan, LessThanEquals etc.
+    '''
+    def __init__(self, operator,lhs, rhs):
+        BinaryOperation.__init__(self,operator, lhs, rhs)
+        self.operator = operator
+        self.lhs = lhs
+        self.rhs = rhs
 
-class LessThan(BinaryOperation):
-    def __init__(self, operandA, operandB):
+    def deriveReversed(self):
+        '''
+        From, e.g., x >= y derive y <= x etc.
+        '''
+        from proveit.number.axioms import reverseGreaterThanEquals, reverseLessThanEquals, reverseGreaterThan, reverseLessThan
+        if self.operator == LESSTHANEQUALS:
+            return reverseLessThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
+        elif self.operator == LESSTHAN:
+            return reverseLessThan.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
+        elif self.operator == GREATERTHANEQUALS:
+            return reverseGreaterThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
+        elif self.operator == GREATERTHAN:
+            return reverseGreaterThan.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
+        else:
+            raise ValueError("Invalid instance of OrderingRelation!")
+    def applyTransitivity(self, other):
+        if isinstance(other,Equals):
+            if other.lhs in (self.lhs, self.rhs):
+                subrule = other.rhsSubstitute
+                commonExpr = other.lhs
+            elif other.rhs in (self.lhs, self.rhs):
+                subrule = other.lhsSubstitute
+                commonExpr = other.rhs
+            else:
+                raise ValueError("Equality does not involve either side of inequality!")
+            X = safeDummyVar([self])
+            if commonExpr == self.lhs:
+                return subrule(X,self.operator.operationMaker([X,self.rhs]))
+            elif commonExpr == self.rhs:
+                return subrule(X,self.operator.operationMaker([self.lhs,X]))
+#                    return other.rhsSubstitute(X,self.operator.operationMaker([X,self.rhs]))
+#                else:
+#                    return other.rhsSubstitute(X,
+        return self.transitivityImpl(other).deriveConclusion().checked({self, other})
+
+class LessThan(OrderingRelation):
+    def __init__(self, lhs, rhs):
         r'''
         See if second number is at bigger than first.
         '''
-        BinaryOperation.__init__(self, LESSTHAN,operandA,operandB)
+        OrderingRelation.__init__(self, LESSTHAN,lhs,rhs)
+    def transitivityImpl(self,other):
+        from proveit.number.axioms import reverseGreaterThanEquals, reverseGreaterThan
+        from proveit.number.axioms import lessThanTransLessThanRight, lessThanTransLessThanEqualsRight
+        from proveit.number.axioms import lessThanTransLessThanLeft, lessThanTransLessThanEqualsLeft
+
+                
+
+        if (other.rhs == self.rhs and other.lhs == self.lhs) or (other.rhs == self.lhs and other.lhs == self.rhs):
+            raise ValueError("Cannot use transitivity with no new expression!")
+        elif (other.rhs == other.lhs):
+            raise ValueError("Cannot use transitivity with trivially reflexive relation!")
+        if isinstance(other,GreaterThan) or isinstance(other,GreaterThanEquals):
+            other = other.deriveReversed()
+#            raise ValueError("Blame KMR for not getting to this yet!")
+#            if other.lhs == self.lhs:
+#                return other.               
+        if other.lhs == self.rhs:
+            if isinstance(other,LessThan):
+                result = lessThanTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                return result.checked({self})
+            elif isinstance(other,LessThanEquals):
+                result = lessThanTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                return result
+        elif other.rhs == self.lhs:
+            if isinstance(other,LessThan):
+                result = lessThanTransLessThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                return result
+            elif isinstance(other,LessThanEquals):
+                result = lessThanTransLessThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                return result
+        else:
+            raise ValueError("Cannot derive implication from input!")
+
 
 LESSTHAN = Literal(pkg,'LESSTHAN', {STRING: r'<', LATEX:r'<'}, operationMaker = lambda operands : LessThan(*operands))
 
-class GreaterThanEquals(BinaryOperation):
-    def __init__(self, operandA, operandB):
+class LessThanEquals(OrderingRelation):
+    def __init__(self, lhs, rhs):
         r'''
-        See if first number is at least as big as second.
+        See if second number is at least as big as first.
         '''
-        BinaryOperation.__init__(self, GREATERTHANEQUALS,operandA,operandB)
+        OrderingRelation.__init__(self, LESSTHANEQUALS,lhs,rhs)
+    def transitivityImpl(self,other):
+        from proveit.number.axioms import reverseGreaterThanEquals, reverseGreaterThan
+        from proveit.number.axioms import lessThanEqualsTransLessThanRight, lessThanEqualsTransLessThanEqualsRight
+        from proveit.number.axioms import lessThanEqualsTransLessThanLeft, lessThanEqualsTransLessThanEqualsLeft
+        if (other.rhs == self.rhs and other.lhs == self.lhs) or (other.rhs == self.lhs and other.lhs == self.rhs):
+            raise ValueError("Cannot use transitivity with no new expression!")
+        elif (other.rhs == other.lhs):
+            raise ValueError("Cannot use transitivity with trivially reflexive relation!")
+        if isinstance(other,GreaterThan) or isinstance(other,GreaterThanEquals):
+            other = other.deriveReversed()
+        elif isinstance(other,Equals):
+            raise ValueError("Blame KMR for not getting to this yet!")
+#            if other.lhs == self.lhs:
+#                return other.               
+        if other.lhs == self.rhs:
+            if isinstance(other,LessThan):
+                result = lessThanEqualsTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                return result.checked({self})
+            elif isinstance(other,LessThanEquals):
+                result = lessThanEqualsTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                return result
+        elif other.rhs == self.lhs:
+            if isinstance(other,LessThan):
+                result = lessThanEqualsTransLessThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                return result
+            elif isinstance(other,LessThanEquals):
+                result = lessThanEqualsTransLessThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                return result
+ #           result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConclusion()
+        else:
+            raise ValueError("Cannot derive implication from input!")
         
-GREATERTHANEQUALS = Literal(pkg,'GREATERTHANEQUALS', {STRING: r'>=', LATEX:r'\geq'}, operationMaker = lambda operands : GreaterThanEquals(*operands))
+LESSTHANEQUALS = Literal(pkg,'LESSTHANEQUALS', {STRING: r'<=', LATEX:r'\leq'}, operationMaker = lambda operands : LessThanEquals(*operands))
 
-class GreaterThan(BinaryOperation):
-    def __init__(self, operandA, operandB):
+
+class GreaterThan(OrderingRelation):
+    def __init__(self, lhs, rhs):
         r'''
         See if first number is at least as big as second.
         '''
-        BinaryOperation.__init__(self, GREATERTHAN,operandA,operandB)
-        
+        OrderingRelation.__init__(self, GREATERTHAN,lhs,rhs)
+    def transitivityImpl(self,other):
+        from proveit.number.axioms import reverseLessThanEquals, reverseLessThan
+        from proveit.number.axioms import greaterThanTransGreaterThanRight, greaterThanTransGreaterThanEqualsRight
+        from proveit.number.axioms import greaterThanTransGreaterThanLeft, greaterThanTransGreaterThanEqualsLeft
+        if (other.rhs == self.rhs and other.lhs == self.lhs) or (other.rhs == self.lhs and other.lhs == self.rhs):
+            raise ValueError("Cannot use transitivity with no new expression!")
+        elif (other.rhs == other.lhs):
+            raise ValueError("Cannot use transitivity with trivially reflexive relation!")
+        if isinstance(other,LessThan) or isinstance(other,LessThanEquals):
+            other = other.deriveReversed()
+        elif isinstance(other,Equals):
+            raise ValueError("Blame KMR for not getting to this yet!")
+#            if other.lhs == self.lhs:
+#                return other.
+        if other.lhs == self.rhs:
+            if isinstance(other,GreaterThan):
+                result = greaterThanTransGreaterThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                return result.checked({self})
+            elif isinstance(other,GreaterThanEquals):
+                result = greaterThanTransGreaterThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                return result
+        elif other.rhs == self.lhs:
+            if isinstance(other,GreaterThan):
+                result = greaterThanTransGreaterThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                return result
+            elif isinstance(other,GreaterThanEquals):
+                result = greaterThanTransGreaterThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                return result
+        else:
+            raise ValueError("Cannot derive implication from input!")
+
 GREATERTHAN = Literal(pkg,'GREATERTHAN', {STRING: r'>', LATEX:r'>'}, operationMaker = lambda operands : GreaterThan(*operands))
+
+class GreaterThanEquals(OrderingRelation):
+    def __init__(self, lhs, rhs):
+        r'''
+        See if first number is at least as big as second.
+        '''
+        OrderingRelation.__init__(self, GREATERTHANEQUALS,lhs,rhs)
+    def transitivityImpl(self,other):
+        from proveit.number.axioms import reverseLessThanEquals, reverseLessThan
+        from proveit.number.axioms import greaterThanEqualsTransGreaterThanRight, greaterThanEqualsTransGreaterThanEqualsRight
+        from proveit.number.axioms import greaterThanEqualsTransGreaterThanLeft, greaterThanEqualsTransGreaterThanEqualsLeft
+        if (other.rhs == self.rhs and other.lhs == self.lhs) or (other.rhs == self.lhs and other.lhs == self.rhs):
+            raise ValueError("Cannot use transitivity with no new expression!")
+        elif (other.rhs == other.lhs):
+            raise ValueError("Cannot use transitivity with trivially reflexive relation!")
+        if isinstance(other,LessThan) or isinstance(other,LessThanEquals):
+            other = other.deriveReversed()
+        elif isinstance(other,Equals):
+            raise ValueError("Blame KMR for not getting to this yet!")
+#            if other.lhs == self.lhs:
+#                return other.
+        if other.lhs == self.rhs:
+            if isinstance(other,GreaterThan):
+                result = greaterThanEqualsTransGreaterThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                return result.checked({self})
+            elif isinstance(other,GreaterThanEquals):
+                result = greaterThanEqualsTransGreaterThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                return result
+        elif other.rhs == self.lhs:
+            if isinstance(other,GreaterThan):
+                result = greaterThanEqualsTransGreaterThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                return result
+            elif isinstance(other,GreaterThanEquals):
+                result = greaterThanEqualsTransGreaterThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                return result
+        else:
+            raise ValueError("Cannot derive implication from input!")
+
+GREATERTHANEQUALS = Literal(pkg,'GREATERTHANEQUALS', {STRING: r'>=', LATEX:r'\geq'}, operationMaker = lambda operands : GreaterThanEquals(*operands))
 
 class Pr(Operation):
     def __init__(self, A):
@@ -201,9 +438,34 @@ class Summation(OperationOverInstances):
         domains: conditions (except no longer optional)
         '''
         OperationOverInstances.__init__(self, SUMMATION, indices, summand, domain=domain, conditions=conditions)
+        if len(self.instanceVars) != 1:
+            raise ValueError('Only one index allowed per integral!')
+        
         self.indices = self.instanceVars
         self.summand = self.instanceExpr
+        self.index = self.instanceVars[0]
+        if isinstance(self.domain,Interval):
+            raise ValueError('Summation cannot sum over non-discrete set (e.g. Interval)')
+        elif self.domain == Reals:
+            raise ValueError('Summation cannot sum over Reals.')
+        elif self.domain == Integers:
+            self.domain = DiscreteContiguousSet(Neg(infinity),infinity)
+        elif self.domain == Naturals:
+            self.domain = DiscreteContiguousSet(zero,infinity)
+        
+        
 #        self.domain = domain#self.domain already set
+
+    def formatted(self, formatType, fence=False):
+
+        if isinstance(self.domain,DiscreteContiguousSet):
+            lower = self.domain.lowerBound.formatted(formatType)
+            upper = self.domain.upperBound.formatted(formatType)
+            return self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+'='+lower+r'}'+r'^{'+upper+r'}'+self.summand.formatted(formatType, fence=fence)
+        else:
+            return self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+r'\in '+self.domain.formatted(formatType)+r'}'+self.summand.formatted(formatType, fence=fence)
+
+
 
     def reduceGeomSum(self):
         r'''
@@ -270,26 +532,42 @@ class Integrate(OperationOverInstances):
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
-    def __init__(self, indices, integrand, domain, conditions = tuple()):
+    def __init__(self, index, integrand, domain, conditions = tuple()):
         r'''
-        Sum summand over indices over domains.
+        Integrates integrand over indices over domain.
         Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
-        indices: instance vars
-        summand: instanceExpressions
+        index: single instance var
+        integrand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        OperationOverInstances.__init__(self, INTEGRATE, indices, integrand, domain=domain, conditions=conditions)
-        self.indices = self.instanceVars
+        OperationOverInstances.__init__(self, INTEGRATE, index, integrand, domain=domain, conditions=conditions)
+        self.domain = domain
+        if len(self.instanceVars) != 1:
+            raise ValueError('Only one index allowed per integral!')
+        elif isinstance(self.domain,DiscreteContiguousSet):
+            raise ValueError('Can\'t integrate over DiscreteContiguousSet!')
+        elif self.domain == Reals:
+            self.domain = IntervalCC(Neg(infinity),infinity)
+        elif not isinstance(self.domain,IntervalCC):
+#            if not isinstance(self.domain,IntervalCC):
+            raise ValueError("domain must be IntervalCC or Reals!")
+        self.index = self.instanceVars[0]
         self.integrand = self.instanceExpr
         
-#    def formatted(self, formatType, fence=False):
-#
-#        return r'\int'+self.operand.formatted(formatType, fence=fence)+indices
-        
-        
+    def formatted(self, formatType, fence=False):
+#        if isinstance(self.domain,IntervalOO) or isinstance(self.domain,IntervalOC) or isinstance(self.domain,IntervalCO) or isinstance(self.domain,IntervalOO):
+        if isinstance(self.domain,Interval):
+            lower = self.domain.lowerBound.formatted(formatType)
+            upper = self.domain.upperBound.formatted(formatType)
+            return self.operator.formatted(formatType)+r'_{'+lower+r'}'+r'^{'+upper+r'}'+self.integrand.formatted(formatType, fence=fence)+'d'+self.index.formatted(formatType)
+#        elif self.domain
+
+        return self.operator.formatted(formatType)+r'_{'+self.domain.formatted(formatType)+r'}'+self.integrand.formatted(formatType, fence=fence)+'d'+self.index.formatted(formatType)
+
+
 def integrateMaker(operands):
     params = OperationOverInstances.extractParameters(operands)
     return Integrate(params['instanceVars'],params['instanceExpr'],params['domain'],params['conditions'])
 
 
-INTEGRATE = Literal(pkg, "INTEGRATE", {STRING: r'Integrate', LATEX: r'\int'}, operationMaker = summationMaker)
+INTEGRATE = Literal(pkg, "INTEGRATE", {STRING: r'Integrate', LATEX: r'\int'}, operationMaker = integrateMaker)
