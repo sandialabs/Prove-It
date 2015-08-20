@@ -21,10 +21,17 @@ class In(Operation):
         formattedOperator = self.operator.formatted(formatType)
         formattedDomain = self.domain.formatted(formatType)
         if len(self.elements) == 1:
-            innerStr = self.elements[0].formatted(formatType, fence=False) + ' ' + formattedOperator + ' ' + formattedDomain
+            innerStr = self.elements[0].formatted(formatType, fence=True) + ' ' + formattedOperator + ' ' + formattedDomain
         elif len(self.elements) > 1:
-            andStr = ' and ' if len(self.elements) == 2 else ', and '
-            innerStr = ', '.join(elem.formatted(formatType, fence=False) for elem in self.elements[:-1]) + andStr +  self.elements[-1].formatted(formatType, fence=False) + ' ' + formattedOperator + ' ' + formattedDomain
+            if formatType == LATEX:
+                andStr = r'~{\rm and}~' if len(self.elements) == 2 else r',~{\rm and}~'
+            else:
+                andStr = ' and ' if len(self.elements) == 2 else ', and '
+            lhs = ', '.join(elem.formatted(formatType, fence=False) for elem in self.elements[:-1]) + andStr +  self.elements[-1].formatted(formatType, fence=False)
+            if formatType == LATEX:
+                innerStr = r'\left(' + lhs + r'\right) ' + formattedOperator + ' ' + formattedDomain
+            else:
+                innerStr = r'(' + lhs + ') ' + formattedOperator + ' ' + formattedDomain            
         if fence: 
             if formatType == LATEX:
                 return r'\left(' + innerStr + r'\right)'
@@ -37,7 +44,7 @@ class In(Operation):
         Deduce and return that this 'in' statement is in the set of BOOLEANS.
         '''
         from axioms import inSetIsInBool
-        return inSetIsInBool.specialize({xEtc:self.elements[0], S:self.domain}).check()
+        return inSetIsInBool.specialize({xEtc:self.elements[0], S:self.domain}).checked()
     
     def unfold(self):
         '''
@@ -48,7 +55,7 @@ class In(Operation):
         for Singleton or Union].
         '''
         assert(len(self.elements) == 1), 'Unfold currently implemented for just 1 element at a time'
-        return self.domain.unfoldElemInSet(self.elements[0]).check({self})
+        return self.domain.unfoldElemInSet(self.elements[0]).checked({self})
     
     def concludeAsFolded(self):
         '''
@@ -210,7 +217,7 @@ class SubsetEq(BinaryOperation):
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
         from theorems import unfoldSubsetEq
-        return unfoldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().check({self})
+        return unfoldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().checked({self})
     
     def concludeAsFolded(self, elemInstanceVar=x):
         '''
@@ -232,7 +239,7 @@ class SupersetEq(BinaryOperation):
         x will be relabeled if an elemInstanceVar is supplied.
         '''
         from theorems import unfoldSupersetEq
-        return unfoldSupersetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().check({self})
+        return unfoldSupersetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().checked({self})
     
     def concludeAsFolded(self, elemInstanceVar=x):
         '''
@@ -242,7 +249,7 @@ class SupersetEq(BinaryOperation):
         from theorems import foldSupersetEq
         return foldSupersetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
 
-SUPERSET_EQ = Literal(pkg, 'SUPERSET_EQ', {STRING:'superseteq', LATEX:r'\superseteq'}, lambda operands : SupersetEq(*operands))
+SUPERSET_EQ = Literal(pkg, 'SUPERSET_EQ', {STRING:'superseteq', LATEX:r'\supseteq'}, lambda operands : SupersetEq(*operands))
  
 class SetOfAll(OperationOverInstances):
     def __init__(self, instanceVars, instanceElement, domain=EVERYTHING, conditions=tuple()):
@@ -268,7 +275,18 @@ class SetOfAll(OperationOverInstances):
                 else:
                     outStr += ', '.join([condition.formatted(formatType, fence=True) for condition in self.conditions])
             outStr += '}'
-            if fence: outStr += ']'
+        elif formatType == LATEX:
+            outStr += r'\left\{'
+            outStr += self.instanceElement.formatted(formatType, fence=innerFence)
+            if self.domain is not EVERYTHING:
+                outStr += r' \in ' + self.domain.formatted(formatType)
+            if len(self.conditions) > 0:
+                outStr += '~|~' # such that
+                if len(self.conditions) == 1:
+                    outStr += self.conditions.formatted(formatType, fence=True)
+                else:
+                    outStr += ', '.join([condition.formatted(formatType, fence=True) for condition in self.conditions])
+            outStr += r'\right\}'            
         return outStr
 
     def unfoldElemInSet(self, element):
@@ -277,7 +295,7 @@ class SetOfAll(OperationOverInstances):
         '''
         from theorems import unfoldSetOfAll
         PofElement = self.instanceExpr.substitute({self.instanceVar:element})
-        return unfoldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().check({PofElement})
+        return unfoldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().checked({PofElement})
     
     def deduceElemInSet(self, element):
         '''
@@ -285,7 +303,7 @@ class SetOfAll(OperationOverInstances):
         '''   
         from theorems import foldSetOfAll
         PofElement = self.instanceExpr.substitute({self.instanceVar:element})
-        return foldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().check({PofElement})
+        return foldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().checked({PofElement})
 
 def setOfAllMaker(operands):
     params = OperationOverInstances.extractParameters(operands)
