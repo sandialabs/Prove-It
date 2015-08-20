@@ -256,7 +256,8 @@ class And(AssociativeOperation):
         From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
         :math:`X` either by index or the Expression.
         '''
-        from axioms import andImpliesEach, Aetc, Cetc
+        from axioms import andImpliesEach
+        from proveit.common import Aetc, Cetc
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         return andImpliesEach.specialize({Aetc:self.operands[:idx], B:self.operands[idx], Cetc:self.operands[idx+1:]}).deriveConclusion().checked({self})
         
