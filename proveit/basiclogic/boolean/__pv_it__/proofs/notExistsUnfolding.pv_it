@@ -1,0 +1,8 @@
+root 919ea5a38a21e3d6fd2d3b7869cdbfcba6b63876/0
+	generalizing d25908972b2ccd11189e096b1e75e8f3b2a46faa/0
+		implication d267820d1a5fca1ce58b0cb6f2c0343639b978ec/0
+			specializing 18e3388d45e9457a392f3b3fe481a2065fcaa95b/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'e5a4588f161b0d00d813dbbbb9d1d665cb68363e/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '3c88a19abce7e0110013385ec53190c2843e4207/0'}
+				by theorem proveit.basiclogic.equality.rhsSubstitution
+		hypothesis 4dfec0db7b65c1311347e45ae2f8e2177aa7437c/0
+			specializing 2f43ada2807112858e1180e885bb0b484adf6ed4/0 via substituting {'c1895521c2fc61f742f78730ecdfdd37ff22045a/0': 'c1895521c2fc61f742f78730ecdfdd37ff22045a/0', '6ba99a720ac24639955c8237e10af85f4578a352/0': '6ba99a720ac24639955c8237e10af85f4578a352/0', 'a6fd5c5b6f1deccf4900ea86f05a49ab112abcfd/0': 'a6fd5c5b6f1deccf4900ea86f05a49ab112abcfd/0'}
+				by axiom proveit.basiclogic.boolean.notExistsDef

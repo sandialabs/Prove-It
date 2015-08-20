@@ -1,0 +1,3 @@
+root febe98cb4d929f8d9d779faf19126991f436669a/0
+	specializing adabd084d6914cc6c790aa428f6f2c2b236e9021/0 via substituting {'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0'}
+		by axiom proveit.basiclogic.equality.equalsReflexivity

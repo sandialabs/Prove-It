@@ -1,0 +1,15 @@
+root 0051c1b04197ab49a14dbdf5e556f3d8b89d638e/0
+	generalizing cf931bea2be0e4997ad053d37bb027b210cfd8fa/0
+		hypothetically reasoning 3add88ec6175ee62522cf4e08576abbaa17d4613/0 assuming 8227d99b86925033fc9fd00d5dcb254d61a48504/0
+			implication 483b988630da07f4caa8a516f493a9e4746305b8/0
+				specializing 24fedf20c6161d436e92626dc1e635329f0cd327/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'd146d34191f17b0a6f397bdbe357d29a3a7c6747/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '7effc68abeea6f112dd46a571de018ee31bc7f46/0'}
+					by axiom proveit.basiclogic.equality.equalsSymmetry
+			hypothesis ec73a1a6c1a6c4652d0ce43c605a1b837714ac3c/0 assuming 8227d99b86925033fc9fd00d5dcb254d61a48504/0
+				implication e2ea752b2d091727b8ec6e7044e6ed3358c55625/0
+					specializing d62ebdde4cddf6b0be688517b4035f6087178f5e/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '7effc68abeea6f112dd46a571de018ee31bc7f46/0'}
+						by theorem proveit.basiclogic.boolean.notImpliesEqFalse
+				hypothesis b87784c6ab7bd440c8f99d89129e47dcbce0fd66/0 assuming 8227d99b86925033fc9fd00d5dcb254d61a48504/0
+					implication 7ee4077055751549252892192da1ee086961c781/0
+						specializing 19b6bf91e265d77db1e4105b8fbf33bc528b12a7/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+							by theorem proveit.basiclogic.boolean.doubleNegation
+					hypothesis 8227d99b86925033fc9fd00d5dcb254d61a48504/0 assuming 8227d99b86925033fc9fd00d5dcb254d61a48504/0

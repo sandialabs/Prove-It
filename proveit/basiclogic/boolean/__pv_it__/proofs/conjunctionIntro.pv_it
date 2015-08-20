@@ -1,0 +1,23 @@
+root 00940750dde12982e8757004337bc78863a8df17/0
+	generalizing ec86121cca4fa46a3fb2167f7667a811026339f2/0 assuming cebb0a1c178ea6b8786da7f45ac7726745018782/0, 8227d99b86925033fc9fd00d5dcb254d61a48504/0
+		implication 8091bed2b1882a09dc08823dc0d8c8089a8ea1e4/0 assuming 8227d99b86925033fc9fd00d5dcb254d61a48504/0
+			implication 114652f2d2155c04cdae8e19ce7a23509fc20398/0
+				specializing 84b4397b8b666157006a64ebaf02bfd5090fd515/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+					by theorem proveit.basiclogic.equality.lhsSubstitution
+			hypothesis 94ec48d68fba01b3f5b3dd099d55c46b9c37202e/0 assuming 8227d99b86925033fc9fd00d5dcb254d61a48504/0
+				implication fe4c3242d0c5faaf4d63285d504b59018af370a9/0
+					specializing 8a12ddb19d4c45e340df09286c27ae41e26ffbc2/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+						by axiom proveit.basiclogic.boolean.eqTrueIntro
+				hypothesis 8227d99b86925033fc9fd00d5dcb254d61a48504/0 assuming 8227d99b86925033fc9fd00d5dcb254d61a48504/0
+		hypothesis 6c1fe79517037aa5ce40a75523581b16441e2954/0 assuming cebb0a1c178ea6b8786da7f45ac7726745018782/0
+			implication 8f3a3b1599ff036826726f9a669d5cff060db950/0 assuming cebb0a1c178ea6b8786da7f45ac7726745018782/0
+				implication cbf33ad1507af70230558ba7082812ab3a7dd6b7/0
+					specializing 84b4397b8b666157006a64ebaf02bfd5090fd515/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'cebb0a1c178ea6b8786da7f45ac7726745018782/0'}
+						by theorem proveit.basiclogic.equality.lhsSubstitution
+				hypothesis ea0a9167df6a50759ba60e966903b2ef39c196b3/0 assuming cebb0a1c178ea6b8786da7f45ac7726745018782/0
+					implication e5fb8b9ef25577b828b81812758972722e866e86/0
+						specializing 8a12ddb19d4c45e340df09286c27ae41e26ffbc2/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'cebb0a1c178ea6b8786da7f45ac7726745018782/0'}
+							by axiom proveit.basiclogic.boolean.eqTrueIntro
+					hypothesis cebb0a1c178ea6b8786da7f45ac7726745018782/0 assuming cebb0a1c178ea6b8786da7f45ac7726745018782/0
+			hypothesis 741d0e40b72145428e40c12688bad4c6621830a5/0
+				by theorem proveit.basiclogic.boolean.trueAndTrue

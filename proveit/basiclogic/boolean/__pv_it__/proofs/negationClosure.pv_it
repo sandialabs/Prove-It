@@ -1,0 +1,9 @@
+root b5e0bad610ebf5f6db389289580e392a905d8990/0
+	generalizing 170719e06714064defa24590df070e9429ea5e82/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
+		implication af52cf6ee1b6fe5b60fc1326f6b8d8b16360ec3b/0
+			specializing 86fa36ce57d341033e6508cc3c8a5fa21849c897/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '7effc68abeea6f112dd46a571de018ee31bc7f46/0'}
+				by theorem proveit.basiclogic.boolean.foldInBool
+		hypothesis f810426def1fa301fff19ab5c1424f6832eadcfd/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
+			specializing 0a0fd89d4a2252aab5fe75bbc96e676141745fb4/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+				by unnamed theorem
+			condition 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0

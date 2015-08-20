@@ -1,0 +1,11 @@
+root d62ebdde4cddf6b0be688517b4035f6087178f5e/0
+	generalizing 5620579e07efc702c123332f0c5cce97cdd4445d/0
+		hypothetically reasoning eb22617846f9e5e7efe894e423aedf73e72f9e36/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+			implication 6bffc199e8aa7b5dc03d5970b48be5f8cb2d08c3/0
+				specializing de877b6b3f313204568074d54736a1d1751af8ce/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+					by axiom proveit.basiclogic.boolean.implicitNotF
+			hypothesis 6b9feca4b55cca2e3700fdc075f74594aa1b2874/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+				implication 85151ab05700dae2059a7a850be7415b65ae8aa2/0
+					specializing 8a12ddb19d4c45e340df09286c27ae41e26ffbc2/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '7effc68abeea6f112dd46a571de018ee31bc7f46/0'}
+						by axiom proveit.basiclogic.boolean.eqTrueIntro
+				hypothesis 7effc68abeea6f112dd46a571de018ee31bc7f46/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0

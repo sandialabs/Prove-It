@@ -1,0 +1,3 @@
+root b38c3694ea20f13cf0d86b0b37e08db75b438619/0
+	specializing 8aa56b1eedbca3b5716a42e75313838408400d10/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '777e8a291f1e4622dd5f964d42c60aa27649d4fa/0'}
+		by axiom proveit.basiclogic.boolean.eqTrueElim

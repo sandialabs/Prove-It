@@ -1,0 +1,12 @@
+root 9d7b81abb3a0dfc1ed3e8cb79d542a5c2262e82a/0
+	generalizing d48e6d7643a65f58526411803d332938f120d9a1/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0, 75501cd42e4e109078f02ee8959e64945690cb53/0
+		implication 96c0ca689ed4a0a1b8b236e13ab5ed50015e2322/0
+			specializing ec92595daf6c197faa7a5bb6e15a981e707a28bc/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'ec3d9633cc6d887855ca9120b5d348a6081e207b/0'}
+				by theorem proveit.basiclogic.boolean.contradictionFromNegation
+		hypothesis 08579ccb80ed1060de9a0812a874aa9676cc5869/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0, 75501cd42e4e109078f02ee8959e64945690cb53/0
+			implication 5a5da313f65da5714cfad92466660eb7f24de5fb/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+				implication f0fbe19c8e18aff6f4bbff40cf5fc49fc095ed47/0
+					specializing d35e96223c6c533b68c8082f5d9116abbb2b58fc/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0', 'cebb0a1c178ea6b8786da7f45ac7726745018782/0': 'cebb0a1c178ea6b8786da7f45ac7726745018782/0'}
+						by theorem proveit.basiclogic.boolean.notOrFromNeither
+				hypothesis 7effc68abeea6f112dd46a571de018ee31bc7f46/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+			hypothesis 75501cd42e4e109078f02ee8959e64945690cb53/0 assuming 75501cd42e4e109078f02ee8959e64945690cb53/0

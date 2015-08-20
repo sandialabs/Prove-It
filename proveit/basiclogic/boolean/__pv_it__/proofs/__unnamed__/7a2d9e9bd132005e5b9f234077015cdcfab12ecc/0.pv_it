@@ -1,0 +1,3 @@
+root 7a2d9e9bd132005e5b9f234077015cdcfab12ecc/0
+	specializing 0bd24feaae5b255f377f22a068b8ad288d2247e2/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0', 'cebb0a1c178ea6b8786da7f45ac7726745018782/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0'}
+		by axiom proveit.basiclogic.boolean.iffDef

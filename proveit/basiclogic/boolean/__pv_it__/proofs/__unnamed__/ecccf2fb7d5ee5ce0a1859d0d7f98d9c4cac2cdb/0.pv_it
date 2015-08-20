@@ -1,0 +1,3 @@
+root ecccf2fb7d5ee5ce0a1859d0d7f98d9c4cac2cdb/0
+	specializing 7e07dc09b13a23744fa0e6c0426eb7fd89013bfd/0 via relabeling {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'cebb0a1c178ea6b8786da7f45ac7726745018782/0'}
+		by theorem proveit.basiclogic.boolean.forallBoolEvalTrue

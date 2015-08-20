@@ -1,0 +1,5 @@
+root 311477fdfa433cc0503049895605060528a9b8b5/0
+	implication bf2e59c204cc0c334a06f8688a7e0bc289a59fc3/0
+		by unnamed theorem
+	hypothesis 43773346b3f9f0643bc20d5101d46dcf4295d9c4/0
+		by theorem proveit.basiclogic.boolean.impliesFF

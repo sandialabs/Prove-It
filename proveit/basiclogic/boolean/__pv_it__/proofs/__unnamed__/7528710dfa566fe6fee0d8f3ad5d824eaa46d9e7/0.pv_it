@@ -1,0 +1,3 @@
+root 7528710dfa566fe6fee0d8f3ad5d824eaa46d9e7/0
+	specializing 9e6fee56a57036a772b82e04246df73482d02c59/0 via substituting {'a6fd5c5b6f1deccf4900ea86f05a49ab112abcfd/0': '2b8a8bf197a0f0eaa501cde97ff5c8acbea6af84/0'} relabeling {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '72fa31c91e7a10b4f485455438b061c68e15fd2c/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'dbc877656265282a1db6b5f9a6aae3f5ba4c924e/0'}
+		by theorem proveit.basiclogic.boolean.forallBundledEquiv

@@ -1,0 +1,8 @@
+root 053cddd9c7e5c6f87b07587f52291390459c035a/0
+	generalizing 769fe8f82adbb39f813adcb859c3619709fd7c13/0
+		implication a39d59b89e33695baec138dbc829e875ed43fc5e/0
+			specializing fc87cef650068b5fb4e66ed907633839d8fe3706/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '701900aa635f81aaf60ead219f52c25352e31836/0', 'cebb0a1c178ea6b8786da7f45ac7726745018782/0': '6e0e7787142df5c8f61c1c3b85558b9d8579fce3/0'}
+				by theorem proveit.basiclogic.boolean.iffImpliesRight
+		hypothesis 2daa198396f19773778443194e951f6bebdd0cd0/0
+			specializing 5a24898b47d6aad6b5c2fa7b84d614e9b5057feb/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0', 'cebb0a1c178ea6b8786da7f45ac7726745018782/0': 'cebb0a1c178ea6b8786da7f45ac7726745018782/0'}
+				by axiom proveit.basiclogic.set.supersetDef

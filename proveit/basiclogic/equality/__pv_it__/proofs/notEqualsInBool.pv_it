@@ -1,0 +1,15 @@
+root cbd43d64b7c7dc1dbb5dea4bbbfea825f6f92f71/0
+	generalizing 5f97dc160474c3b7457fdff4d322fb1e26b03f3f/0
+		implication 6c5b6a5e6515e7ab8cced3a8d51520d9fc6a581f/0
+			implication 527d196849d5da1e62506894adc89f1789128f84/0
+				specializing 84b4397b8b666157006a64ebaf02bfd5090fd515/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'e669c79575762dc2a8ade6a862c9dd97cbc3111a/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '7ef39f8b8ad00f37207b9537a52aec659afacbf7/0'}
+					by theorem proveit.basiclogic.equality.lhsSubstitution
+			hypothesis f6f3d9c6977abf977cb51ea3832c69e041f684ac/0
+				specializing bf63113a23a8dcc0b1bd44e34432a9b5178db081/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'a745488d8ff9284eedea37d2d43963dfec0aedd7/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0'}
+					by axiom proveit.basiclogic.equality.notEqualsDef
+		hypothesis 9174fa427888c11e6a73f7de8b0a7c2b638a00dc/0
+			specializing b5e0bad610ebf5f6db389289580e392a905d8990/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'bd27db2b34f7da2ad29f364bfceb227992d53598/0'}
+				by theorem proveit.basiclogic.boolean.negationClosure
+			condition 7fbc9dba8ac5cf4be374c34fd3199c54d974452c/0
+				specializing d0ecab6ade95d9ce0b7d5b6a3f754da47651c9e1/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'a745488d8ff9284eedea37d2d43963dfec0aedd7/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0'}
+					by axiom proveit.basiclogic.equality.equalityInBool

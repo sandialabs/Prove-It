@@ -1,0 +1,40 @@
+root d35e96223c6c533b68c8082f5d9116abbb2b58fc/0
+	generalizing f0fbe19c8e18aff6f4bbff40cf5fc49fc095ed47/0
+		hypothetically reasoning 5a5da313f65da5714cfad92466660eb7f24de5fb/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+			hypothetically reasoning 08579ccb80ed1060de9a0812a874aa9676cc5869/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0, 75501cd42e4e109078f02ee8959e64945690cb53/0
+				implication a0e86ec92199a2f6b7906ca1c7607ce1f323568f/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0, 75501cd42e4e109078f02ee8959e64945690cb53/0
+					implication 16e8e74a5ee5b422078ef8222d4bc597f211ac20/0
+						specializing 84b4397b8b666157006a64ebaf02bfd5090fd515/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'c79318f6217f7cb1aa83b8f5209bd6776f9296c7/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '08579ccb80ed1060de9a0812a874aa9676cc5869/0'}
+							by theorem proveit.basiclogic.equality.lhsSubstitution
+					hypothesis 5829a5800c150119135a09d4a676dfd95eeca261/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0, 75501cd42e4e109078f02ee8959e64945690cb53/0
+						implication ff8508e53cc813c66d4ce6c3d5c10344965d7e1c/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0, 75501cd42e4e109078f02ee8959e64945690cb53/0
+							implication bf73b42ac8eb511dd6feca364224bce122444278/0
+								specializing 39792ba520e4778877fc15773891fbca5a95770d/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '00e23a7c3574202448d1d74d031aeff10cf53d51/0', 'dcf68a07c56a689f7f28edf83756d39a97ed9f74/0': 'c79318f6217f7cb1aa83b8f5209bd6776f9296c7/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '08579ccb80ed1060de9a0812a874aa9676cc5869/0'}
+									by axiom proveit.basiclogic.equality.equalsTransitivity
+							hypothesis b2f0d1d5728bb16a1d3a571a240b652e475c596c/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0, 75501cd42e4e109078f02ee8959e64945690cb53/0
+								implication 2a3f082101ac18181232fad8d77785c9e32ddbc9/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+									implication 5c7172ba84cc995b69a48964bf48ba484bc9af6f/0
+										specializing 39792ba520e4778877fc15773891fbca5a95770d/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '3c5e62e9e58b2c1c9bc6fc646db7175a692ae6d9/0', 'dcf68a07c56a689f7f28edf83756d39a97ed9f74/0': '00e23a7c3574202448d1d74d031aeff10cf53d51/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '08579ccb80ed1060de9a0812a874aa9676cc5869/0'}
+											by axiom proveit.basiclogic.equality.equalsTransitivity
+									hypothesis 1f752cfe79ad209a1c3b868a96a48970b9e5d985/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+										implication 6b6497f405c8fe0ff0e2eb38f0e9abc411ac3778/0
+											specializing 06a91c1a245a13ef34a4b5036467de9f7cebab56/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'd146d34191f17b0a6f397bdbe357d29a3a7c6747/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+												by axiom proveit.basiclogic.equality.substitution
+										hypothesis eb22617846f9e5e7efe894e423aedf73e72f9e36/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+											implication 5620579e07efc702c123332f0c5cce97cdd4445d/0
+												specializing d62ebdde4cddf6b0be688517b4035f6087178f5e/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+													by theorem proveit.basiclogic.boolean.notImpliesEqFalse
+											hypothesis 7effc68abeea6f112dd46a571de018ee31bc7f46/0 assuming 7effc68abeea6f112dd46a571de018ee31bc7f46/0
+								hypothesis 3f7fc1ee26fc34ece67a3476d74b04011654e2e8/0 assuming 75501cd42e4e109078f02ee8959e64945690cb53/0
+									implication 031aed42f9cfb6d4c52f687d519cb5b7b7140273/0
+										specializing 06a91c1a245a13ef34a4b5036467de9f7cebab56/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'd146d34191f17b0a6f397bdbe357d29a3a7c6747/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'cebb0a1c178ea6b8786da7f45ac7726745018782/0'}
+											by axiom proveit.basiclogic.equality.substitution
+									hypothesis df2668cd22fdbe2ae5e1fdca0a227022c298aa6c/0 assuming 75501cd42e4e109078f02ee8959e64945690cb53/0
+										implication 38ee12bdfb62ad5350be8cddd648032fb6f958de/0
+											specializing d62ebdde4cddf6b0be688517b4035f6087178f5e/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'cebb0a1c178ea6b8786da7f45ac7726745018782/0'}
+												by theorem proveit.basiclogic.boolean.notImpliesEqFalse
+										hypothesis 75501cd42e4e109078f02ee8959e64945690cb53/0 assuming 75501cd42e4e109078f02ee8959e64945690cb53/0
+						hypothesis 963827b105cd42d59169b9f82b7e94ec7cf18032/0
+							by unnamed theorem
+				hypothesis c79318f6217f7cb1aa83b8f5209bd6776f9296c7/0
+					by theorem proveit.basiclogic.boolean.notFalse

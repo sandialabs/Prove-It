@@ -1,0 +1,18 @@
+root 3ba4ec9f63017702b40218cf6fac704312009f6e/0
+	generalizing a0ac428c6aa1c7caff0a4b384c0a00ef08316a44/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
+		hypothetically reasoning 7effc68abeea6f112dd46a571de018ee31bc7f46/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0, c276108d24c0c833d240414b257df58e554ec4fb/0
+			implication 2185e6a25b5ce99d189790b02106c611463e623d/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
+				specializing d87ece8e073666a0b89742509ba06976e8613d7d/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '7effc68abeea6f112dd46a571de018ee31bc7f46/0'}
+					by axiom proveit.basiclogic.boolean.contradictoryValidation
+				condition 170719e06714064defa24590df070e9429ea5e82/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
+					specializing b5e0bad610ebf5f6db389289580e392a905d8990/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+						by theorem proveit.basiclogic.boolean.negationClosure
+					condition 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
+			hypothesis 2d88c56ba32dbe34014d803a12a3bd75e8dfadc2/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0, c276108d24c0c833d240414b257df58e554ec4fb/0
+				hypothetically reasoning d146d34191f17b0a6f397bdbe357d29a3a7c6747/0 assuming b87784c6ab7bd440c8f99d89129e47dcbce0fd66/0, 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0, c276108d24c0c833d240414b257df58e554ec4fb/0
+					implication c276108d24c0c833d240414b257df58e554ec4fb/0 assuming c276108d24c0c833d240414b257df58e554ec4fb/0
+					hypothesis 8227d99b86925033fc9fd00d5dcb254d61a48504/0 assuming b87784c6ab7bd440c8f99d89129e47dcbce0fd66/0, 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
+						implication 04840f931b4318151e9a13ff3519364d7297758c/0
+							specializing 3982a01a29ed5d36de5b9bd97b9fce67f2a7f873/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
+								by theorem proveit.basiclogic.boolean.fromDoubleNegation
+						hypothesis b87784c6ab7bd440c8f99d89129e47dcbce0fd66/0 assuming b87784c6ab7bd440c8f99d89129e47dcbce0fd66/0

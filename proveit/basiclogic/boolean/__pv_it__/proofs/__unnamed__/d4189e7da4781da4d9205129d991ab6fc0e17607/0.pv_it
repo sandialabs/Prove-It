@@ -1,0 +1,3 @@
+root d4189e7da4781da4d9205129d991ab6fc0e17607/0
+	specializing 456aa45513a37c128e3ffd9b2f42552dba660091/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '0d0bedb2cb3ba49c4f29ecaa0691892e60cff159/0'}
+		by theorem proveit.basiclogic.equality.contradictionFromFalseEquivalence

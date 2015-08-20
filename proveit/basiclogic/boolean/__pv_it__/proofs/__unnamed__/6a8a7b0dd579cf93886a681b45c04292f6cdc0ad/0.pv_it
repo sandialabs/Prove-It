@@ -1,0 +1,3 @@
+root 6a8a7b0dd579cf93886a681b45c04292f6cdc0ad/0
+	specializing bf63113a23a8dcc0b1bd44e34432a9b5178db081/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '177c3b071cb47dd7a81b0c5aab9451e072390950/0'}
+		by axiom proveit.basiclogic.equality.notEqualsDef

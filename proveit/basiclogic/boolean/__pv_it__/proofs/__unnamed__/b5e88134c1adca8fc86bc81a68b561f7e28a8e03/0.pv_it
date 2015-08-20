@@ -1,0 +1,3 @@
+root b5e88134c1adca8fc86bc81a68b561f7e28a8e03/0
+	specializing 41d0189d66c485ed7081667311737ff5f5ee1750/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'd146d34191f17b0a6f397bdbe357d29a3a7c6747/0'}
+		by theorem proveit.basiclogic.boolean.selfImplication

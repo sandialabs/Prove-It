@@ -1,0 +1,3 @@
+root 81f043b0ed17b11aeb6a73e5584698944e7f526b/0
+	specializing 8a12ddb19d4c45e340df09286c27ae41e26ffbc2/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8f9ca7657d4be8e711e0cf9e788e61c41f73fa4b/0'}
+		by axiom proveit.basiclogic.boolean.eqTrueIntro

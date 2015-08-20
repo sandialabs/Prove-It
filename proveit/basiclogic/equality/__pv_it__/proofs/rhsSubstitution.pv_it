@@ -1,0 +1,11 @@
+root 18e3388d45e9457a392f3b3fe481a2065fcaa95b/0
+	generalizing 59d4aa68986712d13ca440d6e98ab06935696f2a/0
+		hypothetically reasoning 9ab3874c78937922e6b6de93afa02bbed673e187/0 assuming bd27db2b34f7da2ad29f364bfceb227992d53598/0
+			implication 2aacd9f7bd625f9fc94683842e79ef3b38f52d72/0
+				specializing 84b4397b8b666157006a64ebaf02bfd5090fd515/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'a745488d8ff9284eedea37d2d43963dfec0aedd7/0'}
+					by theorem proveit.basiclogic.equality.lhsSubstitution
+			hypothesis 4a68f9f08c1e9d1e884f3f15172ed8e89dbf08f5/0 assuming bd27db2b34f7da2ad29f364bfceb227992d53598/0
+				implication eaf364a51ee9719f8523ce5ab6f2e1e8a7475bb6/0
+					specializing 24fedf20c6161d436e92626dc1e635329f0cd327/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'a745488d8ff9284eedea37d2d43963dfec0aedd7/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0'}
+						by axiom proveit.basiclogic.equality.equalsSymmetry
+				hypothesis bd27db2b34f7da2ad29f364bfceb227992d53598/0 assuming bd27db2b34f7da2ad29f364bfceb227992d53598/0

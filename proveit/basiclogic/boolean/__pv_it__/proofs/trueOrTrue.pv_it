@@ -1,0 +1,5 @@
+root bbfba04b1639470afac998666c9c69eefab7f068/0
+	implication 9919002cf0efcbc32831b04d4aea4a5847364e30/0
+		by unnamed theorem
+	hypothesis d3e18ae454ea682ac9436f8c4969d2c8d91fc0f7/0
+		by axiom proveit.basiclogic.boolean.orTT
