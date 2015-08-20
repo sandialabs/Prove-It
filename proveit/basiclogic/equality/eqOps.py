@@ -1,5 +1,6 @@
 from proveit.basiclogic.genericOps import BinaryOperation
-from proveit.expression import Variable, Literal, Operation, STRING, LATEX
+from proveit.expression import Variable, Literal, Operation, STRING, LATEX,\
+    safeDummyVar
 from proveit.common import A, P, X, f, x, y, z
 
 pkg = __package__
@@ -114,12 +115,17 @@ class Equals(BinaryOperation):
         from proveit.basiclogic.set.axioms import singletonDef
         singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().checked({self})
     
-    def substitution(self, fnArg, fnExpr):
+    def substitution(self, fnArg=None, fnExpr=None):
         '''
-        From x = y, and given a function f(x), derive f(x)=f(y).  f(x) is defined by the fnArg argument
-        and fnExpr expression.
+        From x = y, and given a function f(x), derive f(x)=f(y).  f(x) is defined by the
+        fnArg argument and fnExpr expression.  If fnArg is None then all occurences
+        of self.lhs in fnExpr will be substituted with self.rhs.
         '''
         from axioms import substitution
+        if fnArg is None:
+            # find all occurences of self.lhs within fnExpr to replace with self.rhs
+            fnArg = safeDummyVar(self, fnExpr)
+            fnExpr = fnExpr.substituted({self.lhs:fnArg})
         assert isinstance(fnArg, Variable)
         return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion().checked({self})
         

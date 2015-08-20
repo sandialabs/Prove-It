@@ -24,15 +24,15 @@ class Equation:
         '''
         if not isinstance(nextEqExpr, Equals):
             raise EquationException('Equation may only be updated with an Equals expression')
-        self.eqExpr = self.eqExpr.applyTransitivity(nextEqExpr).check({self.eqExpr, nextEqExpr})
+        self.eqExpr = self.eqExpr.applyTransitivity(nextEqExpr).checked({self.eqExpr, nextEqExpr})
         return self.eqExpr
     
-    def prove(self, assumptions=frozenset()):
+    def proven(self, assumptions=frozenset()):
         '''
-        Forwards this prove "command" to the wrapped equation Expression but
+        Forwards this proven "command" to the wrapped equation Expression but
         then returns this Equation wrapper.
         '''
-        self.eqExpr.prove(assumptions)
+        self.eqExpr.proven(assumptions)
         return self
 
     def qed(self, filename):
