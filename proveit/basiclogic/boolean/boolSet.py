@@ -11,7 +11,7 @@ class BooleanSet(Literal):
         '''
         from theorems import unfoldInBool
         #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
-        return unfoldInBool.specialize({A:element}).deriveConclusion().check({inBool(element)})
+        return unfoldInBool.specialize({A:element}).deriveConclusion().checked({inBool(element)})
     
     def deduceElemInSet(self, element):
         '''
@@ -22,7 +22,7 @@ class BooleanSet(Literal):
         # prerequisite = [(element = TRUE) or (element = FALSE)]
         prerequisite = Or(Equals(element, TRUE), Equals(element, FALSE))
         # [element in BOOLEANS] assuming prerequisite
-        return foldInBool.specialize({A:element}).deriveConclusion().check({prerequisite})
+        return foldInBool.specialize({A:element}).deriveConclusion().checked({prerequisite})
 
     def evaluateForall(self, forallStmt):
         '''
@@ -47,17 +47,17 @@ class BooleanSet(Literal):
             evaluation = forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr}).deriveConclusion()
         else:
             # must evaluate for the TRUE and FALSE case separately
-            evalTrueInstance = trueInstance.evaluate().check()
-            evalFalseInstance = falseInstance.evaluate().check()
+            evalTrueInstance = trueInstance.evaluate().checked()
+            evalFalseInstance = falseInstance.evaluate().checked()
             if isinstance(evalTrueInstance, Equals) and isinstance(evalFalseInstance, Equals):
                 # proper evaluations for both cases (TRUE and FALSE)
                 trueCaseVal = evalTrueInstance.rhs
                 falseCaseVal = evalFalseInstance.rhs
                 if trueCaseVal == TRUE and falseCaseVal == TRUE:
                     # both cases are TRUE, so the forall over booleans is TRUE
-                    evalTrueInstance.deriveViaBooleanEquality().check()
-                    evalFalseInstance.deriveViaBooleanEquality().check()
-                    compose(evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality()).check()
+                    evalTrueInstance.deriveViaBooleanEquality().checked()
+                    evalFalseInstance.deriveViaBooleanEquality().checked()
+                    compose(evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality()).checked()
                     forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar})
                     evaluation = forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
                 else:
@@ -69,7 +69,7 @@ class BooleanSet(Literal):
                         evaluation = forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
                     elif trueCaseVal == TRUE and falseCaseVal == FALSE:
                         evaluation = forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
-        return evaluation.check()
+        return evaluation.checked()
     
     def unfoldForall(self, forallStmt):
         '''
@@ -80,7 +80,7 @@ class BooleanSet(Literal):
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == BOOLEANS), "May only apply unfoldForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of BOOLEANS to a forall statement with 1 instance variable"
-        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]): forallStmt.instanceExpr, A:forallStmt.instanceVars[0]}).deriveConclusion().check({forallStmt})
+        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]): forallStmt.instanceExpr, A:forallStmt.instanceVars[0]}).deriveConclusion().checked({forallStmt})
 
     def foldAsForall(self, forallStmt):
         '''
