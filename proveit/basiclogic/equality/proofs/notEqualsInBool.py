@@ -3,6 +3,6 @@ from proveit.basiclogic import Not, Equals, inBool
 from proveit.common import x, y, X
 
 # Not(x = y) in BOOLEANS
-Not(Equals(x, y)).deduceInBool().prove()
+Not(Equals(x, y)).deduceInBool().proven()
 # forall_{x, y} (x != y) in BOOLEANS
 notEqualsDef.specialize().lhsSubstitute(X, inBool(X)).generalize((x, y)).qed(__file__)
