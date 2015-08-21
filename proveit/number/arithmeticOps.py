@@ -146,9 +146,9 @@ class OrderingRelation(BinaryOperation):
                 raise ValueError("Equality does not involve either side of inequality!")
             X = safeDummyVar([self])
             if commonExpr == self.lhs:
-                return subrule(X,self.operator.operationMaker([X,self.rhs]))
+                return subrule(self.operator.operationMaker([X,self.rhs]),X)
             elif commonExpr == self.rhs:
-                return subrule(X,self.operator.operationMaker([self.lhs,X]))
+                return subrule(self.operator.operationMaker([self.lhs,X]),X)
 #                    return other.rhsSubstitute(X,self.operator.operationMaker([X,self.rhs]))
 #                else:
 #                    return other.rhsSubstitute(X,
@@ -378,39 +378,41 @@ class Multiply(AssociativeOperation):
         elif len(self.operands) == 2 :
             if (pull == 'left' and self.operands[0] == operand) or (pull == 'right' and self.operands[1] == operand):
                 from proveit.basiclogic.equality.axioms import equalsReflexivity
-                return equalsReflexivity.specialize({x:self}).checked().deriveRightViaEquivalence()
+                return equalsReflexivity.specialize({x:self}).checked()
             else:
                 return multComm.specialize(
                 {Etcetera(v):[],Etcetera(w):self.operands[0],Etcetera(x):[],Etcetera(y):self.operands[1],Etcetera(z):[]}
-                ).checked().deriveRightViaEquivalence()
-            newOperands = []
+                ).checked()
         else:
-            for op in self.operands:
-                if op != operand:
-                    newOperands.append(op)
-#            if len(newOperands) == 1:
+            splitIndex = self.operands.index(operand)
+            newOperandsLeft = self.operands[:splitIndex]
+            newOperandsRight = self.operands[splitIndex+1:]
+            newOperands = newOperandsLeft + newOperandsRight
 #                
             if pull == "left":
                 intermediate1 = multComm.specialize(
-                    {Etcetera(v):operand,Etcetera(w):newOperands,Etcetera(x):[],Etcetera(y):[],Etcetera(z):[]}
+                    {Etcetera(v):[],Etcetera(w):[],Etcetera(x):newOperandsLeft,Etcetera(y):operand,Etcetera(z):newOperandsRight}
                                             )#.deriveRightViaEquivalence()
                 intermediate2 = multAssoc.specialize(
                     {Etcetera(w):operand,Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):[]})#.deriveRightViaEquivalence()
                 eq = Equation(intermediate1)
                 eq.update(intermediate2)
-                return eq.eqExpr.checked().deriveRightViaEquivalence()
+                return eq.eqExpr.checked()
             elif pull == "right":
                 intermediate1 = multComm.specialize(
-                    {Etcetera(v):newOperands,Etcetera(w):operand,Etcetera(x):[],Etcetera(y):[],Etcetera(z):[]}
-                                            )#.deriveRightViaEquivalence()
+                    {Etcetera(v):newOperandsLeft,Etcetera(w):operand,Etcetera(x):[],Etcetera(y):newOperandsRight,Etcetera(z):[]}
+                                            )
                 intermediate2 = multAssoc.specialize(
-#                    {Etcetera(w):newOperands,Etcetera(x):operand,Etcetera(y):[],Etcetera(z):[]})#.deriveRightViaEquivalence()
-                    {Etcetera(w):[],Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):operand})#.deriveRightViaEquivalence()
+                    {Etcetera(w):[],Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):operand})
                 eq = Equation(intermediate1)
                 eq.update(intermediate2)
-                return eq.eqExpr.checked().deriveRightViaEquivalence()
+                return eq.eqExpr.checked()
             else:
                 raise ValueError("Invalid pull arg. provided!  (Acceptable values are \"left\" and \"right\".)")
+
+        AssociativeOperation.__init__(self, MULTIPLY, *operands)
+    def factorRhs(self,operand,pull="left"):
+        return self.factor(operand,pull=pull).deriveRightViaEquivalence()
 
 
 MULTIPLY = Literal(pkg, 'MULTIPLY', {STRING: r'*', LATEX: r'\cdot'}, operationMaker = lambda operands : Multiply(*operands))
