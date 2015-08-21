@@ -179,6 +179,7 @@ class LessThan(OrderingRelation):
         if other.lhs == self.rhs:
             if isinstance(other,LessThan):
                 result = lessThanTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                print self,result
                 return result.checked({self})
             elif isinstance(other,LessThanEquals):
                 result = lessThanTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
