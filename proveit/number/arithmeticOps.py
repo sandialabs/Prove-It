@@ -1,6 +1,6 @@
 import sys
 from proveit.expression import Literal, LATEX, STRING, Operation, Variable, safeDummyVar
-from proveit.basiclogic import Equals
+from proveit.basiclogic import Equals, Equation
 #from proveit.number import axioms
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
@@ -372,22 +372,43 @@ class Multiply(AssociativeOperation):
         '''
         AssociativeOperation.__init__(self, MULTIPLY, *operands)
     def factor(self,operand,pull="left"):
-        from proveit.number.complex.theorems import multComm
+        from proveit.number.complex.theorems import multComm, multAssoc
         if operand not in self.operands:
             raise ValueError("Trying to factor out absent expression!")
-        else:
+        elif len(self.operands) == 2 :
+            if (pull == 'left' and self.operands[0] == operand) or (pull == 'right' and self.operands[1] == operand):
+                from proveit.basiclogic.equality.axioms import equalsReflexivity
+                return equalsReflexivity.specialize({x:self}).checked().deriveRightViaEquivalence()
+            else:
+                return multComm.specialize(
+                {Etcetera(v):[],Etcetera(w):self.operands[0],Etcetera(x):[],Etcetera(y):self.operands[1],Etcetera(z):[]}
+                ).checked().deriveRightViaEquivalence()
             newOperands = []
+        else:
             for op in self.operands:
                 if op != operand:
                     newOperands.append(op)
+#            if len(newOperands) == 1:
+#                
             if pull == "left":
-                return multComm.specialize(
+                intermediate1 = multComm.specialize(
                     {Etcetera(v):operand,Etcetera(w):newOperands,Etcetera(x):[],Etcetera(y):[],Etcetera(z):[]}
-                                            ).deriveRightViaEquivalence()
+                                            )#.deriveRightViaEquivalence()
+                intermediate2 = multAssoc.specialize(
+                    {Etcetera(w):operand,Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):[]})#.deriveRightViaEquivalence()
+                eq = Equation(intermediate1)
+                eq.update(intermediate2)
+                return eq.eqExpr.checked().deriveRightViaEquivalence()
             elif pull == "right":
-                return multComm.specialize(
+                intermediate1 = multComm.specialize(
                     {Etcetera(v):newOperands,Etcetera(w):operand,Etcetera(x):[],Etcetera(y):[],Etcetera(z):[]}
-                                            ).deriveRightViaEquivalence()
+                                            )#.deriveRightViaEquivalence()
+                intermediate2 = multAssoc.specialize(
+#                    {Etcetera(w):newOperands,Etcetera(x):operand,Etcetera(y):[],Etcetera(z):[]})#.deriveRightViaEquivalence()
+                    {Etcetera(w):[],Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):operand})#.deriveRightViaEquivalence()
+                eq = Equation(intermediate1)
+                eq.update(intermediate2)
+                return eq.eqExpr.checked().deriveRightViaEquivalence()
             else:
                 raise ValueError("Invalid pull arg. provided!  (Acceptable values are \"left\" and \"right\".)")
 
