@@ -161,7 +161,7 @@ class Not(Operation):
                 val = notT.rhs
             elif operandEval.rhs == FALSE: 
                 val = notF.rhs
-            return operandEval.lhsSubstitute(A, Equals(Not(A), val))
+            return operandEval.lhsSubstitute(Equals(Not(A), val), A)
         return _evaluate(self, doEval)
 
     def deduceInBool(self):
