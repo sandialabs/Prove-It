@@ -8,7 +8,7 @@ from proveit.everythingLiteral import EVERYTHING
 #from variables import *
 #from variables import a, b
 #import variables as var
-from simpleExpr import cEtc
+#from simpleExpr import cEtc
 #from proveit.number.variables import zero, one, infinity,a,b,c,A,r,m,k,l,x,y,z, Am, Reals, Integers, Naturals
 from proveit.number.common import *
 
