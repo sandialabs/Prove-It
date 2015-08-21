@@ -264,9 +264,9 @@ class Equals(BinaryOperation):
                 val = simplEval.rhs
                 # Using substitution, go from simplEval to self=val
                 if lhsEval is not None:
-                    lhsEval.lhsSubstitute(X, Equals(Equals(X, rhsSimpl), val))
+                    lhsEval.lhsSubstitute(Equals(Equals(X, rhsSimpl), val), X)
                 if rhsEval is not None:
-                    rhsEval.lhsSubstitute(X, Equals(Equals(self.lhs, X), val))
+                    rhsEval.lhsSubstitute(Equals(Equals(self.lhs, X), val), X)
                 return Equals(self, val)
             
         return _evaluate(self, doEval)
@@ -334,7 +334,7 @@ class NotEquals(BinaryOperation):
             Performs the actual work if we can't simply look up the evaluation.
             '''
             unfoldedEvaluation = self.unfold().evaluate()
-            return self.definition().lhsSubstitute(X, Equals(X, unfoldedEvaluation.rhs))
+            return self.definition().lhsSubstitute(Equals(X, unfoldedEvaluation.rhs), X)
         return _evaluate(self, doEval)    
 
     def deduceInBool(self):
