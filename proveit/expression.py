@@ -18,7 +18,7 @@ class Expression:
         self.formatMap = formatMap
         # unique_rep is a unique representation based upon unique_id's of sub-Expressions
         self._coreInfo, self._subExpressions = coreInfo, subExpressions
-        self._unique_rep = self.__class__ + ' ' + self._coreInfo + ' ' + ', '.join(hex(expr._unique_id) for expr in subExpressions)
+        self._unique_rep = self._coreInfo + ' ' + ', '.join(hex(expr._unique_id) for expr in subExpressions)
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
         self._unique_id = hash(self._unique_rep)
         while self._unique_id in Expression.unique_id_map and Expression.unique_id_map[self._unique_id] != self._unique_rep:
@@ -49,7 +49,7 @@ class Expression:
         # export sub expressions and obtain their directory-unique ids
         sub_ids = [sub_expr._export_pvit(directory) for sub_expr in self._subExpressions]
         # generate a directory-unique representation for this expression
-        unique_rep = self.__class__ + ' ' + self._coreInfo + ' ' + ', '.join(sub_id for sub_id in sub_ids) + '\n'
+        unique_rep = self._coreInfo + ' ' + ', '.join(sub_id for sub_id in sub_ids) + '\n'
         # hash the unique representation and make a sub-directory of this hash value
         rep_hash = hashlib.sha1(unique_rep).hexdigest()
         hash_dir = os.path.join(directory, rep_hash)
