@@ -6,7 +6,7 @@ Equals(B, FALSE).deduceInBool()
 # [Not(B=FALSE) => Not(A)] => [A => (B=FALSE)], using inBool(B=FALSE)
 midPointBackHalf = Implies(Not(Equals(B, FALSE)), Not(A)).transposition()
 # [(B != FALSE) => Not(A)] => [Not(B=FALSE) => Not(A)]
-midPointFrontHalf = NotEquals(B, FALSE).definition().rhsStatementSubstitution(X, Implies(X, Not(A))).proven()
+midPointFrontHalf = NotEquals(B, FALSE).definition().rhsStatementSubstitution(Implies(X, Not(A)), X).proven()
 # [(B != FALSE) => Not(A)] => [A => (B=FALSE)]
 midPoint = midPointFrontHalf.applySyllogism(midPointBackHalf).proven()
 # B assuming (B != FALSE) and inBool(B)

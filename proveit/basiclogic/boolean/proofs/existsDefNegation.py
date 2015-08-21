@@ -13,6 +13,6 @@ rhs.deduceInBool().proven()
 # not(not(forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE))) = forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE))
 doubleNegatedForall = Not(Not(rhs)).deduceDoubleNegationEquiv().deriveReversed().proven()
 # notexists_{..x.. in S | ..Q(..x..)..} P(..x..) = forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE))
-equiv = notExistsDefSpec.applyTransitivity(existsDefSpec.substitution(X, Not(X))).applyTransitivity(doubleNegatedForall).proven()
+equiv = notExistsDefSpec.applyTransitivity(existsDefSpec.substitution(Not(X), X)).applyTransitivity(doubleNegatedForall).proven()
 # forall_{P, ..Q..} [notexists_{..x.. in S | ..Q(..x..)..} P(..x..) = forall_{..x.. in S | ..Q(..x..)..} (P(..x..) != TRUE)]
 equiv.generalize((P, Qetc, S)).qed(__file__)

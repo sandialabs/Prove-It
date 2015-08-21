@@ -17,7 +17,7 @@ for expr in (forallPx, forallNotPxNotTrue):
 # Not(TRUE) != TRUE
 NotEquals(Not(TRUE), TRUE).proveByEval()
 # forallNotPxNotTrue assuming forallPx, ..Q(..x..).., In(..x.., S)
-deriveStmtEqTrue(forallPx.specialize()).lhsStatementSubstitution(X, NotEquals(Not(X), TRUE)).deriveConclusion().generalize(xEtc, domain=S, conditions=etc_QxEtc).proven({forallPx, inDomain})
+deriveStmtEqTrue(forallPx.specialize()).lhsStatementSubstitution(NotEquals(Not(X), TRUE), X).deriveConclusion().generalize(xEtc, domain=S, conditions=etc_QxEtc).proven({forallPx, inDomain})
 # Not(forallNotPxNotTrue) => Not(forallPx)
 Implies(forallPx, forallNotPxNotTrue).transpose().proven()
 # forall_{P, ..Q.., S} [exists_{..x.. in S | ..Q(..x..)..} Not(P(..x..))] => [Not(forall_{..x.. in S | ..Q(..x..)..} P(..x..)]

@@ -12,7 +12,7 @@ AimplC.transpose().deriveConclusion().proven({inBool(A), inBool(C), hypothesis, 
 # B assuming inBool(A, B, C), (A=>C and B=>C), (A or B), Not(C)
 AorB.deriveRightIfNotLeft().proven(ABCareBool | {hypothesis, AorB, Not(C)})
 # Not(TRUE) assuming inBool(A, B, C), (A=>C and B=>C), (A or B), Not(C)
-deriveStmtEqTrue(C).rhsSubstitute(X, Not(X)).proven(ABCareBool | {hypothesis, AorB, Not(C)})
+deriveStmtEqTrue(C).rhsSubstitute(Not(X), X).proven(ABCareBool | {hypothesis, AorB, Not(C)})
 # FALSE assuming inBool(A, B, C), (A=>C and B=>C), (A or B), Not(C)
 notT.deriveRightViaEquivalence().proven(ABCareBool | {hypothesis, AorB, Not(C)})
 # Contradiction proof of C assuming (A=>C and B=>C), (A or B), inBool(A), and inBool(B)

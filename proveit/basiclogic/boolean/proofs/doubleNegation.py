@@ -6,7 +6,7 @@ from proveit.common import A, X
 # A=TRUE assuming A
 AeqT = deriveStmtEqTrue(A)
 # [Not(A)=FALSE] assuming A=TRUE
-AeqT.substitution(X, Not(X)).applyTransitivity(notT).proven({AeqT})
+AeqT.substitution(Not(A)).applyTransitivity(notT).proven({AeqT})
 # [Not(A)=FALSE] => Not(Not(A))
 notFromEqFalse.specialize({A:Not(A)}).proven()
 # forall_{A} A => Not(Not(A))

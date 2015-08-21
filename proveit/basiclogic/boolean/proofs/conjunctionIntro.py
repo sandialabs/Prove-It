@@ -9,8 +9,8 @@ BeqT = deriveStmtEqTrue(B).proven({B})
 # TRUE AND TRUE
 trueAndTrue
 # (TRUE and B) assuming B via (TRUE and TRUE)
-BeqT.lhsSubstitute(X, And(TRUE, X)).proven({B})
+BeqT.lhsSubstitute(And(TRUE, X), X).proven({B})
 # (A and B) assuming A, B via (TRUE and TRUE)
-AeqT.lhsSubstitute(X, And(X, B)).proven({A, B})
+AeqT.lhsSubstitute(And(X, B), X).proven({A, B})
 # forall_{A | A, B | B} (A and B)
 And(A, B).generalize((A, B), conditions=(A, B)).qed(__file__)

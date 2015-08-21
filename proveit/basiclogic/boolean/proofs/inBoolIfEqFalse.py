@@ -7,6 +7,6 @@ hypothesis = Equals(A, FALSE)
 # inBool(FALSE)
 falseInBool.proven()
 # inBool(A) assuming hypothesis
-conclusion = hypothesis.lhsSubstitute(X, inBool(X)).proven({hypothesis})
+conclusion = hypothesis.lhsSubstitute(inBool(X), X).proven({hypothesis})
 # forall_{A} A=FALSE => inBool(A)
 Implies(hypothesis, conclusion).generalize(A).qed(__file__)

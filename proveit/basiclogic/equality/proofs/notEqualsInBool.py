@@ -5,4 +5,4 @@ from proveit.common import x, y, X
 # Not(x = y) in BOOLEANS
 Not(Equals(x, y)).deduceInBool().proven()
 # forall_{x, y} (x != y) in BOOLEANS
-notEqualsDef.specialize().lhsSubstitute(X, inBool(X)).generalize((x, y)).qed(__file__)
+notEqualsDef.specialize().lhsSubstitute(inBool(X), X).generalize((x, y)).qed(__file__)

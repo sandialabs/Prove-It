@@ -9,7 +9,7 @@ neverPy = Forall(yEtc, NotEquals(PyEtc, TRUE), S, etc_QyEtc)
 # (P(..x..) != TRUE) assuming ..Q(..x..).., neverPy
 neverPy.specialize({yEtc:xEtc}).proven({etc_QxEtc, neverPy, inDomain})
 # (TRUE != TRUE) assuming ..Q(..x..).., P(..x..), neverPy
-trueNotEqTrue = deriveStmtEqTrue(PxEtc).rhsSubstitute(X, NotEquals(X, TRUE)).proven({etc_QxEtc, PxEtc, neverPy, inDomain})
+trueNotEqTrue = deriveStmtEqTrue(PxEtc).rhsSubstitute(NotEquals(X, TRUE), X).proven({etc_QxEtc, PxEtc, neverPy, inDomain})
 # FALSE assuming ..Q(..x..).., P(..x..), neverPy
 trueNotEqTrue.evaluate().deriveContradiction().deriveConclusion().proven({etc_QxEtc, PxEtc, neverPy, inDomain})
 # [forall_{..y.. in S | ..Q(..y..)..} (P(..y..) != TRUE)] in BOOLEANS
