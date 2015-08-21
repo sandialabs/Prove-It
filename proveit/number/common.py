@@ -1,4 +1,5 @@
 from proveit.expression import Variable, Literal, LATEX, STRING, Operation
+from proveit.multiExpression import Etcetera
 
 pkg = __package__
 
@@ -9,6 +10,8 @@ C = Variable('C')
 a = Variable('a')
 b = Variable('b')
 c = Variable('c')
+
+cEtc = Etcetera(c)
 
 m = Variable('m')
 n = Variable('n')
@@ -53,6 +56,8 @@ Integers = Literal(pkg,'Integers',{LATEX:r'\mathbb{Z}'})
 Naturals = Literal(pkg,'Naturals',{LATEX:r'\mathbb{N}'})
 Complexes = Literal(pkg,'Complexes',{LATEX:r'\mathbb{C}'})
 
+v = Variable('v')
+w = Variable('w')
 x = Variable('x')
 y = Variable('y')
 z = Variable('z')
