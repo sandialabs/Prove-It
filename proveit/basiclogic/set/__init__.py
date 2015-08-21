@@ -1,1 +1,1 @@
-from setOps import In, NotIn, Singleton, Complement, Union, Intersection, SubsetEq, SupersetEq, SetOfAll
+from setOps import In, NotIn, Singleton, Complement, Union, Intersection, SubsetEq, SupersetEq, SetOfAll, EVERYTHING, NOTHING
