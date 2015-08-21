@@ -115,11 +115,11 @@ class Equals(BinaryOperation):
         from proveit.basiclogic.set.axioms import singletonDef
         singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().checked({self})
     
-    def _subFn(self, fnArg, fnExpr, subbing):
+    def _subFn(self, fnExpr, fnArg, subbing):
         if fnArg is None:
             fnArg = safeDummyVar(self, fnExpr)
             fnExpr = fnExpr.substituted({subbing:fnArg})
-        return fnArg, fnExpr
+        return fnExpr, fnArg
     
     def substitution(self, fnExpr, fnArg=None):
         '''
@@ -129,7 +129,7 @@ class Equals(BinaryOperation):
         replaced with self.rhs inside fnExpr for this substitution.
         '''
         from axioms import substitution
-        fnArg, fnExpr = self._subFn(fnArg, fnExpr, self.lhs)
+        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs)
         assert isinstance(fnArg, Variable)
         return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion().checked({self})
         
@@ -141,7 +141,7 @@ class Equals(BinaryOperation):
         replaced with self.lhs inside fnExpr for this substitution.        
         '''
         from theorems import lhsSubstitution
-        fnArg, fnExpr = self._subFn(fnArg, fnExpr, self.rhs)
+        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.rhs)
         assert isinstance(fnArg, Variable)
         return lhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().checked({self})
     
@@ -153,7 +153,7 @@ class Equals(BinaryOperation):
         replaced with self.rhs inside fnExpr for this substitution.   
         '''
         from theorems import rhsSubstitution
-        fnArg, fnExpr = self._subFn(fnArg, fnExpr, self.lhs)        
+        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs)        
         assert isinstance(fnArg, Variable)
         return rhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().checked({self})
 
@@ -164,7 +164,7 @@ class Equals(BinaryOperation):
         P: fnArg -> fnExpr.  Otherwise, all occurences of self.rhs will be
         replaced with self.lhs inside fnExpr for this substitution.   
         '''
-        substitution = self.lhsStatementSubstitution(fnArg, fnExpr)
+        substitution = self.lhsStatementSubstitution(fnExpr, fnArg)
         return substitution.deriveConclusion().checked({self, substitution.hypothesis})
         
     def rhsSubstitute(self, fnExpr, fnArg=None):
@@ -174,7 +174,7 @@ class Equals(BinaryOperation):
         P: fnArg -> fnExpr.  Otherwise, all occurences of self.lhs will be
         replaced with self.rhs inside fnExpr for this substitution.   
         '''
-        substitution = self.rhsStatementSubstitution(fnArg, fnExpr)
+        substitution = self.rhsStatementSubstitution(fnExpr, fnArg)
         return substitution.deriveConclusion().checked({self, substitution.hypothesis})
 
     def leftImplViaEquivalence(self):
