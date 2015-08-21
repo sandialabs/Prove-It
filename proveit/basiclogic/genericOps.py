@@ -166,7 +166,7 @@ class OperationOverInstances(Operation):
         equatedMaps = equivalenceForallInstances.equateMaps()
         assert isinstance(equatedMaps, Equals), "Equated maps expected to be equals expression"
         assert self.etcExpr == equatedMaps.lhs or self.etcExpr == equatedMaps.rhs, "Instance substitution expecting equated map involving this OperationOverInstances etcExpr"
-        equatedOperationOverInstances = equatedMaps.substitution(X, Operation(self.operator, X))
+        equatedOperationOverInstances = equatedMaps.substitution(Operation(self.operator, X), X)
         assert isinstance(equatedOperationOverInstances, Equals), "Equated operation over instance expected to be equals expression"
         if self == equatedOperationOverInstances.rhs:
             equatedOperationOverInstances = equatedOperationOverInstances.deriveReversed()
@@ -185,7 +185,7 @@ class OperationOverInstances(Operation):
         assert isinstance(equatedMaps, Equals), "Equated maps expected to be equals expression"
         assert self.etcExpr == equatedMaps.lhs or self.etcExpr == equatedMaps.rhs, "Instance substitution expecting equated map involving this OperationOverInstances etcExpr"
         if self.etcExpr == equatedMaps.lhs:
-            return equatedMaps.rhsSubstitute(X, Operation(self.operator, [X]))
+            return equatedMaps.rhsSubstitute(Operation(self.operator, [X]), X)
         else:
-            return equatedMaps.lhsSubstitute(X, Operation(self.operator, [X]))
+            return equatedMaps.lhsSubstitute(Operation(self.operator, [X]), X)
     """
