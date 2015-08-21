@@ -274,7 +274,7 @@ class Expression:
     
     def _repr_png_(self):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
-        if self.png is None:
+        if not hasattr(self,'png') or self.png is None:
             LaTeXTool.clear_instance()
             lt = LaTeXTool.instance()
             lt.use_breqn = False
