@@ -115,48 +115,64 @@ class Equals(BinaryOperation):
         from proveit.basiclogic.set.axioms import singletonDef
         singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().checked({self})
     
-    def substitution(self, fnArg=None, fnExpr=None):
+    def _subFn(self, fnArg, fnExpr, subbing):
+        if fnArg is None:
+            fnArg = safeDummyVar(self, fnExpr)
+            fnExpr = fnExpr.substituted({subbing:fnArg})
+        return fnArg, fnExpr
+    
+    def substitution(self, fnExpr, fnArg=None):
         '''
-        From x = y, and given a function f(x), derive f(x)=f(y).  f(x) is defined by the
-        fnArg argument and fnExpr expression.  If fnArg is None then all occurences
-        of self.lhs in fnExpr will be substituted with self.rhs.
+        From x = y, and given f(x), derive f(x)=f(y).  If fnArg is
+        supplied, then the f function is defined as the lambda function
+        f: fnArg -> fnExpr.  Otherwise, all occurences of self.lhs will be
+        replaced with self.rhs inside fnExpr for this substitution.
         '''
         from axioms import substitution
-        if fnArg is None:
-            # find all occurences of self.lhs within fnExpr to replace with self.rhs
-            fnArg = safeDummyVar(self, fnExpr)
-            fnExpr = fnExpr.substituted({self.lhs:fnArg})
+        fnArg, fnExpr = self._subFn(fnArg, fnExpr, self.lhs)
         assert isinstance(fnArg, Variable)
         return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion().checked({self})
         
-    def lhsStatementSubstitution(self, fnArg, fnExpr):
+    def lhsStatementSubstitution(self, fnExpr, fnArg=None):
         '''
-        From x = y, and given a lambda function P(x), derive P(y)=>P(x).  P(x) is defined by the fnArg argument
-        and fnExpr expression.
+        From x = y, and given P(y), derive P(y)=>P(x).  
+        If fnArg is supplied, then the P function is defined as the lambda function
+        P: fnArg -> fnExpr.  Otherwise, all occurences of self.rhs will be
+        replaced with self.lhs inside fnExpr for this substitution.        
         '''
         from theorems import lhsSubstitution
+        fnArg, fnExpr = self._subFn(fnArg, fnExpr, self.rhs)
         assert isinstance(fnArg, Variable)
         return lhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().checked({self})
     
-    def rhsStatementSubstitution(self, fnArg, fnExpr):
+    def rhsStatementSubstitution(self, fnExpr, fnArg=None):
         '''
-        From x = y, and given a lambda function P(x), derive P(x)=>P(y).  P(x) is defined by the fnArg argument
-        and fnExpr expression.
+        From x = y, and given P(x), derive P(x)=>P(y).  
+        If fnArg is supplied, then the P function is defined as the lambda function
+        P: fnArg -> fnExpr.  Otherwise, all occurences of self.lhs will be
+        replaced with self.rhs inside fnExpr for this substitution.   
         '''
         from theorems import rhsSubstitution
+        fnArg, fnExpr = self._subFn(fnArg, fnExpr, self.lhs)        
         assert isinstance(fnArg, Variable)
         return rhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().checked({self})
 
-    def lhsSubstitute(self, fnArg, fnExpr):
+    def lhsSubstitute(self, fnExpr, fnArg=None):
         '''
-        From x = y, and given a lambda function P(x), derive P(x) assuming P(y)
+        From x = y, and given P(y), derive P(x) assuming P(y).  
+        If fnArg is supplied, then the P function is defined as the lambda function
+        P: fnArg -> fnExpr.  Otherwise, all occurences of self.rhs will be
+        replaced with self.lhs inside fnExpr for this substitution.   
         '''
         substitution = self.lhsStatementSubstitution(fnArg, fnExpr)
         return substitution.deriveConclusion().checked({self, substitution.hypothesis})
         
-    def rhsSubstitute(self, fnArg, fnExpr):
+    def rhsSubstitute(self, fnExpr, fnArg=None):
         '''
-        From x = y, and given a lambda function P(x), derive P(y) assuming P(x)
+        From x = y, and given P(x), derive P(y) assuming P(x).  
+        If fnArg is supplied, then the P function is defined as the lambda function
+        P: fnArg -> fnExpr.  Otherwise, all occurences of self.lhs will be
+        replaced with self.rhs inside fnExpr for this substitution.   
         '''
         substitution = self.rhsStatementSubstitution(fnArg, fnExpr)
         return substitution.deriveConclusion().checked({self, substitution.hypothesis})
