@@ -52,6 +52,7 @@ R   = Literal(pkg,'R',{LATEX:r'\mathbb{R}'})
 zeroToOne = Literal(pkg,'zeroToOne',{LATEX:r'[0,1]'})
 
 Reals = Literal(pkg,'Reals',{LATEX:r'\mathbb{R}'})
+RealsPos = Literal(pkg,'RealsPos',{LATEX:r'\mathbb{R}^+'})
 Integers = Literal(pkg,'Integers',{LATEX:r'\mathbb{Z}'})
 Naturals = Literal(pkg,'Naturals',{LATEX:r'\mathbb{N}'})
 Complexes = Literal(pkg,'Complexes',{LATEX:r'\mathbb{C}'})
