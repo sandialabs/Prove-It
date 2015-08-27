@@ -94,20 +94,6 @@ class IntervalCC(Interval):
 
 INTERVALCC = Literal(pkg, 'INTERVALCC', operationMaker = lambda operands : IntervalCC(*operands))
 
-
-class Ket(Operation):
-    def __init__(self, A):
-        Operation.__init__(self, KET, A)
-        self.operand = A
-    
-    def formatted(self, formatType, fence=False):
-        if formatType == LATEX:
-            return r'|'+self.operand.formatted(formatType, fence=fence)+'\\rangle'
-        else:
-            return '|'+self.operand.formatted(formatType, fence=fence)+'>'
-
-KET = Literal(pkg, 'KET', operationMaker = lambda operands : Ket(*operands))
-
 class OrderingRelation(BinaryOperation):
     r'''
     Base class for all strict and non-strict inequalities.
@@ -315,16 +301,6 @@ class GreaterThanEquals(OrderingRelation):
             raise ValueError("Cannot derive implication from input!")
 
 GREATERTHANEQUALS = Literal(pkg,'GREATERTHANEQUALS', {STRING: r'>=', LATEX:r'\geq'}, operationMaker = lambda operands : GreaterThanEquals(*operands))
-
-class Pr(Operation):
-    def __init__(self, A):
-        Operation.__init__(self, PR, A)
-        self.operand = A
-    
-    def formatted(self, formatType, fence=False):
-        return 'Pr['+self.operand.formatted(formatType, fence=True)+']'
-
-PR = Literal(pkg, 'PR', operationMaker = lambda operands : Pr(*operands))
 
 class Abs(Operation):
     def __init__(self, A):
