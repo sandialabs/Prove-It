@@ -1,6 +1,7 @@
 from proveit.basiclogic.genericOps import BinaryOperation
 from proveit.expression import Variable, Literal, Operation, STRING, LATEX,\
     safeDummyVar
+from proveit.multiExpression import ExpressionList, ExpressionTensor, Bundle, Etcetera, Block
 from proveit.common import A, P, X, f, x, y, z
 
 pkg = __package__
@@ -115,10 +116,18 @@ class Equals(BinaryOperation):
         from proveit.basiclogic.set.axioms import singletonDef
         singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().checked({self})
     
-    def _subFn(self, fnExpr, fnArg, subbing):
+    def _subFn(self, fnExpr, fnArg, subbing, replacement):
         if fnArg is None:
-            fnArg = safeDummyVar(self, fnExpr)
+            dummyVar = safeDummyVar(self, fnExpr)
+            if isinstance(replacement, ExpressionList):
+                fnArg = Etcetera(dummyVar)
+            elif isinstance(replacement, ExpressionTensor):
+                fnArg = Block(dummyVar)
+            else:
+                fnArg = dummyVar
             fnExpr = fnExpr.substituted({subbing:fnArg})
+            if dummyVar not in fnExpr.freeVars():
+                raise Exception('Expression to be substituted is not found within the expression that the substitution is applied to.')
         return fnExpr, fnArg
     
     def substitution(self, fnExpr, fnArg=None):
@@ -129,8 +138,12 @@ class Equals(BinaryOperation):
         replaced with self.rhs inside fnExpr for this substitution.
         '''
         from axioms import substitution
-        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs)
-        assert isinstance(fnArg, Variable)
+        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs, self.rhs)
+        assert isinstance(fnArg, Variable) or isinstance(fnArg, Bundle)
+        print fnArg
+        print fnExpr
+        print self.lhs.__class__
+        print self.rhs.__class__
         return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion().checked({self})
         
     def lhsStatementSubstitution(self, fnExpr, fnArg=None):
@@ -141,7 +154,7 @@ class Equals(BinaryOperation):
         replaced with self.lhs inside fnExpr for this substitution.        
         '''
         from theorems import lhsSubstitution
-        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.rhs)
+        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.rhs, self.lhs)
         assert isinstance(fnArg, Variable)
         return lhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().checked({self})
     
@@ -153,7 +166,7 @@ class Equals(BinaryOperation):
         replaced with self.rhs inside fnExpr for this substitution.   
         '''
         from theorems import rhsSubstitution
-        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs)        
+        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs, self.rhs)        
         assert isinstance(fnArg, Variable)
         return rhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion().checked({self})
 
@@ -346,3 +359,89 @@ class NotEquals(BinaryOperation):
 
 NOTEQUALS = Literal(pkg, 'NOTEQUALS', {STRING:'!=', LATEX:r'\neq'}, lambda operands : NotEquals(*operands))
 
+def _autoSub(outcome, outerExpr, superExpr, subExpr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, suppressWarnings=False):
+    if eqGenMethodArgs is None: eqGenMethodArgs = []
+    if eqGenKeywordArgs is None: eqGenKeywordArgs = dict()
+    meetsCriteria = (subExprClass is None or isinstance(subExpr, subExprClass)) and \
+        (criteria is None or criteria(subExpr))
+    if meetsCriteria and hasattr(subExpr, eqGenMethodName):
+        generatedEquality = None
+        try:
+            generatedEquality = getattr(subExpr, eqGenMethodName)(*eqGenMethodArgs, **eqGenKeywordArgs)
+        except Exception as e:
+            if not suppressWarnings:
+                print "Warning, failure in autosub attempt when applying '" + eqGenMethodName + "' method to " + str(subExpr) + ":"
+                print e
+                print "Continuing on"
+            
+        if generatedEquality is not None and isinstance(generatedEquality, Equals) and (generatedEquality.lhs == subExpr or generatedEquality.rhs == subExpr):
+            if superExpr == outerExpr:
+                # substitute all occurences
+                fnExpr, fnArgs = outerExpr, None 
+            else:
+                # substitute only occurences within superExpr
+                subbing = generatedEquality.lhs if generatedEquality.lhs == subExpr else generatedEquality.rhs
+                replacement = generatedEquality.rhs if generatedEquality.lhs == subExpr else generatedEquality.lhs
+                fnExpr, fnArgs = generatedEquality._subFn(superExpr, None, subbing, replacement)
+                fnExpr = outerExpr.substituted({superExpr:fnExpr})
+            if outcome == 'substitution':
+                return generatedEquality.substitution(fnExpr, fnArgs)
+            elif generatedEquality.lhs == subExpr:
+                if outcome == 'substitute':
+                    return generatedEquality.rhsSubstitute(fnExpr, fnArgs)
+                elif outcome == 'statement_substitution':
+                    return generatedEquality.rhsStatementSubstitute(fnExpr, fnArgs)
+            elif generatedEquality.rhs == subExpr:
+                if outcome == 'substitute':
+                    return generatedEquality.lhsSubstitute(fnExpr, fnArgs)
+                elif outcome == 'statement_substitution':
+                    return generatedEquality.lhsStatementSubstitute(fnExpr, fnArgs)
+    for subExpr in subExpr.subExprGen():
+        result = _autoSub(outcome, outerExpr, superExpr, subExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)
+        if result is not None: return result
+    return None            
+    
+def autoSubstitute(expr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, superExpr=None, suppressWarnings = False):
+    '''
+    From a given expr = P(x), derives and returns some P(y) via some x=y that is generated by
+    calling a method of the name eqGenMethodName on one of its sub-expressions.  eqGenMethodArgs
+    and eqGenKeywordArgs may be a list of arguments and/or a dictionary of keyword arguments
+    respectively to pass on to the eqGenMethodName method.  If provided, criteria, subExprClass,
+    and superExpr will force selectivity in choosing the sub-expression to generate x=y.
+    Specificially the sub-expression must be a sub-expression of superExpr (if provided)
+    beyond being a sub-expression of expr, it must be an instance of subExprClass (if provided), 
+    and the criteria method (if provide) must return true when passed in the sub-expression.
+    If superExpr is provided, replacements are only made within superExpr.
+    '''
+    if superExpr is None: superExpr = expr
+    return _autoSub('substitute', expr, superExpr, superExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)
+
+def autoSubstitution(expr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, superExpr=None, suppressWarnings = False):
+    '''
+    From a given expr = f(x), derives and returns some f(x) = f(y) via some x=y that is generated by
+    calling a method of the name eqGenMethodName on one of its sub-expressions.  eqGenMethodArgs
+    and eqGenKeywordArgs may be a list of arguments and/or a dictionary of keyword arguments
+    respectively to pass on to the eqGenMethodName method.  If provided, criteria, subExprClass,
+    and superExpr will force selectivity in choosing the sub-expression to generate x=y.
+    Specificially the sub-expression must be a sub-expression of superExpr (if provided)
+    beyond being a sub-expression of expr, it must be an instance of subExprClass (if provided), 
+    and the criteria method (if provide) must return true when passed in the sub-expression.
+    If superExpr is provided, replacements are only made within superExpr.
+    '''
+    if superExpr is None: superExpr = expr
+    return _autoSub('substitution', expr, superExpr, superExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)
+
+def autoStatementSubstitution(expr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, superExpr=None, suppressWarnings = False):
+    '''
+    From a given expr = P(x), derives and returns some P(x) => P(y) via some x=y that is 
+    generated by calling a method of the name eqGenMethodName on one of its sub-expressions.
+    eqGenMethodArgs and eqGenKeywordArgs may be a list of arguments and/or a dictionary of 
+    keyword arguments respectively to pass on to the eqGenMethodName method.  If provided, 
+    criteria, subExprClass, and superExpr will force selectivity in choosing the sub-expression 
+    to generate x=y.  Specificially the sub-expression must be a sub-expression of superExpr 
+    (if provided) beyond being a sub-expression of expr, it must be an instance of subExprClass 
+    (if provided), and the criteria method (if provide) must return true when passed in the 
+    sub-expression. If superExpr is provided, replacements are only made within superExpr.
+    '''
+    if superExpr is None: superExpr = expr
+    return _autoSub('statement_substitution', expr, superExpr, superExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)
