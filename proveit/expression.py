@@ -25,7 +25,7 @@ class Expression:
             self._unique_id += 1
         Expression.unique_id_map[self._unique_id] = self._unique_rep
         self.png = None # if a png is generate, it is stored for future reference
-        
+    
     def __repr__(self):
         return str(self) # just use the string representation
     
@@ -72,7 +72,14 @@ class Expression:
     
     def __str__(self):
         return self.formatted(STRING)
-            
+    
+    def subExprGen(self):
+        '''
+        Generator over the sub-expressions of this expression.
+        '''
+        for subExpr in self._subExpressions:
+            yield subExpr
+    
     def formatted(self, formatType, fence=False):
         '''
         Returns a formatted version of the expression for the given formatType
@@ -303,6 +310,8 @@ class Literal(Expression):
         Expression.__init__(self, 'Literal ' + str(package) + '.' + name, formatMap=formatMap)
         assert re.match('[A-Za-z0-9_]+', name), 'Literals must be alphanumeric or underscore.'
         self.package = package
+        if self.package[:7] != 'proveit':
+            raise Exception('Literal package must be contained within proveit.  This may result from a relative import.\nUse absolute imports with proveit Literals.')
         self.name = name
         self.operationMaker = operationMaker
             
