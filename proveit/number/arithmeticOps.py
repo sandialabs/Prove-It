@@ -420,6 +420,27 @@ class Fraction(BinaryOperation):
         else:
             print "BAD FORMAT TYPE"
             return None
+    def cancel(self,operand):
+        assert isinstance(self.numerator,Multiply)
+        if isinstance(self.denominator,Multiply):
+            from proveit.number.complex.theorems import fracCancel1
+            newEq0 = self.numerator.factor(operand).proven().substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).proven()
+            newEq1 = self.denominator.factor(operand).proven().substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).proven()
+            newEq2 = fracCancel1.specialize({x:operand,Etcetera(y):newEq1.rhs.numerator.operands[1:],Etcetera(z):newEq1.rhs.denominator.operands[1:]})
+            return newEq0.applyTransitivity(newEq1).applyTransitivity(newEq2)
+#            newFracIntermediate = self.numerator.factor(operand).proven().rhsSubstitute(self)
+#            newFrac = self.denominator.factor(operand).proven().rhsSubstitute(newFracIntermediate)
+#            numRemainingOps = newFrac.numerator.operands[1:]
+#            denomRemainingOps = newFrac.denominator.operands[1:]
+#            return fracCancel1.specialize({x:operand,Etcetera(y):numRemainingOps,Etcetera(z):denomRemainingOps})
+        else:
+            from proveit.number.complex.theorems import fracCancel2
+            newEq0 = self.numerator.factor(operand).proven().substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).proven()
+            newEq1 = fracCancel2.specialize({x:operand,Etcetera(y):newEq0.rhs.numerator.operands[1:]})
+            return newEq0.applyTransitivity(newEq1)
+#            newFrac = self.numerator.factor(operand).proven().rhsSubstitute(self)
+#            numRemainingOps = newFrac.numerator.operands[1:]
+#            return fracCancel2.specialize({x:operand,Etcetera(y):numRemainingOps})
 
 FRACTION = Literal(pkg, 'FRACTION', operationMaker = lambda operands : Fraction(*operands))
 
