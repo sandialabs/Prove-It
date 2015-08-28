@@ -130,7 +130,7 @@ class OrderingRelation(BinaryOperation):
                 commonExpr = other.rhs
             else:
                 raise ValueError("Equality does not involve either side of inequality!")
-            X = safeDummyVar([self])
+            X = safeDummyVar(self)
             if commonExpr == self.lhs:
                 return subrule(self.operator.operationMaker([X,self.rhs]),X)
             elif commonExpr == self.rhs:
