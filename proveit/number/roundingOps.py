@@ -25,3 +25,10 @@ class Ceil(Operation):
         return Operation.formatted(self, formatType, fence)
 
 CEIL = Literal(pkg, 'CEIL', operationMaker = lambda operands : Ceil(*operands))
+
+class Round(Operation):
+    def __init__(self, A):
+        Operation.__init__(self, ROUND, A)
+        self.operand = A
+    
+ROUND = Literal(pkg, 'Round', {LATEX:r'{\rm Round}'}, operationMaker = lambda operands : Round(*operands))
