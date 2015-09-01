@@ -310,7 +310,7 @@ class Literal(Expression):
         Expression.__init__(self, 'Literal ' + str(package) + '.' + name, formatMap=formatMap)
         assert re.match('[A-Za-z0-9_]+', name), 'Literals must be alphanumeric or underscore.'
         self.package = package
-        if self.package[:7] != 'proveit':
+        if package is None or self.package[:7] != 'proveit':
             raise Exception('Literal package must be contained within proveit.  This may result from a relative import.\nUse absolute imports with proveit Literals.')
         self.name = name
         self.operationMaker = operationMaker
@@ -410,8 +410,10 @@ class Operation(Expression):
         
     def formatted(self, formatType, fence=False):
         # override this default as desired
-        if formatType == STRING or formatType == LATEX:
+        if formatType == STRING:
             return self.operator.formatted(formatType, fence=True) +  '(' + self.operands.formatted(formatType, fence=False) + ')'
+        elif formatType == LATEX:
+            return self.operator.formatted(formatType, fence=True) +  r'\left(' + self.operands.formatted(formatType, fence=False) + r'\right)'
         
     def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
         '''
