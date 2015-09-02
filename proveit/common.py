@@ -4,7 +4,7 @@ common.py
 Commonly used Variables and simple expressions involving them.
 '''
 
-from proveit.expression import Variable, Operation
+from proveit.expression import Variable, Operation, LATEX
 from proveit.multiExpression import Etcetera
 
 a = Variable('a')
@@ -41,7 +41,9 @@ P = Variable('P')
 Q = Variable('Q')
 R = Variable('R')
 S = Variable('S')
+U = Variable('U')
 X = Variable('X') 
+eps = Variable('eps',{LATEX:r'\varepsilon'})
 
 PofA = Operation(P, A) # P(A)
 Px = Operation(P, x) # P(x)

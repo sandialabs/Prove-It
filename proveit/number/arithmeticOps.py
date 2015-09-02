@@ -1,16 +1,18 @@
 import sys
 from proveit.expression import Literal, LATEX, STRING, Operation, Variable, safeDummyVar
+from proveit.multiExpression import Etcetera
 from proveit.basiclogic import Equals, Equation
 #from proveit.number import axioms
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
 from proveit.everythingLiteral import EVERYTHING
+from proveit.common import a, b, c, m, k, l, r, v, w, x, y, z, A
 #from variables import *
 #from variables import a, b
 #import variables as var
 #from simpleExpr import cEtc
 #from proveit.number.variables import zero, one, infinity,a,b,c,A,r,m,k,l,x,y,z, Am, Reals, Integers, Naturals
-from proveit.number.common import *
+#from proveit.number.common import *
 
 pkg = __package__
 
@@ -329,7 +331,10 @@ class Add(AssociativeOperation):
         else:
             from proveit.number.theorems import commAdd
             return commAdd.specialize({a:self.operands[0],b:self.operands[1]})
-
+        
+    def deriveInReal(self):
+        from real.theorems import addClosure
+        return addClosure.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
 
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
 
@@ -482,6 +487,7 @@ class Summation(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
+        from proveit.number.common import Reals, Integers, Naturals, zero, infinity
         OperationOverInstances.__init__(self, SUMMATION, indices, summand, domain=domain, conditions=conditions)
         if len(self.instanceVars) != 1:
             raise ValueError('Only one index allowed per integral!')
@@ -517,6 +523,7 @@ class Summation(OperationOverInstances):
         If sum is geometric sum (finite or infinite), provide analytic expression for sum.
         '''
         from proveit.number.theorems import infGeomSum, finGeomSum
+        from proveit.number.common import zero, infinity
         self.m = self.indices[0]
         
         try:
@@ -569,7 +576,7 @@ class Neg(Operation):
         self.operand = A
     
     def formatted(self, formatType, fence=False):
-        return '-'+self.operand.formatted(formatType, fence=fence)
+        return '-'+self.operand.formatted(formatType, fence=True)
         
 NEG = Literal(pkg, 'NEG', operationMaker = lambda operands : Neg(*operands))
 
@@ -585,6 +592,7 @@ class Integrate(OperationOverInstances):
         integrand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
+        from proveit.number.common import Reals, infinity
         OperationOverInstances.__init__(self, INTEGRATE, index, integrand, domain=domain, conditions=conditions)
         self.domain = domain
         if len(self.instanceVars) != 1:
