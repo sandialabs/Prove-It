@@ -331,7 +331,10 @@ class Add(AssociativeOperation):
         else:
             from proveit.number.theorems import commAdd
             return commAdd.specialize({a:self.operands[0],b:self.operands[1]})
-
+        
+    def deriveInReal(self):
+        from real.theorems import addClosure
+        return addClosure.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
 
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
 
