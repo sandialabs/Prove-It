@@ -16,6 +16,27 @@ from proveit.common import a, b, c, m, k, l, r, v, w, x, y, z, A
 
 pkg = __package__
 
+
+"""
+class ArithOp:
+    def __init__(self, closureTheoremDict):
+        self.closureTheoremDict = closureTheoremDict
+        
+    def deriveInNumberSet(self, numberSet):
+        closureThm = self.closureTheoremDict[numberSet]
+        
+        
+    def deriveInReals(self):
+        from real.theorems import addClosure
+        from integer.theorems import inReals
+        for operand in self.operands:
+            if hasattr(operand, 'deriveInReals'):
+                operand.deriveInReals()
+            elif isinstance(operand, Variable) or isinstance(operand, Literal):
+                inReals.specialize({a:operand})
+        return addClosure.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
+"""
+
 class DiscreteContiguousSet(BinaryOperation):
     r'''
     Contiguous set of integers, from lowerBound to upperBound (both bounds to be interpreted inclusively)
@@ -324,6 +345,7 @@ class Add(AssociativeOperation):
         Add together any number of operands.
         '''
         AssociativeOperation.__init__(self, ADD, *operands)
+        
 #    def commute(self,index0,index1):
     def commute(self):#Only works at present for two-place addition
         if len(self.operands)!=2:
@@ -332,8 +354,14 @@ class Add(AssociativeOperation):
             from proveit.number.theorems import commAdd
             return commAdd.specialize({a:self.operands[0],b:self.operands[1]})
         
-    def deriveInReal(self):
+    def deriveInReals(self):
         from real.theorems import addClosure
+        from integer.theorems import inReals
+        for operand in self.operands:
+            if hasattr(operand, 'deriveInReals'):
+                operand.deriveInReals()
+            elif isinstance(operand, Variable) or isinstance(operand, Literal):
+                inReals.specialize({a:operand})
         return addClosure.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
 
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
@@ -393,9 +421,6 @@ class Multiply(AssociativeOperation):
                 raise ValueError("Invalid pull arg. provided!  (Acceptable values are \"left\" and \"right\".)")
 
         AssociativeOperation.__init__(self, MULTIPLY, *operands)
-    def factorRhs(self,operand,pull="left"):
-        return self.factor(operand,pull=pull).deriveRightViaEquivalence()
-
 
 MULTIPLY = Literal(pkg, 'MULTIPLY', {STRING: r'*', LATEX: r'\cdot'}, operationMaker = lambda operands : Multiply(*operands))
 
@@ -438,14 +463,38 @@ class Exponentiate(BinaryOperation):
         self.exponent = exponent
     
     def formatted(self, formatType, fence=False):
+        formattedBase = self.base.formatted(formatType, fence=True)
+        if isinstance(self.base, Exponentiate):
+            # must fence nested powers
+            if formatType == LATEX:
+                formattedBase = r'\left(' + formattedBase + r'\right)'
+            elif formatType == STRING:
+                formattedBase = r'(' + formattedBase + r')'
         if formatType == LATEX:
-            return self.base.formatted(formatType, fence=fence)+'^{'+self.exponent.formatted(formatType, fence=fence)+'}'
+            return formattedBase+'^{'+self.exponent.formatted(formatType, fence=False)+'}'
         elif formatType == STRING:
-            return self.base.formatted(formatType, fence=fence)+'^('+self.exponent.formatted(formatType, fence=fence)+')'
+            return formattedBase+'^('+self.exponent.formatted(formatType, fence=False)+')'
         else:
             print "BAD FORMAT TYPE"
             return None
+    
+    def raiseExpFactor(self, expFactor):
+        from proveit.number.complex.theorems import powOfPow
+        if not isinstance(self.exponent, Multiply):
+            raise Exception('May only apply raiseExpFactor to a power with a product as the exponent')
+        factorEq = self.exponent.factor(expFactor, pull='right')
+        if factorEq.lhs != factorEq.rhs:
+            # factor the exponent first, then raise this exponent factor
+            factoredExpEq = factorEq.substitution(self)
+            return factoredExpEq.applyTransitivity(factoredExpEq.rhs.raiseExpFactor(expFactor))
+        return powOfPow.specialize({a:self.base, b:self.exponent.operands[0], c:self.exponent.operands[1]}).deriveReversed()
 
+    def lowerOuterPow(self):
+        from proveit.number.complex.theorems import powOfPow
+        if not isinstance(self.base, Exponentiate):
+            raise Exception('May only apply lowerOuterPow to nested Exponentiate operations')
+        return powOfPow.specialize({a:self.base.base, b:self.base.exponent, c:self.exponent})
+    
 EXPONENTIATE = Literal(pkg, 'EXPONENTIATE', operationMaker = lambda operands : Exponentiate(*operands))
 
 #def extractExpBase(exponentiateInstance):
