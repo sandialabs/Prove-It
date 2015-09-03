@@ -21,7 +21,7 @@ class NumberOp:
     def __init__(self, closureTheoremDict):
         self.closureTheoremDict = closureTheoremDict
         
-    def deriveInNumberSet(self, numberSet):
+    def deriveInNumberSet(self, numberSet, suppressWarnings=False):
         '''
         Derive this mathematical expression is in some number set (Integers, Reals, Complexes, ..)
         using the closure theorem dictionaries of the operation and applying recursively
@@ -29,6 +29,7 @@ class NumberOp:
         '''
         import integer.theorems 
         import real.theorems
+        from proveit.number.common import Integers, Reals, Complexes
         if numberSet not in self.closureTheoremDict:
             raise NumberClosureException('Could not derive ' + str(self.__class__) + ' expression in ' + numberSet + ' set. Unknown case.')
         closureThm = self.closureTheoremDict[numberSet]
@@ -47,29 +48,39 @@ class NumberOp:
         # Grab the conditions for the specialization of the closure theorem
         for stmt, _, _, conditions in closureSpec.statement._specializers:
             if stmt._expression == closureThm:
-                # check each condition and apply recursively if it is in some set
+                # check each condition and apply recursively if it is in some set                
                 for condition in conditions:
-                    if isinstance(condition, In) and len(condition.operands) == 2:
-                        elem, domain = condition.operands
-                        if hasattr(elem, 'deriveInNumberSet'):
-                            elem.deriveInNumberSet(domain)
-                        elif isinstance(elem, Variable) or isinstance(elem, Literal):
-                            # for good measure, specialize containment theorems
-                            if domain == Complexes:
-                                integer.theorems.inComplexes({a:elem})
-                                real.theorems.inComplexes({a:elem})
-                            elif domain == Real:
-                                integer.theorems.inReals({a:elem})                            
+                    condition = condition._expression
+                    if isinstance(condition, In):
+                        domain = condition.domain
+                        elements = condition.elements
+                        for elem in elements:
+                            if hasattr(elem, 'deriveInNumberSet'):
+                                try:
+                                    elem.deriveInNumberSet(domain, suppressWarnings=suppressWarnings)
+                                except NumberClosureException as e:
+                                    if not suppressWarnings:
+                                        print "Warning, could not perform nested number set derivation: ", str(e)
+                            elif isinstance(elem, Variable) or isinstance(elem, Literal):
+                                # for good measure, specialize containment theorems
+                                if domain == Complexes:
+                                    integer.theorems.inComplexes.specialize({a:elem})
+                                    real.theorems.inComplexes.specialize({a:elem})
+                                elif domain == Reals:
+                                    integer.theorems.inReals.specialize({a:elem})
+        return closureSpec                            
+
+    def deriveInIntegers(self, suppressWarnings=False):
+        from proveit.number.common import Integers
+        return self.deriveInNumberSet(Integers, suppressWarnings=suppressWarnings)
         
-    def deriveInReals(self):
-        from real.theorems import addClosure
-        from integer.theorems import inReals
-        for operand in self.operands:
-            if hasattr(operand, 'deriveInReals'):
-                operand.deriveInReals()
-            elif isinstance(operand, Variable) or isinstance(operand, Literal):
-                inReals.specialize({a:operand})
-        return addClosure.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
+    def deriveInReals(self, suppressWarnings=False):
+        from proveit.number.common import Reals
+        return self.deriveInNumberSet(Reals, suppressWarnings=suppressWarnings)
+
+    def deriveInComplexes(self, suppressWarnings=False):
+        from proveit.number.common import Complexes
+        return self.deriveInNumberSet(Complexes, suppressWarnings=suppressWarnings)
 
 class NumberClosureException(Exception):
     def __init__(self, msg):
@@ -397,16 +408,6 @@ class Add(AssociativeOperation, NumberOp):
             from proveit.number.theorems import commAdd
             return commAdd.specialize({a:self.operands[0],b:self.operands[1]})
         
-    def deriveInReals(self):
-        from real.theorems import addClosure
-        from integer.theorems import inReals
-        for operand in self.operands:
-            if hasattr(operand, 'deriveInReals'):
-                operand.deriveInReals()
-            elif isinstance(operand, Variable) or isinstance(operand, Literal):
-                inReals.specialize({a:operand})
-        return addClosure.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
-
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
 
 class Subtract(BinaryOperation):
