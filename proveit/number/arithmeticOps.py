@@ -491,7 +491,7 @@ class Exponentiate(BinaryOperation):
     
     def formatted(self, formatType, fence=False):
         formattedBase = self.base.formatted(formatType, fence=True)
-        if isinstance(self.base, Exponentiate):
+        if isinstance(self.base, Exponentiate) or isinstance(self.base, Fraction):
             # must fence nested powers
             if formatType == LATEX:
                 formattedBase = r'\left(' + formattedBase + r'\right)'
