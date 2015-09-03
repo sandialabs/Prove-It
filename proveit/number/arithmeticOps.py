@@ -426,6 +426,12 @@ class Fraction(BinaryOperation):
             print "BAD FORMAT TYPE"
             return None
     def cancel(self,operand):
+        if not isinstance(self.numerator,Multiply):
+            from proveit.number.complex.theorems import fracCancel3
+            newEq0 = self.denominator.factor(operand).proven().substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).proven()
+            newEq1 = fracCancel3.specialize({x:operand,Etcetera(y):newEq0.rhs.denominator.operands[1:]})
+            return newEq0.applyTransitivity(newEq1)
+            
         assert isinstance(self.numerator,Multiply)
         if isinstance(self.denominator,Multiply):
             from proveit.number.complex.theorems import fracCancel1
