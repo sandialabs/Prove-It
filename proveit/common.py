@@ -43,7 +43,6 @@ R = Variable('R')
 S = Variable('S')
 U = Variable('U')
 X = Variable('X') 
-eps = Variable('eps',{LATEX:r'\varepsilon'})
 
 PofA = Operation(P, A) # P(A)
 Px = Operation(P, x) # P(x)
@@ -61,6 +60,9 @@ fxy = Operation(f, (x, y)) # f(x, y)
 gx = Operation(g, x) # g(x)
 gy = Operation(g, y) # g(y)
 
+eps = Variable('eps',{LATEX:r'\varepsilon'})
+Upsilon = Variable('Upsilon',{LATEX:r'\Upsilon'})
+
 Aetc = Etcetera(A) # ..A..
 Cetc = Etcetera(C) # ..C..
 Qetc = Etcetera(Q) # ..Q..
@@ -68,6 +70,8 @@ Retc = Etcetera(R) # ..R..
 xEtc = Etcetera(x) # ..x..
 yEtc = Etcetera(y) # ..y..
 zEtc = Etcetera(z) # ..z..
+fxEtc = Operation(f, xEtc) # f(..x..)
+gxEtc = Operation(g, xEtc) # f(..x..)
 PxEtc = Operation(P, xEtc) # P(..x..)
 PyEtc = Operation(P, yEtc) # P(..y..)
 PxyEtc = Operation(P, (xEtc, yEtc)) # P(..x.., ..y..)
