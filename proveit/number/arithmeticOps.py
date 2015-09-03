@@ -1,7 +1,7 @@
 import sys
 from proveit.expression import Literal, LATEX, STRING, Operation, Variable, safeDummyVar
 from proveit.multiExpression import Etcetera
-from proveit.basiclogic import Equals, Equation
+from proveit.basiclogic import Equals, Equation, Forall, In
 #from proveit.number import axioms
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
@@ -17,14 +17,49 @@ from proveit.common import a, b, c, m, k, l, r, v, w, x, y, z, A
 pkg = __package__
 
 
-"""
-class ArithOp:
+class NumberOp:
     def __init__(self, closureTheoremDict):
         self.closureTheoremDict = closureTheoremDict
         
     def deriveInNumberSet(self, numberSet):
+        '''
+        Derive this mathematical expression is in some number set (Integers, Reals, Complexes, ..)
+        using the closure theorem dictionaries of the operation and applying recursively
+        according to the conditions for specializing this theorem. 
+        '''
+        import integer.theorems 
+        import real.theorems
+        if numberSet not in self.closureTheoremDict:
+            raise NumberClosureException('Could not derive ' + str(self.__class__) + ' expression in ' + numberSet + ' set. Unknown case.')
         closureThm = self.closureTheoremDict[numberSet]
-        
+        if not isinstance(closureThm, Forall):
+            raise Exception('Expecting closure theorem to be a Forall expression')
+        iVars = closureThm.instanceVars
+        if not len(iVars) == 2:
+            raise Exception('Expecting two instance variables for the closure theorem')    
+        # Specialize the closure theorem differently for BinaryOperation or AccociativeOperation cases.   
+        if isinstance(self, BinaryOperation):
+            closureSpec = closureThm.specialize({iVars[0]:self.operands[0], iVars[1]:self.operands[1]})
+        elif isinstance(self, AssociativeOperation):
+            closureSpec = closureThm.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
+        else:
+            raise Exception('Expecting NumberOp to be a BinaryOperation or AssociativeOperation')
+        # Grab the conditions for the specialization of the closure theorem
+        for stmt, _, _, conditions in closureSpec.statement._specializers:
+            if stmt._expression == closureThm:
+                # check each condition and apply recursively if it is in some set
+                for condition in conditions:
+                    if isinstance(condition, In) and len(condition.operands) == 2:
+                        elem, domain = condition.operands
+                        if hasattr(elem, 'deriveInNumberSet'):
+                            elem.deriveInNumberSet(domain)
+                        elif isinstance(elem, Variable) or isinstance(elem, Literal):
+                            # for good measure, specialize containment theorems
+                            if domain == Complexes:
+                                integer.theorems.inComplexes({a:elem})
+                                real.theorems.inComplexes({a:elem})
+                            elif domain == Real:
+                                integer.theorems.inReals({a:elem})                            
         
     def deriveInReals(self):
         from real.theorems import addClosure
@@ -35,8 +70,13 @@ class ArithOp:
             elif isinstance(operand, Variable) or isinstance(operand, Literal):
                 inReals.specialize({a:operand})
         return addClosure.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
-"""
 
+class NumberClosureException(Exception):
+    def __init__(self, msg):
+        self.msg
+    def __str__(self):
+        return self.msg
+    
 class DiscreteContiguousSet(BinaryOperation):
     r'''
     Contiguous set of integers, from lowerBound to upperBound (both bounds to be interpreted inclusively)
@@ -339,12 +379,15 @@ class Abs(Operation):
 
 ABS = Literal(pkg, 'ABS', operationMaker = lambda operands : Abs(*operands))
 
-class Add(AssociativeOperation):
+class Add(AssociativeOperation, NumberOp):
     def __init__(self, *operands):
         r'''
         Add together any number of operands.
         '''
+        from common import Reals
+        import real.theorems
         AssociativeOperation.__init__(self, ADD, *operands)
+        NumberOp.__init__(self, {Reals:real.theorems.addClosure})
         
 #    def commute(self,index0,index1):
     def commute(self):#Only works at present for two-place addition
