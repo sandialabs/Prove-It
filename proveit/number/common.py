@@ -2,6 +2,7 @@ from proveit.expression import Variable, Literal, LATEX, STRING, Operation
 from proveit.multiExpression import Etcetera
 from proveit.number import Multiply
 from proveit.common import *
+from proveit.number.number import *
 
 pkg = __package__
 
@@ -19,18 +20,6 @@ Hm = Operation(H,m)
 
 u = Variable('ket_u',{LATEX:r'|u\rangle'})
 
-e = Literal(pkg,'e')
-i = Literal(pkg,'i')
-pi = Literal(pkg,'pi',{LATEX:r'\pi'})
-
-zero = Literal(pkg,'0')
-one = Literal(pkg,'1')
-two = Literal(pkg,'2')
-four = Literal(pkg,'4')
-infinity = Literal(pkg,'infinity',{LATEX:r'\infty'})
-minusOne = Literal(pkg,'minusOne',{LATEX:r'-1'})
-minusTwo = Literal(pkg,'minusTwo',{LATEX:r'-2'})
-
 Z   = Literal(pkg,'Z',{LATEX:r'\mathbb{Z}'})
 Zp  = Literal(pkg,'Z^+',{LATEX:r'\mathbb{Z}^+'})
 R   = Literal(pkg,'R',{LATEX:r'\mathbb{R}'})
@@ -46,10 +35,7 @@ theta = Variable('theta',{LATEX:r'\theta'})
 delta = Variable('delta',{LATEX:r'\delta'})
 
 tFunc = Literal(pkg,'tFunc')
-tFunc_n_eps = Operation(tFunc, (n, eps))
-
-
-                  
+tFunc_n_eps = Operation(tFunc, (n, eps))  
                   
 QPE = Literal(pkg,'QPE')
 QPEfunc = Operation(QPE,(U,u,t))
