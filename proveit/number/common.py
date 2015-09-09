@@ -3,8 +3,11 @@ from proveit.multiExpression import Etcetera
 from proveit.number import Multiply
 from proveit.common import *
 from proveit.number.number import *
+from proveit.number.numberSets import *
 
 pkg = __package__
+
+two_pi = Multiply(two, pi)
 
 #e = Variable('e')
 phi = Variable('phi',{LATEX:r'\phi'})
@@ -20,16 +23,7 @@ Hm = Operation(H,m)
 
 u = Variable('ket_u',{LATEX:r'|u\rangle'})
 
-Z   = Literal(pkg,'Z',{LATEX:r'\mathbb{Z}'})
-Zp  = Literal(pkg,'Z^+',{LATEX:r'\mathbb{Z}^+'})
-R   = Literal(pkg,'R',{LATEX:r'\mathbb{R}'})
-zeroToOne = Literal(pkg,'zeroToOne',{LATEX:r'[0,1]'})
 
-Reals = Literal(pkg,'Reals',{LATEX:r'\mathbb{R}'})
-RealsPos = Literal(pkg,'RealsPos',{LATEX:r'\mathbb{R}^+'})
-Integers = Literal(pkg,'Integers',{LATEX:r'\mathbb{Z}'})
-Naturals = Literal(pkg,'Naturals',{LATEX:r'\mathbb{N}'})
-Complexes = Literal(pkg,'Complexes',{LATEX:r'\mathbb{C}'})
 
 theta = Variable('theta',{LATEX:r'\theta'})
 delta = Variable('delta',{LATEX:r'\delta'})

@@ -7,6 +7,7 @@ from proveit.basiclogic import Equals, Equation, Forall, In
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
 from proveit.everythingLiteral import EVERYTHING
 from proveit.common import a, b, c, m, k, l, r, v, w, x, y, z, A
+from proveit.number.numberSets import *
 #from variables import *
 #from variables import a, b
 #import variables as var
@@ -15,115 +16,6 @@ from proveit.common import a, b, c, m, k, l, r, v, w, x, y, z, A
 #from proveit.number.common import *
 
 pkg = __package__
-
-
-class NumberOp:
-    def __init__(self, closureTheoremDict):
-        self.closureTheoremDict = closureTheoremDict
-        
-    def deriveInNumberSet(self, numberSet, suppressWarnings=False):
-        '''
-        Derive this mathematical expression is in some number set (Integers, Reals, Complexes, ..)
-        using the closure theorem dictionaries of the operation and applying recursively
-        according to the conditions for specializing this theorem. 
-        '''
-        import integer.theorems 
-        import real.theorems
-        from proveit.number.common import Integers, Reals, Complexes
-        if numberSet not in self.closureTheoremDict:
-            raise NumberClosureException('Could not derive ' + str(self.__class__) + ' expression in ' + numberSet + ' set. Unknown case.')
-        closureThm = self.closureTheoremDict[numberSet]
-        if not isinstance(closureThm, Forall):
-            raise Exception('Expecting closure theorem to be a Forall expression')
-        iVars = closureThm.instanceVars
-        if not len(iVars) == 2:
-            raise Exception('Expecting two instance variables for the closure theorem')    
-        # Specialize the closure theorem differently for BinaryOperation or AccociativeOperation cases.   
-        if isinstance(self, BinaryOperation):
-            closureSpec = closureThm.specialize({iVars[0]:self.operands[0], iVars[1]:self.operands[1]})
-        elif isinstance(self, AssociativeOperation):
-            closureSpec = closureThm.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
-        else:
-            raise Exception('Expecting NumberOp to be a BinaryOperation or AssociativeOperation')
-        # Grab the conditions for the specialization of the closure theorem
-        for stmt, _, _, conditions in closureSpec.statement._specializers:
-            if stmt._expression == closureThm:
-                # check each condition and apply recursively if it is in some set                
-                for condition in conditions:
-                    condition = condition._expression
-                    if isinstance(condition, In):
-                        domain = condition.domain
-                        elements = condition.elements
-                        for elem in elements:
-                            if hasattr(elem, 'deriveInNumberSet'):
-                                try:
-                                    elem.deriveInNumberSet(domain, suppressWarnings=suppressWarnings)
-                                except NumberClosureException as e:
-                                    if not suppressWarnings:
-                                        print "Warning, could not perform nested number set derivation: ", str(e)
-                            elif isinstance(elem, Variable) or isinstance(elem, Literal):
-                                # for good measure, specialize containment theorems
-                                if domain == Complexes:
-                                    integer.theorems.inComplexes.specialize({a:elem})
-                                    real.theorems.inComplexes.specialize({a:elem})
-                                elif domain == Reals:
-                                    integer.theorems.inReals.specialize({a:elem})
-        return closureSpec                            
-
-    def deriveInIntegers(self, suppressWarnings=False):
-        from proveit.number.common import Integers
-        return self.deriveInNumberSet(Integers, suppressWarnings=suppressWarnings)
-        
-    def deriveInReals(self, suppressWarnings=False):
-        from proveit.number.common import Reals
-        return self.deriveInNumberSet(Reals, suppressWarnings=suppressWarnings)
-
-    def deriveInComplexes(self, suppressWarnings=False):
-        from proveit.number.common import Complexes
-        return self.deriveInNumberSet(Complexes, suppressWarnings=suppressWarnings)
-
-def deriveInNumberSet(*expressions, **kwargs):
-    numberSet = kwargs['numberSet']
-    suppressWarnings = kwargs['suppressWarnings'] if 'supressWarnings' in kwargs else False
-    for expr in expressions:
-        if not expr.hasattr('deriveInNumberSet'):
-            if not suppressWarnings:
-                print "Expression does not have 'deriveInNumberSet' method: ", str(expr)
-            continue
-        expr.deriveInNumberSet(numberSet, suppressWarnings=suppressWarnings)
-
-def deriveInIntegers(*expressions, **kwargs):
-    '''
-    For each given expression, attempt to derive that it is in the set of integers.
-    Warnings/errors may be suppressed by setting suppressWarnings to True.
-    '''
-    from proveit.number.common import Integers
-    kwargs['numberSet'] = Integers
-    return deriveInNumberSet(*expressions, **kwargs)
-
-def deriveInReals(*expressions, **kwargs):
-    '''
-    For each given expression, attempt to derive that it is in the set of reals.
-    Warnings/errors may be suppressed by setting suppressWarnings to True.
-    '''
-    from proveit.number.common import Reals
-    kwargs['numberSet'] = Reals
-    return deriveInNumberSet(*expressions, **kwargs)
-
-def deriveInComplexes(*expressions, **kwargs):
-    '''
-    For each given expression, attempt to derive that it is in the set of complexes.
-    Warnings/errors may be suppressed by setting suppressWarnings to True.
-    '''
-    from proveit.number.common import Complexes
-    kwargs['numberSet'] = Complexes
-    return deriveInNumberSet(*expressions, **kwargs)
-
-class NumberClosureException(Exception):
-    def __init__(self, msg):
-        self.msg
-    def __str__(self):
-        return self.msg
     
 class DiscreteContiguousSet(BinaryOperation):
     r'''
@@ -413,7 +305,7 @@ class GreaterThanEquals(OrderingRelation):
 
 GREATERTHANEQUALS = Literal(pkg,'GREATERTHANEQUALS', {STRING: r'>=', LATEX:r'\geq'}, operationMaker = lambda operands : GreaterThanEquals(*operands))
 
-class Abs(Operation):
+class Abs(Operation, NumberOp):
     def __init__(self, A):
         import complex.theorems
         Operation.__init__(self, ABS, A)
@@ -434,7 +326,6 @@ class Add(AssociativeOperation, NumberOp):
         r'''
         Add together any number of operands.
         '''
-        from common import Reals
         import real.theorems
         import complex.theorems
         AssociativeOperation.__init__(self, ADD, *operands)
@@ -451,7 +342,7 @@ class Add(AssociativeOperation, NumberOp):
         
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
 
-class Subtract(BinaryOperation):
+class Subtract(BinaryOperation, NumberOp):
     def __init__(self, operandA, operandB):
         r'''
         Subtract one number from another
@@ -585,7 +476,7 @@ class Fraction(BinaryOperation, NumberOp):
 
 FRACTION = Literal(pkg, 'FRACTION', operationMaker = lambda operands : Fraction(*operands))
 
-class Exponentiate(BinaryOperation):
+class Exponentiate(BinaryOperation, NumberOp):
     def __init__(self, base, exponent):
         r'''
         Raise base to exponent power.
@@ -594,7 +485,7 @@ class Exponentiate(BinaryOperation):
         BinaryOperation.__init__(self,EXPONENTIATE, base, exponent)
         self.base = base
         self.exponent = exponent
-        NumberOp.__init__(self, {Complexes:complex.theorems.exponentiateClosure})
+        NumberOp.__init__(self, {Complexes:complex.theorems.powClosure})
     
     def formatted(self, formatType, fence=False):
         formattedBase = self.base.formatted(formatType, fence=True)
@@ -651,7 +542,7 @@ class Summation(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        from proveit.number.common import Reals, Integers, Naturals, zero, infinity
+        from number import infinity, zero
         OperationOverInstances.__init__(self, SUMMATION, indices, summand, domain=domain, conditions=conditions)
         if len(self.instanceVars) != 1:
             raise ValueError('Only one index allowed per integral!')
@@ -687,7 +578,7 @@ class Summation(OperationOverInstances):
         If sum is geometric sum (finite or infinite), provide analytic expression for sum.
         '''
         from proveit.number.theorems import infGeomSum, finGeomSum
-        from proveit.number.common import zero, infinity
+        from number import zero, infinity
         self.m = self.indices[0]
         
         try:
@@ -756,7 +647,7 @@ class Integrate(OperationOverInstances):
         integrand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        from proveit.number.common import Reals, infinity
+        from number import infinity
         OperationOverInstances.__init__(self, INTEGRATE, index, integrand, domain=domain, conditions=conditions)
         self.domain = domain
         if len(self.instanceVars) != 1:
