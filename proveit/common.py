@@ -63,6 +63,9 @@ gy = Operation(g, y) # g(y)
 eps = Variable('eps',{LATEX:r'\varepsilon'})
 Upsilon = Variable('Upsilon',{LATEX:r'\Upsilon'})
 
+aEtc = Etcetera(a) # ..a..
+bEtc = Etcetera(b) # ..b..
+cEtc = Etcetera(c) # ..c..
 Aetc = Etcetera(A) # ..A..
 Cetc = Etcetera(C) # ..C..
 Qetc = Etcetera(Q) # ..Q..
