@@ -7,44 +7,21 @@ from proveit.common import A, B, S, P, x, y, xEtc
 
 pkg = __package__
 
-EVERYTHING.formatMap = {STRING:'EVERYTHING', LATEX:r'EVERYTHING'}
+EVERYTHING.formatMap = {STRING:'EVERYTHING', LATEX:r'\rm{EVERYTHING}'}
 NOTHING = Literal(pkg, 'NOTHING', {STRING:'NOTHING', LATEX:r'\emptyset'})
 
-class In(Operation):
-    def __init__(self, elements, domain):
-        Operation.__init__(self, IN, {'elements':multiExpression(elements), 'domain':domain})
-        self.elements = self.operands['elements']
-        assert len(self.elements) > 0, "An In operation with 0 elements is not allowed"
-        self.domain = self.operands['domain']
-    
-    def formatted(self, formatType, fence=False):
-        formattedOperator = self.operator.formatted(formatType)
-        formattedDomain = self.domain.formatted(formatType)
-        if len(self.elements) == 1:
-            innerStr = self.elements[0].formatted(formatType, fence=True) + ' ' + formattedOperator + ' ' + formattedDomain
-        elif len(self.elements) > 1:
-            if formatType == LATEX:
-                andStr = r'~{\rm and}~' if len(self.elements) == 2 else r',~{\rm and}~'
-            else:
-                andStr = ' and ' if len(self.elements) == 2 else ', and '
-            lhs = ', '.join(elem.formatted(formatType, fence=False) for elem in self.elements[:-1]) + andStr +  self.elements[-1].formatted(formatType, fence=False)
-            if formatType == LATEX:
-                innerStr = r'\left(' + lhs + r'\right) ' + formattedOperator + ' ' + formattedDomain
-            else:
-                innerStr = r'(' + lhs + ') ' + formattedOperator + ' ' + formattedDomain            
-        if fence: 
-            if formatType == LATEX:
-                return r'\left(' + innerStr + r'\right)'
-            else:
-                return '(' + innerStr + ')'
-        else: return innerStr
+class In(BinaryOperation):
+    def __init__(self, element, domain):
+        BinaryOperation.__init__(self, IN, element, domain)
+        self.element = element
+        self.domain = domain
     
     def deduceInBool(self):
         '''
         Deduce and return that this 'in' statement is in the set of BOOLEANS.
         '''
         from axioms import inSetIsInBool
-        return inSetIsInBool.specialize({xEtc:self.elements[0], S:self.domain}).checked()
+        return inSetIsInBool.specialize({xEtc:self.element, S:self.domain}).checked()
     
     def unfold(self):
         '''
@@ -54,8 +31,7 @@ class In(Operation):
         the unfoldElemInSet(...) method for each type [see unfoldElemInSet(..) defined
         for Singleton or Union].
         '''
-        assert(len(self.elements) == 1), 'Unfold currently implemented for just 1 element at a time'
-        return self.domain.unfoldElemInSet(self.elements[0]).checked({self})
+        return self.domain.unfoldElemInSet(self.element).checked({self})
     
     def concludeAsFolded(self):
         '''
@@ -65,8 +41,7 @@ class In(Operation):
         the deduceElemInSet(...) method for each type [see deduceElemInSet(..) defined
         for Singleton or Union].
         '''    
-        assert(len(self.elements) == 1), 'Unfold currently implemented for just 1 element at a time'
-        return self.domain.deduceElemInSet(self.elements[0])
+        return self.domain.deduceElemInSet(self.element)
     
     """
     def deriveIsInExpansion(self, expandedSet):
@@ -81,19 +56,21 @@ class In(Operation):
     
 # The IN Literal is defined at the top level of prove-it, but its operationMaker must be set here.
 IN.formatMap = {STRING:'in', LATEX:r'\in'}
-IN.operationMaker = lambda operands : In(operands['elements'], operands['domain'])
+IN.operationMaker = lambda operands : In(*operands)
 
 class NotIn(BinaryOperation):
-    def __init__(self, element, theSet):
-        BinaryOperation.__init__(self, NOTIN, element, theSet)
+    def __init__(self, element, domain):
+        BinaryOperation.__init__(self, NOTIN, element, domain)
         self.element = element
-        self.theSet = theSet
-        
-    def formattedOperator(self, formatType):
-        if formatType == STRING:
-            return 'not in'
-        elif formatType == LATEX:
-            return r'\notin'        
+        self.domain = domain  
+
+    def unfold(self):
+        '''
+        From (x != y), derive and return Not(x=y).
+        '''
+        from theorems import unfoldNotIn
+        return unfoldNotIn.specialize({x:self.element, S:self.domain}).deriveConclusion().checked({self})
+
 
 NOTIN = Literal(pkg, 'NOTIN', {STRING:'not in', LATEX:r'\notin'}, lambda operands : NotIn(*operands))
 
@@ -109,7 +86,7 @@ class Singleton(Operation):
         if formatType == STRING:
             return '{' + str(self.elem) + '}'
         elif formatType == LATEX:
-            return '{' + self.elem.formatted(formatType) + '}'        
+            return r'\{' + self.elem.formatted(formatType) + r'\}'        
  
     def unfoldElemInSet(self, element):
         '''
@@ -125,7 +102,7 @@ class Singleton(Operation):
         from axioms import singletonDef
         return singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence()
 
-SINGLETON = Literal(pkg, 'SINGLETON', lambda operands : Singleton(operands[0]))
+SINGLETON = Literal(pkg, 'SINGLETON', operationMaker = lambda operands : Singleton(operands[0]))
 
 class Complement(Operation):        
     '''
@@ -138,7 +115,7 @@ class Complement(Operation):
     def __str__(self):
         return 'Complement(' + str(self.elem) + ')'
 
-COMPLEMENT = Literal(pkg, 'COMPLEMENT', lambda operands : Complement(operands[0]))
+COMPLEMENT = Literal(pkg, 'COMPLEMENT', operationMaker = lambda operands : Complement(operands[0]))
         
 class Union(AssociativeOperation):
     def __init__(self, *operands):
@@ -206,6 +183,12 @@ class Intersection(AssociativeOperation):
         return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
 
 INTERSECTION = Literal(pkg, 'INTERSECTION', {STRING:'intersection', LATEX:r'\bigcap'}, lambda operands : Intersection(*operands))
+
+class Difference(BinaryOperation):
+    def __init__(self, A, B):
+        BinaryOperation.__init__(self, DIFFERENCE, A, B)
+    
+DIFFERENCE = Literal(pkg, 'DIFFERENCE', {STRING:'-', LATEX:'-'}, lambda operands : Difference(*operands))
 
 class SubsetEq(BinaryOperation):
     def __init__(self, subSet, superSet):
