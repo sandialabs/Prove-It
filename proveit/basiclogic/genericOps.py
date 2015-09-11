@@ -128,7 +128,7 @@ class OperationOverInstances(Operation):
                 outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
             if self.hasDomain():
                 outStr += ' in ' if formatType == STRING else ' \in '
-                outStr += self.domain.formatted(formatType)
+                outStr += self.domain.formatted(formatType, fence=True)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
                 outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
@@ -141,7 +141,7 @@ class OperationOverInstances(Operation):
                 outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
             if self.hasDomain():
                 outStr += ' in ' if formatType == STRING else ' \in '
-                outStr += self.domain.formatted(formatType)
+                outStr += self.domain.formatted(formatType, fence=True)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
                 outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
@@ -150,42 +150,50 @@ class OperationOverInstances(Operation):
 
         return outStr        
 
-    """
-    #    OUT OF DATA
-    
     def instanceSubstitution(self, equivalenceForallInstances):
         '''
-        Equate this OperationOverInstances, O(x -> f(x) | Q(x)),
-        with one that substitutes instance expressions
-        given some equivalenceForallInstances = forall_{x | Q(x)} f(x) = g(x).
-        Derive and return this equality assuming equivalenceForallInstances.
-        Works also when there is no Q(x) condition.
+        Equate this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..),
+        with one that substitutes instance expressions given some 
+        equivalenceForallInstances = forall_{..x.. in S | ..Q(..x..)..} f(..x..) = g(..x..).
+        Derive and return the following type of equality assuming equivalenceForallInstances:
+        Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..) = Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
+        Works also when there is no domain S and/or no conditions ..Q...
         '''
+        from proveit.basiclogic.axioms import instanceSubstitution
         from proveit.basiclogic import Forall, Equals
-        assert isinstance(equivalenceForallInstances, Forall), "equivalenceForallInstances must be a forall expression: " + str(equivalenceForallInstances)
-        equatedMaps = equivalenceForallInstances.equateMaps()
-        assert isinstance(equatedMaps, Equals), "Equated maps expected to be equals expression"
-        assert self.etcExpr == equatedMaps.lhs or self.etcExpr == equatedMaps.rhs, "Instance substitution expecting equated map involving this OperationOverInstances etcExpr"
-        equatedOperationOverInstances = equatedMaps.substitution(Operation(self.operator, X), X)
-        assert isinstance(equatedOperationOverInstances, Equals), "Equated operation over instance expected to be equals expression"
-        if self == equatedOperationOverInstances.rhs:
-            equatedOperationOverInstances = equatedOperationOverInstances.deriveReversed()
-        assert self == equatedOperationOverInstances.lhs, "Instance substitution expecting equated operation over instances to involve self"
-        return equatedOperationOverInstances
+        from proveit.number import num
+        from proveit.common import n, Qetc, xEtc, yEtc, zEtc, etc_QxEtc, f, g, fxEtc, fyEtc, gxEtc, gzEtc, Upsilon, S
+        if not isinstance(equivalenceForallInstances, Forall):
+            raise InstanceSubstitutionException("equivalenceForallInstances must be a forall expression", self, equivalenceForallInstances)
+        if len(equivalenceForallInstances.instanceVars) != len(self.instanceVars):
+            raise InstanceSubstitutionException("equivalenceForallInstances must have the same number of variables as the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
+        if equivalenceForallInstances.domain != self.domain:
+            raise InstanceSubstitutionException("equivalenceForallInstances must have the same domain as the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
+        # map from the forall instance variables to self's instance variables
+        iVarSubstitutions = {forallIvar:selfIvar for forallIvar, selfIvar in zip(equivalenceForallInstances.instanceVars, self.instanceVars)}
+        if equivalenceForallInstances.conditions.substituted(iVarSubstitutions) != self.conditions:
+            raise InstanceSubstitutionException("equivalenceForallInstances must have the same conditions as the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
+        if not isinstance(equivalenceForallInstances.instanceExpr, Equals):
+            raise InstanceSubstitutionException("equivalenceForallInstances be an equivalence within Forall: " + str(equivalenceForallInstances))
+        if equivalenceForallInstances.instanceExpr.lhs.substituted(iVarSubstitutions) != self.instanceExpr:
+            raise InstanceSubstitutionException("lhs of equivalence in equivalenceForallInstances must match the instance expression of the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
+        return instanceSubstitution.specialize({n:num(len(self.instanceVars)), Upsilon:self.operator, xEtc:self.instanceVars, yEtc:self.instanceVars, zEtc:self.instanceVars, \
+                                                etc_QxEtc:self.conditions, S:self.domain, fxEtc:self.instanceExpr, gxEtc:equivalenceForallInstances.instanceExpr.rhs.substituted(iVarSubstitutions)})
 
     def substituteInstances(self, equivalenceForallInstances):
         '''
-        Assuming OperationOverInstances self as O(x -> f(x) | Q(x)), derive and return 
-        O(x -> g(x) | Q(x)) given some equivalenceForallInstances = forall_{x | Q(x)} f(x) = g(x).
-        Works also when there is no Q(x) condition.
+        Assuming this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..)
+        to be a true statement, derive and return Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
+        given some equivalenceForallInstances = forall_{..x.. in S | ..Q(..x..)..} f(..x..) = g(..x..).
+        Works also when there is no domain S and/or no conditions ..Q...
         '''
-        from proveit.basiclogic import Forall, Equals
-        assert isinstance(equivalenceForallInstances, Forall), "equivalenceForallInstances must be a forall expression"
-        equatedMaps = equivalenceForallInstances.equateMaps()
-        assert isinstance(equatedMaps, Equals), "Equated maps expected to be equals expression"
-        assert self.etcExpr == equatedMaps.lhs or self.etcExpr == equatedMaps.rhs, "Instance substitution expecting equated map involving this OperationOverInstances etcExpr"
-        if self.etcExpr == equatedMaps.lhs:
-            return equatedMaps.rhsSubstitute(Operation(self.operator, [X]), X)
-        else:
-            return equatedMaps.lhsSubstitute(Operation(self.operator, [X]), X)
-    """
+        substitution = self.instanceSubstitution(equivalenceForallInstances)
+        return substitution.deriveRightViaEquivalence()
+        
+class InstanceSubstitutionException(Exception):
+    def __init__(self, msg, operationOverInstances, equivalenceForallInstances):
+        self.msg = msg
+        self.operationOverInstances = operationOverInstances
+        self.equivalenceForallInstances = equivalenceForallInstances
+    def __str__(self):
+        return self.msg + '.\n  operationOverInstances: ' + str(self.operationOverInstances) + '\n  equivalenceForallInstances: ' + str(self.equivalenceForallInstances)
