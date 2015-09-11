@@ -73,6 +73,7 @@ Retc = Etcetera(R) # ..R..
 xEtc = Etcetera(x) # ..x..
 yEtc = Etcetera(y) # ..y..
 zEtc = Etcetera(z) # ..z..
+wEtc = Etcetera(w) # ..z..
 fxEtc = Operation(f, xEtc) # f(..x..)
 fyEtc = Operation(f, yEtc) # f(..y..)
 fzEtc = Operation(f, zEtc) # f(..z..)
