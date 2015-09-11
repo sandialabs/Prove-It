@@ -1,10 +1,7 @@
-from proveit.expression import Literal, LATEX, Variable
-from proveit.multiExpression import Etcetera
+from proveit.expression import Expression, Literal, LATEX, Operation
+from proveit.multiExpression import Etcetera, ExpressionList
 from proveit.common import a, b
-from proveit.basiclogic import Forall, In, BinaryOperation, AssociativeOperation
-import integer.theorems
-import real.theorems
-import complex.theorems
+from proveit.basiclogic import Forall, In, NotEquals, AssociativeOperation
 
 pkg = __package__
 
@@ -20,103 +17,238 @@ Naturals = Literal(pkg,'Naturals',{LATEX:r'\mathbb{N}'})
 Complexes = Literal(pkg,'Complexes',{LATEX:r'\mathbb{C}'})
 
 class NumberOp:
-    def __init__(self, closureTheoremDict):
-        self.closureTheoremDict = closureTheoremDict
+    def __init__(self):
+        pass
+
+    def _closureTheorem(self, numberSet):
+        pass # implemented by derived class
+
+    def _notEqZeroTheorem(self):
+        pass # implemented by derived class
+    
+    def deduceInIntegers(self, assumptions=None):
+        return deduceInNumberSet(self, Integers, assumptions)
+
+    def deduceInNaturals(self, assumptions=None):
+        return deduceInNumberSet(self, Naturals, assumptions)
         
-    def deriveInNumberSet(self, numberSet, suppressWarnings=False):
-        '''
-        Derive this mathematical expression is in some number set (Integers, Reals, Complexes, ..)
-        using the closure theorem dictionaries of the operation and applying recursively
-        according to the conditions for specializing this theorem. 
-        '''
-        import integer.theorems 
-        import real.theorems
-        if numberSet not in self.closureTheoremDict:
-            raise NumberClosureException('Could not derive ' + str(self.__class__) + ' expression in ' + numberSet + ' set. Unknown case.')
-        closureThm = self.closureTheoremDict[numberSet]
-        if not isinstance(closureThm, Forall):
-            raise Exception('Expecting closure theorem to be a Forall expression')
+    def deduceInReals(self, assumptions=None):
+        return deduceInNumberSet(self, Reals, assumptions)
+
+    def deduceInComplexes(self, assumptions=None):
+        return deduceInNumberSet(self, Complexes, assumptions)
+
+    def deduceNotZero(self, assumptions=None):
+        return deduceNotZero(self, assumptions)
+
+def deduceInNumberSet(exprOrList, numberSet, assumptions=None, ruledOutSets=None):
+    '''
+    For each given expression, attempt to derive that it is in the specified numberSet
+    under the given assumptions.  If ruledOutSets is provided, don't attempt to
+    derive it from being in a subset in ruledOutSets.
+    If successful, returns the deduced statement, otherwise raises an Exception.   
+    '''
+    from proveit.number.common import ComplexesSansZero
+    import integer.theorems
+    import natural.theorems
+    import real.theorems
+    import complex.theorems
+    if assumptions is None:
+        assumptions = set() 
+    if ruledOutSets is None:
+        ruledOutSets = set()
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
+        # If it isn't an Expression, assume it's iterable and deduce each
+        return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]
+    # A single Expression:
+    expr = exprOrList
+    try:
+        return In(expr, numberSet).checked(assumptions)
+    except:
+        pass # not so simple, keep trying (below)
+        
+    if Naturals not in ruledOutSets and (numberSet == Complexes or 
+                                         numberSet == Reals or numberSet == Integers):
+        try:
+            # try deducing in the Naturals as a subset of the desired numberSet
+            deduceInNumberSet(expr, Naturals, assumptions=assumptions, ruledOutSets=ruledOutSets)
+            if numberSet == Complexes:
+                natural.theorems.inComplexes.specialize({a:expr})
+            elif numberSet == Reals:
+                natural.theorems.inReals.specialize({a:expr})
+            elif numberSet == Integers:
+                natural.theorems.inIntegers.specialize({a:expr})
+            return In(expr, numberSet).checked(assumptions)
+        except:
+            ruledOutSets = ruledOutSets | {Naturals} # ruled out Naturals
+    if Integers not in ruledOutSets and (numberSet == Complexes or numberSet == Reals):
+        try:
+            # try deducing in the Integers as a subset of the desired numberSet
+            deduceInNumberSet(expr, Integers, assumptions=assumptions, ruledOutSets=ruledOutSets)
+            if numberSet == Complexes:
+                integer.theorems.inComplexes.specialize({a:expr})
+            elif numberSet == Reals:
+                integer.theorems.inReals.specialize({a:expr})
+            return In(expr, numberSet).checked(assumptions)
+        except:
+            ruledOutSets = ruledOutSets | {Integers} # ruled out Integers
+    if Reals not in ruledOutSets and numberSet == Complexes:
+        try:
+            # try deducing in the Reals as a subset of the desired numberSet
+            deduceInNumberSet(expr, Reals, assumptions=assumptions, ruledOutSets=ruledOutSets)
+            if numberSet == Complexes:
+                real.theorems.inComplexes.specialize({a:expr})
+            return In(expr, numberSet).checked(assumptions)
+        except:
+            ruledOutSets = ruledOutSets | {Integers} # ruled out Reals
+    
+    # Couldn't deduce in a subset.  Try using a closure theorem.
+    if numberSet == ComplexesSansZero:
+        # special case for numberSet = Complexes - {0}
+        closureThm = complex.theorems.inComplexesSansZero
+        closureSpec = closureThm.specialize({a:expr})        
+    else:
+        if not isinstance(expr, NumberOp):
+            # See of the Expression class has deduceIn[numberSet] method (as a last resort):
+            if numberSet == Naturals and hasattr(expr, 'deduceInNaturals'):
+                return expr.deduceInNaturals()
+            elif numberSet == Integers and hasattr(expr, 'deduceInIntegers'):
+                return expr.deduceInIntegers()
+            elif numberSet == Reals and hasattr(expr, 'deduceInReals'):
+                return expr.deduceInReals()
+            elif numberSet == Complexes and hasattr(expr, 'deduceInComplexes'):
+                return expr.deduceInComplexes()          
+            # Ran out of options:  
+            raise DeduceInNumberSetException(expr, numberSet, assumptions)
+        closureThm = expr._closureTheorem(numberSet)
+        if closureThm is None:
+            raise DeduceInNumberSetException(expr, numberSet, assumptions)    
+        # Apply the closure theorem
+        assert isinstance(closureThm, Forall), 'Expecting closure theorem to be a Forall expression'
         iVars = closureThm.instanceVars
-        if not len(iVars) == 2:
-            raise Exception('Expecting two instance variables for the closure theorem')    
-        # Specialize the closure theorem differently for BinaryOperation or AccociativeOperation cases.   
-        if isinstance(self, BinaryOperation):
-            closureSpec = closureThm.specialize({iVars[0]:self.operands[0], iVars[1]:self.operands[1]})
-        elif isinstance(self, AssociativeOperation):
-            closureSpec = closureThm.specialize({a:self.operands[0], Etcetera(b):self.operands[1:]})
+        # Specialize the closure theorem differently for AccociativeOperation compared with other cases
+        if isinstance(expr, AssociativeOperation):
+            assert len(iVars) == 2, 'Expecting two instance variables for the closure theorem of an AssociativeOperation'
+            assert isinstance(iVars[1], Etcetera), 'Expecting the second instance variables for the closure theorem of an AssociativeOperation to be an Etcetera Variable'
+            closureSpec = closureThm.specialize({iVars[0]:expr.operands[0], iVars[1]:expr.operands[1:]})
         else:
-            raise Exception('Expecting NumberOp to be a BinaryOperation or AssociativeOperation')
-        # Grab the conditions for the specialization of the closure theorem
-        for stmt, _, _, conditions in closureSpec.statement._specializers:
-            if stmt._expression == closureThm:
-                # check each condition and apply recursively if it is in some set                
-                for condition in conditions:
-                    condition = condition._expression
-                    if isinstance(condition, In):
-                        domain = condition.domain
-                        elements = condition.elements
-                        for elem in elements:
-                            if hasattr(elem, 'deriveInNumberSet'):
-                                try:
-                                    elem.deriveInNumberSet(domain, suppressWarnings=suppressWarnings)
-                                except NumberClosureException as e:
-                                    if not suppressWarnings:
-                                        print "Warning, could not perform nested number set derivation: ", str(e)
-                            elif isinstance(elem, Variable) or isinstance(elem, Literal):
-                                # for good measure, specialize containment theorems
-                                if domain == Complexes:
-                                    integer.theorems.inComplexes.specialize({a:elem})
-                                    real.theorems.inComplexes.specialize({a:elem})
-                                elif domain == Reals:
-                                    integer.theorems.inReals.specialize({a:elem})
-        return closureSpec                            
+            assert len(iVars) == len(expr.operands), 'Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression'
+            closureSpec = closureThm.specialize({iVar:operand for iVar, operand in zip(iVars, expr.operands)})
+    # deduce any of the requirements for the notEqZeroThm application
+    _deduceRequirements(closureThm, closureSpec, assumptions)
+    try:
+        return In(expr, numberSet).checked(assumptions)
+    except:
+        raise DeduceInNumberSetException(expr, numberSet, assumptions)
 
-    def deriveInIntegers(self, suppressWarnings=False):
-        return self.deriveInNumberSet(Integers, suppressWarnings=suppressWarnings)
-        
-    def deriveInReals(self, suppressWarnings=False):
-        return self.deriveInNumberSet(Reals, suppressWarnings=suppressWarnings)
-
-    def deriveInComplexes(self, suppressWarnings=False):
-        return self.deriveInNumberSet(Complexes, suppressWarnings=suppressWarnings)
-
-def deriveInNumberSet(*expressions, **kwargs):
-    numberSet = kwargs['numberSet']
-    suppressWarnings = kwargs['suppressWarnings'] if 'supressWarnings' in kwargs else False
-    for expr in expressions:
-        if not expr.hasattr('deriveInNumberSet'):
-            if not suppressWarnings:
-                print "Expression does not have 'deriveInNumberSet' method: ", str(expr)
-            continue
-        expr.deriveInNumberSet(numberSet, suppressWarnings=suppressWarnings)
-
-def deriveInIntegers(*expressions, **kwargs):
+def deduceInNaturals(exprOrList, assumptions=None):
     '''
     For each given expression, attempt to derive that it is in the set of integers.
     Warnings/errors may be suppressed by setting suppressWarnings to True.
     '''
-    kwargs['numberSet'] = Integers
-    return deriveInNumberSet(*expressions, **kwargs)
+    return deduceInNumberSet(exprOrList, Naturals, assumptions=assumptions)
 
-def deriveInReals(*expressions, **kwargs):
+def deduceInIntegers(exprOrList, assumptions=None):
     '''
-    For each given expression, attempt to derive that it is in the set of reals.
-    Warnings/errors may be suppressed by setting suppressWarnings to True.
+    For each given expression, attempt to derive that it is in the set of integers
+    under the given assumptions.  If successful, returns the deduced statement,
+    otherwise raises an Exception.
     '''
-    kwargs['numberSet'] = Reals
-    return deriveInNumberSet(*expressions, **kwargs)
+    return deduceInNumberSet(exprOrList, Integers, assumptions=assumptions)
 
-def deriveInComplexes(*expressions, **kwargs):
+def deduceInReals(exprOrList, assumptions=None):
     '''
-    For each given expression, attempt to derive that it is in the set of complexes.
-    Warnings/errors may be suppressed by setting suppressWarnings to True.
+    For each given expression, attempt to derive that it is in the set of reals
+    under the given assumptions.  If successful, returns the deduced statement,
+    otherwise raises an Exception.    
     '''
-    kwargs['numberSet'] = Complexes
-    return deriveInNumberSet(*expressions, **kwargs)
+    return deduceInNumberSet(exprOrList, Reals, assumptions=assumptions)
 
-class NumberClosureException(Exception):
-    def __init__(self, msg):
-        self.msg
+def deduceInComplexes(exprOrList, assumptions=None):
+    '''
+    For each given expression, attempt to derive that it is in the set of complexes
+    under the given assumptions.  If successful, returns the deduced statement,
+    otherwise raises an Exception.  
+    '''
+    return deduceInNumberSet(exprOrList, Complexes, assumptions=assumptions)
+
+def deduceNotZero(exprOrList, assumptions=None):
+    '''
+    For each given expression, attempt to derive that it is not equal to zero
+    under the given assumptions.  If successful, returns the deduced statement,
+    otherwise raises an Exception.  
+    '''
+    from proveit.number import num
+    if assumptions is None:
+        assumptions = set() 
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
+        # If it isn't an Expression, assume it's iterable and deduce each
+        return [deduceNotZero(expr, assumptions=assumptions) for expr in exprOrList]
+    # A single Expression:
+    expr = exprOrList
+    try:
+        return NotEquals(expr, num(0)).checked(assumptions)
+    except:
+        pass # not so simple
+
+    # Try using notEqZeroTheorem
+    if not isinstance(expr, NumberOp):
+        # See of the Expression class has deduceNotZero method (as a last resort):
+        if hasattr(expr, 'deduceNotZero'):
+            return expr.deduceNotZero()
+        print expr, expr.__class__
+        raise DeduceNotZeroException(expr, assumptions)
+    notEqZeroThm = expr._notEqZeroTheorem()
+    if notEqZeroThm is None:
+        raise DeduceNotZeroException(expr, assumptions)
+    assert isinstance(notEqZeroThm, Forall), 'Expecting notEqZero theorem to be a Forall expression'
+    iVars = notEqZeroThm.instanceVars
+    # Specialize the closure theorem differently for AccociativeOperation compared with other cases
+    if isinstance(expr, AssociativeOperation):
+        assert len(iVars) == 2, 'Expecting two instance variables for the closure theorem of an AssociativeOperation'
+        assert isinstance(iVars[1], Etcetera), 'Expecting the second instance variables for the closure theorem of an AssociativeOperation to be an Etcetera Variable'
+        notEqZeroSpec = notEqZeroThm.specialize({iVars[0]:expr.operands[0], iVars[1]:expr.operands[1:]})
+    else:
+        if len(iVars) != len(expr.operands):
+            raise Exception('Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression')
+        notEqZeroSpec = notEqZeroThm.specialize({iVar:operand for iVar, operand in zip(iVars, expr.operands)})
+    # deduce any of the requirements for the notEqZeroThm application
+    _deduceRequirements(notEqZeroThm, notEqZeroSpec, assumptions)
+    try:
+        return NotEquals(expr, num(0)).checked(assumptions)
+    except:
+        raise DeduceNotZeroException(expr, assumptions)
+
+
+def _deduceRequirements(theorem, specializedExpr, assumptions):
+    # Grab the conditions for the specialized expression of the given theorem
+    # and see if we need a further deductions for those requirements.
+    from proveit.number import num
+    for stmt, _, _, conditions in specializedExpr.statement._specializers:
+        if stmt._expression == theorem:
+            # check each condition and apply recursively if it is in some set                
+            for condition in conditions:
+                condition = condition._expression
+                if isinstance(condition, In):
+                    domain = condition.domain
+                    elem = condition.element
+                    deduceInNumberSet(elem, numberSet=domain, assumptions=assumptions)
+                elif isinstance(condition, NotEquals) and condition.rhs == num(0):
+                    deduceNotZero(condition.lhs, assumptions=assumptions)
+    
+
+class DeduceInNumberSetException(Exception):
+    def __init__(self, expr, numberSet, assumptions):
+        self.expr = expr
+        self.numberSet = numberSet
+        self.assumptions = assumptions
     def __str__(self):
-        return self.msg
+        return 'Unable to prove ' + str(self.expr) + ' in ' + str(self.numberSet) + ' under assumptions: ' + str(self.assumptions)
+
+class DeduceNotZeroException(Exception):
+    def __init__(self, expr, assumptions):
+        self.expr = expr
+        self.assumptions = assumptions
+    def __str__(self):
+        return 'Unable to prove ' + str(self.expr) + ' not equal to zero under assumptions: ' + str(self.assumptions)
     

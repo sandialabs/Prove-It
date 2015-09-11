@@ -6,7 +6,7 @@ from proveit.basiclogic import Equals, Equation, Forall, In
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
 from proveit.everythingLiteral import EVERYTHING
-from proveit.common import a, b, c, m, k, l, r, v, w, x, y, z, A
+from proveit.common import a, b, c, k, l, m, n, r, v, w, x, y, z, A
 from proveit.number.numberSets import *
 #from variables import *
 #from variables import a, b
@@ -31,6 +31,13 @@ class DiscreteContiguousSet(BinaryOperation):
             return r'\{'+self.lowerBound.formatted(formatType, fence=fence) +'\ldots '+ self.upperBound.formatted(formatType, fence=fence)+'\}'
         else:
             return r'\{'+self.lowerBound.formatted(formatType, fence=fence) +'...'+ self.upperBound.formatted(formatType, fence=fence)+'\}'
+
+    def deduceMemberInIntegers(self, member, assumptions=None):
+        from integer.theorems import allInDiscreteInterval_InInts
+        from numberSets import deduceInIntegers
+        deduceInIntegers(self.lowerBound, assumptions=assumptions)
+        deduceInIntegers(self.upperBound, assumptions=assumptions)
+        return allInDiscreteInterval_InInts.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
 DISCRETECONTIGUOUSSET = Literal(pkg, 'DISCRETECONTIGUOUSSET', operationMaker = lambda operands : DiscreteContiguousSet(*operands))
 
@@ -307,11 +314,18 @@ GREATERTHANEQUALS = Literal(pkg,'GREATERTHANEQUALS', {STRING: r'>=', LATEX:r'\ge
 
 class Abs(Operation, NumberOp):
     def __init__(self, A):
-        import complex.theorems
         Operation.__init__(self, ABS, A)
         self.operand = A
-        NumberOp.__init__(self, {Complexes:complex.theorems.absClosure})
 
+    def _closureTheorem(self, numberSet):
+        import complex.theorems
+        if numberSet == Complexes:
+            return complex.theorems.absClosure
+
+    def _notEqZeroTheorem(self):
+        import complex.theorems
+        return complex.theorems.absNotEqZero
+    
     def formatted(self, formatType, fence=False):
         if formatType == STRING:
             return '|'+self.operand.formatted(formatType, fence=fence)+'|'
@@ -326,18 +340,23 @@ class Add(AssociativeOperation, NumberOp):
         r'''
         Add together any number of operands.
         '''
-        import real.theorems
-        import complex.theorems
         AssociativeOperation.__init__(self, ADD, *operands)
-        NumberOp.__init__(self, {Reals:real.theorems.addClosure, Complexes:complex.theorems.addClosure})
-        
+
+    def _closureTheorem(self, numberSet):
+        import complex.theorems
+        import real.theorems
+        if numberSet == Reals:
+            return real.theorems.addClosure
+        elif numberSet == Complexes:
+            return complex.theorems.addClosure
+            
 #    def commute(self,index0,index1):
-    def commute(self):#Only works at present for two-place addition
+    def commute(self, assumptions=None):#Only works at present for two-place addition
         if len(self.operands)!=2:
             raise ValueError('This method can only commute two-place addition.')
         else:
             from proveit.number.theorems import commAdd
-            deriveInComplexes(self.operands[0], self.operands[1])
+            deduceInComplexes([self.operands[0], self.operands[1]], assumptions)
             return commAdd.specialize({a:self.operands[0],b:self.operands[1]})
         
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
@@ -347,10 +366,15 @@ class Subtract(BinaryOperation, NumberOp):
         r'''
         Subtract one number from another
         '''
-        import complex.theorems
         BinaryOperation.__init__(self, SUBTRACT, operandA, operandB)
-        NumberOp.__init__(self, {Complexes:complex.theorems.subtractClosure})
 
+    def _closureTheorem(self, numberSet):
+        import complex.theorems
+        import real.theorems
+        if numberSet == Reals:
+            return real.theorems.subtractClosure
+        elif numberSet == Complexes:
+            return complex.theorems.subtractClosure
 
 SUBTRACT = Literal(pkg, 'SUBTRACT', {STRING: r'-', LATEX: r'-'}, operationMaker = lambda operands : Subtract(*operands))
 
@@ -359,11 +383,21 @@ class Multiply(AssociativeOperation, NumberOp):
         r'''
         Multiply together any number of operands from first operand.
         '''
-        import complex.theorems
         AssociativeOperation.__init__(self, MULTIPLY, *operands)
-        NumberOp.__init__(self, {Complexes:complex.theorems.multClosure})
+
+    def _closureTheorem(self, numberSet):
+        import complex.theorems
+        import real.theorems
+        if numberSet == Reals:
+            return real.theorems.multClosure
+        elif numberSet == Complexes:
+            return complex.theorems.multClosure
+
+    def _notEqZeroTheorem(self):
+        import complex.theorems
+        return complex.theorems.multNotEqZero
         
-    def factor(self,operand,pull="left"):
+    def factor(self,operand,pull="left", assumptions=None):
         from proveit.number.complex.theorems import multComm, multAssoc
         if operand not in self.operands:
             raise ValueError("Trying to factor out absent expression!")
@@ -372,10 +406,10 @@ class Multiply(AssociativeOperation, NumberOp):
                 from proveit.basiclogic.equality.axioms import equalsReflexivity
                 return equalsReflexivity.specialize({x:self}).checked()
             else:
-                deriveInComplexes(self.operands[0], self.operands[1])
+                deduceInComplexes(self.operands, assumptions)
                 return multComm.specialize(
                 {Etcetera(v):[],Etcetera(w):self.operands[0],Etcetera(x):[],Etcetera(y):self.operands[1],Etcetera(z):[]}
-                ).checked()
+                ).checked({In(operand, Complexes) for operand in self.operands})
         else:
             splitIndex = self.operands.index(operand)
             newOperandsLeft = self.operands[:splitIndex]
@@ -383,8 +417,7 @@ class Multiply(AssociativeOperation, NumberOp):
             newOperands = newOperandsLeft + newOperandsRight
 #                
             if pull == "left":
-                deriveInComplexes(*newOperandsLeft)
-                deriveInComplexes(self.operands[1])
+                deduceInComplexes(self.operands, assumptions)
                 intermediate1 = multComm.specialize(
                     {Etcetera(v):[],Etcetera(w):[],Etcetera(x):newOperandsLeft,Etcetera(y):operand,Etcetera(z):newOperandsRight}
                                             )#.deriveRightViaEquivalence()
@@ -392,8 +425,9 @@ class Multiply(AssociativeOperation, NumberOp):
                     {Etcetera(w):operand,Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):[]})#.deriveRightViaEquivalence()
                 eq = Equation(intermediate1)
                 eq.update(intermediate2)
-                return eq.eqExpr.checked()
+                return eq.eqExpr.checked({In(operand, Complexes) for operand in self.operands})
             elif pull == "right":
+                deduceInComplexes(self.operands, assumptions)
                 intermediate1 = multComm.specialize(
                     {Etcetera(v):newOperandsLeft,Etcetera(w):operand,Etcetera(x):[],Etcetera(y):newOperandsRight,Etcetera(z):[]}
                                             )
@@ -401,7 +435,7 @@ class Multiply(AssociativeOperation, NumberOp):
                     {Etcetera(w):[],Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):operand})
                 eq = Equation(intermediate1)
                 eq.update(intermediate2)
-                return eq.eqExpr.checked()
+                return eq.eqExpr.checked({In(operand, Complexes) for operand in self.operands})
             else:
                 raise ValueError("Invalid pull arg. provided!  (Acceptable values are \"left\" and \"right\".)")
 
@@ -414,9 +448,19 @@ class Divide(BinaryOperation, NumberOp):
         r'''
         Divide two operands.
         '''
-        import complex.theorems
         BinaryOperation.__init__(self, DIVIDE, operandA, operandB)
-        NumberOp.__init__(self, {Complexes:complex.theorems.divideClosure})
+
+    def _closureTheorem(self, numberSet):
+        import complex.theorems
+        import real.theorems
+        if numberSet == Reals:
+            return real.theorems.divideClosure
+        elif numberSet == Complexes:
+            return complex.theorems.divideClosure
+
+    def _notEqZeroTheorem(self):
+        import complex.theorems
+        return complex.theorems.divideNotEqZero
 
 DIVIDE = Literal(pkg, 'DIVIDE', {STRING: r'/', LATEX: r'\div'}, operationMaker = lambda operands : Divide(*operands))
 
@@ -425,37 +469,47 @@ class Fraction(BinaryOperation, NumberOp):
         r'''
         Divide two operands in fraction form.
         '''
-        import complex.theorems
         BinaryOperation.__init__(self, FRACTION, operandA, operandB)
         self.numerator = operandA
         self.denominator = operandB
-        NumberOp.__init__(self, {Complexes:complex.theorems.fractionClosure})
 
+    def _closureTheorem(self, numberSet):
+        import complex.theorems
+        import real.theorems
+        if numberSet == Reals:
+            return real.theorems.fractionClosure
+        elif numberSet == Complexes:
+            return complex.theorems.fractionClosure
+
+    def _notEqZeroTheorem(self):
+        import complex.theorems
+        return complex.theorems.fractionNotEqZero
+    
     def formatted(self, formatType, fence=False):
         if formatType == LATEX:
-            return r'\frac{'+self.numerator.formatted(formatType, fence=fence)+'}{'+ self.denominator.formatted(formatType, fence=fence)+'}'
+            return r'\frac{'+self.numerator.formatted(formatType, fence=False)+'}{'+ self.denominator.formatted(formatType, fence=False)+'}'
         elif formatType == STRING:
             return Divide(self.numerator, self.denominator).formatted(STRING)
         else:
             print "BAD FORMAT TYPE"
             return None
-    def cancel(self,operand):
+    def cancel(self,operand, assumptions=None):
         if not isinstance(self.numerator,Multiply):
             from proveit.number.complex.theorems import fracCancel3
-            newEq0 = self.denominator.factor(operand).proven().substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).proven()
-            deriveInComplexes(operand, suppressWarnings=True)
-            deriveInComplexes(*newEq0.rhs.denominator.operands[1:], suppressWarnings=True)
+            newEq0 = self.denominator.factor(operand).substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
+            deduceInComplexes(operand, assumptions)
+            deduceInComplexes(newEq0.rhs.denominator.operands[1:], assumptions)
             newEq1 = fracCancel3.specialize({x:operand,Etcetera(y):newEq0.rhs.denominator.operands[1:]})
             return newEq0.applyTransitivity(newEq1)
             
         assert isinstance(self.numerator,Multiply)
         if isinstance(self.denominator,Multiply):
             from proveit.number.complex.theorems import fracCancel1
-            newEq0 = self.numerator.factor(operand).proven().substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).proven()
-            newEq1 = self.denominator.factor(operand).proven().substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).proven()
-            deriveInComplexes(operand, suppressWarnings=True)
-            deriveInComplexes(newEq1.rhs.numerator.operands[1:], suppressWarnings=True)
-            deriveInComplexes(newEq1.rhs.denominator.operands[1:], suppressWarnings=True)
+            newEq0 = self.numerator.factor(operand).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
+            newEq1 = self.denominator.factor(operand).substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
+            deduceInComplexes(operand, assumptions)
+            deduceInComplexes(newEq1.rhs.numerator.operands[1:], assumptions)
+            deduceInComplexes(newEq1.rhs.denominator.operands[1:], assumptions)
             newEq2 = fracCancel1.specialize({x:operand,Etcetera(y):newEq1.rhs.numerator.operands[1:],Etcetera(z):newEq1.rhs.denominator.operands[1:]})
             return newEq0.applyTransitivity(newEq1).applyTransitivity(newEq2)
 #            newFracIntermediate = self.numerator.factor(operand).proven().rhsSubstitute(self)
@@ -465,14 +519,59 @@ class Fraction(BinaryOperation, NumberOp):
 #            return fracCancel1.specialize({x:operand,Etcetera(y):numRemainingOps,Etcetera(z):denomRemainingOps})
         else:
             from proveit.number.complex.theorems import fracCancel2
-            newEq0 = self.numerator.factor(operand).proven().substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).proven()
-            deriveInComplexes(operand, suppressWarnings=True)   
-            deriveInComplexes(newEq0.rhs.numerator.operands[1:], suppressWarnings=True)
+            newEq0 = self.numerator.factor(operand).proven().substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
+            deduceInComplexes(operand, assumptions)   
+            deduceInComplexes(newEq0.rhs.numerator.operands[1:], assumptions)
             newEq1 = fracCancel2.specialize({x:operand,Etcetera(y):newEq0.rhs.numerator.operands[1:]})
             return newEq0.applyTransitivity(newEq1)
 #            newFrac = self.numerator.factor(operand).proven().rhsSubstitute(self)
 #            numRemainingOps = newFrac.numerator.operands[1:]
 #            return fracCancel2.specialize({x:operand,Etcetera(y):numRemainingOps})
+
+    def factor(self,operand,pull="left", assumptions=None):
+        from complex.theorems import leftFracMultRev, rightFracMultRev, fracProdRev, fracProdLeftNumerOneRev, fracProdRightNumerOneRev
+        from number import num
+        dummyVar = safeDummyVar(self)
+        eqns = []
+        if isinstance(operand, Fraction):
+            # factor the operand denominator out of self's denominator
+            denomFactorEqn = self.denominator.factor(operand.denominator, pull, assumptions)
+            factoredDenom = denomFactorEqn.rhs
+            eqns.append(denomFactorEqn.substitution(Fraction(self.numerator, dummyVar), dummyVar))
+            if operand.numerator != num(1) and self.numerator != num(1):
+                # factor the operand numerator out of self's numerator
+                numerFactorEqn = self.numerator.factor(operand.numerator, pull, assumptions)
+                factoredNumer = numerFactorEqn.rhs
+                eqns.append(numerFactorEqn.substitution(Fraction(dummyVar, factoredDenom), dummyVar))
+                # factor the two fractions
+                deduceInComplexes(factoredNumer.operands, assumptions)
+                deduceInComplexes(factoredDenom.operands, assumptions)
+                eqns.append(fracProdRev.specialize({x:factoredNumer.operands[0], y:factoredNumer.operands[1], 
+                                                    z:factoredDenom.operands[0], w:factoredDenom.operands[1]}))
+            else:
+                # special case: one of the numerators is equal to one, no numerator factoring to be done
+                if (pull == 'left') == (operand.numerator == num(1)):
+                    thm = fracProdLeftNumerOneRev
+                else:
+                    thm = fracProdRightNumerOneRev
+                # factor the two fractions
+                deduceInComplexes(self.numerator, assumptions)                    
+                deduceInComplexes(factoredDenom.operands, assumptions)
+                eqns.append(thm.specialize({x:self.numerator, y:factoredDenom.operands[0], z:factoredDenom.operands[1]}))
+        else:
+            numerFactorEqn = self.numerator.factor(operand, pull, assumptions)
+            factoredNumer = numerFactorEqn.rhs
+            eqns.append(numerFactorEqn.substitution(Fraction(dummyVar, self.denominator), dummyVar))
+            if pull == 'left':
+                thm = leftFracMultRev
+            else:
+                thm = rightFracMultRev
+            # factor the numerator factor from the fraction
+            deduceInComplexes(factoredNumer.operands, assumptions)                    
+            deduceInComplexes(self.denominator, assumptions)
+            eqns.append(thm.specialize({x:factoredNumer.operands[0], y:factoredNumer.operands[1], 
+                                        z:self.denominator}))
+        return Equation(*eqns).eqExpr # equating the lhs of the first equation to the rhs of the last equation
 
 FRACTION = Literal(pkg, 'FRACTION', operationMaker = lambda operands : Fraction(*operands))
 
@@ -481,12 +580,25 @@ class Exponentiate(BinaryOperation, NumberOp):
         r'''
         Raise base to exponent power.
         '''
-        import complex.theorems
         BinaryOperation.__init__(self,EXPONENTIATE, base, exponent)
         self.base = base
         self.exponent = exponent
-        NumberOp.__init__(self, {Complexes:complex.theorems.powClosure})
-    
+
+    def _closureTheorem(self, numberSet):
+        import natural.theorems
+        import real.theorems
+        import complex.theorems
+        if numberSet == Naturals:
+            return natural.theorems.powClosure
+        elif numberSet == Reals:
+            return real.theorems.powClosure
+        elif numberSet == Complexes:
+            return complex.theorems.powClosure
+
+    def _notEqZeroTheorem(self):
+        import complex.theorems
+        return complex.theorems.powNotEqZero
+        
     def formatted(self, formatType, fence=False):
         formattedBase = self.base.formatted(formatType, fence=True)
         if isinstance(self.base, Exponentiate) or isinstance(self.base, Fraction):
@@ -503,24 +615,42 @@ class Exponentiate(BinaryOperation, NumberOp):
             print "BAD FORMAT TYPE"
             return None
     
-    def raiseExpFactor(self, expFactor):
-        from proveit.number.complex.theorems import powOfPow
-        if not isinstance(self.exponent, Multiply):
-            raise Exception('May only apply raiseExpFactor to a power with a product as the exponent')
-        factorEq = self.exponent.factor(expFactor, pull='right')
+    def raiseExpFactor(self, expFactor, assumptions=None):
+        from proveit.number.complex.theorems import powOfPow, powOfNegPow
+        if isinstance(self.exponent, Neg):
+            b_times_c = self.exponent.operand
+            thm = powOfNegPow
+        else:
+            b_times_c = self.exponent
+            thm = powOfPow
+        if not hasattr(b_times_c, 'factor'):
+            raise Exception('Exponent not factorable, may not raise the exponent factor.')
+        factorEq = b_times_c.factor(expFactor, pull='right', assumptions=assumptions)
         if factorEq.lhs != factorEq.rhs:
             # factor the exponent first, then raise this exponent factor
             factoredExpEq = factorEq.substitution(self)
-            return factoredExpEq.applyTransitivity(factoredExpEq.rhs.raiseExpFactor(expFactor))
-        deriveInComplexes(self.base, self.exponent.operands[0], self.exponent.operands[1], suppressWarnings=True)
-        return powOfPow.specialize({a:self.base, b:self.exponent.operands[0], c:self.exponent.operands[1]}).deriveReversed()
+            return factoredExpEq.applyTransitivity(factoredExpEq.rhs.raiseExpFactor(expFactor, assumptions))
+        deduceInComplexes([self.base, b_times_c.operands[0], b_times_c.operands[1]], assumptions)
+        return thm.specialize({a:self.base, b:b_times_c.operands[0], c:b_times_c.operands[1]}).deriveReversed()
 
-    def lowerOuterPow(self):
-        from proveit.number.complex.theorems import powOfPow
+    def lowerOuterPow(self, assumptions=None):
+        from proveit.number.complex.theorems import powOfPow, powOfNegPow, negPowOfPow, negPowOfNegPow
         if not isinstance(self.base, Exponentiate):
             raise Exception('May only apply lowerOuterPow to nested Exponentiate operations')
-        deriveInComplexes(self.base.base, self.base.exponent, self.exponent, suppressWarnings=True)
-        return powOfPow.specialize({a:self.base.base, b:self.base.exponent, c:self.exponent})
+        if isinstance(self.base.exponent, Neg) and isinstance(self.exponent, Neg):
+            b_, c_ = self.base.exponent.operand, self.exponent.operand
+            thm = negPowOfNegPow
+        elif isinstance(self.base.exponent, Neg):
+            b_, c_ = self.base.exponent.operand, self.exponent
+            thm = powOfNegPow
+        elif isinstance(self.exponent, Neg):
+            b_, c_ = self.base.exponent, self.exponent.operand
+            thm = negPowOfPow
+        else:
+            b_, c_ = self.base.exponent, self.exponent
+            thm = powOfPow
+        deduceInComplexes([self.base.base, b_, c_], assumptions)
+        return thm.specialize({a:self.base.base, b:b_, c:c_})
     
 EXPONENTIATE = Literal(pkg, 'EXPONENTIATE', operationMaker = lambda operands : Exponentiate(*operands))
 
@@ -625,13 +755,46 @@ def summationMaker(operands):
 
 SUMMATION = Literal(pkg, "SUMMATION", {STRING: r'Summation', LATEX: r'\sum'}, operationMaker = summationMaker)
 
-class Neg(Operation):
+class Neg(Operation, NumberOp):
     def __init__(self,A):
         Operation.__init__(self, NEG, A)
         self.operand = A
+        #NumberOp.__init__(self, {Complexes:complex.theorems.negClosure})
+
+    def _closureTheorem(self, numberSet):
+        import complex.theorems
+        if numberSet == Complexes:
+            return complex.theorems.negClosure
+
+    def _notEqZeroTheorem(self):
+        import complex.theorems
+        return complex.theorems.negNotEqZero
     
     def formatted(self, formatType, fence=False):
-        return '-'+self.operand.formatted(formatType, fence=True)
+        outStr = ''
+        if fence: outStr += r'\left(' if formatType == LATEX else r'('
+        outStr += ('-'+self.operand.formatted(formatType, fence=True))
+        if fence: outStr += r'\right)' if formatType == LATEX else r')'
+        return outStr
+
+    def factor(self,operand,pull="left", assumptions=None):
+        from complex.theorems import negTimesPosRev, posTimesNegRev
+        if isinstance(operand, Neg):
+            if pull == 'left':
+                thm = negTimesPosRev
+            else:
+                thm = posTimesNegRev
+            operand = operand.operand
+        else:
+            if pull == 'left':
+                thm = posTimesNegRev
+            else:
+                thm = negTimesPosRev
+        operandFactorEqn = self.operand.factor(operand, pull, assumptions)
+        # in this instance, the automated way is safe because there is no other operand:
+        eqn1 = operandFactorEqn.substitution(self) 
+        eqn2 = thm.specialize({x:operandFactorEqn.rhs.operands[0], y:operandFactorEqn.rhs.operands[1]})
+        return eqn1.applyTransitivity(eqn2)
         
 NEG = Literal(pkg, 'NEG', operationMaker = lambda operands : Neg(*operands))
 
