@@ -53,25 +53,6 @@ class Forall(OperationOverInstances):
             return Implies(self.conditions[0], specialized).checked({self})
         return specialized
     
-    """
-    # out of data
-    def equateMaps(self):
-        '''
-        From forall_{x | Q(x)} f(x) = g(x) derive and return 
-        [x -> f(x) | Q(x)] = [x -> g(x) | Q(x)]
-        '''
-        from proveit.basiclogic.mapping.theorems import mapSubstitution, mapOverAllSubstitution
-        from proveit.basiclogic import Equals
-        assert isinstance(self.instanceExpr, Equals), "Instance expression must be an equality to use mapSubstitution"
-        fOp, fOpSub = Operation(f, self.instanceVars), self.instanceExpr.lhs
-        gOp, gOpSub = Operation(g, self.instanceVars), self.instanceExpr.rhs
-        Q_op, Q_op_sub = Operation(Q, self.instanceVars), self.conditions
-        if self.hasCondition():
-            return mapSubstitution.specialize({fOp:fOpSub, gOp:gOpSub, Q_op:Q_op_sub, x:self.instanceVars, y:self.instanceVars}).deriveConclusion().checked({self})
-        else:
-            return mapOverAllSubstitution.specialize({fOp:fOpSub, gOp:gOpSub}).deriveConclusion().checked({self})
-    """
-    
     def unfold(self):
         '''
         From this forall statement, derive an "unfolded" version dependent upon the domain of the forall,
