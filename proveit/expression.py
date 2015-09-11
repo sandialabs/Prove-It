@@ -276,9 +276,10 @@ class Expression:
         return self
 
     # THIS USES MATHJAX WHICH IS LESS FLEXIBLE THAN DVIPNG (BELOW)    
-    #def _repr_latex_(self):
-    #    return '$' + self.formatted(LATEX) + '$'
+    def _repr_latex_(self):
+        return '$' + self.formatted(LATEX) + '$'
     
+    '''
     def _repr_png_(self):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
         if not hasattr(self,'png') or self.png is None:
@@ -288,6 +289,7 @@ class Expression:
             self._config_latex_tool(lt)
             self.png = latex_to_png(self.formatted(LATEX), backend='dvipng', wrap=True)
         return self.png
+    '''
     
     def _config_latex_tool(self, lt):
         '''
