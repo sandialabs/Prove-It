@@ -4,10 +4,14 @@ from proveit.number import Multiply
 from proveit.common import *
 from proveit.number.number import *
 from proveit.number.numberSets import *
+from proveit.basiclogic import Difference, Singleton
 
 pkg = __package__
 
 two_pi = Multiply(two, pi)
+
+ComplexesSansZero = Difference(Complexes, Singleton(zero))
+
 
 #e = Variable('e')
 phi = Variable('phi',{LATEX:r'\phi'})
