@@ -125,9 +125,9 @@ BOOLEANS = BooleanSet()
 TRUE = TrueLiteral()
 FALSE = FalseLiteral()
 
-def inBool(*elements):
+def inBool(element):
     from proveit.basiclogic.set.setOps import In
-    return In(elements, BOOLEANS)
+    return In(element, BOOLEANS)
 
 def deduceInBool(expr):
     '''
