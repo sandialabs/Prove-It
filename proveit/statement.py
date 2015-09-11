@@ -211,19 +211,26 @@ class Statement:
             instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], list(lambdaExpr.expression['conditions'])
             iVarSet = set().union(*[iVar.freeVars() for iVar in instanceVars])
             assert substitutingVars == iVarSet, 'The set of substituting variables must be that same as the set of Forall instance variables'
-            if domain != EVERYTHING:
-                conditions += [IN.operationMaker({'elements':[var], 'domain':domain}) for var in instanceVars]
             for arg in lambdaExpr.arguments:
                 if isinstance(arg, Variable) and arg in substitutingVars and isinstance(substitutingVars, ExpressionList):
                     raise ImproperSpecialization("May only specialize a Forall instance variable with an ExpressionList if it is wrapped in Etcetera")
         else:
             # just a relabeling
             expr = originalExpr
+            instanceVars = []
             conditions = []
+            domain = None
         # make and state the specialized expression with appropriate substitutions
         specializedExpr = Statement.state(expr.substituted(nonOpSubMap, operationSubMap, relabelMap))
         # make substitutions in the condition
         subbedConditions = {asStatement(condition.substituted(nonOpSubMap, operationSubMap, relabelMap)) for condition in conditions}
+        # add conditions for satisfying the domain restriction if there is one
+        if domain != EVERYTHING:
+            # extract all of the elements
+            for var in instanceVars:
+                elementOrList = var.substituted(nonOpSubMap, operationSubMap, relabelMap)
+                for element in (elementOrList if isinstance(elementOrList, ExpressionList) else [elementOrList]):
+                    subbedConditions.add(asStatement(IN.operationMaker([element, domain])))
         Statement.state(originalExpr)
         # add the specializer link
         specializedExpr.statement.addSpecializer(originalExpr.statement, nonOpSubMap, relabelMap, subbedConditions)
