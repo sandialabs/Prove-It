@@ -5,7 +5,7 @@ from proveit.impliesLiteral import IMPLIES
 from proveit.everythingLiteral import EVERYTHING
 from boolSet import TRUE, FALSE, inBool, deduceInBool
 from quantifiers import Exists, NotExists
-from proveit.common import A, B, C, x, y, f, a, b, c
+from proveit.common import A, B, C, x, y, f, a, b, c, S
 
 pkg = __package__
 
@@ -222,6 +222,16 @@ class Not(Operation):
         from proveit.basiclogic.equality.theorems import foldNotEquals
         if isinstance(self.operand, Equals):
             return foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}).deriveConclusion().checked({self})
+
+    def deriveNotIn(self):
+        r'''
+        From :math:`\lnot(A \in B)`, derive and return :math:`A \notin B`.
+        '''
+        from proveit.basiclogic import Equals
+        from proveit.basiclogic import In
+        from proveit.basiclogic.set.theorems import foldNotIn
+        if isinstance(self.operand, In):
+            return foldNotIn.specialize({x:self.operand.element, S:self.operand.domain}).deriveConclusion().checked({self})
 
     def deriveNotExists(self):
         r'''
