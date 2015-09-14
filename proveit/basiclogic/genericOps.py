@@ -1,5 +1,5 @@
 from proveit.expression import Operation, Lambda, STRING, LATEX
-from proveit.multiExpression import multiExpression
+from proveit.multiExpression import multiExpression, Etcetera
 from proveit.everythingLiteral import EVERYTHING
 
 class BinaryOperation(Operation):
@@ -29,7 +29,10 @@ class AssociativeOperation(Operation):
         Operation.__init__(self, operator, operands)   
         # What is the sound of one (or no) hand clapping?  Who really cares?
         if len(self.operands) < 2:
-            raise ValueError("An AssociativeOperation must have at least 2 operands")  
+            # A single Etcetera operand is okay though (it will have to be replace with
+            # 2 or more items)
+            if len(self.operands) == 0 or not isinstance(self.operands[0], Etcetera):
+                raise ValueError("An AssociativeOperation must have at least 2 operands")  
     
     def formatted(self, formatType, fence=False, subFence=True):
         '''
@@ -37,7 +40,21 @@ class AssociativeOperation(Operation):
         the operator that is obtained from self.operator.formatted(formatType).
         '''
         outStr = ''
-        formattedOperands = [operand.formatted(formatType, fence=subFence) for operand in self.operands]
+        # insert ellipses (two dots in our case) before and after Etcetera expressions
+        formattedOperands = [] 
+        spc = '~' if formatType == LATEX else ' ' 
+        for operand in self.operands:
+            if isinstance(operand, Etcetera):
+                if len(formattedOperands) > 0 and formattedOperands[-1] == '..' + spc:
+                    # instead of having "..  .." back-to-back, do ".."
+                    formattedOperands[-1] = '...'
+                else:
+                    formattedOperands.append(spc + '..')
+                formattedOperands.append(operand.bundledExpr.formatted(formatType, fence=subFence))
+                formattedOperands.append('..' + spc)
+            else:
+                formattedOperands.append(operand.formatted(formatType, fence=subFence))
+        # put the formatted operator between each of formattedOperandsWithEllipses
         if formatType == STRING:
             if fence: outStr += '('
             outStr += (' ' + self.operator.formatted(formatType) + ' ').join(formattedOperands)
@@ -162,7 +179,7 @@ class OperationOverInstances(Operation):
         from proveit.basiclogic.axioms import instanceSubstitution
         from proveit.basiclogic import Forall, Equals
         from proveit.number import num
-        from proveit.common import n, Qetc, xEtc, yEtc, zEtc, etc_QxEtc, f, g, fxEtc, fyEtc, gxEtc, gzEtc, Upsilon, S
+        from proveit.common import n, Q, Qetc, xEtc, yEtc, zEtc, etc_QxEtc, f, g, fxEtc, fyEtc, gxEtc, gzEtc, Upsilon, S
         if not isinstance(equivalenceForallInstances, Forall):
             raise InstanceSubstitutionException("equivalenceForallInstances must be a forall expression", self, equivalenceForallInstances)
         if len(equivalenceForallInstances.instanceVars) != len(self.instanceVars):
@@ -177,8 +194,11 @@ class OperationOverInstances(Operation):
             raise InstanceSubstitutionException("equivalenceForallInstances be an equivalence within Forall: " + str(equivalenceForallInstances))
         if equivalenceForallInstances.instanceExpr.lhs.substituted(iVarSubstitutions) != self.instanceExpr:
             raise InstanceSubstitutionException("lhs of equivalence in equivalenceForallInstances must match the instance expression of the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
-        return instanceSubstitution.specialize({n:num(len(self.instanceVars)), Upsilon:self.operator, xEtc:self.instanceVars, yEtc:self.instanceVars, zEtc:self.instanceVars, \
-                                                etc_QxEtc:self.conditions, S:self.domain, fxEtc:self.instanceExpr, gxEtc:equivalenceForallInstances.instanceExpr.rhs.substituted(iVarSubstitutions)})
+        f_op, f_op_sub = Operation(f, self.instanceVars), self.instanceExpr
+        g_op, g_op_sub = Operation(g, self.instanceVars), equivalenceForallInstances.instanceExpr.rhs.substituted(iVarSubstitutions)
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        return instanceSubstitution.specialize({Upsilon:self.operator, xEtc:self.instanceVars, yEtc:self.instanceVars, zEtc:self.instanceVars, \
+                                                Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub}).deriveConclusion()
 
     def substituteInstances(self, equivalenceForallInstances):
         '''
