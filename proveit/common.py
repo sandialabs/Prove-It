@@ -70,6 +70,7 @@ Aetc = Etcetera(A) # ..A..
 Cetc = Etcetera(C) # ..C..
 Qetc = Etcetera(Q) # ..Q..
 Retc = Etcetera(R) # ..R..
+vEtc = Etcetera(v) # ..v..
 xEtc = Etcetera(x) # ..x..
 yEtc = Etcetera(y) # ..y..
 zEtc = Etcetera(z) # ..z..
