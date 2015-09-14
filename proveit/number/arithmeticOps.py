@@ -6,7 +6,7 @@ from proveit.basiclogic import Equals, Equation, Forall, In
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
 from proveit.everythingLiteral import EVERYTHING
-from proveit.common import a, b, c, d, k, l, m, n, r, v, w, x, y, z, A, vEtc, wEtc, xEtc, yEtc, zEtc
+from proveit.common import a, b, c, d, k, l, m, n, r, v, w, x, y, z, A, P, S, vEtc, wEtc, xEtc, yEtc, zEtc
 from proveit.number.numberSets import *
 #from variables import *
 #from variables import a, b
@@ -872,11 +872,15 @@ class Summation(OperationOverInstances):
         if isinstance(self.domain,DiscreteContiguousSet):
             lower = self.domain.lowerBound.formatted(formatType)
             upper = self.domain.upperBound.formatted(formatType)
-            return self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+'='+lower+r'}'+r'^{'+upper+r'}'+self.summand.formatted(formatType, fence=fence)
+            formattedInner = self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+'='+lower+r'}'+r'^{'+upper+r'}'+self.summand.formatted(formatType, fence=fence) 
         else:
-            return self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+r'\in '+self.domain.formatted(formatType)+r'}'+self.summand.formatted(formatType, fence=fence)
-
-
+            formattedInner = self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+r'\in '+self.domain.formatted(formatType)+r'}'+self.summand.formatted(formatType, fence=fence)
+        if fence:
+            if formatType == LATEX:
+                return r'\left(' + formattedInner + r'\right)'
+            else:
+                return r'(' + formattedInner + r')'
+        else: return formattedInner                
 
     def reduceGeomSum(self):
         r'''
@@ -920,7 +924,33 @@ class Summation(OperationOverInstances):
         self.Aselfm = Operation(A,self.m)
         return splitSum.specialize({m:self.m,a:self.a,b:self.b,c:self.c,self.Aselfm:self.summand})
 
-
+    def factor(self, theFactor, pull="left", groupFactor=False, groupRemainder=None, assumptions=frozenset()):
+        '''
+        Pull out a common factor from a summation, pulling it either to the "left" or "right".
+        If groupFactor is True and theFactor is a product, it will be grouped together as a 
+        sub-product.  groupRemainder is not relevant kept for compatibility with other factor
+        methods.  Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in Complexes so that
+        the associative and commutation theorems are applicable.
+        '''
+        from complex.theorems import distributeOverSummationRev
+        if not theFactor.freeVars().isdisjoint(self.indices):
+            raise Exception('Cannot factor anything involving summation indices out of a summation')
+        summand_assumptions = assumptions | set([In(index, self.domain) for index in self.indices])
+        summandFactorEq = self.summand.factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=summand_assumptions)
+        summandInstanceEquivalence = summandFactorEq.generalize(self.indices, domain=self.domain)
+        eq = Equation(self.instanceSubstitution(summandInstanceEquivalence).checked(assumptions))
+        factorOperands = theFactor.operands if isinstance(theFactor, Multiply) else theFactor
+        if pull == 'left':
+            Pop, Pop_sub = Operation(P, self.indices), summandFactorEq.rhs.operands[-1]
+            eq.update(distributeOverSummationRev.specialize({xEtc:factorOperands, yEtc:self.indices, zEtc:[], Pop:Pop_sub, S:self.domain}).checked())
+        elif pull == 'right':
+            Pop, Pop_sub = Operation(P, self.indices), summandFactorEq.rhs.operands[0]
+            eq.update(distributeOverSummationRev.specialize({xEtc:[], yEtc:self.indices, zEtc:factorOperands, Pop:Pop_sub, S:self.domain}).checked())
+        if groupFactor and len(factorOperands) > 1:
+            eq.update(eq.eqExpr.rhs.group(endIdx=len(factorOperands), assumptions=assumptions))
+        return eq.eqExpr #.checked(assumptions)
+            
 def summationMaker(operands):
     params = OperationOverInstances.extractParameters(operands)
     return Summation(params['instanceVars'],params['instanceExpr'],params['domain'],params['conditions'])
