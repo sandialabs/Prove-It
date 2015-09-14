@@ -2,26 +2,28 @@
 
 import os
 
-listOfFiles = [
-               'proveit/basiclogic/axioms.ipynb',
-               'proveit/basiclogic/boolean/axioms.ipynb',
-               'proveit/basiclogic/boolean/theorems.ipynb',
-               'proveit/basiclogic/equality/axioms.ipynb',
-               'proveit/basiclogic/equality/theorems.ipynb',
-               'proveit/basiclogic/set/axioms.ipynb',
-               'proveit/basiclogic/set/theorems.ipynb',
+cwd = os.getcwd()
 
-               'proveit/number/axioms.ipynb',
-               'proveit/number/theorems.ipynb',
-               'proveit/number/complex/theorems.ipynb',
-               'proveit/number/integer/theorems.ipynb',
-               'proveit/number/natural/theorems.ipynb',
-               'proveit/number/real/theorems.ipynb',
+listOfFolders = [
+               'proveit/basiclogic',
+               'proveit/basiclogic/boolean',                              
+               'proveit/basiclogic/equality/',
+               'proveit/basiclogic/set/',
 
-               'proveit/physics/quantum/QPE/axioms.ipynb',
-               'proveit/physics/quantum/QPE/theorems.ipynb'
+               'proveit/number/',
+               'proveit/number/complex/',
+               'proveit/number/integer/',
+               'proveit/number/natural/',
+               'proveit/number/real/',
+
+               'proveit/physics/quantum/QPE/'
                ]
 
-for fileName in listOfFiles:
-    os.system('ipython2-2.7 nbconvert --execute '+fileName)
+for folderName in listOfFolders:
+    os.chdir(cwd+'/'+folderName)
+    if 'axioms.ipynb' in os.listdir('.'):    
+        os.system('ipython2-2.7 nbconvert --execute axioms.ipynb')
+#    os.system('ipython nbconvert --execute '+fileName)#If you're not Kenny, you probably want this line instead of the previous one.
+    if 'theorems.ipynb' in os.listdir('.'):    
+        os.system('ipython2-2.7 nbconvert --execute theorems.ipynb')
 #    os.system('ipython nbconvert --execute '+fileName)#If you're not Kenny, you probably want this line instead of the previous one.
