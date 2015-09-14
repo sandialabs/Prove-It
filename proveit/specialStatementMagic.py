@@ -51,7 +51,9 @@ class AxiomsOrTheoremsMagics(Magics):
             if fname[-6:] == '.pv_it':
                 if fname[:-6] not in defns:
                     if remove_all_extraneous == False:
-                        response = query(fname[:-6] + ' appears to be obsolete.  Remove it?  (yes/no/all)')
+                        # TEMPORARILY MAKE THIS ALWAYS OVERWRITE, FOR CONVENIENCE
+                        #response = query(fname[:-6] + ' appears to be obsolete.  Remove it?  (yes/no/all)')
+                        response = 'a'                        
                         if response.lower() == 'a' or response.lower() == 'all':
                             remove_all_extraneous = True
                         elif response.lower() != 'y' and response.lower() != 'yes':
@@ -74,7 +76,9 @@ class AxiomsOrTheoremsMagics(Magics):
                 with open(os.path.join(pvit_file), 'r') as f:
                     changed = (f.read() != (expr_id + '\n'))
                     if changed:
-                        response = query(name + ' has changed.  Replace it? (yes/no/all)')
+                        # TEMPORARILY MAKE THIS ALWAYS OVERWRITE, FOR CONVENIENCE
+                        #response = query(name + ' has changed.  Replace it? (yes/no/all)')
+                        response = 'a'
                         if response.lower() == 'a' or response.lower() == 'all':
                             replace_all = True
                         elif response.lower() != 'y' and response.lower() != 'yes':

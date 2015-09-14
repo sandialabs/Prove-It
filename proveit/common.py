@@ -4,7 +4,7 @@ common.py
 Commonly used Variables and simple expressions involving them.
 '''
 
-from proveit.expression import Variable, Operation
+from proveit.expression import Variable, Operation, LATEX
 from proveit.multiExpression import Etcetera
 
 a = Variable('a')
@@ -41,6 +41,7 @@ P = Variable('P')
 Q = Variable('Q')
 R = Variable('R')
 S = Variable('S')
+U = Variable('U')
 X = Variable('X') 
 
 PofA = Operation(P, A) # P(A)
@@ -59,16 +60,31 @@ fxy = Operation(f, (x, y)) # f(x, y)
 gx = Operation(g, x) # g(x)
 gy = Operation(g, y) # g(y)
 
+eps = Variable('eps',{LATEX:r'\varepsilon'})
+Upsilon = Variable('Upsilon',{LATEX:r'\Upsilon'})
+
+aEtc = Etcetera(a) # ..a..
+bEtc = Etcetera(b) # ..b..
+cEtc = Etcetera(c) # ..c..
 Aetc = Etcetera(A) # ..A..
 Cetc = Etcetera(C) # ..C..
 Qetc = Etcetera(Q) # ..Q..
 Retc = Etcetera(R) # ..R..
+vEtc = Etcetera(v) # ..v..
 xEtc = Etcetera(x) # ..x..
 yEtc = Etcetera(y) # ..y..
 zEtc = Etcetera(z) # ..z..
+wEtc = Etcetera(w) # ..z..
+fxEtc = Operation(f, xEtc) # f(..x..)
+fyEtc = Operation(f, yEtc) # f(..y..)
+fzEtc = Operation(f, zEtc) # f(..z..)
+gxEtc = Operation(g, xEtc) # g(..x..)
+gyEtc = Operation(g, yEtc) # g(..y..)
+gzEtc = Operation(g, zEtc) # g(..z..)
 PxEtc = Operation(P, xEtc) # P(..x..)
 PyEtc = Operation(P, yEtc) # P(..y..)
 PxyEtc = Operation(P, (xEtc, yEtc)) # P(..x.., ..y..)
 etc_QxEtc = Etcetera(Operation(Q, xEtc)) # ..Q(..x..)..
 etc_QyEtc = Etcetera(Operation(Q, yEtc)) # ..Q(..y..)..
+etc_QzEtc = Etcetera(Operation(Q, zEtc)) # ..Q(..z..)..
 etc_RyEtc = Etcetera(Operation(R, yEtc)) # ..R(..y..)..

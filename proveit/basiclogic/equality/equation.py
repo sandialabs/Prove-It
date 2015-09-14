@@ -6,13 +6,15 @@ class Equation:
     new equations that involve A or B, deriving each new equation from
     the previous equations.
     '''
-    def __init__(self, eqExpr):
+    def __init__(self, *equationExpressions):
         '''
-        Initialize the Equation with an Equals expression.
+        Initialize the Equation with any number of Equals expression,
+        a starting expression a subsequent updates.  If there are no
+        expressions given, the starting expression will be the first update.
         '''
-        if not isinstance(eqExpr, Equals):
-            raise EquationException('Equation must be initialized with an Equals expression')
-        self.eqExpr = eqExpr
+        self.eqExpr = None
+        for expr in equationExpressions:
+            self.update(expr)
     
     def update(self, nextEqExpr):
         '''
@@ -24,7 +26,10 @@ class Equation:
         '''
         if not isinstance(nextEqExpr, Equals):
             raise EquationException('Equation may only be updated with an Equals expression')
-        self.eqExpr = self.eqExpr.applyTransitivity(nextEqExpr).checked({self.eqExpr, nextEqExpr})
+        if self.eqExpr is None:
+            self.eqExpr = nextEqExpr
+        else:
+            self.eqExpr = self.eqExpr.applyTransitivity(nextEqExpr).checked({self.eqExpr, nextEqExpr})
         return self.eqExpr
     
     def proven(self, assumptions=frozenset()):

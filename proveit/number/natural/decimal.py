@@ -1,21 +1,13 @@
 from proveit.expression import Literal, Operation
 
 pkg = __package__
-ZERO = Literal(pkg, '0')
-ONE = Literal(pkg, '1')
-TWO = Literal(pkg, '2')
-THREE = Literal(pkg, '3')
-FOUR = Literal(pkg, '4')
-FIVE = Literal(pkg, '5')
-SIX = Literal(pkg, '6')
-SEVEN = Literal(pkg, '7')
-EIGHT = Literal(pkg, '8')
-NINE = Literal(pkg, '9')
-ALL_DIGITS = [ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE]
 
 class WholeDecimal(Operation):
     def __init__(self, digits):
+        from proveit.number.number import ALL_DIGITS
         Operation.__init__(self, WHOLE_DECIMAL, digits)
+        if len(digits) <= 1:
+            raise Exception('A WholeDecimal should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
         self.digits = digits
         if not all(digit in ALL_DIGITS for digit in self.digits):
             raise Exception('A WholeDecimal may only be composed of 0-9 digits')

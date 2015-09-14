@@ -140,10 +140,6 @@ class Equals(BinaryOperation):
         from axioms import substitution
         fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs, self.rhs)
         assert isinstance(fnArg, Variable) or isinstance(fnArg, Bundle)
-        print fnArg
-        print fnExpr
-        print self.lhs.__class__
-        print self.rhs.__class__
         return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion().checked({self})
         
     def lhsStatementSubstitution(self, fnExpr, fnArg=None):

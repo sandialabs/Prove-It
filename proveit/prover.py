@@ -163,7 +163,7 @@ class Prover:
         # Prove by generalization?
         for original, forallVars, domain, conditions in stmt._generalizers:
             if domain != EVERYTHING:
-                conditions = [asStatement(Operation(IN, {'elements':multiExpression([var]), 'domain':domain})) for var in forallVars] + list(conditions)
+                conditions = [asStatement(Operation(IN, [var, domain])) for var in forallVars] + list(conditions)
             # we cannot allow assumptions that have any of the forallVars as free variables
             subAssumptions = {assumption for assumption in self.assumptions if len(assumption.freeVars() & set(forallVars)) == 0}            
             # add assumptions for any of the conditions of the generalizer

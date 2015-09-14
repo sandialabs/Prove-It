@@ -1,2 +1,3 @@
-from circuit import *
+from quantumOps import Bra, Ket, Meas
+#from circuit import *
 
