@@ -430,7 +430,7 @@ class Etcetera(Bundle):
     def formatted(self, formatType, fence=False):
         # override this default as desired
         if formatType == STRING or formatType == LATEX:
-            return '..' + self.bundledExpr.formatted(formatType, fence=False) + '..'
+            return '..' + self.bundledExpr.formatted(formatType, fence=True) + '..'
     
 class Block(Bundle):
     def __init__(self, expr):
