@@ -43,3 +43,5 @@ Bm = Operation(B,m)
 Cn = Operation(C,n)
 
 MonDecFuncs = Literal(__package__,'MonDecFuncs')
+Funcs = Literal(__package__,'Funcs')
+
