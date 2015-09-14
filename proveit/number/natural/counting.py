@@ -6,4 +6,4 @@ class ExprListCount(Operation):
     def __init__(self, *operands):
         Operation.__init__(self, EXPR_LIST_COUNT, operands)
 
-EXPR_LIST_COUNT = Literal(pkg, 'EXPR_LIST_COUNT', {STRING:'#', LATEX:r'\#'}, operationMaker = lambda operands : ExprListCount(operands))
+EXPR_LIST_COUNT = Literal(pkg, 'EXPR_LIST_COUNT', {STRING:'#', LATEX:r'\#'}, operationMaker = lambda operands : ExprListCount(*operands))
