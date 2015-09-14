@@ -26,22 +26,22 @@ class NumberOp:
     def _notEqZeroTheorem(self):
         pass # implemented by derived class
     
-    def deduceInIntegers(self, assumptions=None):
+    def deduceInIntegers(self, assumptions=frozenset()):
         return deduceInNumberSet(self, Integers, assumptions)
 
-    def deduceInNaturals(self, assumptions=None):
+    def deduceInNaturals(self, assumptions=frozenset()):
         return deduceInNumberSet(self, Naturals, assumptions)
         
-    def deduceInReals(self, assumptions=None):
+    def deduceInReals(self, assumptions=frozenset()):
         return deduceInNumberSet(self, Reals, assumptions)
 
-    def deduceInComplexes(self, assumptions=None):
+    def deduceInComplexes(self, assumptions=frozenset()):
         return deduceInNumberSet(self, Complexes, assumptions)
 
-    def deduceNotZero(self, assumptions=None):
+    def deduceNotZero(self, assumptions=frozenset()):
         return deduceNotZero(self, assumptions)
 
-def deduceInNumberSet(exprOrList, numberSet, assumptions=None, ruledOutSets=None):
+def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSets=frozenset()):
     '''
     For each given expression, attempt to derive that it is in the specified numberSet
     under the given assumptions.  If ruledOutSets is provided, don't attempt to
@@ -53,10 +53,6 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=None, ruledOutSets=None
     import natural.theorems
     import real.theorems
     import complex.theorems
-    if assumptions is None:
-        assumptions = set() 
-    if ruledOutSets is None:
-        ruledOutSets = set()
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]
@@ -128,9 +124,9 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=None, ruledOutSets=None
         iVars = closureThm.instanceVars
         # Specialize the closure theorem differently for AccociativeOperation compared with other cases
         if isinstance(expr, AssociativeOperation):
-            assert len(iVars) == 2, 'Expecting two instance variables for the closure theorem of an AssociativeOperation'
-            assert isinstance(iVars[1], Etcetera), 'Expecting the second instance variables for the closure theorem of an AssociativeOperation to be an Etcetera Variable'
-            closureSpec = closureThm.specialize({iVars[0]:expr.operands[0], iVars[1]:expr.operands[1:]})
+            assert len(iVars) == 1, 'Expecting one instance variable for the closure theorem of an AssociativeOperation'
+            assert isinstance(iVars[0], Etcetera), 'Expecting the instance variables for the closure theorem of an AssociativeOperation to be an Etcetera Variable'
+            closureSpec = closureThm.specialize({iVars[0]:expr.operands})
         else:
             assert len(iVars) == len(expr.operands), 'Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression'
             closureSpec = closureThm.specialize({iVar:operand for iVar, operand in zip(iVars, expr.operands)})
@@ -141,14 +137,14 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=None, ruledOutSets=None
     except:
         raise DeduceInNumberSetException(expr, numberSet, assumptions)
 
-def deduceInNaturals(exprOrList, assumptions=None):
+def deduceInNaturals(exprOrList, assumptions=frozenset()):
     '''
     For each given expression, attempt to derive that it is in the set of integers.
     Warnings/errors may be suppressed by setting suppressWarnings to True.
     '''
     return deduceInNumberSet(exprOrList, Naturals, assumptions=assumptions)
 
-def deduceInIntegers(exprOrList, assumptions=None):
+def deduceInIntegers(exprOrList, assumptions=frozenset()):
     '''
     For each given expression, attempt to derive that it is in the set of integers
     under the given assumptions.  If successful, returns the deduced statement,
@@ -156,7 +152,7 @@ def deduceInIntegers(exprOrList, assumptions=None):
     '''
     return deduceInNumberSet(exprOrList, Integers, assumptions=assumptions)
 
-def deduceInReals(exprOrList, assumptions=None):
+def deduceInReals(exprOrList, assumptions=frozenset()):
     '''
     For each given expression, attempt to derive that it is in the set of reals
     under the given assumptions.  If successful, returns the deduced statement,
@@ -164,7 +160,7 @@ def deduceInReals(exprOrList, assumptions=None):
     '''
     return deduceInNumberSet(exprOrList, Reals, assumptions=assumptions)
 
-def deduceInComplexes(exprOrList, assumptions=None):
+def deduceInComplexes(exprOrList, assumptions=frozenset()):
     '''
     For each given expression, attempt to derive that it is in the set of complexes
     under the given assumptions.  If successful, returns the deduced statement,
@@ -172,15 +168,13 @@ def deduceInComplexes(exprOrList, assumptions=None):
     '''
     return deduceInNumberSet(exprOrList, Complexes, assumptions=assumptions)
 
-def deduceNotZero(exprOrList, assumptions=None):
+def deduceNotZero(exprOrList, assumptions=frozenset()):
     '''
     For each given expression, attempt to derive that it is not equal to zero
     under the given assumptions.  If successful, returns the deduced statement,
     otherwise raises an Exception.  
     '''
     from proveit.number import num
-    if assumptions is None:
-        assumptions = set() 
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deduceNotZero(expr, assumptions=assumptions) for expr in exprOrList]
@@ -205,9 +199,9 @@ def deduceNotZero(exprOrList, assumptions=None):
     iVars = notEqZeroThm.instanceVars
     # Specialize the closure theorem differently for AccociativeOperation compared with other cases
     if isinstance(expr, AssociativeOperation):
-        assert len(iVars) == 2, 'Expecting two instance variables for the closure theorem of an AssociativeOperation'
-        assert isinstance(iVars[1], Etcetera), 'Expecting the second instance variables for the closure theorem of an AssociativeOperation to be an Etcetera Variable'
-        notEqZeroSpec = notEqZeroThm.specialize({iVars[0]:expr.operands[0], iVars[1]:expr.operands[1:]})
+        assert len(iVars) == 1, 'Expecting one instance variables for the notEqZero theorem of an AssociativeOperation'
+        assert isinstance(iVars[0], Etcetera), 'Expecting the instance variable for the notEqZero theorem of an AssociativeOperation to be an Etcetera Variable'
+        notEqZeroSpec = notEqZeroThm.specialize({iVars[0]:expr.operands})
     else:
         if len(iVars) != len(expr.operands):
             raise Exception('Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression')
