@@ -6,7 +6,7 @@ from proveit.basiclogic import Equals, Equation, Forall, In
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
 from proveit.everythingLiteral import EVERYTHING
-from proveit.common import a, b, c, k, l, m, n, r, v, w, x, y, z, A
+from proveit.common import a, b, c, d, k, l, m, n, r, v, w, x, y, z, A, vEtc, wEtc, xEtc, yEtc, zEtc
 from proveit.number.numberSets import *
 #from variables import *
 #from variables import a, b
@@ -32,7 +32,7 @@ class DiscreteContiguousSet(BinaryOperation):
         else:
             return r'\{'+self.lowerBound.formatted(formatType, fence=fence) +'...'+ self.upperBound.formatted(formatType, fence=fence)+'\}'
 
-    def deduceMemberInIntegers(self, member, assumptions=None):
+    def deduceMemberInIntegers(self, member, assumptions=frozenset()):
         from integer.theorems import allInDiscreteInterval_InInts
         from numberSets import deduceInIntegers
         deduceInIntegers(self.lowerBound, assumptions=assumptions)
@@ -351,7 +351,7 @@ class Add(AssociativeOperation, NumberOp):
             return complex.theorems.addClosure
             
 #    def commute(self,index0,index1):
-    def commute(self, assumptions=None):#Only works at present for two-place addition
+    def commute(self, assumptions=frozenset()):#Only works at present for two-place addition
         if len(self.operands)!=2:
             raise ValueError('This method can only commute two-place addition.')
         else:
@@ -375,6 +375,48 @@ class Subtract(BinaryOperation, NumberOp):
             return real.theorems.subtractClosure
         elif numberSet == Complexes:
             return complex.theorems.subtractClosure
+    
+    def factor(self, theFactor, pull='left', groupFactor=False, groupRemainder=None, assumptions=frozenset()):
+        '''
+        Pull out a common factor from a subtraction, pulling it either to the "left" or "right".
+        If there are multiple occurrences in any term, the first occurrence is used.  
+        If groupFactor is True and theFactor is a product, it will be grouped together as a 
+        sub-product.  groupRemainder is not relevant kept for compatibility with other factor
+        methods.  Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in Complexes so that
+        the associative and commutation theorems are applicable.
+        '''
+        from complex.theorems import distributeOverSubtractionRev
+        dummyVar = self.safeDummyVar()
+        eq = Equation()
+        # commute both terms so that the factor is at the beginning
+        factorEqLeft = self.operands[0].factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=assumptions)
+        factorEqRight = self.operands[1].factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=assumptions)
+        # substitute the factored terms
+        eq.update(factorEqLeft.substitution(Subtract(dummyVar, self.operands[1]), dummyVar)).checked(assumptions)
+        eq.update(factorEqRight.substitution(Subtract(factorEqLeft.rhs, dummyVar), dummyVar)).checked(assumptions)
+        # perform distribution in reverse
+        num = len(theFactor.operands) if isinstance(theFactor, Multiply) else 1
+        if pull == 'left':
+            wEtcSub = theFactor.operands if isinstance(theFactor, Multiply) else [theFactor]
+            xSub = factorEqLeft.rhs.operands[num:]
+            ySub = factorEqRight.rhs.operands[num:]
+            zEtcSub = []
+        elif pull == 'right':            
+            wEtcSub = []
+            xSub = factorEqLeft.rhs.operands[:-num]
+            ySub = factorEqRight.rhs.operands[:-num]
+            zEtcSub = theFactor.operands if isinstance(theFactor, Multiply) else [theFactor]
+        xSub = xSub[0] if len(xSub) == 1 else Multiply(*xSub)
+        ySub = ySub[0] if len(ySub) == 1 else Multiply(*ySub)
+        deduceInComplexes(wEtcSub + [xSub] + [ySub] + zEtcSub, assumptions)
+        eq.update(distributeOverSubtractionRev.specialize({wEtc:wEtcSub, x:xSub, y:ySub, zEtc:zEtcSub}))
+        if groupFactor and num > 1:
+            if pull=='left':
+                eq.update(eq.eqExpr.rhs.group(endIdx=num, assumptions=assumptions))
+            elif pull=='right':
+                eq.update(eq.eqExpr.rhs.group(startIdx=-num, assumptions=assumptions))                
+        return eq.eqExpr.checked(assumptions)
 
 SUBTRACT = Literal(pkg, 'SUBTRACT', {STRING: r'-', LATEX: r'-'}, operationMaker = lambda operands : Subtract(*operands))
 
@@ -396,50 +438,165 @@ class Multiply(AssociativeOperation, NumberOp):
     def _notEqZeroTheorem(self):
         import complex.theorems
         return complex.theorems.multNotEqZero
-        
-    def factor(self,operand,pull="left", assumptions=None):
-        from proveit.number.complex.theorems import multComm, multAssoc
-        if operand not in self.operands:
-            raise ValueError("Trying to factor out absent expression!")
-        elif len(self.operands) == 2 :
-            if (pull == 'left' and self.operands[0] == operand) or (pull == 'right' and self.operands[1] == operand):
-                from proveit.basiclogic.equality.axioms import equalsReflexivity
-                return equalsReflexivity.specialize({x:self}).checked()
-            else:
-                deduceInComplexes(self.operands, assumptions)
-                return multComm.specialize(
-                {Etcetera(v):[],Etcetera(w):self.operands[0],Etcetera(x):[],Etcetera(y):self.operands[1],Etcetera(z):[]}
-                ).checked({In(operand, Complexes) for operand in self.operands})
-        else:
-            splitIndex = self.operands.index(operand)
-            newOperandsLeft = self.operands[:splitIndex]
-            newOperandsRight = self.operands[splitIndex+1:]
-            newOperands = newOperandsLeft + newOperandsRight
-#                
-            if pull == "left":
-                deduceInComplexes(self.operands, assumptions)
-                intermediate1 = multComm.specialize(
-                    {Etcetera(v):[],Etcetera(w):[],Etcetera(x):newOperandsLeft,Etcetera(y):operand,Etcetera(z):newOperandsRight}
-                                            )#.deriveRightViaEquivalence()
-                intermediate2 = multAssoc.specialize(
-                    {Etcetera(w):operand,Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):[]})#.deriveRightViaEquivalence()
-                eq = Equation(intermediate1)
-                eq.update(intermediate2)
-                return eq.eqExpr.checked({In(operand, Complexes) for operand in self.operands})
-            elif pull == "right":
-                deduceInComplexes(self.operands, assumptions)
-                intermediate1 = multComm.specialize(
-                    {Etcetera(v):newOperandsLeft,Etcetera(w):operand,Etcetera(x):[],Etcetera(y):newOperandsRight,Etcetera(z):[]}
-                                            )
-                intermediate2 = multAssoc.specialize(
-                    {Etcetera(w):[],Etcetera(x):newOperands,Etcetera(y):[],Etcetera(z):operand})
-                eq = Equation(intermediate1)
-                eq.update(intermediate2)
-                return eq.eqExpr.checked({In(operand, Complexes) for operand in self.operands})
-            else:
-                raise ValueError("Invalid pull arg. provided!  (Acceptable values are \"left\" and \"right\".)")
+    
+    def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
+        '''
+        Commute self.operands[startIdx1:endIdx1] with self.operands[startIdx2:endIdx2].  
+        The default, if no indices are provided, is to commute the first operand with the rest
+        (convenient especially when there are just two operands).
+        Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in 
+        Complexes so that the commutation theorem is applicable.
+        '''
+        from proveit.number.complex.theorems import multComm
+        if startIdx1 is None and endIdx1 is None and startIdx2 is None and endIdx2 is None:
+            stattIdx1, endIdx1, startIdx2, endIdx2 = 0, 1, 1, None
+        nOperands = len(self.operands)
+        start1, stop1, _ = slice(startIdx1, endIdx1).indices(nOperands)
+        start2, stop2, _ = slice(startIdx2, endIdx2).indices(nOperands)
+        if start1  > start2:
+            # swap 1 and 2 so that 1 comes first
+            startIdx1, endIdx1, startIdx2, endIdx2 = startIdx2, endIdx2, startIdx1, endIdx2
+            start1, stop1, start2, stop2 = start2, stop2, start1, stop1
+        if stop1 > start2:
+            raise ValueError("Cannot commute verlapping sets of operands")
+        vSub = self.operands[:startIdx1] if startIdx1 is not None else []
+        wSub = self.operands[startIdx1:endIdx1]
+        xSub = self.operands[endIdx1:startIdx2]
+        ySub = self.operands[startIdx2:endIdx2]
+        zSub = self.operands[endIdx2:] if endIdx2 is not None else []
+        deduceInComplexes(self.operands, assumptions)
+        return multComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
 
-        AssociativeOperation.__init__(self, MULTIPLY, *operands)
+    def group(self, startIdx=None, endIdx=None, assumptions=frozenset()):
+        '''
+        Group together (associate as a sub-product wrapped in parenthesis)
+        consecutive operands, self.operands[startIdx:endIdx].
+        Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in 
+        Complexes so that the commutation theorem is applicable.
+        '''
+        from proveit.number.complex.theorems import multAssoc
+        deduceInComplexes(self.operands, assumptions)
+        xSub = self.operands[:startIdx] if startIdx is not None else []
+        ySub = self.operands[startIdx:endIdx]
+        zSub = self.operands[endIdx:] if endIdx is not None else []
+        return multAssoc.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+    
+    def index(self, theFactor, alsoReturnNum=False):
+        '''
+        Return the starting index of theFactor, which may be a single operand,
+        a list of consecutive operands, or a Multiply expression that represents
+        the product of the list of consecutive operands.  If alsoReturnNum is
+        True, return a tuple of the index and number of operands for theFactor.
+        '''
+        if isinstance(theFactor, Multiply):
+            theFactor = theFactor.operands
+        if hasattr(theFactor, '__getitem__') and hasattr(theFactor, '__len__'):
+            # multiple operands in theFactor
+            firstFactor = theFactor[0]
+            num = len(theFactor)
+            idx = -1
+            try:
+                while True:
+                    idx = self.operands.index(firstFactor, idx+1)
+                    if tuple(self.operands[idx:idx+num]) == tuple(theFactor):
+                        break # found it all!
+            except ValueError:
+                raise ValueError("Factor is absent!")
+        else:
+            num = 1
+            try:
+                idx = self.operands.index(theFactor)
+            except ValueError:
+                raise ValueError("Factor is absent!")        
+        return (idx, num) if alsoReturnNum else idx
+    
+    def pull(self, startIdx=None, endIdx=None, direction='left', assumptions=frozenset()):
+        '''
+        Pull a subset of consecutive operands, self.operands[startIdx:endIdx],
+        to one side or another. Returns the equality that equates self to 
+        this new version.  Give any assumptions necessary to prove that the 
+        operands are in Complexes so that the commutation theorem is applicable.
+        '''
+        from proveit.basiclogic.equality.axioms import equalsReflexivity
+        if direction == "left": # pull the factor(s) to the left
+            if startIdx == 0 or startIdx is None:
+                return equalsReflexivity.specialize({x:self}).checked() # no move necessary
+            return self.commute(None, startIdx, startIdx, endIdx, assumptions=assumptions)
+        elif direction == "right": # pull the factor(s) to the right
+            if endIdx == len(self.operands) or endIdx is None:
+                return equalsReflexivity.specialize({x:self}).checked() # no move necessary
+            return self.commute(startIdx, endIdx, endIdx, None, assumptions=assumptions)
+        else:
+            raise ValueError("Invalid pull direction!  (Acceptable values are \"left\" and \"right\".)")
+        
+    def factor(self,theFactor,pull="left", groupFactor=True, groupRemainder=False, assumptions=frozenset()):
+        '''
+        Factor out "theFactor" from this product, pulling it either to the "left" or "right".
+        If "theFactor" is a product, this may factor out a subset of the operands as
+        long as they are next to each other (use commute to make this happen).  If
+        there are multiple occurrences, the first occurrence is used.  If groupFactor is
+        True and theFactor is a product, these operands are grouped together as a sub-product.
+        If groupRemainder is True and there are multiple remaining operands (those not in
+        "theFactor"), then these remaining operands are grouped together as a sub-product.
+        Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in Complexes so that
+        the associative and commutation theorems are applicable.
+        '''
+        idx, num = self.index(theFactor, alsoReturnNum = True)
+        eq = Equation(self.pull(idx, idx+num, pull, assumptions))
+        if groupFactor and num > 1:
+            if pull == 'left':  # use 0:num type of convention like standard pythong
+                eq.update(eq.eqExpr.rhs.group(endIdx=num, assumptions=assumptions))
+            elif pull == 'right':
+                eq.update(eq.eqExpr.rhs.group(startIdx=-num, assumptions=assumptions))
+        if groupRemainder and len(self.operands)-num > 1:
+            # if the factor has been group, effectively there is just 1 factor operand now
+            numFactorOperands = 1 if groupFactor else num
+            if pull == 'left':           
+                eq.update(eq.eqExpr.rhs.group(startIdx=numFactorOperands, assumptions=assumptions))
+            elif pull == 'right':
+                eq.update(eq.eqExpr.rhs.group(endIdx=-numFactorOperands, assumptions=assumptions))
+        return eq.eqExpr.checked(assumptions)
+        
+    def combineExponents(self, assumptions=frozenset()):
+        '''
+        Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$, 
+        or equates $a^c b^c$ to $(a b)^c$.
+        '''
+        from complex.theorems import powOfProdRev, sumInPowRev, diffInPowRev, diffFracInPowRev
+        if len(self.operands) != 2 or not isinstance(self.operands[0], Exponentiate) or not isinstance(self.operands[1], Exponentiate):
+            raise Exception('Combine exponents only implemented for a product of two exponentiated operands')
+        if self.operands[0].base == self.operands[1].base:
+            # Same base: a^b a^c = a^{b+c}$, or something similar
+            aSub = self.operands[0].base
+            bSub = self.operands[0].exponent
+            if isinstance(self.operands[1].exponent, Neg):
+                # equate $a^b a^{-c} = a^{b-c}$
+                thm = diffInPowRev
+                cSub = self.operands[1].exponent.operand
+            elif isinstance(self.operands[1].exponent, Fraction) and isinstance(self.operands[1].exponent.numerator, Neg):
+                # equate $a^b a^{-c/d} = a^{b-c/d}$
+                thm = diffFracInPowRev
+                cSub = self.operands[1].exponent.numerator.operand
+                dSub = self.operands[1].exponent.denominator
+                deduceInComplexes([aSub, bSub, cSub, dSub], assumptions=assumptions)
+                return thm.specialize({a:aSub, b:bSub, c:cSub, d:dSub})
+            else:
+                # standard $a^b a^c = a^{b+c}$
+                thm = sumInPowRev
+                cSub = self.operands[1].exponent
+        elif self.operands[0].exponent == self.operands[1].exponent:
+            # Same exponent: equate $a^c b^c = (a b)^c$
+            thm = powOfProdRev
+            aSub = self.operands[0].base
+            bSub = self.operands[1].base
+            cSub = self.operands[0].exponent
+        else:
+            raise Exception('Product is not in the correct form to combine exponents: ' + str(self))
+        deduceInComplexes([aSub, bSub, cSub], assumptions=assumptions)
+        return thm.specialize({a:aSub, b:bSub, c:cSub})
 
 MULTIPLY = Literal(pkg, 'MULTIPLY', {STRING: r'*', LATEX: r'\cdot'}, operationMaker = lambda operands : Multiply(*operands))
 
@@ -493,7 +650,7 @@ class Fraction(BinaryOperation, NumberOp):
         else:
             print "BAD FORMAT TYPE"
             return None
-    def cancel(self,operand, assumptions=None):
+    def cancel(self,operand, assumptions=frozenset()):
         if not isinstance(self.numerator,Multiply):
             from proveit.number.complex.theorems import fracCancel3
             newEq0 = self.denominator.factor(operand).substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
@@ -528,49 +685,67 @@ class Fraction(BinaryOperation, NumberOp):
 #            numRemainingOps = newFrac.numerator.operands[1:]
 #            return fracCancel2.specialize({x:operand,Etcetera(y):numRemainingOps})
 
-    def factor(self,operand,pull="left", assumptions=None):
-        from complex.theorems import leftFracMultRev, rightFracMultRev, fracProdRev, fracProdLeftNumerOneRev, fracProdRightNumerOneRev
+    def factor(self,theFactor,pull="left", groupFactor=False, groupRemainder=None, assumptions=frozenset()):
+        '''
+        Pull out a factor from a fraction, pulling it either to the "left" or "right".
+        The factor may be a product or fraction itself.  
+        If groupFactor is True and theFactor is a product, it will be grouped together as a 
+        sub-product.  groupRemainder is not relevant kept for compatibility with other factor
+        methods.  Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in Complexes so that
+        the associative and commutation theorems are applicable.
+        '''        
+        from complex.theorems import fracInProdRev, prodOfFracsRev, prodOfFracsLeftNumerOneRev, prodOfFracsRightNumerOneRev
         from number import num
         dummyVar = safeDummyVar(self)
         eqns = []
-        if isinstance(operand, Fraction):
+        if isinstance(theFactor, Fraction):
             # factor the operand denominator out of self's denominator
-            denomFactorEqn = self.denominator.factor(operand.denominator, pull, assumptions)
+            denomFactorEqn = self.denominator.factor(theFactor.denominator, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
             factoredDenom = denomFactorEqn.rhs
             eqns.append(denomFactorEqn.substitution(Fraction(self.numerator, dummyVar), dummyVar))
-            if operand.numerator != num(1) and self.numerator != num(1):
+            if theFactor.numerator != num(1) and self.numerator != num(1):
                 # factor the operand numerator out of self's numerator
-                numerFactorEqn = self.numerator.factor(operand.numerator, pull, assumptions)
+                numerFactorEqn = self.numerator.factor(theFactor.numerator, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
                 factoredNumer = numerFactorEqn.rhs
                 eqns.append(numerFactorEqn.substitution(Fraction(dummyVar, factoredDenom), dummyVar))
                 # factor the two fractions
                 deduceInComplexes(factoredNumer.operands, assumptions)
                 deduceInComplexes(factoredDenom.operands, assumptions)
-                eqns.append(fracProdRev.specialize({x:factoredNumer.operands[0], y:factoredNumer.operands[1], 
+                eqns.append(prodOfFracsRev.specialize({x:factoredNumer.operands[0], y:factoredNumer.operands[1], 
                                                     z:factoredDenom.operands[0], w:factoredDenom.operands[1]}))
             else:
                 # special case: one of the numerators is equal to one, no numerator factoring to be done
-                if (pull == 'left') == (operand.numerator == num(1)):
-                    thm = fracProdLeftNumerOneRev
+                if (pull == 'left') == (theFactor.numerator == num(1)):
+                    thm = prodOfFracsLeftNumerOneRev
                 else:
-                    thm = fracProdRightNumerOneRev
+                    thm = prodOfFracsRightNumerOneRev
                 # factor the two fractions
                 deduceInComplexes(self.numerator, assumptions)                    
                 deduceInComplexes(factoredDenom.operands, assumptions)
                 eqns.append(thm.specialize({x:self.numerator, y:factoredDenom.operands[0], z:factoredDenom.operands[1]}))
         else:
-            numerFactorEqn = self.numerator.factor(operand, pull, assumptions)
+            numerFactorEqn = self.numerator.factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=assumptions)
             factoredNumer = numerFactorEqn.rhs
             eqns.append(numerFactorEqn.substitution(Fraction(dummyVar, self.denominator), dummyVar))
-            if pull == 'left':
-                thm = leftFracMultRev
-            else:
-                thm = rightFracMultRev
             # factor the numerator factor from the fraction
             deduceInComplexes(factoredNumer.operands, assumptions)                    
             deduceInComplexes(self.denominator, assumptions)
-            eqns.append(thm.specialize({x:factoredNumer.operands[0], y:factoredNumer.operands[1], 
-                                        z:self.denominator}))
+            if pull == 'left':
+                wEtcSub = factoredNumer.operands[:-1]
+                xSub = factoredNumer.operands[-1]
+                zEtcSub = []
+            elif pull == 'right':
+                wEtcSub = []
+                xSub = factoredNumer.operands[0]
+                zEtcSub = factoredNumer.operands[1:]
+            eqns.append(fracInProdRev.specialize({wEtc:wEtcSub, x:xSub, y:self.denominator, zEtc:zEtcSub}))
+            num = len(theFactor.operands) if isinstance(theFactor, Multiply) else 1
+            if groupFactor and num > 1:
+                if pull=='left':
+                    eqns.append(eqns[-1].rhs.group(endIdx=num, assumptions=assumptions))
+                elif pull=='right':
+                    eqns.append(eqns[-1].rhs.group(startIdx=-num, assumptions=assumptions))           
         return Equation(*eqns).eqExpr # equating the lhs of the first equation to the rhs of the last equation
 
 FRACTION = Literal(pkg, 'FRACTION', operationMaker = lambda operands : Fraction(*operands))
@@ -615,7 +790,7 @@ class Exponentiate(BinaryOperation, NumberOp):
             print "BAD FORMAT TYPE"
             return None
     
-    def raiseExpFactor(self, expFactor, assumptions=None):
+    def raiseExpFactor(self, expFactor, assumptions=frozenset()):
         from proveit.number.complex.theorems import powOfPow, powOfNegPow
         if isinstance(self.exponent, Neg):
             b_times_c = self.exponent.operand
@@ -625,15 +800,15 @@ class Exponentiate(BinaryOperation, NumberOp):
             thm = powOfPow
         if not hasattr(b_times_c, 'factor'):
             raise Exception('Exponent not factorable, may not raise the exponent factor.')
-        factorEq = b_times_c.factor(expFactor, pull='right', assumptions=assumptions)
+        factorEq = b_times_c.factor(expFactor, pull='right', groupRemainder=True, assumptions=assumptions)
         if factorEq.lhs != factorEq.rhs:
             # factor the exponent first, then raise this exponent factor
             factoredExpEq = factorEq.substitution(self)
-            return factoredExpEq.applyTransitivity(factoredExpEq.rhs.raiseExpFactor(expFactor, assumptions))
+            return factoredExpEq.applyTransitivity(factoredExpEq.rhs.raiseExpFactor(expFactor, assumptions=assumptions))
         deduceInComplexes([self.base, b_times_c.operands[0], b_times_c.operands[1]], assumptions)
         return thm.specialize({a:self.base, b:b_times_c.operands[0], c:b_times_c.operands[1]}).deriveReversed()
 
-    def lowerOuterPow(self, assumptions=None):
+    def lowerOuterPow(self, assumptions=frozenset()):
         from proveit.number.complex.theorems import powOfPow, powOfNegPow, negPowOfPow, negPowOfNegPow
         if not isinstance(self.base, Exponentiate):
             raise Exception('May only apply lowerOuterPow to nested Exponentiate operations')
@@ -777,7 +952,15 @@ class Neg(Operation, NumberOp):
         if fence: outStr += r'\right)' if formatType == LATEX else r')'
         return outStr
 
-    def factor(self,operand,pull="left", assumptions=None):
+    def factor(self,operand,pull="left", groupFactor=None, groupRemainder=None, assumptions=frozenset()):
+        '''
+        Pull out a factor from a negated expression, pulling it either to the "left" or "right".
+        groupFactor and groupRemainder are not relevant but kept for compatibility with 
+        other factor methods.
+        Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in Complexes so that
+        the associative and commutation theorems are applicable.
+        '''
         from complex.theorems import negTimesPosRev, posTimesNegRev
         if isinstance(operand, Neg):
             if pull == 'left':
@@ -790,9 +973,10 @@ class Neg(Operation, NumberOp):
                 thm = posTimesNegRev
             else:
                 thm = negTimesPosRev
-        operandFactorEqn = self.operand.factor(operand, pull, assumptions)
+        operandFactorEqn = self.operand.factor(operand, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
         # in this instance, the automated way is safe because there is no other operand:
         eqn1 = operandFactorEqn.substitution(self) 
+        deduceInComplexes(operandFactorEqn.rhs.operands, assumptions)
         eqn2 = thm.specialize({x:operandFactorEqn.rhs.operands[0], y:operandFactorEqn.rhs.operands[1]})
         return eqn1.applyTransitivity(eqn2)
         
