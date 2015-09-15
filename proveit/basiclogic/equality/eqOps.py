@@ -441,3 +441,12 @@ def autoStatementSubstitution(expr, eqGenMethodName, eqGenMethodArgs=None, eqGen
     '''
     if superExpr is None: superExpr = expr
     return _autoSub('statement_substitution', expr, superExpr, superExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)
+
+def extractSubExpr(expr, criteria=None, subExprClass=None):
+    meetsCriteria = (subExprClass is None or isinstance(expr, subExprClass)) and \
+        (criteria is None or criteria(expr))
+    if meetsCriteria: return expr
+    for subExpr in subExpr.subExprGen():
+        result = extractSubExpr(subExpr, criteria, subExprClass)
+        if result is not None: return result
+    return None            
