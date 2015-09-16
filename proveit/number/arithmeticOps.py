@@ -358,7 +358,40 @@ class Add(AssociativeOperation, NumberOp):
             from proveit.number.theorems import commAdd
             deduceInComplexes([self.operands[0], self.operands[1]], assumptions)
             return commAdd.specialize({a:self.operands[0],b:self.operands[1]})
-        
+    
+    def group(self, startIdx=None, endIdx=None, assumptions=frozenset()):
+        '''
+        Group together (associate as a sub-sum wrapped in parenthesis)
+        consecutive operands, self.operands[startIdx:endIdx].
+        Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in 
+        Complexes so that the commutation theorem is applicable.
+        '''
+        from proveit.number.complex.theorems import addAssoc
+        deduceInComplexes(self.operands, assumptions)
+        xSub = self.operands[:startIdx] if startIdx is not None else []
+        ySub = self.operands[startIdx:endIdx]
+        zSub = self.operands[endIdx:] if endIdx is not None else []
+        return addAssoc.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+
+    def ungroup(self, idx, assumptions=frozenset()):
+        '''
+        Ungroup (un-associate a sub-sum wrapped in parenthesis)
+        an operand, self.operands[idx].
+        Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in 
+        Complexes so that the commutation theorem is applicable.
+        '''
+        if not isinstance(self.operands[idx], Add):  
+            raise ValueError("Selected term is not an Add expression")
+
+        from proveit.number.complex.theorems import addAssocRev
+        deduceInComplexes(self.operands, assumptions)
+        xSub = self.operands[:idx] if idx is not None else []
+        ySub = self.operands[idx].operands
+        zSub = self.operands[idx+1:] if idx is not None else []
+        return addAssocRev.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
 
 class Subtract(BinaryOperation, NumberOp):
@@ -482,6 +515,24 @@ class Multiply(AssociativeOperation, NumberOp):
         ySub = self.operands[startIdx:endIdx]
         zSub = self.operands[endIdx:] if endIdx is not None else []
         return multAssoc.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+
+    def ungroup(self, idx, assumptions=frozenset()):
+        '''
+        Ungroup (un-associate a sub-product wrapped in parenthesis)
+        an operand, self.operands[idx].
+        Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in 
+        Complexes so that the commutation theorem is applicable.
+        '''
+        if not isinstance(self.operands[idx], Multiply):  
+            raise ValueError("Selected term is not a Multiply expression")
+
+        from proveit.number.complex.theorems import multAssocRev
+        deduceInComplexes(self.operands, assumptions)
+        xSub = self.operands[:idx] if idx is not None else []
+        ySub = self.operands[idx].operands
+        zSub = self.operands[idx+1:] if idx is not None else []
+        return multAssocRev.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
     
     def index(self, theFactor, alsoReturnNum=False):
         '''
