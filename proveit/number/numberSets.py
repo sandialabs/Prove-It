@@ -57,9 +57,9 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
     import natural.theorems
     import real.theorems
     import complex.theorems
-    if not isinstance(assumptions, set) or not isinstance(assumptions, frozenset):
+    if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
-    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
+    if not isinstance(exprOrList, Expression) and isinstance(exprOrList, ExpressionList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]
     # A single Expression:
@@ -230,7 +230,7 @@ def deduceNotZero(exprOrList, assumptions=frozenset()):
     otherwise raises an Exception.  
     '''
     from proveit.number import num
-    if not isinstance(assumptions, set) or not isinstance(assumptions, frozenset):
+    if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
         # If it isn't an Expression, assume it's iterable and deduce each
@@ -278,7 +278,7 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     otherwise raises an Exception.  
     '''
     from proveit.number import GreaterThan, num
-    if not isinstance(assumptions, set) or not isinstance(assumptions, frozenset):
+    if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
         # If it isn't an Expression, assume it's iterable and deduce each
