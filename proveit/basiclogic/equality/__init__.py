@@ -1,2 +1,2 @@
-from eqOps import Equals, NotEquals, autoSubstitute, autoSubstitution, autoStatementSubstitution
+from eqOps import Equals, NotEquals, autoSubstitute, autoSubstitution, autoStatementSubstitution, extractSubExpr
 from equation import Equation

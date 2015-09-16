@@ -43,5 +43,7 @@ Bm = Operation(B,m)
 Cn = Operation(C,n)
 
 MonDecFuncs = Literal(__package__,'MonDecFuncs')
+EvenFuncs = Literal(__package__,'EvenFuncs')
 Funcs = Literal(__package__,'Funcs')
+
 

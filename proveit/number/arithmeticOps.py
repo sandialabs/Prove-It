@@ -319,7 +319,7 @@ class Abs(Operation, NumberOp):
 
     def _closureTheorem(self, numberSet):
         import complex.theorems
-        if numberSet == Complexes:
+        if numberSet == Reals:
             return complex.theorems.absClosure
 
     def _notEqZeroTheorem(self):
