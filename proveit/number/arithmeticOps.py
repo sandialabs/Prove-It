@@ -676,7 +676,7 @@ class Fraction(BinaryOperation, NumberOp):
 #            return fracCancel1.specialize({x:operand,Etcetera(y):numRemainingOps,Etcetera(z):denomRemainingOps})
         else:
             from proveit.number.complex.theorems import fracCancel2
-            newEq0 = self.numerator.factor(operand).proven().substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
+            newEq0 = self.numerator.factor(operand,assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
             deduceInComplexes(operand, assumptions)   
             deduceInComplexes(newEq0.rhs.numerator.operands[1:], assumptions)
             newEq1 = fracCancel2.specialize({x:operand,Etcetera(y):newEq0.rhs.numerator.operands[1:]})
