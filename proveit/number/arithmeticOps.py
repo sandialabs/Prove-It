@@ -650,24 +650,24 @@ class Fraction(BinaryOperation, NumberOp):
         else:
             print "BAD FORMAT TYPE"
             return None
-    def cancel(self,operand, assumptions=frozenset()):
+    def cancel(self,operand, pull="left", assumptions=frozenset()):
         if not isinstance(self.numerator,Multiply):
             from proveit.number.complex.theorems import fracCancel3
-            newEq0 = self.denominator.factor(operand).substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
+            newEq0 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             deduceInComplexes(operand, assumptions)
-            deduceInComplexes(newEq0.rhs.denominator.operands[1:], assumptions)
-            newEq1 = fracCancel3.specialize({x:operand,Etcetera(y):newEq0.rhs.denominator.operands[1:]})
+            deduceInComplexes(newEq0.rhs.denominator.operands[1], assumptions)
+            newEq1 = fracCancel3.specialize({x:operand,y:newEq0.rhs.denominator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
             
         assert isinstance(self.numerator,Multiply)
         if isinstance(self.denominator,Multiply):
             from proveit.number.complex.theorems import fracCancel1
-            newEq0 = self.numerator.factor(operand).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
-            newEq1 = self.denominator.factor(operand).substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
+            newEq0 = self.numerator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
+            newEq1 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             deduceInComplexes(operand, assumptions)
-            deduceInComplexes(newEq1.rhs.numerator.operands[1:], assumptions)
-            deduceInComplexes(newEq1.rhs.denominator.operands[1:], assumptions)
-            newEq2 = fracCancel1.specialize({x:operand,Etcetera(y):newEq1.rhs.numerator.operands[1:],Etcetera(z):newEq1.rhs.denominator.operands[1:]})
+            deduceInComplexes(newEq1.rhs.numerator.operands[1], assumptions)
+            deduceInComplexes(newEq1.rhs.denominator.operands[1], assumptions)
+            newEq2 = fracCancel1.specialize({x:operand,y:newEq1.rhs.numerator.operands[1],z:newEq1.rhs.denominator.operands[1]})
             return newEq0.applyTransitivity(newEq1).applyTransitivity(newEq2)
 #            newFracIntermediate = self.numerator.factor(operand).proven().rhsSubstitute(self)
 #            newFrac = self.denominator.factor(operand).proven().rhsSubstitute(newFracIntermediate)
@@ -676,10 +676,10 @@ class Fraction(BinaryOperation, NumberOp):
 #            return fracCancel1.specialize({x:operand,Etcetera(y):numRemainingOps,Etcetera(z):denomRemainingOps})
         else:
             from proveit.number.complex.theorems import fracCancel2
-            newEq0 = self.numerator.factor(operand).proven().substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
+            newEq0 = self.numerator.factor(operand,pull=pull,groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
             deduceInComplexes(operand, assumptions)   
-            deduceInComplexes(newEq0.rhs.numerator.operands[1:], assumptions)
-            newEq1 = fracCancel2.specialize({x:operand,Etcetera(y):newEq0.rhs.numerator.operands[1:]})
+            deduceInComplexes(newEq0.rhs.numerator.operands[1], assumptions)
+            newEq1 = fracCancel2.specialize({x:operand,y:newEq0.rhs.numerator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
 #            newFrac = self.numerator.factor(operand).proven().rhsSubstitute(self)
 #            numRemainingOps = newFrac.numerator.operands[1:]
