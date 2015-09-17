@@ -347,10 +347,13 @@ class Add(AssociativeOperation, NumberOp):
     def _closureTheorem(self, numberSet):
         import complex.theorems
         import real.theorems
+        import integer.theorems
         if numberSet == Reals:
             return real.theorems.addClosure
         elif numberSet == Complexes:
             return complex.theorems.addClosure
+        elif numberSet == Integers:
+            return integer.theorems.addClosure
             
 #    def commute(self,index0,index1):
     def commute(self, assumptions=frozenset()):#Only works at present for two-place addition
@@ -1029,8 +1032,11 @@ class Neg(Operation, NumberOp):
 
     def _closureTheorem(self, numberSet):
         import complex.theorems
+        import integer.theorems
         if numberSet == Complexes:
             return complex.theorems.negClosure
+        elif numberSet == Integers:
+            return integer.theorems.negClosure
 
     def _notEqZeroTheorem(self):
         import complex.theorems
