@@ -321,6 +321,8 @@ class Abs(Operation, NumberOp):
         import complex.theorems
         if numberSet == Reals:
             return complex.theorems.absClosure
+        elif numberSet == RealsPos:
+            return complex.theorems.absPosClosure            
 
     def _notEqZeroTheorem(self):
         import complex.theorems
@@ -465,6 +467,8 @@ class Multiply(AssociativeOperation, NumberOp):
         import real.theorems
         if numberSet == Reals:
             return real.theorems.multClosure
+        elif numberSet == RealsPos:
+            return complex.theorems.multPosClosure            
         elif numberSet == Complexes:
             return complex.theorems.multClosure
 
@@ -663,6 +667,8 @@ class Divide(BinaryOperation, NumberOp):
         import real.theorems
         if numberSet == Reals:
             return real.theorems.divideClosure
+        elif numberSet == RealsPos:
+            return complex.theorems.dividePosClosure            
         elif numberSet == Complexes:
             return complex.theorems.divideClosure
 
@@ -686,6 +692,8 @@ class Fraction(BinaryOperation, NumberOp):
         import real.theorems
         if numberSet == Reals:
             return real.theorems.fractionClosure
+        elif numberSet == RealsPos:
+            return complex.theorems.fractionPosClosure            
         elif numberSet == Complexes:
             return complex.theorems.fractionClosure
 
@@ -816,6 +824,8 @@ class Exponentiate(BinaryOperation, NumberOp):
         import complex.theorems
         if numberSet == Naturals:
             return natural.theorems.powClosure
+        elif numberSet == RealsPos:
+            return complex.theorems.powPosClosure            
         elif numberSet == Reals:
             return real.theorems.powClosure
         elif numberSet == Complexes:
