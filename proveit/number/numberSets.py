@@ -59,7 +59,7 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
     import complex.theorems
     if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
-    if not isinstance(exprOrList, Expression) and isinstance(exprOrList, ExpressionList):
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]
     # A single Expression:
@@ -114,7 +114,7 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
         try:
             # try deducing in the RealsPos for greater than zero
             deducePositive(expr, assumptions=assumptions, dontTryRealsPos=True)
-            reals.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveLeft()
+            real.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveLeft()
         except:
             pass
     if RealsPos not in ruledOutSets and (numberSet == Complexes or numberSet == Reals):
@@ -122,12 +122,12 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             # try deducing in the RealsPos as a subset of the desired numberSet
             deduceInNumberSet(expr, RealsPos, assumptions=assumptions, ruledOutSets=ruledOutSets)
             if numberSet == Complexes:
-                reals.theorems.inRealsPos_inComplexes.specialize({a:expr})
+                real.theorems.inRealsPos_inComplexes.specialize({a:expr})
             elif numberSet == Reals:
-                reals.theorems.inRealsPos_inReals.specialize({a:expr})
+                real.theorems.inRealsPos_inReals.specialize({a:expr})
             return In(expr, numberSet).checked(assumptions)
         except:
-            ruledOutSets = ruledOutSets | {Integers} # ruled out Reals
+            ruledOutSets = ruledOutSets | {RealsPos} # ruled out Reals
     if Reals not in ruledOutSets and numberSet == Complexes:
         try:
             # try deducing in the Reals as a subset of the desired numberSet
@@ -136,7 +136,7 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
                 real.theorems.inComplexes.specialize({a:expr})
             return In(expr, numberSet).checked(assumptions)
         except:
-            ruledOutSets = ruledOutSets | {Integers} # ruled out Reals
+            ruledOutSets = ruledOutSets | {Reals} # ruled out Reals
 
     # Couldn't deduce in a subset.  Try using a closure theorem.
     if numberSet == ComplexesSansZero:
@@ -148,10 +148,14 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             # See of the Expression class has deduceIn[numberSet] method (as a last resort):
             if numberSet == Naturals and hasattr(expr, 'deduceInNaturals'):
                 return expr.deduceInNaturals()
+            elif numberSet == NaturalsPos and hasattr(expr, 'deduceInNaturalsPos'):
+                return expr.deduceInNaturalsPos()
             elif numberSet == Integers and hasattr(expr, 'deduceInIntegers'):
                 return expr.deduceInIntegers()
             elif numberSet == Reals and hasattr(expr, 'deduceInReals'):
                 return expr.deduceInReals()
+            elif numberSet == RealsPos and hasattr(expr, 'deduceInRealsPos'):
+                return expr.deduceInRealsPos()
             elif numberSet == Complexes and hasattr(expr, 'deduceInComplexes'):
                 return expr.deduceInComplexes()          
             # Ran out of options:  
@@ -248,7 +252,6 @@ def deduceNotZero(exprOrList, assumptions=frozenset()):
         # See of the Expression class has deduceNotZero method (as a last resort):
         if hasattr(expr, 'deduceNotZero'):
             return expr.deduceNotZero()
-        print expr, expr.__class__
         raise DeduceNotZeroException(expr, assumptions)
     notEqZeroThm = expr._notEqZeroTheorem()
     if notEqZeroThm is None:
@@ -295,7 +298,7 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
         try:
             # see if we can deduce in RealsPos first
             deduceInRealsPos(expr, assumptions, dontTryPos=True)
-            return reals.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveRight().checked(assumptions)
+            return real.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveRight().checked(assumptions)
         except:
             pass # not so simple
 
@@ -304,7 +307,6 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
         # See of the Expression class has deduceNotZero method (as a last resort):
         if hasattr(expr, 'deducePositive'):
             return expr.deducePositive()
-        print expr, expr.__class__
         raise DeducePositiveException(expr, assumptions)
     positiveThm = expr._positiveTheorem()
     if positiveThm is None:
