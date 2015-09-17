@@ -24,7 +24,7 @@ class DigitLiteral(Literal):
         return DigitLiteral._inNaturalsStmts[self.n]
     
     def deduceNotZero(self):
-        if DigitLiteral._inRealsPosStmts is None:
+        if DigitLiteral._notZeroStmts is None:
             from natural.theorems import oneNotZero, twoNotZero, threeNotZero, fourNotZero, fiveNotZero
             from natural.theorems import sixNotZero, sevenNotZero, eightNotZero, nineNotZero
             DigitLiteral._notZeroStmts = {1:oneNotZero, 2:twoNotZero, 3:threeNotZero, 4:fourNotZero, 5:fiveNotZero, 6:sixNotZero, 7:sevenNotZero, 8:eightNotZero, 9:nineNotZero}
