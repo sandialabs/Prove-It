@@ -296,7 +296,7 @@ class And(AssociativeOperation):
         Prove and return some (A and B) assuming A, B.  See also the compose method to
         do this constructively.
         '''
-        compose(*self.operands)
+        return compose(*self.operands)
             
     def evaluate(self):
         '''
