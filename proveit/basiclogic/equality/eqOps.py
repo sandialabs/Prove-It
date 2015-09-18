@@ -451,6 +451,6 @@ def generateSubExpressions(expr, criteria=None, subExprClass=None):
             yield subSubExpr
 
 def extractSubExpr(expr, criteria=None, subExprClass=None):
-    for subExpr in generateSubExpressions(expr, criteria=None, subExprClass=None):
+    for subExpr in generateSubExpressions(expr, criteria=criteria, subExprClass=subExprClass):
         return subExpr
     print "Sub expression meeting the criteria not found"
