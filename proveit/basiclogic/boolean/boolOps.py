@@ -520,7 +520,6 @@ def compose(*expressions):
     '''
     from axioms import andComposition
     from theorems import conjunctionIntro
-    print len(expressions)
     if len(expressions) == 2:
         exprA, exprB = expressions
         return conjunctionIntro.specialize({A:exprA, B:exprB}).checked({exprA, exprB})
