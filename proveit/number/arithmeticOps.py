@@ -471,7 +471,7 @@ class Multiply(AssociativeOperation, NumberOp):
         if numberSet == Reals:
             return real.theorems.multClosure
         elif numberSet == RealsPos:
-            return complex.theorems.multPosClosure            
+            return real.theorems.multPosClosure            
         elif numberSet == Complexes:
             return complex.theorems.multClosure
 
@@ -701,7 +701,7 @@ class Divide(BinaryOperation, NumberOp):
         if numberSet == Reals:
             return real.theorems.divideClosure
         elif numberSet == RealsPos:
-            return complex.theorems.dividePosClosure            
+            return real.theorems.dividePosClosure            
         elif numberSet == Complexes:
             return complex.theorems.divideClosure
 
@@ -726,7 +726,7 @@ class Fraction(BinaryOperation, NumberOp):
         if numberSet == Reals:
             return real.theorems.fractionClosure
         elif numberSet == RealsPos:
-            return complex.theorems.fractionPosClosure            
+            return real.theorems.fractionPosClosure            
         elif numberSet == Complexes:
             return complex.theorems.fractionClosure
 
@@ -887,7 +887,7 @@ class Exponentiate(BinaryOperation, NumberOp):
         if numberSet == Naturals:
             return natural.theorems.powClosure
         elif numberSet == RealsPos:
-            return complex.theorems.powPosClosure            
+            return real.theorems.powPosClosure            
         elif numberSet == Reals:
             return real.theorems.powClosure
         elif numberSet == Complexes:
