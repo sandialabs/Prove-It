@@ -12,7 +12,8 @@ When an ExpressionTensor is substituted for a Block Expression, its elements (or
 will be absorbed into the parent ExpressionTensor.
 '''
 
-from proveit.expression import Expression, Variable, Operation, STRING, LATEX
+from proveit.expression import Expression, Variable, Operation, Lambda, STRING, LATEX
+from _elementtree import SubElement
 
 class MultiExpression(Expression):
     """
@@ -55,10 +56,16 @@ class NamedExpressions(MultiExpression, dict):
         
     def freeVars(self):
         '''
-        Returns the union of the free Variable sof the sub-Expressions.
+        Returns the union of the free Variables of the sub-Expressions.
         '''
         return set().union(*[expr.freeVars() for expr in self.values()])
 
+    def freeUnbundledVars(self):
+        """
+        Returns the union of the free unbundled Variables of the sub-Expressions.
+        """
+        return set().union(*[expr.freeUnbundledVars() for expr in self.values()])
+    
 class ExpressionList(MultiExpression, list):
     """
     An ExpressionList is a composite Expression composed of an ordered list of member
@@ -120,9 +127,15 @@ class ExpressionList(MultiExpression, list):
         
     def freeVars(self):
         '''
-        Returns the union of the free Variable sof the sub-Expressions.
+        Returns the union of the free Variables of the sub-Expressions.
         '''
         return set().union(*[expr.freeVars() for expr in self])
+
+    def freeUnbundledVars(self):
+        '''
+        Returns the union of the free unbundled Variables of the sub-Expressions.
+        '''
+        return set().union(*[expr.freeUnbundledVars() for expr in self])
 
 class ExpressionTensor(MultiExpression, dict): 
     '''
@@ -364,9 +377,16 @@ class ExpressionTensor(MultiExpression, dict):
         
     def freeVars(self):
         '''
-        Returns the union of the free Variable sof the sub-Expressions.
+        Returns the union of the free Variables of the sub-Expressions.
         '''
         return set().union(*[expr.freeVars() for expr in self.values()])
+
+    def freeUnbundledVars(self):
+        '''
+        Returns the union of the free unbundled Variables of the sub-Expressions.
+        '''
+        return set().union(*[expr.freeUnbundledVars() for expr in self.values()])
+
 
 class Bundle(MultiExpression):
     def __init__(self, multiExprType, bundledExpr, maker):
@@ -387,12 +407,43 @@ class Bundle(MultiExpression):
         '''
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
-        subbed = self.bundledExpr.substituted(exprMap, operationMap, relabelMap, reservedVars)
-        if isinstance(subbed, self.multiExprType):
-            # substituting the entire Bundles expression with an ExpressionList to be merged with an outer multi-Expression
-            return subbed 
-        else:
-            return self.maker(subbed)
+        unbundledInnerVars = self.bundledExpr.freeUnbundledVars()
+        bundleVarCandidates = [var for var in unbundledInnerVars if (var in exprMap and isinstance(exprMap[var], self.multiExprType)) or
+                               (var in operationMap and isinstance(operationMap[var], Lambda) and isinstance(operationMap[var].expression, self.multiExprType)) or
+                                (var in relabelMap and isinstance(relabelMap[var], self.multiExprType))]
+        if len(bundleVarCandidates) > 1:
+            raise Exception("Multiple Bundle variable expansion is unsupported due to ambiguity")
+        if len(bundleVarCandidates) == 1:
+            # performing a bundle expansion substitution
+            bundleVar = bundleVarCandidates[0]
+            subExprMap, subOperationMap, subRelabelMap = exprMap, operationMap, relabelMap
+            inOperationMap = bundleVar in operationMap
+            if bundleVar in exprMap:
+                subExprMap = subBundleVarMap = dict(exprMap)
+            elif inOperationMap:
+                subOperationMap = subBundleVarMap = dict(operationMap)
+            elif bundleVar in relabelMap:
+                subRelabelMap = subBundleVarMap = dict(relabelMap)
+            else:
+                assert False, "shouldn't happen"
+            bundleVarSub = subBundleVarMap[bundleVar]
+            if inOperationMap:
+                bundleOpArgs = bundleVarSub.arguments
+                bundleVarSub = bundleVarSub.expression
+            def substituteForElem(subElem):
+                if inOperationMap:
+                    subBundleVarMap[bundleVar] = Lambda(bundleOpArgs, subElem)
+                else:
+                    subBundleVarMap[bundleVar] = subElem
+                return self.bundledExpr.substituted(subExprMap, subOperationMap, subRelabelMap, reservedVars)
+            if self.multiExprType == ExpressionList:
+                # ExpressionList bundle expansion
+                return ExpressionList(substituteForElem(subElem) for subElem in bundleVarSub)
+            elif self.multiExprType == ExpressionTensor:
+                # ExpressionTensor bundle expansion
+                return ExpressionTensor({key:substituteForElem(subElem) for key, subElem in bundleVarSub})
+        # default when not performing a bundle expansion substitution
+        return self.maker(self.bundledExpr.substituted(exprMap, operationMap, relabelMap, reservedVars))
 
     def usedVars(self):
         '''
@@ -402,9 +453,16 @@ class Bundle(MultiExpression):
         
     def freeVars(self):
         '''
-        Returns the union of the free Variable sof the bundledExpr.
+        Returns the union of the free Variables of the bundledExpr.
         '''
         return self.bundledExpr.freeVars()
+
+    def freeUnbundledVars(self):
+        '''
+        No unbundled variables within a bundle.
+        '''
+        return set()
+    
 
 def isBundledVar(expr):
     # Is the expression a Bundled Variable (Variable wrapped in Bundle)?

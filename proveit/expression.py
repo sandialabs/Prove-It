@@ -210,8 +210,21 @@ class Expression:
         """
         return set()    
 
+    def freeUnbundledVars(self):
+        """
+        Returns the used variables that are not bound as an instance variable
+        or wrapped in a Bundle (see multiExpression.py).
+        """
+        return set()    
+
     def safeDummyVar(self):
         return safeDummyVar(self)
+
+    def safeDummyVars(self, n):
+        dummyVars = []
+        for _ in range (n):
+            dummyVars.append(safeDummyVar(*([self] + dummyVars)))
+        return dummyVars
     
     def state(self):
         from statement import Statement
@@ -369,6 +382,9 @@ class Variable(Expression):
     def freeVars(self):
         return {self}
 
+    def freeUnbundledVars(self):
+        return {self}
+    
 class IndexVariable(Variable):
     def __init__(self, n):
         Variable.__init__(self, '_' + str(n) + '_')
@@ -422,13 +438,21 @@ class Operation(Expression):
         Return this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        from multiExpression import ExpressionList, extractVar, multiExpression
+        from multiExpression import ExpressionList, extractVar, multiExpression, Etcetera
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
         operator = self.operator
         subbedOperands = self.operands.substituted(exprMap, operationMap, relabelMap, reservedVars)
+        # Not allowed to substitute the operator or operation if there are Etcetera operands
+        # because the number of operands should not be indeterminate when performing such a substition.
+        hasEtcOperand = False
+        for subbedOperand in subbedOperands:
+            if isinstance(subbedOperand, Etcetera):
+                hasEtcOperand = True
         if operationMap is not None and isinstance(operator, Variable) and operator in operationMap:
             # Substitute the entire operation via a Lambda expression
+            #if hasEtcOperand:
+            #    raise Exception('Not allowed to perform an Operation substition with any remaining Etcetera operands because the number of operands should be determined when substititing the operation.')
             operatorSubs = operationMap[operator]
             subbedOperations = []
             for operatorSub in (operatorSubs if isinstance(operatorSubs, ExpressionList) else [operatorSubs]):
@@ -451,6 +475,8 @@ class Operation(Expression):
                 return subbedOperations[0]
         else:
             # Can perform substitutions within the Operator
+            #if (operator in exprMap) and hasEtcOperand:
+            #    raise Exception('Not allowed to perform an operator substition with any remaining Etcetera operands because the number of operands should be determined when substititing the operator.')
             subbedOperator = operator.substituted(exprMap, operationMap, relabelMap, reservedVars)
             if isinstance(subbedOperator, ExpressionList):
                 # substituting the single operation with multiple operations as an ExpressionList
@@ -469,6 +495,13 @@ class Operation(Expression):
         Returns the union of the operator and operands free variables.
         '''
         return self.operator.freeVars().union(self.operands.freeVars())
+    
+    def freeUnbundledVars(self):
+        """
+        Returns the used variables that are not bound as an instance variable
+        or wrapped in a Bundle (see multiExpression.py).
+        """
+        return self.operator.freeUnbundledVars().union(self.operands.freeUnbundledVars())
 
 class Lambda(Expression):
     '''
@@ -572,6 +605,15 @@ class Lambda(Expression):
         '''
         innerFreeVs = set(self.expression.freeVars())
         return innerFreeVs - self.argVarSet
+    
+    def freeUnbundledVars(self):
+        """
+        Returns the used variables that are not bound as an instance variable
+        or wrapped in a Bundle (see multiExpression.py).
+        """
+        innerFreeVs = set(self.expression.freeUnbundledVars())
+        return innerFreeVs - self.argVarSet
+    
 
 class ImproperSubstitution(Exception):
     def __init__(self, message):
