@@ -355,14 +355,34 @@ class Add(AssociativeOperation, NumberOp):
         elif numberSet == Integers:
             return integer.theorems.addClosure
             
-#    def commute(self,index0,index1):
-    def commute(self, assumptions=frozenset()):#Only works at present for two-place addition
-        if len(self.operands)!=2:
-            raise ValueError('This method can only commute two-place addition.')
-        else:
-            from proveit.number.theorems import commAdd
-            deduceInComplexes([self.operands[0], self.operands[1]], assumptions)
-            return commAdd.specialize({a:self.operands[0],b:self.operands[1]})
+    def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
+        '''
+        Commute self.operands[startIdx1:endIdx1] with self.operands[startIdx2:endIdx2].  
+        The default, if no indices are provided, is to commute the first operand with the rest
+        (convenient especially when there are just two operands).
+        Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in 
+        Complexes so that the commutation theorem is applicable.
+        '''
+        from proveit.number.complex.theorems import addComm
+        if startIdx1 is None and endIdx1 is None and startIdx2 is None and endIdx2 is None:
+            stattIdx1, endIdx1, startIdx2, endIdx2 = 0, 1, 1, None
+        nOperands = len(self.operands)
+        start1, stop1, _ = slice(startIdx1, endIdx1).indices(nOperands)
+        start2, stop2, _ = slice(startIdx2, endIdx2).indices(nOperands)
+        if start1  > start2:
+            # swap 1 and 2 so that 1 comes first
+            startIdx1, endIdx1, startIdx2, endIdx2 = startIdx2, endIdx2, startIdx1, endIdx2
+            start1, stop1, start2, stop2 = start2, stop2, start1, stop1
+        if stop1 > start2:
+            raise ValueError("Cannot commute verlapping sets of operands")
+        vSub = self.operands[:startIdx1] if startIdx1 is not None else []
+        wSub = self.operands[startIdx1:endIdx1]
+        xSub = self.operands[endIdx1:startIdx2]
+        ySub = self.operands[startIdx2:endIdx2]
+        zSub = self.operands[endIdx2:] if endIdx2 is not None else []
+        deduceInComplexes(self.operands, assumptions)
+        return addComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
     
     def group(self, startIdx=None, endIdx=None, assumptions=frozenset()):
         '''
@@ -455,48 +475,116 @@ class Subtract(BinaryOperation, NumberOp):
             elif pull=='right':
                 eq.update(eq.eqExpr.rhs.group(startIdx=-num, assumptions=assumptions))                
         return eq.eqExpr.checked(assumptions)
+    
+    def convertToAdd(self, assumptions=None):
+        '''
+        Given (x - y) deduce (x - y) = (x + (-y)).
+        Assumptions may be needed to deduce that the operands are in Complexes.
+        '''
+        from complex.theorems import subtractAsAddNeg
+        deduceInComplexes(self.operands, assumptions)
+        return subtractAsAddNeg.specialize({x:self.operands[0], y:self.operands[1]}).checked(assumptions)
 
-    def cancel(self, idxInFirstSum=None, assumptions=frozenset()):
+    def cancel(self, assumptions=frozenset()):
+        '''
+        Attempt to cancel any term of a subtraction and return the resulting equivalence.
+        The first term on the left that is the same as on the right will be canceled.
+        Assumptions may be needed to deduce that the operands are in Complexes.        
+        '''
+        from complex.theorems import subtractCancelElimSums, subtractCancelElimLeftSum, subtractCancelElimRightSum
         from complex.theorems import subtractCancelTwoSums, subtractCancelLeftSum, subtractCancelRightSum
-        deduceInComplexes(self.operands[0].operands, assumptions=assumptions)
-        deduceInComplexes(self.operands[1].operands, assumptions=assumptions)
-        if isinstance(self.operands[0], Add):
-            if isinstance(self.operands[1], Add):
-                if idxInFirstSum is None:
-                    raise Exception("Must supply idxInFirstSum when canceling terms of a subtraction between sums")
-                idx1 = idxInFirstSum
-                wSub = self.operands[0].operands[idx1]
+        deduceInComplexes(self.operands, assumptions=assumptions)
+        dummy = self.safeDummyVar()
+        eq = Equation()
+        expr = self
+        if isinstance(expr.operands[0], Subtract):
+            eq.update(expr.operands[0].convertToAdd(assumptions=assumptions).substitution(Subtract(dummy, expr.operands[1]), dummy))
+            expr = eq.eqExpr.rhs
+        if isinstance(expr.operands[1], Subtract):
+            eq.update(expr.operands[1].convertToAdd(assumptions=assumptions).substitution(Subtract(expr.operands[0], dummy), dummy))
+            expr = eq.eqExpr.rhs
+        if isinstance(expr.operands[0], Add):
+            if isinstance(expr.operands[1], Add):
+                foundOne = False
+                for idx1 in xrange(len(expr.operands[0].operands)):
+                    try:
+                        idx2 = expr.operands[1].operands.index(expr.operands[0].operands[idx1])
+                        foundOne = True
+                        break
+                    except:
+                        pass
+                if not foundOne:
+                    raise Exception("No common term found")
+                wSub = expr.operands[0].operands[idx1]
                 try:
-                    idx2 = self.operands[1].operands.index(wSub)
+                    idx2 = expr.operands[1].operands.index(wSub)
                 except:
-                    raise Exception(str(wSub) + " not found in " + str(self.operands[1]) + " for a subtraction cancel")
-                vSub = self.operands[0].operands[:idx1]
-                xSub = self.operands[0].operands[idx1+1:]
-                ySub = self.operands[1].operands[:idx2]
-                zSub = self.operands[1].operands[idx2+1:]
-                return subtractCancelTwoSums.specialize({vEtc:vSub, w:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+                    raise Exception(str(wSub) + " not found in " + str(expr.operands[1]) + " for a subtraction cancel")
+                if len(expr.operands[0].operands) == 2 and len(expr.operands[1].operands) == 2:
+                    # special case where Add on both sides is eliminated
+                    if idx1 > 0:
+                        # commute the left
+                        eq.update(expr.operands[0].commute(assumptions=assumptions).substitution(Subtract(dummy, expr.operands[1]), dummy))
+                        expr = eq.eqExpr.rhs
+                    if idx2 > 0:
+                        # commute the right
+                        eq.update(expr.operands[1].commute(assumptions=assumptions).substitution(Subtract(expr.operands[0], dummy), dummy))
+                        expr = eq.eqExpr.rhs
+                    assert expr.operands[0].operands[0] == expr.operands[1].operands[0] # the form we were supposed to get to
+                    eq.update(subtractCancelElimSums.specialize({x:expr.operands[0].operands[0], y:expr.operands[0].operands[1], z:expr.operands[1].operands[1]}))
+                    return eq.eqExpr
+                elif len(expr.operands[0].operands) == 2:
+                    # special case where Add on the left is eliminated
+                    if idx1 > 0:
+                        # commute the left
+                        eq.update(expr.operands[0].commute(assumptions=assumptions).substitution(Subtract(dummy, expr.operands[1]), dummy))
+                        expr = eq.eqExpr.rhs
+                    assert expr.operands[0].operands[0] == expr.operands[1].operands[idx2] # the form we were supposed to get to
+                    wSub = expr.operands[0].operands[0]
+                    xSub = expr.operands[0].operands[1]
+                    ySub = expr.operands[1].operands[:idx2]
+                    zSub = expr.operands[1].operands[idx2+1:]
+                    eq.update(subtractCancelElimLeftSum.specialize({w:wSub, x:xSub, yEtc:ySub, zEtc:zSub}))
+                    return eq.eqExpr
+                elif len(expr.operands[1].operands) == 2:
+                    # special case where Add on the right is eliminated
+                    if idx2 > 0:
+                        # commute the right
+                        eq.update(expr.operands[1].commute(assumptions=assumptions).substitution(Subtract(expr.operands[0], dummy), dummy))
+                        expr = eq.eqExpr.rhs
+                    assert expr.operands[1].operands[0] == expr.operands[0].operands[idx1] # the form we were supposed to get to
+                    wSub = expr.operands[0].operands[:idx1]
+                    xSub = expr.operands[0].operands[idx1]
+                    ySub = expr.operands[0].operands[idx1+1:]
+                    zSub = expr.operands[1].operands[1]
+                    eq.update(subtractCancelElimRightSum.specialize({wEtc:wSub, x:xSub, yEtc:ySub, z:zSub}))
+                    return eq.eqExpr
+                vSub = expr.operands[0].operands[:idx1]
+                xSub = expr.operands[0].operands[idx1+1:]
+                ySub = expr.operands[1].operands[:idx2]
+                zSub = expr.operands[1].operands[idx2+1:]
+                eq.update(subtractCancelTwoSums.specialize({vEtc:vSub, w:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions))
+                return eq.eqExpr
             else:
-                ySub = self.operands[1]
+                ySub = expr.operands[1]
                 try:
-                    idx1 = self.operands[0].operands.index(ySub)
+                    idx1 = expr.operands[0].operands.index(ySub)
                 except:
-                    raise Exception(str(ySub) + " not found in " + str(self.operands[0]) + " for a subtraction cancel")                    
-                if idxInFirstSum is not None and idx1 != idxInFirstSum:
-                    raise Exception("idxInFirstSum not consistent with found index (it also isn't necessary when there is only one Add operand of the Subtract)")
-                xSub = self.operands[0].operands[:idx1]
-                zSub = self.operands[0].operands[idx1+1:]
-                return subtractCancelLeftSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions)
+                    raise Exception(str(ySub) + " not found in " + str(expr.operands[0]) + " for a subtraction cancel")                    
+                xSub = expr.operands[0].operands[:idx1]
+                zSub = expr.operands[0].operands[idx1+1:]
+                eq.update(subtractCancelLeftSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions))
+                return eq.eqExpr
         else:
-            ySub = self.operands[0]
+            ySub = expr.operands[0]
             try:
-                idx2 = self.operands[1].operands.index(ySub)
+                idx2 = expr.operands[1].operands.index(ySub)
             except:
-                raise Exception(str(ySub) + " not found in " + str(self.operands[1]) + " for a subtraction cancel")                    
-            if idxInFirstSum is not None and idx2 != idxInFirstSum:
-                raise Exception("idxInFirstSum not consistent with found index (it also isn't necessary when there is only one Add operand of the Subtract)")
-            xSub = self.operands[1].operands[:idx2]
-            zSub = self.operands[1].operands[idx2+1:]
-            return subtractCancelRightSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions)            
+                raise Exception(str(ySub) + " not found in " + str(expr.operands[1]) + " for a subtraction cancel")                    
+            xSub = expr.operands[1].operands[:idx2]
+            zSub = expr.operands[1].operands[idx2+1:]
+            eq.update(subtractCancelRightSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions))
+            return eq.eqExpr
 
 SUBTRACT = Literal(pkg, 'SUBTRACT', {STRING: r'-', LATEX: r'-'}, operationMaker = lambda operands : Subtract(*operands))
 
