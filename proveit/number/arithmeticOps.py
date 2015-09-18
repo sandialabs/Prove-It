@@ -421,7 +421,7 @@ class Subtract(BinaryOperation, NumberOp):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.
         '''
-        from complex.theorems import distributeOverSubtractionRev
+        from complex.theorems import distributeThroughSubtractRev
         dummyVar = self.safeDummyVar()
         eq = Equation()
         # commute both terms so that the factor is at the beginning
@@ -445,7 +445,7 @@ class Subtract(BinaryOperation, NumberOp):
         xSub = xSub[0] if len(xSub) == 1 else Multiply(*xSub)
         ySub = ySub[0] if len(ySub) == 1 else Multiply(*ySub)
         deduceInComplexes(wEtcSub + [xSub] + [ySub] + zEtcSub, assumptions)
-        eq.update(distributeOverSubtractionRev.specialize({wEtc:wEtcSub, x:xSub, y:ySub, zEtc:zEtcSub}))
+        eq.update(distributeThroughSubtractRev.specialize({wEtc:wEtcSub, x:xSub, y:ySub, zEtc:zEtcSub}))
         if groupFactor and num > 1:
             if pull=='left':
                 eq.update(eq.eqExpr.rhs.group(endIdx=num, assumptions=assumptions))
@@ -585,6 +585,36 @@ class Multiply(AssociativeOperation, NumberOp):
             return self.commute(startIdx, endIdx, endIdx, None, assumptions=assumptions)
         else:
             raise ValueError("Invalid pull direction!  (Acceptable values are \"left\" and \"right\".)")
+
+    def distribute(self, index, assumptions=frozenset()):
+        r'''
+        Distribute through the operand at the given index.  
+        Returns the equality that equates self to this new version.
+        Examples: 
+            :math:`a (b + c + a) d = a b d + a c d + a a d`
+            :math:`a (b - c) d = a b d - a c d`
+            :math:`a \left(\sum_x f(x)\right c = \sum_x a f(x) c`
+        Give any assumptions necessary to prove that the operands are in Complexes so that
+        the associative and commutation theorems are applicable.            
+        '''
+        from complex.theorems import distributeThroughSum, distributeThroughSubtract, distributeThroughSummation
+        operand = self.operands[index]
+        if isinstance(operand, Add):
+            deduceInComplexes(self.operands, assumptions)
+            return distributeThroughSum.specialize({xEtc:self.operands[:index], yEtc:self.operands[index].operands, zEtc:self.operands[index+1:]})
+        elif isinstance(operand, Subtract):
+            deduceInComplexes(self.operands, assumptions)
+            return distributeThroughSubtract.specialize({wEtc:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zEtc:self.operands[index+1:]})
+        elif isinstance(operand, Summation):
+            deduceInComplexes(self.operands, assumptions)
+            yEtcSub = operand.indices
+            Pop, Pop_sub = Operation(P, operand.indices), operand.summand
+            S_sub = operand.domain
+            xDummy, zDummy = self.safeDummyVars(2)
+            spec1 = distributeThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, x:xDummy, z:zDummy}).checked()
+            return spec1.deriveConclusion().specialize({Etcetera(xDummy):self.operands[:index], Etcetera(zDummy):self.operands[index+1:]})
+        else:
+            raise Exception("Unsupported operand type to distribute over: " + operand.__class__)
         
     def factor(self,theFactor,pull="left", groupFactor=True, groupRemainder=False, assumptions=frozenset()):
         '''
@@ -652,7 +682,7 @@ class Multiply(AssociativeOperation, NumberOp):
             raise Exception('Product is not in the correct form to combine exponents: ' + str(self))
         deduceInComplexes([aSub, bSub, cSub], assumptions=assumptions)
         return thm.specialize({a:aSub, b:bSub, c:cSub})
-
+    
 MULTIPLY = Literal(pkg, 'MULTIPLY', {STRING: r'*', LATEX: r'\cdot'}, operationMaker = lambda operands : Multiply(*operands))
 
 class Divide(BinaryOperation, NumberOp):
@@ -743,6 +773,35 @@ class Fraction(BinaryOperation, NumberOp):
 #            newFrac = self.numerator.factor(operand).proven().rhsSubstitute(self)
 #            numRemainingOps = newFrac.numerator.operands[1:]
 #            return fracCancel2.specialize({x:operand,Etcetera(y):numRemainingOps})
+
+    def distribute(self, assumptions=frozenset()):
+        r'''
+        Distribute the denominator through the numerate.  
+        Returns the equality that equates self to this new version.
+        Examples: 
+            :math:`(a + b + c) / d = a / d + b / d + c / d`
+            :math:`(a - b) / d = a / d - b / d`
+            :math:`\left(\sum_x f(x)\right / y = \sum_x [f(x) / y]`
+        Give any assumptions necessary to prove that the operands are in Complexes so that
+        the associative and commutation theorems are applicable.            
+        '''
+        from complex.theorems import distributeFractionThroughSum, distributeFractionThroughSubtract, distributeFractionThroughSummation
+        if isinstance(self.numerator, Add):
+            deduceInComplexes(self.operands, assumptions)
+            return distributeFractionThroughSum.specialize({xEtc:self.numerator.operands, y:self.denominator})
+        elif isinstance(self.numerator, Subtract):
+            deduceInComplexes(self.operands, assumptions)
+            return distributeFractionThroughSubtract.specialize({x:self.numerator.operands[0], y:self.numerator.operands[1], z:self.denominator})
+        elif isinstance(self.numerator, Summation):
+            # Should deduce in Complexes, but distributeThroughSummation doesn't have a domain restriction right now
+            # because this is a little tricky.   To do.
+            #deduceInComplexes(self.operands, assumptions)
+            xEtcSub = self.numerator.indices
+            Pop, Pop_sub = Operation(P, self.numerator.indices), self.numerator.summand
+            S_sub = self.numerator.domain
+            return distributeFractionThroughSummation.specialize({Pop:Pop_sub, S:S_sub, xEtc:xEtcSub, z:self.denominator})
+        else:
+            raise Exception("Unsupported operand type to distribute over: " + self.numerator.__class__)
 
     def factor(self,theFactor,pull="left", groupFactor=False, groupRemainder=None, assumptions=frozenset()):
         '''
@@ -896,7 +955,7 @@ EXPONENTIATE = Literal(pkg, 'EXPONENTIATE', operationMaker = lambda operands : E
 #    else:
 #        return exponentiateInstance.base
 
-class Summation(OperationOverInstances):
+class Summation(OperationOverInstances, NumberOp):
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
@@ -925,7 +984,21 @@ class Summation(OperationOverInstances):
         elif self.domain == Naturals:
             self.domain = DiscreteContiguousSet(zero,infinity)
         
-        
+    def _closureTheorem(self, numberSet):
+        import natural.theorems
+        import real.theorems
+        import complex.theorems
+        '''
+        if numberSet == Naturals:
+            return natural.theorems.powClosure
+        elif numberSet == RealsPos:
+            return complex.theorems.powPosClosure            
+        elif numberSet == Reals:
+            return real.theorems.powClosure
+        el'''
+        if numberSet == Complexes:
+            return complex.theorems.summationClosure
+                
 #        self.domain = domain#self.domain already set
 
     def formatted(self, formatType, fence=False):
@@ -933,16 +1006,25 @@ class Summation(OperationOverInstances):
         if isinstance(self.domain,DiscreteContiguousSet):
             lower = self.domain.lowerBound.formatted(formatType)
             upper = self.domain.upperBound.formatted(formatType)
-            formattedInner = self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+'='+lower+r'}'+r'^{'+upper+r'}'+self.summand.formatted(formatType, fence=fence) 
+            formattedInner = self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+'='+lower+r'}'+r'^{'+upper+r'} '
+            implicitIvars = self.implicitInstanceVars(formatType)
+            hasExplicitIvars = (len(implicitIvars) < len(self.instanceVars))
+            implicitConditions = self.implicitConditions(formatType)
+            hasExplicitConditions = self.hasCondition() and (len(implicitConditions) < len(self.conditions))
+            if hasExplicitConditions:
+                if hasExplicitIvars: 
+                    formattedInner += " | "
+                formattedInner += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
+            formattedInner += self.summand.formatted(formatType, fence=fence) 
+            if fence:
+                if formatType == LATEX:
+                    return r'\left(' + formattedInner + r'\right)'
+                else:
+                    return r'(' + formattedInner + r')'
+            else: return formattedInner
         else:
-            formattedInner = self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+r'\in '+self.domain.formatted(formatType)+r'}'+self.summand.formatted(formatType, fence=fence)
-        if fence:
-            if formatType == LATEX:
-                return r'\left(' + formattedInner + r'\right)'
-            else:
-                return r'(' + formattedInner + r')'
-        else: return formattedInner                
-
+            return OperationOverInstances.formatted(self, formatType, fence)
+        
     def reduceGeomSum(self):
         r'''
         If sum is geometric sum (finite or infinite), provide analytic expression for sum.
@@ -994,20 +1076,31 @@ class Summation(OperationOverInstances):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.
         '''
-        from complex.theorems import distributeOverSummationRev
+        from complex.theorems import distributeThroughSummationRev
         if not theFactor.freeVars().isdisjoint(self.indices):
             raise Exception('Cannot factor anything involving summation indices out of a summation')
+        # We need to deduce that the summands are all in Complexes.  We prove that as a side-effect when
+        # we deduce that the summation is in Complexes.
+        self.deduceInComplexes(assumptions=assumptions)
+        # We may need to factor the summand within the summation
         summand_assumptions = assumptions | set([In(index, self.domain) for index in self.indices])
         summandFactorEq = self.summand.factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=summand_assumptions)
-        summandInstanceEquivalence = summandFactorEq.generalize(self.indices, domain=self.domain)
+        summandInstanceEquivalence = summandFactorEq.generalize(self.indices, domain=self.domain).checked(assumptions)
         eq = Equation(self.instanceSubstitution(summandInstanceEquivalence).checked(assumptions))
         factorOperands = theFactor.operands if isinstance(theFactor, Multiply) else theFactor
+        xDummy, zDummy = self.safeDummyVars(2)
+        # Now do the actual factoring by reversing distribution
         if pull == 'left':
             Pop, Pop_sub = Operation(P, self.indices), summandFactorEq.rhs.operands[-1]
-            eq.update(distributeOverSummationRev.specialize({xEtc:factorOperands, yEtc:self.indices, zEtc:[], Pop:Pop_sub, S:self.domain}).checked())
+            xSub = factorOperands
+            zSub = []
         elif pull == 'right':
             Pop, Pop_sub = Operation(P, self.indices), summandFactorEq.rhs.operands[0]
-            eq.update(distributeOverSummationRev.specialize({xEtc:[], yEtc:self.indices, zEtc:factorOperands, Pop:Pop_sub, S:self.domain}).checked())
+            xSub = []
+            zSub = factorOperands
+        spec1 = distributeThroughSummationRev.specialize({Pop:Pop_sub, S:self.domain, yEtc:self.indices, x:xDummy, z:zDummy}).checked()
+        eq.update(spec1.deriveConclusion().specialize({Etcetera(xDummy):xSub, Etcetera(zDummy):zSub}))
+        deduceInComplexes(eq.eqExpr.rhs, assumptions)
         if groupFactor and len(factorOperands) > 1:
             eq.update(eq.eqExpr.rhs.group(endIdx=len(factorOperands), assumptions=assumptions))
         return eq.eqExpr #.checked(assumptions)
