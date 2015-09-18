@@ -456,6 +456,48 @@ class Subtract(BinaryOperation, NumberOp):
                 eq.update(eq.eqExpr.rhs.group(startIdx=-num, assumptions=assumptions))                
         return eq.eqExpr.checked(assumptions)
 
+    def cancel(self, idxInFirstSum=None, assumptions=frozenset()):
+        from complex.theorems import subtractCancelTwoSums, subtractCancelLeftSum, subtractCancelRightSum
+        deduceInComplexes(self.operands[0].operands, assumptions=assumptions)
+        deduceInComplexes(self.operands[1].operands, assumptions=assumptions)
+        if isinstance(self.operands[0], Add):
+            if isinstance(self.operands[1], Add):
+                if idxInFirstSum is None:
+                    raise Exception("Must supply idxInFirstSum when canceling terms of a subtraction between sums")
+                idx1 = idxInFirstSum
+                wSub = self.operands[0].operands[idx1]
+                try:
+                    idx2 = self.operands[1].operands.index(wSub)
+                except:
+                    raise Exception(str(wSub) + " not found in " + str(self.operands[1]) + " for a subtraction cancel")
+                vSub = self.operands[0].operands[:idx1]
+                xSub = self.operands[0].operands[idx1+1:]
+                ySub = self.operands[1].operands[:idx2]
+                zSub = self.operands[1].operands[idx2+1:]
+                return subtractCancelTwoSums.specialize({vEtc:vSub, w:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+            else:
+                ySub = self.operands[1]
+                try:
+                    idx1 = self.operands[0].operands.index(ySub)
+                except:
+                    raise Exception(str(ySub) + " not found in " + str(self.operands[0]) + " for a subtraction cancel")                    
+                if idxInFirstSum is not None and idx1 != idxInFirstSum:
+                    raise Exception("idxInFirstSum not consistent with found index (it also isn't necessary when there is only one Add operand of the Subtract)")
+                xSub = self.operands[0].operands[:idx1]
+                zSub = self.operands[0].operands[idx1+1:]
+                return subtractCancelLeftSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions)
+        else:
+            ySub = self.operands[0]
+            try:
+                idx2 = self.operands[1].operands.index(ySub)
+            except:
+                raise Exception(str(ySub) + " not found in " + str(self.operands[1]) + " for a subtraction cancel")                    
+            if idxInFirstSum is not None and idx2 != idxInFirstSum:
+                raise Exception("idxInFirstSum not consistent with found index (it also isn't necessary when there is only one Add operand of the Subtract)")
+            xSub = self.operands[1].operands[:idx2]
+            zSub = self.operands[1].operands[idx2+1:]
+            return subtractCancelRightSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions)            
+
 SUBTRACT = Literal(pkg, 'SUBTRACT', {STRING: r'-', LATEX: r'-'}, operationMaker = lambda operands : Subtract(*operands))
 
 class Multiply(AssociativeOperation, NumberOp):
