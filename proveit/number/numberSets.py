@@ -1,7 +1,8 @@
 from proveit.expression import Expression, Literal, LATEX, Operation
-from proveit.multiExpression import Etcetera, ExpressionList
+from proveit.multiExpression import Etcetera, ExpressionList, extractVar
 from proveit.common import a, b
-from proveit.basiclogic import Forall, In, NotEquals, AssociativeOperation
+from proveit.basiclogic import Forall, Implies, In, NotEquals, AssociativeOperation, OperationOverInstances
+from proveit.basiclogic import generateSubExpressions
 
 pkg = __package__
 
@@ -166,11 +167,54 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
         # Apply the closure theorem
         assert isinstance(closureThm, Forall), 'Expecting closure theorem to be a Forall expression'
         iVars = closureThm.instanceVars
-        # Specialize the closure theorem differently for AccociativeOperation compared with other cases
+        # Specialize the closure theorem differently for AccociativeOperation and OperationOverInstances compared with other cases
         if isinstance(expr, AssociativeOperation):
             assert len(iVars) == 1, 'Expecting one instance variable for the closure theorem of an AssociativeOperation'
             assert isinstance(iVars[0], Etcetera), 'Expecting the instance variables for the closure theorem of an AssociativeOperation to be an Etcetera Variable'
             closureSpec = closureThm.specialize({iVars[0]:expr.operands})
+        elif isinstance(expr, OperationOverInstances):
+            # first deduce that all of the instances are in the domain
+            
+            # See if we can deduce that the indices under the domain are in one of the number sets
+            # For summand assumptions, remove any assumptions involving the index variable and add assumptions 
+            # that the index variable is in the domain and add the condition assumption.
+            summand_assumptions = {assumption for assumption in assumptions if assumption.freeVars().isdisjoint(expr.indices)}
+            summand_assumptions |= set([In(index, expr.domain) for index in expr.indices])
+            summand_assumptions |= set([condition for condition in expr.conditions])
+            print summand_assumptions
+            if hasattr(expr.domain, 'deduceMemberInNaturals'):
+                for index in expr.indices:
+                    expr.domain.deduceMemberInNaturals(index, assumptions=summand_assumptions)
+            elif hasattr(expr.domain, 'deduceMemberInNaturalsPos'):
+                for index in expr.indices:
+                    expr.domain.deduceMemberInNaturalsPos(index, assumptions=summand_assumptions)
+            elif hasattr(expr.domain, 'deduceMemberInIntegers'):
+                for index in expr.indices:
+                    print expr.domain.deduceMemberInIntegers(index, assumptions=summand_assumptions)
+            elif hasattr(expr.domain, 'deduceMemberInReals'):
+                for index in expr.indices:
+                    expr.domain.deduceMemberInReals(index, assumptions=summand_assumptions)
+            elif hasattr(expr.domain, 'deduceMemberInRealsPos'):
+                for index in expr.indices:
+                    expr.domain.deduceMemberInRealsPos(index, assumptions=summand_assumptions)
+            elif hasattr(expr.domain, 'deduceMemberInComplexes'):
+                for index in expr.indices:
+                    expr.domain.deduceMemberInIntegers(index, assumptions=summand_assumptions)
+            
+            # Now we need to deduce that the summands are all in the number set
+            summandInNumberSet = deduceInNumberSet(expr.summand, numberSet, assumptions=summand_assumptions).checked(summand_assumptions)
+            print summandInNumberSet
+            summandInNumberSet.generalize(expr.indices, domain=expr.domain).checked(assumptions)
+            
+            assert len(iVars) == 2 # instance function and domain -- conditions not implemented at this time
+            Pop, Pop_sub = Operation(iVars[0], expr.instanceVars), expr.instanceExpr
+
+            innerIvars = set().union(subExpr.instanceVars[0] for subExpr in generateSubExpressions(closureThm.instanceExpr, subExprClass=OperationOverInstances))
+            subMap = {Pop:Pop_sub, iVars[1]:expr.domain}
+            subMap.update({innerIvar:expr.instanceVars for innerIvar in innerIvars})
+            preClosureSpec = closureThm.specialize(subMap).checked()
+            assert isinstance(preClosureSpec, Implies), "Expecting the OperationOverInstances closure theorem to specialize to an implication with the hypothesis being the closure forall instances"
+            closureSpec = preClosureSpec.deriveConclusion()
         else:
             assert len(iVars) == len(expr.operands), 'Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression'
             closureSpec = closureThm.specialize({iVar:operand for iVar, operand in zip(iVars, expr.operands)})
