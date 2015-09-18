@@ -21,6 +21,7 @@ listOfFolders = [
 
 for folderName in listOfFolders:
     os.chdir(cwd+'/'+folderName)
+    print folderName
     if 'axioms.ipynb' in os.listdir('.'):    
         os.system('ipython2-2.7 nbconvert --execute axioms.ipynb')
 #    os.system('ipython nbconvert --execute '+fileName)#If you're not Kenny, you probably want this line instead of the previous one.
