@@ -392,6 +392,15 @@ class Or(AssociativeOperation):
         leftInBool = deduceInBool(self.leftOperand)
         rightInBool = deduceInBool(self.rightOperand)
         return disjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion}).checked({leftInBool, rightInBool})
+    
+    def concludeViaExample(self, trueOperand):
+        '''
+        From one true operand, conclude that this 'or' expression is true.
+        Requires all of the operands to be in the set of BOOLEANS.
+        '''
+        from theorems import orIfAny
+        index = self.operands.index(trueOperand)
+        return orIfAny.specialize({xEtc:self.operands[:index], y:self.operands[index], zEtc:self.operands[index+1:]})
 
 OR = Literal(pkg, 'OR', {STRING:'or', LATEX:r'\lor'}, lambda operands : Or(*operands))
 
