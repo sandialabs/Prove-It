@@ -6,7 +6,7 @@ from proveit.basiclogic import Equals, Equation, Forall, In
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
 from proveit.everythingLiteral import EVERYTHING
-from proveit.common import a, b, c, d, k, l, m, n, r, v, w, x, y, z, A, P, S, vEtc, wEtc, xEtc, yEtc, zEtc
+from proveit.common import a, b, c, d, k, l, m, n, r, v, w, x, y, z, A, P, S, aEtc, cEtc, vEtc, wEtc, xEtc, yEtc, zEtc
 from proveit.number.numberSets import *
 #from variables import *
 #from variables import a, b
@@ -39,6 +39,34 @@ class DiscreteContiguousSet(BinaryOperation):
         deduceInIntegers(self.upperBound, assumptions=assumptions)
         return allInDiscreteInterval_InInts.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
+    def deduceMemberInNaturals(self, member, assumptions=frozenset()):
+        from natural.theorems import allInDiscreteInterval_InNats
+        from numberSets import deduceInNaturals
+        deduceInNaturals(self.lowerBound, assumptions=assumptions)
+        deduceInNaturals(self.upperBound, assumptions=assumptions)
+        return allInDiscreteInterval_InNats.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
+
+    def deduceMemberInNaturalsPos(self, member, assumptions=frozenset()):
+        from natural.theorems import allInDiscreteInterval_InNatsPos
+        from numberSets import deduceInNaturalsPos
+        deduceInNaturalsPos(self.lowerBound, assumptions=assumptions)
+        deduceInNaturalsPos(self.upperBound, assumptions=assumptions)
+        return allInDiscreteInterval_InNatsPos.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
+
+    def deduceMemberIsPositive(self, member, assumptions=frozenset()):
+        from integer.theorems import allInPositiveIntervalArePositive
+        deduceInIntegers(self.lowerBound, assumptions=assumptions)
+        deduceInIntegers(self.upperBound, assumptions=assumptions)
+        deducePositive(self.lowerBound, assumptions=assumptions)
+        return allInPositiveIntervalArePositive.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})        
+        
+    def deduceMemberIsNegative(self, member, assumptions=frozenset()):
+        from integer.theorems import allInNegativeIntervalAreNegative
+        deduceInIntegers(self.lowerBound, assumptions=assumptions)
+        deduceInIntegers(self.upperBound, assumptions=assumptions)
+        deduceNegative(self.upperBound, assumptions=assumptions)
+        return allInNegativeIntervalAreNegative.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})        
+
 DISCRETECONTIGUOUSSET = Literal(pkg, 'DISCRETECONTIGUOUSSET', operationMaker = lambda operands : DiscreteContiguousSet(*operands))
 
 class Interval(BinaryOperation):
@@ -62,6 +90,13 @@ class IntervalOO(Interval):
         else:
             return r'('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r')'
 
+    def deduceMemberInReals(self, member, assumptions=frozenset()):
+        from real.theorems import allInIntervalOO_InReals
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        return allInIntervalOO_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+
 INTERVALOO = Literal(pkg, 'INTERVALOO', operationMaker = lambda operands : IntervalOO(*operands))
 
 
@@ -76,6 +111,13 @@ class IntervalOC(Interval):
         else:
             return r'('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r']'
 
+    def deduceMemberInIntegers(self, member, assumptions=frozenset()):
+        from real.theorems import allInIntervalOC_InReals
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        return allInIntervalOC_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+
 INTERVALOC = Literal(pkg, 'INTERVALOC', operationMaker = lambda operands : IntervalOC(*operands))
 
 class IntervalCO(Interval):
@@ -89,6 +131,13 @@ class IntervalCO(Interval):
         else:
             return r'['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r')'
 
+    def deduceMemberInReals(self, member, assumptions=frozenset()):
+        from real.theorems import allInIntervalCO_InReals
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        return allInIntervalCO_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+
 INTERVALCO = Literal(pkg, 'INTERVALCO', operationMaker = lambda operands : IntervalCO(*operands))
 
 class IntervalCC(Interval):
@@ -101,6 +150,13 @@ class IntervalCC(Interval):
             return r'\left['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right]'
         else:
             return r'['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r']'
+
+    def deduceMemberInReals(self, member, assumptions=frozenset()):
+        from real.theorems import allInIntervalCC_InReals
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        return allInIntervalCC_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
 INTERVALCC = Literal(pkg, 'INTERVALCC', operationMaker = lambda operands : IntervalCC(*operands))
 
@@ -156,12 +212,17 @@ class LessThan(OrderingRelation):
         See if second number is at bigger than first.
         '''
         OrderingRelation.__init__(self, LESSTHAN,lhs,rhs)
+        
+    def decudeInBooleans(self, assumptions):
+        from reals.theorems import lessThanInBools
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return lessThanInBools.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
+        
     def transitivityImpl(self,other):
         from proveit.number.axioms import reverseGreaterThanEquals, reverseGreaterThan
         from proveit.number.axioms import lessThanTransLessThanRight, lessThanTransLessThanEqualsRight
         from proveit.number.axioms import lessThanTransLessThanLeft, lessThanTransLessThanEqualsLeft
-
-                
 
         if (other.rhs == self.rhs and other.lhs == self.lhs) or (other.rhs == self.lhs and other.lhs == self.rhs):
             raise ValueError("Cannot use transitivity with no new expression!")
@@ -199,6 +260,13 @@ class LessThanEquals(OrderingRelation):
         See if second number is at least as big as first.
         '''
         OrderingRelation.__init__(self, LESSTHANEQUALS,lhs,rhs)
+        
+    def decudeInBooleans(self, assumptions):
+        from reals.theorems import lessThanEqualsInBools
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return lessThanEqualsInBools.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
+        
     def transitivityImpl(self,other):
         from proveit.number.axioms import reverseGreaterThanEquals, reverseGreaterThan
         from proveit.number.axioms import lessThanEqualsTransLessThanRight, lessThanEqualsTransLessThanEqualsRight
@@ -240,6 +308,13 @@ class GreaterThan(OrderingRelation):
         See if first number is at least as big as second.
         '''
         OrderingRelation.__init__(self, GREATERTHAN,lhs,rhs)
+        
+    def decudeInBooleans(self, assumptions):
+        from reals.theorems import greaterThanInBools
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return greaterThanInBools.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
+        
     def transitivityImpl(self,other):
         from proveit.number.axioms import reverseLessThanEquals, reverseLessThan
         from proveit.number.axioms import greaterThanTransGreaterThanRight, greaterThanTransGreaterThanEqualsRight
@@ -279,6 +354,13 @@ class GreaterThanEquals(OrderingRelation):
         See if first number is at least as big as second.
         '''
         OrderingRelation.__init__(self, GREATERTHANEQUALS,lhs,rhs)
+
+    def decudeInBooleans(self, assumptions):
+        from reals.theorems import greaterThanEqualsInBools
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return greaterThanEqualsInBools.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
+    
     def transitivityImpl(self,other):
         from proveit.number.axioms import reverseLessThanEquals, reverseLessThan
         from proveit.number.axioms import greaterThanEqualsTransGreaterThanRight, greaterThanEqualsTransGreaterThanEqualsRight
@@ -311,6 +393,32 @@ class GreaterThanEquals(OrderingRelation):
             raise ValueError("Cannot derive implication from input!")
 
 GREATERTHANEQUALS = Literal(pkg,'GREATERTHANEQUALS', {STRING: r'>=', LATEX:r'\geq'}, operationMaker = lambda operands : GreaterThanEquals(*operands))
+
+class Min(Operation, NumberOp):
+    def __init__(self, A, B):
+        Operation.__init__(self, MIN, [A, B])
+
+    def _closureTheorem(self, numberSet):
+        import real.theorems
+        if numberSet == Reals:
+            return real.theorems.minClosure
+        elif numberSet == RealsPos:
+            return real.theorems.minPosClosure            
+
+MIN = Literal(pkg, 'MIN', {STRING:'Min', LATEX:r'{\rm Min}'}, operationMaker = lambda operands : Min(*operands))
+
+class Max(Operation, NumberOp):
+    def __init__(self, A, B):
+        Operation.__init__(self, MAX, [A, B])
+
+    def _closureTheorem(self, numberSet):
+        import real.theorems
+        if numberSet == Reals:
+            return real.theorems.maxClosure
+        elif numberSet == RealsPos:
+            return real.theorems.maxPosClosure               
+
+MAX = Literal(pkg, 'MAX', {STRING:'Max', LATEX:r'{\rm Max}'}, operationMaker = lambda operands : Max(*operands))
 
 class Abs(Operation, NumberOp):
     def __init__(self, A):
@@ -354,7 +462,27 @@ class Add(AssociativeOperation, NumberOp):
             return complex.theorems.addClosure
         elif numberSet == Integers:
             return integer.theorems.addClosure
-            
+    
+    def deduceInNaturalsPosDirectly(self, assumptions=frozenset(), ruledOutSets=frozenset(), dontTryPos=False, dontTryNeg=False):
+        '''
+        If all of the terms are in Naturals and just one is positive, then the sum is positive.
+        '''
+        from numberSets import DeduceInNumberSetException
+        from natural.theorems import sumInNatsPos
+        
+        # first make sure all the terms are in Naturals
+        for term in self.operands:
+            deduceInNaturals(term, assumptions) 
+        for k, term in enumerate(self.operands):
+            try:
+                # found one positive term to make the sum positive
+                deducePositive(term, assumptions)
+                return sumInNatsPos.specialize({aEtc:self.operands[:k], b:term, cEtc:self.operands[k+1:]}).checked(assumptions)
+            except:
+                pass
+        # need to have one of the elements positive for the sum to be positive
+        raise DeduceInNumberSetException(self, NaturalsPos, assumptions)
+        
     def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
         '''
         Commute self.operands[startIdx1:endIdx1] with self.operands[startIdx2:endIdx2].  
@@ -429,10 +557,15 @@ class Subtract(BinaryOperation, NumberOp):
     def _closureTheorem(self, numberSet):
         import complex.theorems
         import real.theorems
+        import natural.theorems
+        from number import one
         if numberSet == Reals:
             return real.theorems.subtractClosure
         elif numberSet == Complexes:
             return complex.theorems.subtractClosure
+        elif numberSet == Naturals:
+            if self.operands[1] == one:
+                return natural.theorems.subtractOneInNats
     
     def factor(self, theFactor, pull='left', groupFactor=False, groupRemainder=None, assumptions=frozenset()):
         '''
@@ -1014,14 +1147,24 @@ class Exponentiate(BinaryOperation, NumberOp):
         import natural.theorems
         import real.theorems
         import complex.theorems
+        from number import two
         if numberSet == Naturals:
             return natural.theorems.powClosure
         elif numberSet == RealsPos:
-            return real.theorems.powPosClosure            
-        elif numberSet == Reals:
-            return real.theorems.powClosure
+            if self.exponent != two: # otherwise, use deduceInRealsPosDirectly(..)
+                return real.theorems.powPosClosure            
         elif numberSet == Complexes:
             return complex.theorems.powClosure
+    
+    def deduceInRealsPosDirectly(self, assumptions=frozenset()):
+        import real.theorems
+        from number import two
+        if self.exponent == two:
+            deduceInReals(self.base, assumptions)
+            deduceNotZero(self.base, assumptions)
+            return real.theorems.sqrdClosure.specialize({a:self.base}).checked(assumptions)
+        # only treating certain special case(s) in this manner
+        raise DeduceInNumberSetException(self, RealsPos, assumptions)
 
     def _notEqZeroTheorem(self):
         import complex.theorems
@@ -1129,6 +1272,8 @@ class Summation(OperationOverInstances, NumberOp):
         elif numberSet == Reals:
             return real.theorems.powClosure
         el'''
+        if numberSet == Reals:
+            return real.theorems.summationClosure
         if numberSet == Complexes:
             return complex.theorems.summationClosure
                 
@@ -1255,11 +1400,22 @@ class Neg(Operation, NumberOp):
 
     def _closureTheorem(self, numberSet):
         import complex.theorems
+        import real.theorems
         import integer.theorems
         if numberSet == Complexes:
             return complex.theorems.negClosure
+        elif numberSet == Reals:
+            return real.theorems.negClosure
         elif numberSet == Integers:
             return integer.theorems.negClosure
+
+    def _negativeTheorem(self):
+        import real.theorems
+        return real.theorems.negatedPositiveIsNegative
+
+    def _positiveTheorem(self):
+        import real.theorems
+        return real.theorems.negatedNegativeIsPositive
 
     def _notEqZeroTheorem(self):
         import complex.theorems

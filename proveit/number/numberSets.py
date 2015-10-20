@@ -1,7 +1,7 @@
 from proveit.expression import Expression, Literal, LATEX, Operation
 from proveit.multiExpression import Etcetera, ExpressionList, extractVar
 from proveit.common import a, b
-from proveit.basiclogic import Forall, Implies, In, NotEquals, AssociativeOperation, OperationOverInstances
+from proveit.basiclogic import Forall, Implies, In, Or, NotEquals, AssociativeOperation, OperationOverInstances
 from proveit.basiclogic import generateSubExpressions
 
 pkg = __package__
@@ -13,6 +13,7 @@ zeroToOne = Literal(pkg,'zeroToOne',{LATEX:r'[0,1]'})
 
 Reals = Literal(pkg,'Reals',{LATEX:r'\mathbb{R}'})
 RealsPos = Literal(pkg,'RealsPos',{LATEX:r'\mathbb{R}^+'})
+RealsNeg = Literal(pkg,'RealsNeg',{LATEX:r'\mathbb{R}^-'})
 Integers = Literal(pkg,'Integers',{LATEX:r'\mathbb{Z}'})
 Naturals = Literal(pkg,'Naturals',{LATEX:r'\mathbb{N}'})
 NaturalsPos = Literal(pkg,'NaturalsPos',{LATEX:r'\mathbb{N}^{+}'})
@@ -23,10 +24,16 @@ class NumberOp:
         pass
 
     def _closureTheorem(self, numberSet):
-        pass # implemented by derived class
+        pass # may be implemented by derived class
 
     def _notEqZeroTheorem(self):
-        pass # implemented by derived class
+        pass # may be implemented by derived class
+    
+    def _positiveTheorem(self):
+        pass # may be implemented by derived class
+    
+    def _negativeTheorem(self):
+        pass # may be implemented by derived class
     
     def deduceInIntegers(self, assumptions=frozenset()):
         return deduceInNumberSet(self, Integers, assumptions)
@@ -34,19 +41,59 @@ class NumberOp:
     def deduceInNaturals(self, assumptions=frozenset()):
         return deduceInNumberSet(self, Naturals, assumptions)
         
+    def deduceInNaturalsPos(self, assumptions=frozenset()):
+        return deduceInNumberSet(self, NaturalsPos, assumptions)
+    
     def deduceInReals(self, assumptions=frozenset()):
         return deduceInNumberSet(self, Reals, assumptions)
 
     def deduceInRealsPos(self, assumptions=frozenset()):
         return deduceInNumberSet(self, RealsPos, assumptions)
 
+    def deduceInRealsNeg(self, assumptions=frozenset()):
+        return deduceInNumberSet(self, RealsNeg, assumptions)
+
     def deduceInComplexes(self, assumptions=frozenset()):
         return deduceInNumberSet(self, Complexes, assumptions)
+
+    def deduceInIntegersDirectly(self, assumptions=frozenset()):
+        # override as an alternate to supplying a _closureTheorem
+        raise DeduceInNumberSetException(self, Integers, assumptions) 
+
+    def deduceInNaturalsDirectly(self, assumptions=frozenset()):
+        # override as an alternate to supplying a _closureTheorem
+        raise DeduceInNumberSetException(self, Naturals, assumptions) 
+        
+    def deduceInNaturalsPosDirectly(self, assumptions=frozenset()):
+        # override as an alternate to supplying a _closureTheorem
+        raise DeduceInNumberSetException(self, NaturalsPos, assumptions) 
+    
+    def deduceInRealsDirectly(self, assumptions=frozenset()):
+        # override as an alternate to supplying a _closureTheorem
+        raise DeduceInNumberSetException(self, Reals, assumptions) 
+
+    def deduceInRealsPosDirectly(self, assumptions=frozenset()):
+        # override as an alternate to supplying a _closureTheorem
+        raise DeduceInNumberSetException(self, RealsPos, assumptions) 
+
+    def deduceInRealsNegDirectly(self, assumptions=frozenset()):
+        # override as an alternate to supplying a _closureTheorem
+        raise DeduceInNumberSetException(self, RealsNeg, assumptions) 
+
+    def deduceInComplexesDirectly(self, assumptions=frozenset()):
+        # override as an alternate to supplying a _closureTheorem
+        raise DeduceInNumberSetException(self, Complexes, assumptions) 
 
     def deduceNotZero(self, assumptions=frozenset()):
         return deduceNotZero(self, assumptions)
 
-def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSets=frozenset(), dontTryPos=False):
+    def deducePositive(self, assumptions=frozenset()):
+        return deducePositive(self, assumptions)
+
+    def deduceNegative(self, assumptions=frozenset()):
+        return deduceNegative(self, assumptions)
+    
+def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSets=frozenset(), dontTryPos=False, dontTryNeg=False):
     '''
     For each given expression, attempt to derive that it is in the specified numberSet
     under the given assumptions.  If ruledOutSets is provided, don't attempt to
@@ -60,23 +107,28 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
     import complex.theorems
     if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
+
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
         # If it isn't an Expression, assume it's iterable and deduce each
-        return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]
-    # A single Expression:
-    expr = exprOrList
+        return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]    
+    expr = exprOrList # just a single expression
+    
+    #print expr, numberSet
     try:
         return In(expr, numberSet).checked(assumptions)
     except:
         pass # not so simple, keep trying (below)
         
     if NaturalsPos not in ruledOutSets and (numberSet == Naturals or numberSet == Complexes or 
-                                            numberSet == RealsPos or numberSet == Reals or numberSet == Integers):
+                                            numberSet == RealsPos or numberSet == Reals or 
+                                            numberSet == Integers):
         try:
             # try deducing in the NaturalsPos as a subset of the desired numberSet
             deduceInNumberSet(expr, NaturalsPos, assumptions=assumptions, ruledOutSets=ruledOutSets)
             if numberSet == Complexes:
                 natural.theorems.inNatPos_inComplexes.specialize({a:expr})
+            elif numberSet == RealsPos:
+                natural.theorems.inNatPos_inRealsPos.specialize({a:expr})
             elif numberSet == Reals:
                 natural.theorems.inNatPos_inReals.specialize({a:expr})
             elif numberSet == Integers:
@@ -115,7 +167,14 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
         try:
             # try deducing in the RealsPos for greater than zero
             deducePositive(expr, assumptions=assumptions, dontTryRealsPos=True)
-            real.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveLeft()
+            return real.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveLeft()
+        except:
+            pass
+    if not dontTryNeg and (numberSet == Complexes or numberSet == Reals or numberSet == RealsNeg):
+        try:
+            # try deducing in the RealsNeg for greater than zero
+            deduceNegative(expr, assumptions=assumptions, dontTryRealsNeg=True)
+            return real.theorems.inRealsNeg_iff_negative.specialize({a:expr}).deriveLeft()
         except:
             pass
     if RealsPos not in ruledOutSets and (numberSet == Complexes or numberSet == Reals):
@@ -129,6 +188,17 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             return In(expr, numberSet).checked(assumptions)
         except:
             ruledOutSets = ruledOutSets | {RealsPos} # ruled out Reals
+    if RealsNeg not in ruledOutSets and (numberSet == Complexes or numberSet == Reals):
+        try:
+            # try deducing in the RealsNeg as a subset of the desired numberSet
+            deduceInNumberSet(expr, RealsNeg, assumptions=assumptions, ruledOutSets=ruledOutSets)
+            if numberSet == Complexes:
+                real.theorems.inRealsNeg_inComplexes.specialize({a:expr})
+            elif numberSet == Reals:
+                real.theorems.inRealsNeg_inReals.specialize({a:expr})
+            return In(expr, numberSet).checked(assumptions)
+        except:
+            ruledOutSets = ruledOutSets | {RealsNeg} # ruled out Reals
     if Reals not in ruledOutSets and numberSet == Complexes:
         try:
             # try deducing in the Reals as a subset of the desired numberSet
@@ -157,12 +227,28 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
                 return expr.deduceInReals()
             elif numberSet == RealsPos and hasattr(expr, 'deduceInRealsPos'):
                 return expr.deduceInRealsPos()
+            elif numberSet == RealsNeg and hasattr(expr, 'deduceInRealsNeg'):
+                return expr.deduceInRealsNeg()
             elif numberSet == Complexes and hasattr(expr, 'deduceInComplexes'):
                 return expr.deduceInComplexes()          
             # Ran out of options:  
             raise DeduceInNumberSetException(expr, numberSet, assumptions)
         closureThm = expr._closureTheorem(numberSet)
         if closureThm is None:
+            if numberSet == Naturals and hasattr(expr, 'deduceInNaturalsDirectly'):
+                return expr.deduceInNaturalsDirectly(assumptions)
+            elif numberSet == NaturalsPos and hasattr(expr, 'deduceInNaturalsPosDirectly'):
+                return expr.deduceInNaturalsPosDirectly(assumptions)
+            elif numberSet == Integers and hasattr(expr, 'deduceInIntegersDirectly'):
+                return expr.deduceInIntegersDirectly(assumptions)
+            elif numberSet == Reals and hasattr(expr, 'deduceInRealsDirectly'):
+                return expr.deduceInRealsDirectly(assumptions)
+            elif numberSet == RealsPos and hasattr(expr, 'deduceInRealsPosDirectly'):
+                return expr.deduceInRealsPosDirectly(assumptions)
+            elif numberSet == RealsNeg and hasattr(expr, 'deduceInRealsNegDirectly'):
+                return expr.deduceInRealsNegDirectly(assumptions)
+            elif numberSet == Complexes and hasattr(expr, 'deduceInComplexesDirectly'):
+                return expr.deduceInComplexesDirectly(assumptions)
             raise DeduceInNumberSetException(expr, numberSet, assumptions)    
         # Apply the closure theorem
         assert isinstance(closureThm, Forall), 'Expecting closure theorem to be a Forall expression'
@@ -181,29 +267,53 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             summand_assumptions = {assumption for assumption in assumptions if assumption.freeVars().isdisjoint(expr.indices)}
             summand_assumptions |= set([In(index, expr.domain) for index in expr.indices])
             summand_assumptions |= set([condition for condition in expr.conditions])
-            print summand_assumptions
+            #print summand_assumptions
             if hasattr(expr.domain, 'deduceMemberInNaturals'):
                 for index in expr.indices:
-                    expr.domain.deduceMemberInNaturals(index, assumptions=summand_assumptions)
+                    try:
+                        expr.domain.deduceMemberInNaturals(index, assumptions=summand_assumptions)
+                    except:
+                        pass
             elif hasattr(expr.domain, 'deduceMemberInNaturalsPos'):
                 for index in expr.indices:
-                    expr.domain.deduceMemberInNaturalsPos(index, assumptions=summand_assumptions)
+                    try:
+                        expr.domain.deduceMemberInNaturalsPos(index, assumptions=summand_assumptions)
+                    except:
+                        pass
             elif hasattr(expr.domain, 'deduceMemberInIntegers'):
                 for index in expr.indices:
-                    print expr.domain.deduceMemberInIntegers(index, assumptions=summand_assumptions)
+                    try:
+                        expr.domain.deduceMemberInIntegers(index, assumptions=summand_assumptions)
+                    except:
+                        pass
             elif hasattr(expr.domain, 'deduceMemberInReals'):
                 for index in expr.indices:
-                    expr.domain.deduceMemberInReals(index, assumptions=summand_assumptions)
+                    try:
+                        expr.domain.deduceMemberInReals(index, assumptions=summand_assumptions)
+                    except:
+                        pass
             elif hasattr(expr.domain, 'deduceMemberInRealsPos'):
                 for index in expr.indices:
-                    expr.domain.deduceMemberInRealsPos(index, assumptions=summand_assumptions)
+                    try:
+                        expr.domain.deduceMemberInRealsPos(index, assumptions=summand_assumptions)
+                    except:
+                        pass
+            elif hasattr(expr.domain, 'deduceMemberInRealsNeg'):
+                for index in expr.indices:
+                    try:
+                        expr.domain.deduceMemberInRealsNeg(index, assumptions=summand_assumptions)
+                    except:
+                        pass
             elif hasattr(expr.domain, 'deduceMemberInComplexes'):
                 for index in expr.indices:
-                    expr.domain.deduceMemberInIntegers(index, assumptions=summand_assumptions)
+                    try:
+                        expr.domain.deduceMemberInIntegers(index, assumptions=summand_assumptions)
+                    except:
+                        pass
             
             # Now we need to deduce that the summands are all in the number set
             summandInNumberSet = deduceInNumberSet(expr.summand, numberSet, assumptions=summand_assumptions).checked(summand_assumptions)
-            print summandInNumberSet
+            #print summandInNumberSet
             summandInNumberSet.generalize(expr.indices, domain=expr.domain).checked(assumptions)
             
             assert len(iVars) == 2 # instance function and domain -- conditions not implemented at this time
@@ -218,7 +328,8 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
         else:
             assert len(iVars) == len(expr.operands), 'Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression'
             closureSpec = closureThm.specialize({iVar:operand for iVar, operand in zip(iVars, expr.operands)})
-    # deduce any of the requirements for the notEqZeroThm application
+    # deduce any of the requirements for the closureThm application
+    #print closureThm
     _deduceRequirements(closureThm, closureSpec, assumptions)
     try:
         return In(expr, numberSet).checked(assumptions)
@@ -257,11 +368,19 @@ def deduceInReals(exprOrList, assumptions=frozenset()):
 
 def deduceInRealsPos(exprOrList, assumptions=frozenset()):
     '''
-    For each given expression, attempt to derive that it is in the set of reals
+    For each given expression, attempt to derive that it is in the set of RealsPos
     under the given assumptions.  If successful, returns the deduced statement,
     otherwise raises an Exception.    
     '''
     return deduceInNumberSet(exprOrList, RealsPos, assumptions=assumptions)
+
+def deduceInRealsNeg(exprOrList, assumptions=frozenset()):
+    '''
+    For each given expression, attempt to derive that it is in the set of RealsNeg
+    under the given assumptions.  If successful, returns the deduced statement,
+    otherwise raises an Exception.    
+    '''
+    return deduceInNumberSet(exprOrList, RealsNeg, assumptions=assumptions)
 
 def deduceInComplexes(exprOrList, assumptions=frozenset()):
     '''
@@ -271,13 +390,14 @@ def deduceInComplexes(exprOrList, assumptions=frozenset()):
     '''
     return deduceInNumberSet(exprOrList, Complexes, assumptions=assumptions)
 
-def deduceNotZero(exprOrList, assumptions=frozenset()):
+def deduceNotZero(exprOrList, assumptions=frozenset(), dontTryPos=False, dontTryNeg=False):
     '''
     For each given expression, attempt to derive that it is not equal to zero
     under the given assumptions.  If successful, returns the deduced statement,
     otherwise raises an Exception.  
     '''
     from proveit.number import num
+    import real.theorems
     if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
@@ -290,6 +410,28 @@ def deduceNotZero(exprOrList, assumptions=frozenset()):
         return NotEquals(expr, num(0)).checked(assumptions)
     except:
         pass # not so simple
+
+    if not dontTryPos:
+        try:
+            # see if we can deduce in positive first
+            deducePositive(expr, assumptions)
+            isPos = True
+        except:
+            isPos = False # not so simple
+        if isPos:
+            deduceInReals(expr, assumptions)
+            return real.theorems.positive_implies_notzero.specialize({a:expr}).checked(assumptions)
+
+    if not dontTryNeg:
+        try:
+            # see if we can deduce in negative first
+            deduceNegative(expr, assumptions)
+            isNeg = True
+        except:
+            isNeg = False # not so simple
+        if isNeg:
+            deduceInReals(expr, assumptions)
+            return real.theorems.negative_implies_notzero.specialize({a:expr}).checked(assumptions)
 
     # Try using notEqZeroTheorem
     if not isinstance(expr, NumberOp):
@@ -325,6 +467,7 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     otherwise raises an Exception.  
     '''
     from proveit.number import GreaterThan, num
+    import real.theorems
     if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
@@ -341,10 +484,13 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     if not dontTryRealsPos:
         try:
             # see if we can deduce in RealsPos first
-            deduceInRealsPos(expr, assumptions, dontTryPos=True)
-            return real.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveRight().checked(assumptions)
+            deduceInNumberSet(expr, RealsPos, assumptions, dontTryPos=True)
+            inRealsPos = True
         except:
-            pass # not so simple
+            inRealsPos = False # not so simple
+        if inRealsPos:
+            deduceInReals(expr, assumptions)
+            return real.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveRight().checked(assumptions)
 
     # Try using positiveTheorem
     if not isinstance(expr, NumberOp):
@@ -355,7 +501,7 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     positiveThm = expr._positiveTheorem()
     if positiveThm is None:
         raise DeducePositiveException(expr, assumptions)
-    assert isinstance(positiveThm, Forall), 'Expecting notEqZero theorem to be a Forall expression'
+    assert isinstance(positiveThm, Forall), 'Expecting deduce positive theorem to be a Forall expression'
     iVars = positiveThm.instanceVars
     # Specialize the closure theorem differently for AccociativeOperation compared with other cases
     if isinstance(expr, AssociativeOperation):
@@ -373,21 +519,104 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     except:
         raise DeducePositiveException(expr, assumptions)
 
+def deduceNegative(exprOrList, assumptions=frozenset(), dontTryRealsNeg=False):
+    '''
+    For each given expression, attempt to derive that it is negative
+    under the given assumptions.  If successful, returns the deduced statement,
+    otherwise raises an Exception.  
+    '''
+    from proveit.number import LessThan, num
+    import real.theorems
+    if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
+        raise Exception('assumptions should be a set')
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
+        # If it isn't an Expression, assume it's iterable and deduce each
+        return [deduceNegative(expr, assumptions=assumptions) for expr in exprOrList]
+    # A single Expression:
+    expr = exprOrList
+    try:
+        # may be done before we started
+        return LessThan(expr, num(0)).checked(assumptions)
+    except:
+        pass # not so simple
+
+    if not dontTryRealsNeg:
+        try:
+            # see if we can deduce in RealsNeg first
+            deduceInNumberSet(expr, RealsNeg, assumptions, dontTryNeg=True)
+            inRealsNeg = True
+        except:
+            inRealsNeg = False # not so simple
+        if inRealsNeg:
+            deduceInReals(expr, assumptions)
+            return real.theorems.inRealsNeg_iff_negative.specialize({a:expr}).deriveRight().checked(assumptions)
+
+    # Try using negativeTheorem
+    if not isinstance(expr, NumberOp):
+        # See of the Expression class has deduceNotZero method (as a last resort):
+        if hasattr(expr, 'deduceNegative'):
+            return expr.deduceNegative()
+        raise DeduceNegativeException(expr, assumptions)
+    negativeThm = expr._negativeTheorem()
+    if negativeThm is None:
+        raise DeduceNegativeException(expr, assumptions)
+    assert isinstance(negativeThm, Forall), 'Expecting deduce negative theorem to be a Forall expression'
+    iVars = negativeThm.instanceVars
+    # Specialize the closure theorem differently for AccociativeOperation compared with other cases
+    if isinstance(expr, AssociativeOperation):
+        assert len(iVars) == 1, 'Expecting one instance variables for the negative theorem of an AssociativeOperation'
+        assert isinstance(iVars[0], Etcetera), 'Expecting the instance variable for the negative theorem of an AssociativeOperation to be an Etcetera Variable'
+        negativeSpec = negativeThm.specialize({iVars[0]:expr.operands})
+    else:
+        if len(iVars) != len(expr.operands):
+            raise Exception('Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression')
+        negativeSpec = negativeThm.specialize({iVar:operand for iVar, operand in zip(iVars, expr.operands)})
+    # deduce any of the requirements for the notEqZeroThm application
+    _deduceRequirements(negativeThm, negativeSpec, assumptions)
+    try:
+        return LessThan(expr, num(0)).checked(assumptions)
+    except:
+        raise DeduceNegativeException(expr, assumptions)
+
 def _deduceRequirements(theorem, specializedExpr, assumptions):
     # Grab the conditions for the specialized expression of the given theorem
     # and see if we need a further deductions for those requirements.
-    from proveit.number import num
     for stmt, _, _, conditions in specializedExpr.statement._specializers:
         if stmt._expression == theorem:
             # check each condition and apply recursively if it is in some set                
             for condition in conditions:
                 condition = condition._expression
-                if isinstance(condition, In):
-                    domain = condition.domain
-                    elem = condition.element
-                    deduceInNumberSet(elem, numberSet=domain, assumptions=assumptions)
-                elif isinstance(condition, NotEquals) and condition.rhs == num(0):
-                    deduceNotZero(condition.lhs, assumptions=assumptions)
+                if isinstance(condition, Or):
+                    # just one of an or'd list must be satisfied
+                    trueConditionOperand = None
+                    for possibility in condition.operands:
+                        # We need to deduce that each operand is in BOOLEANS
+                        if possibility.hasattr('deduceInBools'):
+                            possibility.deduceInBools(assumptions)
+                        try:
+                            # see if this is a satisfied condition
+                            _deduceRequirement(possibility, assumptions)
+                            trueConditionOperand = possibility
+                        except:
+                            pass
+                    if trueConditionOperand is not None:
+                        # conclude the "or" condition from one true condition operand
+                        condition.concludeViaExample(trueConditionOperand)
+                else:
+                    _deduceRequirement(condition, assumptions)
+
+def _deduceRequirement(condition, assumptions):
+    from proveit.number import num, LessThan, GreaterThan
+    if isinstance(condition, In):
+        domain = condition.domain
+        elem = condition.element
+        deduceInNumberSet(elem, numberSet=domain, assumptions=assumptions)
+    elif isinstance(condition, NotEquals) and condition.rhs == num(0):
+        deduceNotZero(condition.lhs, assumptions=assumptions)
+    elif isinstance(condition, GreaterThan) and condition.rhs == num(0):
+        deducePositive(condition.lhs, assumptions=assumptions)
+    elif isinstance(condition, LessThan) and condition.rhs == num(0):
+        deduceNegative(condition.lhs, assumptions=assumptions)
     
 
 class DeduceInNumberSetException(Exception):
@@ -412,3 +641,9 @@ class DeducePositiveException(Exception):
     def __str__(self):
         return 'Unable to prove ' + str(self.expr) + ' is positive under assumptions: ' + str(self.assumptions)
 
+class DeduceNegativeException(Exception):
+    def __init__(self, expr, assumptions):
+        self.expr = expr
+        self.assumptions = assumptions
+    def __str__(self):
+        return 'Unable to prove ' + str(self.expr) + ' is negative under assumptions: ' + str(self.assumptions)
