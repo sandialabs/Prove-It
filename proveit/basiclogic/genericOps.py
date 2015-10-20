@@ -160,7 +160,7 @@ class OperationOverInstances(Operation):
                 outStr += ' in ' if formatType == STRING else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)
             if hasExplicitConditions:
-                if hasExplicitIvars: outStr += " | "
+                if hasExplicitIvars: outStr += "~|~"
                 outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += r'\right]'
