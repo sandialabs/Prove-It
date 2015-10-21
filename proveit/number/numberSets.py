@@ -163,17 +163,19 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             return In(expr, numberSet).checked(assumptions)
         except:
             ruledOutSets = ruledOutSets | {Integers} # ruled out Integers
-    if not dontTryPos and (numberSet == Complexes or numberSet == Reals or numberSet == RealsPos):
+    if not dontTryPos and numberSet == RealsPos:
         try:
             # try deducing in the RealsPos for greater than zero
             deducePositive(expr, assumptions=assumptions, dontTryRealsPos=True)
+            deduceInReals(expr, assumptions)
             return real.theorems.inRealsPos_iff_positive.specialize({a:expr}).deriveLeft()
         except:
             pass
-    if not dontTryNeg and (numberSet == Complexes or numberSet == Reals or numberSet == RealsNeg):
+    if not dontTryNeg and numberSet == RealsNeg:
         try:
             # try deducing in the RealsNeg for greater than zero
             deduceNegative(expr, assumptions=assumptions, dontTryRealsNeg=True)
+            deduceInReals(expr, assumptions)
             return real.theorems.inRealsNeg_iff_negative.specialize({a:expr}).deriveLeft()
         except:
             pass
