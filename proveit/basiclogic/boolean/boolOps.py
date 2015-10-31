@@ -212,7 +212,7 @@ class Not(Operation):
         From :math:`\lnot A`, derive and return :math:`A \Rightarrow \mathtt{FALSE}`.
         '''
         from theorems import contradictionFromNegation
-        return contradictionFromNegation.specialize({A:self.operand}).checked({self})
+        return contradictionFromNegation.specialize({A:self.operand}).deriveConclusion().checked({self})
     
     def deriveNotEquals(self):
         r'''
