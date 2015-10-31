@@ -32,6 +32,10 @@ class DiscreteContiguousSet(BinaryOperation):
         else:
             return r'\{'+self.lowerBound.formatted(formatType, fence=fence) +'...'+ self.upperBound.formatted(formatType, fence=fence)+'\}'
 
+    def deduceElemInSet(self, member):
+        from integer.theorems import inInterval
+        return inInterval.specialize({a:self.lowerBound, b:self.upperBound, n:member})
+
     def deduceMemberLowerBound(self, member, assumptions=frozenset()):
         from integer.theorems import intervalLowerBound
         from numberSets import deduceInIntegers
@@ -63,8 +67,9 @@ class DiscreteContiguousSet(BinaryOperation):
     def deduceMemberInNaturalsPos(self, member, assumptions=frozenset()):
         from natural.theorems import allInDiscreteInterval_InNatsPos
         from numberSets import deduceInNaturalsPos
-        deduceInNaturalsPos(self.lowerBound, assumptions=assumptions)
-        deduceInNaturalsPos(self.upperBound, assumptions=assumptions)
+        deduceInIntegers(self.lowerBound, assumptions=assumptions)
+        deduceInIntegers(self.upperBound, assumptions=assumptions)
+        deducePositive(self.lowerBound, assumptions=assumptions)
         return allInDiscreteInterval_InNatsPos.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
     def deduceMemberIsPositive(self, member, assumptions=frozenset()):
@@ -104,6 +109,10 @@ class IntervalOO(Interval):
         else:
             return r'('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r')'
 
+    def deduceElemInSet(self, member):
+        from real.theorems import inIntervalOO
+        return inIntervalOO.specialize({a:self.lowerBound, b:self.upperBound, x:member})
+
     def deduceMemberLowerBound(self, member, assumptions=frozenset()):
         from real.theorems import intervalOOLowerBound
         from numberSets import deduceInReals
@@ -125,6 +134,14 @@ class IntervalOO(Interval):
         deduceInReals(self.upperBound, assumptions=assumptions)
         return allInIntervalOO_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
+    def deduceRescaledMembership(self, member, scaleFactor, assumptions=frozenset()):
+        from real.theorems import rescaleInIntervalOO
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        deduceInReals(scaleFactor, assumptions=assumptions)
+        return rescaleInIntervalOO.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+
 INTERVALOO = Literal(pkg, 'INTERVALOO', operationMaker = lambda operands : IntervalOO(*operands))
 
 
@@ -138,6 +155,10 @@ class IntervalOC(Interval):
             return r'\left('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right]'
         else:
             return r'('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r']'
+
+    def deduceElemInSet(self, member):
+        from real.theorems import inIntervalOC
+        return inIntervalOC.specialize({a:self.lowerBound, b:self.upperBound, x:member})
 
     def deduceMemberLowerBound(self, member, assumptions=frozenset()):
         from real.theorems import intervalOCLowerBound
@@ -160,6 +181,14 @@ class IntervalOC(Interval):
         deduceInReals(self.upperBound, assumptions=assumptions)
         return allInIntervalOC_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
+    def deduceRescaledMembership(self, member, scaleFactor, assumptions=frozenset()):
+        from real.theorems import rescaleInIntervalOC
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        deduceInReals(scaleFactor, assumptions=assumptions)
+        return rescaleInIntervalOC.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+
 INTERVALOC = Literal(pkg, 'INTERVALOC', operationMaker = lambda operands : IntervalOC(*operands))
 
 class IntervalCO(Interval):
@@ -172,6 +201,10 @@ class IntervalCO(Interval):
             return r'\left['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right)'
         else:
             return r'['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r')'
+
+    def deduceElemInSet(self, member):
+        from real.theorems import inIntervalCO
+        return inIntervalCO.specialize({a:self.lowerBound, b:self.upperBound, x:member})
 
     def deduceMemberLowerBound(self, member, assumptions=frozenset()):
         from real.theorems import intervalCOLowerBound
@@ -194,10 +227,18 @@ class IntervalCO(Interval):
         deduceInReals(self.upperBound, assumptions=assumptions)
         return allInIntervalCO_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
+    def deduceRescaledMembership(self, member, scaleFactor, assumptions=frozenset()):
+        from real.theorems import rescaleInIntervalCO
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        deduceInReals(scaleFactor, assumptions=assumptions)
+        return rescaleInIntervalCO.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+
 INTERVALCO = Literal(pkg, 'INTERVALCO', operationMaker = lambda operands : IntervalCO(*operands))
 
 class IntervalCC(Interval):
-
+    
     def __init__(self,lowerBound,upperBound):
         Interval.__init__(self,INTERVALCC,lowerBound,upperBound)
         
@@ -206,6 +247,10 @@ class IntervalCC(Interval):
             return r'\left['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right]'
         else:
             return r'['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r']'
+
+    def deduceElemInSet(self, member):
+        from real.theorems import inIntervalCC
+        return inIntervalCC.specialize({a:self.lowerBound, b:self.upperBound, x:member})
 
     def deduceMemberLowerBound(self, member, assumptions=frozenset()):
         from real.theorems import intervalCCLowerBound
@@ -227,6 +272,14 @@ class IntervalCC(Interval):
         deduceInReals(self.lowerBound, assumptions=assumptions)
         deduceInReals(self.upperBound, assumptions=assumptions)
         return allInIntervalCC_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+
+    def deduceRescaledMembership(self, member, scaleFactor, assumptions=frozenset()):
+        from real.theorems import rescaleInIntervalCC
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        deduceInReals(scaleFactor, assumptions=assumptions)
+        return rescaleInIntervalCC.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
 
 INTERVALCC = Literal(pkg, 'INTERVALCC', operationMaker = lambda operands : IntervalCC(*operands))
 
@@ -276,6 +329,25 @@ class OrderingRelation(BinaryOperation):
 #                    return other.rhsSubstitute(X,
         return self.transitivityImpl(other).deriveConclusion().checked({self, other})
 
+    def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
+        raise NotImplementedError('deriveShifted is implemented for each specific OrderingRelation')
+
+    def deriveAdded(self, otherOrderingRelation, assumptions=frozenset()):
+        r'''
+        Add this ordering relation with another ordering relation.
+        For example, if self is (a < b) and otherOrderingRelation is (c < d), then
+        this derives and returns (a + c < b + d).
+        '''
+        other = otherOrderingRelation
+        if not (isinstance(other, OrderingRelation)):
+            raise ValueError("Expecting 'otherOrderingRelation' to be an OrderingRelation")
+        if (isinstance(self, LessThan) or isinstance(self, LessThanEquals)) != (isinstance(other, LessThan) or isinstance(other, LessThanEquals)):
+            # reverse other to be consistent with self (both less than type or greater than type)
+            other = other.deriveReversed()
+        shiftedSelf = self.deriveShifted(other.lhs, 'right', assumptions) # e.g., a + c < b + c
+        shiftedOther = other.deriveShifted(self.rhs, 'left', assumptions) # e.g., b + c < b + d
+        return shiftedSelf.applyTransitivity(shiftedOther) # e.g., a + c < b + d
+
 class LessThan(OrderingRelation):
     def __init__(self, lhs, rhs):
         r'''
@@ -283,7 +355,7 @@ class LessThan(OrderingRelation):
         '''
         OrderingRelation.__init__(self, LESSTHAN,lhs,rhs)
         
-    def deduceInBooleans(self, assumptions):
+    def deduceInBooleans(self, assumptions=frozenset()):
         from real.theorems import lessThanInBools
         deduceInReals(self.lhs, assumptions)
         deduceInReals(self.rhs, assumptions)
@@ -316,7 +388,7 @@ class LessThan(OrderingRelation):
         if other.lhs == self.rhs:
             if isinstance(other,LessThan):
                 result = lessThanTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
-                print self,result
+                #print self,result
                 return result.checked({self})
             elif isinstance(other,LessThanEquals):
                 result = lessThanTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
@@ -331,6 +403,38 @@ class LessThan(OrderingRelation):
         else:
             raise ValueError("Cannot derive implication from input!")
 
+    def deriveNegated(self, assumptions=frozenset()):
+        '''
+        From :math:`a < b`, derive and return :math:`-a > -b`.
+        Assumptions may be required to prove that a, and b are in Reals.        
+        '''
+        from real.theorems import negatedLessThan
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return negatedLessThan.specialize({a:self.lhs, b:self.rhs})
+        
+    def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
+        r'''
+        From :math:`a < b`, derive and return :math:`a + c < b + c` where c is the given shift.
+        Assumptions may be required to prove that a, b, and c are in Reals.
+        '''
+        from real.theorems import lessThanAddRight, lessThanAddLeft, lessThanSubtract
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        deduceInReals(addend, assumptions)
+        if addendSide == 'right':
+            '''
+            # Do this later and get it to work properly with deriveAdded
+            if isinstance(addend, Neg):
+                deduceInReals(addend.operand, assumptions)
+                return lessThanSubtract.specialize({a:self.lhs, b:self.rhs, c:addend.operand}).checked(assumptions)
+            else:
+            '''
+            return lessThanAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+        elif addendSide == 'left':
+            return lessThanAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+        else:
+            raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
 LESSTHAN = Literal(pkg,'LESSTHAN', {STRING: r'<', LATEX:r'<'}, operationMaker = lambda operands : LessThan(*operands))
 
@@ -341,12 +445,18 @@ class LessThanEquals(OrderingRelation):
         '''
         OrderingRelation.__init__(self, LESSTHANEQUALS,lhs,rhs)
         
-    def deduceInBooleans(self, assumptions):
+    def deduceInBooleans(self, assumptions=frozenset()):
         from real.theorems import lessThanEqualsInBools
         deduceInReals(self.lhs, assumptions)
         deduceInReals(self.rhs, assumptions)
         return lessThanEqualsInBools.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
-        
+    
+    def unfold(self, assumptions=frozenset()):
+        from real.axioms import lessThanEqualsDef
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return lessThanEqualsDef.specialize({x:self.lhs, y:self.rhs})
+    
     def transitivityImpl(self,other):
         from proveit.number.axioms import reverseGreaterThanEquals, reverseGreaterThan
         from proveit.number.axioms import lessThanEqualsTransLessThanRight, lessThanEqualsTransLessThanEqualsRight
@@ -378,6 +488,39 @@ class LessThanEquals(OrderingRelation):
  #           result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConclusion()
         else:
             raise ValueError("Cannot derive implication from input!")
+
+    def deriveNegated(self, assumptions=frozenset()):
+        '''
+        From :math:`a \leq b`, derive and return :math:`-a \geq -b`.
+        Assumptions may be required to prove that a, and b are in Reals.        
+        '''
+        from real.theorems import negatedLessThanEquals
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return negatedLessThanEquals.specialize({a:self.lhs, b:self.rhs})
+    
+    def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
+        r'''
+        From :math:`a \leq b`, derive and return :math:`a + c \leq b + c` where c is the given shift.
+        Assumptions may be required to prove that a, b, and c are in Reals.
+        '''
+        from real.theorems import lessThanEqualsAddRight, lessThanEqualsAddLeft, lessThanEqualsSubtract
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        deduceInReals(addend, assumptions)
+        if addendSide == 'right':
+            '''
+            # Do this later and get it to work properly with deriveAdded
+            if isinstance(addend, Neg):
+                deduceInReals(addend.operand, assumptions)
+                return lessThanEqualsSubtract.specialize({a:self.lhs, b:self.rhs, c:addend.operand}).checked(assumptions)
+            else:
+            '''
+            return lessThanEqualsAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+        elif addendSide == 'left':
+            return lessThanEqualsAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+        else:
+            raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
         
 LESSTHANEQUALS = Literal(pkg,'LESSTHANEQUALS', {STRING: r'<=', LATEX:r'\leq'}, operationMaker = lambda operands : LessThanEquals(*operands))
 
@@ -389,7 +532,7 @@ class GreaterThan(OrderingRelation):
         '''
         OrderingRelation.__init__(self, GREATERTHAN,lhs,rhs)
         
-    def deduceInBooleans(self, assumptions):
+    def deduceInBooleans(self, assumptions=frozenset()):
         from real.theorems import greaterThanInBools
         deduceInReals(self.lhs, assumptions)
         deduceInReals(self.rhs, assumptions)
@@ -436,6 +579,39 @@ class GreaterThan(OrderingRelation):
         else:
             raise ValueError("Cannot derive implication from input!")
 
+    def deriveNegated(self, assumptions=frozenset()):
+        '''
+        From :math:`a > b`, derive and return :math:`-a < -b`.
+        Assumptions may be required to prove that a, and b are in Reals.        
+        '''
+        from real.theorems import negatedGreaterThan
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return negatedGreaterThan.specialize({a:self.lhs, b:self.rhs})
+
+    def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
+        r'''
+        From :math:`a > b`, derive and return :math:`a + c > b + c` where c is the given shift.
+        Assumptions may be required to prove that a, b, and c are in Reals.
+        '''
+        from real.theorems import greaterThanAddRight, greaterThanAddLeft, greaterThanSubtract
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        deduceInReals(addend, assumptions)
+        if addendSide == 'right':
+            '''
+            # Do this later and get it to work properly with deriveAdded
+            if isinstance(addend, Neg):
+                deduceInReals(addend.operand, assumptions)
+                return greaterThanSubtract.specialize({a:self.lhs, b:self.rhs, c:addend.operand}).checked(assumptions)
+            else:
+            '''
+            return greaterThanAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+        elif addendSide == 'left':
+            return greaterThanAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+        else:
+            raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
+
 GREATERTHAN = Literal(pkg,'GREATERTHAN', {STRING: r'>', LATEX:r'>'}, operationMaker = lambda operands : GreaterThan(*operands))
 
 class GreaterThanEquals(OrderingRelation):
@@ -445,11 +621,17 @@ class GreaterThanEquals(OrderingRelation):
         '''
         OrderingRelation.__init__(self, GREATERTHANEQUALS,lhs,rhs)
 
-    def deduceInBooleans(self, assumptions):
+    def deduceInBooleans(self, assumptions=frozenset()):
         from real.theorems import greaterThanEqualsInBools
         deduceInReals(self.lhs, assumptions)
         deduceInReals(self.rhs, assumptions)
         return greaterThanEqualsInBools.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
+
+    def unfold(self, assumptions=frozenset()):
+        from real.axioms import greaterThanEqualsDef
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return greaterThanEqualsDef.specialize({x:self.lhs, y:self.rhs})
     
     def transitivityImpl(self,other):
         from proveit.number.axioms import reverseLessThanEquals, reverseLessThan
@@ -481,6 +663,39 @@ class GreaterThanEquals(OrderingRelation):
                 return result
         else:
             raise ValueError("Cannot derive implication from input!")
+
+    def deriveNegated(self, assumptions=frozenset()):
+        '''
+        From :math:`a \geq b`, derive and return :math:`-a \leq -b`.
+        Assumptions may be required to prove that a, and b are in Reals.        
+        '''
+        from real.theorems import negatedGreaterThanEquals
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        return negatedGreaterThanEquals.specialize({a:self.lhs, b:self.rhs})
+
+    def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
+        r'''
+        From :math:`a \geq b`, derive and return :math:`a + c \geq b + c` where c is the given shift.
+        Assumptions may be required to prove that a, b, and c are in Reals.
+        '''
+        from real.theorems import greaterThanEqualsAddRight, greaterThanEqualsAddLeft, greaterThanEqualsSubtract
+        deduceInReals(self.lhs, assumptions)
+        deduceInReals(self.rhs, assumptions)
+        deduceInReals(addend, assumptions)
+        if addendSide == 'right':
+            '''
+            # Do this later and get it to work properly with deriveAdded
+            if isinstance(addend, Neg):
+                deduceInReals(addend.operand, assumptions)
+                return greaterThanEqualsSubtract.specialize({a:self.lhs, b:self.rhs, c:addend.operand}).checked(assumptions)
+            else:
+            '''
+            return greaterThanEqualsAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+        elif addendSide == 'left':
+            return greaterThanEqualsAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+        else:
+            raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
 GREATERTHANEQUALS = Literal(pkg,'GREATERTHANEQUALS', {STRING: r'>=', LATEX:r'\geq'}, operationMaker = lambda operands : GreaterThanEquals(*operands))
 
@@ -531,7 +746,11 @@ class Abs(Operation, NumberOp):
             return '|'+self.operand.formatted(formatType, fence=fence)+'|'
         elif formatType == LATEX:
             return r'\left|'+self.operand.formatted(formatType, fence=fence)+r'\right|'
-        
+
+    def deduceGreaterThanEqualsZero(self, assumptions=frozenset()):
+        from complex.theorems import absIsNonNeg
+        deduceInComplexes(self.operand, assumptions)
+        return absIsNonNeg.specialize({a:self.operand}).checked(assumptions)
 
 ABS = Literal(pkg, 'ABS', operationMaker = lambda operands : Abs(*operands))
 
@@ -553,6 +772,67 @@ class Add(AssociativeOperation, NumberOp):
             return complex.theorems.addClosure
         elif numberSet == Integers:
             return integer.theorems.addClosure
+
+    def simplification(self, assumptions=frozenset()):
+        '''
+        For the trivial case of a zero term,
+        derive and return this Add expression equated with a simplified form.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        from complex.theorems import addZero
+        from number import zero
+        eq = Equation()
+        expr = self
+        try:
+            zeroIdx = expr.operands.index(zero)
+            # there is a zero in the sum.  We can simplify that.
+            if zeroIdx > 0:
+                # commute it so that the zero comes first
+                expr = eq.update(expr.commute(0, zeroIdx, zeroIdx, zeroIdx+1, assumptions)).rhs
+            if len(expr.operands) > 2:
+                # group the other operands so there are only two at the top level
+                expr = eq.update(expr.group(1, len(expr.operands), assumptions)).rhs
+            deduceInComplexes(expr.operands[1], assumptions)
+            return eq.update(addZero.specialize({x:expr.operands[1]}))
+        except ValueError:
+            raise ValueError('Only trivial simplification is implemented (zero term)')
+        
+    def simplified(self, assumptions=frozenset()):
+        '''
+        For the trivial case of a zero term,
+        derive this Add expression equated with a simplified form
+        and return the simplified form.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        return self.simplification(assumptions).rhs
+    
+    def subtractionFolding(self, termIdx=None, assumptions=frozenset()):
+        '''
+        Given a negated term, termIdx or the first negated term if termIdx is None,
+        deduce the equivalence between self and a Subtract form (with the specified
+        negated term on the right of the subtraction).  Assumptions
+        may be necessary to deduce operands being in the set of Complexes.
+        '''
+        from complex.theorems import addNegAsSubtract
+        if termIdx is None:
+            for k, term in enumerate(self.terms):
+                if isinstance(term, Neg):
+                    termIdx = k
+                    break
+            if termIdx is None:
+                raise Exception("No negated term, can't provide the subtraction folding.")
+        if not isinstance(self.terms[termIdx], Neg):
+            raise ValueError("Specified term is not negated, can't provide the subtraction folding.")
+        expr = self
+        if termIdx != -1 and termIdx != len(expr.terms)-1:
+            # put the negative term at the end
+            expr = expr.commute(termIdx, termIdx+1, -1)
+        if len(expr.terms) > 2:
+            # group all of the other terms
+            expr = expr.group(0, -1)
+        deduceInComplexes(expr.operands[0], assumptions)
+        deduceInComplexes(expr.operands[-1].operand, assumptions)
+        return addNegAsSubtract.specialize({x:expr.operands[0], y:expr.operands[-1].operand})
     
     def deduceInNaturalsPosDirectly(self, assumptions=frozenset(), ruledOutSets=frozenset(), dontTryPos=False, dontTryNeg=False):
         '''
@@ -659,6 +939,7 @@ class Add(AssociativeOperation, NumberOp):
 
         from proveit.number.complex.theorems import addAssocRev
         deduceInComplexes(self.operands, assumptions)
+        deduceInComplexes(self.operands[idx].operands, assumptions)
         xSub = self.operands[:idx] if idx is not None else []
         ySub = self.operands[idx].operands
         zSub = self.operands[idx+1:] if idx is not None else []
@@ -683,11 +964,10 @@ class Subtract(BinaryOperation, NumberOp):
             return real.theorems.subtractClosure
         elif numberSet == Complexes:
             return complex.theorems.subtractClosure
+        elif numberSet == Integers:
+            return integer.theorems.subtractClosure
         elif numberSet == Naturals:
-            if self.operands[1] == one:
-                return natural.theorems.subtractOneInNats
-            else:
-                return integer.theorems.subtractClosureNats
+            return integer.theorems.subtractClosureNats
         elif numberSet == NaturalsPos:
             return integer.theorems.subtractClosureNatsPos
             
@@ -758,8 +1038,8 @@ class Subtract(BinaryOperation, NumberOp):
         '''
         from complex.theorems import subtractCancelElimSums, subtractCancelElimLeftSum, subtractCancelElimRightSum
         from complex.theorems import subtractCancelTwoSums, subtractCancelLeftSum, subtractCancelRightSum
-        deduceInComplexes(self.operands[0].operands, assumptions=assumptions)
-        deduceInComplexes(self.operands[1].operands, assumptions=assumptions)
+        from complex.theorems import subtractCancelLeftSumSingleRight, subtractCancelLeftSumSingleLeft, subtractCancelRightSumSingleRight, subtractCancelRightSumSingleLeft 
+        from number import zero
         dummy = self.safeDummyVar()
         eq = Equation()
         expr = self
@@ -771,6 +1051,8 @@ class Subtract(BinaryOperation, NumberOp):
             expr = eq.eqExpr.rhs
         if isinstance(expr.operands[0], Add):
             if isinstance(expr.operands[1], Add):
+                deduceInComplexes(expr.operands[0].operands, assumptions=assumptions)
+                deduceInComplexes(expr.operands[1].operands, assumptions=assumptions)                
                 foundOne = False
                 for idx1 in xrange(len(expr.operands[0].operands)):
                     try:
@@ -798,7 +1080,6 @@ class Subtract(BinaryOperation, NumberOp):
                         expr = eq.eqExpr.rhs
                     assert expr.operands[0].operands[0] == expr.operands[1].operands[0] # the form we were supposed to get to
                     eq.update(subtractCancelElimSums.specialize({x:expr.operands[0].operands[0], y:expr.operands[0].operands[1], z:expr.operands[1].operands[1]}))
-                    return eq.eqExpr
                 elif len(expr.operands[0].operands) == 2:
                     # special case where Add on the left is eliminated
                     if idx1 > 0:
@@ -811,7 +1092,6 @@ class Subtract(BinaryOperation, NumberOp):
                     ySub = expr.operands[1].operands[:idx2]
                     zSub = expr.operands[1].operands[idx2+1:]
                     eq.update(subtractCancelElimLeftSum.specialize({w:wSub, x:xSub, yEtc:ySub, zEtc:zSub}))
-                    return eq.eqExpr
                 elif len(expr.operands[1].operands) == 2:
                     # special case where Add on the right is eliminated
                     if idx2 > 0:
@@ -824,33 +1104,51 @@ class Subtract(BinaryOperation, NumberOp):
                     ySub = expr.operands[0].operands[idx1+1:]
                     zSub = expr.operands[1].operands[1]
                     eq.update(subtractCancelElimRightSum.specialize({wEtc:wSub, x:xSub, yEtc:ySub, z:zSub}))
-                    return eq.eqExpr
-                vSub = expr.operands[0].operands[:idx1]
-                xSub = expr.operands[0].operands[idx1+1:]
-                ySub = expr.operands[1].operands[:idx2]
-                zSub = expr.operands[1].operands[idx2+1:]
-                eq.update(subtractCancelTwoSums.specialize({vEtc:vSub, w:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions))
-                return eq.eqExpr
+                else:
+                    vSub = expr.operands[0].operands[:idx1]
+                    xSub = expr.operands[0].operands[idx1+1:]
+                    ySub = expr.operands[1].operands[:idx2]
+                    zSub = expr.operands[1].operands[idx2+1:]
+                    eq.update(subtractCancelTwoSums.specialize({vEtc:vSub, w:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions))
             else:
+                deduceInComplexes(expr.operands[0].operands, assumptions=assumptions)
+                deduceInComplexes(expr.operands[1], assumptions=assumptions)                
                 ySub = expr.operands[1]
                 try:
                     idx1 = expr.operands[0].operands.index(ySub)
                 except:
                     raise Exception(str(ySub) + " not found in " + str(expr.operands[0]) + " for a subtraction cancel")                    
-                xSub = expr.operands[0].operands[:idx1]
-                zSub = expr.operands[0].operands[idx1+1:]
-                eq.update(subtractCancelLeftSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions))
-                return eq.eqExpr
+                if len(expr.operands[0].operands) == 2:
+                    # only one term remains
+                    if idx1 == 0:
+                        eq.update(subtractCancelLeftSumSingleRight.specialize({y:ySub, x:expr.operands[0].operands[1]})).checked(assumptions)
+                    else:
+                        eq.update(subtractCancelLeftSumSingleLeft.specialize({y:ySub, x:expr.operands[0].operands[0]})).checked(assumptions)                        
+                else:
+                    xSub = expr.operands[0].operands[:idx1]
+                    zSub = expr.operands[0].operands[idx1+1:]
+                    eq.update(subtractCancelLeftSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions))
         else:
+            deduceInComplexes(expr.operands[0], assumptions=assumptions)
+            deduceInComplexes(expr.operands[1].operands, assumptions=assumptions)                
             ySub = expr.operands[0]
             try:
                 idx2 = expr.operands[1].operands.index(ySub)
             except:
                 raise Exception(str(ySub) + " not found in " + str(expr.operands[1]) + " for a subtraction cancel")                    
-            xSub = expr.operands[1].operands[:idx2]
-            zSub = expr.operands[1].operands[idx2+1:]
-            eq.update(subtractCancelRightSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions))
-            return eq.eqExpr
+            if len(expr.operands[1].operands) == 2:
+                # only one term remains
+                if idx2 == 0:
+                    eq.update(subtractCancelRightSumSingleRight.specialize({y:ySub, x:expr.operands[1].operands[1]})).checked(assumptions)
+                else:
+                    eq.update(subtractCancelRightSumSingleLeft.specialize({y:ySub, x:expr.operands[1].operands[0]})).checked(assumptions)                        
+            else:
+                xSub = expr.operands[1].operands[:idx2]
+                zSub = expr.operands[1].operands[idx2+1:]
+                eq.update(subtractCancelRightSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions))
+        if isinstance(eq.eqExpr.rhs, Neg) and (isinstance(eq.eqExpr.rhs.operand, Neg) or eq.eqExpr.rhs.operand == zero):
+            eq.update(eq.eqExpr.rhs.simplification(assumptions)) # take care of double negation or zero negation
+        return eq.eqExpr
 
 SUBTRACT = Literal(pkg, 'SUBTRACT', {STRING: r'-', LATEX: r'-'}, operationMaker = lambda operands : Subtract(*operands))
 
@@ -875,6 +1173,53 @@ class Multiply(AssociativeOperation, NumberOp):
         import complex.theorems
         return complex.theorems.multNotEqZero
     
+    def simplification(self, assumptions=frozenset()):
+        '''
+        For trivial cases, a zero or one factor,
+        derive and return this multiplication expression equated with a simplified form.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        from complex.theorems import prodOne, prodZero
+        from number import zero, one
+        eq = Equation()
+        expr = self
+        try:
+            zeroIdx = self.operands.index(zero)
+            # there is a zero in the product.  We can simplify that.
+            if zeroIdx > 0:
+                # commute it so that the zero comes first
+                expr = eq.update(expr.commute(0, zeroIdx, zeroIdx, zeroIdx+1, assumptions)).rhs
+            if len(expr.operands) > 2:
+                # group the other operands so there are only two at the top level
+                expr = eq.update(expr.group(1, len(expr.operands), assumptions)).rhs
+            deduceInComplexes(expr.operands[1], assumptions)
+            return eq.update(expr.prodZero.specialize({x:expr.operands[1]}))
+        except ValueError:
+            pass # no zero factor
+        try:
+            oneIdx = expr.operands.index(one)
+            # there is a one in the product.  We can simplify that.
+            if oneIdx > 0:
+                # commute it so that the one comes first
+                expr = eq.update(expr.commute(0, oneIdx, oneIdx, oneIdx+1, assumptions)).rhs                
+            if len(expr.operands) > 2:
+                # group the other operands so there are only two at the top level
+                expr = eq.update(expr.group(1, len(expr.operands), assumptions)).rhs
+            deduceInComplexes(expr.operands[1], assumptions)
+            return eq.update(prodOne.specialize({x:expr.operands[1]}))
+        except ValueError:
+            pass # no one factor
+        raise ValueError('Only trivial simplification is implemented (zero or one factors)')
+
+    def simplified(self, assumptions=frozenset()):
+        '''
+        For trivial cases, a zero or one factor,
+        derive this multiplication expression equated with a simplified form
+        and return the simplified form.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        return self.simplification(assumptions).rhs
+        
     def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
         '''
         Commute self.operands[startIdx1:endIdx1] with self.operands[startIdx2:endIdx2].  
@@ -997,13 +1342,31 @@ class Multiply(AssociativeOperation, NumberOp):
         the associative and commutation theorems are applicable.            
         '''
         from complex.theorems import distributeThroughSum, distributeThroughSubtract, distributeThroughSummation
+        from complex.theorems import fracInProd
         operand = self.operands[index]
         if isinstance(operand, Add):
-            deduceInComplexes(self.operands, assumptions)
+            deduceInComplexes(self.operands[:index], assumptions)
+            deduceInComplexes(self.operands[index].operands, assumptions)
+            deduceInComplexes(self.operands[index+1:], assumptions)
             return distributeThroughSum.specialize({xEtc:self.operands[:index], yEtc:self.operands[index].operands, zEtc:self.operands[index+1:]})
         elif isinstance(operand, Subtract):
-            deduceInComplexes(self.operands, assumptions)
+            deduceInComplexes(self.operands[:index], assumptions)
+            deduceInComplexes(self.operands[index].operands, assumptions)
+            deduceInComplexes(self.operands[index+1:], assumptions)
             return distributeThroughSubtract.specialize({wEtc:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zEtc:self.operands[index+1:]})
+        elif isinstance(operand, Fraction):
+            deduceInComplexes(self.operands[:index], assumptions)
+            deduceInComplexes(self.operands[index].operands, assumptions)
+            deduceInComplexes(self.operands[index+1:], assumptions)
+            eqn = fracInProd.specialize({wEtc:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zEtc:self.operands[index+1:]})            
+            #try:
+            # see if the numerator can simplify (e.g., with a one factor)
+            numerSimplification = eqn.rhs.numerator.simplification(assumptions=assumptions)
+            print numerSimplification
+            dummyVar = eqn.safeDummyVar()
+            return numerSimplification.rhsSubstitute(Equals(eqn.lhs, Fraction(dummyVar, eqn.rhs.denominator)), dummyVar)
+            #except:
+            #    return eqn
         elif isinstance(operand, Summation):
             deduceInComplexes(self.operands, assumptions)
             yEtcSub = operand.indices
@@ -1013,7 +1376,7 @@ class Multiply(AssociativeOperation, NumberOp):
             spec1 = distributeThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, x:xDummy, z:zDummy}).checked()
             return spec1.deriveConclusion().specialize({Etcetera(xDummy):self.operands[:index], Etcetera(zDummy):self.operands[index+1:]})
         else:
-            raise Exception("Unsupported operand type to distribute over: " + operand.__class__)
+            raise Exception("Unsupported operand type to distribute over: " + str(operand.__class__))
         
     def factor(self,theFactor,pull="left", groupFactor=True, groupRemainder=False, assumptions=frozenset()):
         '''
@@ -1046,12 +1409,23 @@ class Multiply(AssociativeOperation, NumberOp):
         
     def combineExponents(self, assumptions=frozenset()):
         '''
-        Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$, 
+        Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$,  $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b},
         or equates $a^c b^c$ to $(a b)^c$.
         '''
         from complex.theorems import powOfProdRev, sumInPowRev, diffInPowRev, diffFracInPowRev
+        from complex.theorems import addOneRightInPowRev, addOneLeftInPowRev
         if len(self.operands) != 2 or not isinstance(self.operands[0], Exponentiate) or not isinstance(self.operands[1], Exponentiate):
-            raise Exception('Combine exponents only implemented for a product of two exponentiated operands')
+            if len(self.operands) == 2 and isinstance(self.operands[0], Exponentiate) and self.operands[0].base == self.operands[1]:
+                # Of the form a^b a
+                deduceInComplexes(self.operands[1], assumptions)
+                deduceInComplexes(self.operands[0].exponent, assumptions)
+                return addOneRightInPowRev.specialize({a:self.operands[1], b:self.operands[0].exponent})
+            elif len(self.operands) == 2 and isinstance(self.operands[1], Exponentiate) and self.operands[1].base == self.operands[0]:
+                # Of the form a a^b
+                deduceInComplexes(self.operands[0], assumptions)
+                deduceInComplexes(self.operands[1].exponent, assumptions)
+                return addOneLeftInPowRev.specialize({a:self.operands[0], b:self.operands[1].exponent})
+            raise Exception('Combine exponents only implemented for a product of two exponentiated operands (or a simple variant)')
         if self.operands[0].base == self.operands[1].base:
             # Same base: a^b a^c = a^{b+c}$, or something similar
             aSub = self.operands[0].base
@@ -1129,7 +1503,32 @@ class Fraction(BinaryOperation, NumberOp):
     def _notEqZeroTheorem(self):
         import complex.theorems
         return complex.theorems.fractionNotEqZero
-    
+
+    def simplification(self, assumptions=frozenset()):
+        '''
+        For trivial cases, a zero numerator or one denominator,
+        derive and return this fraction expression equated with a simplified form.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        from complex.theorems import fracZeroNumer, fracOneDenom
+        from number import zero, one
+        if self.numerator == zero:
+            deduceInComplexes(self.denominator, assumptions)
+            return fracZeroNumer.specialize({x:self.denominator})
+        elif self.denominator == one:
+            deduceInComplexes(self.numerator, assumptions)
+            return fracOneDenom.specialize({x:self.numerator})
+        raise ValueError('Only trivial simplification is implemented (zero or one factors)')
+
+    def simplified(self, assumptions=frozenset()):
+        '''
+        For trivial cases, a zero numerator or one denominator,
+        derive this fraction expression equated with a simplified form
+        and return the simplified form.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        return self.simplification(assumptions).rhs
+        
     def formatted(self, formatType, fence=False):
         if formatType == LATEX:
             return r'\frac{'+self.numerator.formatted(formatType, fence=False)+'}{'+ self.denominator.formatted(formatType, fence=False)+'}'
@@ -1143,6 +1542,7 @@ class Fraction(BinaryOperation, NumberOp):
             from proveit.number.complex.theorems import fracCancel3
             newEq0 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             deduceInComplexes(operand, assumptions)
+            deduceNotZero(operand, assumptions)            
             deduceInComplexes(newEq0.rhs.denominator.operands[1], assumptions)
             newEq1 = fracCancel3.specialize({x:operand,y:newEq0.rhs.denominator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
@@ -1153,6 +1553,7 @@ class Fraction(BinaryOperation, NumberOp):
             newEq0 = self.numerator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
             newEq1 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             deduceInComplexes(operand, assumptions)
+            deduceNotZero(operand, assumptions)
             deduceInComplexes(newEq1.rhs.numerator.operands[1], assumptions)
             deduceInComplexes(newEq1.rhs.denominator.operands[1], assumptions)
             newEq2 = fracCancel1.specialize({x:operand,y:newEq1.rhs.numerator.operands[1],z:newEq1.rhs.denominator.operands[1]})
@@ -1166,6 +1567,7 @@ class Fraction(BinaryOperation, NumberOp):
             from proveit.number.complex.theorems import fracCancel2
             newEq0 = self.numerator.factor(operand,pull=pull,groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
             deduceInComplexes(operand, assumptions)   
+            deduceNotZero(operand, assumptions)
             deduceInComplexes(newEq0.rhs.numerator.operands[1], assumptions)
             newEq1 = fracCancel2.specialize({x:operand,y:newEq0.rhs.numerator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
@@ -1283,8 +1685,10 @@ class Exponentiate(BinaryOperation, NumberOp):
         import real.theorems
         import complex.theorems
         from number import two
-        if numberSet == Naturals:
+        if numberSet == NaturalsPos:
             return natural.theorems.powClosure
+        elif numberSet == Reals:
+            return real.theorems.powClosure
         elif numberSet == RealsPos:
             if self.exponent != two: # otherwise, use deduceInRealsPosDirectly(..)
                 return real.theorems.powPosClosure            
@@ -1590,6 +1994,31 @@ class Neg(Operation, NumberOp):
     def _notEqZeroTheorem(self):
         import complex.theorems
         return complex.theorems.negNotEqZero
+
+    def simplification(self, assumptions=frozenset()):
+        '''
+        For trivial cases, double negation or negating zero,
+        derive and return this Neg expression equated with the simplified form.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        from complex.theorems import negNeg, negZero
+        from number import zero
+        
+        if isinstance(self.operand, Neg):
+            deduceInComplexes(self.operand.operand, assumptions)
+            return negNeg.specialize({a:self.operand.operand}).checked(assumptions)
+        elif self.operand == zero:
+            return negZero
+        raise ValueError('Only trivial simplification is implemented (double negation or negating zero)')
+        
+    def simplified(self, assumptions=frozenset()):
+        '''
+        For trivial cases, double negation or negating zero,
+        derive and return the simplified form.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        return self.simplification(assumptions).rhs
+
     
     def formatted(self, formatType, fence=False):
         outStr = ''
@@ -1628,7 +2057,7 @@ class Neg(Operation, NumberOp):
         
 NEG = Literal(pkg, 'NEG', operationMaker = lambda operands : Neg(*operands))
 
-class Integrate(OperationOverInstances):
+class Integrate(OperationOverInstances, NumberOp):
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
@@ -1649,15 +2078,21 @@ class Integrate(OperationOverInstances):
             raise ValueError('Can\'t integrate over DiscreteContiguousSet!')
         elif self.domain == Reals:
             self.domain = IntervalCC(Neg(infinity),infinity)
-        elif not isinstance(self.domain,IntervalCC):
-#            if not isinstance(self.domain,IntervalCC):
-            raise ValueError("domain must be IntervalCC or Reals!")
         self.index = self.instanceVars[0]
         self.integrand = self.instanceExpr
+
+    def _closureTheorem(self, numberSet):
+        import real.theorems
+        #import complex.theorems
+        if numberSet == Reals:
+            return real.theorems.integrationClosure
+        #if numberSet == Complexes:
+        #    return complex.theorems.integrationClosure
+
         
     def formatted(self, formatType, fence=False):
 #        if isinstance(self.domain,IntervalOO) or isinstance(self.domain,IntervalOC) or isinstance(self.domain,IntervalCO) or isinstance(self.domain,IntervalOO):
-        if isinstance(self.domain,Interval):
+        if isinstance(self.domain,IntervalCC):
             lower = self.domain.lowerBound.formatted(formatType)
             upper = self.domain.upperBound.formatted(formatType)
             return self.operator.formatted(formatType)+r'_{'+lower+r'}'+r'^{'+upper+r'}'+self.integrand.formatted(formatType, fence=fence)+'d'+self.index.formatted(formatType)
