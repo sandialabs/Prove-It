@@ -364,6 +364,8 @@ class Variable(Expression):
         from multiExpression import ExpressionList, isBundledVar
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
+        elif (operationMap is not None) and (self in operationMap):
+            return operationMap[self]._restrictionChecked(reservedVars)
         elif relabelMap != None:
             subbed = relabelMap.get(self, self)
             for subVar in (subbed if isinstance(subbed, ExpressionList) else [subbed]):
