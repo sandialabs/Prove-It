@@ -1,7 +1,7 @@
 from proveit.expression import Literal, STRING, LATEX
-from proveit.number import Exponentiate, Abs, Subtract, Multiply, Fraction
+from proveit.number import Exponentiate, Abs, Add, Subtract, Neg, Multiply, Fraction, DiscreteContiguousSet
 from proveit.number.common import one, two
-from proveit.common import l
+from proveit.common import l, eps
 from proveit.physics.quantum.QPE.phaseEstOps import Alpha
 
 pkg = __package__
@@ -49,4 +49,8 @@ alpha_l_sqrd = Exponentiate(Abs(Alpha(l)), two)
 # delta: difference between the phase and the best phase_m
 delta_ = Literal(pkg, 'delta', {LATEX:r'\delta'})
 
-
+fullDomain = DiscreteContiguousSet(Add(Neg(Exponentiate(two, Subtract(t_, one))), one),
+                                                         Exponentiate(two, Subtract(t_, one)))
+negDomain = DiscreteContiguousSet(Add(Neg(two_pow_t_minus_one), one), Neg(Add(eps, one)))
+posDomain = DiscreteContiguousSet(Add(eps, one), two_pow_t_minus_one)
+epsDomain = DiscreteContiguousSet(one, Subtract(two_pow_t_minus_one, two))
