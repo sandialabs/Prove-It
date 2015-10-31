@@ -1,6 +1,6 @@
 from proveit.expression import Expression, Literal, LATEX, Operation
 from proveit.multiExpression import Etcetera, ExpressionList, extractVar
-from proveit.common import a, b
+from proveit.common import a, b, n
 from proveit.basiclogic import Forall, Implies, In, Or, NotEquals, AssociativeOperation, OperationOverInstances
 from proveit.basiclogic import generateSubExpressions
 
@@ -11,12 +11,46 @@ Zp  = Literal(pkg,'Z^+',{LATEX:r'\mathbb{Z}^+'})
 R   = Literal(pkg,'R',{LATEX:r'\mathbb{R}'})
 zeroToOne = Literal(pkg,'zeroToOne',{LATEX:r'[0,1]'})
 
-Reals = Literal(pkg,'Reals',{LATEX:r'\mathbb{R}'})
-RealsPos = Literal(pkg,'RealsPos',{LATEX:r'\mathbb{R}^+'})
-RealsNeg = Literal(pkg,'RealsNeg',{LATEX:r'\mathbb{R}^-'})
+
+class RealsPosClass(Literal):
+    def __init__(self, pkg):
+        Literal.__init__(self, pkg, 'RealsPos', {LATEX:r'\mathbb{R}^+'})
+    
+    def deduceMemberLowerBound(self, member):
+        from real.theorems import inRealsPos_iff_positive
+        return inRealsPos_iff_positive.specialize({a:member}).deriveRightImplication()    
+
+class RealsNegClass(Literal):
+    def __init__(self, pkg):
+        Literal.__init__(self, pkg, 'RealsNeg', {LATEX:r'\mathbb{R}^-'})
+    
+    def deduceMemberUpperBound(self, member):
+        from real.theorems import inRealsNeg_iff_negative
+        return inRealsNeg_iff_negative.specialize({a:member}).deriveRightImplication()    
+
+class NaturalsClass(Literal):
+    def __init__(self, pkg):
+        Literal.__init__(self, pkg, 'Naturals', {LATEX:r'\mathbb{N}'})
+    
+    def deduceMemberLowerBound(self, member):
+        from natural.theorems import naturalsLowerBound
+        return naturalsLowerBound.specialize({n:member})  
+
+class NaturalsPosClass(Literal):
+    def __init__(self, pkg):
+        Literal.__init__(self, pkg, 'NaturalsPos', {LATEX:r'\mathbb{N}^+'})
+    
+    def deduceMemberLowerBound(self, member):
+        from natural.theorems import naturalsPosLowerBound
+        return naturalsPosLowerBound.specialize({n:member})  
+
+
+Reals = Literal(pkg,'Reals',{LATEX:r'\mathbb{R}'})    
+RealsPos = RealsPosClass(pkg)
+RealsNeg = RealsNegClass(pkg)
 Integers = Literal(pkg,'Integers',{LATEX:r'\mathbb{Z}'})
-Naturals = Literal(pkg,'Naturals',{LATEX:r'\mathbb{N}'})
-NaturalsPos = Literal(pkg,'NaturalsPos',{LATEX:r'\mathbb{N}^{+}'})
+Naturals = NaturalsClass(pkg)
+NaturalsPos = NaturalsPosClass(pkg)
 Complexes = Literal(pkg,'Complexes',{LATEX:r'\mathbb{C}'})
 
 class NumberOp:
@@ -263,60 +297,58 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
         elif isinstance(expr, OperationOverInstances):
             # first deduce that all of the instances are in the domain
             
-            # See if we can deduce that the indices under the domain are in one of the number sets
-            # For summand assumptions, remove any assumptions involving the index variable and add assumptions 
-            # that the index variable is in the domain and add the condition assumption.
-            summand_assumptions = {assumption for assumption in assumptions if assumption.freeVars().isdisjoint(expr.indices)}
-            summand_assumptions |= set([In(index, expr.domain) for index in expr.indices])
-            summand_assumptions |= set([condition for condition in expr.conditions])
-            #print summand_assumptions
+            # See if we can deduce that the instanceVars under the domain are in one of the number sets
+            # For instance expression assumptions, remove any assumptions involving the instance variable and add assumptions 
+            # that the instance variable is in the domain and add the condition assumption.
+            instanceExpr_assumptions = {assumption for assumption in assumptions if assumption.freeVars().isdisjoint(expr.instanceVars)}
+            instanceExpr_assumptions |= set([In(instanceVar, expr.domain) for instanceVar in expr.instanceVars])
+            instanceExpr_assumptions |= set([condition for condition in expr.conditions])
             if hasattr(expr.domain, 'deduceMemberInNaturals'):
-                for index in expr.indices:
+                for instanceVar in expr.instanceVars:
                     try:
-                        expr.domain.deduceMemberInNaturals(index, assumptions=summand_assumptions)
+                        expr.domain.deduceMemberInNaturals(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInNaturalsPos'):
-                for index in expr.indices:
+                for instanceVar in expr.instanceVars:
                     try:
-                        expr.domain.deduceMemberInNaturalsPos(index, assumptions=summand_assumptions)
+                        expr.domain.deduceMemberInNaturalsPos(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInIntegers'):
-                for index in expr.indices:
+                for instanceVar in expr.instanceVars:
                     try:
-                        expr.domain.deduceMemberInIntegers(index, assumptions=summand_assumptions)
+                        expr.domain.deduceMemberInIntegers(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInReals'):
-                for index in expr.indices:
+                for instanceVar in expr.instanceVars:
                     try:
-                        expr.domain.deduceMemberInReals(index, assumptions=summand_assumptions)
+                        expr.domain.deduceMemberInReals(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInRealsPos'):
-                for index in expr.indices:
+                for instanceVar in expr.instanceVars:
                     try:
-                        expr.domain.deduceMemberInRealsPos(index, assumptions=summand_assumptions)
+                        expr.domain.deduceMemberInRealsPos(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInRealsNeg'):
-                for index in expr.indices:
+                for instanceVar in expr.instanceVars:
                     try:
-                        expr.domain.deduceMemberInRealsNeg(index, assumptions=summand_assumptions)
+                        expr.domain.deduceMemberInRealsNeg(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInComplexes'):
-                for index in expr.indices:
+                for instanceVar in expr.instanceVars:
                     try:
-                        expr.domain.deduceMemberInIntegers(index, assumptions=summand_assumptions)
+                        expr.domain.deduceMemberInIntegers(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             
-            # Now we need to deduce that the summands are all in the number set
-            summandInNumberSet = deduceInNumberSet(expr.summand, numberSet, assumptions=summand_assumptions).checked(summand_assumptions)
-            #print summandInNumberSet
-            summandInNumberSet.generalize(expr.indices, domain=expr.domain).checked(assumptions)
+            # Now we need to deduce that the instance expressions are all in the number set
+            instanceExprInNumberSet = deduceInNumberSet(expr.instanceExpr, numberSet, assumptions=instanceExpr_assumptions).checked(instanceExpr_assumptions)
+            instanceExprInNumberSet.generalize(expr.instanceVars, domain=expr.domain).checked(assumptions)
             
             assert len(iVars) == 2 # instance function and domain -- conditions not implemented at this time
             Pop, Pop_sub = Operation(iVars[0], expr.instanceVars), expr.instanceExpr
@@ -608,7 +640,8 @@ def _deduceRequirements(theorem, specializedExpr, assumptions):
                     _deduceRequirement(condition, assumptions)
 
 def _deduceRequirement(condition, assumptions):
-    from proveit.number import num, LessThan, GreaterThan
+    from proveit.number import num, LessThan, GreaterThan, GreaterThanEquals, Abs
+    from proveit.number.complex.theorems import absIsNonNeg
     if isinstance(condition, In):
         domain = condition.domain
         elem = condition.element
@@ -617,6 +650,24 @@ def _deduceRequirement(condition, assumptions):
         deduceNotZero(condition.lhs, assumptions=assumptions)
     elif isinstance(condition, GreaterThan) and condition.rhs == num(0):
         deducePositive(condition.lhs, assumptions=assumptions)
+    elif isinstance(condition, GreaterThanEquals) and condition.rhs == num(0):
+        if isinstance(condition.lhs, Abs):
+            condition.lhs.deduceGreaterThanEqualsZero(assumptions=assumptions)
+        else:
+            try:
+                # if it is in Naturals, this comes naturally
+                deduceInNaturals(condition.lhs, assumptions)
+                Naturals.deduceMemberLowerBound(condition.lhs).checked(assumptions)
+            except:
+                # May also extend with deduceNonNegative, but that isn't implemented yet.
+                pass
+    elif isinstance(condition, GreaterThanEquals) and condition.rhs == num(1):
+        try:
+            # if it is in NaturalsPos, this comes naturally
+            deduceInNaturalsPos(condition.lhs, assumptions)
+            NaturalsPos.deduceMemberLowerBound(condition.lhs).checked(assumptions)
+        except:
+            pass        
     elif isinstance(condition, LessThan) and condition.rhs == num(0):
         deduceNegative(condition.lhs, assumptions=assumptions)
     
