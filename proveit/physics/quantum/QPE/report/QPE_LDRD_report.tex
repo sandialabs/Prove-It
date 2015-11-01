@@ -1,0 +1,293 @@
+\documentclass{article}[12pt]
+
+\usepackage{amsmath, amsfonts, amsthm, amssymb}
+\usepackage[margin=1in]{geometry}
+\usepackage{mdwlist}
+
+\begin{document}
+
+\begin{description*}
+\item[SAND20XX-XXXXR]
+\item[LDRD PROJECT NUMBER:] 15-2618
+\item[LDRD PROJECT TITLE:] Versatile Formal Methods Applied to Quantum Information
+\item[PROJECT TEAM MEMBERS:] Wayne Witzel, Mohan Sarovar, Kenneth Rudinger
+\end{description*}
+  
+\section*{ABTRACT:}
+
+Using a novel formal methods approach, we have generated computer-verified proofs of major theorems pertinent to the quantum phase estimation algorithm.  This was accomplished using our Prove-It software package in Python.
+
+While many formal methods tools are available, their practical utility is limited.  Translating a problem of interest into these systems and working through the steps of a proof is an art form that requires much expertise.  One must surrender to the preferences and restrictions of the tool regarding how mathematical notions are expressed and what deductions are allowed.  Automation is a major driver that forces restrictions.  Our focus, on the other hand, is to produce a tool that allows users the ability to confirm proofs that are essentially known already.  This goal is valuable in itself.
+
+We demonstrate the viability of our approach that allows the user great flexibility in expressing statements and composing derivations.  There were no major obstacles in following a textbook proof of the quantum phase estimation algorithm.  There were tedious details of algebraic manipulations that we needed to implement (and a few that we did not have time to enter into our system) and some basic components that we needed to rethink, but there were no serious roadblocks.  In the process, we made a number of convenient additions to our Prove-It package that will make certain algebraic manipulations easier to perform in the future.  In fact, our intent is for our system to build upon itself in this manner.
+
+
+\section*{INTRODUCTION:}
+
+The quantum phase estimation algorithm solves the following problem.  Given a unitary operator $U$ and quantum state $\lvert u \rangle$ such that $U \lvert u \rangle = {\rm e}^{2 \pi i \varphi} \lvert u \rangle$, estimate $\varphi$. The algorithm uses a prepared register of $t$ quantum bits and an input register containing $\lvert u \rangle$.  It puts the $t$-qubit register into a state that, when measured, produces a binary expansion that approximates $\varphi$.  It requires the ability to apply qubit-controlled applications of $U^{2^0},U^{2^1},...,U^{2^{t-1}}$.  If these operations cannot be performed efficiently, e.g., if $U^{2^n}$ is implemented in $O(2^n)$ time, then this quantum algorithm offers no advantage over the classical algorithm.  However, for special instances of $U$, it is possible to implement $U^{2^n}$ efficiently, in $O(n)$ time, and then there is a quantum speedup.  The most well known application is as a main component of Peter Shor’s quantum factoring algorithm used to factor numbers in polynomial time.  There is no known classical algorithm to accomplish this feat.
+
+We have followed the proof on pages 223-224 of Nielsen and Chuang, “Quantum Computation and Quantum Information” which is a standard reference in the field.
+        
+
+\section*{DETAILED DESCRIPTION OF EXPERIMENT/METHOD:}
+
+Prove-It is a code base written in the Python programming language that allows one to generate proofs in Python.  A proof in the Prove-It system is specified as a derivation tree with a finite number of allowed derivation step types.
+
+Before getting into some details of the Prove-It system, we shall discuss some background philosophy.  The following is a list of guiding principles used in the development of the system.
+
+\begin{description}
+\item[Freedom of expression] \hfill \\
+  Ideally, one should be able to express anything in the Prove-It system that is unambiguous and is standard notation in any field.  The internal representation of this expression in Prove-It should be as close as possible to a direct translation to the written expression.  We have had to alter some notation that may be standard but is somewhat ambiguous.  One example is the use of ellipses (“…”) for which we have created our own notation that is unambiguous.  But we strive, to the extent possible, to allow a user to be flexible in how they express statements, and allow these statements to be powerful.  A theorem is a statement, represented by an expression, which applies generally to a variety of specialized cases.  This is how statements may be powerful, and our goal is to allow Prove-It statements to be as limitless as possible.
+\item[New notation is defined via new axioms] \hfill \\
+  To be versatile in expressing anything in any standard notation, a user must be able to define their notation independently of the Prove-It core.  One does this by adding axioms to the system.  Axioms may be any statements that the user deems fit to provide defining properties for their notation and mathematical constructs.  Although it is easy to add an axiom that introduces a logical contradiction or is otherwise incorrect, our philosophy is to allow the user to do as they wish but make a clear disclaimer that the proof of any theorem may only be as trusted as the axioms employed in the proof.  The axioms employed in a proof are easily tracked and should be clearly indicated (grouped into packages for convenience).  As Prove-It gains popularity, the validity of axiom packages will be tested through crowd sourcing.
+\item[Prove-It should have a lightweight core] \hfill \\
+  Since most of the notation that is used in Prove-It is defined via axioms that are added to the system, the core of Prove-It can be very lightweight.  The Prove-It core only needs to understand a few core expression types and derivation rules in order to derive virtually anything from the use of powerful axiom and theorem statements.
+\item[Harmless nonsense is... well... harmless] \hfill \\
+  To truly be flexible and robust, axioms that allow one to derive harmless nonsense should be embraced rather than restricted.  It can be very cumbersome to make restrictions that prevent nonsensical statements from being derived.  Being overly restrictive can limit the utility of the system.  On the other hand, nonsense can be completely harmless.  Consider the statement
+    $\forall_{A, B} A \land B \Rightarrow A$ where $\forall$ is the universal quantifier (“forall”), $\land$ is the logical “and” operator, and $\Rightarrow$ is the “implies” operator (logical implication).  Since $\land$ is an operation that is only defined when applied to Booleans, the quantifier should perhaps be restricted to $A$ and $B$ being in the set of Booleans (True or False):
+    $\forall_{A, B \in {\rm BOOLEANS}} A \land B \Rightarrow A$.
+ However, if one specializes the original statement to non-Boolean objects, it derives a harmless statement because the hypothesis of the implication cannot be proven.  For example, specializing $A$ to $5$ and $B$ to $10$ will produce $5 \land 10 \Rightarrow 5$.  Fine.  This doesn’t make sense, but since we cannot prove that $5 \land 10$ is a true statement (with reasonable axioms), then this does not allow one to prove that $5$ is a true statement.  It is therefore harmless.  While it is possible to use Prove-It only with strict axioms that prevent nonsense, it is designed to be flexible.
+\end{description}
+
+Statements are represented with expression trees.  Each expression (including sub-expressions) is an instance of a core Prove-It expression type.  The core of Prove-It only needs to “understand” expressions in the context of core expression types.  Most employed notation is defined through axioms.  The Prove-It core only needs to know how to apply (specialize) these axioms.  Beyond that, the core is agnostic to ones notation (with just a couple of exceptions).  The following is a complete list of the core expression types with descriptions:
+\begin{description}
+\item[Variable] \hfill \\
+  In Prove-It, a {\em variable} is a label without any inherent meaning.  The meaning of a statement should not ever change if one replaces a {\em variable} with any other variable, as long as distinct variables remain distinct.
+\item[Literal]  In contrast to {\em variable}, {\em literal}s are labels that do have contextual meaning.  They are defined through axioms (with just a couple of exceptions for special {\em literal}s that are understood at the core level).  Specific operators are {\em literal}s, and so are numbers, labeled sets (reals, integers, ...), etc.  If it is a label with a meaning, it must be a {\em literal} in Prove-It.
+\item[Operation] \hfill \\
+  An {\em operation} consists of an operator and operands.  Each of these is a sub-expression.  The operator is often a {\em literal}, but it can also be a {\em variable} or a Lambda function.  For example, in the statement
+  $\forall_{f, x, y} (x = y) \Rightarrow (f(x) = f(y))$ (the “substitution” axiom), $f$ is a variable acting as an operator because it is a stand-in for any operator.  The “operands” is an {\em expression-list} or {\em expression-tensor}.
+\item[Lambda] \hfill \\
+  A {\em lambda} function consists of arguments and the lambda expression.  It represents a mapping from the arguments to an expression that involves the arguments.  For example, $(x,y) \rightarrow x+y$.  The “arguments” is an {\em expression-list}.
+\item[Named-Expressions] \hfill \\
+  A {\em named-expressions} expression maps each of a set of “names” (any string) to a sub-expression.  Essentially, this simply labels the sub-expressions and is useful for making the internal representation of the expression unambiguous (e.g., when the order of the operands does not intrinsically distinguish their role).
+\item[Expression-List] \hfill \\
+  An {\em expression-list} is an ordered list of any number of sub-expressions.
+\item[Expression-Tensor] \hfill \\
+  An {\em expression-tensor} maps lists of indices to sub-expressions.  This is useful for expressing matrices, quantum circuits, or anything with a 2-dimensional representation (or higher dimensional).  The tensor may be sparse (not every combination of indices needs a sub-expression), but the dimensionality must be consistent (each list of indices must have the same length).
+\item[Multi-Variable] \hfill \\
+  A {\em multi-variable} is a stand-in for any number of {\em variable}s.  It is denoted with a “box” index, such as
+  $x_{\Box}$.  This notation is meant to convey the notion that there is an $x_1$ ,$x_2$, ... except that the actual index labels are irrelevant and the number of them is unspecified (it may be replace with zero {\em variable}s, in fact).  A {\em multi-variable} must be a sub-expression of an {\em etcetera}, described below.
+\item[Etcetera] \hfill \\  An {\em etcetera} expression is a placeholder that may be expanded to any number of sub-expressions within an {\em expression-list}.  This is our way to represent ellipses (“...”) but without any ambiguity.  The following are examples of what one may do using {\em etcetera} (and {\em multi-variable}s): \hfill \\
+  $\forall_{...,x_{\Box},...,y_{\Box},...} .. + x_{\Box} + ... + y_{\Box}  + .. = .. + y_{\Box} + ... + x_{\Box}  + ..$ \hfill \\
+  may be specialized, for example, to $a+c+d=c+d+a$ in one step. \hfill \\
+  $\forall_{x,..,y_{\Box},..} x \cdot (.. + y_{\Box} + ..) = .. + x \cdot y_{\Box} + ..$ \hfill \\
+may be specialized, for example, to $a \cdot (b+c+d)= a \cdot b + a \cdot c + a \cdot d$ in one step.
+\item[Block] \hfill \\
+{\em Block} is similar to {\em etcetera} but expands into an {\em expression-tensor} rather than an {\em expression-list}.  This is useful in the context of quantum circuits for substituting a multi-qubit gate for an entire sub-circuit.
+\end{description}
+The concepts for the {\em expression-tensor}, {\em multi-variable}, {\em etcetera}, and {\em block} expression types were developed over the course of this project.  Working out an appropriate treatment for these concepts was a considerable challenge that we encountered.  These concepts may evolve further in the future.
+
+Ideally, there is a direct translation between internal and external representations within Prove-It.  However, this is not enforced in any way.  The translation from the internal to the external representation is at the discretion of the user and is very flexible in terms of formatting expressions using LaTeX.  As with the freedom to add axioms at will, this brings potential danger but we resolve to allow users to proceed as they see fit with clear disclaimers.  The external representations are only for convenience and may only be trusted to the extent that they faithfully convey the internal representation.  One must not only check the axioms employed in a proof for their validity, but also check the internal representations of the axioms and the internal representation of the theorem being proven.  To the extent that the internal and external representations are direct translations of each other, this is relatively straightforward.
+
+A proof in Prove-It is a derivation tree that deduces a theorem (the root of a tree) from a set of axioms and/or theorems (the leaves of the tree).  Each derivation step indicates how a particular statement is proven under a set of assumptions given previously proven statements (possibly with other assumptions).  The following is a list of the recognized derivation step types with descriptions:
+
+\begin{description}
+\item[Axiom/theorem invocation] \hfill \\
+  Any axiom or theorem can be invoked within a proof and will be accepted as truth in the context of a proof.  An axiom or theorem may be any Prove-It expression that contains no free {\em variable}s (meaning that all {\em variable}s must be bound explicitly as {\em lambda} arguments).  For any proof, it is possible to trace back all used axioms (directly or indirectly via the proof of a used theorem) and all used unproven theorems.  A proof is not complete unless all of theorems that it uses directly or indirectly have complete proofs for themselves.
+\item[Assumption] \hfill \\
+  Any statement may be taken to be true by assumption.  The assumption must be carried up toward the root of the derivation tree, in the set of required assumptions, until it is eliminated through hypothetical reasoning or generalization conditions.
+\item[Relabeling] \hfill \\
+  Changes {\em variable}s.  Since {\em variable}s are labels with no intrinsic meaning, the meaning of the statement is unchanged by relabeling except when changing which {\em variable}s are distinct from each other.  For example, relabeling $P(x,y)$ into $P(a,a)$ does have a different meaning.  However, the statement is only weakened by such a change, so this derivation step is allowed.
+\item[Specialization] Eliminates universal quantification (a “forall” operation).  Substitutes each quantified {\em variable} with an expression and each quantified {\em multi-variable} with an {\em expression-list} (using the {\em etcetera}/{\em block} machinery described above).  Requires proof of all conditions placed upon those variables from the original “forall” operation.  These are added as branches in the derivation tree.  For example, one may specialize $\forall_{A \in {\rm BOOLEANS}} A \Rightarrow (A \lor B)$ by replacing $A$ with $P(x)$ as long as one can also satisfy the condition that $P(x) \in {\rm BOOLEANS}$.  The process of specialization may introduce unbound variables that are taken as “arbitrary” variables (e.g., $P$ and $x$ in the previous example would be unbound, arbitrary {\em variable}s, unless they happen to be {\em literal}s).  These may be bound further up the derivation tree using {\em generalization}.
+\item[Generalization] \hfill \\
+  Introduces universal quantification (a “forall” operation) over unbound Variables as desired.  May apply any domain restriction or condition on this universal quantification.  These only weaken the generalized statement, making it no less proven than the unconditional “forall” statement.  Applied domain restrictions or conditions may serve to eliminate assumptions.  For example, $\forall_{x \in S} P(x)$ eliminates the assumption $x \in S$ because this statement is true under the set of assumptions $\Omega$ as long as we can prove $P(x)$ under the assumptions $\Omega \bigcup \{x \in S\}$.
+\item[Implication (modus ponens)] \hfill \\
+  Proves that some statement $B$ is true after proving statements of the form $A \Rightarrow B$ and $A$.
+\item[Hypothetical reasoning] \hfill \\
+  Proves a statement of the form $A \Rightarrow B$ after proving statement $B$ using statement $A$ as an assumption.  Eliminates the hypothesis (e.g.,  statement $A$) as an assumption.
+\item[Axiom elimination] \hfill \\
+  Transforms a set of axioms into a set of assumptions.  When tracking the axioms that are employed in a proof, these ones may not be counted (unless used in another branch of the derivation tree) because they are ultimately not necessary for the proof if they can be transformed into assumptions and then eliminated.  In the process, {\em literal}s that only appear in the axioms being eliminated are transformed into Variables (their axiomatic, contextual meaning has been lost except within the assumptions that are carried along in the derivation tree).  This is useful since all definitions in Prove-It are made via {\em axiom}s involving {\em literal}s and some definitions are only a temporary convenience.  In our quantum phase estimation proof, we employ this to define some useful {\em literal}s for the problem set-up (such as $U, u, \varphi, t$, etc.) that are used in multiple theorems but later transformed into Variables and quantified over universally (i.e.,
+  $\forall_{U, u, \varphi, t, ...}$) in the final theorem.
+  
+\end{description}
+  
+\section*{RESULTS:}
+
+We begin our verification of the quantum phase estimation by define a set of axioms that defines the problem.  This involves defining both temporary and permanent {\em literal}s.  By temporary {\em literal}s, we mean convenient labels for setting up the problem and using throughout the proof, but ones that we ultimately would like to quantify over (as {\em variable}s) for a final theorem that may be used outside of this context.  This would be done through {\em axiom elimination} (which has not yet been implemented in the system, but the concept is straightforard).  The permanent {\em literal}s, in contract, are necessary in order to define what the proof means.  In particular, a label for the algorithm is a permanent {\em literal}.  Its definition is required in order to interpret the proof.
+
+The following is a list of all of the axioms asserted within the quantum phase estimation context.  We provide some further descriptions below.
+\begin{enumerate}
+\item $U \in SU\left(n\right)$
+\item $\varphi \in \left[0,1\right)$
+\item $\left(U   \lvert u \rangle\right) = \left(e^{2 \cdot \pi \cdot i \cdot \varphi}   \lvert u \rangle\right)$
+\item $\forall_{U, t} {\rm QPE_A}\left(U, t\right)$
+\item $\forall_{U, t} {\rm QPE_B}\left(U, t\right)$  
+\item $t \in \mathbb{N}^+$
+\item $\lvert \Psi \rangle = \left({\rm QPE}\left(U, t\right)   \lvert u \rangle\right)$
+\item $m = {\cal M}\left(\lvert \Psi \rangle\right)$
+\item $\varphi_m = \frac{m}{2^{t}}$
+\item $b = \lfloor \varphi \cdot 2^{t}\rfloor$
+\item $\delta = \left(\varphi - \frac{b}{2^{t}}\right)$
+\item $\forall_{\varepsilon \in \mathbb{Z}} \left(P_{\rm success}\left(\varepsilon\right) = Pr[\left(\left|\left(m - b\right)\right|_{{\rm mod}~2^{t}} \leq \varepsilon\right)]\right)$
+\item $\forall_{\varepsilon \in \mathbb{Z}} \left(P_{\rm fail}\left(\varepsilon\right) = \left(1 - P_{\rm success}\left(\varepsilon\right)\right)\right)$
+\item $\forall_{a, b \in \mathbb{Z}} \left(\left(a \oplus b\right) = \left(\left(a + b\right) ~\rm{mod}~ 2^{t}\right)\right)$
+\item $\forall_{l \in \mathbb{Z}} \left(\alpha_{l} = \left(\langle b \oplus l \rvert   \lvert \Psi \rangle\right)\right)$
+\end{enumerate}
+Axioms 1-3 set up the basic quantum phase estimation problem.  The goal of the algorithm is to estimate $\varphi$ for a given $U$ (unitary quantum operation) and $\lvert u \rangle$ (ket, or quantum state).  The $U$ operation involves $n$ qubits.  Axioms 4 and 5 define the quantum phase estimation algorithm in a quantum circuit representation.  In the quantification of these axioms, $U$ and $t$ are {\em variable}s (that happen to have the same representation as our {\em literal}s).  Axioms 6-9 apply the quantum phase estimation algorithm to the problem of interest as we have specified it (in terms of $U$ and $\lvert u \rangle$) for a particular number of register qubits $t$.  The precision of the estimate is determined by $t$.  This is the main fact that we seek to prove.  Axiom 8 defines $m$ to be the random variable outcome of the quantum measurement of $\lvert \Psi \rangle$, the output of the quantum algorithm (${\cal M}$ denotes quantum measurement).  Axiom 9 defines $\varphi_m$ to be the random variable estimate of $\varphi$.  Axioms 10-13 are all related to defining success versus failure of the quantum algorithm output.  Axiom 10 defines $b$ to be the outcome of $m$ that would give us the closest estimate to $\varphi$ without exceeding it.  Axiom 11 defines $\delta$ to be the difference between $\varphi$ and this closest undershooting estimate.  Axiom 12 defines the probability that the outcome succeeds in being within some $\varepsilon$ of $b$, and Axiom 13 defines the corresponding probability of failure.  Axioms 14 and 15 are convenient definitions within the proof.  Axiom 14 defines a short-hand for adding integers modulo $2^t$.  Axiom 15 defines $\alpha_l$ to be the amplitude of the outcome state $\vert \Psi \rangle$ to a state denoted by $l$ that is relative to $b$.
+
+Below we list each of the theorems that we have either proven, or intend to prove, within the quantum phase estimation context.  For each theorem, we indicate whether or not we have produced the proof, the lines of code to generate the proof, the number of theorems/axioms that this proof employed, and the number of unique nodes in its derivation tree (nodes are often repeated in derivation trees but we will not count them separately).  We also provide brief notes about each theorem to indicate theorems/axioms that it derives from and how it fits into the larger picture.  For unproven theorems, we indicate what it would require to finish them.  Strictly speaking, none of our theorems are {\em complete} because they all rely upon theorems in other contexts that we have not yet proven in the Prove-It system (for algebraic manipulation and various other well-known facts).
+
+\begin{enumerate}
+\item $2^{t} \in \mathbb{N}^+$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 10 & \textbf{used theorems/axioms:} 8 & \textbf{unique nodes:} 19
+  \end{tabular} \hfill \\
+  Derives from Axiom 6 ($t \in \mathbb{N}^+$) and number set properties.
+\item $2^{t - 1} \in \mathbb{N}^+$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 9 & \textbf{used theorems/axioms:} 12 & \textbf{unique nodes:} 26
+  \end{tabular} \hfill \\
+  Derives from Axiom 6 and number set properties.
+\item $\left(2^{t} - 1\right) \in \mathbb{N}^+$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -
+  \end{tabular} \hfill \\
+  Derives from Axiom 6.  Since $t \geq 1$ in order to be in $\mathbb{N}^+$, $\left(2^{t} - 1\right) \geq \left((2^1 - 1) = 1\right)$.  This can be done easily, we just did not have time.
+\item $2^{t} \neq 0$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 9 & \textbf{used theorems/axioms:} 8 & \textbf{unique nodes:} 26
+  \end{tabular} \hfill \\
+  Derives from Axiom 6 and number set properties.
+\item $\forall_{a, b \in \mathbb{Z}} \left(\left(a \oplus b\right) \in \mathbb{Z}\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 14 & \textbf{used theorems/axioms:} 6 & \textbf{unique nodes:} 16
+  \end{tabular} \hfill \\
+  Derives from Axiom 14 (the definition of our $\oplus$ notation), substitution, and number set properties.
+\item $\varphi \in \mathbb{R}$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 6 & \textbf{used theorems/axioms:} 5 & \textbf{unique nodes:} 10
+  \end{tabular} \hfill \\
+  Derives from Axiom 2 ($\varphi \in \left[0,1\right)$) and number set properties.
+\item $b \in \mathbb{Z}$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 7 & \textbf{used theorems/axioms:} 13 & \textbf{unique nodes:} 30
+  \end{tabular} \hfill \\
+  Derives from Axiom 10 (the definition of $b$), Theorem 1, Theorem 6, substitution, and number set properties.
+\item $\forall_{\varepsilon \in \mathbb{N}^+} \left(\forall_{l \in \{\left(\varepsilon + 1\right)\ldots 2^{t - 1}\}} \left(l \in \{\left(\left(-2^{t - 1}\right) + 1\right)\ldots 2^{t - 1}\}\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 25 & \textbf{used theorems/axioms:} 21 & \textbf{unique nodes:} 67
+  \end{tabular} \hfill \\
+Derives from Theorem 3 and number set properties as well as some properties of ordering relations (less/greater than, etc.).
+\item $\forall_{\varepsilon \in \mathbb{N}^+} \left(\forall_{l \in \{\left(\left(-2^{t - 1}\right) + 1\right)\ldots \left(-\left(\varepsilon + 1\right)\right)\}} \left(l \in \{\left(\left(-2^{t - 1}\right) + 1\right)\ldots 2^{t - 1}\}\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 25 & \textbf{used theorems/axioms:} 20 & \textbf{unique nodes:} 69
+  \end{tabular} \hfill \\
+Derives from Theorem 3 and number set properties as well as some properties of ordering relations (less/greater than, etc.).
+\item $\left(2^{t} \cdot \delta\right) \in \left[0,1\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 29 & \textbf{used theorems/axioms:} 6 & \textbf{unique nodes:} 13
+  \end{tabular} \hfill \\
+Derives from Axiom 10 and 11 (the definition of $\delta$) as well as Theorems 1, 6, and 7 along with number set properties and algebraic manipulations.
+\item $\delta \in \mathbb{R}$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 7 & \textbf{used theorems/axioms:} 13 & \textbf{unique nodes:} 26
+  \end{tabular} \hfill \\
+Derives from Axiom 11 (the definition of $\delta$) and Theorems 1, 6, and 7 along with substitution and number set properties.
+\item $\forall_{l \in \mathbb{Z}} \left(\alpha_{l} \in \mathbb{C}\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -
+  \end{tabular} \hfill \\
+Derives from Axiom 15 (the definition of $\alpha_l$) and a fundamental property of quantum state projections.  This is straightforward, but we did not have time to get to it.
+\item $\forall_{l \in \mathbb{Z}} \left(\left(\left|\alpha_{l}\right| \in \mathbb{R}\right) \land \left(\left|\alpha_{l}\right| \geq 0\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 18 & \textbf{used theorems/axioms:} 4 & \textbf{unique nodes:} 10
+  \end{tabular} \hfill \\
+Derives from Theorem 12 and number set properties.
+\item $\forall_{l \in \mathbb{Z}~|~l \neq 0} \left(\left(2^{t} \cdot \delta\right) \neq l\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 40 & \textbf{used theorems/axioms:} 22 & \textbf{unique nodes:} 66
+  \end{tabular} \hfill \\
+Derives from Theorem 10, number set properties, and some algebraic and logical manipulations.  This is a proof by contradiction.
+\item $\forall_{l \in \mathbb{Z}~|~l \neq 0} \left(\delta \neq \frac{l}{2^{t}}\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 29 & \textbf{used theorems/axioms:} 18 & \textbf{unique nodes:} 53
+  \end{tabular} \hfill \\
+Derives from Theorem 1 and 14, number set properties, and some algebraic and logical manipulations.  This is a proof by contradiction as well.
+\item $\forall_{l \in \{\left(\left(-2^{t - 1}\right) + 1\right)\ldots 2^{t - 1}\}} \left(\left(\delta - \frac{l}{2^{t}}\right) \in \left[\left(-\frac{1}{2}\right),\frac{1}{2}\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 69 & \textbf{used theorems/axioms:} 60 & \textbf{unique nodes:} 224
+  \end{tabular} \hfill \\
+Derives from Axiom 6 ($t \in \mathbb{N}^+$) and Theorems 1, 2, 6, and 10, as well as number set properties and algebraic manipulations. 
+\item $\forall_{l \in \{\left(\left(-2^{t - 1}\right) + 1\right)\ldots 2^{t - 1}\}} \left(\left(2 \cdot \pi \cdot \left(\delta - \frac{l}{2^{t}}\right)\right) \in \left(\left(-\pi\right),\pi\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 36 & \textbf{used theorems/axioms:} 25 & \textbf{unique nodes:} 79
+  \end{tabular} \hfill \\
+Derives from Theorem 16, number set properties, and algebraic manipulations.
+\item $\forall_{l \in \{\left(\left(-2^{t - 1}\right) + 1\right)\ldots 2^{t - 1}\}~|~l \neq 0} \left(\left(\delta - \frac{l}{2^{t}}\right) \notin \mathbb{Z}\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -
+  \end{tabular} \hfill \\
+Derives from Theorem 16 in a fairly straightforward manner.  We simply did not have time to implement this.
+\item $\forall_{\varepsilon \in \mathbb{N}} \left(P_{\rm success}\left(\varepsilon\right) = \left(\sum_{l=-\varepsilon}^{\varepsilon} Pr(\left(\left|\left(m - b\right)\right| = l\right))\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -
+  \end{tabular} \hfill \\
+Derives from Axiom 12 (the definition of $P_{\rm success}$), modular arithmetic, and basic probability theory (summing the probabilities of independent events).  This would not be difficult to implement, but we did not have time.
+\item $\forall_{\varepsilon \in \mathbb{N}^+} \left(P_{\rm fail}\left(\varepsilon\right) = \left(\left(\sum_{l=\left(-2^{t - 1}\right) + 1}^{-\left(\varepsilon + 1\right)} \left|\alpha_{l}\right|^{2}\right) + \left(\sum_{l=\varepsilon + 1}^{2^{t - 1}} \left|\alpha_{l}\right|^{2}\right)\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -    
+  \end{tabular} \hfill \\
+Derives from Axioms 13 (the definition of $P_{\rm fail}$), 14, and 15 (the definition of $\alpha_l$), and from Theorem 19 along with algebraic manipulations and the fact that sum of all possible, distinct outcome probabilities is equal to one.  This would require a little work, but there is no significant obstacle to producing this proof.
+\item $\forall_{a, b \in \mathbb{Z}} \left(e^{\frac{2 \cdot \pi \cdot i \cdot \left(a \oplus b\right)}{2^{t}}} = e^{\frac{2 \cdot \pi \cdot i \cdot \left(a + b\right)}{2^{t}}}\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 25 & \textbf{used theorems/axioms:} 13 & \textbf{unique nodes:} 35
+  \end{tabular} \hfill \\
+  Derives from Axioms 6 and 14 (the definition our $\oplus$ notation) as well as some algebraic manipulations and the trigonometry-related identity that
+  $\forall_{x, r \in \mathbb{R}} \left(e^{\frac{2 \cdot \pi \cdot i \cdot \left(x ~\rm{mod}~ r\right)}{r}} = e^{\frac{2 \cdot \pi \cdot i \cdot x}{r}}\right)$.
+\item $\forall_{l \in \mathbb{Z}} \left(\alpha_{l} = \left(\frac{1}{2^{t}} \cdot \left(\sum_{k=0}^{2^{t} - 1} \left(e^{\frac{-\left(2 \cdot \pi \cdot i \cdot k \cdot \left(b \oplus l\right)\right)}{2^{t}}} \cdot e^{2 \cdot \pi \cdot i \cdot \varphi \cdot k}\right)\right)\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -    
+  \end{tabular} \hfill \\
+Derives from the definition of the quantum phase estimation algorithm defined in Axioms 4 and 5 as well as the definition of $\alpha_l$ in Axiom 15, and the definition of our modular arithmetic shorthand in Axiom 14.  This is not completely trivial, but comes from a relatively direct translation of the quantum circuit operations on the input states.  There is no significant obstacle here, but we did not have time to do this.
+\item $\varphi = \left(\frac{b}{2^{t}} + \delta\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -        
+  \end{tabular} \hfill \\
+This is very simply derived from Axiom 11 (the definition of $\delta$) but we did not have time.
+\item $\forall_{l \in \mathbb{Z}} \left(\alpha_{l} = \left(\frac{1}{2^{t}} \cdot \frac{1 - e^{2 \cdot \pi \cdot i \cdot \left(\left(2^{t} \cdot \delta\right) - l\right)}}{1 - e^{2 \cdot \pi \cdot i \cdot \left(\delta - \frac{l}{2^{t}}\right)}}\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 92 & \textbf{used theorems/axioms:} 62 & \textbf{unique nodes:} 285
+  \end{tabular} \hfill \\
+  Performs the summation in the expression for $\alpha_l$ in Theorem 22 as a finite geometric series.  Also uses the definition of our $\oplus$ notation via Axiom 14, $t \in \mathbb{N}^+$ from Axiom 5, $(2^t - 1) \in \mathbb{N}^+$ from Theorem 3, $b \in \mathbb{Z}$ from Theorem 7, $\varphi~{\rm and}~\delta \in \mathbb{R}$ from Theorems 6 and 11, the identity of Theorem 21, and the relation between $b$, $\varphi$, and $\delta$ from Theorem 23.  There is also various algebraic manipulations, substitutions, and number set properties employed.
+\item $\forall_{l \in \mathbb{Z}} \left(\left|\alpha_{l}\right| = \frac{\left|1 - e^{2 \cdot \pi \cdot i \cdot \left(\left(2^{t} \cdot \delta\right) - l\right)}\right|}{2^{t} \cdot \left|\left(1 - e^{2 \cdot \pi \cdot i \cdot \left(\delta - \frac{l}{2^{t}}\right)}\right)\right|}\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -        
+  \end{tabular}
+Very easy to derive from Theorem 24, but we did not have time to do this.
+\item $\forall_{l \in \{\left(\left(-2^{t - 1}\right) + 1\right)\ldots 2^{t - 1}\}~|~l \neq 0} \left(\left|\alpha_{l}\right|^{2} \leq \frac{1}{4 \cdot \left(l - \left(2^{t} \cdot \delta\right)\right)^{2}}\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 197 & \textbf{used theorems/axioms:} 74 & \textbf{unique nodes:} 425
+  \end{tabular} \hfill \\
+  Bounds $\lvert \alpha_l \rvert^2$ using the expression for $\lvert \alpha_l \rvert$ from Theorem 25.  It uses Axiom 6 and Theorem 2 ($t \in \mathbb{N}^+$ and $2^{t-1} \in \mathbb{N}^+$), Theorem 12 and 13 ($\alpha_l \in \mathbb{C}$ and related properties), Theorem 11, 15, 17, and 18 ($\delta \in \mathbb{R}$ and more specific constraints that avoid division by zero and enable the upper bounding).  Specifically, we bound $\lvert \alpha_l \rvert^2$ using $\forall_{\theta \in \left[\left(-\pi\right),\pi\right]} \left(\left|\left(1 - e^{i \cdot \theta}\right)\right| \geq \frac{2 \cdot \left|\theta\right|}{\pi}\right)$ and $\forall_{\theta \in \mathbb{R}} \left(\left|\left(1 - e^{i \cdot \theta}\right)\right| \leq 2\right)$ (theorems that we have not proven in our system).  We also employ various algebraic manipulations, including manipulations of inequalities.
+\item $\forall_{\varepsilon \in \{1\ldots \left(2^{t - 1} - 2\right)\}} \left(P_{\rm fail}\left(\varepsilon\right) \leq \left(\frac{1}{2} \cdot \left(\frac{1}{\varepsilon} + \frac{1}{\varepsilon^{2}}\right)\right)\right)$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} proven & \textbf{lines of code:} 303 & \textbf{used theorems/axioms:} 115 & \textbf{unique nodes:} 658
+  \end{tabular} \hfill \\
+  Uses the expression for $P_{\rm fail}(\varepsilon)$ from Theorem 20 and the bound of $\lvert \alpha_l \rvert^2$ from Theorem 26 along with number set restrictions of Axiom 6 and Theorems 2, 8, 9, 10, 11, 12, 13, and 14.  Employs various algebraic manipulations, including manipulations of inequalities and summations (e.g., splitting summations apart over separate ranges, and the fact that an inequality for all summand instances implies the inequality of the summations).  It also uses the fact that $l \rightarrow 1/l^2$ is an even function so that $\forall_{a, b \in \mathbb{Z}} \left(\left(\sum_{l=a}^{b} \frac{1}{l^{2}}\right) = \left(\sum_{l=-b}^{-a} \frac{1}{l^{2}}\right)\right)$, that it is a monotonically decreasing function so that $\left(\sum_{l=\varepsilon}^{2^{t - 1} - 1} \frac{1}{l^{2}}\right) \leq \left(\frac{1}{\varepsilon^{2}} + \int_{\varepsilon}^{2^{t - 1} - 1}\frac{1}{l^{2}}dl\right)$.  These facts come from theorems not yet proven in the Prove-It system.  We assert (as an unproven Prove-It theorem) that $\forall_{a, b \in \mathbb{R}^+~|~a \leq b} \left(\int_{a}^{b}\frac{1}{l^{2}}dl \leq \frac{1}{a}\right)$.
+\item $P_{\rm fail}(2) \leq \frac{3}{8}$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -            
+  \end{tabular} \hfill \\
+Simple arithmetic applied to Theorem 27, but we did not have time to do this.
+\item $P_{\rm success}(2) \geq \frac{5}{8}$ \hfill \\
+  \begin{tabular}{l | l | l | l}
+    \textbf{status:} unproven & \textbf{lines of code:} - & \textbf{used theorems/axioms:} - & \textbf{unique nodes:} -            
+  \end{tabular} \hfill \\
+  Simple arithmetic applied to Axiom 13 (relating $P_{\rm success}$ and $P_{\rm fail}$) and Theorem 28, but we did not have time to do this.
+\end{enumerate}
+An additional theorem, not listed, would be to prove the success probability (or probability distribution) of the algorithm quantified over all appropriate values of $U$, $\lvert u \rangle$, and $t$ via {\em axiom elimination}.  We have not yet implemented {\em axiom elimination} in the Prove-It system, but this step would be straightforward.  Furthermore, to be complete, we would want to prove that the depth (time) and width (number of qubits) of the quantum circuit for the quantum phase estimation algorithm both scale linearly with $t$.  This fact is obvious and would not be difficult to prove in our system.
+
+\section*{DISCUSSION:}
+code re-use and convenience methods (broader line count?), number set deductions, etc.
+
+trickiness with quantum circuits
+
+tools to assist in viewing incomplete derivation tree to aid user.
+
+\section*{ANTICIPATED IMPACT:}
+wiki-qed as well as use at Sandia
+
+\section*{CONCLUSION:}
+
+\end{document}
