@@ -10,6 +10,7 @@ LATEX = 2
 
 class Expression:
     unique_id_map = dict() # map unique_id's to unique_rep's
+    expr_to_prove = None # the theorem currently being proven (if there is one)
     
     def __init__(self, coreInfo, subExpressions=tuple(), formatMap=None):
         # Will be the associated Statement if the Expression is
@@ -27,7 +28,8 @@ class Expression:
         self.png = None # if a png is generate, it is stored for future reference
     
     def __repr__(self):
-        return str(self) # just use the string representation
+        return '$' + self.formatted(LATEX) + '$' # temporary convenience for writing report
+        #return str(self) # just use the string representation
     
     def __eq__(self, other):
         if isinstance(other, Expression):
@@ -101,8 +103,30 @@ class Expression:
             raise ProofFailure("Proof failed: " + str(self) + " assuming " + makeAssumptionsStr(assumptions))
         return self
     
-    def qed(self, filename):
+    def beginProof(self):
+        # clear all the provers
+        from proveit.statement import Statement
+        from proveit.prover import Prover
+
+        # forget that this is a theorem expression so that we generate a non-trivial proof:
+        for stmt in Statement.statements.values():
+            # clear all of the statements to start fresh
+            stmt.proofNumber = float('inf')
+            stmt._prover = None
+            if stmt == self.statement:
+                stmt._isNamedTheorem = False
+        Prover._tmpProvers.clear()
+        for stmt in Statement.statements.values():
+            # re-mark the axioms and theorems as proven (but not the special one we are trying to prove)
+            if stmt._isAxiom or stmt._isNamedTheorem:
+                Prover._markAsProven(stmt, Prover(stmt, []))
+                
+        Expression.expr_to_prove = self
+        return self
+    
+    def qed(self):
         import proveit
+        """
         proofsdir, proofname = os.path.split(filename)
         # remove the file extension for the proof name
         proofname = os.path.splitext(proofname)[0]
@@ -131,6 +155,12 @@ class Expression:
         pvit_proof_filename = os.path.join(pvit_proofs_path, proofname + '.pv_it')
         with open(pvit_proof_filename, 'w') as pvit_proof_file:
             self.statement.getProver()._export_pvit(pvit_proofs_path, pvit_proof_file, expressions_dir)
+        """
+        if not Expression.expr_to_prove == self:
+            raise ProofFailure('Theorem statement does not match qed expression:\n' + str(Expression.expr_to_prove) + ' vs\n' + str(self))
+        self.proven()
+        self.statement.getProver().showProof()
+        return self
     
     def checked(self, assumptions=frozenset()):
         """
@@ -288,11 +318,10 @@ class Expression:
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., arguments of a Lambda function)")
         return self
 
-    # THIS USES MATHJAX WHICH IS LESS FLEXIBLE THAN DVIPNG (BELOW)    
+    # THIS USES MATHJAX WHICH IS LESS FLEXIBLE THAN DVIPNG (BELOW)  
     def _repr_latex_(self):
         return '$' + self.formatted(LATEX) + '$'
-    
-    '''
+    '''    
     def _repr_png_(self):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
         if not hasattr(self,'png') or self.png is None:

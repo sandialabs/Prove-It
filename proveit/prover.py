@@ -82,6 +82,52 @@ class Prover:
             for prover in self.provers:
                 prover._export_pvit(path, pvit_file, expressions_dir, indentation)
     
+    def showProof(self, indentation='', remembered = None, usedAxioms = None, usedTheorems = None):
+        if remembered is None: 
+            remembered = set()
+            usedAxioms = set()
+            usedTheorems = set()
+        numNodes = 1
+        print (indentation + self.proverType + ' ' + str(self.stmtToProve.getExpression())),
+        if self.provingAssumptions is not None and len(self.provingAssumptions) > 0:
+            print ' assuming', ', '.join(str(assumption.getExpression()) for assumption in self.provingAssumptions),
+        key = (self.stmtToProve,) + tuple([assumption for assumption in self.provingAssumptions])
+        if key in remembered:
+            print ' proven above'
+            return 0 # don't count this as a separate node
+        if len(indentation) > 0:
+            remembered.add(key) # don't add the top-level theorem
+        '''
+        if self.proverType == 'specializing':
+            print ' via',
+            if self.subMap is not None and len(self.subMap) > 0:
+                print ' substituting', str({key:val for key, val in self.subMap}),
+            if self.relabelMap is not None and len(self.relabelMap) > 0:
+                print ' relabeling', str({key:val for key, val in self.relabelMap}),
+        '''
+        print '' # new line
+        indentation += '  '
+        if self.stmtToProve.isAxiom():
+            print indentation + 'by axiom ' + self.stmtToProve._package + '.' + self.stmtToProve._name 
+            usedAxioms.add(self.stmtToProve._package + '.' + self.stmtToProve._name)
+        elif self.stmtToProve.isNamedTheorem():
+            print indentation + 'by theorem ' + self.stmtToProve._package + '.' + self.stmtToProve._name 
+            usedTheorems.add(self.stmtToProve._package + '.' + self.stmtToProve._name)
+        #elif self.proverType != 'root' and self.stmtToProve.isProvenTheorem():
+        #    print indentation + 'by unnamed theorem'
+        elif self.provers is not None:
+            for prover in self.provers:
+                numNodes += prover.showProof(indentation, remembered, usedAxioms, usedTheorems)  
+        if indentation == '  ':
+            for axiom in sorted(usedAxioms):
+                print axiom
+            for thm in sorted(usedTheorems):
+                print thm
+            print "Number of used axioms:", len(usedAxioms)
+            print "Number of used theorms:", len(usedTheorems)
+            print "Number of derivation tree nodes:", numNodes      
+        return numNodes
+    
     def isCircular(self, assumptions=None):
         '''
         Make sure we aren't stuck in circular logic.  Returns True if this derivation
