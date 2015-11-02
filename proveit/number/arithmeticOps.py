@@ -142,6 +142,21 @@ class IntervalOO(Interval):
         deduceInReals(scaleFactor, assumptions=assumptions)
         return rescaleInIntervalOO.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
 
+    def deduceLeftRelaxedMembership(self, member, assumptions=frozenset()):
+        from real.theorems import relaxIntervalOOleft
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        return relaxIntervalOOleft.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+
+    def deduceRightRelaxedMembership(self, member, assumptions=frozenset()):
+        from real.theorems import relaxIntervalOOright
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        return relaxIntervalOOright.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+        
+
 INTERVALOO = Literal(pkg, 'INTERVALOO', operationMaker = lambda operands : IntervalOO(*operands))
 
 
@@ -189,6 +204,14 @@ class IntervalOC(Interval):
         deduceInReals(scaleFactor, assumptions=assumptions)
         return rescaleInIntervalOC.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
 
+    def deduceRelaxedMembership(self, member, assumptions=frozenset()):
+        from real.theorems import relaxIntervalOC
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        return relaxIntervalOC.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+
+
 INTERVALOC = Literal(pkg, 'INTERVALOC', operationMaker = lambda operands : IntervalOC(*operands))
 
 class IntervalCO(Interval):
@@ -234,6 +257,14 @@ class IntervalCO(Interval):
         deduceInReals(self.upperBound, assumptions=assumptions)
         deduceInReals(scaleFactor, assumptions=assumptions)
         return rescaleInIntervalCO.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+
+    def deduceRelaxedMembership(self, member, assumptions=frozenset()):
+        from real.theorems import relaxIntervalCO
+        from numberSets import deduceInReals
+        deduceInReals(self.lowerBound, assumptions=assumptions)
+        deduceInReals(self.upperBound, assumptions=assumptions)
+        return relaxIntervalCO.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+
 
 INTERVALCO = Literal(pkg, 'INTERVALCO', operationMaker = lambda operands : IntervalCO(*operands))
 
@@ -1277,6 +1308,7 @@ class Multiply(AssociativeOperation, NumberOp):
 
         from proveit.number.complex.theorems import multAssocRev
         deduceInComplexes(self.operands, assumptions)
+        deduceInComplexes(self.operands[idx].operands, assumptions)
         xSub = self.operands[:idx] if idx is not None else []
         ySub = self.operands[idx].operands
         zSub = self.operands[idx+1:] if idx is not None else []
@@ -1359,14 +1391,13 @@ class Multiply(AssociativeOperation, NumberOp):
             deduceInComplexes(self.operands[index].operands, assumptions)
             deduceInComplexes(self.operands[index+1:], assumptions)
             eqn = fracInProd.specialize({wEtc:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zEtc:self.operands[index+1:]})            
-            #try:
-            # see if the numerator can simplify (e.g., with a one factor)
-            numerSimplification = eqn.rhs.numerator.simplification(assumptions=assumptions)
-            print numerSimplification
-            dummyVar = eqn.safeDummyVar()
-            return numerSimplification.rhsSubstitute(Equals(eqn.lhs, Fraction(dummyVar, eqn.rhs.denominator)), dummyVar)
-            #except:
-            #    return eqn
+            try:
+                # see if the numerator can simplify (e.g., with a one factor)
+                numerSimplification = eqn.rhs.numerator.simplification(assumptions=assumptions)
+                dummyVar = eqn.safeDummyVar()
+                return numerSimplification.rhsSubstitute(Equals(eqn.lhs, Fraction(dummyVar, eqn.rhs.denominator)), dummyVar)
+            except:
+                return eqn
         elif isinstance(operand, Summation):
             deduceInComplexes(self.operands, assumptions)
             yEtcSub = operand.indices
