@@ -1,6 +1,6 @@
 import sys
 from proveit.expression import Literal, LATEX, STRING, Operation, Variable, safeDummyVar
-from proveit.multiExpression import Etcetera
+from proveit.multiExpression import MultiVariable, Etcetera
 from proveit.basiclogic import Equals, Equation, Forall, In
 #from proveit.number import axioms
 #from proveit.statement import *
@@ -782,6 +782,32 @@ class Abs(Operation, NumberOp):
         from complex.theorems import absIsNonNeg
         deduceInComplexes(self.operand, assumptions)
         return absIsNonNeg.specialize({a:self.operand}).checked(assumptions)
+    
+    def distribute(self, assumptions=frozenset()):
+        '''
+        Distribute the absolute value over a product or fraction.
+        Assumptions may be needed to deduce that the sub-operands are in complexes.
+        '''
+        from complex.theorems import absFrac, absProd
+        if isinstance(self.operand, Fraction):
+            deduceInComplexes(self.operand.numerator, assumptions)
+            deduceInComplexes(self.operand.denominator, assumptions)
+            return absFrac.specialize({a:self.operand.numerator, b:self.operand.denominator}).checked(assumptions)
+        elif isinstance(self.operand, Multiply):
+            deduceInComplexes(self.operand.operands, assumptions)
+            return absProd.specialize({xEtc:self.operand.operands}).checked(assumptions)
+        else:
+            raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
+    
+    def absElimination(self, assumptions=frozenset()):
+        '''
+        For some |x| expression, deduce |x| = x after trying to deduce x >= 0.
+        Assumptions may be needed to deduce x >= 0.
+        '''
+        from real.theorems import absElim
+        # deduceNonNeg(self.operand, assumptions) # NOT YET IMPLEMENTED
+        return absElim.specialize({x:self.operand})
+        
 
 ABS = Literal(pkg, 'ABS', operationMaker = lambda operands : Abs(*operands))
 
@@ -1404,8 +1430,10 @@ class Multiply(AssociativeOperation, NumberOp):
             Pop, Pop_sub = Operation(P, operand.indices), operand.summand
             S_sub = operand.domain
             xDummy, zDummy = self.safeDummyVars(2)
-            spec1 = distributeThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, x:xDummy, z:zDummy}).checked()
-            return spec1.deriveConclusion().specialize({Etcetera(xDummy):self.operands[:index], Etcetera(zDummy):self.operands[index+1:]})
+            spec1 = distributeThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, 
+                                                           xEtc:Etcetera(MultiVariable(xDummy)), zEtc:Etcetera(MultiVariable(zDummy))}).checked()
+            return spec1.deriveConclusion().specialize({Etcetera(MultiVariable(xDummy)):self.operands[:index], \
+                                                        Etcetera(MultiVariable(zDummy)):self.operands[index+1:]})
         else:
             raise Exception("Unsupported operand type to distribute over: " + str(operand.__class__))
         
@@ -1630,10 +1658,12 @@ class Fraction(BinaryOperation, NumberOp):
             # Should deduce in Complexes, but distributeThroughSummation doesn't have a domain restriction right now
             # because this is a little tricky.   To do.
             #deduceInComplexes(self.operands, assumptions)
-            xEtcSub = self.numerator.indices
+            yEtcSub = self.numerator.indices
             Pop, Pop_sub = Operation(P, self.numerator.indices), self.numerator.summand
             S_sub = self.numerator.domain
-            return distributeFractionThroughSummation.specialize({Pop:Pop_sub, S:S_sub, xEtc:xEtcSub, z:self.denominator})
+            dummyVar = safeDummyVar(self)            
+            spec1 = distributeFractionThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, z:dummyVar})
+            return spec1.deriveConclusion().specialize({dummyVar:self.denominator})
         else:
             raise Exception("Unsupported operand type to distribute over: " + self.numerator.__class__)
 
@@ -1735,14 +1765,18 @@ class Exponentiate(BinaryOperation, NumberOp):
         from number import zero, one
         from complex.theorems import powZeroEqOne, powOneUnchanged, exponentiatedZero, exponentiatedOne
         if self.exponent == zero:
+            deduceInComplexes(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
             return powZeroEqOne.specialize({a:self.base})
         elif self.exponent == one:
+            deduceInComplexes(self.base, assumptions)
             return powOneUnchanged.specialize({a:self.base})
         elif self.base == zero:
+            deduceInComplexes(self.exponent, assumptions)
             deduceNotZero(self.exponent, assumptions)
             return exponentiatedZero.specialize({x:self.exponent})
         elif self.base == one:
+            deduceInComplexes(self.exponent, assumptions)
             return exponentiatedOne.specialize({x:self.exponent})
         else:
             raise ValueError('Only trivial simplification is implemented (zero or one for the base or exponent)')
@@ -1982,8 +2016,8 @@ class Summation(OperationOverInstances, NumberOp):
         deduceInComplexes(factorOperands, assumptions=assumptions)
         deduceInComplexes(Pop_sub, assumptions=assumptions | {In(idx, self.domain) for idx in self.indices}).generalize(self.indices, domain=self.domain).checked(assumptions)
         # Now we specialize distributThroughSummationRev
-        spec1 = distributeThroughSummationRev.specialize({Pop:Pop_sub, S:self.domain, yEtc:self.indices, x:xDummy, z:zDummy}).checked()
-        eq.update(spec1.deriveConclusion().specialize({Etcetera(xDummy):xSub, Etcetera(zDummy):zSub}))
+        spec1 = distributeThroughSummationRev.specialize({Pop:Pop_sub, S:self.domain, yEtc:self.indices, xEtc:Etcetera(MultiVariable(xDummy)), zEtc:Etcetera(MultiVariable(zDummy))}).checked()
+        eq.update(spec1.deriveConclusion().specialize({Etcetera(MultiVariable(xDummy)):xSub, Etcetera(MultiVariable(zDummy)):zSub}))
         if groupFactor and len(factorOperands) > 1:
             eq.update(eq.eqExpr.rhs.group(endIdx=len(factorOperands), assumptions=assumptions))
         return eq.eqExpr #.checked(assumptions)
