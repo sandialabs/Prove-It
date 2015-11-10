@@ -88,9 +88,9 @@ class Prover:
             usedAxioms = set()
             usedTheorems = set()
         numNodes = 1
-        print (indentation + self.proverType + ' ' + str(self.stmtToProve.getExpression())),
+        print (indentation + self.proverType + ' ' + repr(self.stmtToProve.getExpression())),
         if self.provingAssumptions is not None and len(self.provingAssumptions) > 0:
-            print ' assuming', ', '.join(str(assumption.getExpression()) for assumption in self.provingAssumptions),
+            print ' assuming', ', '.join(repr(assumption.getExpression()) for assumption in self.provingAssumptions),
         key = (self.stmtToProve,) + tuple([assumption for assumption in self.provingAssumptions])
         if key in remembered:
             print ' proven above'

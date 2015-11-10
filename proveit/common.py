@@ -5,7 +5,7 @@ Commonly used Variables and simple expressions involving them.
 '''
 
 from proveit.expression import Variable, Operation, LATEX
-from proveit.multiExpression import Etcetera
+from proveit.multiExpression import MultiVariable, Etcetera
 
 a = Variable('a')
 b = Variable('b')
@@ -64,18 +64,21 @@ gy = Operation(g, y) # g(y)
 eps = Variable('eps',{LATEX:r'\varepsilon'})
 Upsilon = Variable('Upsilon',{LATEX:r'\Upsilon'})
 
-aEtc = Etcetera(a) # ..a..
-bEtc = Etcetera(b) # ..b..
-cEtc = Etcetera(c) # ..c..
-Aetc = Etcetera(A) # ..A..
-Cetc = Etcetera(C) # ..C..
-Qetc = Etcetera(Q) # ..Q..
-Retc = Etcetera(R) # ..R..
-vEtc = Etcetera(v) # ..v..
-xEtc = Etcetera(x) # ..x..
-yEtc = Etcetera(y) # ..y..
-zEtc = Etcetera(z) # ..z..
-wEtc = Etcetera(w) # ..z..
+def etcMultiVar(var):
+    return Etcetera(MultiVariable(var))
+
+aEtc = etcMultiVar(a) # ..a..
+bEtc = etcMultiVar(b) # ..b..
+cEtc = etcMultiVar(c) # ..c..
+Aetc = etcMultiVar(A) # ..A..
+Cetc = etcMultiVar(C) # ..C..
+Qetc = etcMultiVar(Q) # ..Q..
+Retc = etcMultiVar(R) # ..R..
+vEtc = etcMultiVar(v) # ..v..
+xEtc = etcMultiVar(x) # ..x..
+yEtc = etcMultiVar(y) # ..y..
+zEtc = etcMultiVar(z) # ..z..
+wEtc = etcMultiVar(w) # ..z..
 fxEtc = Operation(f, xEtc) # f(..x..)
 fyEtc = Operation(f, yEtc) # f(..y..)
 fzEtc = Operation(f, zEtc) # f(..z..)
@@ -85,7 +88,7 @@ gzEtc = Operation(g, zEtc) # g(..z..)
 PxEtc = Operation(P, xEtc) # P(..x..)
 PyEtc = Operation(P, yEtc) # P(..y..)
 PxyEtc = Operation(P, (xEtc, yEtc)) # P(..x.., ..y..)
-etc_QxEtc = Etcetera(Operation(Q, xEtc)) # ..Q(..x..)..
-etc_QyEtc = Etcetera(Operation(Q, yEtc)) # ..Q(..y..)..
-etc_QzEtc = Etcetera(Operation(Q, zEtc)) # ..Q(..z..)..
-etc_RyEtc = Etcetera(Operation(R, yEtc)) # ..R(..y..)..
+etc_QxEtc = Etcetera(Operation(MultiVariable(Q), xEtc)) # ..Q(..x..)..
+etc_QyEtc = Etcetera(Operation(MultiVariable(Q), yEtc)) # ..Q(..y..)..
+etc_QzEtc = Etcetera(Operation(MultiVariable(Q), zEtc)) # ..Q(..z..)..
+etc_RyEtc = Etcetera(Operation(MultiVariable(R), yEtc)) # ..R(..y..)..

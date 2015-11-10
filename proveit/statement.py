@@ -148,24 +148,24 @@ class Statement:
                     if not isBundledVarOrVar(v) or (isBundledVar(v) and v.multiExprType != key.multiExprType):
                         raise ImproperSpecialization('May only relabel a Bundled Variable to Bundled Variables of the same type')
                 # change ..x..:expression_or_expressions to x:expressions
-                relabelVar = key.bundledExpr
+                relabelVar = key.bundledExpr.variable
             else:
                 raise ImproperSpecialization("May only relabel a Variable or a Bundled Variable")   
             relabelMap[relabelVar] = sub
         # Process the substitution map, performming conversions of Operations and Etcetera-wrapped Operations/Variables
         substitutingVars = set()
-        operationSubMap = dict()
-        nonOpSubMap = dict()
-        for subKey, sub in subMap.iteritems():
+        origSubMapItems = list(subMap.iteritems())
+        subMap = dict()
+        for subKey, sub in origSubMapItems:
             if isinstance(subKey, Variable):
                 # substitute a simple Variable
                 if not isinstance(sub, Expression) or isinstance(sub, MultiExpression):
                     raise ImproperSpecialization('A normal Variable may be not be specialized to a MultiExpression (only a Bundled Variable may be)')
                 subVar = subKey
-                nonOpSubMap[subVar] = sub
+                subMap[subVar] = sub
             elif isBundledVar(subKey):
                 # substitute an Etcetera-wrapped Variable -- sub in an ExpressionList
-                subVar = subKey.bundledExpr
+                subVar = subKey.bundledExpr.variable
                 sub = multiExpression(sub)
                 if sub.__class__ != subKey.multiExprType:
                     if subKey.multiExprType == ExpressionList:
@@ -174,29 +174,28 @@ class Statement:
                         raise ImproperSpecialization('Block Variables may only be specialized to a tensor of Expressions')
                     else:
                         raise ImproperSpecialization('Unknown Bundle type:' + str(subKey.multiExprType))
-                nonOpSubMap[subVar] = sub
+                subMap[subVar] = sub
             elif isinstance(subKey, Operation) or isBundledOperation(subKey):
                 # Substitute an Operation, f(x):expression, or a Bundled operation like
                 # ..Q(x)..:expressions.
-                # These get converted in the operationSubMap to a map of the operator Variable
+                # These get converted in the subMap to a map of the operator Variable
                 # to a lambda, e.g. f:(x->expression) or Q:(x->expressions)
                 operation = subKey if isinstance(subKey, Operation) else subKey.bundledExpr
-                if isinstance(subKey, Operation):
-                    operation = subKey
-                    if not isinstance(sub, Expression) or isinstance(sub, MultiExpression):
-                        raise ImproperSpecialization('A normal operations may be not be specialized to a MultiExpression (only a Bundled Operation may be)')                    
-                    lambdaExpr = sub
-                else: 
-                    operation = subKey.bundledExpr
-                    lambdaExpr = multiExpression(sub)
                 try:
-                    opSub = Lambda(operation.operands, lambdaExpr)
+                    if isinstance(subKey, Operation):
+                        if not isinstance(sub, Expression) or isinstance(sub, MultiExpression):
+                            raise ImproperSpecialization('A normal operation may be not be specialized to a MultiExpression (only a Bundled Operation may be)')                    
+                        lambdaExpr = sub
+                        subVar = operation.operator
+                        subMap[subVar] = Lambda(operation.operands, lambdaExpr)
+                    else: 
+                        lambdaExpressions = multiExpression(sub)
+                        subVar = operation.operator.variable
+                        subMap[subVar] = ExpressionList([Lambda(operation.operands, lambdaExpr) for lambdaExpr in lambdaExpressions])
                 except TypeError as e:
                     raise ImproperSpecialization("Improper Operation substitution, error transforming to Lambda: " + e.message)
                 except ValueError as e:
                     raise ImproperSpecialization("Improper Operation substitution, error transforming to Lambda: " + e.message)
-                subVar = operation.operator
-                operationSubMap[subVar] = opSub
             else:
                 raise ImproperSpecialization("Substitution may only map (Bundled) Variable types or (Bundled) Operations that have Variable operators")
             substitutingVars.add(subVar)
@@ -221,19 +220,19 @@ class Statement:
             conditions = []
             domain = None
         # make and state the specialized expression with appropriate substitutions
-        specializedExpr = Statement.state(expr.substituted(nonOpSubMap, operationSubMap, relabelMap))
+        specializedExpr = Statement.state(expr.substituted(subMap, relabelMap))
         # make substitutions in the condition
-        subbedConditions = {asStatement(condition.substituted(nonOpSubMap, operationSubMap, relabelMap)) for condition in conditions}
+        subbedConditions = {asStatement(condition.substituted(subMap, relabelMap)) for condition in conditions}
         # add conditions for satisfying the domain restriction if there is one
         if domain != EVERYTHING:
             # extract all of the elements
             for var in instanceVars:
-                elementOrList = var.substituted(nonOpSubMap, operationSubMap, relabelMap)
+                elementOrList = var.substituted(subMap, relabelMap)
                 for element in (elementOrList if isinstance(elementOrList, ExpressionList) else [elementOrList]):
                     subbedConditions.add(asStatement(IN.operationMaker([element, domain])))
         Statement.state(originalExpr)
         # add the specializer link
-        specializedExpr.statement.addSpecializer(originalExpr.statement, nonOpSubMap, relabelMap, subbedConditions)
+        specializedExpr.statement.addSpecializer(originalExpr.statement, subMap, relabelMap, subbedConditions)
         # return the specialized expression and the 
         return specializedExpr, subbedConditions
                        

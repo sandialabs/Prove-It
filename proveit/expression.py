@@ -198,14 +198,11 @@ class Expression:
                 raise TypeError('Expression statement must be of Statement type')
             return self.statement.wasProven(assumptions)
         
-    def substituted(self, exprMap, operationMap, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
         Returns this expression with the expressions substituted 
         according to the exprMap dictionary (mapping Expressions to Expressions --
-        for specialize, this may only map Variables to Expressions)
-        and/or operations with variable operators substituted according to operationMap
-        dictionary (mapping Variables to either individual Lambda functions 
-        or MultiExpressions containing Lambda functions).
+        for specialize, this may only map Variables to Expressions).
         If supplied, reservedVars is a dictionary that maps reserved Variable's
         to relabeling exceptions.  You cannot substitute with an expression that
         uses a restricted variable and you can only relabel the exception to the
@@ -222,7 +219,7 @@ class Expression:
         changed.  This may also involve substituting a MultiVariable with a list
         of Variables.
         '''
-        return self.substituted(exprMap=dict(), operationMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
+        return self.substituted(exprMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
     
     def _validateRelabelMap(self, relabelMap):
         if len(relabelMap) != len(set(relabelMap.values())):
@@ -240,9 +237,9 @@ class Expression:
         """
         return set()    
 
-    def freeUnbundledVars(self):
+    def freeMultiVars(self):
         """
-        Returns the used variables that are not bound as an instance variable
+        Returns the used multi-variables that are not bound as an instance variable
         or wrapped in a Bundle (see multiExpression.py).
         """
         return set()    
@@ -384,7 +381,7 @@ class Variable(Expression):
         if formatType == STRING or formatType == LATEX:
             return self.name
 
-    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
@@ -393,8 +390,6 @@ class Variable(Expression):
         from multiExpression import ExpressionList, isBundledVar
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
-        elif (operationMap is not None) and (self in operationMap):
-            return operationMap[self]._restrictionChecked(reservedVars)
         elif relabelMap != None:
             subbed = relabelMap.get(self, self)
             for subVar in (subbed if isinstance(subbed, ExpressionList) else [subbed]):
@@ -413,8 +408,8 @@ class Variable(Expression):
     def freeVars(self):
         return {self}
 
-    def freeUnbundledVars(self):
-        return {self}
+    def freeMultiVars(self):
+        return set() # overridden in MultiVariable
     
 class IndexVariable(Variable):
     def __init__(self, n):
@@ -434,9 +429,9 @@ class Operation(Expression):
         Literal, Variable, or Lambda function.  The operands may be single expression that
         will be then be wrapped by ExpressionList.
         '''
-        from multiExpression import multiExpression
-        if not (isinstance(operator, Literal) or isinstance(operator, Variable) or isinstance(operator, Lambda)):
-            raise TypeError('operator must be a Literal, Variable, or a Lambda function')
+        from multiExpression import multiExpression, MultiVariable
+        if not (isinstance(operator, Literal) or isinstance(operator, Variable) or isinstance(operator, MultiVariable)):
+            raise TypeError('operator must be a Literal, Variable, or MultiVariable')
         self.operator = operator
         self.operands = multiExpression(operands)
         if isinstance(operator, Lambda):
@@ -464,56 +459,36 @@ class Operation(Expression):
         elif formatType == LATEX:
             return self.operator.formatted(formatType, fence=True) +  r'\left(' + self.operands.formatted(formatType, fence=False) + r'\right)'
         
-    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
         Return this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        from multiExpression import ExpressionList, extractVar, multiExpression, Etcetera
+        from multiExpression import extractVar, Etcetera
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
         operator = self.operator
-        subbedOperands = self.operands.substituted(exprMap, operationMap, relabelMap, reservedVars)
+        subbedOperands = self.operands.substituted(exprMap, relabelMap, reservedVars)
+        subbedOperator = self.operator.substituted(exprMap, relabelMap, reservedVars)
         # Not allowed to substitute the operator or operation if there are Etcetera operands
         # because the number of operands should not be indeterminate when performing such a substition.
-        hasEtcOperand = False
         for subbedOperand in subbedOperands:
             if isinstance(subbedOperand, Etcetera):
-                hasEtcOperand = True
-        if operationMap is not None and isinstance(operator, Variable) and operator in operationMap:
+                if subbedOperator != operator:
+                    raise Exception('Not allowed to perform an Operation substition with any remaining Etcetera operands because the number of operands should be determined when substititing the operation.')
+        if isinstance(subbedOperator, Lambda):
             # Substitute the entire operation via a Lambda expression
-            #if hasEtcOperand:
-            #    raise Exception('Not allowed to perform an Operation substition with any remaining Etcetera operands because the number of operands should be determined when substititing the operation.')
-            operatorSubs = operationMap[operator]
-            subbedOperations = []
-            for operatorSub in (operatorSubs if isinstance(operatorSubs, ExpressionList) else [operatorSubs]):
-                if not isinstance(operatorSub, Lambda):
-                    raise ImproperSubstitution("Operation substitution requires a Lambda function to define the new operation.")
-                # Substitute the entire operation via a lambda expression
-                # For example, f(x, y) -> x + y.
-                if len(subbedOperands) != len(operatorSub.arguments):
-                    raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of arguments')
-                operandSubMap = {argument:operand for argument, operand in zip(operatorSub.arguments, subbedOperands)}
-                if not reservedVars is None:
-                    # the reserved variables of the lambda expression excludes the lambda arguments
-                    # (i.e., the arguments mask externally reserved variables).
-                    lambdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if extractVar(k) not in operatorSub.argVarSet}
-                else: lambdaExprReservedVars = None
-                subbedOperations.append(operatorSub.expression._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, None))
-            if isinstance(operatorSubs, ExpressionList):
-                return multiExpression(subbedOperations)
-            else:
-                return subbedOperations[0]
-        else:
-            # Can perform substitutions within the Operator
-            #if (operator in exprMap) and hasEtcOperand:
-            #    raise Exception('Not allowed to perform an operator substition with any remaining Etcetera operands because the number of operands should be determined when substititing the operator.')
-            subbedOperator = operator.substituted(exprMap, operationMap, relabelMap, reservedVars)
-            if isinstance(subbedOperator, ExpressionList):
-                # substituting the single operation with multiple operations as an ExpressionList
-                return ExpressionList([Operation.make(operator, subbedOperands) for operator in subbedOperator])
-            else:                   
-                return Operation.make(subbedOperator, subbedOperands)
+            # For example, f(x, y) -> x + y.
+            if len(subbedOperands) != len(subbedOperator.arguments):
+                raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of arguments')
+            operandSubMap = {argument:operand for argument, operand in zip(subbedOperator.arguments, subbedOperands)}
+            if not reservedVars is None:
+                # the reserved variables of the lambda expression excludes the lambda arguments
+                # (i.e., the arguments mask externally reserved variables).
+                lambdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if extractVar(k) not in subbedOperator.argVarSet}
+            else: lambdaExprReservedVars = None
+            return subbedOperator.expression._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, None)
+        return Operation.make(subbedOperator, subbedOperands)
         
     def usedVars(self):
         '''
@@ -527,12 +502,12 @@ class Operation(Expression):
         '''
         return self.operator.freeVars().union(self.operands.freeVars())
     
-    def freeUnbundledVars(self):
+    def freeMultiVars(self):
         """
-        Returns the used variables that are not bound as an instance variable
+        Returns the used multi-variables that are not bound as an instance variable
         or wrapped in a Bundle (see multiExpression.py).
         """
-        return self.operator.freeUnbundledVars().union(self.operands.freeUnbundledVars())
+        return self.operator.freeMultiVars().union(self.operands.freeMultiVars())
 
 class Lambda(Expression):
     '''
@@ -580,7 +555,7 @@ class Lambda(Expression):
             if fence: outStr += r'\right]'
         return outStr
         
-    def substituted(self, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
         Return this expression with its variables substituted 
         according to subMap and/or relabeled according to relabelMap.
@@ -595,8 +570,6 @@ class Lambda(Expression):
             return exprMap[self]._restrictionChecked(reservedVars)        
         # Can't substitute the lambda argument variables; they are in a new scope.
         innerExprMap = {key:value for (key, value) in exprMap.iteritems() if extractVar(key) not in self.argVarSet}
-        if operationMap is None: operationMap = dict()
-        innerOperationMap = {key:value for (key, value) in operationMap.iteritems() if extractVar(key) not in self.argVarSet}
         # Handle relabeling and variable reservations consistent with relabeling.
         innerReservations = dict() if reservedVars is None else dict(reservedVars)
         try:
@@ -613,7 +586,7 @@ class Lambda(Expression):
                 for x in newArg: innerReservations[extractVar(x)] = extractVar(arg)
             else: innerReservations[extractVar(newArg)] = extractVar(arg)
         # the lambda expression with the substitution:
-        subbedExpr = self.expression.substituted(innerExprMap, innerOperationMap, relabelMap, innerReservations)
+        subbedExpr = self.expression.substituted(innerExprMap, relabelMap, innerReservations)
         try:
             newLambda = Lambda(newArgs, subbedExpr)
         except TypeError as e:
@@ -637,12 +610,12 @@ class Lambda(Expression):
         innerFreeVs = set(self.expression.freeVars())
         return innerFreeVs - self.argVarSet
     
-    def freeUnbundledVars(self):
+    def freeMultiVars(self):
         """
-        Returns the used variables that are not bound as an instance variable
+        Returns the used multi-variables that are not bound as an instance variable
         or wrapped in a Bundle (see multiExpression.py).
         """
-        innerFreeVs = set(self.expression.freeUnbundledVars())
+        innerFreeVs = set(self.expression.freeMultiVars())
         return innerFreeVs - self.argVarSet
     
 
