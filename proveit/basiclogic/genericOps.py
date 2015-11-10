@@ -1,5 +1,5 @@
 from proveit.expression import Operation, Lambda, STRING, LATEX
-from proveit.multiExpression import multiExpression, Etcetera
+from proveit.multiExpression import multiExpression, MultiVariable, Etcetera
 from proveit.everythingLiteral import EVERYTHING
 
 class BinaryOperation(Operation):
@@ -39,10 +39,12 @@ class AssociativeOperation(Operation):
         Format the associative operation in the form "A * B * C" where '*' is a stand-in for
         the operator that is obtained from self.operator.formatted(formatType).
         '''
+        formattedOperator = self.operator.formatted(formatType) 
+        return self.operands.formatted(formatType, fence=fence, subFence=subFence, formattedOperator=formattedOperator)
+        """
         outStr = ''
         # insert ellipses (two dots in our case) before and after Etcetera expressions
         formattedOperands = [] 
-        spc = '~' if formatType == LATEX else ' ' 
         for operand in self.operands:
             if isinstance(operand, Etcetera):
                 if len(formattedOperands) > 0 and formattedOperands[-1] == '..' + spc:
@@ -54,7 +56,7 @@ class AssociativeOperation(Operation):
                 formattedOperands.append('..' + spc)
             else:
                 formattedOperands.append(operand.formatted(formatType, fence=subFence))
-        # put the formatted operator between each of formattedOperandsWithEllipses
+        # put the formatted operator between each of formattedOperands
         if formatType == STRING:
             if fence: outStr += '('
             outStr += (' ' + self.operator.formatted(formatType) + ' ').join(formattedOperands)
@@ -64,6 +66,7 @@ class AssociativeOperation(Operation):
             outStr += (' ' + self.operator.formatted(formatType) + ' ').join(formattedOperands)
             if fence: outStr += r'\right)'
         return outStr           
+        """
 
 class OperationOverInstances(Operation):
     def __init__(self, operator, instanceVars, instanceExpr, domain=EVERYTHING, conditions=tuple()):
@@ -142,26 +145,30 @@ class OperationOverInstances(Operation):
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
             if hasExplicitIvars:
-                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
+                outStr += self.instanceVars.formatted(formatType, fence=False)
+                #outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
             if self.hasDomain():
                 outStr += ' in ' if formatType == STRING else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
-                outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
+                outStr += self.conditions.formatted(formatType, fence=False)                
+                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += ']'
         if formatType == LATEX:
             if fence: outStr += r'\left['
             outStr += self.operator.formatted(formatType) + '_{'
             if hasExplicitIvars:
-                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
+                outStr += self.instanceVars.formatted(formatType, fence=False)
+                #outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
             if self.hasDomain():
                 outStr += ' in ' if formatType == STRING else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += "~|~"
-                outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
+                outStr += self.conditions.formatted(formatType, fence=False)                
+                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += r'\right]'
 
@@ -196,7 +203,7 @@ class OperationOverInstances(Operation):
             raise InstanceSubstitutionException("lhs of equivalence in equivalenceForallInstances must match the instance expression of the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
         f_op, f_op_sub = Operation(f, self.instanceVars), self.instanceExpr
         g_op, g_op_sub = Operation(g, self.instanceVars), equivalenceForallInstances.instanceExpr.rhs.substituted(iVarSubstitutions)
-        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
         return instanceSubstitution.specialize({Upsilon:self.operator, xEtc:self.instanceVars, yEtc:self.instanceVars, zEtc:self.instanceVars, \
                                                 Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub}).deriveConclusion()
 
