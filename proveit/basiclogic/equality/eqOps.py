@@ -1,7 +1,7 @@
 from proveit.basiclogic.genericOps import BinaryOperation
 from proveit.expression import Variable, Literal, Operation, STRING, LATEX,\
     safeDummyVar
-from proveit.multiExpression import ExpressionList, ExpressionTensor, Bundle, Etcetera, Block
+from proveit.multiExpression import ExpressionList, ExpressionTensor, MultiVariable, Etcetera, Bundle, Block
 from proveit.common import A, P, X, f, x, y, z
 
 pkg = __package__
@@ -120,7 +120,7 @@ class Equals(BinaryOperation):
         if fnArg is None:
             dummyVar = safeDummyVar(self, fnExpr)
             if isinstance(replacement, ExpressionList):
-                fnArg = Etcetera(dummyVar)
+                fnArg = Etcetera(MultiVariable(dummyVar))
             elif isinstance(replacement, ExpressionTensor):
                 fnArg = Block(dummyVar)
             else:
