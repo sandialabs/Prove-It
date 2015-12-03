@@ -321,9 +321,10 @@ class And(AssociativeOperation):
         Attempt to deduce, then return, that this 'and' expression is in the set of BOOLEANS.
         '''
         from theorems import conjunctionClosure
-        leftInBool = deduceInBool(self.leftOperand)
-        rightInBool = deduceInBool(self.rightOperand)
-        return conjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion}).checked({leftInBool, rightInBool})
+        if len(self.operands) > 2:
+            raise Exception('Deducing more than binary conjunction in booleans has not been implemented')
+        inBools = {deduceInBool(operand) for operand in self.operands}
+        return conjunctionClosure.specialize({A:self.operands[0], B:self.operands[1]}).checked(inBools)
 
 AND = Literal(pkg, 'AND', {STRING:'and', LATEX:r'\land'}, lambda operands : And(*operands))
 
@@ -364,7 +365,7 @@ class Or(AssociativeOperation):
         rightImplConclusion = Implies(rightOperand, conclusion)
         # (A=>C and B=>C) assuming A=>C, B=>C
         compose(leftImplConclusion, rightImplConclusion)
-        return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}).deriveConclusion().deriveConclusion().checked({self, leftImplConclusion, rightImplConclusion, inBool(A), inBool(B), inBool(C)})
+        return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}).deriveConclusion().deriveConclusion()#.checked({self, leftImplConclusion, rightImplConclusion, inBool(A), inBool(B), inBool(C)})
         
     def evaluate(self):
         '''
