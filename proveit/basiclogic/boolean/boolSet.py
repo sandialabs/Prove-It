@@ -3,7 +3,7 @@ from proveit.common import A, P
 
 class BooleanSet(Literal):
     def __init__(self):
-        Literal.__init__(self, __package__, 'BOOLEANS', {LATEX:r'\cal{B}'})
+        Literal.__init__(self, __package__, 'BOOLEANS', {LATEX:r'\mathbb{B}'})
 
     def unfoldElemInSet(self, element):
         '''
