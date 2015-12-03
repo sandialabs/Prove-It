@@ -268,7 +268,7 @@ class ExpressionTensor(MultiExpression, dict):
         # Establish the shape and check for restriction violations:
         self.shape = shape
         fixed_shape = (shape is not None)
-        print tensor, shape
+        #print tensor, shape
         for idx, element in tensor.iteritems():
             for i in idx:
                 if not isinstance(i, int) or i < 0:
