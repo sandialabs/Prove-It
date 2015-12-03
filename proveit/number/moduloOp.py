@@ -1,6 +1,7 @@
 from proveit.expression import Literal, STRING, LATEX
 from proveit.basiclogic.genericOps import Operation, BinaryOperation
 from numberSets import NumberOp, Reals, Integers
+from proveit.common import a, b
 
 pkg = __package__
 
@@ -17,6 +18,20 @@ class Mod(BinaryOperation, NumberOp):
             return integer.theorems.modClosure
         elif numberSet == Reals:
             return real.theorems.modClosure
+    
+    def deduceInInterval(self, assumptions=frozenset()):
+        import integer.theorems
+        import real.theorems
+        from numberSets import deduceInIntegers, deduceInReals
+        try:
+            # if the operands are integers, then we can deduce that a mod b is in 0..(b-1)
+            deduceInIntegers(self.operands, assumptions)
+            return integer.theorems.modInInterval.specialize({a:self.dividend, b:self.divisor}).checked(assumptions)
+        except:
+            # if the operands are reals, then we can deduce that a mod b is in [0, b)
+            deduceInReals(self.operands, assumptions)
+            return real.theorems.modInIntervalCO.specialize({a:self.dividend, b:self.divisor}).checked(assumptions)
+        
 
 MOD = Literal(pkg, 'MOD', {STRING:'mod', LATEX:r'~\rm{mod}~'}, operationMaker = lambda operands : Mod(*operands))
 

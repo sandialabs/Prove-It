@@ -6,7 +6,7 @@ from proveit.basiclogic import Equals, Equation, Forall, In
 #from proveit.statement import *
 from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
 from proveit.everythingLiteral import EVERYTHING
-from proveit.common import a, b, c, d, k, l, m, n, r, v, w, x, y, z, A, P, S, aEtc, cEtc, vEtc, wEtc, xEtc, yEtc, zEtc
+from proveit.common import a, b, c, d, f, k, l, m, n, r, v, w, x, y, z, A, P, S, aEtc, cEtc, vEtc, wEtc, xEtc, yEtc, zEtc
 from proveit.number.numberSets import *
 #from variables import *
 #from variables import a, b
@@ -976,7 +976,7 @@ class Add(AssociativeOperation, NumberOp):
         Give any assumptions necessary to prove that the operands are in 
         Complexes so that the commutation theorem is applicable.
         '''
-        from proveit.number.complex.theorems import addAssoc
+        from proveit.number.axioms import addAssoc
         deduceInComplexes(self.operands, assumptions)
         xSub = self.operands[:startIdx] if startIdx is not None else []
         ySub = self.operands[startIdx:endIdx]
@@ -994,13 +994,62 @@ class Add(AssociativeOperation, NumberOp):
         if not isinstance(self.operands[idx], Add):  
             raise ValueError("Selected term is not an Add expression")
 
-        from proveit.number.complex.theorems import addAssocRev
+        from proveit.number.theorems import addAssocRev
         deduceInComplexes(self.operands, assumptions)
         deduceInComplexes(self.operands[idx].operands, assumptions)
         xSub = self.operands[:idx] if idx is not None else []
         ySub = self.operands[idx].operands
         zSub = self.operands[idx+1:] if idx is not None else []
         return addAssocRev.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+
+    def factor(self, theFactor, pull="left", groupFactor=True, assumptions=frozenset()):
+        '''
+        Factor out "theFactor" from this sum, pulling it either to the "left" or "right".
+        If groupFactor is True and theFactor is a product, these operands are grouped 
+        together as a sub-product.  Returns the equality that equates self to this new version.
+        Give any assumptions necessary to prove that the operands are in Complexes so that
+        the associative and commutation theorems are applicable.
+        '''
+        from complex.theorems import distributeThroughSumRev
+        expr = self
+        eq = Equation()
+        dummyVar = self.safeDummyVar()
+        yEtcSub = []
+        for i, term in enumerate(self.terms):
+            sumWithDummy = Add(*[jterm if j != i else dummyVar for j, jterm in enumerate(expr.terms)])
+            termFactorization = term.factor(theFactor, pull, groupFactor=groupFactor, groupRemainder=True, assumptions=assumptions)
+            if not isinstance(termFactorization.rhs, Multiply):
+                raise Exception('Expecting right hand size of factorization to be a product')
+            if pull == 'left':
+                # the grouped remainder on the right
+                yEtcSub.append(termFactorization.rhs.operands[-1]) 
+            else:
+                # the grouped remainder on the left
+                yEtcSub.append(termFactorization.rhs.operands[0])
+            eq.update(termFactorization.substitution(sumWithDummy, dummyVar))
+            expr = eq.eqExpr.rhs
+        if not groupFactor and isinstance(theFactor, Multiply):
+            factorSub = theFactor.operands
+        else:
+            factorSub = [theFactor]
+        deduceInComplexes(factorSub, assumptions=assumptions)
+        deduceInComplexes(yEtcSub, assumptions=assumptions)
+        if pull == 'left':
+            xEtcSub = factorSub
+            zEtcSub = []
+        else:
+            xEtcSub = []
+            zEtcSub = factorSub
+        eq.update(distributeThroughSumRev.specialize({xEtc:xEtcSub, yEtc:yEtcSub, zEtc:zEtcSub}))
+        return eq.eqExpr.checked(assumptions)
+    
+    def join(self, assumptions=frozenset()):
+        '''
+        For joining two summations (could be more sophistocated later).
+        '''
+        if len(self.terms) != 2 or not all(isinstance(term, Summation) for term in self.terms):
+            raise Exception("Sum joinoing currently only implemented for two summation terms.")
+        return self.terms[0].join(self.terms[1], assumptions)
 
 ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
 
@@ -1080,12 +1129,43 @@ class Subtract(BinaryOperation, NumberOp):
     
     def convertToAdd(self, assumptions=frozenset()):
         '''
-        Given (x - y) deduce (x - y) = (x + (-y)).
+        Given (x - y) deduce and return (x - y) = (x + (-y)).
         Assumptions may be needed to deduce that the operands are in Complexes.
         '''
         from complex.theorems import subtractAsAddNeg
         deduceInComplexes(self.operands, assumptions)
         return subtractAsAddNeg.specialize({x:self.operands[0], y:self.operands[1]}).checked(assumptions)
+
+    def distribute(self, assumptions=frozenset()):
+        '''
+        Given something of the form (a + b + ...) - (x + y + ...), deduce and return
+        (a + b + ...) - (x + y + ...) = a + b + ... + (-x) + (-y) + ....
+        Assumptions may be needed to deduce that the operands are in Complexes.        
+        '''
+        # first deduce: (a + b + ...) - (x + y + ...)  = (a + b + ...) + (-x) + (-y) + ...
+        eqn = Equation()
+        if isinstance(self.operands[1], Add):
+            from complex.theorems import distributeSubtraction
+            deduceInComplexes(self.operands[0], assumptions)
+            deduceInComplexes(self.operands[1].operands, assumptions)
+            eqn.update(distributeSubtraction.specialize({x:self.operands[0], yEtc:self.operands[1].operands}).checked(assumptions))
+        else:
+            eqn.update(self.convertToAdd(assumptions))
+        expr = eqn.eqExpr.rhs
+        dummyVar = expr.safeDummyVar()
+        # next try to simplify any of the negated terms
+        negatedTerms = [term for term in expr.operands[1:]]
+        for k, negatedTerm in enumerate(negatedTerms):
+            try:
+                negTermSimplification = negatedTerm.simplification(assumptions)
+                eqn.update(negTermSimplification.substitution(Add(*(expr.terms[:k+1] + [dummyVar] + expr.terms[k+2:])), dummyVar)).checked(assumptions)
+                expr = eqn.eqExpr.rhs
+            except:
+                pass # skip over 
+        # ungroup the first part if it is a sum: (a + b + ...) + (-x) + (-y) + ... = a + b + ... + (-x) + (-y) + ...
+        if isinstance(self.operands[0], Add):
+            eqn.update(expr.applyTransitivity(expr.ungroup(0)).checked(assumptions))
+        return eqn.eqExpr
 
     def cancel(self, assumptions=frozenset()):
         '''
@@ -1096,10 +1176,15 @@ class Subtract(BinaryOperation, NumberOp):
         from complex.theorems import subtractCancelElimSums, subtractCancelElimLeftSum, subtractCancelElimRightSum
         from complex.theorems import subtractCancelTwoSums, subtractCancelLeftSum, subtractCancelRightSum
         from complex.theorems import subtractCancelLeftSumSingleRight, subtractCancelLeftSumSingleLeft, subtractCancelRightSumSingleRight, subtractCancelRightSumSingleLeft 
+        from complex.theorems import subtractCancelComplete
         from number import zero
         dummy = self.safeDummyVar()
         eq = Equation()
         expr = self
+        if self.operands[0] == self.operands[1]:
+            # x - x = 0
+            deduceInComplexes(self.operands[0], assumptions)
+            return subtractCancelComplete.specialize({x:self.operands[0]}).checked(assumptions)
         if isinstance(expr.operands[0], Subtract):
             eq.update(expr.operands[0].convertToAdd(assumptions=assumptions).substitution(Subtract(dummy, expr.operands[1]), dummy))
             expr = eq.eqExpr.rhs
@@ -1215,6 +1300,7 @@ class Multiply(AssociativeOperation, NumberOp):
         Multiply together any number of operands from first operand.
         '''
         AssociativeOperation.__init__(self, MULTIPLY, *operands)
+        self.factors = operands
 
     def _closureTheorem(self, numberSet):
         import complex.theorems
@@ -1250,7 +1336,7 @@ class Multiply(AssociativeOperation, NumberOp):
                 # group the other operands so there are only two at the top level
                 expr = eq.update(expr.group(1, len(expr.operands), assumptions)).rhs
             deduceInComplexes(expr.operands[1], assumptions)
-            return eq.update(expr.prodZero.specialize({x:expr.operands[1]}))
+            return eq.update(prodZero.specialize({x:expr.operands[1]}))
         except ValueError:
             pass # no zero factor
         try:
@@ -1314,7 +1400,7 @@ class Multiply(AssociativeOperation, NumberOp):
         Give any assumptions necessary to prove that the operands are in 
         Complexes so that the commutation theorem is applicable.
         '''
-        from proveit.number.complex.theorems import multAssoc
+        from proveit.number.axioms import multAssoc
         deduceInComplexes(self.operands, assumptions)
         xSub = self.operands[:startIdx] if startIdx is not None else []
         ySub = self.operands[startIdx:endIdx]
@@ -1332,7 +1418,7 @@ class Multiply(AssociativeOperation, NumberOp):
         if not isinstance(self.operands[idx], Multiply):  
             raise ValueError("Selected term is not a Multiply expression")
 
-        from proveit.number.complex.theorems import multAssocRev
+        from proveit.number.theorems import multAssocRev
         deduceInComplexes(self.operands, assumptions)
         deduceInComplexes(self.operands[idx].operands, assumptions)
         xSub = self.operands[:idx] if idx is not None else []
@@ -1388,7 +1474,7 @@ class Multiply(AssociativeOperation, NumberOp):
         else:
             raise ValueError("Invalid pull direction!  (Acceptable values are \"left\" and \"right\".)")
 
-    def distribute(self, index, assumptions=frozenset()):
+    def distribute(self, index=None, assumptions=frozenset()):
         r'''
         Distribute through the operand at the given index.  
         Returns the equality that equates self to this new version.
@@ -1400,7 +1486,11 @@ class Multiply(AssociativeOperation, NumberOp):
         the associative and commutation theorems are applicable.            
         '''
         from complex.theorems import distributeThroughSum, distributeThroughSubtract, distributeThroughSummation
-        from complex.theorems import fracInProd
+        from complex.theorems import fracInProd, prodOfFracs
+        if index is None and len(self.factors) == 2 and all(isinstance(factor, Fraction) for factor in self.factors):
+            deduceInComplexes(self.factors[0].operands, assumptions)
+            deduceInComplexes(self.factors[1].operands, assumptions)
+            return prodOfFracs.specialize({x:self.factors[0].numerator, y:self.factors[1].numerator, z:self.factors[0].denominator, w:self.factors[1].denominator})
         operand = self.operands[index]
         if isinstance(operand, Add):
             deduceInComplexes(self.operands[:index], assumptions)
@@ -1412,7 +1502,7 @@ class Multiply(AssociativeOperation, NumberOp):
             deduceInComplexes(self.operands[index].operands, assumptions)
             deduceInComplexes(self.operands[index+1:], assumptions)
             return distributeThroughSubtract.specialize({wEtc:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zEtc:self.operands[index+1:]})
-        elif isinstance(operand, Fraction):
+        elif isinstance(operand, Fraction):            
             deduceInComplexes(self.operands[:index], assumptions)
             deduceInComplexes(self.operands[index].operands, assumptions)
             deduceInComplexes(self.operands[index+1:], assumptions)
@@ -1471,23 +1561,33 @@ class Multiply(AssociativeOperation, NumberOp):
         Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$,  $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b},
         or equates $a^c b^c$ to $(a b)^c$.
         '''
-        from complex.theorems import powOfProdRev, sumInPowRev, diffInPowRev, diffFracInPowRev
+        from complex.theorems import powOfPositivesProdRev, intPowOfProdRev, natsPosPowOfProdRev
+        from complex.theorems import sumInPowRev, diffInPowRev, diffFracInPowRev
         from complex.theorems import addOneRightInPowRev, addOneLeftInPowRev
+        from real.theorems import prodOfSqrts
+        if all(isinstance(factor, Sqrt) for factor in self.factors):
+            # combine the square roots into one square root
+            factorBases = [factor.base for factor in self.factors]
+            deduceInRealsPos(factorBases, assumptions)
+            return prodOfSqrts.specialize({xEtc:factorBases})
         if len(self.operands) != 2 or not isinstance(self.operands[0], Exponentiate) or not isinstance(self.operands[1], Exponentiate):
             if len(self.operands) == 2 and isinstance(self.operands[0], Exponentiate) and self.operands[0].base == self.operands[1]:
                 # Of the form a^b a
                 deduceInComplexes(self.operands[1], assumptions)
+                deduceNotZero(self.operands[1], assumptions)
                 deduceInComplexes(self.operands[0].exponent, assumptions)
                 return addOneRightInPowRev.specialize({a:self.operands[1], b:self.operands[0].exponent})
             elif len(self.operands) == 2 and isinstance(self.operands[1], Exponentiate) and self.operands[1].base == self.operands[0]:
                 # Of the form a a^b
                 deduceInComplexes(self.operands[0], assumptions)
+                deduceNotZero(self.operands[0], assumptions)
                 deduceInComplexes(self.operands[1].exponent, assumptions)
                 return addOneLeftInPowRev.specialize({a:self.operands[0], b:self.operands[1].exponent})
             raise Exception('Combine exponents only implemented for a product of two exponentiated operands (or a simple variant)')
         if self.operands[0].base == self.operands[1].base:
             # Same base: a^b a^c = a^{b+c}$, or something similar
             aSub = self.operands[0].base
+            deduceNotZero(aSub, assumptions)
             bSub = self.operands[0].exponent
             if isinstance(self.operands[1].exponent, Neg):
                 # equate $a^b a^{-c} = a^{b-c}$
@@ -1506,10 +1606,24 @@ class Multiply(AssociativeOperation, NumberOp):
                 cSub = self.operands[1].exponent
         elif self.operands[0].exponent == self.operands[1].exponent:
             # Same exponent: equate $a^c b^c = (a b)^c$
-            thm = powOfProdRev
             aSub = self.operands[0].base
             bSub = self.operands[1].base
-            cSub = self.operands[0].exponent
+            expSub = self.operands[0].exponent
+            try:
+                deduceInNaturalsPos(expSub, assumptions)
+                deduceInComplexes([aSub, bSub], assumptions)
+                return natsPosPowOfProdRev.specialize({n:expSub}).specialize({a:aSub, b:bSub})
+            except:
+                pass
+            try:
+                deduceInIntegers(expSub, assumptions)
+                deduceInComplexes([aSub, bSub], assumptions)
+                deduceNotZero([aSub, bSub], assumptions)
+                return intPowOfProdRev.specialize({n:expSub}).specialize({a:aSub, b:bSub})
+            except:
+                deduceInRealsPos([aSub, bSub], assumptions)
+                deduceInComplexes([expSub], assumptions)
+                return powOfPositivesProdRev.specialize({c:expSub}).specialize({a:aSub, b:bSub})
         else:
             raise Exception('Product is not in the correct form to combine exponents: ' + str(self))
         deduceInComplexes([aSub, bSub, cSub], assumptions=assumptions)
@@ -1597,6 +1711,13 @@ class Fraction(BinaryOperation, NumberOp):
             print "BAD FORMAT TYPE"
             return None
     def cancel(self,operand, pull="left", assumptions=frozenset()):
+        if self.numerator == self.denominator == operand:
+            # x/x = 1
+            from proveit.number.complex.theorems import fracCancelComplete
+            deduceInComplexes(operand, assumptions)
+            deduceNotZero(operand, assumptions)            
+            return fracCancelComplete.specialize({x:operand}).checked(assumptions)
+        
         if not isinstance(self.numerator,Multiply):
             from proveit.number.complex.theorems import fracCancel3
             newEq0 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
@@ -1732,12 +1853,12 @@ class Fraction(BinaryOperation, NumberOp):
 
 FRACTION = Literal(pkg, 'FRACTION', operationMaker = lambda operands : Fraction(*operands))
 
-class Exponentiate(BinaryOperation, NumberOp):
+class Exponentiate(Operation, NumberOp):
     def __init__(self, base, exponent):
         r'''
         Raise base to exponent power.
         '''
-        BinaryOperation.__init__(self,EXPONENTIATE, base, exponent)
+        Operation.__init__(self,EXPONENTIATE, (base, exponent))
         self.base = base
         self.exponent = exponent
 
@@ -1763,13 +1884,13 @@ class Exponentiate(BinaryOperation, NumberOp):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         from number import zero, one
-        from complex.theorems import powZeroEqOne, powOneUnchanged, exponentiatedZero, exponentiatedOne
+        from complex.theorems import powZeroEqOne, exponentiatedZero, exponentiatedOne
+        from theorems import powOneUnchanged
         if self.exponent == zero:
             deduceInComplexes(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
             return powZeroEqOne.specialize({a:self.base})
         elif self.exponent == one:
-            deduceInComplexes(self.base, assumptions)
             return powOneUnchanged.specialize({a:self.base})
         elif self.base == zero:
             deduceInComplexes(self.exponent, assumptions)
@@ -1813,21 +1934,27 @@ class Exponentiate(BinaryOperation, NumberOp):
             elif formatType == STRING:
                 formattedBase = r'(' + formattedBase + r')'
         if formatType == LATEX:
-            return formattedBase+'^{'+self.exponent.formatted(formatType, fence=False)+'}'
+            if fence:
+                return r'\left(' + formattedBase+'^{'+self.exponent.formatted(formatType, fence=False)+'}' + r'\right)'
+            else:
+                return formattedBase+'^{'+self.exponent.formatted(formatType, fence=False)+'}'
         elif formatType == STRING:
-            return formattedBase+'^('+self.exponent.formatted(formatType, fence=False)+')'
+            if fence:
+                return '(' + formattedBase+'^('+self.exponent.formatted(formatType, fence=False)+'))'
+            else:
+                return formattedBase+'^{'+self.exponent.formatted(formatType, fence=False)+'}'            
         else:
             print "BAD FORMAT TYPE"
             return None
     
     def raiseExpFactor(self, expFactor, assumptions=frozenset()):
-        from proveit.number.complex.theorems import powOfPow, powOfNegPow
+        from proveit.number.complex.theorems import intPowOfPow, intPowOfNegPow
         if isinstance(self.exponent, Neg):
             b_times_c = self.exponent.operand
-            thm = powOfNegPow
+            thm = intPowOfNegPow
         else:
             b_times_c = self.exponent
-            thm = powOfPow
+            thm = intPowOfPow
         if not hasattr(b_times_c, 'factor'):
             raise Exception('Exponent not factorable, may not raise the exponent factor.')
         factorEq = b_times_c.factor(expFactor, pull='right', groupRemainder=True, assumptions=assumptions)
@@ -1835,29 +1962,75 @@ class Exponentiate(BinaryOperation, NumberOp):
             # factor the exponent first, then raise this exponent factor
             factoredExpEq = factorEq.substitution(self)
             return factoredExpEq.applyTransitivity(factoredExpEq.rhs.raiseExpFactor(expFactor, assumptions=assumptions))
-        deduceInComplexes([self.base, b_times_c.operands[0], b_times_c.operands[1]], assumptions)
-        return thm.specialize({a:self.base, b:b_times_c.operands[0], c:b_times_c.operands[1]}).deriveReversed()
+        nSub = b_times_c.operands[1]
+        aSub = self.base
+        bSub = b_times_c.operands[0]
+        deduceNotZero(aSub, assumptions)
+        deduceInIntegers(nSub, assumptions)
+        deduceInComplexes([aSub, bSub], assumptions)
+        return thm.specialize({n:nSub}).specialize({a:aSub, b:bSub}).deriveReversed()
 
     def lowerOuterPow(self, assumptions=frozenset()):
-        from proveit.number.complex.theorems import powOfPow, powOfNegPow, negPowOfPow, negPowOfNegPow
+        from proveit.number.complex.theorems import intPowOfPow, intPowOfNegPow, negIntPowOfPow, negIntPowOfNegPow
         if not isinstance(self.base, Exponentiate):
             raise Exception('May only apply lowerOuterPow to nested Exponentiate operations')
         if isinstance(self.base.exponent, Neg) and isinstance(self.exponent, Neg):
-            b_, c_ = self.base.exponent.operand, self.exponent.operand
-            thm = negPowOfNegPow
+            b_, n_ = self.base.exponent.operand, self.exponent.operand
+            thm = negIntPowOfNegPow
         elif isinstance(self.base.exponent, Neg):
-            b_, c_ = self.base.exponent.operand, self.exponent
-            thm = powOfNegPow
+            b_, n_ = self.base.exponent.operand, self.exponent
+            thm = intPowOfNegPow
         elif isinstance(self.exponent, Neg):
-            b_, c_ = self.base.exponent, self.exponent.operand
-            thm = negPowOfPow
+            b_, n_ = self.base.exponent, self.exponent.operand
+            thm = negIntPowOfPow
         else:
-            b_, c_ = self.base.exponent, self.exponent
-            thm = powOfPow
-        deduceInComplexes([self.base.base, b_, c_], assumptions)
-        return thm.specialize({a:self.base.base, b:b_, c:c_})
+            b_, n_ = self.base.exponent, self.exponent
+            thm = intPowOfPow
+        a_ = self.base.base
+        deduceNotZero(self.base.base, assumptions)
+        deduceInIntegers(n_, assumptions)
+        deduceInComplexes([a_, b_], assumptions)
+        return thm.specialize({n:n_}).specialize({a:a_, b:b_})
     
 EXPONENTIATE = Literal(pkg, 'EXPONENTIATE', operationMaker = lambda operands : Exponentiate(*operands))
+
+class Sqrt(Operation, NumberOp):
+    def __init__(self, base):
+        r'''
+        Take the square root of the base.
+        '''
+        Operation.__init__(self, SQRT, (base))
+        self.base = base
+        
+    def formatted(self, formatType, fence=False):
+        formattedBase = self.base.formatted(formatType, fence=True)
+        if formatType == LATEX:
+            return r'\sqrt{' + formattedBase+'}'
+        else:
+            return Operation.formatted(self, formatType, fence)
+    
+    def distribute(self):
+        '''
+        Distribute the sqrt over a product.
+        '''
+        from real.theorems import sqrtOfProd
+        if isinstance(self.base, Multiply):
+            deduceInRealsPos(self.base.factors)
+            return sqrtOfProd({xEtc:self.base.factors})
+
+    def _closureTheorem(self, numberSet):
+        import real.theorems
+        import complex.theorems
+        from number import two
+        if numberSet == Reals:
+            return real.theorems.sqrtClosure            
+        elif numberSet == RealsPos:
+            return real.theorems.sqrtPosClosure            
+        elif numberSet == Complexes:
+            return complex.theorems.sqrtClosure
+
+
+SQRT = Literal(pkg, 'SQRT', operationMaker = lambda operands : Sqrt(*operands))
 
 #def extractExpBase(exponentiateInstance):
 #    if not isinstance(exponentiateInstance,Exponentiate):
@@ -1936,13 +2109,38 @@ class Summation(OperationOverInstances, NumberOp):
             else: return formattedInner
         else:
             return OperationOverInstances.formatted(self, formatType, fence)
+
+    def simplification(self, assumptions=frozenset()):
+        '''
+        For the trivial case of summing over only one item (currently implemented just
+        for a DiscreteContiguousSet where the endpoints are equal),
+        derive and return this summation expression equated the simplified form of
+        the single term.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        from axioms import sumSingle
+        if isinstance(self.domain, DiscreteContiguousSet) and self.domain.lowerBound == self.domain.upperBound:
+            if len(self.instanceVars) == 1:
+                deduceInIntegers(self.domain.lowerBound, assumptions)
+                return sumSingle.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound})
+        raise Exception("Summation simplification only implemented for a summation over a DiscreteContiguousSet of one instance variable where the upper and lower bound is the same")
+
+    def simplified(self, assumptions=frozenset()):
+        '''
+        For the trivial case of summing over only one item (currently implemented just
+        for a DiscreteContiguousSet where the endpoints are equal),
+        derive and return this summation expression equated the simplified form of
+        the single term.
+        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        '''
+        return self.simplification(assumptions).rhs
         
     def reduceGeomSum(self, assumptions=frozenset()):
         r'''
         If sum is geometric sum (finite or infinite), provide analytic expression for sum.
         May need assumptions to proven prerequisite number set conditions.
         '''
-        from proveit.number.theorems import infGeomSum, finGeomSum
+        from proveit.number.complex.theorems import infGeomSum, finGeomSum
         from number import zero, infinity
         mVal = self.indices[0]
         
@@ -1968,21 +2166,90 @@ class Summation(OperationOverInstances, NumberOp):
                 return finGeomSum.specialize({x:xVal, m:mVal, k:kVal, l:lVal})
 #        else:
 #            print "Not a geometric sum!"
-    def splitSumApart(self,splitIndex):
-    #Something is not right here- e.g.:
-#        zz = Summation(x,Bm,DiscreteContiguousSet(k,l))
-#        zz.splitSumApart(t)
-##       replaces B(m) with B(x), which is... not right.
+
+    def shift(self, shiftAmount, assumptions=frozenset()):
+        '''
+        Shift the summation indices by the shift amount, deducing and returning
+        the equivalence of this summation with a index-shifted version.
+        '''
+        from integer.theorems import indexShift
+        if len(self.indices) != 1 or not isinstance(self.domain, DiscreteContiguousSet):
+            raise Exception('Summation shift only implemented for summations with one index over a DiscreteContiguousSet')
+        fOp, fOpSub = Operation(f, self.index), self.summand
+        deduceInIntegers(self.domain.lowerBound, assumptions)
+        deduceInIntegers(self.domain.upperBound, assumptions)
+        deduceInIntegers(shiftAmount, assumptions)
+        return indexShift.specialize({fOp:fOpSub, x:self.index}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, c:shiftAmount})
+
+    def join(self, secondSummation, assumptions=frozenset()):
+        '''
+        Join the "second summation" with "this" summation, deducing and returning
+        the equivalence of these summations added with the joined summation.
+        Both summation must be over DiscreteContiguousSets.
+        The relation between the first summation upper bound, UB1, and the second
+        summation lower bound, LB2 must be explicitly either UB1 = LB2-1 or LB2=UB1+1.
+        '''
+        from proveit.number.integer.theorems import sumSplitAfter, sumSplitBefore
+        from proveit.number.common import one
+        if not isinstance(self.domain, DiscreteContiguousSet) or not isinstance(secondSummation.domain, DiscreteContiguousSet):
+            raise Exception('Summation joining only implemented for DiscreteContiguousSet domains')
+        if self.summand != secondSummation.summand:
+            raise Exception('Summation joining only allowed when the summands are the same')            
+        if self.domain.upperBound == Subtract(secondSummation.domain.lowerBound, one):
+            sumSplit = sumSplitBefore 
+            splitIndex = secondSummation.domain.lowerBound
+        elif secondSummation.domain.lowerBound == Add(self.domain.upperBound, one):
+            sumSplit = sumSplitAfter
+            splitIndex = self.domain.upperBound
+        else:
+            raise Exception('Summation joining only implemented when there is an explicit increment of one from the upper bound and the second summations lower bound')
+        lowerBound, upperBound = self.domain.lowerBound, secondSummation.domain.upperBound
+        deduceInIntegers(lowerBound, assumptions)
+        deduceInIntegers(upperBound, assumptions)
+        deduceInIntegers(splitIndex, assumptions)
+        return sumSplit.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:lowerBound, b:splitIndex, c:upperBound, x:self.indices[0]}).deriveReversed()
+        
+    def split(self, splitIndex, side='after', assumptions=frozenset()):
         r'''
-        Splits sum over one DiscreteContiguousSet into sum over two, splitting at splitIndex. 
+        Splits summation over one DiscreteContiguousSet {a ... c} into two summations.
+        If side == 'after', it splits into a summation over {a ... splitIndex} plus
+        a summation over {splitIndex+1 ... c}.  If side == 'before', it splits into
+        a summation over {a ... splitIndex-1} plus a summation over {splitIndex ... c}.
+        As special cases, splitIndex==a with side == 'after' splits off the first single
+        term.  Also, splitIndex==c with side == 'before' splits off the last single term.
         r'''
-        from proveit.number.theorems import splitSum
-        self.m = self.indices[0]
-        self.a = self.domain.lowerBound
-        self.c = self.domain.upperBound
-        self.b = splitIndex
-        self.Aselfm = Operation(A,self.m)
-        return splitSum.specialize({m:self.m,a:self.a,b:self.b,c:self.c,self.Aselfm:self.summand})
+        if not isinstance(self.domain, DiscreteContiguousSet) :
+            raise Exception('Summation splitting only implemented for DiscreteContiguousSet domains')
+        if side=='before' and self.domain.upperBound==splitIndex: return self.splitOffLast()
+        if side=='after' and self.domain.lowerBound==splitIndex: return self.splitOffFirst()
+        if isinstance(self.domain, DiscreteContiguousSet) and len(self.instanceVars) == 1:
+            from proveit.number.integer.theorems import sumSplitAfter, sumSplitBefore
+            sumSplit = sumSplitAfter if side == 'after' else sumSplitBefore
+            deduceInIntegers(self.domain.lowerBound, assumptions)
+            deduceInIntegers(self.domain.upperBound, assumptions)
+            deduceInIntegers(splitIndex, assumptions)
+            # Also needs lowerBound <= splitIndex and splitIndex < upperBound
+            return sumSplit.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:splitIndex, c:self.domain.upperBound, x:self.indices[0]})
+        raise Exception("splitOffLast only implemented for a summation over a DiscreteContiguousSet of one instance variable")
+
+
+    def splitOffLast(self, assumptions=frozenset()):
+        from proveit.number.integer.axioms import sumSplitLast
+        if isinstance(self.domain, DiscreteContiguousSet) and len(self.instanceVars) == 1:
+            deduceInIntegers(self.domain.lowerBound, assumptions)
+            deduceInIntegers(self.domain.upperBound, assumptions)
+            # Also needs lowerBound < upperBound
+            return sumSplitLast.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
+        raise Exception("splitOffLast only implemented for a summation over a DiscreteContiguousSet of one instance variable")
+
+    def splitOffFirst(self, assumptions=frozenset()):
+        from proveit.number.integer.theorems import sumSplitFirst # only for associative summation
+        if isinstance(self.domain, DiscreteContiguousSet) and len(self.instanceVars) == 1:
+            deduceInIntegers(self.domain.lowerBound, assumptions)
+            deduceInIntegers(self.domain.upperBound, assumptions)
+            # Also needs lowerBound < upperBound
+            return sumSplitFirst.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
+        raise Exception("splitOffLast only implemented for a summation over a DiscreteContiguousSet of one instance variable")
 
     def factor(self, theFactor, pull="left", groupFactor=False, groupRemainder=None, assumptions=frozenset()):
         '''
@@ -2083,7 +2350,6 @@ class Neg(Operation, NumberOp):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         return self.simplification(assumptions).rhs
-
     
     def formatted(self, formatType, fence=False):
         outStr = ''
@@ -2091,6 +2357,33 @@ class Neg(Operation, NumberOp):
         outStr += ('-'+self.operand.formatted(formatType, fence=True))
         if fence: outStr += r'\right)' if formatType == LATEX else r')'
         return outStr
+
+    def distribute(self, assumptions=frozenset()):
+        '''
+        Distribute negation through a sum.
+        '''
+        from complex.theorems import distributeNegThroughSum, distributeNegThroughSubtract
+        if isinstance(self.operand, Add):
+            deduceInComplexes(self.operand.operands, assumptions)
+            # distribute the negation over the sum
+            eqn = Equation(distributeNegThroughSum.specialize({xEtc:self.operand.operands}))
+            # try to simplify each term
+            expr = eqn.eqExpr.rhs
+            dummyVar = self.safeDummyVar()
+            negatedTerms = [term for term in expr.operands]
+            for k, negatedTerm in enumerate(negatedTerms):
+                try:
+                    negTermSimplification = negatedTerm.simplification(assumptions)
+                    eqn.update(negTermSimplification.substitution(Add(*(expr.terms[:k] + [dummyVar] + expr.terms[k+1:])), dummyVar)).checked(assumptions)
+                    expr = eqn.eqExpr.rhs
+                except:
+                    pass # skip over                     
+            return eqn.eqExpr.checked(assumptions)
+        elif isinstance(self.operand, Subtract):
+            deduceInComplexes(self.operand.operands, assumptions)
+            return distributeNegThroughSubtract.specialize({x:self.operand.operands[0], y:self.operand.operands[1]}).checked(assumptions)
+        else:
+            raise Exception('Only negation distribution through a sum or subtract is implemented')
 
     def factor(self,operand,pull="left", groupFactor=None, groupRemainder=None, assumptions=frozenset()):
         '''
@@ -2100,6 +2393,7 @@ class Neg(Operation, NumberOp):
         Returns the equality that equates self to this new version.
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.
+        FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''
         from complex.theorems import negTimesPosRev, posTimesNegRev
         if isinstance(operand, Neg):

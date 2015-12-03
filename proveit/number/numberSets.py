@@ -6,12 +6,6 @@ from proveit.basiclogic import generateSubExpressions
 
 pkg = __package__
 
-Z   = Literal(pkg,'Z',{LATEX:r'\mathbb{Z}'})
-Zp  = Literal(pkg,'Z^+',{LATEX:r'\mathbb{Z}^+'})
-R   = Literal(pkg,'R',{LATEX:r'\mathbb{R}'})
-zeroToOne = Literal(pkg,'zeroToOne',{LATEX:r'[0,1]'})
-
-
 class RealsPosClass(Literal):
     def __init__(self, pkg):
         Literal.__init__(self, pkg, 'RealsPos', {LATEX:r'\mathbb{R}^+'})
