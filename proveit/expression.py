@@ -316,9 +316,11 @@ class Expression:
         return self
 
     # THIS USES MATHJAX WHICH IS LESS FLEXIBLE THAN DVIPNG (BELOW)  
+    '''
     def _repr_latex_(self):
         return '$' + self.formatted(LATEX) + '$'
-    '''    
+    '''
+
     def _repr_png_(self):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
         if not hasattr(self,'png') or self.png is None:
@@ -328,7 +330,6 @@ class Expression:
             self._config_latex_tool(lt)
             self.png = latex_to_png(self.formatted(LATEX), backend='dvipng', wrap=True)
         return self.png
-    '''
     
     def _config_latex_tool(self, lt):
         '''
@@ -455,9 +456,9 @@ class Operation(Expression):
     def formatted(self, formatType, fence=False):
         # override this default as desired
         if formatType == STRING:
-            return self.operator.formatted(formatType, fence=True) +  '(' + self.operands.formatted(formatType, fence=False) + ')'
+            return self.operator.formatted(formatType, fence=True) +  '(' + self.operands.formatted(formatType, fence=False, subFence=False) + ')'
         elif formatType == LATEX:
-            return self.operator.formatted(formatType, fence=True) +  r'\left(' + self.operands.formatted(formatType, fence=False) + r'\right)'
+            return self.operator.formatted(formatType, fence=True) +  r'\left(' + self.operands.formatted(formatType, fence=False, subFence=False) + r'\right)'
         
     def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
