@@ -1,7 +1,52 @@
 from proveit.common import A, B, C, D
-from proveit.expression import Variable
+from proveit.expression import Variable, Literal, LATEX, STRING
 from proveit.multiExpression import Block
-#from circuit import ImplicitIdentities
+from proveit.number import Exponentiate, Fraction, Sqrt
+from proveit.number.common import zero, one, two
+from proveit.number.numberSets import Complexes
+from proveit.linalg import TensorExp, SU
+from proveit.physics.quantum.circuit import Gate
+from proveit.physics.quantum.quantumOps import Ket
+
+pkg = __package__
+
+I = Literal(pkg, 'I') # Single qubit identity
+X = Literal(pkg, 'X') # Pauli-X
+Y = Literal(pkg, 'Y') # Pauli-Y
+Z = Literal(pkg, 'Z') # Pauli-Z
+H = Literal(pkg, 'H') # Hadamard
+
+# PASS: either a blank spot or continuation of a wire in a quantum circuit.
+# Can be used when initializing the circuit with a list of lists -- these PASS elements
+# are subsequently removed and turned into empty spots of the quantum circuit tensor.
+PASS = Literal(pkg, 'PASS') 
+
+PLUS = Literal(pkg, 'PLUS', {LATEX:'+', STRING:'+'}) # For positive X eigenstate
+MINUS = Literal(pkg, 'MINUS', {LATEX:'-', STRING:'-'}) # For negative X eigenstate
+
+ket0 = Ket(zero)
+ket1 = Ket(one)
+ketPlus = Ket(PLUS)
+ketMinus = Ket(MINUS)
+
+Xgate = Gate(X)
+Ygate = Gate(Y)
+Zgate = Gate(Z)
+Hgate = Gate(H)
+
+CTRL_UP = Literal(pkg, 'CTRL_UP')
+CTRL_DN = Literal(pkg, 'CTRL_DN')
+CTRL_UPDN = Literal(pkg, 'CTRL_UPDN')
+
+WIRE_UP = Literal(pkg, 'WIRE_UP') # wire goes up to link with another wire
+WIRE_DN = Literal(pkg, 'WIRE_DN') # wire goes down to link with another wire
+WIRE_LINK = Literal(pkg, 'WIRE_LINK') # link destination for WIRE_UP or WIRE_DN
+
+QubitSpace = Exponentiate(Complexes, two)
+QubitRegisterSpace = lambda n : TensorExp(Exponentiate(Complexes, two), n) 
+RegisterSU = lambda n : SU(Exponentiate(two, n))
+
+invRoot2 = Fraction(one, Sqrt(two))
 
 B1 = Variable('B1')
 B2 = Variable('B2')
