@@ -1,1 +1,1 @@
-from fourierTransformOps import QFT
+from fourierTransformOps import InverseFourierTransform

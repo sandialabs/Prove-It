@@ -1,8 +1,8 @@
-from proveit.expression import Literal, Operation, LATEX
+from proveit.expression import Literal, Operation, STRING, LATEX
 
 pkg = __package__
 
-class QFT(Operation):
+class InverseFourierTransform(Operation):
     '''
     Represents the quantum circuit for the quantum fourier transform algorithm.
     '''
@@ -10,6 +10,12 @@ class QFT(Operation):
         '''
         QFT circuit for n qubits.
         '''
-        Operation.__init__(self, n)
+        Operation.__init__(self, INV_FT, n)
+        self.nqubits = n
+    
+    def formatted(self, formatType, fence=False):
+        formattedOperator = self.operator.formatted(formatType, fence=False)
+        formatedNqubits = self.nqubits.formatted(formatType, fence=False)
+        return formattedOperator + '_{' + formatedNqubits + '}'
         
-QFT  = Literal(pkg, 'QFT', {LATEX:r'{\rm QFT}'}, operationMaker = lambda operands : QFT(*operands))
+INV_FT  = Literal(pkg, 'INV_FT', {STRING:'FT^{dag}', LATEX:r'{\rm FT}^{\dag}'}, operationMaker = lambda operands : InverseFourierTransform(*operands))
