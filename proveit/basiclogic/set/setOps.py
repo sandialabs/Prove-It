@@ -1,9 +1,10 @@
 from proveit.basiclogic.genericOps import BinaryOperation, AssociativeOperation, OperationOverInstances
 from proveit.expression import Literal, Operation, Lambda, STRING, LATEX
-from proveit.multiExpression import multiExpression
+from proveit.multiExpression import multiExpression, MultiVariable, Etcetera
 from proveit.inLiteral import IN
 from proveit.everythingLiteral import EVERYTHING
-from proveit.common import A, B, S, P, x, y, xEtc
+from proveit.common import f, x, y, A, B, S, P, Q, yEtc
+
 
 pkg = __package__
 
@@ -21,7 +22,7 @@ class In(BinaryOperation):
         Deduce and return that this 'in' statement is in the set of BOOLEANS.
         '''
         from axioms import inSetIsInBool
-        return inSetIsInBool.specialize({xEtc:self.element, S:self.domain}).checked()
+        return inSetIsInBool.specialize({x:self.element, S:self.domain}).checked()
     
     def unfold(self):
         '''
@@ -64,6 +65,13 @@ class NotIn(BinaryOperation):
         self.element = element
         self.domain = domain  
 
+    def deduceInBool(self):
+        '''
+        Deduce and return that this 'in' statement is in the set of BOOLEANS.
+        '''
+        from theorems import notInSetIsInBool
+        return notInSetIsInBool.specialize({x:self.element, S:self.domain}).checked()
+    
     def unfold(self):
         '''
         From (x != y), derive and return Not(x=y).
@@ -246,47 +254,52 @@ class SetOfAll(OperationOverInstances):
     def formatted(self, formatType, fence=False):
         outStr = ''
         innerFence = (len(self.conditions) > 0)
-        if formatType == STRING:
-            outStr += '{'
-            outStr += self.instanceElement.formatted(formatType, fence=innerFence)
-            if self.domain is not EVERYTHING:
-                outStr += ' in ' + self.domain.formatted(formatType)
-            if len(self.conditions) > 0:
-                outStr += ' s.t. ' # such that
-                if len(self.conditions) == 1:
-                    outStr += self.conditions.formatted(formatType, fence=True)
-                else:
-                    outStr += ', '.join([condition.formatted(formatType, fence=True) for condition in self.conditions])
-            outStr += '}'
-        elif formatType == LATEX:
-            outStr += r'\left\{'
-            outStr += self.instanceElement.formatted(formatType, fence=innerFence)
-            if self.domain is not EVERYTHING:
-                outStr += r' \in ' + self.domain.formatted(formatType)
-            if len(self.conditions) > 0:
-                outStr += '~|~' # such that
-                if len(self.conditions) == 1:
-                    outStr += self.conditions.formatted(formatType, fence=True)
-                else:
-                    outStr += ', '.join([condition.formatted(formatType, fence=True) for condition in self.conditions])
-            outStr += r'\right\}'            
+        formattedInstanceVars = self.instanceVars.formatted(formatType, fence=False)
+        formattedInstanceElement = self.instanceElement.formatted(formatType, fence=innerFence)
+        formattedDomain = self.domain.formatted(formatType, fence=True)
+        formattedConditions = self.conditions.formatted(formatType, fence=False) 
+        if formatType == LATEX: outStr += r"\left\{"
+        else: outStr += "{"
+        outStr += formattedInstanceElement
+        if len(self.conditions) > 0:
+            if formatType == LATEX: outStr += r'~|~'
+            else: outStr += ' s.t. ' # such that
+            outStr += formattedConditions
+        if formatType == LATEX: outStr += r"\right\}"
+        else: outStr += "}"
+        outStr += '_{' + formattedInstanceVars
+        if self.domain != EVERYTHING:
+            if formatType == LATEX: outStr += r' \in '
+            else: outStr += ' in '
+            outStr += formattedDomain
+        outStr += '}'
         return outStr
 
     def unfoldElemInSet(self, element):
         '''
         From (x in {Q(y) | P(y)}), derive and return P(x), where x is meant as the given element.
         '''
-        from theorems import unfoldSetOfAll
-        PofElement = self.instanceExpr.substitute({self.instanceVar:element})
-        return unfoldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().checked({PofElement})
+        from theorems import unfoldSetOfAll, unfoldSimpleSetOfAll
+        if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0] and len(self.conditions) == 1:
+            Pop, Psub = Operation(P, self.instanceVars), self.conditions[0]
+            return unfoldSimpleSetOfAll.specialize({Pop:Psub, x:element, y:self.instanceVars[0]}).deriveConclusion()
+        else:
+            Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
+            f_op, f_sub = Operation(f, self.instanceVars), self.instanceElement
+            return unfoldSetOfAll.specialize({f_op:f_sub, Q_op:Q_op_sub, x:element, yEtc:self.instanceVars}).deriveConclusion()
     
     def deduceElemInSet(self, element):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''   
-        from theorems import foldSetOfAll
-        PofElement = self.instanceExpr.substitute({self.instanceVar:element})
-        return foldSetOfAll.specialize({P:Lambda(self.instanceVar, self.instanceExpr), x:element}).deriveConclusion().checked({PofElement})
+        from theorems import foldSetOfAll, foldSimpleSetOfAll
+        if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0] and len(self.conditions) == 1:
+            Pop, Psub = Operation(P, self.instanceVars), self.conditions[0]
+            return foldSimpleSetOfAll.specialize({Pop:Psub, x:element, y:self.instanceVars[0]}).deriveConclusion()
+        else:
+            Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
+            f_op, f_sub = Operation(f, self.instanceVars), self.instanceElement
+            return foldSetOfAll.specialize({f_op:f_sub, Q_op:Q_op_sub, x:element, yEtc:self.instanceVars}).deriveConclusion()
 
 def setOfAllMaker(operands):
     params = OperationOverInstances.extractParameters(operands)
