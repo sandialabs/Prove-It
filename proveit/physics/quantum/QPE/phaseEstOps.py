@@ -69,23 +69,23 @@ class ModAdd(BinaryOperation, NumberOp):
             return modAddClosure
     
 MOD_ADD = Literal(pkg, 'MOD_ADD', {LATEX:r'\oplus'}, operationMaker = lambda operands : ModAdd(*operands))
-    
-class Alpha(Operation):
+
+class SubIndexed(Operation):
     '''
-    Amplitude of the output of the quantum phase estimation circuit
-    for a particular state l relative to b, the best outcome.
+    Subscript indexing of a label
     '''
-    def __init__(self, l):
+    def __init__(self, label, index):
         '''
         \alpha_l
         '''
-        Operation.__init__(self, ALPHA, l)
-        self.l = l
+        Operation.__init__(self, SUB_INDEXED, [label, index])
+        self.label = label
+        self.index = index
     
     def formatted(self, formatType, fence=False):
-        if formatType == STRING:
-            return 'alpha_{' + self.l.formatted(formatType, fence=False) + '}'
-        elif formatType == LATEX:
-            return r'\alpha_{' + self.l.formatted(formatType, fence=False) + '}'
+        formattedLabel = self.label.formatted(formatType, fence=True)
+        formattedIndex = self.index.formatted(formatType, fence=False)
+        return formattedLabel + '_{' + formattedIndex + '}'
 
-ALPHA = Literal(pkg, 'ALPHA', operationMaker = lambda operands : Alpha(*operands))
+SUB_INDEXED = Literal(pkg, 'SUB_INDEXED', operationMaker = lambda operands : SubIndexed(*operands))
+
