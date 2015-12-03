@@ -1,5 +1,5 @@
 from proveit.expression import Operation, Lambda, STRING, LATEX
-from proveit.multiExpression import multiExpression, MultiVariable, Etcetera
+from proveit.multiExpression import multiExpression, MultiVariable, ExpressionList, Etcetera
 from proveit.everythingLiteral import EVERYTHING
 
 class BinaryOperation(Operation):
@@ -27,6 +27,7 @@ class AssociativeOperation(Operation):
         Represent an associative operator operating on any number of operands.
         '''
         Operation.__init__(self, operator, operands)   
+        assert isinstance(self.operands, ExpressionList)
         # What is the sound of one (or no) hand clapping?  Who really cares?
         if len(self.operands) < 2:
             # A single Etcetera operand is okay though (it will have to be replace with
