@@ -1,0 +1,80 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amsfonts, amsthm, amssymb, mathtools}
+\usepackage{enumitem}
+\usepackage[margin=0.25in]{geometry}
+\usepackage{mdwlist}
+\usepackage{breqn}
+
+\begin{document}
+\title{Motivating and Justifying Prove-It}
+\author{Wayne M. Witzel}
+%\affiliation{Center for Computing Research, Sandia National Laboratories, Albuquerque, New Mexico}
+
+\maketitle
+
+\section{Distinguishing Philosophy}
+
+The goal for Prove-It is relatively straightforward: replicate classical mathematics (pure and simple) on the computer, preserving the human-understandable content and intent of the mathematics as much as possible.  It is a theorem prover that will not allow the user to skip steps in their derivation, but it allows flexibility in assuming beliefs that may later be verified.  Content preservation is the key.  This means that any valid man-made proof may be replicated with nothing lost in translation.  Automation is a secondary goal in Prove-It, not a primary one.  Automation is great, but we choose not to allow this goal to get in the way of preserving content and allowing a user to freely express their chosen mathematical formalism.
+
+Don't theorem provers generally preserve mathematical content and intent?  Not directly.  Generally, a formal system employs a theory that maps standard mathematics into a kind of ``shadowland'' where symbols may be manipulated following specific rules that are guaranteed (by the theory) to translate back into mathematical truths.  Consider the following example out of ``HOL Light: an overview'' written by John Harrison (www.cl.cam.ac.uk/~jrh13/papers/hollight.pdf) for the way that $\forall$ is defined:
+\begin{eqnarray}
+  \forall &=_{def}& \lambda P.~P = \lambda x.~\top \\
+  \top &=_{def}&  (\lambda p.~p) = (\lambda p.~p)
+\end{eqnarray}
+These are foundational definitions in HOL Light.  What in the world do they mean?  I do not doubt that its definitions correctly map truths in correspondence with the use of $\forall$ in classical mathematical logic, but clearly this system is working with mathematics rather indirectly.  If you, dear reader, do not feel that this example is representative, please direct me to a different system in which the definitions are more direct.
+
+In contrast, Prove-It ``defines'' $\forall$ through core derivation steps that directly implement the meaning of $\forall$.  At its essense, $\forall_x P(x)$ means ``for all instances of x, P(x) is true''.  Prove-It only has a few derivation steps.  These implement the intent of $\forall$ and $\Rightarrow$ (implies).  Specialization and generalization implement the intent of $\forall$ quite literally.  Modus ponens and hypothetical reasoning implment the intent of $\Rightarrow$ quite literally.  The meaning of all other symbols are implemented through axioms (on a layer extending beyond the core) that are at the liberty of the user but should, in keeping with the Prove-It philosophy, directly represent the meaning of the symbols.  For example, logical operators (and, or, not, etc.) are defined via truth tables.
+
+\section{Soundness}
+
+Why are the existing formal methods tools the way they are?  As far as I can tell, there are two historic reasons: a focus on automation and a concern for soundness.  Of course soundness (or consistency) is very important.  As soon as a formal theory is able to prove that a statement is both true and false (the definition of an inconsistent theory), then it will be able to prove that all (true/false) statements are true and false.  If you cannot trust what comes out of your formal theory, what good is it?
+
+Taking HOL Light as an example, again, it is designed to have a clean and simple logically sound core that may be extended in nontrivial ways without compromising soundness.  The reason that $\forall$ has such an indirect definition is so that it can is defined in terms of its core primitives (pertaining particularly to equality, substitution, and lambda calculus transformations).  That is, you are working with math indirectly so that you can be assured that the symbolic manipulations employed in your derivation are sound.
+
+Is Prove-It sound?  The answer is either yes or sometimes depending upon what is meant.  In a strict sense, Prove-It's guarantee is that any proven theorem is a valid and sound consequence of the axioms (and any unproven theorems) that were employed in the proof.  This relies on the derivation steps being valid and correctly implemented.
+But this is a very small and simple core for the community to scrutinize.  
+By this definition, Prove-It can be declared to be sound, as well as any theory can be, once its core principles have been published, the implementation has been released, and these have been properly scrutinized.  Because it is intended to be a direct translation of mathematics, there are not too many ways it could go wrong.
+
+When we take soundness one step further, claiming that proven theorems are valid and sound, requires a justification of all of the axioms that were employed.  Then the answer is sometimes.  It depends upon the axioms that the user employed and whether or not they have been properly scrutinized.  In some respects, this is more challenging than in HOL Light where extensions could be made without compromising soundness, according to its published theory.  However, because Prove-It has a philosophy that axioms should preserve mathematical content and meaning, this is not such an onerous task and there is a wide community with the credentials to scrutinize the axioms.  Furthermore, Prove-It is designed to keep axioms organized into packages so that one can simply check the crowd-sourced credibility of axioms at the package level rather than individually.  Also, many trained mathematicians will have more faith in the Prove-It system with its strong connection to traditional mathematics and ability to carefully track axioms compared with something like HOL or Coq in which proofs are obfuscated through a translation to an inner core theory.
+
+Even when one is not sure if ones axioms are sound, Prove-It is still a valuable tool.  Amatuer mathematics is used all over the place, with real-world consequences.  The field of physics is notorious for its use of less-than-rigorous mathematics.  They still arrive at conclusions that are usually more-or-less correct and useful.  Sometimes mistakes are caught and revisions are made.  That is what peer review is about.  But imagine if all of these physics were forced to employ a form of computer-assisted mathematics that allows them to essentially perform the same derivations they are used to performing but does not allow them to skip any step in their derivations.  They are still allowed to make faulty assumptions, but it makes a huge difference when steps cannot be skipped.  Few mistakes could slip through.  The ones that did would be significant conceptual mistakes (at the axiom level) that could be more easily identified by using such a system.  Prove-It is such a system, and it has much to offer that I have not been able to find in any other system.
+
+\section{Paradoxes}
+
+But aren't Prove-It's aims futile because of well-known paradoxes?  Absolutely not.  These paradoxes point to care that must be taken, but there are no show-stoppers.  There is no reason to doubt the claims of Prove-It because of these paradoxes.  Paradox arise from bad assumptions.  What this means for Prove-It, is that one must be careful with ones axioms.  In particular, one must avoid axioms that assume an expression must be true or false if there is any way to generate a self-referential contradiction.  Russel showed how a loose version of set theory allows self-referential contradictions.  G\"odel used self-referential contradiction to show that a formal theory cannot be both consistent (no statement can be both true and false) and complete (all statements must be true or false) if the theory contains some elementary arithmetic with natural numbers.  Each of these are examined briefly below.
+
+\subsection{Russel's set}
+
+Let $R = \{x | x \notin x\}$.  In words, let $R$ be the set of all sets that do not contain themselves.  Now as the question $R \in R$.  Well, $(R \in R) \Rightarrow (R \notin R)$ and $(R \notin R) \Rightarrow (R \in R)$.  Hence, $R \in R$ is paradoxical statement.  It is not well defined.  How can we avoid this in Prove-It.  By NOT including
+\begin{equation}
+\forall_{x, y} (x \in y) \in \mathbb{B}
+\end{equation}
+as an axiom where $\mathbb{B}$ is the set of booleans (true or false).  Russel demonstrated that one must take care regarding what one defines as a set.  ZFC set theory axioms may be used to construct valid sets.  Alternatively, type theory concepts may be used.  Perhaps these are, or can be, equivalent.  But in any case, it would be valid to say
+\begin{equation}
+\forall_{x, y | \rm{SET}(y)} (x \in y) \in \mathbb{B},
+\end{equation}
+where $\rm{SET}(y)$ is a predicate that is true when $y$ is a proper set.
+
+\subsection{G\"odel's incompleteness}
+
+G\"odel's incompleteness theorems are based upon the liar's paradox: ``This statement is false.''  Say this statement is true implies that it is false and vice versa.  G\"odel put formalized this and show that an effectively self-referential statement could be made in any formal theory that includes elementary arithmetic.  The idea is to encode statements in compressed form as numbers and use these numbers to construct effectively self-referential statements without an infinite regress problem.  I will not go into details.  I do recommend plato.stanford.edu/entries/goedel-incompleteness for a clear, careful, and concise discussion on the matter.
+
+G\"odel's statement is also somewhat different than the liar's paradox in that it deals with the ``provability'' or ``existence of a derivation'' rather then simply expressing that the statement is ``false''.  Given a particular statement, you should be able to prove it in a given theory or not, right?  Surprisingly, this turns out to be a bad assumption.  Under normal circumstances, it is fine to say that.  However, this is not true under the unusual circumstance that the act of concluding the proof's existence or non-existence contradicts the conclusion.  Thus, one should probably avoid assuming that
+\begin{equation}
+\forall_{P, Q} \left[ \exists_{x~|~Q(x)} P(x) \right] \in \mathbb{B}.  
+\end{equation}
+This can only be assumed if $P$ and $Q$ are such that no self-contradiction is possible.
+
+G\"odel's first incompleteness theorem states that no formal theory capabily of elementary arithmetic is consistent and complete (all statements are true or false) using a self-contradiction construction.  G\"odel's second incompleteness theorem states that no formal theory may prove its own consistency.  This theorem has a few more caveats than the first theorem which we will delve into.  But it derives from the self-contradiction constructed in the first theorem.
+
+Note that the self-referential aspect is really in two senses.  First, the statement refers to itself (indirectly through a numerical encoding).  Second, the statement refers to the theory that is trying to derive it.  It is about ``provability'' or ``existence of a derivation'' in a particular formal theory $F$.  The contradiction arises when $F$ is trying to prove the statement.  No contradiction arises when some other formal theory, $F'$, is trying to prove the statement.  In fact, it is possible for a formal theory to prove the consistency of a different formal theory.  Furthermore, G\"odel's second incompleteness theorem gives no reason why $F$ could not prove the consistency of an exact replica of itself, as long as the replica is kept logically distinct from $F$ (e.g., use $F' = replica(F)$ and $\forall_{F} replica(F) \neq F$).
+
+``A common misunderstanding is to interpret G\"odel's first theorem as showing that there are truths that cannot be proved'' (http://plato.stanford.edu/entries/goedel-incompleteness).  False conclusions derive from this misunderstanding to support mystical claims.  But it is a wrong interpretation.  While some different formal theory, $F'$, is capability of proving G\"odel's statement applied to $F$, the statement is not true in an absolute sense.  It's decidability depends upon the theory trying to prove the statement.  It does not mean that formal theories are doomed to be inadequate in some sense, unless one is demanding completeness by G\"odel's definition.  Accepting that some things are not well defined, there is no reason that a computerized formal theory cannot be entirely inline with mankinds best understanding of mathematics.
+
+\section{Conclusion}
+
+Prove-It is a unique approach to formal methods (as far as I have seen) in its philosophical goals to replicate classical mathematics as directly as possible.  This focus may have adverse consequences for automation and maintaining a certificate of soundness as new axioms are introduced.  However, I believe this approach offers great advantages in terms of its utility and acceptance among a broad audience of researchers who do not find the typical functional programming approach of formal methods to be appealing or may find these approaches to be constraining.  Furthermore, it is quite possible that the advantages of this approach will completely overwhelm potential disadvantages if Prove-It is able to gain a critical mass of popularity.  The ultimate vision is a wikipedia-like support of Prove-It, or any successors that employ a similar philosophy.
+
+I thank Robert Carr for useful discussions while formulating the thoughts expressed above.
+
+\end{document}
