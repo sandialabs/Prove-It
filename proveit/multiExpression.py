@@ -30,7 +30,7 @@ class MultiVariable(MultiExpression):
         if not isinstance(variable, Variable):
             raise ValueError('MultiVariable must be initialized with a Variable to wrap')
         self.variable = variable
-        MultiExpression.__init__(self, 'MultiVariable' + str(numIndices), [self.variable])
+        MultiExpression.__init__(self, 'MultiVariable ' + str(numIndices), [self.variable])
         self.numIndices = numIndices
         if indexFormatMap is None: indexFormatMap = MultiVariable.defaultIndexFormatMap
         self.indexFormatMap = indexFormatMap
@@ -65,7 +65,14 @@ class NamedExpressions(MultiExpression, dict):
         MultiExpression.__init__(self, 'NamedExpressions ' + ','.join(sorted(self.keys())), [self[key] for key in sorted(self.keys())])
 
     def formatted(self, formatType, fence=False):
-        return '{' + ', '.join(key + ':' + self[key].formatted(formatType, fence=True) for key in sorted(self.keys())) + '}'
+        if formatType == LATEX:
+            outStr = r'\left\{ \begin{array}{l}' + '\n'
+            for key in sorted(self.keys()):
+                outStr += r'{\rm ' + key.replace('_', r'\_') + r'}: ' + self[key].formatted(formatType, fence=True) + r'\\' + '\n'
+            outStr += r'\end{array} \right\}' + '\n'
+            return outStr
+        else:
+            return '{' + ', '.join(key + ':' + self[key].formatted(formatType, fence=True) for key in sorted(self.keys())) + '}'
     
     def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
