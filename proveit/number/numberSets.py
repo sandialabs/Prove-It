@@ -38,11 +38,22 @@ class NaturalsPosClass(Literal):
         from natural.theorems import naturalsPosLowerBound
         return naturalsPosLowerBound.specialize({n:member})  
 
+class IntegersClass(Literal):
+    def __init__(self, pkg):
+        Literal.__init__(self, pkg, 'Integers', {LATEX:r'\mathbb{Z}'})
+
+    def deduceInSetIsBool(self, element):
+        from integer.theorems import inIntsIsBool
+        return inIntsIsBool.specialize({a:element})
+    
+    def deduceNotInSetIsBool(self, element):
+        from integer.theorems import notInIntsIsBool
+        return notInIntsIsBool.specialize({a:element})
 
 Reals = Literal(pkg,'Reals',{LATEX:r'\mathbb{R}'})    
 RealsPos = RealsPosClass(pkg)
 RealsNeg = RealsNegClass(pkg)
-Integers = Literal(pkg,'Integers',{LATEX:r'\mathbb{Z}'})
+Integers = IntegersClass(pkg)
 Naturals = NaturalsClass(pkg)
 NaturalsPos = NaturalsPosClass(pkg)
 Complexes = Literal(pkg,'Complexes',{LATEX:r'\mathbb{C}'})
