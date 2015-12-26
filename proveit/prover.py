@@ -1,5 +1,5 @@
 from proveit.statement import Statement, asStatement
-from proveit.expression import Operation
+from proveit.expression import Operation, LATEX
 from proveit.multiExpression import multiExpression
 from proveit.inLiteral import IN
 from proveit.everythingLiteral import EVERYTHING
@@ -81,14 +81,73 @@ class Prover:
         elif self.provers is not None:
             for prover in self.provers:
                 prover._export_pvit(path, pvit_file, expressions_dir, indentation)
-    
+
+    def statementAndAssumptions(self):
+        '''
+        Return the statement and assumptions for the prover in a hashable form.
+        '''
+        return (self.stmtToProve, tuple([assumption for assumption in self.assumptions]))
+
+    def showProof(self):
+        from multiExpression import NamedExpressions
+        visitedStmtAndAsumptions = set()
+        nextProvers = [self]
+        enumeratedProvers = []
+        while len(nextProvers) > 0:
+            nextProver = nextProvers.pop(0)
+            stmtAndAssumptions = nextProver.statementAndAssumptions()
+            if stmtAndAssumptions in visitedStmtAndAsumptions: continue # already showed that one
+            visitedStmtAndAsumptions.add(stmtAndAssumptions)
+            enumeratedProvers.append(nextProver)
+            if nextProver.provers is not None:
+                nextProvers += nextProver.provers
+        proverNumMap = {prover.statementAndAssumptions():k for k, prover in enumerate(enumeratedProvers)}
+        print r'\begin{tabular}{rl|l|l|l}'
+        print r' & \textbf{statement} & \textbf{assumptions} & \textbf{step type} & \textbf{requirements} \\'
+        for k, prover in enumerate(enumeratedProvers):
+            print r'\hline'
+            if prover.provers is None:
+                requirements = []
+                stepType = ''
+            else:
+                requirements = prover.provers
+                if requirements[0].proverType == 'generalizing':
+                    stepType = 'generalization'
+                elif requirements[0].proverType == 'specializing':
+                    stepType = r'$\begin{array}{l} '
+                    if requirements[0].subMap is not None and len(requirements[0].subMap) > 0:
+                        stepType += r'{\rm specialization~via} \\ '
+                        stepType += r'\left\{' + ',~'.join(key.formatted(LATEX) + ': ' + val.formatted(LATEX) for key, val in requirements[0].subMap) + r'\right\}'
+                    if requirements[0] is not None and len(requirements[0].relabelMap) > 0:
+                        stepType += r'{\rm relabeling via} \\ '
+                        stepType += r'\left\{' + ',~'.join(key.formatted(LATEX) + ': ' + val.formatted(LATEX) for key, val in requirements[0].relabelMap) + r'\right\}'
+                    stepType += r'\end{array}$'
+                elif requirements[0].proverType == 'implication':
+                    stepType = 'modus ponens'
+                elif requirements[0].proverType == 'hypothetically reasoning':
+                    stepType = 'hypothetical reasoning'
+            print str(k) + '. & ' + repr(prover.stmtToProve.getExpression()) + ' & ',
+            if prover.stmtToProve.isAxiom() or prover.stmtToProve.isNamedTheorem():
+                print r'\multicolumn{3}{|l}{',
+                if prover.stmtToProve.isAxiom():
+                    print r'axiom: ',
+                elif prover.stmtToProve.isNamedTheorem():
+                    print r'theorem: ',
+                print prover.stmtToProve._package + '.' + prover.stmtToProve._name + r'} \\'
+            else:
+                print ', '.join(repr(assumption.getExpression()) for assumption in prover.provingAssumptions) \
+                    + ' & ' + stepType + ' & ' + ', '.join([str(proverNumMap[requirement.statementAndAssumptions()]) for requirement in requirements]) + r' \\'
+        print r'\hline'
+        print r'\end{tabular}'
+        
+    """    
     def showProof(self, indentation='', remembered = None, usedAxioms = None, usedTheorems = None):
         if remembered is None: 
             remembered = set()
             usedAxioms = set()
             usedTheorems = set()
         numNodes = 1
-        print (indentation + self.proverType + ' ' + repr(self.stmtToProve.getExpression())),
+        print (indentation + r'\item ' + self.proverType + ' ' + repr(self.stmtToProve.getExpression())),
         if self.provingAssumptions is not None and len(self.provingAssumptions) > 0:
             print ' assuming', ', '.join(repr(assumption.getExpression()) for assumption in self.provingAssumptions),
         key = (self.stmtToProve,) + tuple([assumption for assumption in self.provingAssumptions])
@@ -108,16 +167,20 @@ class Prover:
         print '' # new line
         indentation += '  '
         if self.stmtToProve.isAxiom():
-            print indentation + 'by axiom ' + self.stmtToProve._package + '.' + self.stmtToProve._name 
+            print r'\\'
+            print indentation + r'by axiom \verb|' + self.stmtToProve._package + '.' + self.stmtToProve._name + '|'
             usedAxioms.add(self.stmtToProve._package + '.' + self.stmtToProve._name)
         elif self.stmtToProve.isNamedTheorem():
-            print indentation + 'by theorem ' + self.stmtToProve._package + '.' + self.stmtToProve._name 
+            print r'\\'
+            print indentation + r'by theorem \verb|' + self.stmtToProve._package + '.' + self.stmtToProve._name + '|'
             usedTheorems.add(self.stmtToProve._package + '.' + self.stmtToProve._name)
         #elif self.proverType != 'root' and self.stmtToProve.isProvenTheorem():
         #    print indentation + 'by unnamed theorem'
         elif self.provers is not None:
+            print r'\begin{itemize}'
             for prover in self.provers:
                 numNodes += prover.showProof(indentation, remembered, usedAxioms, usedTheorems)  
+            print r'\end{itemize}'
         if indentation == '  ':
             for axiom in sorted(usedAxioms):
                 print axiom
@@ -127,6 +190,7 @@ class Prover:
             print "Number of used theorms:", len(usedTheorems)
             print "Number of derivation tree nodes:", numNodes      
         return numNodes
+    """
     
     def isCircular(self, assumptions=None):
         '''
