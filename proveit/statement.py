@@ -232,7 +232,7 @@ class Statement:
                     subbedConditions.add(asStatement(IN.operationMaker([element, domain])))
         Statement.state(originalExpr)
         # add the specializer link
-        specializedExpr.statement.addSpecializer(originalExpr.statement, subMap, relabelMap, subbedConditions)
+        specializedExpr.statement.addSpecializer(originalExpr.statement, instanceVars, subMap, relabelMap, subbedConditions)
         # return the specialized expression and the 
         return specializedExpr, subbedConditions
                        
@@ -289,9 +289,13 @@ class Statement:
     def getGroupAndName(self):
         return self._group, self._name
         
-    def addSpecializer(self, original, subMap, relabelMap, conditions):
+    def addSpecializer(self, original, substitutingVars, subMap, relabelMap, conditions):
+        from multiExpression import extractVar
         subMap = {key:singleOrMultiExpression(val) for key, val in subMap.iteritems()}
-        self._specializers.add((original, tuple(subMap.items()), tuple(relabelMap.items()), tuple(conditions)))
+        varToIndex = {extractVar(var):i for i, var in enumerate(substitutingVars)}
+        subMapItems = tuple([(var, subMap[var]) for var in sorted(subMap.keys(), key = lambda var : varToIndex[var])])
+        relabelMapItems = tuple([(var, relabelMap[var]) for var in sorted(relabelMap.keys(), key = lambda var : var.name)])
+        self._specializers.add((original, subMapItems, relabelMapItems, tuple(conditions)))
         original._specializations.add(self)
 
     def addGeneralizer(self, original, forallVars, domain, conditions):
