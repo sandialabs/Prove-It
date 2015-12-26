@@ -1322,7 +1322,7 @@ class Multiply(AssociativeOperation, NumberOp):
         derive and return this multiplication expression equated with a simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        from complex.theorems import prodOne, prodZero
+        from complex.theorems import multOne, multZero
         from number import zero, one
         eq = Equation()
         expr = self
@@ -1336,7 +1336,7 @@ class Multiply(AssociativeOperation, NumberOp):
                 # group the other operands so there are only two at the top level
                 expr = eq.update(expr.group(1, len(expr.operands), assumptions)).rhs
             deduceInComplexes(expr.operands[1], assumptions)
-            return eq.update(prodZero.specialize({x:expr.operands[1]}))
+            return eq.update(multZero.specialize({x:expr.operands[1]}))
         except ValueError:
             pass # no zero factor
         try:
@@ -1349,7 +1349,7 @@ class Multiply(AssociativeOperation, NumberOp):
                 # group the other operands so there are only two at the top level
                 expr = eq.update(expr.group(1, len(expr.operands), assumptions)).rhs
             deduceInComplexes(expr.operands[1], assumptions)
-            return eq.update(prodOne.specialize({x:expr.operands[1]}))
+            return eq.update(multOne.specialize({x:expr.operands[1]}))
         except ValueError:
             pass # no one factor
         raise ValueError('Only trivial simplification is implemented (zero or one factors)')
@@ -1556,7 +1556,7 @@ class Multiply(AssociativeOperation, NumberOp):
                 eq.update(eq.eqExpr.rhs.group(endIdx=-numFactorOperands, assumptions=assumptions))
         return eq.eqExpr.checked(assumptions)
         
-    def combineExponents(self, assumptions=frozenset()):
+    def combineExponents(self, startIdx=None, endIdx=None, assumptions=frozenset()):
         '''
         Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$,  $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b},
         or equates $a^c b^c$ to $(a b)^c$.
@@ -1565,6 +1565,12 @@ class Multiply(AssociativeOperation, NumberOp):
         from complex.theorems import sumInPowRev, diffInPowRev, diffFracInPowRev
         from complex.theorems import addOneRightInPowRev, addOneLeftInPowRev
         from real.theorems import prodOfSqrts
+        if startIdx is not None or endIdx is not None:
+            dummyVar = self.safeDummyVar()
+            grouped = self.group(startIdx, endIdx, assumptions=assumptions)
+            innerCombineExponents = grouped.rhs.factors[startIdx].combineExponents(assumptions=assumptions)
+            combineInGroup = innerCombineExponents.substitution(Multiply(*(self.factors[:startIdx] + (dummyVar,) + self.factors[endIdx:])), dummyVar)
+            return grouped.applyTransitivity(combineInGroup)
         if all(isinstance(factor, Sqrt) for factor in self.factors):
             # combine the square roots into one square root
             factorBases = [factor.base for factor in self.factors]
@@ -1710,6 +1716,25 @@ class Fraction(BinaryOperation, NumberOp):
         else:
             print "BAD FORMAT TYPE"
             return None
+    
+    def combineExponents(self, assumptions=frozenset()):
+        from complex.theorems import fracIntExp, fracNatPosExp
+        if isinstance(self.numerator, Exponentiate) and isinstance(self.denominator, Exponentiate):
+            if self.numerator.exponent == self.denominator.exponent:
+                exponent = self.numerator.exponent
+                try:
+                    deduceInNaturalsPos(exponent, assumptions)
+                    deduceInComplexes([self.numerator.base, self.denominator.base], assumptions)
+                    deduceNotZero(self.denominator.base, assumptions)
+                    return fracNatPosExp.specialize({n:exponent}).specialize({a:self.numerator.base, b:self.denominator.base})
+                except:
+                    deduceInIntegers(exponent, assumptions)
+                    deduceInComplexes([self.numerator.base, self.denominator.base], assumptions)
+                    deduceNotZero(self.numerator.base, assumptions)
+                    deduceNotZero(self.denominator.base, assumptions)
+                    return fracIntExp.specialize({n:exponent}).specialize({a:self.numerator.base, b:self.denominator.base})
+        raise Exception('Unable to combine exponents of this fraction')
+        
     def cancel(self,operand, pull="left", assumptions=frozenset()):
         if self.numerator == self.denominator == operand:
             # x/x = 1
@@ -1947,6 +1972,23 @@ class Exponentiate(Operation, NumberOp):
             print "BAD FORMAT TYPE"
             return None
     
+    def distributeExponent(self, assumptions=frozenset()):
+        from complex.theorems import fracIntExpRev, fracNatPosExpRev
+        if isinstance(self.base, Fraction):
+            exponent = self.exponent
+            try:
+                deduceInNaturalsPos(exponent, assumptions)
+                deduceInComplexes([self.base.numerator, self.base.denominator], assumptions)
+                deduceNotZero(self.base.denominator, assumptions)
+                return fracNatPosExpRev.specialize({n:exponent}).specialize({a:self.numerator.base, b:self.denominator.base})
+            except:
+                deduceInIntegers(exponent, assumptions)
+                deduceInComplexes([self.base.numerator, self.base.denominator], assumptions)
+                deduceNotZero(self.base.numerator, assumptions)
+                deduceNotZero(self.base.denominator, assumptions)
+                return fracIntExpRev.specialize({n:exponent}).specialize({a:self.base.numerator, b:self.base.denominator})
+        raise Exception('distributeExponent currently only implemented for a fraction base')
+        
     def raiseExpFactor(self, expFactor, assumptions=frozenset()):
         from proveit.number.complex.theorems import intPowOfPow, intPowOfNegPow
         if isinstance(self.exponent, Neg):
