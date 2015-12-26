@@ -316,11 +316,11 @@ class Expression:
         return self
 
     # THIS USES MATHJAX WHICH IS LESS FLEXIBLE THAN DVIPNG (BELOW)  
-    '''
+    """
     def _repr_latex_(self):
         return '$' + self.formatted(LATEX) + '$'
-    '''
-
+    """
+    """
     def _repr_png_(self):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
         if not hasattr(self,'png') or self.png is None:
@@ -338,7 +338,45 @@ class Expression:
         '''
         for sub_expr in self._subExpressions:
             sub_expr._config_latex_tool(lt)
-        
+    """
+    
+    def showNestedSubExpressions(self):
+        from multiExpression import NamedExpressions
+        visitedExpressions = set()
+        nextExpressions = [self]
+        enumeratedExpressions = []
+        while len(nextExpressions) > 0:
+            nextExpr = nextExpressions.pop(0)
+            if nextExpr in visitedExpressions: continue # already showed that one
+            visitedExpressions.add(nextExpr)
+            enumeratedExpressions.append(nextExpr)
+            nextExpressions += nextExpr._subExpressions
+        exprNumMap = {expr:k for k, expr in enumerate(enumeratedExpressions)}
+        print r'\begin{tabular}{rl|l|l}'
+        print r' & \textbf{expression} & \textbf{core type} & \textbf{sub-expressions} \\'
+        for k, expr in enumerate(enumeratedExpressions):
+            print r'\hline'
+            print str(k) + '. & ' + repr(expr) + ' & ' + expr._coreInfo.split()[0] + ' & '
+            if isinstance(expr, NamedExpressions):
+                print r'$\begin{array}{l}'
+                for key in sorted(expr.keys()):
+                    print r'\rm{' + key.replace('_', r'\_') + '}: ' + str(exprNumMap[expr[key]]) + r'\\'
+                print r'\end{array}$ \\'
+            elif isinstance(expr, Operation):
+                print r'$\begin{array}{l}'
+                print r'\rm{operator}: ' + str(exprNumMap[expr.operator]) + r' \\'
+                print r'\rm{operands}: ' + str(exprNumMap[expr.operands]) + r' \\'
+                print r'\end{array}$ \\'
+            elif isinstance(expr, Lambda):
+                print r'$\begin{array}{l}'
+                print r'\rm{arguments}: ' + str(exprNumMap[expr.arguments]) + r' \\'
+                print r'\rm{expression}: ' + str(exprNumMap[expr.expression]) + r' \\'
+                print r'\end{array}$ \\'
+            else:
+                print ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions) + r'\\'
+        print r'\hline'
+        print r'\end{tabular}'
+            
 class Literal(Expression):
     """
     A Literal expresses contextual meaning and they are not interchangeable.
@@ -414,7 +452,7 @@ class Variable(Expression):
     
 class IndexVariable(Variable):
     def __init__(self, n):
-        Variable.__init__(self, '_' + str(n) + '_')
+        Variable.__init__(self, '_' + str(n) + '_', {LATEX: r'\_' + str(n) + r'\_'})
 
 def safeDummyVar(*expressions):
     usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])
