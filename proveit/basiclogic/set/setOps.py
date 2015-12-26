@@ -21,8 +21,7 @@ class In(BinaryOperation):
         '''
         Deduce and return that this 'in' statement is in the set of BOOLEANS.
         '''
-        from axioms import inSetIsInBool
-        return inSetIsInBool.specialize({x:self.element, S:self.domain}).checked()
+        self.domain.deduceInSetIsBool(self.element)
     
     def unfold(self):
         '''
@@ -67,10 +66,9 @@ class NotIn(BinaryOperation):
 
     def deduceInBool(self):
         '''
-        Deduce and return that this 'in' statement is in the set of BOOLEANS.
+        Deduce and return that this 'not in' statement is in the set of BOOLEANS.
         '''
-        from theorems import notInSetIsInBool
-        return notInSetIsInBool.specialize({x:self.element, S:self.domain}).checked()
+        self.domain.deduceNotInSetIsBool(self.element)
     
     def unfold(self):
         '''
