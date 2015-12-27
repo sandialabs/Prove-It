@@ -86,7 +86,7 @@ class Prover:
         '''
         Return the statement and assumptions for the prover in a hashable form.
         '''
-        return (self.stmtToProve, tuple([assumption for assumption in self.assumptions]))
+        return (self.stmtToProve, tuple([assumption for assumption in self.provingAssumptions]))
 
     def showProof(self):
         from multiExpression import NamedExpressions
