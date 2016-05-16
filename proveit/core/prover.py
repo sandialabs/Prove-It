@@ -1,8 +1,4 @@
-from proveit.statement import Statement, asStatement
-from proveit.expression import Operation, LATEX
-from proveit.multiExpression import multiExpression
-from proveit.inLiteral import IN
-from proveit.everythingLiteral import EVERYTHING
+from proveit.core.statement import Statement, asStatement
 
 class Prover:
     # Temporary provers: mapping a statement to a list of provers (for various assumption sets).
@@ -89,7 +85,6 @@ class Prover:
         return (self.stmtToProve, tuple([assumption for assumption in self.provingAssumptions]))
 
     def showProof(self):
-        from multiExpression import NamedExpressions
         visitedStmtAndAsumptions = set()
         nextProvers = [self]
         enumeratedProvers = []
@@ -117,10 +112,10 @@ class Prover:
                     stepType = r'$\begin{array}{l} '
                     if requirements[0].subMap is not None and len(requirements[0].subMap) > 0:
                         stepType += r'{\rm specialization~via} \\ '
-                        stepType += r'\left\{' + ',~'.join(key.formatted(LATEX) + ': ' + val.formatted(LATEX) for key, val in requirements[0].subMap) + r'\right\}'
+                        stepType += r'\left\{' + ',~'.join(key.latex() + ': ' + val.latex() for key, val in requirements[0].subMap) + r'\right\}'
                     if requirements[0] is not None and len(requirements[0].relabelMap) > 0:
                         stepType += r'{\rm relabeling via} \\ '
-                        stepType += r'\left\{' + ',~'.join(key.formatted(LATEX) + ': ' + val.formatted(LATEX) for key, val in requirements[0].relabelMap) + r'\right\}'
+                        stepType += r'\left\{' + ',~'.join(key.latex() + ': ' + val.latex() for key, val in requirements[0].relabelMap) + r'\right\}'
                     stepType += r'\end{array}$'
                 elif requirements[0].proverType == 'implication':
                     stepType = 'modus ponens'
@@ -259,6 +254,7 @@ class Prover:
         '''
         Append any provers that can implicate that self is proven.
         '''
+        from proveit import InSet
         stmt = self.stmtToProve
         # Prove by specialization?  Put this at front to connect with a theorem first if possible,
         for original, substitutionMap, relabelMap, conditions in stmt._specializers:
@@ -272,8 +268,8 @@ class Prover:
             breadth1stQueue += corequisites
         # Prove by generalization?
         for original, forallVars, domain, conditions in stmt._generalizers:
-            if domain != EVERYTHING:
-                conditions = [asStatement(Operation(IN, [var, domain])) for var in forallVars] + list(conditions)
+            if domain is not None:
+                conditions = [asStatement(InSet(var, domain)) for var in forallVars] + list(conditions)
             # we cannot allow assumptions that have any of the forallVars as free variables
             subAssumptions = {assumption for assumption in self.assumptions if len(assumption.freeVars() & set(forallVars)) == 0}            
             # add assumptions for any of the conditions of the generalizer

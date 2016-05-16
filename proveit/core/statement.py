@@ -2,13 +2,9 @@
 This is the statement module.
 """
 
-import proveit
-from proveit.expression import Expression, Variable, Operation, Lambda
-from proveit.multiExpression import MultiExpression, NamedExpressions, ExpressionList, ExpressionTensor, Bundle, isBundledVar, isBundledVarOrVar, isBundledOperation, multiExpression, singleOrMultiExpression
-from proveit.impliesLiteral import IMPLIES
-from proveit.forallLiteral import FORALL
-from proveit.inLiteral import IN
-from proveit.everythingLiteral import EVERYTHING
+from proveit.core.expression import Lambda, Operation, Expression, Variable, ExpressionTensor, ExpressionList
+from proveit.core.expression.composite.composite import Composite, compositeExpression, singleOrCompositeExpression
+from proveit.core.expression.bundle import isBundledVar, isBundledVarOrVar, isBundledOperation
             
 def asStatement(statementOrExpression):
     '''
@@ -54,6 +50,7 @@ class Statement:
         Make a Statement from the given Expression and return the Expression.
         '''
         from prover import Prover
+        from proveit import Implies
         
         statement = Statement(expression, _package, _name, _isAxiom, _isNamedTheorem)
         statement = Statement.statements.setdefault(expression._unique_id, statement)
@@ -68,7 +65,7 @@ class Statement:
             Prover._markAsProven(statement, Prover(statement, []))
             
         # When stating an implication, link together the implication, hypothesis and conclusion
-        if isinstance(expression, Operation) and expression.operator == IMPLIES and len(expression.operands) == 2:
+        if isinstance(expression, Implies) and len(expression.operands) == 2:
             implication = statement
             hypothesis = Statement.state(expression.operands[0]).statement
             conclusion = Statement.state(expression.operands[1]).statement
@@ -132,6 +129,8 @@ class Statement:
         used in logical reasoning.  Eventually they should be bound again via 
         generalization (the counterpart to specialization).
         '''
+        from proveit import Forall, InSet
+        
         # Check the relabelMap and convert Etcetera-wrapped relabelMap keys to Variable keys
         origRelabelItems = list(relabelMap.iteritems())
         relabelMap = dict()
@@ -141,7 +140,7 @@ class Statement:
                     raise ImproperSpecialization('May only relabel a Variable to a Variable.')
                 relabelVar = key
             elif isBundledVar(key):                
-                sub = multiExpression(sub)
+                sub = compositeExpression(sub)
                 if not isinstance(sub, ExpressionList):
                     raise ImproperSpecialization('May only relabel a Bundled Variable to a single (Bundled) Variable or list of (Bundled) Variables')
                 for v in sub:
@@ -159,14 +158,14 @@ class Statement:
         for subKey, sub in origSubMapItems:
             if isinstance(subKey, Variable):
                 # substitute a simple Variable
-                if not isinstance(sub, Expression) or isinstance(sub, MultiExpression):
-                    raise ImproperSpecialization('A normal Variable may be not be specialized to a MultiExpression (only a Bundled Variable may be)')
+                if not isinstance(sub, Expression) or isinstance(sub, Composite):
+                    raise ImproperSpecialization('A normal Variable may be not be specialized to a composite Expression (only a Bundled Variable may be)')
                 subVar = subKey
                 subMap[subVar] = sub
             elif isBundledVar(subKey):
                 # substitute an Etcetera-wrapped Variable -- sub in an ExpressionList
                 subVar = subKey.bundledExpr.variable
-                sub = multiExpression(sub)
+                sub = compositeExpression(sub)
                 if sub.__class__ != subKey.multiExprType:
                     if subKey.multiExprType == ExpressionList:
                         raise ImproperSpecialization('Etcetera Variables may only be specialized to a list of Expressions')
@@ -183,13 +182,13 @@ class Statement:
                 operation = subKey if isinstance(subKey, Operation) else subKey.bundledExpr
                 try:
                     if isinstance(subKey, Operation):
-                        if not isinstance(sub, Expression) or isinstance(sub, MultiExpression):
-                            raise ImproperSpecialization('A normal operation may be not be specialized to a MultiExpression (only a Bundled Operation may be)')                    
+                        if not isinstance(sub, Expression) or isinstance(sub, Composite):
+                            raise ImproperSpecialization('A normal operation may be not be specialized to a composite Expression (only a Bundled Operation may be)')                    
                         lambdaExpr = sub
                         subVar = operation.operator
                         subMap[subVar] = Lambda(operation.operands, lambdaExpr)
                     else: 
-                        lambdaExpressions = multiExpression(sub)
+                        lambdaExpressions = compositeExpression(sub)
                         subVar = operation.operator.variable
                         subMap[subVar] = ExpressionList([Lambda(operation.operands, lambdaExpr) for lambdaExpr in lambdaExpressions])
                 except TypeError as e:
@@ -201,11 +200,11 @@ class Statement:
             substitutingVars.add(subVar)
         if len(subMap) > 0:
             # an actual Forall specialization
-            assert originalExpr.operator == FORALL, 'May only perform substitution specialization on Forall Expressions (relabeling would be okay)'
+            assert isinstance(originalExpr, Forall), 'May only perform substitution specialization on Forall Expressions (relabeling would be okay)'
             expr = originalExpr.operands
             lambdaExpr = expr['instance_mapping']
             domain = expr['domain']
-            assert isinstance(lambdaExpr, Lambda), "FORALL Operation bundledExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
+            assert isinstance(lambdaExpr, Lambda), "Forall Operation bundledExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
             # extract the instance expression and instance variables from the lambda expression        
             instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], list(lambdaExpr.expression['conditions'])
             iVarSet = set().union(*[iVar.freeVars() for iVar in instanceVars])
@@ -224,12 +223,12 @@ class Statement:
         # make substitutions in the condition
         subbedConditions = {asStatement(condition.substituted(subMap, relabelMap)) for condition in conditions}
         # add conditions for satisfying the domain restriction if there is one
-        if domain != EVERYTHING:
+        if domain is not None:
             # extract all of the elements
             for var in instanceVars:
                 elementOrList = var.substituted(subMap, relabelMap)
                 for element in (elementOrList if isinstance(elementOrList, ExpressionList) else [elementOrList]):
-                    subbedConditions.add(asStatement(IN.operationMaker([element, domain])))
+                    subbedConditions.add(asStatement(InSet(element, domain)))
         Statement.state(originalExpr)
         # add the specializer link
         specializedExpr.statement.addSpecializer(originalExpr.statement, instanceVars, subMap, relabelMap, subbedConditions)
@@ -237,7 +236,7 @@ class Statement:
         return specializedExpr, subbedConditions
                        
     @staticmethod
-    def generalize(originalExpr, newForallVars, newDomain=EVERYTHING, newConditions=tuple()):
+    def generalize(originalExpr, newForallVars, newDomain=None, newConditions=tuple()):
         '''
         State and return a generalization of a given original statement
         which derives from the original statement via a generalization inference
@@ -250,8 +249,8 @@ class Statement:
         statement relative  to no condition.  The newForallVar(s) and newCondition(s) 
         may be singular or plural (iterable).
         '''
-        forallMaker = FORALL.operationMaker
-        generalizedExpr = Statement.state(forallMaker(instanceVars=newForallVars, instanceExpr=originalExpr, domain=newDomain, conditions=newConditions))
+        from proveit import Forall
+        generalizedExpr = Statement.state(Forall(instanceVars=newForallVars, instanceExpr=originalExpr, domain=newDomain, conditions=newConditions))
         Statement.state(originalExpr)
         generalizedExpr.statement.addGeneralizer(originalExpr.statement, newForallVars, newDomain, newConditions)
         # In order to be a valid tautology, we have to make sure that the expression is
@@ -264,10 +263,11 @@ class Statement:
         '''
         Make sure the expr is a generalization of the instanceExpr.
         '''
-        assert isinstance(expr, Operation) and expr.operator == FORALL, 'The result of a generalization must be a FORALL operation'
+        from proveit import Forall
+        assert isinstance(expr, Forall), 'The result of a generalization must be a Forall operation'
         expr = expr.operands
         lambdaExpr = expr['instance_mapping']
-        assert isinstance(lambdaExpr, Lambda), 'A FORALL Expression must be in the proper form'
+        assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
         expr = lambdaExpr.expression['instance_expression']
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
                     
@@ -290,8 +290,8 @@ class Statement:
         return self._group, self._name
         
     def addSpecializer(self, original, substitutingVars, subMap, relabelMap, conditions):
-        from multiExpression import extractVar
-        subMap = {key:singleOrMultiExpression(val) for key, val in subMap.iteritems()}
+        from proveit.core.expression.bundle import extractVar
+        subMap = {key:singleOrCompositeExpression(val) for key, val in subMap.iteritems()}
         varToIndex = {extractVar(var):i for i, var in enumerate(substitutingVars)}
         subMapItems = tuple([(var, subMap[var]) for var in sorted(subMap.keys(), key = lambda var : varToIndex[var])])
         relabelMapItems = tuple([(var, relabelMap[var]) for var in sorted(relabelMap.keys(), key = lambda var : var.name)])
@@ -300,7 +300,7 @@ class Statement:
 
     def addGeneralizer(self, original, forallVars, domain, conditions):
         if conditions is None: conditions = tuple()
-        self._generalizers.add((original, tuple(forallVars), domain, tuple([asStatement(condition) for condition in multiExpression(conditions)])))
+        self._generalizers.add((original, tuple(forallVars), domain, tuple([asStatement(condition) for condition in compositeExpression(conditions)])))
         original._generalizations.add(self)
         
     def addImplicator(self, hypothesis, implication):
