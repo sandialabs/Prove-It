@@ -1,3 +1,0 @@
-root 5fc57978d1c50f42ca1f6f9537fcec3c3559cd1f/0
-	specializing 9c5ba795640e0daafc626dd019669a62040dc48f/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'd146d34191f17b0a6f397bdbe357d29a3a7c6747/0'}
-		by theorem proveit.basiclogic.equality.notEqualsSymmetry

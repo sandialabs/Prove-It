@@ -1,8 +1,0 @@
-root cb920ffcfad7b2ae3f93c0f2977c9ad07129dad1/0
-	generalizing da8e982f7f289139a3943cb1931be845b30824eb/0
-		implication 5038526182b783fd05a2267d543e770a86770950/0
-			specializing 84b4397b8b666157006a64ebaf02bfd5090fd515/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'e669c79575762dc2a8ade6a862c9dd97cbc3111a/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '7ef39f8b8ad00f37207b9537a52aec659afacbf7/0'}
-				by theorem proveit.basiclogic.equality.lhsSubstitution
-		hypothesis f6f3d9c6977abf977cb51ea3832c69e041f684ac/0
-			specializing bf63113a23a8dcc0b1bd44e34432a9b5178db081/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': 'a745488d8ff9284eedea37d2d43963dfec0aedd7/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0'}
-				by axiom proveit.basiclogic.equality.notEqualsDef

@@ -1,8 +1,0 @@
-root cc3c9acfd6d3a0f25c3407dd89edf372c3f086ca/0
-	generalizing fead11ef451ed25eabb05a97ea61eeff7cb10f88/0
-		implication b0061c6f5a1395f498c259ab75db9ba3a4fdeb0d/0
-			specializing c7c29471f738cadaf682fd1acfe923e7dfc133d2/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'ca7a0191097e55e95d76d8aef75ce833579bf801/0', 'cebb0a1c178ea6b8786da7f45ac7726745018782/0': 'b25e8eb3a40ce0cf7395d6b3eb8b6ea61befa3e1/0'}
-				by theorem proveit.basiclogic.boolean.iffImpliesLeft
-		hypothesis d305dc6fb153fe7d637fcbaa4bcf31df6a2c66f7/0
-			specializing d023e537c1e1d075b8f15e9288e75bb3d5d764b5/0 via substituting {'e7d8ff9df0f7a14804ef59f9652e00b9c1ce3d11/0': 'e7d8ff9df0f7a14804ef59f9652e00b9c1ce3d11/0', '6ba99a720ac24639955c8237e10af85f4578a352/0': '6ba99a720ac24639955c8237e10af85f4578a352/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0'}
-				by axiom proveit.basiclogic.set.setOfAllDef

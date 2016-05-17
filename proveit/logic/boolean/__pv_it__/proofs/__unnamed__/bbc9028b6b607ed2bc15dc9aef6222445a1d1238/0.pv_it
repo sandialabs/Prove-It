@@ -1,7 +1,0 @@
-root bbc9028b6b607ed2bc15dc9aef6222445a1d1238/0
-	specializing 00940750dde12982e8757004337bc78863a8df17/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'c33e5cfc1515bbe4c22b93daa1ca1bfebb881277/0', 'cebb0a1c178ea6b8786da7f45ac7726745018782/0': 'ba8f370cf091f825c4af4a9b3e20715d96088996/0'}
-		by theorem proveit.basiclogic.boolean.conjunctionIntro
-	condition ba8f370cf091f825c4af4a9b3e20715d96088996/0
-		by unnamed theorem
-	condition c33e5cfc1515bbe4c22b93daa1ca1bfebb881277/0
-		by unnamed theorem

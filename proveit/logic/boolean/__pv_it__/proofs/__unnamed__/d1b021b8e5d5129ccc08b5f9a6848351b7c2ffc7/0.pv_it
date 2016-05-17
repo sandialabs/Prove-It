@@ -1,3 +1,0 @@
-root d1b021b8e5d5129ccc08b5f9a6848351b7c2ffc7/0
-	specializing 39792ba520e4778877fc15773891fbca5a95770d/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '222cddc24abb1e8a945e4fd4661db45689cd5ec0/0', 'dcf68a07c56a689f7f28edf83756d39a97ed9f74/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '8c462be9e50190b67ea8387822c02c4b332292bf/0'}
-		by axiom proveit.basiclogic.equality.equalsTransitivity

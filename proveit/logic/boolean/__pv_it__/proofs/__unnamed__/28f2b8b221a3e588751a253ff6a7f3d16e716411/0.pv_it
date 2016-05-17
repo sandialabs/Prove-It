@@ -1,3 +1,0 @@
-root 28f2b8b221a3e588751a253ff6a7f3d16e716411/0
-	specializing d62ebdde4cddf6b0be688517b4035f6087178f5e/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'fd5ad1999009a7b32e9bc89551c41c1ad843dc06/0'}
-		by theorem proveit.basiclogic.boolean.notImpliesEqFalse

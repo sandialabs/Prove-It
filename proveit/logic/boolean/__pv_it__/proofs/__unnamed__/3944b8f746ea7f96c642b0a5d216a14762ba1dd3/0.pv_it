@@ -1,5 +1,0 @@
-root 3944b8f746ea7f96c642b0a5d216a14762ba1dd3/0
-	implication 0fe0c38600cdf537579d92242d81097309c56b8d/0
-		by unnamed theorem
-	hypothesis f5926fbf81da7624b5f4bae81630bf01a10d2b7d/0
-		by theorem proveit.basiclogic.boolean.impliesTT

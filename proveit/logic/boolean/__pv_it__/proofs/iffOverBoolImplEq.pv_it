@@ -1,7 +1,0 @@
-root 1e8af3871dad4cd766e8abd499337c03d8c15e9e/0
-	generalizing 12ebe023fd9d289c4f975d7e3d0fdb3a18e1b0d0/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0, 21fd0791c2fd5828afcbed682bd2deb052c6b8eb/0
-		specializing 11912b4d91a97203a85bf9108a466da3b39693cd/0 via substituting {'cebb0a1c178ea6b8786da7f45ac7726745018782/0': 'cebb0a1c178ea6b8786da7f45ac7726745018782/0'} assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
-			specializing 72559d5c5e4a842f4f3c7e69c3b86d6c006a29df/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': '8227d99b86925033fc9fd00d5dcb254d61a48504/0'}
-				by unnamed theorem
-			condition 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0 assuming 4cd5a93db12a44bfd1d407d15b0fe7c5d28f25c7/0
-		condition 21fd0791c2fd5828afcbed682bd2deb052c6b8eb/0 assuming 21fd0791c2fd5828afcbed682bd2deb052c6b8eb/0

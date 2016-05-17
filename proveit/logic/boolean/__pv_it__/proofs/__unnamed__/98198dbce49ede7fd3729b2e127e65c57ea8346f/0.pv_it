@@ -1,3 +1,0 @@
-root 98198dbce49ede7fd3729b2e127e65c57ea8346f/0
-	specializing 84b4397b8b666157006a64ebaf02bfd5090fd515/0 via substituting {'a745488d8ff9284eedea37d2d43963dfec0aedd7/0': '8ef05544c8d8249bca16b8d0442b3f247036c7bc/0', 'acbb4a04a9c766c07d2f96b05d72d961ed936b72/0': '6ae1531c461c9ee361bdea0e6253cd8444b3d2a3/0'}
-		by theorem proveit.basiclogic.equality.lhsSubstitution

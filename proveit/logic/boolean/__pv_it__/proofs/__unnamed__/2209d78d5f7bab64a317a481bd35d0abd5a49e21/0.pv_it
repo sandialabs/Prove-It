@@ -1,3 +1,0 @@
-root 2209d78d5f7bab64a317a481bd35d0abd5a49e21/0
-	specializing 86fa36ce57d341033e6508cc3c8a5fa21849c897/0 via substituting {'8227d99b86925033fc9fd00d5dcb254d61a48504/0': 'd146d34191f17b0a6f397bdbe357d29a3a7c6747/0'}
-		by theorem proveit.basiclogic.boolean.foldInBool
