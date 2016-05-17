@@ -369,45 +369,10 @@ class Expression:
         for sub_expr in self._subExpressions:
             sub_expr._config_latex_tool(lt)
     
-    def showNestedSubExpressions(self):
-        from composite.named_exprs import NamedExpressions
-        from operation import Operation
-        from lambda_expr import Lambda
-        visitedExpressions = set()
-        nextExpressions = [self]
-        enumeratedExpressions = []
-        while len(nextExpressions) > 0:
-            nextExpr = nextExpressions.pop(0)
-            if nextExpr in visitedExpressions: continue # already showed that one
-            visitedExpressions.add(nextExpr)
-            enumeratedExpressions.append(nextExpr)
-            nextExpressions += nextExpr._subExpressions
-        exprNumMap = {expr:k for k, expr in enumerate(enumeratedExpressions)}
-        print r'\begin{tabular}{rl|l|l}'
-        print r' & \textbf{expression} & \textbf{core type} & \textbf{sub-expressions} \\'
-        for k, expr in enumerate(enumeratedExpressions):
-            print r'\hline'
-            print str(k) + '. & ' + repr(expr) + ' & ' + expr._coreInfo[0] + ' & '
-            if isinstance(expr, NamedExpressions):
-                print r'$\begin{array}{l}'
-                for key in sorted(expr.keys()):
-                    print r'\rm{' + key.replace('_', r'\_') + '}: ' + str(exprNumMap[expr[key]]) + r'\\'
-                print r'\end{array}$ \\'
-            elif isinstance(expr, Operation):
-                print r'$\begin{array}{l}'
-                print r'\rm{operator}: ' + str(exprNumMap[expr.operator]) + r' \\'
-                print r'\rm{operands}: ' + str(exprNumMap[expr.operands]) + r' \\'
-                print r'\end{array}$ \\'
-            elif isinstance(expr, Lambda):
-                print r'$\begin{array}{l}'
-                print r'\rm{arguments}: ' + str(exprNumMap[expr.arguments]) + r' \\'
-                print r'\rm{expression}: ' + str(exprNumMap[expr.expression]) + r' \\'
-                print r'\end{array}$ \\'
-            else:
-                print ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions) + r'\\'
-        print r'\hline'
-        print r'\end{tabular}'
-    
+    def exprTree(self):
+        from expr_tree import ExpressionTree
+        return ExpressionTree(self)
+        
 class MakeNotImplemented(NotImplementedError):
     def __init__(self, exprSubClass):
         self.exprSubClass = exprSubClass
