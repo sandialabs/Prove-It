@@ -1,12 +1,16 @@
-from proveit.expression import Operation, Lambda, STRING, LATEX
-from proveit.multiExpression import multiExpression, MultiVariable, ExpressionList, Etcetera
-from proveit.everythingLiteral import EVERYTHING
+from proveit import Operation, Lambda, compositeExpression, MultiVariable, ExpressionList, Etcetera
 
 class BinaryOperation(Operation):
     def __init__(self, operator, A, B):
         Operation.__init__(self, operator, (A, B))
         self.leftOperand = A
-        self.rightOperand = B
+        self.rightOperand = B    
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
         
     def formatted(self, formatType, fence=False, subLeftFence=True, subRightFence=True):
         # override this default as desired
@@ -15,7 +19,7 @@ class BinaryOperation(Operation):
         formattedOp = self.operator.formatted(formatType)
         innerStr = formattedLeft + ' ' + formattedOp + ' ' + formattedRight
         if fence:
-            if formatType == LATEX:
+            if formatType == 'latex':
                 return r'\left(' + innerStr + r'\right)'
             else:
                 return '(' + innerStr + ')'
@@ -34,6 +38,12 @@ class AssociativeOperation(Operation):
             # 2 or more items)
             if len(self.operands) == 0 or not isinstance(self.operands[0], Etcetera):
                 raise ValueError("An AssociativeOperation must have at least 2 operands")  
+    
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
     
     def formatted(self, formatType, fence=False, subFence=True):
         '''
@@ -70,7 +80,7 @@ class AssociativeOperation(Operation):
         """
 
 class OperationOverInstances(Operation):
-    def __init__(self, operator, instanceVars, instanceExpr, domain=EVERYTHING, conditions=tuple()):
+    def __init__(self, operator, instanceVars, instanceExpr, domain=None, conditions=tuple()):
         '''
         Create an Operation for the given operator over instances of the given instance Variables,
         instanceVars, for the given instance Expression, instanceExpr under the given conditions
@@ -91,7 +101,7 @@ class OperationOverInstances(Operation):
     
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, domain, conditions):
-        lambdaFn = Lambda(instanceVars, {'instance_expression':instanceExpr, 'conditions':multiExpression(conditions)})
+        lambdaFn = Lambda(instanceVars, {'instance_expression':instanceExpr, 'conditions':compositeExpression(conditions)})
         return {'instance_mapping':lambdaFn, 'domain':domain}
     
     @staticmethod
@@ -127,13 +137,40 @@ class OperationOverInstances(Operation):
         '''
         Returns True if this OperationOverInstances has a domain restriction.
         '''
-        return self.domain != EVERYTHING
+        return self.domain is not None
         
     def hasCondition(self):
         '''
         Returns True if this OperationOverInstances has conditions.
         '''
         return self.conditions is not None and len(self.conditions) > 0
+
+    @classmethod
+    def make(operationClass, coreInfo, subExpressions):
+        '''
+        Make the appropriate OperationOverInstances.  coreInfo should equal ['Operation'].
+        The first of the subExpressions should be the operator and the subsequent ones 
+        should be operands.  For OperationOverInstances sub-classes that use a specific Literal 
+        operator, override 'operatorOfOperation' and the default behavior of 'make' will be to 
+        instantiate the OperationOverInstances sub-class with extracted parameters of the operand:
+        'instanceVars', 'instanceExpr', 'domain', 'conditions'.  Override extractParameters if
+        parameters are renamed.
+        '''
+        if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
+            raise ValueError("Expecting Operation coreInfo to contain exactly one item: 'Operation'")
+        if len(subExpressions) != 2:
+            raise ValueError('Expecting exactly two subExpressions for an OperationOverInstances')
+        operator, operands = subExpressions[0], subExpressions[1]
+        subClassOperator = operationClass.operatorOfOperation()
+        if subClassOperator != operator:
+            raise ValueError('Unexpected operator, ' + str(operator) + ', when making ' + str(operationClass)) 
+        return operationClass(**operationClass.extractParameters(operands))
+    
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
 
     def formatted(self, formatType, fence=False):
         # override this default as desired
@@ -142,14 +179,14 @@ class OperationOverInstances(Operation):
         implicitConditions = self.implicitConditions(formatType)
         hasExplicitConditions = self.hasCondition() and (len(implicitConditions) < len(self.conditions))
         outStr = ''        
-        if formatType == STRING :
+        if formatType == 'string':
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
             if hasExplicitIvars:
                 outStr += self.instanceVars.formatted(formatType, fence=False)
                 #outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
             if self.hasDomain():
-                outStr += ' in ' if formatType == STRING else ' \in '
+                outStr += ' in ' if formatType == 'string' else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
@@ -157,14 +194,14 @@ class OperationOverInstances(Operation):
                 #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += ']'
-        if formatType == LATEX:
+        if formatType == 'latex':
             if fence: outStr += r'\left['
             outStr += self.operator.formatted(formatType) + '_{'
             if hasExplicitIvars:
                 outStr += self.instanceVars.formatted(formatType, fence=False)
                 #outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
             if self.hasDomain():
-                outStr += ' in ' if formatType == STRING else ' \in '
+                outStr += ' in ' if formatType == 'string' else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += "~|~"
@@ -184,8 +221,8 @@ class OperationOverInstances(Operation):
         Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..) = Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
         Works also when there is no domain S and/or no conditions ..Q...
         '''
-        from proveit.basiclogic.axioms import instanceSubstitution
-        from proveit.basiclogic import Forall, Equals
+        from proveit.logic.axioms import instanceSubstitution
+        from proveit.logic import Forall, Equals
         from proveit.number import num
         from proveit.common import n, Q, Qetc, xEtc, yEtc, zEtc, etc_QxEtc, f, g, fxEtc, fyEtc, gxEtc, gzEtc, Upsilon, S
         if not isinstance(equivalenceForallInstances, Forall):

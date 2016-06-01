@@ -1,16 +1,21 @@
-from proveit.basiclogic.genericOps import BinaryOperation
-from proveit.expression import Variable, Literal, Operation, STRING, LATEX,\
-    safeDummyVar
-from proveit.multiExpression import ExpressionList, ExpressionTensor, MultiVariable, Etcetera, Bundle, Block
+from proveit.logic.genericOps import BinaryOperation
+from proveit import Variable, MultiVariable, Literal, Operation, ExpressionList, Etcetera, ExpressionTensor, Block, safeDummyVar
 from proveit.common import A, P, X, f, x, y, z
 
 pkg = __package__
+
+EQUALS = Literal(pkg, '=')
+NOTEQUALS = Literal(pkg, stringFormat = '!=', latexFormat = r'\neq')
 
 class Equals(BinaryOperation):
     def __init__(self, a, b):
         BinaryOperation.__init__(self, EQUALS, a, b)
         self.lhs = a
         self.rhs = b
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return EQUALS    
 
     def concludeViaReflexivity(self):
         '''
@@ -63,9 +68,9 @@ class Equals(BinaryOperation):
         From A = TRUE or TRUE = A derive A, or from A = FALSE or FALSE = A derive Not(A).
         Note, see deriveStmtEqTrue or Not.equateNegatedToFalse for the reverse process.
         '''
-        from proveit.basiclogic import TRUE, FALSE        
-        from proveit.basiclogic.boolean.axioms import eqTrueElim
-        from proveit.basiclogic.boolean.theorems import eqTrueRevElim, notFromEqFalse, notFromEqFalseRev
+        from proveit.logic import TRUE, FALSE        
+        from proveit.logic.boolean.axioms import eqTrueElim
+        from proveit.logic.boolean.theorems import eqTrueRevElim, notFromEqFalse, notFromEqFalseRev
         if self.lhs == TRUE:
             return eqTrueRevElim.specialize({A:self.rhs}).deriveConclusion().checked({self}) # A
         elif self.rhs == TRUE:
@@ -79,7 +84,7 @@ class Equals(BinaryOperation):
         '''
         From A=FALSE, derive A=>FALSE.
         '''
-        from proveit.basiclogic import FALSE        
+        from proveit.logic import FALSE        
         from theorems import contradictionFromFalseEquivalence, contradictionFromFalseEquivalenceReversed
         if self.rhs == FALSE:
             return contradictionFromFalseEquivalence.specialize({A:self.lhs}).deriveConclusion().checked({self})
@@ -91,9 +96,9 @@ class Equals(BinaryOperation):
         Prove and return self of the form (A=TRUE) assuming A, (TRUE=A) assuming A, 
         A=FALSE assuming Not(A), FALSE=A assuming Not(A), [Not(A)=FALSE] assuming A, or [FALSE=Not(A)] assuming A.
         '''
-        from proveit.basiclogic import TRUE, FALSE, Not        
-        from proveit.basiclogic.boolean.axioms import eqTrueIntro
-        from proveit.basiclogic.boolean.theorems import eqTrueRevIntro, eqFalseFromNegation, eqFalseRevFromNegation
+        from proveit.logic import TRUE, FALSE, Not        
+        from proveit.logic.boolean.axioms import eqTrueIntro
+        from proveit.logic.boolean.theorems import eqTrueRevIntro, eqFalseFromNegation, eqFalseRevFromNegation
         if self.rhs == TRUE:
             return eqTrueIntro.specialize({A:self.lhs}).deriveConclusion().checked({self.lhs})
         elif self.rhs == FALSE:
@@ -113,7 +118,7 @@ class Equals(BinaryOperation):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from proveit.basiclogic.set.axioms import singletonDef
+        from proveit.logic.set.axioms import singletonDef
         singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft().checked({self})
     
     def _subFn(self, fnExpr, fnArg, subbing, replacement):
@@ -139,7 +144,7 @@ class Equals(BinaryOperation):
         '''
         from axioms import substitution
         fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs, self.rhs)
-        assert isinstance(fnArg, Variable) or isinstance(fnArg, Bundle)
+        assert isinstance(fnArg, Variable) or isinstance(fnArg, Etcetera) or isinstance(fnArg, Block)
         return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion().checked({self})
         
     def lhsStatementSubstitution(self, fnExpr, fnArg=None):
@@ -221,8 +226,8 @@ class Equals(BinaryOperation):
         '''
         From A=TRUE, A=FALSE, TRUE=A, or FALSE=A, derive and return inBool(A).
         '''
-        from proveit.basiclogic import TRUE, FALSE
-        from proveit.basiclogic.boolean.theorems import inBoolIfEqTrue, inBoolIfEqTrueRev, inBoolIfEqFalse, inBoolIfEqFalseRev
+        from proveit.logic import TRUE, FALSE
+        from proveit.logic.boolean.theorems import inBoolIfEqTrue, inBoolIfEqTrueRev, inBoolIfEqFalse, inBoolIfEqFalseRev
         if self.rhs == TRUE:
             return inBoolIfEqTrue.specialize({A:self.lhs}).deriveConclusion().proven({self})
         if self.lhs == TRUE:
@@ -240,8 +245,8 @@ class Equals(BinaryOperation):
         evalEquality using the evaluated left and right hand sides
         of the expression to determine the evaluation of the equality.
         '''
-        from proveit.basiclogic import TRUE
-        from proveit.basiclogic.boolean.boolOps import _evaluate
+        from proveit.logic import TRUE
+        from proveit.logic.boolean.boolOps import _evaluate
         def doEval():
             '''
             Performs the actual work if we can't simply look up the evaluation.
@@ -279,8 +284,6 @@ class Equals(BinaryOperation):
                 return Equals(self, val)
             
         return _evaluate(self, doEval)
-
-EQUALS = Literal(pkg, 'EQUALS', {STRING:'=', LATEX:'='}, lambda operands : Equals(*operands))
         
 class NotEquals(BinaryOperation):
     def __init__(self, a, b):
@@ -288,6 +291,10 @@ class NotEquals(BinaryOperation):
         self.lhs = a
         self.rhs = b
         
+    @classmethod
+    def operatorOfOperation(subClass):
+        return NOTEQUALS    
+    
     def deriveReversed(self):
         '''
         From x != y derive y != x.
@@ -300,8 +307,8 @@ class NotEquals(BinaryOperation):
         From A != FALSE, derive and return A assuming inBool(A).
         Also see version in Not class.
         '''
-        from proveit.basiclogic import FALSE, inBool
-        from proveit.basiclogic.boolean.theorems import fromNotFalse
+        from proveit.logic import FALSE, inBool
+        from proveit.logic.boolean.theorems import fromNotFalse
         if self.rhs == FALSE:
             return fromNotFalse.specialize({A:self.lhs}).deriveConclusion().checked({self, inBool(self.lhs)})
 
@@ -310,8 +317,8 @@ class NotEquals(BinaryOperation):
         Prove and return self of the form A != FALSE assuming A.
         Also see version in Not class.
         '''
-        from proveit.basiclogic import FALSE
-        from proveit.basiclogic.boolean.theorems import notEqualsFalse
+        from proveit.logic import FALSE
+        from proveit.logic.boolean.theorems import notEqualsFalse
         if self.rhs == FALSE:
             return notEqualsFalse.specialize({A:self.lhs}).deriveConclusion().checked({self.lhs})
 
@@ -337,7 +344,7 @@ class NotEquals(BinaryOperation):
         evalEquality using the evaluated left and right hand sides
         of the expression to determine the evaluation of the equality.
         '''
-        from proveit.basiclogic.boolean.boolOps import _evaluate
+        from proveit.logic.boolean.boolOps import _evaluate
         def doEval():
             '''
             Performs the actual work if we can't simply look up the evaluation.
@@ -352,8 +359,6 @@ class NotEquals(BinaryOperation):
         '''
         from theorems import notEqualsInBool
         return notEqualsInBool.specialize({x:self.lhs, y:self.rhs}).checked()
-
-NOTEQUALS = Literal(pkg, 'NOTEQUALS', {STRING:'!=', LATEX:r'\neq'}, lambda operands : NotEquals(*operands))
 
 def _autoSub(outcome, outerExpr, superExpr, subExpr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, suppressWarnings=False):
     if eqGenMethodArgs is None: eqGenMethodArgs = []

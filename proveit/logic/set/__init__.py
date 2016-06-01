@@ -1,1 +1,2 @@
-from setOps import In, NotIn, Singleton, Complement, Union, Intersection, Difference, SubsetEq, SupersetEq, SetOfAll, EVERYTHING, NOTHING
+from setOps import InSet, NotInSet, Singleton, Complement, Union, Intersection, Difference, SubsetEq, SupersetEq, SetOfAll
+from common import NOTHING

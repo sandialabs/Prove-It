@@ -1,9 +1,9 @@
-from proveit.expression import Operation, Literal, STRING, LATEX
+from proveit import Operation, Literal
 from proveit.common import A, P
 
 class BooleanSet(Literal):
     def __init__(self):
-        Literal.__init__(self, __package__, 'BOOLEANS', {LATEX:r'\mathbb{B}'})
+        Literal.__init__(self, __package__, stringFormat='BOOLEANS', latexFormat=r'\mathbb{B}')
 
     def unfoldElemInSet(self, element):
         '''
@@ -17,7 +17,7 @@ class BooleanSet(Literal):
         '''
         From [(element = TRUE) or (element = FALSE)], derive and return [element in BOOLEANS].
         '''   
-        from proveit.basiclogic import Or, Equals
+        from proveit.logic import Or, Equals
         from theorems import foldInBool
         # prerequisite = [(element = TRUE) or (element = FALSE)]
         prerequisite = Or(Equals(element, TRUE), Equals(element, FALSE))
@@ -29,7 +29,7 @@ class BooleanSet(Literal):
         Given a forall statement over the BOOLEANS domain, evaluate to TRUE or FALSE
         if possible.
         '''        
-        from proveit.basiclogic import Forall, Equals
+        from proveit.logic import Forall, Equals
         from theorems import falseEqFalse, trueEqTrue, forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
         from boolOps import compose
         assert(isinstance(forallStmt, Forall)), "May only apply evaluateForall method of BOOLEANS to a forall statement"
@@ -75,7 +75,7 @@ class BooleanSet(Literal):
         '''
         Given forall_{A in BOOLEANS} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
-        from proveit.basiclogic import Forall
+        from proveit.logic import Forall
         from theorems import unfoldForallOverBool
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == BOOLEANS), "May only apply unfoldForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
@@ -86,7 +86,7 @@ class BooleanSet(Literal):
         '''
         Given forall_{A in BOOLEANS} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
         '''
-        from proveit.basiclogic import Forall
+        from proveit.logic import Forall
         from theorems import foldForallOverBool
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == BOOLEANS), "May only apply foldAsForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
@@ -98,7 +98,7 @@ class BooleanSet(Literal):
 
 class TrueLiteral(Literal):
     def __init__(self):
-        Literal.__init__(self, __package__, 'TRUE', formatMap = {STRING:'TRUE', LATEX:r'\mathtt{TRUE}'})
+        Literal.__init__(self, __package__, stringFormat='TRUE', latexFormat=r'\top')
     
     def evalEquality(self, other):
         from boolOps import deriveStmtEqTrue
@@ -110,7 +110,7 @@ class TrueLiteral(Literal):
         
 class FalseLiteral(Literal):
     def __init__(self):
-        Literal.__init__(self, __package__, 'FALSE', formatMap = {STRING:'FALSE', LATEX:r'\mathtt{FALSE}'})
+        Literal.__init__(self, __package__, stringFormat='FALSE', latexFormat=r'\bot')
     
     def evalEquality(self, other):
         from boolOps import deriveStmtEqTrue
@@ -126,8 +126,8 @@ TRUE = TrueLiteral()
 FALSE = FalseLiteral()
 
 def inBool(element):
-    from proveit.basiclogic.set.setOps import In
-    return In(element, BOOLEANS)
+    from proveit.logic.set.setOps import InSet
+    return InSet(element, BOOLEANS)
 
 def deduceInBool(expr):
     '''

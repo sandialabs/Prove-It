@@ -1,21 +1,30 @@
-from proveit.basiclogic.genericOps import BinaryOperation, AssociativeOperation, OperationOverInstances
-from proveit.expression import Literal, Operation, Lambda, STRING, LATEX
-from proveit.multiExpression import multiExpression, MultiVariable, Etcetera
-from proveit.inLiteral import IN
-from proveit.everythingLiteral import EVERYTHING
+from proveit.logic.genericOps import BinaryOperation, AssociativeOperation, OperationOverInstances
+from proveit import Operation, Literal, Etcetera, MultiVariable
 from proveit.common import f, x, y, A, B, S, P, Q, yEtc
 
 
 pkg = __package__
 
-EVERYTHING.formatMap = {STRING:'EVERYTHING', LATEX:r'\rm{EVERYTHING}'}
-NOTHING = Literal(pkg, 'NOTHING', {STRING:'NOTHING', LATEX:r'\emptyset'})
+IN = Literal(pkg, stringFormat = 'in', latexFormat = r'\in')
+NOTIN = Literal(pkg, stringFormat = 'not in', latexFormat = r'\notin')
+SINGLETON = Literal(pkg, stringFormat = 'SINGLETON')
+COMPLEMENT = Literal(pkg, stringFormat = 'COMPLEMENT')
+UNION = Literal(pkg, stringFormat = 'union', latexFormat = r'\bigcup')
+INTERSECTION = Literal(pkg, stringFormat = 'intersection', latexFormat = r'\bigcap')
+DIFFERENCE = Literal(pkg, '-')
+SUBSET_EQ = Literal(pkg, stringFormat = 'subseteq', latexFormat = r'\subseteq')
+SUPERSET_EQ = Literal(pkg, stringFormat = 'superseteq', latexFormat = r'\supseteq')
+SET = Literal(pkg, 'SET')
 
-class In(BinaryOperation):
+class InSet(BinaryOperation):
     def __init__(self, element, domain):
         BinaryOperation.__init__(self, IN, element, domain)
         self.element = element
         self.domain = domain
+    
+    @classmethod
+    def operatorOfOperation(subClass):
+        return IN    
     
     def deduceInBool(self):
         '''
@@ -53,17 +62,17 @@ class In(BinaryOperation):
         #return unionDef.specialize({x:self.element, A:self.domain, B:self.expandingSet}).deriveLeft()
         pass
     """
-    
-# The IN Literal is defined at the top level of prove-it, but its operationMaker must be set here.
-IN.formatMap = {STRING:'in', LATEX:r'\in'}
-IN.operationMaker = lambda operands : In(*operands)
 
-class NotIn(BinaryOperation):
+class NotInSet(BinaryOperation):
     def __init__(self, element, domain):
         BinaryOperation.__init__(self, NOTIN, element, domain)
         self.element = element
         self.domain = domain  
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return NOTIN    
+    
     def deduceInBool(self):
         '''
         Deduce and return that this 'not in' statement is in the set of BOOLEANS.
@@ -78,8 +87,6 @@ class NotIn(BinaryOperation):
         return unfoldNotIn.specialize({x:self.element, S:self.domain}).deriveConclusion().checked({self})
 
 
-NOTIN = Literal(pkg, 'NOTIN', {STRING:'not in', LATEX:r'\notin'}, lambda operands : NotIn(*operands))
-
 class Singleton(Operation):
     '''
     Defines a set with only one item.
@@ -88,11 +95,15 @@ class Singleton(Operation):
         Operation.__init__(self, SINGLETON, elem)
         self.elem = elem
 
-    def formatted(self, formatType, fence=False):
-        if formatType == STRING:
-            return '{' + str(self.elem) + '}'
-        elif formatType == LATEX:
-            return r'\{' + self.elem.formatted(formatType) + r'\}'        
+    @classmethod
+    def operatorOfOperation(subClass):
+        return SINGLETON    
+
+    def string(self, **kwargs):
+        return '{' + str(self.elem) + '}'
+    
+    def latex(self, **kwargs):
+        return r'\{' + self.elem.latex() + r'\}'        
  
     def unfoldElemInSet(self, element):
         '''
@@ -108,8 +119,6 @@ class Singleton(Operation):
         from axioms import singletonDef
         return singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence()
 
-SINGLETON = Literal(pkg, 'SINGLETON', operationMaker = lambda operands : Singleton(operands[0]))
-
 class Complement(Operation):        
     '''
     The complement of a set is everything outside that set.
@@ -118,10 +127,9 @@ class Complement(Operation):
         Operation.__init__(self, COMPLEMENT, elem)
         self.elem = elem
 
-    def __str__(self):
-        return 'Complement(' + str(self.elem) + ')'
-
-COMPLEMENT = Literal(pkg, 'COMPLEMENT', operationMaker = lambda operands : Complement(operands[0]))
+    @classmethod
+    def operatorOfOperation(subClass):
+        return COMPLEMENT    
         
 class Union(AssociativeOperation):
     def __init__(self, *operands):
@@ -130,6 +138,10 @@ class Union(AssociativeOperation):
         '''
         AssociativeOperation.__init__(self, UNION, *operands)
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return UNION    
+    
     def deriveCompletion(self):
         '''
         derive and return S union Complement(S) = EVERYTHING or
@@ -163,8 +175,6 @@ class Union(AssociativeOperation):
             leftOperand, rightOperand = self.operands              
             return unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveLeft()
 
-UNION = Literal(pkg, 'UNION', {STRING:'union', LATEX:r'\bigcup'}, lambda operands : Union(*operands))
-
 class Intersection(AssociativeOperation):
     def __init__(self, *operands):
         '''
@@ -172,6 +182,10 @@ class Intersection(AssociativeOperation):
         '''
         AssociativeOperation.__init__(self, INTERSECTION, *operands)
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return INTERSECTION  
+    
     def unfoldElemInSet(self, element):
         '''
         From [element in (A intersection B)], derive and return [(element in A) and (element in B)],
@@ -188,17 +202,21 @@ class Intersection(AssociativeOperation):
         from axioms import intersectionDef
         return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()
 
-INTERSECTION = Literal(pkg, 'INTERSECTION', {STRING:'intersection', LATEX:r'\bigcap'}, lambda operands : Intersection(*operands))
-
 class Difference(BinaryOperation):
     def __init__(self, A, B):
         BinaryOperation.__init__(self, DIFFERENCE, A, B)
-    
-DIFFERENCE = Literal(pkg, 'DIFFERENCE', {STRING:'-', LATEX:'-'}, lambda operands : Difference(*operands))
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return DIFFERENCE
+        
 class SubsetEq(BinaryOperation):
     def __init__(self, subSet, superSet):
         BinaryOperation.__init__(self, SUBSET_EQ, subSet, superSet)
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return SUBSET_EQ
         
     def unfold(self, elemInstanceVar=x):
         '''
@@ -216,12 +234,14 @@ class SubsetEq(BinaryOperation):
         from theorems import foldSubsetEq
         return foldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
 
-SUBSET_EQ = Literal(pkg, 'SUBSET_EQ', {STRING:'subseteq', LATEX:r'\subseteq'}, lambda operands : SubsetEq(*operands))
-
 class SupersetEq(BinaryOperation):
     def __init__(self, superSet, subSet):
         BinaryOperation.__init__(self, SUPERSET_EQ, superSet, subSet)
         
+    @classmethod
+    def operatorOfOperation(subClass):
+        return SUPERSET_EQ
+
     def unfold(self, elemInstanceVar=x):
         '''
         From A superset B, derive and return (forall_{x in B} x in A).
@@ -237,11 +257,9 @@ class SupersetEq(BinaryOperation):
         '''
         from theorems import foldSupersetEq
         return foldSupersetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()
-
-SUPERSET_EQ = Literal(pkg, 'SUPERSET_EQ', {STRING:'superseteq', LATEX:r'\supseteq'}, lambda operands : SupersetEq(*operands))
  
 class SetOfAll(OperationOverInstances):
-    def __init__(self, instanceVars, instanceElement, domain=EVERYTHING, conditions=tuple()):
+    def __init__(self, instanceVars, instanceElement, domain=None, conditions=tuple()):
         '''
         Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
         {instanceElement | conditions}_{instanceVar}
@@ -249,6 +267,10 @@ class SetOfAll(OperationOverInstances):
         OperationOverInstances.__init__(self, SET, instanceVars, instanceElement, domain, conditions)
         self.instanceElement = instanceElement
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return SET
+    
     def formatted(self, formatType, fence=False):
         outStr = ''
         innerFence = (len(self.conditions) > 0)
@@ -256,18 +278,18 @@ class SetOfAll(OperationOverInstances):
         formattedInstanceElement = self.instanceElement.formatted(formatType, fence=innerFence)
         formattedDomain = self.domain.formatted(formatType, fence=True)
         formattedConditions = self.conditions.formatted(formatType, fence=False) 
-        if formatType == LATEX: outStr += r"\left\{"
+        if formatType == 'latex': outStr += r"\left\{"
         else: outStr += "{"
         outStr += formattedInstanceElement
         if len(self.conditions) > 0:
-            if formatType == LATEX: outStr += r'~|~'
+            if formatType == 'latex': outStr += r'~|~'
             else: outStr += ' s.t. ' # such that
             outStr += formattedConditions
-        if formatType == LATEX: outStr += r"\right\}"
+        if formatType == 'latex': outStr += r"\right\}"
         else: outStr += "}"
         outStr += '_{' + formattedInstanceVars
-        if self.domain != EVERYTHING:
-            if formatType == LATEX: outStr += r' \in '
+        if self.domain is not None:
+            if formatType == 'latex': outStr += r' \in '
             else: outStr += ' in '
             outStr += formattedDomain
         outStr += '}'
@@ -299,8 +321,4 @@ class SetOfAll(OperationOverInstances):
             f_op, f_sub = Operation(f, self.instanceVars), self.instanceElement
             return foldSetOfAll.specialize({f_op:f_sub, Q_op:Q_op_sub, x:element, yEtc:self.instanceVars}).deriveConclusion()
 
-def setOfAllMaker(operands):
-    params = OperationOverInstances.extractParameters(operands)
-    return SetOfAll(params['instanceVars'], params['instanceExpr'], params['domain'], params['conditions'])
-SET = Literal(pkg, 'SET', operationMaker=setOfAllMaker)
 

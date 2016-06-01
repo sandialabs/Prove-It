@@ -1,14 +1,15 @@
-from proveit.basiclogic.genericOps import OperationOverInstances
-from proveit.expression import Expression, Literal, Operation, STRING, LATEX
-from proveit.multiExpression import ExpressionList, MultiVariable, Etcetera
-from proveit.forallLiteral import FORALL
-from proveit.everythingLiteral import EVERYTHING
+from proveit.logic.genericOps import OperationOverInstances
+from proveit import Expression, Literal, Operation, ExpressionList, MultiVariable, Etcetera
 from proveit.common import P, Q, R, S
 
 pkg = __package__
 
+FORALL = Literal(pkg, stringFormat='forall', latexFormat=r'\forall')
+EXISTS = Literal(pkg, stringFormat='exists', latexFormat=r'\exists')
+NOTEXISTS = Literal(pkg, stringFormat='notexists', latexFormat=r'\nexists')
+
 class Forall(OperationOverInstances):
-    def __init__(self, instanceVars, instanceExpr, domain=EVERYTHING, conditions = tuple()):
+    def __init__(self, instanceVars, instanceExpr, domain=None, conditions = tuple()):
         '''
         Create a Forall expression:
         forall_{instanceVars | conditions} instanceExpr.
@@ -17,6 +18,10 @@ class Forall(OperationOverInstances):
         may be singular or plural (iterable).
         '''
         OperationOverInstances.__init__(self, FORALL, instanceVars, instanceExpr, domain, conditions)
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return FORALL    
         
     def specialize(self, subMap=None, conditionAsHypothesis=False):
         '''
@@ -166,18 +171,8 @@ class Forall(OperationOverInstances):
         print Q_op, Q_op_sub
         return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).checked()
 
-# The FORALL Literal is defined at the top level of prove-it, but its operationMaker must be set here.
-FORALL.formatMap = {STRING:'forall', LATEX:r'\forall'}
-def forallMaker(operands=None, instanceVars=None, instanceExpr=None, domain=EVERYTHING, conditions=None):
-    if operands is not None:
-        params = OperationOverInstances.extractParameters(operands)
-        return Forall(params['instanceVars'], params['instanceExpr'], params['domain'], params['conditions'])
-    else:
-        return Forall(instanceVars, instanceExpr, domain, conditions)
-FORALL.operationMaker = forallMaker
-
 class Exists(OperationOverInstances):
-    def __init__(self, instanceVars, instanceExpr, domain=EVERYTHING, conditions=tuple()):
+    def __init__(self, instanceVars, instanceExpr, domain=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
         exists_{instanceVars | condition} instanceExpr
@@ -187,12 +182,16 @@ class Exists(OperationOverInstances):
         '''
         OperationOverInstances.__init__(self, EXISTS, instanceVars, instanceExpr, domain, conditions)
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return EXISTS    
+
     def concludeViaExample(self, exampleInstance):
         '''
         Conclude and return this [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] from P(..x..) and Q(..x..) and ..x.. in S, where ..x.. is the given exampleInstance.
         '''
         from theorems import existenceByExample
-        from proveit.basiclogic import In
+        from proveit.logic import InSet
         from proveit.common import xEtc, yEtc
         if len(self.instanceVars) > 1 and (not isinstance(exampleInstance, ExpressionList) or (len(exampleInstance) != len(self.instanceVars))):
             raise Exception('Number in exampleInstance list must match number of instance variables in the Exists expression')
@@ -203,9 +202,9 @@ class Exists(OperationOverInstances):
         exampleExpr = self.instanceExpr.substituted(exampleMapping)
         # ..Q(..x..).. where ..x.. is the given exampleInstance
         exampleConditions = self.conditions.substituted(exampleMapping)
-        if self.domain != EVERYTHING:
+        if self.domain is not None:
             for iVar in self.instanceVars:
-                exampleConditions.append(In(iVar, self.domain))
+                exampleConditions.append(InSet(iVar, self.domain))
         # exists_{..y.. | ..Q(..x..)..} P(..y..)]
         return existenceByExample.specialize({P_op:P_op_sub, Q_op:Q_op_sub, yEtc:self.instanceVars, S:self.domain}).specialize({xEtc:exampleInstance}).deriveConclusion().checked({exampleExpr, exampleConditions})
 
@@ -237,13 +236,8 @@ class Exists(OperationOverInstances):
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
         return existsInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).checked()
 
-def existsMaker(operands):
-    params = OperationOverInstances.extractParameters(operands)
-    return Exists(params['instanceVars'], params['instanceExpr'], params['domain'], params['conditions'])
-EXISTS = Literal(pkg, 'EXISTS', {STRING:'exists', LATEX:r'\exists'}, existsMaker)
-
 class NotExists(OperationOverInstances):
-    def __init__(self, instanceVars, instanceExpr, domain=EVERYTHING, conditions=tuple()):
+    def __init__(self, instanceVars, instanceExpr, domain=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
         exists_{instanceVars | conditions} instanceExpr
@@ -252,6 +246,10 @@ class NotExists(OperationOverInstances):
         singular or plural (iterable).
         '''
         OperationOverInstances.__init__(self, NOTEXISTS, instanceVars, instanceExpr, domain, conditions)
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return NOTEXISTS    
         
     def unfold(self):
         '''
@@ -282,7 +280,7 @@ class NotExists(OperationOverInstances):
         assuming forall_{x | Q(x)} P(x) or assuming forall_{x | Q(x)} (P(x) != TRUE) respectively.
         '''
         from theorems import forallImpliesNotExistsNot, existsDefNegation
-        from proveit.basiclogic.equality.eqOps import NotEquals
+        from proveit.logic.equality.eqOps import NotEquals
         from boolOps import Not
         from boolSet import TRUE
         Q_op, Q_op_sub = Operation(Q, self.instanceVars), self.conditions
@@ -297,7 +295,3 @@ class NotExists(OperationOverInstances):
             return existsDefNegation.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveLeftViaEquivalence().checked({assumption})
     """
 
-def notExistsMaker(operands):
-    params = OperationOverInstances.extractParameters(operands)
-    return NotExists(params['instanceVars'], params['instanceExpr'], params['domain'], params['conditions'])
-NOTEXISTS = Literal(pkg, 'NOTEXISTS', {STRING:'notexists', LATEX:r'\nexists'}, notExistsMaker)

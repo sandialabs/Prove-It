@@ -1,19 +1,26 @@
-from proveit.expression import Expression, Literal, STRING, LATEX, Operation
-from proveit.multiExpression import ExpressionList, multiExpression
-from proveit.basiclogic.genericOps import BinaryOperation, AssociativeOperation
-from proveit.impliesLiteral import IMPLIES
-from proveit.everythingLiteral import EVERYTHING
+from proveit import Expression, Operation, Literal, ExpressionList, compositeExpression
+from proveit.logic.genericOps import BinaryOperation, AssociativeOperation
 from boolSet import TRUE, FALSE, inBool, deduceInBool
 from quantifiers import Exists, NotExists
-from proveit.common import A, B, C, x, y, f, a, b, c, S
+from proveit.common import A, B, C, x, y, f, a, b, c, S, xEtc, zEtc
 
 pkg = __package__
+
+IMPLIES = Literal(pkg, stringFormat = '=>', latexFormat = r'\Rightarrow')
+NOT = Literal(pkg, stringFormat = 'not', latexFormat = r'\lnot')
+AND = Literal(pkg, stringFormat = 'and', latexFormat = r'\land')
+OR = Literal(pkg, stringFormat = 'or', latexFormat = r'\lor')
+IFF = Literal(pkg, stringFormat = '<=>', latexFormat = r'\Leftrightarrow')
 
 class Implies(BinaryOperation):
     def __init__(self, hypothesis, conclusion):
         BinaryOperation.__init__(self, IMPLIES, hypothesis, conclusion)
         self.hypothesis = hypothesis
         self.conclusion = conclusion
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return IMPLIES    
 
     def deriveConclusion(self):
         r'''
@@ -45,31 +52,31 @@ class Implies(BinaryOperation):
         else:
             return hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion().checked({self, inBool(self.hypothesis)})
     
-    def generalize(self, forallVars, domain=EVERYTHING, conditions=tuple()):
+    def generalize(self, forallVars, domain=None, conditions=tuple()):
         r'''
         This makes a generalization of this expression, prepending Forall 
         operations according to newForallVars and newConditions and/or newDomain
-        that will bind 'arbitrary' free variables.  This overrides the Expression 
+        that will bind 'arbitrary' free variables.  This overrides the expr 
         version to absorb hypothesis into conditions if they match.  For example, 
         :math:`[A(x) \Rightarrow [B(x, y) \Rightarrow P(x, y)]]` generalized 
         forall :math:`x, y` such that :math:`A(x), B(x, y)`
         becomes :math:`\forall_{x, y | A(x), B(x, y)} P(x, y)`,
         '''
-        from proveit.basiclogic import In
+        from proveit.logic import InSet
         hypothesizedConditions = set()
-        conditionsSet = set(multiExpression(conditions))
+        conditionsSet = set(compositeExpression(conditions))
         if domain is not None:
             # add in the effective conditions from the domain
-            for var in multiExpression(forallVars):
-                conditionsSet.add(In(var, domain))
+            for var in compositeExpression(forallVars):
+                conditionsSet.add(InSet(var, domain))
         expr = self
         while isinstance(expr, Implies) and expr.hypothesis in conditionsSet:
             hypothesizedConditions.add(expr.hypothesis)
             expr = expr.conclusion
         if len(hypothesizedConditions) == 0:
-            # Just use the Expression version
-            return Expression.generalize(self, forallVars, domain, conditions)
-        return Expression.generalize(expr, forallVars, domain, conditions)
+            # Just use the expr version
+            return expr.generalize(self, forallVars, domain, conditions)
+        return expr.generalize(expr, forallVars, domain, conditions)
         #return Forall(newForallVars, expr, newConditions)
 
     def transposition(self):
@@ -127,31 +134,28 @@ class Implies(BinaryOperation):
         conclusionInBool = deduceInBool(self.conclusion)
         return implicationClosure.specialize({A:self.hypothesis, B:self.conclusion}).checked({hypothesisInBool, conclusionInBool})
 
-# The IMPLIES Literal is defined at the top level of prove-it, but its operationMaker must be set here.
-IMPLIES.formatMap = {STRING:'=>', LATEX:r'\Rightarrow'}
-IMPLIES.operationMaker = lambda operands : Implies(*operands)
-
 class Not(Operation):
     def __init__(self, A):
         Operation.__init__(self, NOT, A)
         self.operand = A
 
-    def formatted(self, formatType, fence=False):
-        if formatType == STRING:
-            return Operation.formatted(self, formatType, fence)                    
-        elif formatType == LATEX:
-            outStr = ''
-            if fence: outStr += "("
-            outStr += self.operator.formatted(formatType) + ' ' + self.operand.formatted(formatType, fence=True)
-            if fence: outStr += ')'
-            return outStr            
+    @classmethod
+    def operatorOfOperation(subClass):
+        return NOT
+    
+    def latex(self, fence=False):
+        outStr = ''
+        if fence: outStr += "("
+        outStr += self.operator.latex() + ' ' + self.operand.latex(fence=True)
+        if fence: outStr += ')'
+        return outStr            
         
     def evaluate(self):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from proveit.basiclogic import Equals
+        from proveit.logic import Equals
         from axioms import notT, notF
         if self.operand == TRUE: return notT
         elif self.operand == FALSE: return notF
@@ -218,8 +222,8 @@ class Not(Operation):
         r'''
         From :math:`\lnot(A = B)`, derive and return :math:`A \neq B`.
         '''
-        from proveit.basiclogic import Equals
-        from proveit.basiclogic.equality.theorems import foldNotEquals
+        from proveit.logic import Equals
+        from proveit.logic.equality.theorems import foldNotEquals
         if isinstance(self.operand, Equals):
             return foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}).deriveConclusion().checked({self})
 
@@ -227,10 +231,9 @@ class Not(Operation):
         r'''
         From :math:`\lnot(A \in B)`, derive and return :math:`A \notin B`.
         '''
-        from proveit.basiclogic import Equals
-        from proveit.basiclogic import In
-        from proveit.basiclogic.set.theorems import foldNotIn
-        if isinstance(self.operand, In):
+        from proveit.logic import InSet
+        from proveit.logic.set.theorems import foldNotIn
+        if isinstance(self.operand, InSet):
             return foldNotIn.specialize({x:self.operand.element, S:self.operand.domain}).deriveConclusion().checked({self})
 
     def deriveNotExists(self):
@@ -252,8 +255,6 @@ class Not(Operation):
             Asub = self.operand.operand
             return doubleNegationEquiv.specialize({A:Asub}).checked({inBool(Asub)})
 
-NOT = Literal(pkg, 'NOT', {STRING:'not', LATEX:r'\lnot'}, lambda operands : Not(*operands))
-
 class And(AssociativeOperation):
     def __init__(self, *operands):
         r'''
@@ -261,10 +262,14 @@ class And(AssociativeOperation):
         '''
         AssociativeOperation.__init__(self, AND, *operands)
         
+    @classmethod
+    def operatorOfOperation(subClass):
+        return AND
+    
     def deriveInPart(self, indexOrExpr):
         r'''
         From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
-        :math:`X` either by index or the Expression.
+        :math:`X` either by index or the expr.
         '''
         from axioms import andImpliesEach
         from proveit.common import Aetc, Cetc
@@ -326,14 +331,16 @@ class And(AssociativeOperation):
         inBools = {deduceInBool(operand) for operand in self.operands}
         return conjunctionClosure.specialize({A:self.operands[0], B:self.operands[1]}).checked(inBools)
 
-AND = Literal(pkg, 'AND', {STRING:'and', LATEX:r'\land'}, lambda operands : And(*operands))
-
 class Or(AssociativeOperation):
     def __init__(self, *operands):
         '''
         Or together any number of operands: A or B or C
         '''
         AssociativeOperation.__init__(self, OR, *operands)
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return OR
     
     def deriveRightIfNotLeft(self):
         '''
@@ -403,14 +410,16 @@ class Or(AssociativeOperation):
         index = self.operands.index(trueOperand)
         return orIfAny.specialize({xEtc:self.operands[:index], y:self.operands[index], zEtc:self.operands[index+1:]})
 
-OR = Literal(pkg, 'OR', {STRING:'or', LATEX:r'\lor'}, lambda operands : Or(*operands))
-
 # if and only if: A => B and B => A
 class Iff(BinaryOperation):
     def __init__(self, A, B):
         BinaryOperation.__init__(self, IFF, A, B)
         self.A = A
         self.B = B
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return IFF
         
     def deriveLeftImplication(self):
         '''
@@ -514,13 +523,11 @@ class Iff(BinaryOperation):
         from theorems import iffOverBoolImplEq
         return iffOverBoolImplEq.specialize({A:self.A, B:self.B}).deriveConclusion().checked({self, inBool(self.A), inBool(self.B)})
 
-IFF = Literal(pkg, 'IFF', {STRING:'<=>', LATEX:r'\Leftrightarrow'}, lambda operands : Iff(*operands))
-
 def deriveStmtEqTrue(statement):
     '''
     For a given statement, derive statement = TRUE assuming statement.
     '''
-    from proveit.basiclogic import Equals
+    from proveit.logic import Equals
     return Equals(statement, TRUE).concludeBooleanEquality()
 
 def compose(*expressions):
@@ -546,7 +553,7 @@ def compose(*expressions):
         return compositionEquality.applyTransitivity(nestedAndEqT).deriveViaBooleanEquality().checked(expressions)
 
 def _evaluateBooleanBinaryOperation(operation, baseEvalFn):
-    from proveit.basiclogic.equality.theorems import unaryEvaluation, binaryEvaluation
+    from proveit.logic.equality.theorems import unaryEvaluation, binaryEvaluation
     _x = operation.operands[0]
     _y = operation.operands[1]
     operator = operation.operator
@@ -556,15 +563,15 @@ def _evaluateBooleanBinaryOperation(operation, baseEvalFn):
         _b = _y.evaluate().rhs
         _c = baseEvalFn(_x, _b).rhs
         dummyVar = _x.safeDummyVar() # var that isn't in _x
-        fOp = Operation(f, dummyVar)
-        fOpSub =  Operation.make(operator, ExpressionList(_x, dummyVar))
+        fOp = operation(f, dummyVar)
+        fOpSub =  operation.make(operator, ExpressionList(_x, dummyVar))
         evaluation = unaryEvaluation.specialize({fOp:fOpSub, x:_y, a:_b, c:_c}).deriveConclusion().deriveConclusion()
     elif (_y == TRUE or _y == FALSE):
         _a = _x.evaluate().rhs
         _c = baseEvalFn(_a, _y).rhs
         dummyVar = _y.safeDummyVar() # var that isn't in _y
-        fOp = Operation(f, dummyVar)
-        fOpSub = Operation.make(operator, ExpressionList(dummyVar, _y))
+        fOp = operation(f, dummyVar)
+        fOpSub = operation.make(operator, ExpressionList(dummyVar, _y))
         evaluation = unaryEvaluation.specialize({fOp:fOpSub, x:_x, a:_a, c:_c}).deriveConclusion().deriveConclusion()
     else:
         xEval = _x.evaluate()
@@ -572,8 +579,8 @@ def _evaluateBooleanBinaryOperation(operation, baseEvalFn):
         compose(xEval, yEval)
         _a, _b = xEval.rhs, yEval.rhs 
         _c = baseEvalFn(_a, _b).rhs
-        fOp = Operation(f, (a, b))
-        fOpSub = Operation.make(operator, ExpressionList(a, b))
+        fOp = operation(f, (a, b))
+        fOpSub = operation.make(operator, ExpressionList(a, b))
         # f(_x, _y) = _c
         evaluation = binaryEvaluation.specialize({fOp:fOpSub, x:_x, y:_y, a:_a, b:_b, c:_c}).deriveConclusion().deriveConclusion()
     return evaluation    

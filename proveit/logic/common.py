@@ -1,6 +1,6 @@
 # Common expressions involving basiclogic operations acting on common Variables.
 
-from proveit.expression import Operation
+from proveit import Operation
 from boolean.boolSet import TRUE, FALSE
 from equality.eqOps import Equals
 from proveit.common import n, P, fx, gx, xEtc, yEtc, zEtc
