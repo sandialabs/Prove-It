@@ -369,9 +369,9 @@ class Expression:
         for sub_expr in self._subExpressions:
             sub_expr._config_latex_tool(lt)
     
-    def exprTree(self):
-        from expr_tree import ExpressionTree
-        return ExpressionTree(self)
+    def exprInfo(self, details=False):
+        from proveit.core.expression.expr_info import ExpressionInfo
+        return ExpressionInfo(self, details)
         
 class MakeNotImplemented(NotImplementedError):
     def __init__(self, exprSubClass):
