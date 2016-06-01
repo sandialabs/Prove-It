@@ -2,9 +2,9 @@
 This is the statement module.
 """
 
-from proveit.core.expression import Lambda, Operation, Expression, Variable, ExpressionTensor, ExpressionList
-from proveit.core.expression.composite.composite import Composite, compositeExpression, singleOrCompositeExpression
-from proveit.core.expression.bundle import isBundledVar, isBundledVarOrVar, isBundledOperation
+from proveit._core_.expression import Lambda, Operation, Expression, Variable, ExpressionTensor, ExpressionList
+from proveit._core_.expression.composite.composite import Composite, compositeExpression, singleOrCompositeExpression
+from proveit._core_.expression.bundle import isBundledVar, isBundledVarOrVar, isBundledOperation
             
 def asStatement(statementOrExpression):
     '''
@@ -290,7 +290,7 @@ class Statement:
         return self._group, self._name
         
     def addSpecializer(self, original, substitutingVars, subMap, relabelMap, conditions):
-        from proveit.core.expression.bundle import extractVar
+        from proveit._core_.expression.bundle import extractVar
         subMap = {key:singleOrCompositeExpression(val) for key, val in subMap.iteritems()}
         varToIndex = {extractVar(var):i for i, var in enumerate(substitutingVars)}
         subMapItems = tuple([(var, subMap[var]) for var in sorted(subMap.keys(), key = lambda var : varToIndex[var])])

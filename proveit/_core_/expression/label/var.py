@@ -1,5 +1,5 @@
 from label import Label
-from proveit.core.expression.expr import MakeNotImplemented, ScopingViolation, ImproperRelabeling
+from proveit._core_.expression.expr import MakeNotImplemented, ScopingViolation, ImproperRelabeling
 
 class Variable(Label):
     """
@@ -25,8 +25,8 @@ class Variable(Label):
         according to subMap and/or relabeled according to relabelMap.
         May expand to an expr_list.
         '''
-        from proveit.core.expression.bundle.bundle import isBundledVar
-        from proveit.core.expression.composite.expr_list import ExpressionList
+        from proveit._core_.expression.bundle.bundle import isBundledVar
+        from proveit._core_.expression.composite.expr_list import ExpressionList
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         elif relabelMap != None:

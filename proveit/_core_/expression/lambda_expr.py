@@ -1,4 +1,4 @@
-from proveit.core.expression.expr import Expression, MakeNotImplemented, ImproperSubstitution, ImproperRelabeling
+from expr import Expression, MakeNotImplemented, ImproperSubstitution, ImproperRelabeling
 
 class Lambda(Expression):
     '''
@@ -69,7 +69,7 @@ class Lambda(Expression):
         are reserved), consistent with any relabeling.
         '''
         from composite import ExpressionList, NestedCompositeExpressionError
-        from proveit.core.expression.bundle import extractVar
+        from bundle import extractVar
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
         # Can't substitute the lambda argument variables; they are in a new scope.

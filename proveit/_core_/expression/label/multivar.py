@@ -1,6 +1,6 @@
 from label import Label
 from var import Variable
-from proveit.core.expression.expr import MakeNotImplemented
+from proveit._core_.expression.expr import MakeNotImplemented
 
 class MultiVariable(Label):
     '''

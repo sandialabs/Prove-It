@@ -1,5 +1,5 @@
 from composite import Composite, NestedCompositeExpressionError
-from proveit.core.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.expression.expr import Expression, MakeNotImplemented
 
 class ExpressionList(Composite, Expression, list):
     """

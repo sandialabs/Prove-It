@@ -1,4 +1,4 @@
-from proveit.core.statement import Statement, asStatement
+from proveit._core_.statement import Statement, asStatement
 
 class Prover:
     # Temporary provers: mapping a statement to a list of provers (for various assumption sets).

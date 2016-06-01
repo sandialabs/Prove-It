@@ -1,4 +1,4 @@
-from proveit.core.expression.expr import Expression
+from proveit._core_.expression.expr import Expression
 
 class Composite:
     """

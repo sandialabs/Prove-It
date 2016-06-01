@@ -1,5 +1,5 @@
 from composite import Composite
-from proveit.core.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.expression.expr import Expression, MakeNotImplemented
 import re
 
 class NamedExpressions(Composite, Expression, dict):
@@ -7,7 +7,7 @@ class NamedExpressions(Composite, Expression, dict):
     An NamedExpressions is a composite expr that maps strings to Expressions.
     """
     def __init__(self, expr_dict):
-        from proveit.core.expression.bundle.etcetera import Etcetera
+        from proveit._core_.expression.bundle.etcetera import Etcetera
         dict.__init__(self, expr_dict)
         for key, val in expr_dict.iteritems():
             if not isinstance(key, str): 

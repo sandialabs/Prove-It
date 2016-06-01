@@ -1,6 +1,6 @@
 from bundle import Bundle
-from proveit.core.expression.expr import MakeNotImplemented
-from proveit.core.expression.composite.expr_list import ExpressionList
+from proveit._core_.expression.expr import MakeNotImplemented
+from proveit._core_.expression.composite.expr_list import ExpressionList
 
 class Etcetera(Bundle):
     def __init__(self, expr):

@@ -9,10 +9,10 @@ substituted for a Block that is an element of an expr_tensor, its
 elements are absorbed into the parent expr_tensor.
 '''
 
-from proveit.core.expression.operation import Operation
-from proveit.core.expression.expr import Expression
-from proveit.core.expression.label import Variable, MultiVariable
-from proveit.core.expression.composite import ExpressionList, ExpressionTensor
+from proveit._core_.expression.operation import Operation
+from proveit._core_.expression.expr import Expression
+from proveit._core_.expression.label import Variable, MultiVariable
+from proveit._core_.expression.composite import ExpressionList, ExpressionTensor
 
 class Bundle(Expression):
     def __init__(self, multiExprType, bundledExpr, maker, extraCoreInfo = tuple()):
@@ -97,7 +97,7 @@ def extractVar(expr):
 
 def isBundledOperation(expr):
     # Is the expression a Bundled operation (operation with a multivar operator wrapped in Bundle)?
-    from proveit.core.expression.bundle.etcetera import Etcetera
+    from etcetera import Etcetera
     return isinstance(expr, Etcetera) and isinstance(expr.bundledExpr, Operation) and \
         isinstance(expr.bundledExpr.operator, MultiVariable)
         

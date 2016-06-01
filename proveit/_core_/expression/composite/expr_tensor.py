@@ -14,7 +14,7 @@ will be absorbed into the parent ExpressionTensor.
 
 from composite import Composite, NestedCompositeExpressionError
 from expr_list import ExpressionList
-from proveit.core.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.expression.expr import Expression, MakeNotImplemented
 import itertools
 from ast import literal_eval
                 

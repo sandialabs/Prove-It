@@ -1,7 +1,7 @@
 from bundle import Bundle
 from etcetera import Etcetera
-from proveit.core.expression.expr import MakeNotImplemented
-from proveit.core.expression.composite import ExpressionTensor
+from proveit._core_.expression.expr import MakeNotImplemented
+from proveit._core_.expression.composite import ExpressionTensor
 from ast import literal_eval
 
 class Block(Bundle):

@@ -136,8 +136,8 @@ class Expression:
     
     def beginProof(self):
         # clear all the provers
-        from proveit.core.statement import Statement
-        from proveit.core.prover import Prover
+        from proveit._core_.statement import Statement
+        from proveit._core_.prover import Prover
 
         # forget that this is a theorem expression so that we generate a non-trivial proof:
         for stmt in Statement.statements.values():
@@ -210,7 +210,7 @@ class Expression:
         is found, returns True.  If it can't be found in the number of steps indicated by
         maxDepth, returns False.
         """
-        from proveit.core.statement import Statement
+        from proveit._core_.statement import Statement
         if self.statement == None: Statement.state(self)
         if not isinstance(self.statement, Statement):
             raise TypeError('Expression statement must be of Statement type')
@@ -220,7 +220,7 @@ class Expression:
         """
         Returns True iff this statement has already be proven under the given assumptions.
         """
-        from proveit.core.statement import Statement
+        from proveit._core_.statement import Statement
         if self.statement == None:
             return False
         else:
@@ -275,18 +275,18 @@ class Expression:
         return set()    
 
     def safeDummyVar(self):
-        from proveit.core.expression.label.var import safeDummyVar
+        from proveit._core_.expression.label.var import safeDummyVar
         return safeDummyVar(self)
 
     def safeDummyVars(self, n):
-        from proveit.core.expression.label.var import safeDummyVar
+        from proveit._core_.expression.label.var import safeDummyVar
         dummyVars = []
         for _ in range (n):
             dummyVars.append(safeDummyVar(*([self] + dummyVars)))
         return dummyVars
     
     def state(self):
-        from proveit.core.statement import Statement
+        from proveit._core_.statement import Statement
         return Statement.state(self)
 
     def relabel(self, relabelMap=None):
@@ -297,15 +297,15 @@ class Expression:
         return self._specialize_or_relabel(subMap=subMap, relabelMap=relabelMap)
 
     def _specialize_or_relabel(self, subMap=None, relabelMap=None):
-        from proveit.core.statement import Statement
+        from proveit._core_.statement import Statement
         if subMap is None: subMap = dict()
         if relabelMap is None: relabelMap = dict()
         (specialization, conditions) = Statement.specialize(self, subMap, relabelMap)
         return specialization.checked({self} | conditions)
         
     def generalize(self, forallVars, domain=None, conditions=tuple()):
-        from proveit.core.statement import Statement
-        from proveit.core.expression.composite.composite import compositeExpression
+        from proveit._core_.statement import Statement
+        from proveit._core_.expression.composite.composite import compositeExpression
         # Note that the prover will not pass this "checked" in its current implementation
         # because it will not allow assumptions with variables in the newly created scope.
         # The solution for now is not to bother calling "checked" here.
@@ -370,7 +370,7 @@ class Expression:
             sub_expr._config_latex_tool(lt)
     
     def exprInfo(self, details=False):
-        from proveit.core.expression.expr_info import ExpressionInfo
+        from proveit._core_.expression.expr_info import ExpressionInfo
         return ExpressionInfo(self, details)
         
 class MakeNotImplemented(NotImplementedError):

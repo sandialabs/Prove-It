@@ -1,4 +1,4 @@
-from proveit.core.expression.expr import Expression, ImproperSubstitution
+from expr import Expression, ImproperSubstitution
 
 class Operation(Expression):    
     def __init__(self, operator, operands):
@@ -7,8 +7,8 @@ class Operation(Expression):
         Label or Lambda function.  The operands may be single expression that
         will be then be wrapped by ExpressionList.
         '''
-        from proveit.core.expression.composite.composite import compositeExpression
-        from proveit.core.expression.label.label import Label
+        from composite.composite import compositeExpression
+        from label.label import Label
         from lambda_expr import Lambda
         if not isinstance(operator, Expression) and not (isinstance(operator, Label) or isinstance(operator, Lambda)):
             raise TypeError('operator must be an Expression that is a label or Lambda')
@@ -63,7 +63,7 @@ class Operation(Expression):
         according to subMap and/or relabeled according to relabelMap.
         '''
         from lambda_expr import Lambda
-        from proveit.core.expression.bundle import extractVar, Etcetera
+        from bundle import extractVar, Etcetera
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
         operator = self.operator
