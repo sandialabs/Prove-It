@@ -1,9 +1,10 @@
 from label import Label
+from var import Variable
 from proveit.core.expression.expr import MakeNotImplemented
 
 class MultiVariable(Label):
     '''
-    A MultiVariable is a single label that may be expanded to zero or more Variable's.
+    A MultiVariable is a single Label that may be expanded to zero or more Variable's.
     It uses dummy axes symbols (Labels) to indicate that it may be expanded in one
     or more dimensions.
     '''
@@ -29,10 +30,7 @@ class MultiVariable(Label):
         self.numIndices = numDimensions
         if axesLabels is None: axesLabels = MultiVariable.defaultAxesLabels[:numDimensions]
         self.axesLabels = axesLabels
-        extraCoreInfo = []
-        for axisLabel in axesLabels:
-            extraCoreInfo += axisLabel._labelInfo()
-        Label.__init__(self, stringFormat, latexFormat, 'MultiVariable', extraCoreInfo)
+        Label.__init__(self, stringFormat, latexFormat, 'MultiVariable', subExpressions=axesLabels)
 
     @classmethod
     def make(subClass, coreInfo, subExpressions):
@@ -60,15 +58,55 @@ class MultiVariable(Label):
     def latex(self, **kwargs):
         indicesStr = ' '.join(self.axesLabels[k].latex() for k in range(self.numIndices))
         return Label.latex(self) + '_{' + indicesStr + '}'
-        
+
     def substituted(self, exprMap, relabelMap = None, reservedVars = None):
-        return self.variable.substituted(exprMap, relabelMap, reservedVars)
+        '''                                                                                                 
+        Return this expression with the MultiVariable substituted                                           
+        according to subMap and/or relabeled according to relabelMap.                                       
+        May expand to an ExpressionList.                                                                    
+        '''
+        from proveit import compositeExpression, Expression, ExpressionList, ExpressionTensor
+        subbed = None
+        whichKind = None
+        if (exprMap is not None) and (self in exprMap):
+            subbed = exprMap[self]
+            whichKind = 'substitute'
+        elif relabelMap is not None:
+            subbed = relabelMap.get(self, self)
+            whichKind = 'relabel'
+        if subbed is not None:
+            if whichKind == 'relabel' and isinstance(subbed, MultiVariable):
+                if subbed.numIndices != self.numIndices:
+                    raise ValueError('Attempting to relabel a MultiVariable with another MultiVariable with a different number of indices')
+                # relabel the MultiVariable as another MultiVariable
+                if reservedVars is not None and subbed in reservedVars.keys():
+                    assert self == reservedVars[subbed], "Relabeling in violation of Variable restriction."  
+                return subbed    
+            subbed = compositeExpression(subbed)            
+            if self.numIndices == 1:             
+                if not isinstance(subbed, ExpressionList):
+                    raise TypeError('May only %s a single-axis MultiVariable with an ExpressionList'%whichKind) 
+            else:
+                if not isinstance(subbed, ExpressionTensor):
+                    raise TypeError('May only %s a multi-axis MultiVariable with an ExpressionTensor'%whichKind) 
+                if len(subbed.shape) != self.numIndices:
+                    raise ValueError('May only %s a multi-axis MultiVariable with an ExpressionTensor that has the appropriate dimensionality'%whichKind)
+            if whichKind == 'relabel':
+                for subVar in subbed.subExprGen():
+                    if not isinstance(subVar, Variable):
+                        raise TypeError('Must relabel a MultiVariable with a MultiVariable or list of Variables')
+                    if reservedVars is not None and subVar in reservedVars.keys():
+                        assert self == reservedVars[subVar], "Relabeling in violation of Variable restriction."
+            else:
+                for expr in subbed.subExprGen():
+                    expr._restrictionChecked(reservedVars)
+            return subbed
 
     def usedVars(self):
-        return self.variable.usedVars()
+        return {self}
 
     def freeVars(self):
-        return self.variable.freeVars()
+        return {self}
 
     def freeMultiVars(self):
         return {self}

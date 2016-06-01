@@ -1,4 +1,5 @@
 from proveit.core.expression.expr import Expression
+import re
 
 class Label(Expression):
     """
@@ -6,13 +7,16 @@ class Label(Expression):
     classes (Label is not itself an expr class).  It is a mathematical label
     with string and latex formatting.
     """
-    def __init__(self, stringFormat, latexFormat, labelType = 'Label', extraCoreInfo = tuple()):
+    def __init__(self, stringFormat, latexFormat, labelType = 'Label', extraCoreInfo = tuple(), subExpressions=tuple()):
         '''
         Create a Label with the given string and latex formatting.
         By default, the latex formatting is the same as the string formatting.
         '''
         self.stringFormat = stringFormat
         self.latexFormat = latexFormat if latexFormat is not None else stringFormat
+        assert re.match('[!-~]+', self.stringFormat), 'Label stringFormat may include only printable ascii characters and no space'
+        assert re.match('[ -~]+', self.latexFormat), 'Label latexFormat may include only printable ascii characters'
+        self.latexFormat = self.latexFormat.strip() # strip any whitespace from the beginning or the end
         if not isinstance(self.stringFormat, str):
             raise TypeError("'stringFormat' must be a str")
         if not isinstance(self.latexFormat, str):
@@ -20,7 +24,7 @@ class Label(Expression):
         if ',' in self.stringFormat or ',' in self.latexFormat:
             raise ValueError("Comma not allowed within a label's formatting")
         coreInfo = [labelType] + self._labelInfo() + list(extraCoreInfo)
-        Expression.__init__(self, coreInfo)
+        Expression.__init__(self, coreInfo, subExpressions=subExpressions)
         
     def string(self, **kwargs):
         '''
