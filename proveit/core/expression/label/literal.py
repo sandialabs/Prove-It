@@ -1,6 +1,5 @@
 from label import Label
 from var import Variable
-from proveit.core.expression.expr import MakeNotImplemented
 
 class Literal(Label):
     """
