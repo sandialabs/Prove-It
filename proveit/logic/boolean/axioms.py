@@ -1,7 +1,9 @@
 from proveit.logic import BOOLEANS, TRUE, FALSE, inBool, Forall, Exists, NotExists, And, Or, Not, Implies, Iff, \
 Union, Singleton, Equals, NotEquals
 from proveit.common import A, B, C, P, Q, S, x, Px, Qx, Aetc, Betc, Cetc, PxEtc, Qetc, xEtc, etc_QxEtc
+from proveit import beginAxioms, endAxioms
 
+beginAxioms(locals())
 
 trueAxiom = TRUE
 trueAxiom
@@ -87,5 +89,6 @@ impliesTF
 contradictoryValidation = Forall(A, Implies(Implies(Not(A), FALSE), A), domain=BOOLEANS)
 contradictoryValidation
 
+endAxioms(locals(), __package__)
 
 

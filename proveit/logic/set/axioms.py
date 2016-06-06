@@ -5,7 +5,9 @@
 
 from proveit.logic import BOOLEANS, Forall, Exists, And, Or, Not, Implies, Iff, Equals, InSet, NotInSet, Singleton, Union, Intersection, Difference, SubsetEq, SupersetEq, SetOfAll, NOTHING
 from proveit.common import x, y, z, A, B, C, Cetc, S, f, P, fy, Py
+from proveit import beginAxioms, endAxioms
 
+beginAxioms(locals())
 
 # In[3]:
 
@@ -79,6 +81,7 @@ setIsAsSetContains
 allNotInNothing = Forall(x, NotInSet(x, NOTHING))
 allNotInNothing
 
+endAxioms(locals(), __package__)
 
 
 

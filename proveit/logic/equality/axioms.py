@@ -5,7 +5,9 @@
 
 from proveit.logic import Equals, NotEquals, Implies, Not, Forall, inBool
 from proveit.common import x, y, z, f, fx, fy
+from proveit import beginAxioms, endAxioms
 
+beginAxioms(locals())
 
 
 # In[3]:
@@ -43,5 +45,5 @@ notEqualsDef
 substitution = Forall((f, x, y), Implies(Equals(x, y), Equals(fx, fy)))
 substitution
 
-
+endAxioms(locals(), __package__)
 
