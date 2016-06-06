@@ -5,7 +5,9 @@
 
 from proveit.logic import Equals, NotEquals, Implies, Not, And, Forall, TRUE, FALSE, inBool
 from proveit.common import A, a, b, c, x, y, z, f, P, fa, fb, fab, fx, fy, fxy, Px, Py
+from proveit import beginTheorems, endTheorems
 
+beginTheorems(locals())
 
 # In[3]:
 
@@ -73,4 +75,4 @@ contradictionFromFalseEquivalenceReversed = Forall(A, Implies(Equals(FALSE, A), 
 contradictionFromFalseEquivalenceReversed
 
 
-
+endTheorems(locals(), __package__)

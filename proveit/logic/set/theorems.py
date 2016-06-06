@@ -5,7 +5,9 @@
 
 from proveit.logic import BOOLEANS, Forall, Exists, And, Or, Not, Implies, Iff, Equals, NotEquals, InSet, NotInSet, Singleton, Union, Intersection, Difference, SubsetEq, SupersetEq, SetOfAll
 from proveit.common import f, x, y, A, B, C, S, P, fy, Px, Py, yEtc, fyEtc, Qetc, etc_QyEtc
+from proveit import beginTheorems, endTheorems
 
+beginTheorems(locals())
 
 # In[3]:
 
@@ -80,13 +82,6 @@ foldSimpleSetOfAll = Forall((P, x), Implies(Px, InSet(x, SetOfAll(y, y, conditio
 foldSimpleSetOfAll
 
 
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
+endTheorems(locals(), __package__)
 
 

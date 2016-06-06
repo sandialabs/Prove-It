@@ -6,11 +6,13 @@
 from proveit.logic import Forall, Exists, NotExists, BOOLEANS, TRUE, FALSE, inBool, Not, And, Or, Implies, Iff, Equals, NotEquals
 from proveit.common import A, B, C, P, Q, R, S, x, y, PofA, Qetc, Retc, xEtc, yEtc, zEtc, PxEtc, PyEtc, PxyEtc, etc_QxEtc, etc_QyEtc, etc_RyEtc
 from proveit.logic.common import PofTrue, PofFalse
+from proveit import beginTheorems, endTheorems
 
 
 # In[2]:
 
 # In[3]:
+beginTheorems(locals())
 
 notFalse = Not(FALSE)
 notFalse
@@ -496,6 +498,7 @@ forallBoolEvalFalseViaTF
 orIfAny = Forall((xEtc, y, zEtc), Implies(y, Or(xEtc, y, zEtc)), domain=BOOLEANS)
 orIfAny
 
+endTheorems(locals(), __package__)
 
 
 
