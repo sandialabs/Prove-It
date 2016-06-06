@@ -103,8 +103,8 @@ class ExpressionTensor(Composite, Expression, dict):
         Providing alignmentCoordinates establishes how this Tensor may be incorporated into another
         tensor when substituting a Block element.
         '''
-        from proveit.core.expression.bundle.etcetera import Etcetera
-        from proveit.core.expression.bundle.block import Block
+        from proveit._core_.expression.bundle.etcetera import Etcetera
+        from proveit._core_.expression.bundle.block import Block
         dict.__init__(self)
         if not isinstance(tensor, dict):
             tensor, _ = ExpressionTensor.TensorDictFromIterables(tensor)
@@ -140,6 +140,10 @@ class ExpressionTensor(Composite, Expression, dict):
                 raise TypeError('An Etcetera may be contained in an exprlist but not an ExpressionTensor')
             self[coord] = element
         self.shape = tuple(self.shape)
+        if alignmentCoordinates is None:
+            # by default, eachvcoordinate within the tensor's shape is an alignment coordinate
+            alignmentCoordinates = [list(range(k)) for k in self.shape]
+        self.alignmentCoordinates = alignmentCoordinates
         # Check for overlap errors and add appropriate _ExpressionTensorGhost elements
         # that cover the regions of any Blocks.
         for start_coord, element in self.iteritems():
@@ -154,7 +158,7 @@ class ExpressionTensor(Composite, Expression, dict):
                         raise ExpressionTensorOverlapError("ExpressionTensor Block overlaps another element")
                     self[coord] = _ExpresisonTensorBlockGhost(block, block_coord)
         sortedNonGhostKeys = [key for key in sorted(self.keys()) if not isinstance(self[key], _ExpresisonTensorBlockGhost)]
-        Expression.__init__(self, ['ExpressionTensor', str(self.shape), ';'.join(str(key) for key in sortedNonGhostKeys), [self[key] for key in sortedNonGhostKeys]])
+        Expression.__init__(self, ['ExpressionTensor', str(self.shape), ';'.join(str(key) for key in sortedNonGhostKeys)], [self[key] for key in sortedNonGhostKeys])
 
     @staticmethod
     def TensorDictFromIterables(tensor, pre_coord=tuple()):
@@ -214,7 +218,7 @@ class ExpressionTensor(Composite, Expression, dict):
             lt.preamble += r'\newcommand{\exprtensorghost}[1]{*+<1em,.9em>{\hphantom{#1}}}' + '\n'        
     
     def latex(self, fence=False):
-        from proveit.core.expression.bundle import Block
+        from proveit._core_.expression.bundle import Block
         if len(self.shape) != 2:
             raise NotImplementedError('One 2-dimensional ExpressionTensor formatting has been implemented.')
         _, ncolumns = self.shape
@@ -223,11 +227,11 @@ class ExpressionTensor(Composite, Expression, dict):
         current_col = -1
         # first add arrows at the top for all column alignment indices
         for c in xrange(-1, ncolumns):
-            if c in self.alignmentIndices[1]:
+            if c in self.alignmentCoordinates[1]:
                 outStr += ' \ar @{->} [0,1]'
             outStr += ' & '
         outStr += r'\\'
-        isAlignmentRow = 0 in self.alignmentIndices[0]
+        isAlignmentRow = 0 in self.alignmentCoordinates[0]
         # next add the populated elements
         for (r, c) in sorted(self.keys()):
             element = self[(r, c)]
@@ -243,7 +247,7 @@ class ExpressionTensor(Composite, Expression, dict):
                     outStr += ' \ar @{<-} [0,-1]'
                 outStr += r' \\' + '\n'
                 current_row += 1
-                isAlignmentRow = current_row in self.alignmentIndices[0]
+                isAlignmentRow = current_row in self.alignmentCoordinates[0]
                 current_col = -1
             while c > current_col:
                 outStr += ' & '
@@ -256,20 +260,20 @@ class ExpressionTensor(Composite, Expression, dict):
                 block = element.ghosted_block
                 block_r, block_c = element.block_coord
                 # Add arrow(s) to indicate alignment coordinates "into" a block
-                if block_r == 0 and block_c in block.alignmentIndices[1]:
+                if block_r == 0 and block_c in block.alignmentCoordinates[1]:
                     blockAlignmentStr += r' \ar @{<-} [0,-1]'
-                elif block_r == block.shape[0]-1 and block_c in block.alignmentIndices[1]:
+                elif block_r == block.shape[0]-1 and block_c in block.alignmentCoordinates[1]:
                     blockAlignmentStr += r' \ar @{<-} [0,1]'
-                if block_c == 0 and block_r in block.alignmentIndices[0]:
+                if block_c == 0 and block_r in block.alignmentCoordinates[0]:
                     blockAlignmentStr = r' \ar @{<-} [-1,0]'
-                elif block_c == block.shape[1]-1 and block_c in block.alignmentIndices[0]:
+                elif block_c == block.shape[1]-1 and block_c in block.alignmentCoordinates[0]:
                     blockAlignmentStr = r' \ar @{<-} [1,0]'
             else:                
                 outStr += r'\exprtensorelem'
             outStr += '{' + element.latex(fence=True) + '}' + blockAlignmentStr
         # finally add arrows at the bottom for all column alignment indices
         for c in xrange(-1, ncolumns):
-            if c in self.alignmentIndices[1]:
+            if c in self.alignmentCoordinates[1]:
                 outStr += ' \ar @{->} [0,-1]'
             outStr += ' & '
         outStr += r'\\'
@@ -343,7 +347,7 @@ class ExpressionTensor(Composite, Expression, dict):
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
         '''
-        from proveit.core.expression.bundle.block import Block
+        from proveit._core_.expression.bundle.block import Block
         
         # Check to see if the entire ExpressionTensor is to be substituted
         if (exprMap is not None) and (self in exprMap):

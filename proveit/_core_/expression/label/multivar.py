@@ -1,6 +1,5 @@
 from label import Label
-from var import Variable
-from proveit._core_.expression.expr import MakeNotImplemented
+from proveit._core_.expression.expr import MakeNotImplemented, ScopingViolation, ImproperRelabeling
 
 class MultiVariable(Label):
     '''
@@ -65,7 +64,24 @@ class MultiVariable(Label):
         according to subMap and/or relabeled according to relabelMap.                                       
         May expand to an ExpressionList.                                                                    
         '''
-        from proveit import compositeExpression, Expression, ExpressionList, ExpressionTensor
+        from proveit._core_.expression.expr import Expression
+        from var import Variable
+        if (exprMap is not None) and (self in exprMap):
+            subbed = exprMap[self]
+            if not isinstance(subbed, Expression):
+                raise TypeError('Must substitute a MultiVariable with an Expression (or a list/tensor of Expressions within an Etcetera/Block)')
+            return subbed._restrictionChecked(reservedVars)
+        elif relabelMap is not None:
+            subbed = relabelMap.get(self, self)
+            if not isinstance(subbed, MultiVariable) and not isinstance(subbed, Variable):
+                raise ImproperRelabeling('May only relabel MultiVariable to Variable or MultiVariable (or a list/tensor of Variables within an Etcetera/Block)')
+            if reservedVars is not None and subbed in reservedVars.keys():
+                if self != reservedVars[subbed]:
+                    raise ScopingViolation("Relabeling in violation of Variable scoping restrictions.")
+            return subbed
+        return self
+        '''
+        from proveit._core_.expression.bundle import isBundledVarOrVar
         subbed = None
         whichKind = None
         if (exprMap is not None) and (self in exprMap):
@@ -74,7 +90,9 @@ class MultiVariable(Label):
         elif relabelMap is not None:
             subbed = relabelMap.get(self, self)
             whichKind = 'relabel'
-        if subbed is not None:
+        if subbed is None:
+            return self
+        else:
             if whichKind == 'relabel' and isinstance(subbed, MultiVariable):
                 if subbed.numIndices != self.numIndices:
                     raise ValueError('Attempting to relabel a MultiVariable with another MultiVariable with a different number of indices')
@@ -93,7 +111,7 @@ class MultiVariable(Label):
                     raise ValueError('May only %s a multi-axis MultiVariable with an ExpressionTensor that has the appropriate dimensionality'%whichKind)
             if whichKind == 'relabel':
                 for subVar in subbed.subExprGen():
-                    if not isinstance(subVar, Variable):
+                    if not isBundledVarOrVar(subVar):
                         raise TypeError('Must relabel a MultiVariable with a MultiVariable or list of Variables')
                     if reservedVars is not None and subVar in reservedVars.keys():
                         assert self == reservedVars[subVar], "Relabeling in violation of Variable restriction."
@@ -101,6 +119,7 @@ class MultiVariable(Label):
                 for expr in subbed.subExprGen():
                     expr._restrictionChecked(reservedVars)
             return subbed
+        '''
 
     def usedVars(self):
         return {self}

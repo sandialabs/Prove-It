@@ -5,28 +5,28 @@ from proveit._core_.expression.composite import ExpressionTensor
 from ast import literal_eval
 
 class Block(Bundle):
-    def __init__(self, expr, shape, alignmentIndices=None):
+    def __init__(self, expr, shape, alignmentCoordinates=None):
         '''
         Alignment indices
         '''
-        if alignmentIndices is None:
-            # by default, each block-relative index with the Block's shape is an alignment index
-            alignmentIndices = [list(range(k)) for k in shape]
-        if len(shape) != alignmentIndices:
-            raise ValueError("alignmentIndices have the wrong dimensionality for the Block")
+        if alignmentCoordinates is None:
+            # by default, each block-relative coordinate within the Block's shape is an alignment coordinate
+            alignmentCoordinates = [list(range(k)) for k in shape]
+        if len(shape) != alignmentCoordinates:
+            raise ValueError("alignmentCoordinates have the wrong dimensionality for the Block")
         for extent in shape:
             if not isinstance(extent, int):
                 raise ValueError("shape must be a list/tuple of integers")
-        for indices in alignmentIndices:
+        for indices in alignmentCoordinates:
             for idx in indices:
                 if not isinstance(extent, idx):
-                    raise ValueError("alignmentIndices be a list of integer lists")            
+                    raise ValueError("alignmentCoordinates be a list of integer lists")            
         self.shape = shape
-        self.alignmentIndices = alignmentIndices
+        self.alignmentCoordinates = alignmentCoordinates
         extraCoreInfo = [';'.join(str(extent) for extent in self.shape)]
-        for indices in alignmentIndices:
+        for indices in alignmentCoordinates:
             extraCoreInfo += [';'.join(str(idx) for idx in indices)]
-        # the alignmentIndices are the extra coreInfo
+        # the alignmentCoordinates are the extra coreInfo
         Bundle.__init__(self, ExpressionTensor, expr, lambda expr : Block(expr), extraCoreInfo)
 
     @classmethod
@@ -41,12 +41,12 @@ class Block(Bundle):
         dimensions = len(shape)
         if len(coreInfo) != 2+dimensions:
             raise ValueError("coreInfo of the Block should have 2+dimensions elements to contain 'Block', the shape, and alignment indices for each dimension")
-        alignmentIndices = []
+        alignmentCoordinates = []
         for k in xrange(dimensions):
-            alignmentIndices.append([literal_eval(idx) for idx in coreInfo[2+k].split(';')])
+            alignmentCoordinates.append([literal_eval(idx) for idx in coreInfo[2+k].split(';')])
         if len(subExpressions) != 1:
             raise ValueError("Expecting exactly one sub-expression to make a Block")
-        return Block(subExpressions[0], shape, alignmentIndices)  
+        return Block(subExpressions[0], shape, alignmentCoordinates)  
 
     def string(self, **kwargs):
         return '[[' + self.bundledExpr.string(fence=False) + ']]'

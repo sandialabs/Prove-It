@@ -26,7 +26,7 @@ class Literal(Label):
         '''
         Return the var with the same label as this Literal.
         '''
-        return Variable(self.stringFormate, self.latexFormat)
+        return Variable(self.stringFormat, self.latexFormat)
     
     @classmethod
     def _make(literalClass, coreInfo, subExpressions):

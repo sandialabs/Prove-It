@@ -33,11 +33,12 @@ class Bundle(Expression):
         If the substituted bundledExpr is of the multiExprType, it will be extracted 
         from the Bundle wrapping and incorporated into the multi-expr which contains it.
         '''
+        from proveit._core_.expression.composite import compositeExpression
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
-        freeBundleVars = [multiVar.variable for multiVar in self.bundledExpr.freeMultiVars()]
-        bundleVarCandidates = [var for var in freeBundleVars if (var in exprMap and isinstance(exprMap[var], self.multiExprType)) or
-                                (var in relabelMap and isinstance(relabelMap[var], self.multiExprType))]
+        freeBundleVars = [multiVar for multiVar in self.bundledExpr.freeMultiVars()]
+        if relabelMap is None: relabelMap = dict()
+        bundleVarCandidates = [var for var in freeBundleVars if (var in exprMap) or (var in relabelMap)]
         if len(bundleVarCandidates) > 1:
             raise Exception("Multiple Bundle variable expansion is unsupported due to ambiguity")
         if len(bundleVarCandidates) == 1:
@@ -50,7 +51,7 @@ class Bundle(Expression):
                 subRelabelMap = subBundleVarMap = dict(relabelMap)
             else:
                 assert False, "shouldn't happen"
-            bundleVarSub = subBundleVarMap[bundleVar]
+            bundleVarSub = compositeExpression(subBundleVarMap[bundleVar])
             def substituteForElem(subElem):
                 subBundleVarMap[bundleVar] = subElem
                 return self.bundledExpr.substituted(subExprMap, subRelabelMap, reservedVars)

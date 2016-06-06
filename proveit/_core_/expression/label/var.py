@@ -23,23 +23,22 @@ class Variable(Label):
         '''
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
-        May expand to an expr_list.
         '''
-        from proveit._core_.expression.bundle.bundle import isBundledVar
-        from proveit._core_.expression.composite.expr_list import ExpressionList
+        from proveit._core_.expression.expr import Expression
         if (exprMap is not None) and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)
-        elif relabelMap != None:
+            subbed = exprMap[self]
+            if not isinstance(subbed, Expression):
+                raise TypeError('Must substitute a Variable with an Expression')
+            return subbed._restrictionChecked(reservedVars)
+        elif relabelMap is not None:
             subbed = relabelMap.get(self, self)
-            for subVar in (subbed if isinstance(subbed, ExpressionList) else [subbed]):
-                if not isinstance(subVar, Variable) and not isBundledVar(subVar):
-                    raise ImproperRelabeling('May only relabel a Variable with Variable(s) and/or Bundled Variable(s)')
-                if reservedVars != None and subVar in reservedVars.keys():
-                    if self != reservedVars[subVar]:
-                        raise ScopingViolation("Relabeling in violation of Variable scoping restrictions.")
+            if not isinstance(subbed, Variable):
+                raise ImproperRelabeling('May only relabel Variable to Variable')
+            if reservedVars is not None and subbed in reservedVars.keys():
+                if self != reservedVars[subbed]:
+                    raise ScopingViolation("Relabeling in violation of Variable scoping restrictions.")
             return subbed
-        else:
-            return self
+        return self
         
     def usedVars(self):
         return {self}

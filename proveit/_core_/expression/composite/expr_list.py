@@ -42,7 +42,7 @@ class ExpressionList(Composite, Expression, list):
         return self.formatted('latex', **kwargs)
     
     def formatted(self, formatType, fence=True, subFence=True, formattedOperator=None):
-        from proveit.core.expression.bundle.etcetera import Etcetera
+        from proveit._core_.expression.bundle.etcetera import Etcetera
         outStr = ''
         if len(self) == 0: return '()' # for an empty list, show the parenthesis to show something.
         spc = '~' if formatType == 'latex' else ' ' 
@@ -77,7 +77,7 @@ class ExpressionList(Composite, Expression, list):
         according to exprMap and/or relabeled according to relabelMap.
         Flattens nested ExpressionLists that arise from etcetera substitutions.
         '''
-        from proveit.core.expression.bundle.etcetera import Etcetera
+        from proveit._core_.expression.bundle.etcetera import Etcetera
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         def subbedGen():
