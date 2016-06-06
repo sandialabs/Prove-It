@@ -23,8 +23,8 @@ def tex_escape(text):
         '~': r'\textasciitilde{}',
         '^': r'\^{}',
         '\\': r'\textbackslash{}',
-        '<': r'\textless',
-        '>': r'\textgreater',
+        '<': r'\textless ',
+        '>': r'\textgreater ',
     }
     regex = re.compile('|'.join(re.escape(unicode(key)) for key in sorted(conv.keys(), key = lambda item: - len(item))))
     return regex.sub(lambda match: conv[match.group()], text)
@@ -115,10 +115,10 @@ class ExpressionInfo:
                 outStr += ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions) + r'\\' + '\n'
             if self.show_details:
                 if isinstance(expr, Label):
-                    outStr += r' & stringFormat: \texttt{' + tex_escape(expr.stringFormat) + r'} & & \\' + '\n'
+                    outStr += r' & \texttt{\textless stringFormat ' + tex_escape(expr.stringFormat) + r'\textgreater } & & \\' + '\n'
                 if isinstance(expr, Literal):
-                    outStr += r' & context: \texttt{' + tex_escape(expr.context) + r'} & & \\' + '\n'
-                outStr += r' & class: \texttt{' + tex_escape(str(expr.__class__)) + r'} & & \\' + '\n'
+                    outStr += r' & \texttt{\textless context ' + tex_escape(expr.context) + r'\textgreater } & & \\' + '\n'
+                outStr += r' & \texttt{' + tex_escape(repr(expr.__class__)) + r'} & & \\' + '\n'
         outStr += r'\hline' + '\n'
         outStr += r'\end{tabular}' + '\n'
         return outStr

@@ -53,7 +53,7 @@ class Lambda(Expression):
     def latex(self, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
         outStr = r'\left[' if fence else ''
-        outStr += r'\left(' + ', '.join([var.latex() for var in self.arguments]) + r'\right) \rightarrow '
+        outStr += r'\left(' + ', '.join([var.latex() for var in self.arguments]) + r'\right) \mapsto '
         outStr += self.expression.latex()
         if fence: outStr += r'\right]'
         return outStr

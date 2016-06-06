@@ -26,19 +26,19 @@ class Operation(Expression):
         of the subExpressions should be the operator and the subsequent ones should be 
         operands.  For Operation sub-classes that use a specific Literal operator, override
         'operatorOfOperation' and the default behavior of 'make' will be to 
-        instantiate the Operation sub-class with just the operands (and checking that
+        instantiate the Operation sub-class with just *operands (and checking that
         the operator is consistent).  Override this method for any other behavior.
         '''
         if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
             raise ValueError("Expecting Operation coreInfo to contain exactly one item: 'Operation'")
         if len(subExpressions) == 0:
             raise ValueError('Expecting at least one subExpression for an Operation, for the operator')
-        operator, operands = subExpressions[0], subExpressions[1:]
+        operator, operands = subExpressions[0], subExpressions[1]
         if operationClass != Operation: 
             subClassOperator = operationClass.operatorOfOperation()
             if subClassOperator != operator:
                 raise ValueError('Unexpected operator, ' + str(operator) + ', when making ' + str(operationClass)) 
-            return operationClass(operands)
+            return operationClass(*operands)
         return Operation(operator, operands)
 
     @classmethod
@@ -88,7 +88,7 @@ class Operation(Expression):
             else: lambdaExprReservedVars = None
             return subbedOperator.expression._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, None)
         # remake the Expression with substituted operator and/or operands
-        return self.__class__.make([subbedOperator] + subbedOperands)
+        return self.__class__.make(['Operation'], [subbedOperator, subbedOperands])
         
     def usedVars(self):
         '''
