@@ -1,4 +1,4 @@
-from proveit.logic.genericOps import BinaryOperation, AssociativeOperation, OperationOverInstances
+from proveit import BinaryOperation, AssociativeOperation, OperationOverInstances
 from proveit import Operation, Literal, Etcetera, MultiVariable
 from proveit.common import f, x, y, A, B, S, P, Q, yEtc
 

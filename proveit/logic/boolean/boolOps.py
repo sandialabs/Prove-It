@@ -1,5 +1,5 @@
 from proveit import Expression, Operation, Literal, ExpressionList, compositeExpression
-from proveit.logic.genericOps import BinaryOperation, AssociativeOperation
+from proveit import BinaryOperation, AssociativeOperation
 from boolSet import TRUE, FALSE, inBool, deduceInBool
 from quantifiers import Exists, NotExists
 from proveit.common import A, B, C, x, y, f, a, b, c, S, xEtc, zEtc

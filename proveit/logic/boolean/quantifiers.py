@@ -1,4 +1,4 @@
-from proveit.logic.genericOps import OperationOverInstances
+from proveit import OperationOverInstances
 from proveit import Expression, Literal, Operation, ExpressionList, MultiVariable, Etcetera
 from proveit.common import P, Q, R, S
 

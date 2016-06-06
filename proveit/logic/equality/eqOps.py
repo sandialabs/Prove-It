@@ -1,4 +1,4 @@
-from proveit.logic.genericOps import BinaryOperation
+from proveit import BinaryOperation
 from proveit import Variable, MultiVariable, Literal, Operation, ExpressionList, Etcetera, ExpressionTensor, Block, safeDummyVar
 from proveit.common import A, P, X, f, x, y, z
 
