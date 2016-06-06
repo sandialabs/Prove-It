@@ -203,7 +203,7 @@ class Statement:
             assert isinstance(originalExpr, Forall), 'May only perform substitution specialization on Forall Expressions (relabeling would be okay)'
             expr = originalExpr.operands
             lambdaExpr = expr['instance_mapping']
-            domain = expr['domain']
+            domain = expr['domain'] if 'domain' in expr else None
             assert isinstance(lambdaExpr, Lambda), "Forall Operation bundledExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
             # extract the instance expression and instance variables from the lambda expression        
             instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], list(lambdaExpr.expression['conditions'])
