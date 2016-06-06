@@ -1,4 +1,3 @@
-from genericOps import BinaryOperation, AssociativeOperation, OperationOverInstances
 from boolean.quantifiers import Forall, Exists, NotExists
 from boolean.boolSet import TRUE, FALSE, BOOLEANS, inBool, deduceInBool
 from boolean.boolOps import And, Or, Not, Implies, Iff, deriveStmtEqTrue, compose
