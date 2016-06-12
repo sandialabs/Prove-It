@@ -10,8 +10,8 @@ class Operation(Expression):
         from composite.composite import compositeExpression
         from label.label import Label
         from lambda_expr import Lambda
-        if not isinstance(operator, Expression) and not (isinstance(operator, Label) or isinstance(operator, Lambda)):
-            raise TypeError('operator must be an Expression that is a label or Lambda')
+        if not isinstance(operator, Label):
+            raise TypeError('operator must be a Label-type Expression')
         self.operator = operator
         self.operands = compositeExpression(operands)
         if isinstance(operator, Lambda):
