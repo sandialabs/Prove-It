@@ -41,8 +41,10 @@ class Statement:
         self._generalizations = set()
         self._isAxiom = _isAxiom
         self._isNamedTheorem = _isNamedTheorem
-        self.proofNumber = float("inf") # number each proof for statements proven with no assumptions necessary
+        self._proofNumber = float("inf") # number each proof for statements proven with no assumptions necessary
         self._prover = None # a Prover that proves this statement if it has no free variables and has been proven (theorem)
+        self._latestProvingAssumptions = None # stores the proving assumptions from the last time the statement was proven under any assumptions
+        self.png = None
 
     @staticmethod
     def state(expression, _package=None, _name=None, _isAxiom=False, _isNamedTheorem=False):
@@ -69,7 +71,7 @@ class Statement:
             implication = statement
             hypothesis = Statement.state(expression.operands[0]).statement
             conclusion = Statement.state(expression.operands[1]).statement
-            conclusion.addImplicator(hypothesis, implication)
+            conclusion._addImplicator(hypothesis, implication)
         
         expression.statement = statement
         return expression
@@ -89,9 +91,6 @@ class Statement:
         return statement             
     """
              
-    def __str__(self):
-        return str(self.getExpression())    
-        
     """
     def getManifestations(self):
         '''
@@ -109,12 +108,12 @@ class Statement:
         return self._defaultManifestation
     """
     
-    def getExpression(self):
+    def expr(self):
+        '''
+        Returns the Expression object that this Statement is wrapping.
+        '''
         return self._expression
-    
-    def freeVars(self):
-        return self.getExpression().freeVars()
-    
+        
     @staticmethod
     def specialize(originalExpr, subMap, relabelMap):
         '''
@@ -231,35 +230,38 @@ class Statement:
                     subbedConditions.add(asStatement(InSet(element, domain)))
         Statement.state(originalExpr)
         # add the specializer link
-        specializedExpr.statement.addSpecializer(originalExpr.statement, instanceVars, subMap, relabelMap, subbedConditions)
+        specializedExpr.statement._addSpecializer(originalExpr.statement, instanceVars, subMap, relabelMap, subbedConditions)
         # return the specialized expression and the 
         return specializedExpr, subbedConditions
                        
     @staticmethod
     def generalize(originalExpr, newForallVars, newDomain=None, newConditions=tuple()):
         '''
-        State and return a generalization of a given original statement
-        which derives from the original statement via a generalization inference
-        rule.  This is the counterpart of specialization.  Where the original 
+        State and return a tuple of (generalization, effectiveConditions) of a given 
+        original statement which derives from the original statement via a generalization 
+        inference rule.  This is the counterpart of specialization.  Where the original 
         has free variables taken to represent any particular 'arbitrary' values, 
-        the  generalized form is a forall statement over some or all of these once
-        free variables.  That is, it is statement applied to all values of any 
+        the  generalized form is a forall statement over some or all of these previously
+        free variables.  That is, it is a forall statement applied to all values of any 
         of the once free variable(s) under the given condition(s) and/or domain.  
         Any condition/domain  restriction is allowed because it only weakens the 
-        statement relative  to no condition.  The newForallVar(s) and newCondition(s) 
+        statement relative to no condition.  The newForallVar(s) and newCondition(s) 
         may be singular or plural (iterable).
         '''
-        from proveit import Forall
+        from proveit import Forall, InSet
         generalizedExpr = Statement.state(Forall(instanceVars=newForallVars, instanceExpr=originalExpr, domain=newDomain, conditions=newConditions))
         Statement.state(originalExpr)
-        generalizedExpr.statement.addGeneralizer(originalExpr.statement, newForallVars, newDomain, newConditions)
+        generalizedExpr.statement._addGeneralizer(originalExpr.statement, newForallVars, newDomain, newConditions)
         # In order to be a valid tautology, we have to make sure that the expression is
         # a generalization of the original.
         Statement._checkGeneralization(generalizedExpr, originalExpr)
-        return generalizedExpr
+        effectiveConditions = [asStatement(condition) for condition in compositeExpression(newConditions)]
+        if newDomain is not None:
+            effectiveConditions += [asStatement(InSet(var, newDomain)) for var in newForallVars]
+        return generalizedExpr, effectiveConditions
     
     @staticmethod
-    def _checkGeneralization(expr, instanceExpr):
+    def checkGeneralization(expr, instanceExpr):
         '''
         Make sure the expr is a generalization of the instanceExpr.
         '''
@@ -283,13 +285,13 @@ class Statement:
         '''
         return self.isProven() and len(self.getExpression().freeVars()) == 0
     
-    def hasName(self):
+    def _hasName(self):
         return not self._name is None
         
-    def getGroupAndName(self):
+    def _getGroupAndName(self):
         return self._group, self._name
         
-    def addSpecializer(self, original, substitutingVars, subMap, relabelMap, conditions):
+    def _addSpecializer(self, original, substitutingVars, subMap, relabelMap, conditions):
         from proveit._core_.expression.bundle import extractVar
         subMap = {key:singleOrCompositeExpression(val) for key, val in subMap.iteritems()}
         varToIndex = {extractVar(var):i for i, var in enumerate(substitutingVars)}
@@ -298,12 +300,11 @@ class Statement:
         self._specializers.add((original, subMapItems, relabelMapItems, tuple(conditions)))
         original._specializations.add(self)
 
-    def addGeneralizer(self, original, forallVars, domain, conditions):
-        if conditions is None: conditions = tuple()
+    def _addGeneralizer(self, original, forallVars, domain, conditions):
         self._generalizers.add((original, tuple(forallVars), domain, tuple([asStatement(condition) for condition in compositeExpression(conditions)])))
         original._generalizations.add(self)
         
-    def addImplicator(self, hypothesis, implication):
+    def _addImplicator(self, hypothesis, implication):
         if (hypothesis, implication) in self._implicators:
             return # already in implicators list
         self._implicators.add((hypothesis, implication))
@@ -311,7 +312,7 @@ class Statement:
         implication._conclusionOfImplication = self
         hypothesis._implicationsOfHypothesis.add(implication)
 
-    def getProver(self, assumptions=frozenset()):
+    def _getProver(self, assumptions=frozenset()):
         '''
         If this statement was proven under the given assumptions and this proof is to be
         remembered (i.e., not a clear temporary proof), returns the Prover that proves 
@@ -324,41 +325,105 @@ class Statement:
             assumptions = frozenset(assumptions)
             return Prover.getProver(self, assumptions)
         
-    def getOrMakeProver(self, assumptions=frozenset()):
+    def _getOrMakeProver(self, assumptions=frozenset()):
         '''
         If this statement was proven, returns the Prover that proves this statement;
         otherwise, returns a new Prover to be used to find the proof or explore the possibilities.
         '''
         from prover import Prover
-        prover = self.getProver(assumptions)
+        prover = self._getProver(assumptions)
         if prover != None:
             return prover
         return Prover(self, assumptions)    
     
-    def isProven(self, assumptions=frozenset(), maxDepth=float("inf"), markProof=True):
+    def _isProven(self, assumptions=frozenset(), maxDepth=float("inf"), markProof=True):
         """
         Attempt to prove this statement under the given assumptions.  If a proof derivation
         is found, returns True.  If it can't be found in the number of steps indicated by
         maxDepth, returns False.
         """
         from prover import Prover
-        return Prover.isProven(self, assumptions, maxDepth, markProof)
+        proven = Prover.isProven(self, assumptions, maxDepth, markProof)
+        if proven:
+            self._latestProvingAssumptions = self._provingAssumptions(assumptions)
+        return proven
         
-    def wasProven(self, assumptions=frozenset()):
+    def _wasProven(self, assumptions=frozenset()):
         """
         Returns True iff this statement has been proven under the given assumptions
         and it is a proof that is remembered (i.e., not a clear temporary proof).
         """
-        return self.getProver(assumptions) != None
+        return self._getProver(assumptions) is not None
 
-    def provingAssumptions(self, assumptions=frozenset()):
+    def _provingAssumptions(self, assumptions=frozenset()):
         """
         Returns the subset of the assumptions that proves the statement,
         or None if no such proof was made or remembered.
         """
-        prover = self.getProver(assumptions)
+        prover = self._getProver(assumptions)
         if prover == None: return None
         return prover.assumptions
+    
+    def _getLatestAssumptions(self):
+        """
+        Returns the set of proving assumptions from the last time this statement
+        was proven under some set of assumptions (or no assumptions)
+        """
+        if self._latestProvingAssumptions is not None:
+            assert self._getProver(self._latestProvingAssumptions) is not None, 'Expecting a valid corresponding Prover when _latestProvingAssumptions is set to something'
+            return self._latestProvingAssumptions
+        return None
+
+    def latex(self):
+        '''
+        If the Statement was proven under any assumptions, display the 
+        double-turnstyle notation to show that the set of assumptions proves
+        the statement/expression.  Otherwise, simply display the expression.
+        '''
+        assumptions = self._getLatestAssumptions()
+        if assumptions is None:
+            return self._expression.latex()
+        if len(assumptions) > 0:
+            return r'\{' + ','.join(assumption.expr().latex() for assumption in assumptions) + r'\} \boldsymbol{\vdash} ' + self._expression.latex()
+        return r'\boldsymbol{\vdash} ' + self._expression.latex()
+
+    def string(self):
+        '''
+        If the Statement was proven under any assumptions, display the 
+        double-turnstyle notation to show that the set of assumptions proves
+        the statement/expression.  Otherwise, simply display the expression.
+        '''
+        assumptions = self._getLatestAssumptions()
+        if assumptions is None:
+            return self._expression.string()
+        if len(assumptions) > 0:
+            return r'{' + ','.join(assumption.expr().string() for assumption in assumptions) + r'} |= ' + self._expression.string()
+        return r'|= ' + self._expression.string()
+
+    def proof(self):
+        return self._getProver(self._getLatestAssumptions())
+
+    def __str__(self):
+        '''
+        Return a string representation of the Statement.
+        '''
+        return self.string()
+
+    def _repr_png_(self):
+        from IPython.lib.latextools import latex_to_png, LaTeXTool
+        if not hasattr(self,'png') or self.png is None:
+            LaTeXTool.clear_instance()
+            lt = LaTeXTool.instance()
+            lt.use_breqn = False
+            self._expression._config_latex_tool(lt)
+            self.png = latex_to_png(self.latex(), backend='dvipng', wrap=True)
+        return self.png
+
+    def __getattr__(self, name):
+        return getattr(self._expression, name)
+    
+    def __dir__(self):
+        return sorted(set(self.__dict__.keys() + dir(self._expression)))
     
 class ImproperSpecialization(Exception):
     def __init__(self, message):

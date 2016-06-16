@@ -24,9 +24,9 @@ class Prover:
         self.provingAssumptions = None
         if self.stmtToProve.isAxiom():
             self.provingAssumptions = frozenset()
-        elif self.stmtToProve.wasProven(assumptions):
-            self.provingAssumptions = self.stmtToProve.provingAssumptions(assumptions)
-            self.provers = self.stmtToProve.getProver(assumptions).provers
+        elif self.stmtToProve._wasProven(assumptions):
+            self.provingAssumptions = self.stmtToProve._provingAssumptions(assumptions)
+            self.provers = self.stmtToProve._getProver(assumptions).provers
         elif stmtToProve in assumptions:
             self.provingAssumptions = frozenset([stmtToProve])
 #            # see whether or not it was already proven for a subset of the assumptions
@@ -45,7 +45,7 @@ class Prover:
         an expression is called (and is therefore not a "public" method).
         '''
         import os
-        expr_id = self.stmtToProve.getExpression()._export_pvit(expressions_dir)
+        expr_id = self.stmtToProve.expr()._export_pvit(expressions_dir)
         pvit_file.write(indentation + self.proverType + ' ' + expr_id)
         if self.proverType == 'specializing':
             pvit_file.write(' via')
@@ -84,7 +84,7 @@ class Prover:
         '''
         return (self.stmtToProve, tuple([assumption for assumption in self.provingAssumptions]))
 
-    def showProof(self):
+    def latex(self, latexTool=None):
         visitedStmtAndAsumptions = set()
         nextProvers = [self]
         enumeratedProvers = []
@@ -97,10 +97,12 @@ class Prover:
             if nextProver.provers is not None:
                 nextProvers += nextProver.provers
         proverNumMap = {prover.statementAndAssumptions():k for k, prover in enumerate(enumeratedProvers)}
-        print r'\begin{tabular}{rl|l|l|l}'
-        print r' & \textbf{statement} & \textbf{assumptions} & \textbf{step type} & \textbf{requirements} \\'
+        outStr = r'\begin{tabular}{rl|l|l|l}' + '\n'
+        outStr += r' & \textbf{statement} & \textbf{assumptions} & \textbf{step type} & \textbf{requirements} \\' + '\n'
         for k, prover in enumerate(enumeratedProvers):
-            print r'\hline'
+            if latexTool is not None:
+                prover.stmtToProve.expr()._config_latex_tool(latexTool)
+            outStr += r'\hline' + '\n'
             if prover.provers is None:
                 requirements = []
                 stepType = ''
@@ -121,19 +123,20 @@ class Prover:
                     stepType = 'modus ponens'
                 elif requirements[0].proverType == 'hypothetically reasoning':
                     stepType = 'hypothetical reasoning'
-            print str(k) + '. & ' + repr(prover.stmtToProve.getExpression()) + ' & ',
+            outStr += str(k) + '. & ' + repr(prover.stmtToProve.expr()) + ' & '
             if prover.stmtToProve.isAxiom() or prover.stmtToProve.isNamedTheorem():
-                print r'\multicolumn{3}{|l}{',
+                outStr += r'\multicolumn{3}{|l}{'
                 if prover.stmtToProve.isAxiom():
-                    print r'axiom: ',
+                    outStr += r'axiom: '
                 elif prover.stmtToProve.isNamedTheorem():
-                    print r'theorem: ',
-                print prover.stmtToProve._package + '.' + prover.stmtToProve._name + r'} \\'
+                    outStr += r'theorem: '
+                outStr += prover.stmtToProve._package + '.' + prover.stmtToProve._name + r'} \\'  + '\n'
             else:
-                print ', '.join(repr(assumption.getExpression()) for assumption in prover.provingAssumptions) \
-                    + ' & ' + stepType + ' & ' + ', '.join([str(proverNumMap[requirement.statementAndAssumptions()]) for requirement in requirements]) + r' \\'
-        print r'\hline'
-        print r'\end{tabular}'
+                outStr += ', '.join(repr(assumption.expr()) for assumption in prover.provingAssumptions) \
+                    + ' & ' + stepType + ' & ' + ', '.join([str(proverNumMap[requirement.statementAndAssumptions()]) for requirement in requirements]) + r' \\' + '\n'
+        outStr += r'\hline' + '\n'
+        outStr += r'\end{tabular}' + '\n'
+        return outStr
         
     """    
     def showProof(self, indentation='', remembered = None, usedAxioms = None, usedTheorems = None):
@@ -323,7 +326,7 @@ class Prover:
             # theorem-level proof
             stmt._prover = prover 
             Statement.ProofCount += 1
-            stmt.proofNumber = Statement.ProofCount
+            stmt._proofNumber = Statement.ProofCount
             # any other provers are obsolete
             Prover._tmpProvers.pop(stmt, None)
         if not stmt in Prover._tmpProvers:
@@ -343,7 +346,8 @@ class Prover:
         remembered (i.e., not a clear temporary proof), returns the Prover that proves 
         this statement; otherwise, returns None.
         '''
-        noAssumptionProver = stmt.getProver()
+        assumptions = {asStatement(assumption) for assumption in assumptions}        
+        noAssumptionProver = stmt._getProver()
         if not noAssumptionProver is None: 
             return noAssumptionProver
         if not stmt in Prover._tmpProvers: 
@@ -361,3 +365,12 @@ class Prover:
         clutter of spurious assumption derivation steps.
         '''
         Prover._tmpProvers.clear()
+
+    def _repr_png_(self):
+        from IPython.lib.latextools import latex_to_png, LaTeXTool
+        if not hasattr(self,'png') or self.png is None:
+            LaTeXTool.clear_instance()
+            lt = LaTeXTool.instance()
+            lt.use_breqn = False
+            self.png = latex_to_png(self.latex(lt), backend='dvipng', wrap=True)
+        return self.png
