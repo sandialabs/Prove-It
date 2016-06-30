@@ -1,5 +1,5 @@
 from proveit import OperationOverInstances
-from proveit import Expression, Literal, Operation, ExpressionList, MultiVariable, Etcetera
+from proveit import USE_DEFAULTS, Expression, Literal, Operation, ExpressionList, MultiVariable, Etcetera
 from proveit.common import P, Q, R, S
 
 pkg = __package__
@@ -23,7 +23,7 @@ class Forall(OperationOverInstances):
     def operatorOfOperation(subClass):
         return FORALL    
         
-    def specialize(self, subMap=None, conditionAsHypothesis=False):
+    def specialize(self, subMap=None, conditionAsHypothesis=False, assumptions=USE_DEFAULTS):
         '''
         From this Forall expression, and the condition if there is one,
         derive and return a specialized form.  If conditionAsHypothesis is True, 
@@ -53,7 +53,7 @@ class Forall(OperationOverInstances):
         # default instance variables to themselves
         for var in iVarSet:
             if var not in subVars: subMap[var] = var 
-        specialized = Expression.specialize(self, subMap, relabelMap)
+        specialized = Expression.specialize(self, subMap, relabelMap, assumptions)
         if conditionAsHypothesis and self.hasCondition():
             return Implies(self.conditions[0], specialized).checked({self})
         return specialized

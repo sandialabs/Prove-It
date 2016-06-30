@@ -1,4 +1,4 @@
-from proveit import Expression, Operation, Literal, ExpressionList, compositeExpression
+from proveit import USE_DEFAULTS, Expression, Operation, Literal, ExpressionList, compositeExpression, ProofStepFailure
 from proveit import BinaryOperation, AssociativeOperation
 from boolSet import TRUE, FALSE, inBool, deduceInBool
 from quantifiers import Exists, NotExists
@@ -22,21 +22,29 @@ class Implies(BinaryOperation):
     def operatorOfOperation(subClass):
         return IMPLIES    
 
-    def deriveConclusion(self):
+    def deriveConclusion(self, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \Rightarrow B)` derive and return :math:`B` assuming :math:`A`.
         '''
-        return self.conclusion.checked({self, self.hypothesis})
+        for prerequisite in (self, self.hypothesis):
+            if not prerequisite.isProven(assumptions=assumptions, maxDepth=1):
+                try:
+                    prerequisite.prove(assumptions=assumptions)
+                    assert prerequisite.wasProven(assumptions=assumptions), "The prove method should either prove the expressions's statement or throw an exception"
+                except:
+                    raise ProofStepFailure('Unable to prove this modus ponens step due to an unproven prerequisite:\n' + str(prerequisite))
+        assert self.conclusion.isProven(assumptions=assumptions, maxDepth=1), 'Modus ponens conclusion should be proven if both prerequisites are proven'
+        return self.conclusion.statement
                 
-    def applySyllogism(self, otherImpl):
+    def applySyllogism(self, otherImpl, assumptions=USE_DEFAULTS):
         '''
         From :math:`A \Rightarrow B` (self) and a given :math:`B \Rightarrow C` (otherImpl), derive and return :math:`A \Rightarrow C`.
         '''
         assert isinstance(otherImpl, Implies), "expected an Implies object"
         if self.conclusion == otherImpl.hypothesis:
-            return Implies(self.hypothesis, otherImpl.conclusion).checked({self, otherImpl})
+            return Implies(self.hypothesis, otherImpl.conclusion).proven(assumptions)
         elif self.hypothesis == otherImpl.conclusion:
-            return Implies(otherImpl.hypothesis, self.conclusion).checked({self, otherImpl})
+            return Implies(otherImpl.hypothesis, self.conclusion).proven(assumptions)
     
     def deriveViaContradiction(self):
         r'''
@@ -48,9 +56,9 @@ class Implies(BinaryOperation):
         assert self.conclusion == FALSE
         if isinstance(self.hypothesis, Not):
             stmt = self.hypothesis.operand
-            return contradictoryValidation.specialize({A:stmt}).deriveConclusion().checked({self, inBool(stmt)})
+            return contradictoryValidation.specialize({A:stmt}).deriveConclusion()
         else:
-            return hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion().checked({self, inBool(self.hypothesis)})
+            return hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion()
     
     def generalize(self, forallVars, domain=None, conditions=tuple()):
         r'''
@@ -91,13 +99,13 @@ class Implies(BinaryOperation):
         '''
         from theorems import transpositionFromNegated, transpositionFromNegatedConclusion, transpositionFromNegatedHypothesis, transpositionToNegated
         if isinstance(self.hypothesis, Not) and isinstance(self.conclusion, Not):
-            return transpositionFromNegated.specialize({B:self.hypothesis.operand, A:self.conclusion.operand}).checked({inBool(self.hypothesis.operand)})
+            return transpositionFromNegated.specialize({B:self.hypothesis.operand, A:self.conclusion.operand})
         elif isinstance(self.hypothesis, Not):
-            return transpositionFromNegatedHypothesis.specialize({B:self.hypothesis.operand, A:self.conclusion}).checked({inBool(self.conclusion), inBool(self.hypothesis.operand)})
+            return transpositionFromNegatedHypothesis.specialize({B:self.hypothesis.operand, A:self.conclusion})
         elif isinstance(self.conclusion, Not):
-            return transpositionFromNegatedConclusion.specialize({B:self.hypothesis, A:self.conclusion.operand}).checked({inBool(self.hypothesis)})
+            return transpositionFromNegatedConclusion.specialize({B:self.hypothesis, A:self.conclusion.operand})
         else:
-            return transpositionToNegated.specialize({B:self.hypothesis, A:self.conclusion}).checked({inBool(self.conclusion), inBool(self.hypothesis)})
+            return transpositionToNegated.specialize({B:self.hypothesis, A:self.conclusion})
         
     def transpose(self):
         '''
@@ -132,7 +140,7 @@ class Implies(BinaryOperation):
         from theorems import implicationClosure
         hypothesisInBool = deduceInBool(self.hypothesis)
         conclusionInBool = deduceInBool(self.conclusion)
-        return implicationClosure.specialize({A:self.hypothesis, B:self.conclusion}).checked({hypothesisInBool, conclusionInBool})
+        return implicationClosure.specialize({A:self.hypothesis, B:self.conclusion})
 
 class Not(Operation):
     def __init__(self, A):
@@ -174,7 +182,7 @@ class Not(Operation):
         '''
         from theorems import negationClosure
         operandInBool = deduceInBool(self.operand)
-        return negationClosure.specialize({A:self.operand}).checked({operandInBool})
+        return negationClosure.specialize({A:self.operand})
    
     def equateNegatedToFalse(self):
         r'''
@@ -182,7 +190,7 @@ class Not(Operation):
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         from theorems import notImpliesEqFalse
-        return notImpliesEqFalse.specialize({A:self.operand}).deriveConclusion().checked({self})
+        return notImpliesEqFalse.specialize({A:self.operand}).deriveConclusion()
 
     def equateFalseToNegated(self):
         r'''
@@ -190,7 +198,7 @@ class Not(Operation):
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         from theorems import notImpliesEqFalseRev
-        return notImpliesEqFalseRev.specialize({A:self.operand}).deriveConclusion().checked({self})
+        return notImpliesEqFalseRev.specialize({A:self.operand}).deriveConclusion()
     
     def deriveViaDoubleNegation(self):
         r'''
@@ -199,7 +207,7 @@ class Not(Operation):
         '''
         from theorems import fromDoubleNegation
         if isinstance(self.operand, Not):
-            return fromDoubleNegation.specialize({A:self.operand.operand}).deriveConclusion().checked({self, inBool(A)})
+            return fromDoubleNegation.specialize({A:self.operand.operand}).deriveConclusion()
 
     def concludeViaDoubleNegation(self):
         r'''
@@ -209,14 +217,14 @@ class Not(Operation):
         from theorems import doubleNegation
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
-            return doubleNegation.specialize({A:stmt}).deriveConclusion().checked({stmt})
+            return doubleNegation.specialize({A:stmt}).deriveConclusion()
             
     def deriveContradiction(self):
         r'''
         From :math:`\lnot A`, derive and return :math:`A \Rightarrow \mathtt{FALSE}`.
         '''
         from theorems import contradictionFromNegation
-        return contradictionFromNegation.specialize({A:self.operand}).deriveConclusion().checked({self})
+        return contradictionFromNegation.specialize({A:self.operand}).deriveConclusion()
     
     def deriveNotEquals(self):
         r'''
@@ -225,7 +233,7 @@ class Not(Operation):
         from proveit.logic import Equals
         from proveit.logic.equality.theorems import foldNotEquals
         if isinstance(self.operand, Equals):
-            return foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}).deriveConclusion().checked({self})
+            return foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}).deriveConclusion()
 
     def deriveNotIn(self):
         r'''
@@ -234,7 +242,7 @@ class Not(Operation):
         from proveit.logic import InSet
         from proveit.logic.set.theorems import foldNotIn
         if isinstance(self.operand, InSet):
-            return foldNotIn.specialize({x:self.operand.element, S:self.operand.domain}).deriveConclusion().checked({self})
+            return foldNotIn.specialize({x:self.operand.element, S:self.operand.domain}).deriveConclusion()
 
     def deriveNotExists(self):
         r'''
@@ -244,7 +252,7 @@ class Not(Operation):
         if isinstance(operand, Exists):
             existsExpr = operand
             notExistsExpr = NotExists(existsExpr.instanceVars, existsExpr.instanceExpr, domain=existsExpr.domain, conditions=existsExpr.conditions)
-            return notExistsExpr.concludeAsFolded().checked({self})
+            return notExistsExpr.concludeAsFolded()
         
     def deduceDoubleNegationEquiv(self):
         '''
@@ -253,7 +261,7 @@ class Not(Operation):
         from theorems import doubleNegationEquiv
         if isinstance(self.operand, Not):
             Asub = self.operand.operand
-            return doubleNegationEquiv.specialize({A:Asub}).checked({inBool(Asub)})
+            return doubleNegationEquiv.specialize({A:Asub})
 
 class And(AssociativeOperation):
     def __init__(self, *operands):
@@ -274,7 +282,7 @@ class And(AssociativeOperation):
         from axioms import andImpliesEach
         from proveit.common import Aetc, Cetc
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
-        return andImpliesEach.specialize({Aetc:self.operands[:idx], B:self.operands[idx], Cetc:self.operands[idx+1:]}).deriveConclusion().checked({self})
+        return andImpliesEach.specialize({Aetc:self.operands[:idx], B:self.operands[idx], Cetc:self.operands[idx+1:]}).deriveConclusion()
         
     def deriveLeft(self):
         '''
@@ -329,7 +337,7 @@ class And(AssociativeOperation):
         if len(self.operands) > 2:
             raise Exception('Deducing more than binary conjunction in booleans has not been implemented')
         inBools = {deduceInBool(operand) for operand in self.operands}
-        return conjunctionClosure.specialize({A:self.operands[0], B:self.operands[1]}).checked(inBools)
+        return conjunctionClosure.specialize({A:self.operands[0], B:self.operands[1]})
 
 class Or(AssociativeOperation):
     def __init__(self, *operands):
@@ -349,7 +357,7 @@ class Or(AssociativeOperation):
         from theorems import orImpliesRightIfNotLeft
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}).deriveConclusion().checked({self, Not(leftOperand), inBool(rightOperand)})
+        return orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}).deriveConclusion()
 
     def deriveLeftIfNotRight(self):
         '''
@@ -358,7 +366,7 @@ class Or(AssociativeOperation):
         from theorems import orImpliesLeftIfNotRight
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}).deriveConclusion().checked({self, Not(rightOperand), inBool(leftOperand)})
+        return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}).deriveConclusion()
         
     def deriveCommonConclusion(self, conclusion):
         '''
@@ -372,7 +380,7 @@ class Or(AssociativeOperation):
         rightImplConclusion = Implies(rightOperand, conclusion)
         # (A=>C and B=>C) assuming A=>C, B=>C
         compose(leftImplConclusion, rightImplConclusion)
-        return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}).deriveConclusion().deriveConclusion()#.checked({self, leftImplConclusion, rightImplConclusion, inBool(A), inBool(B), inBool(C)})
+        return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}).deriveConclusion().deriveConclusion()
         
     def evaluate(self):
         '''
@@ -399,7 +407,7 @@ class Or(AssociativeOperation):
         from theorems import disjunctionClosure
         leftInBool = deduceInBool(self.leftOperand)
         rightInBool = deduceInBool(self.rightOperand)
-        return disjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion}).checked({leftInBool, rightInBool})
+        return disjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion})
     
     def concludeViaExample(self, trueOperand):
         '''
@@ -426,33 +434,33 @@ class Iff(BinaryOperation):
         From (A<=>B) derive and return B=>A.
         '''
         from theorems import iffImpliesLeft
-        return iffImpliesLeft.specialize({A: self.A, B: self.B}).deriveConclusion().checked({self})
+        return iffImpliesLeft.specialize({A: self.A, B: self.B}).deriveConclusion()
         
     def deriveLeft(self):
         '''
         From (A<=>B) derive and return A assuming B.
         '''
-        return self.deriveLeftImplication().deriveConclusion().checked({self, self.B})
+        return self.deriveLeftImplication().deriveConclusion()
 
     def deriveRightImplication(self):
         '''
         From (A<=>B) derive and return A=>B.
         '''
         from theorems import iffImpliesRight
-        return iffImpliesRight.specialize({A: self.A, B: self.B}).deriveConclusion().checked({self})
+        return iffImpliesRight.specialize({A: self.A, B: self.B}).deriveConclusion()
 
     def deriveRight(self):
         '''
         From (A<=>B) derive and return B assuming A.
         '''
-        return self.deriveRightImplication().deriveConclusion().checked({self, self.A})
+        return self.deriveRightImplication().deriveConclusion()
     
     def deriveReversed(self):
         '''
         From (A<=>B) derive and return (B<=>A).
         '''
         from theorems import iffSymmetry
-        return iffSymmetry.specialize({A:self.A, B:self.B}).deriveConclusion().checked({self})
+        return iffSymmetry.specialize({A:self.A, B:self.B}).deriveConclusion()
     
     def applyTransitivity(self, otherIff):
         '''
@@ -464,8 +472,8 @@ class Iff(BinaryOperation):
         assert isinstance(otherIff, Iff)
         if self.B == otherIff.A:
             # from A <=> B, B <=> C, derive A <=> C
-            compose(self, otherIff).checked({self, otherIff}) # A <=> B and B <=> C
-            return iffTransitivity.specialize({A:self.A, B:self.B, C:otherIff.B}).deriveConclusion().checked({self, otherIff})
+            compose(self, otherIff) # A <=> B and B <=> C
+            return iffTransitivity.specialize({A:self.A, B:self.B, C:otherIff.B}).deriveConclusion()
         elif self.A == otherIff.A:
             # from y = x and y = z, derive x = z
             return self.deriveReversed().applyTransitivity(otherIff)
@@ -483,7 +491,7 @@ class Iff(BinaryOperation):
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
         '''
         from axioms import iffDef
-        return iffDef.specialize({A:self.A, B:self.B}).checked()
+        return iffDef.specialize({A:self.A, B:self.B})
     
     def concludeViaComposition(self):
         '''
@@ -492,7 +500,7 @@ class Iff(BinaryOperation):
         AimplB = Implies(self.A, self.B) 
         BimplA = Implies(self.B, self.A) 
         compose(AimplB, BimplA)
-        return self.definition().deriveLeftViaEquivalence().checked({AimplB, BimplA})
+        return self.definition().deriveLeftViaEquivalence()
     
     def evaluate(self):
         '''
@@ -514,14 +522,14 @@ class Iff(BinaryOperation):
         from theorems import iffClosure
         leftInBool = deduceInBool(self.A)
         rightInBool = deduceInBool(self.B)
-        return iffClosure.specialize({A:self.hypothesis, B:self.conclusion}).checked({leftInBool, rightInBool})
+        return iffClosure.specialize({A:self.hypothesis, B:self.conclusion})
     
     def deriveEquality(self):
         '''
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
         from theorems import iffOverBoolImplEq
-        return iffOverBoolImplEq.specialize({A:self.A, B:self.B}).deriveConclusion().checked({self, inBool(self.A), inBool(self.B)})
+        return iffOverBoolImplEq.specialize({A:self.A, B:self.B}).deriveConclusion()
 
 def deriveStmtEqTrue(statement):
     '''
@@ -539,18 +547,18 @@ def compose(*expressions):
     from theorems import conjunctionIntro
     if len(expressions) == 2:
         exprA, exprB = expressions
-        return conjunctionIntro.specialize({A:exprA, B:exprB}).checked({exprA, exprB})
+        return conjunctionIntro.specialize({A:exprA, B:exprB})
     else:
         assert len(expressions) > 2, "Compose 2 or more expressions, but not less than 2."
         rightComposition = compose(*expressions[1:])
         # A and (B and ..C..) = TRUE, given A, B, ..C..
-        nestedAndEqT = deriveStmtEqTrue(compose(expressions[0], rightComposition)).checked(expressions)
+        nestedAndEqT = deriveStmtEqTrue(compose(expressions[0], rightComposition))
         # A and B and ..C.. = A and (B and ..C..)
-        compositionEquality = andComposition.specialize({A:expressions[0], B:rightComposition.operands[0], C:rightComposition.operands[1:]}).checked(expressions)
+        compositionEquality = andComposition.specialize({A:expressions[0], B:rightComposition.operands[0], C:rightComposition.operands[1:]})
         print nestedAndEqT
         print compositionEquality
         # [A and B and ..C..] given A, B, ..C..
-        return compositionEquality.applyTransitivity(nestedAndEqT).deriveViaBooleanEquality().checked(expressions)
+        return compositionEquality.applyTransitivity(nestedAndEqT).deriveViaBooleanEquality()
 
 def _evaluateBooleanBinaryOperation(operation, baseEvalFn):
     from proveit.logic.equality.theorems import unaryEvaluation, binaryEvaluation
