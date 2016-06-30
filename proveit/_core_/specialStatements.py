@@ -18,13 +18,17 @@ def _beginSpecialStatements(excludedLocalVars, specialStatementType):
 def _endSpecialStatements(localVars, specialStatementType, package):
     assert specialStatementType == _specialStatementType, 'cannot end ' + specialStatementType + ' without beggining them.'
     for name, expr in localVars.iteritems():
+        '''
+        For each non-excluded Expression, state it, mark it as an axiom/theorem, and replace the
+        Expression in the localVars with the Statement.
+        '''
         if name in _excludedLocalVars: continue
         if name[0] == '_': continue # skip variables whose name begins with underscore
         assert isinstance(expr, Expression), 'Expecting only Expression statements for ' + _specialStatementType + ' variables.'
         if _specialStatementType == 'axioms':
-            Statement.state(expr, package, name, _isAxiom=True)
+            localVars[name] = Statement.state(expr, package, name, _isAxiom=True)
         if _specialStatementType == 'theorems':
-            Statement.state(expr, package, name, _isNamedTheorem=True)        
+            localVars[name] = Statement.state(expr, package, name, _isNamedTheorem=True)        
 
 def beginAxioms(excludedLocalVars):
     _beginSpecialStatements(excludedLocalVars, 'axioms')

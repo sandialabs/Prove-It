@@ -5,6 +5,7 @@ This is the statement module.
 from proveit._core_.expression import Lambda, Operation, Expression, Variable, ExpressionTensor, ExpressionList
 from proveit._core_.expression.composite.composite import Composite, compositeExpression, singleOrCompositeExpression
 from proveit._core_.expression.bundle import isBundledVar, isBundledVarOrVar, isBundledOperation
+from proveit._core_.defaults_and_settings import storage
             
 def asStatement(statementOrExpression):
     '''
@@ -65,6 +66,8 @@ class Statement:
             # theorems are completely proven, but the proof steps will be in place in any case. 
             assert len(expression.freeVars()) == 0, "Axioms and theorems may not have free variables: " + _name + ', ' + str(expression.freeVars())
             Prover._markAsProven(statement, Prover(statement, []))
+            statement._prover = Prover(statement, [])
+            assert statement.isProven(), 'Axiom and theorem statements are automatically proven' # just checking
             
         # When stating an implication, link together the implication, hypothesis and conclusion
         if isinstance(expression, Implies) and len(expression.operands) == 2:
@@ -74,7 +77,7 @@ class Statement:
             conclusion._addImplicator(hypothesis, implication)
         
         expression.statement = statement
-        return expression
+        return statement
             
     """
     @staticmethod
@@ -115,7 +118,7 @@ class Statement:
         return self._expression
         
     @staticmethod
-    def specialize(originalExpr, subMap, relabelMap):
+    def _specialize(originalExpr, subMap, relabelMap):
         '''
         State and return a tuple of (specialization, conditions).  The 
         specialization derives from the given original statement and its conditions
@@ -218,7 +221,7 @@ class Statement:
             conditions = []
             domain = None
         # make and state the specialized expression with appropriate substitutions
-        specializedExpr = Statement.state(expr.substituted(subMap, relabelMap))
+        specializedStmt = Statement.state(expr.substituted(subMap, relabelMap))
         # make substitutions in the condition
         subbedConditions = {asStatement(condition.substituted(subMap, relabelMap)) for condition in conditions}
         # add conditions for satisfying the domain restriction if there is one
@@ -230,12 +233,12 @@ class Statement:
                     subbedConditions.add(asStatement(InSet(element, domain)))
         Statement.state(originalExpr)
         # add the specializer link
-        specializedExpr.statement._addSpecializer(originalExpr.statement, instanceVars, subMap, relabelMap, subbedConditions)
+        specializedStmt._addSpecializer(originalExpr.statement, instanceVars, subMap, relabelMap, subbedConditions)
         # return the specialized expression and the 
-        return specializedExpr, subbedConditions
+        return specializedStmt, subbedConditions
                        
     @staticmethod
-    def generalize(originalExpr, newForallVars, newDomain=None, newConditions=tuple()):
+    def _generalize(originalExpr, newForallVars, newDomain=None, newConditions=tuple()):
         '''
         State and return a tuple of (generalization, effectiveConditions) of a given 
         original statement which derives from the original statement via a generalization 
@@ -261,7 +264,7 @@ class Statement:
         return generalizedExpr, effectiveConditions
     
     @staticmethod
-    def checkGeneralization(expr, instanceExpr):
+    def _checkGeneralization(expr, instanceExpr):
         '''
         Make sure the expr is a generalization of the instanceExpr.
         '''
@@ -362,7 +365,7 @@ class Statement:
         """
         prover = self._getProver(assumptions)
         if prover == None: return None
-        return prover.assumptions
+        return prover.provingAssumptions
     
     def _getLatestAssumptions(self):
         """
@@ -410,14 +413,20 @@ class Statement:
         return self.string()
 
     def _repr_png_(self):
+        if self._getLatestAssumptions() is None:
+            # If the statement has not been proven, just display it as the expression.
+            return self.expr()._repr_png_()
+        if (not hasattr(self,'png') or self.png is None):
+            self.png = storage._retrieve_png(self, self._generate_png)
+        return self.png # previous stored or generated
+    
+    def _generate_png(self):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
-        if not hasattr(self,'png') or self.png is None:
-            LaTeXTool.clear_instance()
-            lt = LaTeXTool.instance()
-            lt.use_breqn = False
-            self._expression._config_latex_tool(lt)
-            self.png = latex_to_png(self.latex(), backend='dvipng', wrap=True)
-        return self.png
+        LaTeXTool.clear_instance()
+        lt = LaTeXTool.instance()
+        lt.use_breqn = False
+        self._expression._config_latex_tool(lt)
+        return latex_to_png(self.latex(), backend='dvipng', wrap=True)
 
     def __getattr__(self, name):
         return getattr(self._expression, name)

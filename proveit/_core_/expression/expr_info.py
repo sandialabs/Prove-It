@@ -5,6 +5,7 @@ the exprInfo() method of an Expression object.
 '''
 
 import re
+from proveit._core_.defaults_and_settings import storage
 
 def tex_escape(text):
     """
@@ -124,14 +125,18 @@ class ExpressionInfo:
         return outStr
 
     def _repr_png_(self):
+        if (not hasattr(self,'png') or self.png is None):
+            distinction = 'details' if self.show_details else 'info'
+            self.png = storage._retrieve_png(self.expr, self._generate_png, distinction=distinction)
+        return self.png # previous stored or generated
+    
+    def _generate_png(self):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
-        if not hasattr(self,'png') or self.png is None:
-            LaTeXTool.clear_instance()
-            lt = LaTeXTool.instance()
-            lt.use_breqn = False
-            self._config_latex_tool(lt)
-            self.png = latex_to_png(self.latex(), backend='dvipng', wrap=True)
-        return self.png
+        LaTeXTool.clear_instance()
+        lt = LaTeXTool.instance()
+        lt.use_breqn = False
+        self._config_latex_tool(lt)
+        return latex_to_png(self.latex(), backend='dvipng', wrap=True)
     
     def _config_latex_tool(self, lt):
         '''

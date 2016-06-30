@@ -1,4 +1,5 @@
 from proveit._core_.statement import Statement, asStatement
+from proveit._core_.defaults_and_settings import storage
 
 class Prover:
     # Temporary provers: mapping a statement to a list of provers (for various assumption sets).
@@ -22,13 +23,15 @@ class Prover:
         self.provers = None # when proven, what Prover's provide the proof for this one
         # subset of the assumptions which proves self.stmtToProve
         self.provingAssumptions = None
-        if self.stmtToProve.isAxiom():
+        if self.stmtToProve.isAxiom() or self.stmtToProve.isNamedTheorem():
             self.provingAssumptions = frozenset()
+            self.provers = [] # no provers necessary
         elif self.stmtToProve._wasProven(assumptions):
             self.provingAssumptions = self.stmtToProve._provingAssumptions(assumptions)
             self.provers = self.stmtToProve._getProver(assumptions).provers
         elif stmtToProve in assumptions:
             self.provingAssumptions = frozenset([stmtToProve])
+            self.provers = [] # no provers necessary
 #            # see whether or not it was already proven for a subset of the assumptions
 #            if self.stmtToProve.provingStatements(self.provingAssumptions) == None:
 #                self.provingAssumptions = None
@@ -103,7 +106,7 @@ class Prover:
             if latexTool is not None:
                 prover.stmtToProve.expr()._config_latex_tool(latexTool)
             outStr += r'\hline' + '\n'
-            if prover.provers is None:
+            if prover.provers is None or len(prover.provers) == 0:
                 requirements = []
                 stepType = ''
             else:
@@ -123,7 +126,7 @@ class Prover:
                     stepType = 'modus ponens'
                 elif requirements[0].proverType == 'hypothetically reasoning':
                     stepType = 'hypothetical reasoning'
-            outStr += str(k) + '. & ' + repr(prover.stmtToProve.expr()) + ' & '
+            outStr += str(k) + '. & $' + prover.stmtToProve.expr().latex() + '$ & '
             if prover.stmtToProve.isAxiom() or prover.stmtToProve.isNamedTheorem():
                 outStr += r'\multicolumn{3}{|l}{'
                 if prover.stmtToProve.isAxiom():
@@ -132,7 +135,7 @@ class Prover:
                     outStr += r'theorem: '
                 outStr += prover.stmtToProve._package + '.' + prover.stmtToProve._name + r'} \\'  + '\n'
             else:
-                outStr += ', '.join(repr(assumption.expr()) for assumption in prover.provingAssumptions) \
+                outStr += ', '.join(('$' + assumption.expr().latex() + '$') for assumption in prover.provingAssumptions) \
                     + ' & ' + stepType + ' & ' + ', '.join([str(proverNumMap[requirement.statementAndAssumptions()]) for requirement in requirements]) + r' \\' + '\n'
         outStr += r'\hline' + '\n'
         outStr += r'\end{tabular}' + '\n'
@@ -218,7 +221,8 @@ class Prover:
     def completesProof(self):
         '''
         Go up the tree of impliedParents as long as requirements are satisfied, returning True
-        if we get to the root.  While going up, records the first Provers to prove a Prover.
+        if we get to the root.  While going up, record the first set of Provers that satisfy
+        requirements to prove each Prover.
         '''
         prover = self
         while prover.requirementsSatisfied():
@@ -367,10 +371,22 @@ class Prover:
         Prover._tmpProvers.clear()
 
     def _repr_png_(self):
+        if (not hasattr(self,'png') or self.png is None):
+            self.png = storage._retrieve_png(self, self._generate_png)
+        return self.png # previous stored or generated
+    
+    def _generate_png(self):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
-        if not hasattr(self,'png') or self.png is None:
-            LaTeXTool.clear_instance()
-            lt = LaTeXTool.instance()
-            lt.use_breqn = False
-            self.png = latex_to_png(self.latex(lt), backend='dvipng', wrap=True)
-        return self.png
+        LaTeXTool.clear_instance()
+        lt = LaTeXTool.instance()
+        lt.use_breqn = False
+        self._config_latex_tool(lt)
+        return latex_to_png(self.latex(), backend='dvipng', wrap=True)
+    
+    def _config_latex_tool(self, lt):
+        '''
+        Configure the LaTeXTool from IPython.lib.latextools as required by all
+        sub-expressions.
+        '''
+        self.stmtToProve._config_latex_tool(lt)
+        
