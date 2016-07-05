@@ -10,14 +10,14 @@ class Storage:
     def __init__(self):
         self.directory = ''
         
-        # For retrieved pv_it files that represent Prove-It object (Expressions or Provers),
+        # For retrieved pv_it files that represent Prove-It object (Expressions, KnownTruths, and Proofs),
         # this maps the object to the pv_it file so we
         # can recall this without searching the hard drive again.
         self._proveItObjects = dict()
         
     def _retrieve_png(self, proveItObj, pngGenFn, distinction=''):
         '''
-        Find the .png file for the stored Expression, Statement, or Prover.
+        Find the .png file for the stored Expression, KnownTruth, or Proof.
         If distinction is provided, this is an extra string that decorates
         the filename to distinguish it from the basic png of an Expression
         ['info' for exprInfo() png, 'details' for exprInfo(details=True) png].
@@ -52,33 +52,33 @@ class Storage:
         '''
         Generate a unique representation string for the given Prove-It object.
         '''
-        from proveit import Expression, Statement, Prover
-        if isinstance(proveItObject, Statement):
-            # To uniquely identify a Statement, we need its Expression and list of assumptions
-            stmt = proveItObject
-            assumptions = stmt._getLatestAssumptions()
-            assert assumptions is not None, 'Statement hould have been proven, with latest assumptions, if we are trying to store it.'
-            return 'Statement:' + self._proveItObjId(stmt.expr()) + '[' + ','.join(self._proveItObjId(assumption.expr()) for assumption in assumptions) + ']'            
+        from proveit import Expression, KnownTruth, Proof
+        if isinstance(proveItObject, KnownTruth):
+            # To uniquely identify a KnownTruth for displaying purposes, we need its Expression and list of assumptions
+            knownTruth = proveItObject
+            assumptions = knownTruth.assumptions
+            return 'KnownTruth:' + self._proveItObjId(knownTruth.expr) + '[' + ','.join(self._proveItObjId(assumption) for assumption in assumptions) + ']'          
         elif isinstance(proveItObject, Expression):
             # This unique_rep differs from expr._unique_rep because it is designed to avoid
             # collisions in storage which may differ from in-memory collisions (collisions are unlikely, but let's stay safe).
             expr = proveItObject
             return str(expr.__class__) + '[' + ','.join(expr._coreInfo) + '];[' + ','.join(self._proveItObjId(subExpr) for subExpr in expr.subExprIter()) + ']'
-        elif isinstance(proveItObject, Prover):
-            # The Prover is identified by the expression for the statement it is proving
-            # and the set of Provers that are used to prove the statement.
-            prover = proveItObject
-            return 'Prover:' + self._proveItObjId(prover.stmtToProve.expr()) + '[' + ','.join(self._proveItObjId(prover) for prover in prover.provers) + ']'
+        elif isinstance(proveItObject, Proof):
+            # The Proof is uniquely identified by its provenTruth and its requiredProofs (recursively)
+            proof = proveItObject
+            return 'Proof:' + self._proveItObjId(proof.provenTruth) + '[' + ','.join(self._proveItObjId(requiredProof) for requiredProof in proof.requiredProofs) + ']'
         else:
-            raise NotImplementedError('Strorage only implemented for Expressions, Statements (effectively), and Provers')
+            raise NotImplementedError('Strorage only implemented for Expressions, Statements (effectively), and Proofs')
         
     
     def _retrieve(self, proveItObject):
         '''
-        Find the .pv_it file for the stored Expression, Statement (under the "latest" assumptions),
-        or Prover.  Create it if it did not previously exist.  Return the .pv_it filename, relative to
+        Find the .pv_it file for the stored Expression, KnownTruth, or Proof.
+        Create it if it did not previously exist.  Return the .pv_it filename, relative to
         the .pv_it directory.
         '''
+        if proveItObject in self._proveItObjects:
+            return self._proveItObjects[proveItObject]
         pv_it_dir = os.path.join(self.directory, '.pv_it')
         unique_rep = self._proveItObjUniqueRep(proveItObject)
         # hash the unique representation and make a sub-directory of this hash value
