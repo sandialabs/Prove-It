@@ -1,6 +1,6 @@
-from proveit import USE_DEFAULTS, Expression, Operation, Literal, ExpressionList, compositeExpression, ProofStepFailure
+from proveit import USE_DEFAULTS, Operation, Literal, ExpressionList, compositeExpression
 from proveit import BinaryOperation, AssociativeOperation
-from boolSet import TRUE, FALSE, inBool, deduceInBool
+from boolSet import TRUE, FALSE, deduceInBool
 from quantifiers import Exists, NotExists
 from proveit.common import A, B, C, x, y, f, a, b, c, S, xEtc, zEtc
 
@@ -26,15 +26,8 @@ class Implies(BinaryOperation):
         r'''
         From :math:`(A \Rightarrow B)` derive and return :math:`B` assuming :math:`A`.
         '''
-        for prerequisite in (self, self.hypothesis):
-            if not prerequisite.isProven(assumptions=assumptions, maxDepth=1):
-                try:
-                    prerequisite.prove(assumptions=assumptions)
-                    assert prerequisite.wasProven(assumptions=assumptions), "The prove method should either prove the expressions's statement or throw an exception"
-                except:
-                    raise ProofStepFailure('Unable to prove this modus ponens step due to an unproven prerequisite:\n' + str(prerequisite))
-        assert self.conclusion.isProven(assumptions=assumptions, maxDepth=1), 'Modus ponens conclusion should be proven if both prerequisites are proven'
-        return self.conclusion.statement
+        from proveit._core_.proof import ModusPonens
+        return ModusPonens(self, assumptions).provenTruth
                 
     def applySyllogism(self, otherImpl, assumptions=USE_DEFAULTS):
         '''
