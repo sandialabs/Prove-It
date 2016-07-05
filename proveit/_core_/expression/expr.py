@@ -13,9 +13,6 @@ class Expression:
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
         level) which should be a list (or tuple) of strings, and a list (or tuple) of subExpressions.
         '''
-        # Will be the associated Statement if the Expression is
-        # ever 'stated' in a particular prover.
-        self.statement = None
         for coreInfoElem in coreInfo:
             if not isinstance(coreInfoElem, str):
                 raise TypeError('Expecting coreInfo elements to be of string type')
@@ -30,7 +27,15 @@ class Expression:
         while self._unique_id in Expression.unique_id_map and Expression.unique_id_map[self._unique_id] != self._unique_rep:
             self._unique_id += 1
         Expression.unique_id_map[self._unique_id] = self._unique_rep
-        self.png = None # if a png is generate, it is stored for future reference
+    
+    def __setattr__(self, attr, value):
+        '''
+        Expressions should be read-only objects.  Attributes may be added, however; for example,
+        the 'png' attribute which will be added whenever it is generated).
+        '''
+        if hasattr(self, attr):
+            raise Exception("Attempting to alter read-only value")
+        self.__dict__[attr] = value      
     
     def __repr__(self):
         return str(self) # just use the string representation
@@ -92,66 +97,39 @@ class Expression:
     
     def prove(self, assumptions=None):
         '''
-        Attempt to prove this expression's statement automatically under the
+        Attempt to prove this expression automatically under the
         given assumptions (if None, uses defaults.assumptions).  If this
-        fails, an exception will be thrown.  Otherwise, self is returned.
+        fails, an exception will be thrown.  Otherwise, the KnownTruth that
+        proves this Expression under the set of assumptions (or a subset
+        of those) is returned.
         '''
-        raise NotImplementedError('Automated proving is not implemented for this type of Expression:' + str(self.__class__))
+        from proveit import KnownTruth
+        if assumptions is None:
+            assumptions = defaults.assumptions
+        foundTruth = KnownTruth.findKnownTruth(self, assumptions)
+        if foundTruth is not None: 
+            return foundTruth # found an existing KnownTruth that does the job!
+        if self in assumptions:
+            # prove by assumption
+            from proveit._core_.proof import Assumption
+            return Assumption(self).provenTruth
+        raise ProofFailure('Unable to automatically prove ' + str(self) + ' assuming ' + ', '.join(str(assumption) for assumption in assumptions))
     
-    def proven(self, assumptions=None):
-        """
-        Prove a step along the way to a theorem proof (or throw an error if the proof fails)
-        under the given assumptions (if None, uses defaults.assumptions).
-        Returns this proven statement expression.
-        """
-        if assumptions is None: assumptions = defaults.assumptions
-        def makeAssumptionsStr(assumption):
-            return "{" + ", ".join([str(assumption) for assumption in assumptions]) + "}"
-        if self.isProven(assumptions)==False:
-            raise ProofFailure("Proof failed: " + str(self) + " assuming " + makeAssumptionsStr(assumptions))
-        return self.statement
-
-    def isProven(self, assumptions=None, maxDepth=float("inf"), markProof=True):
-        """
-        Attempt to prove this statement under the given assumptions (if None, uses defaults.assumptions).  
-        If a proof derivation is found, returns True.  If it can't be found in the number of steps indicated by
-        maxDepth, returns False.
-        """
-        if assumptions is None: assumptions = defaults.assumptions
-        from proveit._core_.statement import Statement
-        if self.statement == None: Statement.state(self)
-        if not isinstance(self.statement, Statement):
-            raise TypeError('Expression statement must be of Statement type')
-        return self.statement._isProven(assumptions, maxDepth, markProof)
-    
-    def wasProven(self, assumptions=None):
-        """
-        Returns True iff this statement has already be proven under the given assumptions
-        if None, uses defaults.assumptions).
-        """
-        if assumptions is None: assumptions = defaults.assumptions        
-        from proveit._core_.statement import Statement
-        if self.statement == None:
-            return False
-        else:
-            if not isinstance(self.statement, Statement):
-                raise TypeError('Expression statement must be of Statement type')
-            return self.statement._wasProven(assumptions)
-    
+    '''
     def beginProof(self):
         # clear all the provers
-        from proveit._core_.statement import Statement
+        from proveit._core_.known_truth import KnownTruth
         from proveit._core_.prover import Prover
 
         # forget that this is a theorem expression so that we generate a non-trivial proof:
-        for stmt in Statement.statements.values():
+        for stmt in KnownTruth.statements.values():
             # clear all of the statements to start fresh
             stmt.proofNumber = float('inf')
             stmt._prover = None
             if stmt == self.statement:
                 stmt._isNamedTheorem = False
         Prover._tmpProvers.clear()
-        for stmt in Statement.statements.values():
+        for stmt in KnownTruth.statements.values():
             # re-mark the axioms and theorems as proven (but not the special one we are trying to prove)
             if stmt._isAxiom or stmt._isNamedTheorem:
                 Prover._markAsProven(stmt, Prover(stmt, []))
@@ -195,7 +173,7 @@ class Expression:
         self.proven()
         self.statement._getProver().showProof()
         return self
-            
+    '''
         
     def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
@@ -258,7 +236,7 @@ class Expression:
         '''
         Performs a relabeling derivation step to be proven under the given
         assumptions (if None, uses defaults.assumptions).  Returns
-        the proven relabeled Statement, or throws an exception if the
+        the proven relabeled KnownTruth, or throws an exception if the
         proof fails.
         '''
         return self._specialize_or_relabel(subMap=None, relabelMap=relabelMap, assumptions=assumptions)
@@ -267,75 +245,22 @@ class Expression:
         '''
         Performs a specialize derivation step to be proven under the given
         assumptions (if None, uses defaults.assumptions).  Returns
-        the proven relabeled Statement, or throws an exception if the
+        the proven relabeled KnownTruth, or throws an exception if the
         proof fails.
         '''
         # Can be overridden by the Forall implementation
         return self._specialize_or_relabel(subMap=subMap, relabelMap=relabelMap, assumptions=assumptions)
 
     def _specialize_or_relabel(self, subMap=None, relabelMap=None, assumptions=None):
-        from proveit._core_.statement import Statement
-        if subMap is None: subMap = dict()
-        if relabelMap is None: relabelMap = dict()
-        (specialization, conditions) = Statement._specialize(self, subMap, relabelMap)
-        for prerequisite in [self] + list(conditions):
-            if not prerequisite.isProven(assumptions=assumptions, maxDepth=1):
-                try:
-                    prerequisite.prove(assumptions=assumptions)
-                    assert prerequisite.wasProven(assumptions=assumptions), "The prove method should either prove the expressions's statement or throw an exception"
-                except:
-                    raise ProofStepFailure('Unable to prove this specialize/relabel derivation step due to an unproven prerequisite:\n' + str(prerequisite))
-        assert specialization.isProven(assumptions=assumptions, maxDepth=1), 'Specialization should be proven if all prerequisites are proven'
-        return specialization.statement
-        
-    def generalize(self, forallVars, domain=None, conditions=tuple(), assumptions=None):
-        '''
-        Performs a generalize derivation step to be proven under the given
-        assumptions (if None, uses defaults.assumptions).  Returns
-        the proven relabeled Statement, or throws an exception if the
-        proof fails.
-        '''
-        from proveit._core_.statement import Statement
-        from proveit._core_.expression.composite.composite import compositeExpression
-        if assumptions is None: assumptions = defaults.assumptions
-        (generalization, effectiveConditions) = Statement._generalize(self, compositeExpression(forallVars), domain, conditions)
-        # we cannot allow assumptions that have any of the forallVars as free variables
-        subAssumptions = {assumption for assumption in assumptions if len(assumption.freeVars() & set(forallVars)) == 0}            
-        # add assumptions for any of the conditions of the generalizer
-        subAssumptions |= set(effectiveConditions)
-        if not self.wasProven(assumptions=subAssumptions):
-            try:
-                self.prove(assumptions=subAssumptions)
-                assert self.wasProven(assumptions=subAssumptions), "The prove method should either prove the expressions's statement or throw an exception"
-            except:
-                raise ProofStepFailure('Unable to prove this generalize derivation step due to an unproven prerequisite: ' + str(self))
-        assert generalization.isProven(assumptions=assumptions, maxDepth=1), 'Generalization should be proven if all prerequisites are proven'
-        return generalization.statement
-    
-    """
-    def show(self, assumptions=frozenset()):
-        '''
-        Show the derivation tree of the proof or partial proof for
-        proving the Statement of this Expression under the given
-        assumptions.
-        '''
-        from derivationTreeView import showTreeView
-        showTreeView([self.state().statement.getOrMakeProver(assumptions)])
-    
-    def proveThenShow(self, assumptions=frozenset()):
-        '''
-        First attempt to proven the Statement of this Expression, then
-        show the derivation tree of the proof.
-        '''
-        self.proven(assumptions).show(assumptions)
-    """
+        from proveit._core_.proof import Specialization
+        return Specialization(self, subMap, relabelMap, assumptions).provenTruth
     
     def proveByEval(self):
         '''
         Prove self by calling self.evaluate() if it equates the expression to TRUE.
         The evaluate method must be implemented by the derived class.
         '''
-        return self.evaluate().deriveViaBooleanEquality().proven()
+        return self.evaluate().deriveViaBooleanEquality()
     
     def _restrictionChecked(self, reservedVars):
         '''
@@ -347,11 +272,18 @@ class Expression:
         return self
 
     def _repr_png_(self):
-        if (not hasattr(self,'png') or self.png is None):
+        '''
+        Generate a png image from the latex.  May be recalled from memory or
+        storage if it was generated previously.
+        '''
+        if not hasattr(self,'png'):
             self.png = storage._retrieve_png(self, self._generate_png)
         return self.png # previous stored or generated
     
     def _generate_png(self):
+        '''
+        Compile the latex into a png image.
+        '''        
         from IPython.lib.latextools import latex_to_png, LaTeXTool
         LaTeXTool.clear_instance()
         lt = LaTeXTool.instance()
@@ -395,14 +327,9 @@ class ScopingViolation(Exception):
     def __str__(self):
         return self.message
 
-class ProofStepFailure(Exception):
-    def __init__(self, message):
-        self.message = message
-    def __str__(self):
-        return self.message    
-    
 class ProofFailure(Exception):
     def __init__(self, message):
         self.message = message
     def __str__(self):
         return self.message
+    
