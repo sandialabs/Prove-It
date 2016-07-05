@@ -33,7 +33,7 @@ class Forall(OperationOverInstances):
         subMap that do not pertain to instance variables, an attempt to
         relabel them will be made.
         '''
-        from boolOps import Implies
+        from proveit._core_.proof import Specialization
         # Note that we use freeVars to deal with Etcetera-wrapped Variables
         iVarSet = set().union(*[iVar.freeVars() for iVar in self.instanceVars])
         explicitlySubbed = set()
@@ -53,9 +53,9 @@ class Forall(OperationOverInstances):
         # default instance variables to themselves
         for var in iVarSet:
             if var not in subVars: subMap[var] = var 
-        specialized = Expression.specialize(self, subMap, relabelMap, assumptions)
+        specialized = Specialization(self, subMap, relabelMap, assumptions).provenTruth
         if conditionAsHypothesis and self.hasCondition():
-            return Implies(self.conditions[0], specialized).checked({self})
+            return specialized.asImplication(self.conditions[0])
         return specialized
     
     def unfold(self):
