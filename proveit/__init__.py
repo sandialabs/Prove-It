@@ -1,7 +1,9 @@
 from _core_ import defaults, USE_DEFAULTS, storage, Expression, Operation, Lambda, Label, Variable, MultiVariable, Literal, Etcetera, Block, safeDummyVar
-from _core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure, ProofStepFailure
+from _core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
 from _core_ import ExpressionList, ExpressionTensor, NamedExpressions, compositeExpression, singleOrCompositeExpression, NestedCompositeExpressionError
-from _core_ import Statement, Prover, beginAxioms, endAxioms, beginTheorems, endTheorems
+from _core_ import beginAxioms, endAxioms, beginTheorems, endTheorems, KnownTruth
+from _core_ import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
+from _core_ import ModusPonensFailure, SpecializationFailure, GeneralizationFailure
 from _generic_ import BinaryOperation, AssociativeOperation, OperationOverInstances, InstanceSubstitutionException
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
