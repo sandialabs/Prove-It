@@ -13,10 +13,9 @@ class Label(Expression):
         By default, the latex formatting is the same as the string formatting.
         '''
         self.stringFormat = stringFormat
-        self.latexFormat = latexFormat if latexFormat is not None else stringFormat
+        self.latexFormat = latexFormat.strip() if latexFormat is not None else stringFormat
         assert re.match('[!-~]+', self.stringFormat), 'Label stringFormat may include only printable ascii characters and no space'
         assert re.match('[ -~]+', self.latexFormat), 'Label latexFormat may include only printable ascii characters'
-        self.latexFormat = self.latexFormat.strip() # strip any whitespace from the beginning or the end
         if not isinstance(self.stringFormat, str):
             raise TypeError("'stringFormat' must be a str")
         if not isinstance(self.latexFormat, str):
