@@ -1,4 +1,4 @@
-from expr import Expression, MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure, ProofStepFailure
+from expr import Expression, MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
 from operation import Operation
 from lambda_expr import Lambda
 from bundle import Block, Etcetera
