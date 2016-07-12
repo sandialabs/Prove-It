@@ -5,4 +5,4 @@ from proveit._core_.known_truth import KnownTruth
 from defaults_and_settings import defaults, USE_DEFAULTS, storage
 from proveit._core_.special_statements import beginAxioms, endAxioms, beginTheorems, endTheorems
 from proof import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
-from proof import ModusPonensFailure, SpecializationFailure, GeneralizationFailure
+from proof import ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure
