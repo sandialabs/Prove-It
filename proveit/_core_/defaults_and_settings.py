@@ -3,9 +3,44 @@ import hashlib, os
 class Defaults:
     def __init__(self):
         self.assumptions = frozenset()
+    
+    def checkedAssumptions(self, assumptions):
+        '''
+        If the given assumptions is None, return the default;
+        otherwise return the given assumptions after checking
+        that it is an iterable collection of Expressions.
+        '''
+        if assumptions is None:
+            return self.assumptions
+        self._checkAssumptions(assumptions)
+        return assumptions
+    
+    def _checkAssumptions(self, assumptions):
+        '''
+        Check that the given assumptions are valid -- an iterable
+        collection of Expressions.
+        '''
+        from expression.expr import Expression
+        for assumption in assumptions:
+            if not isinstance(assumption, Expression):
+                raise TypeError('The assumptions must be an iterable collection of Expression objects')
+        
+    def __setattr__(self, attr, value):
+        '''
+        When setting the assumptions, check that they are valid.
+        '''
+        if attr == 'assumptions' and hasattr(self, attr):
+            self._checkAssumptions(value)
+        self.__dict__[attr] = value             
 
 defaults = Defaults()
 
+class InvalidAssumptions:
+    def __init__(self):
+        pass
+    def __str__(self):
+        return 'The assumptions must be an iterable collection of Expression objects'
+        
 class Storage:
     def __init__(self):
         self.directory = ''
@@ -15,7 +50,7 @@ class Storage:
         # can recall this without searching the hard drive again.
         self._proveItObjects = dict()
         
-    def _retrieve_png(self, proveItObj, pngGenFn, distinction=''):
+    def _retrieve_png(self, proveItObj, latex, configLatexToolFn, distinction=''):
         '''
         Find the .png file for the stored Expression, KnownTruth, or Proof.
         If distinction is provided, this is an extra string that decorates
@@ -25,20 +60,38 @@ class Storage:
         If it existed or was generated, read the .png file; otherwise return None.
         '''
         if self.directory is None:
-            return pngGenFn() # don't do any storage
+            return self._generate_png(latex, configLatexToolFn) # don't do any storage
         pv_it_filename = self._retrieve(proveItObj)
-        # generate the png file, including path, from pv_it_filename and the distinction 
+        # generate the latex and png file paths, from pv_it_filename and the distinction 
+        latex_path = os.path.join(self.directory, '.pv_it', pv_it_filename[:-6] + distinction + '.latex')
         png_path = os.path.join(self.directory, '.pv_it', pv_it_filename[:-6] + distinction + '.png')
-        if os.path.isfile(png_path):
-            # png file exists.  read and return the data.
-            with open(png_path) as f:
-                return f.read()
-        # png file does not exist.  generate it, store it, and return it.
-        png = pngGenFn()
-        with open(png_path, 'w') as f:
-            f.write(png)
+        # check if the latex file exists, is consistent with the given latex string, and if the png
+        # file exists.
+        if os.path.isfile(latex_path):
+            # latex file exists.  read it ans see if it the same as the given latex string
+            with open(latex_path) as latex_file:
+                if latex_file.read() == latex:
+                    # the latex files are the same, try to read the png file
+                    if os.path.isfile(png_path):                        
+                        # png file exists.  read and return the data.
+                        with open(png_path) as png_file:
+                            return png_file.read()
+        # store the latex string in the latex file
+        with open(latex_path, 'w') as latex_file:
+            latex_file.write(latex)
+        # generate, store and return the png file
+        png = self._generate_png(latex, configLatexToolFn)
+        with open(png_path, 'w') as png_file:
+            png_file.write(png)
         return png
     
+    def _generate_png(self, latex, configLatexToolFn):
+        from IPython.lib.latextools import latex_to_png, LaTeXTool
+        LaTeXTool.clear_instance()
+        lt = LaTeXTool.instance()
+        lt.use_breqn = False
+        return latex_to_png(latex, backend='dvipng', wrap=True)
+       
     def _proveItObjId(self, proveItObject):
         '''
         Retrieve a unique id for the Prove-It object based upon its pv_it filename from calling _retrieve.
