@@ -127,17 +127,9 @@ class ExpressionInfo:
     def _repr_png_(self):
         if (not hasattr(self,'png') or self.png is None):
             distinction = 'details' if self.show_details else 'info'
-            self.png = storage._retrieve_png(self.expr, self._generate_png, distinction=distinction)
+            self.png = storage._retrieve_png(self.expr, self.latex(), self._config_latex_tool, distinction=distinction)
         return self.png # previous stored or generated
-    
-    def _generate_png(self):
-        from IPython.lib.latextools import latex_to_png, LaTeXTool
-        LaTeXTool.clear_instance()
-        lt = LaTeXTool.instance()
-        lt.use_breqn = False
-        self._config_latex_tool(lt)
-        return latex_to_png(self.latex(), backend='dvipng', wrap=True)
-    
+        
     def _config_latex_tool(self, lt):
         '''
         Configure the LaTeXTool from IPython.lib.latextools as required by all

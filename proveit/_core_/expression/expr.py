@@ -2,7 +2,7 @@
 This is the expression module.
 """
 
-from proveit._core_.defaults_and_settings import defaults, storage
+from proveit._core_.defaults_and_settings import defaults, storage, USE_DEFAULTS
 
 class Expression:
     unique_id_map = dict() # map unique_id's to unique_rep's
@@ -95,7 +95,7 @@ class Expression:
         '''
         return iter(self._subExpressions)
     
-    def prove(self, assumptions=None):
+    def prove(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to prove this expression automatically under the
         given assumptions (if None, uses defaults.assumptions).  If this
@@ -104,8 +104,7 @@ class Expression:
         of those) is returned.
         '''
         from proveit import KnownTruth
-        if assumptions is None:
-            assumptions = defaults.assumptions
+        assumptions = defaults.checkedAssumptions(assumptions)
         foundTruth = KnownTruth.findKnownTruth(self, assumptions)
         if foundTruth is not None: 
             return foundTruth # found an existing KnownTruth that does the job!
@@ -113,7 +112,7 @@ class Expression:
             # prove by assumption
             from proveit._core_.proof import Assumption
             return Assumption(self).provenTruth
-        raise ProofFailure('Unable to automatically prove ' + str(self) + ' assuming ' + ', '.join(str(assumption) for assumption in assumptions))
+        raise ProofFailure('Unable to automatically prove ' + str(self) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
     
     '''
     def beginProof(self):
@@ -277,19 +276,8 @@ class Expression:
         storage if it was generated previously.
         '''
         if not hasattr(self,'png'):
-            self.png = storage._retrieve_png(self, self._generate_png)
+            self.png = storage._retrieve_png(self, self.latex(), self._config_latex_tool)
         return self.png # previous stored or generated
-    
-    def _generate_png(self):
-        '''
-        Compile the latex into a png image.
-        '''        
-        from IPython.lib.latextools import latex_to_png, LaTeXTool
-        LaTeXTool.clear_instance()
-        lt = LaTeXTool.instance()
-        lt.use_breqn = False
-        self._config_latex_tool(lt)
-        return latex_to_png(self.latex(), backend='dvipng', wrap=True)
     
     def _config_latex_tool(self, lt):
         '''
