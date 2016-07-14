@@ -1,4 +1,4 @@
-from proveit.expression import Literal, Operation
+from proveit import Literal, Operation
 from proveit.number.natural.decimal import WholeDecimal
 
 pkg = __package__
@@ -14,4 +14,4 @@ class DecimalFraction(Operation):
     def formatted(self, formatType, fence=False):
         return self.integer_part.formatted(formatType, False) + '.' + self.fractional_part.formatted(formatType, False)
         
-DECIMAL_FRACTION = Literal(pkg, 'DECIMAL_FRACTION', operationMaker=lambda operands : DecimalFraction(*operands))
+DECIMAL_FRACTION = Literal(pkg, 'DecimalFraction')

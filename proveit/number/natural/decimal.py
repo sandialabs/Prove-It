@@ -1,4 +1,4 @@
-from proveit.expression import Literal, Operation
+from proveit import Literal, Operation
 
 pkg = __package__
 
@@ -15,4 +15,4 @@ class WholeDecimal(Operation):
     def formatted(self, formatType, fence=False):
         return ''.join(digit.formatted(formatType, False) for digit in self.digits)
         
-WHOLE_DECIMAL = Literal(pkg, 'WHOLE_DECIMAL', operationMaker=lambda digits : WholeDecimal(digits))
+WHOLE_DECIMAL = Literal(pkg, 'WHOLE_DECIMAL')
