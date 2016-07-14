@@ -1,1 +1,2 @@
 from genericOps import BinaryOperation, AssociativeOperation, OperationOverInstances, InstanceSubstitutionException
+from genericOps import maybeFencedString, maybeFencedLatex, maybeFenced

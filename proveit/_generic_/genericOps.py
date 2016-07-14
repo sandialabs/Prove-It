@@ -1,5 +1,31 @@
 from proveit import Operation, Lambda, compositeExpression, MultiVariable, ExpressionList, Etcetera
 
+def maybeFencedString(innerStr, **kwargs):
+    '''
+    Return innerStr, wrapped in parentheses iff kwargs['fence']==True.
+    '''
+    if 'fence' in kwargs and kwargs['fence']==True:
+        return '(' + innerStr + ')'
+    return innerStr
+
+def maybeFencedLatex(innerLatex, **kwargs):
+    '''
+    Return innerLatex, wrapped in parentheses iff kwargs['fence']==True.
+    '''
+    if 'fence' in kwargs and kwargs['fence']==True:
+        return r'\left(' + innerLatex + r'\right)'
+    return innerLatex
+
+def maybeFenced(formatType, innerFormatted, **kwargs):
+    '''
+    Return the innerFormatted string/latex iff kwargs['fence']=True.  If formatType=='string'
+    use normal string formatting.  If formatType=='latex', use latex formatting.
+    '''
+    if formatType == 'string':
+        return maybeFencedString(innerFormatted, **kwargs)
+    elif formatType == 'latex':
+        return maybeFencedLatex(innerFormatted, **kwargs)
+    
 class BinaryOperation(Operation):
     def __init__(self, operator, A, B):
         Operation.__init__(self, operator, (A, B))
@@ -12,18 +38,16 @@ class BinaryOperation(Operation):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=False, subLeftFence=True, subRightFence=True):
+    def formatted(self, formatType, **kwargs):
+        fence =  kwargs['fence'] if 'fence' in kwargs else False
+        subLeftFence =  kwargs['subLeftFence'] if 'subLeftFence' in kwargs else True
+        subRightFence =  kwargs['subRightFence'] if 'subRightFence' in kwargs else True
         # override this default as desired
         formattedLeft = self.leftOperand.formatted(formatType, fence=subLeftFence)
         formattedRight = self.rightOperand.formatted(formatType, fence=subRightFence)
         formattedOp = self.operator.formatted(formatType)
         innerStr = formattedLeft + ' ' + formattedOp + ' ' + formattedRight
-        if fence:
-            if formatType == 'latex':
-                return r'\left(' + innerStr + r'\right)'
-            else:
-                return '(' + innerStr + ')'
-        else: return innerStr
+        return maybeFenced(formatType, innerStr, fence=fence)
 
 class AssociativeOperation(Operation):
     def __init__(self, operator, *operands):
@@ -45,11 +69,13 @@ class AssociativeOperation(Operation):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
     
-    def formatted(self, formatType, fence=False, subFence=True):
+    def formatted(self, formatType, **kwargs):
         '''
         Format the associative operation in the form "A * B * C" where '*' is a stand-in for
         the operator that is obtained from self.operator.formatted(formatType).
         '''
+        fence =  kwargs['fence'] if 'fence' in kwargs else False
+        subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
         formattedOperator = self.operator.formatted(formatType) 
         return self.operands.formatted(formatType, fence=fence, subFence=subFence, formattedOperator=formattedOperator)
         """
