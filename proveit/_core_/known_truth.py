@@ -7,7 +7,7 @@ with possibly fewer assumptions, suffices).
 """
 
 from proveit._core_.expression import Expression
-from proveit._core_.defaults_and_settings import storage
+from storage import storage
             
 class KnownTruth:
     
@@ -38,48 +38,69 @@ class KnownTruth:
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
         self._proof = proof
-        # add the KnownTruth to KnownTruth.lookup_dict (unless it is redundant)
         if self.expr in KnownTruth.lookup_dict:
-            # Another known truth for this expression.
-            # Update proofs for any known truths that have become obsolete by this one
-            # with a superset of this ones' assumptions.
-            keptTruths = []
-            for other in KnownTruth.lookup_dict[self.expr]:
-                if self.assumptionsSet.issubset(other.assumptionsSet):
-                    other._updateProof(proof) # use the new proof that is does the job as well or better
-                else:
-                    keptTruths.append(other)
-            # Remove the obsolete KnownTruths from the lookup_dict
-            KnownTruth.lookup_dict[self.expr] = keptTruths
-            # See if this KnownTruth is born obsolete.
-            preExistingReplacement = KnownTruth.findKnownTruth(expression, assumptions)
-            if preExistingReplacement is not None:
-                # this is a redundant known truth which is born with an existing replacement
-                self._updateProof(preExistingReplacement._proof)
-            else:
-                # a new, non-redundant known truth.
-                KnownTruth.lookup_dict[self.expr].append(self)
+            # Another known truth for this expression
+            KnownTruth.lookup_dict[self.expr].append(self)
         else:
             # The first known truth recorded for this expression.
-            KnownTruth.lookup_dict[self.expr] = [self]   
+            KnownTruth.lookup_dict[self.expr] = [self]               
+        # a unique representation for the KnownTruth comprises its expr and assumptions:
+        self._unique_rep = hex(self.expr._unique_id) + ';[' + ','.join(hex(assumption._unique_id) for assumption in assumptions) + ']'
+        # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
+        self._unique_id = hash(self._unique_rep)
+
+    def __eq__(self, other):
+        if isinstance(other, KnownTruth):
+            return self._unique_id == other._unique_id
+        else: return False # other must be an KnownTruth to be equal to self
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    def __hash__(self):
+        return self._unique_id
 
     def proof(self):
         '''
         Returns the most up-to-date proof of this KnownTruth.
         '''
         return self._proof
+    
+    def _updateObsoleteProofs(self):
+        '''
+        After a Proof is finished being constructed, check to see if
+        any proofs for this KnownTruth are obsolete; the new proof
+        might make an previous one obsolete, or it may be born
+        obsolete itself.
+        '''
+        keptTruths = []
+        bornObsolete = False
+        for other in KnownTruth.lookup_dict[self.expr]:
+            if other == self: continue # that's not an "other"
+            if self.assumptionsSet.issubset(other.assumptionsSet):
+                other._updateProof(self._proof) # use the new proof that does the job as well or better
+            elif self.assumptionsSet.issuperset(other.assumptionsSet):
+                # the new proof was born obsolete
+                self._updateProof(other._proof) # use an old proof that does the job better
+                bornObsolete = True
+            else:
+                keptTruths.append(other)
+        if not bornObsolete:
+            keptTruths.append(self)
+        # Remove the obsolete KnownTruths from the lookup_dict
+        KnownTruth.lookup_dict[self.expr] = keptTruths
 
     def _updateProof(self, newProof):
         '''
         Update the proof of this KnownTruth which has been made obsolete.
         Dependents of the old proof must also be updated.
         '''
-        from proof import Proof
         oldDependents = self._proof._dependents
-        self._proof = newProof
+        self._proof = newProof # set to the new proof
         for oldDependentProof in oldDependents:
-            dependentReplacement = Proof(oldDependentProof.provenTruth, oldDependentProof.requiredTruths())
+            # remake the dependents and update their proofs
+            dependentReplacement = oldDependentProof.remake()
             oldDependentProof.provenTruth._updateProof(dependentReplacement)
+        else:
+            self._proof = newProof # no dependents, just replace the proof
 
     def __setattr__(self, attr, value):
         '''
@@ -87,7 +108,7 @@ class KnownTruth:
         the 'png' attribute which will be added whenever it is generated).   Also,
         _proof is an exception which can be updated internally.
         '''
-        if attr != '_proof' and hasattr(self, attr):
+        if attr != '_proof' and attr in self.__dict__:
             raise Exception("Attempting to alter read-only value")
         self.__dict__[attr] = value    
 
@@ -96,6 +117,9 @@ class KnownTruth:
         The KnownTruth aquires the attributes of its Expression, so it will act
         like the Expression except it has additional (or possibly overridden) attributes.
         '''
+        # called only if the attribute does not exist in KnownTruth directly
+        if name == 'png':
+            raise AttributeError("Do not use the Expression version of the 'png' attribute.") 
         return getattr(self.expr, name)
     
     def __dir__(self):
@@ -114,11 +138,14 @@ class KnownTruth:
         '''
         if expression not in KnownTruth.lookup_dict:
             return None
-        exprStmts = KnownTruth.lookup_dict[expression]
-        for stmt in exprStmts:
-            if stmt.assumptionsSet.issubset(assumptions):
-                return stmt # found one that works
-        return None
+        truths = KnownTruth.lookup_dict[expression]
+        suitableTruths = []
+        for truth in truths:
+            if truth.assumptionsSet.issubset(assumptions):
+                suitableTruths.append(truth)
+        if len(suitableTruths)==0: return None # no suitable truth
+        # return one wih the fewest assumptions
+        return min(suitableTruths, key=lambda truth : len(truth.assumptions))
 
     def generalize(self, forallVars, domain=None, conditions=tuple()):
         '''
@@ -126,7 +153,10 @@ class KnownTruth:
         proven generalized KnownTruth.
         '''
         from proveit._core_.proof import Generalization
-        return Generalization(self, forallVars, domain, conditions).provenStmt
+        from proveit import Variable
+        if isinstance(forallVars, Variable):
+            forallVars = [forallVars] # a single Variable to convert into a list of one
+        return Generalization(self, forallVars, domain, conditions).provenTruth
 
     def asImplication(self, hypothesis):
         '''
@@ -139,7 +169,14 @@ class KnownTruth:
         from proveit._core_.proof import HypotheticalReasoning
         if isinstance(hypothesis, KnownTruth):
             hypothesis = hypothesis.expr # we want the expression for this purpose
-        return HypotheticalReasoning(self, hypothesis).provenStmt
+        return HypotheticalReasoning(self, hypothesis).provenTruth
+
+    def relabel(self, relabelMap):
+        '''
+        Performs a relabeling derivation step, relabeling the Variables of the 
+        KnownTruth for the expr and the assumptions.
+        '''
+        return Expression.relabel(self.expr, relabelMap, assumptions=self.assumptions)
 
     def asImpl(self, hypothesis):
         '''
@@ -179,18 +216,17 @@ class KnownTruth:
         storage if it was generated previously.
         '''
         if not hasattr(self,'png'):
-            self.png = storage._retrieve_png(self, self._generate_png)
+            self.png = storage._retrieve_png(self, self.latex(), self._config_latex_tool)
         return self.png # previous stored or generated
     
-    def _generate_png(self):
+    def _config_latex_tool(self, lt):
         '''
-        Compile the latex into a png image.
+        Configure the LaTeXTool from IPython.lib.latextools as required by all
+        sub-expressions.
         '''
-        from IPython.lib.latextools import latex_to_png, LaTeXTool
-        LaTeXTool.clear_instance()
-        lt = LaTeXTool.instance()
-        lt.use_breqn = False
         self.expr._config_latex_tool(lt)
-        return latex_to_png(self.latex(), backend='dvipng', wrap=True)
+        for assumption in self.assumptions:
+            assumption._config_latex_tool(lt)
+
     
 
