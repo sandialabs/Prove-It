@@ -2,7 +2,8 @@
 This is the expression module.
 """
 
-from proveit._core_.defaults_and_settings import defaults, storage, USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit._core_.storage import storage
 
 class Expression:
     unique_id_map = dict() # map unique_id's to unique_rep's

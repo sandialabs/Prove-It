@@ -5,7 +5,7 @@ the exprInfo() method of an Expression object.
 '''
 
 import re
-from proveit._core_.defaults_and_settings import storage
+from proveit._core_.storage import storage
 
 def tex_escape(text):
     """
