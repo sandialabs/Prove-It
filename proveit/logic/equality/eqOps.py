@@ -1,4 +1,4 @@
-from proveit import BinaryOperation
+from proveit import BinaryOperation, USE_DEFAULTS
 from proveit import Variable, MultiVariable, Literal, Operation, ExpressionList, Etcetera, ExpressionTensor, Block, safeDummyVar
 from proveit.common import A, P, X, f, x, y, z
 
@@ -25,14 +25,14 @@ class Equals(BinaryOperation):
         assert self.lhs == self.rhs
         return equalsReflexivity.specialize({x:self.lhs})
             
-    def deriveReversed(self):
+    def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From x = y derive y = x.
         '''
         from axioms import equalsSymmetry
-        return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion()
+        return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
 
-    def transitivityImpl(self, otherEquality):
+    def transitivityImpl(self, otherEquality, assumptions=USE_DEFAULTS):
         '''
         From x = y (self) and the given y = z (otherEquality) derive and return 
         (y=z) => (x = z) assuming self.
@@ -42,26 +42,26 @@ class Equals(BinaryOperation):
         assert isinstance(otherEquality, Equals)
         if self.rhs == otherEquality.lhs:
             # from x = y, y = z, derive y = z => x = z assuing x = y
-            result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConclusion()
+            result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConclusion(assumptions)
             return result
         elif self.lhs == otherEquality.lhs:
             # from y = x and y = z, derive y = z => x = z assuing x = y
-            return self.deriveReversed().transitivityImpl(otherEquality)
+            return self.deriveReversed(assumptions).transitivityImpl(otherEquality, assumptions)
         elif self.lhs == otherEquality.rhs:
             # from y = x and z = y, derive y = z => x = z assuing x = y
-            return self.deriveReversed().transitivityImpl(otherEquality.deriveReversed())
+            return self.deriveReversed(assumptions).transitivityImpl(otherEquality.deriveReversed(assumptions), assumptions)
         elif self.rhs == otherEquality.rhs:
             # from x = y and z = y, derive y = z => x = z assuing x = y
-            return self.transitivityImpl(otherEquality.deriveReversed())
+            return self.transitivityImpl(otherEquality.deriveReversed(assumptions), assumptions)
         else:
             assert False, 'transitivity cannot be applied unless there is something in common in the equalities'
             
-    def applyTransitivity(self, otherEquality):
+    def applyTransitivity(self, otherEquality, assumptions=USE_DEFAULTS):
         '''
         From x = y (self) and y = z (otherEquality) derive and return x = z.
         Also works more generally as long as there is a common side to the equations.
         '''
-        return self.transitivityImpl(otherEquality).deriveConclusion()
+        return self.transitivityImpl(otherEquality, assumptions).deriveConclusion(assumptions)
         
     def deriveViaBooleanEquality(self):
         '''
@@ -135,7 +135,7 @@ class Equals(BinaryOperation):
                 raise Exception('Expression to be substituted is not found within the expression that the substitution is applied to.')
         return fnExpr, fnArg
     
-    def substitution(self, fnExpr, fnArg=None):
+    def substitution(self, fnExpr, fnArg=None, assumptions=USE_DEFAULTS):
         '''
         From x = y, and given f(x), derive f(x)=f(y).  If fnArg is
         supplied, then the f function is defined as the lambda function
@@ -145,7 +145,7 @@ class Equals(BinaryOperation):
         from axioms import substitution
         fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs, self.rhs)
         assert isinstance(fnArg, Variable) or isinstance(fnArg, Etcetera) or isinstance(fnArg, Block)
-        return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion()
+        return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion(assumptions)
         
     def lhsStatementSubstitution(self, fnExpr, fnArg=None):
         '''
@@ -159,7 +159,7 @@ class Equals(BinaryOperation):
         assert isinstance(fnArg, Variable)
         return lhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion()
     
-    def rhsStatementSubstitution(self, fnExpr, fnArg=None):
+    def rhsStatementSubstitution(self, fnExpr, fnArg=None, assumptions=USE_DEFAULTS):
         '''
         From x = y, and given P(x), derive P(x)=>P(y).  
         If fnArg is supplied, then the P function is defined as the lambda function
@@ -169,7 +169,7 @@ class Equals(BinaryOperation):
         from theorems import rhsSubstitution
         fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs, self.rhs)        
         assert isinstance(fnArg, Variable)
-        return rhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion()
+        return rhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion(assumptions=assumptions)
 
     def lhsSubstitute(self, fnExpr, fnArg=None):
         '''
@@ -181,14 +181,14 @@ class Equals(BinaryOperation):
         substitution = self.lhsStatementSubstitution(fnExpr, fnArg)
         return substitution.deriveConclusion()
         
-    def rhsSubstitute(self, fnExpr, fnArg=None):
+    def rhsSubstitute(self, fnExpr, fnArg=None, assumptions=USE_DEFAULTS):
         '''
         From x = y, and given P(x), derive P(y) assuming P(x).  
         If fnArg is supplied, then the P function is defined as the lambda function
         P: fnArg -> fnExpr.  Otherwise, all occurences of self.lhs will be
         replaced with self.rhs inside fnExpr for this substitution.   
         '''
-        substitution = self.rhsStatementSubstitution(fnExpr, fnArg)
+        substitution = self.rhsStatementSubstitution(fnExpr, fnArg, assumptions)
         return substitution.deriveConclusion()
 
     def leftImplViaEquivalence(self):
@@ -295,14 +295,14 @@ class NotEquals(BinaryOperation):
     def operatorOfOperation(subClass):
         return NOTEQUALS    
     
-    def deriveReversed(self):
+    def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From x != y derive y != x.
         '''
         from theorems import notEqualsSymmetry
-        return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion()
+        return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
 
-    def deriveViaDoubleNegation(self):
+    def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         '''
         From A != FALSE, derive and return A assuming inBool(A).
         Also see version in Not class.
@@ -310,7 +310,7 @@ class NotEquals(BinaryOperation):
         from proveit.logic import FALSE, inBool
         from proveit.logic.boolean.theorems import fromNotFalse
         if self.rhs == FALSE:
-            return fromNotFalse.specialize({A:self.lhs}).deriveConclusion()
+            return fromNotFalse.specialize({A:self.lhs}).deriveConclusion(assumptions)
 
     def concludeViaDoubleNegation(self):
         '''
