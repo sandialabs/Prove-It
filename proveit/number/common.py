@@ -1,10 +1,9 @@
-from proveit.expression import Variable, Literal, LATEX, STRING, Operation
-from proveit.multiExpression import Etcetera
+from proveit import Variable, Literal, Operation, Etcetera
 from proveit.number import Multiply
 from proveit.common import *
 from proveit.number.number import *
 from proveit.number.numberSets import *
-from proveit.basiclogic import Difference, Singleton
+from proveit.logic import Difference, Singleton
 
 pkg = __package__
 
