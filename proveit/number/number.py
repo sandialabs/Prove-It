@@ -1,4 +1,4 @@
-from proveit.expression import Literal, LATEX
+from proveit import Literal
 from proveit.number.arithmeticOps import Neg
 from proveit.number.natural.decimal import WholeDecimal
 
@@ -57,7 +57,7 @@ nine = DigitLiteral(9)
 
 ALL_DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
-infinity = Literal(pkg,'infinity',{LATEX:r'\infty'})
+infinity = Literal(pkg,'infinity',r'\infty')
 minusOne = Neg(one)
 minusTwo = Neg(two)
 
@@ -96,8 +96,8 @@ class IrrationalLiteral(Literal):
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
     
-    def __init__(self, name, formatMap = None):
-        Literal.__init__(self, pkg, name, formatMap)
+    def __init__(self, stringFormat, latexFormat = None):
+        Literal.__init__(self, pkg, stringFormat, latexFormat)
     
     def deduceInRealsPos(self):
         if IrrationalLiteral._inRealsPosStmts is None:
@@ -118,7 +118,7 @@ class IrrationalLiteral(Literal):
         return IrrationalLiteral._positiveStmts[self.name]
     
 e = IrrationalLiteral('e')
-pi = IrrationalLiteral('pi',{LATEX:r'\pi'})
+pi = IrrationalLiteral('pi', r'\pi')
 
 class ComplexLiteral(Literal):
     _inComplexesStmts = None # initializes when needed

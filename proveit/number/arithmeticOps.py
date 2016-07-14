@@ -1,13 +1,12 @@
 import sys
-from proveit.expression import Literal, LATEX, STRING, Operation, Variable, safeDummyVar
-from proveit.multiExpression import MultiVariable, Etcetera
-from proveit.basiclogic import Equals, Equation, Forall, In
+from proveit import Literal, Operation, Variable, safeDummyVar, MultiVariable, Etcetera
+from proveit.logic import Equals, Equation, Forall, InSet
 #from proveit.number import axioms
 #from proveit.statement import *
-from proveit.basiclogic.genericOps import AssociativeOperation, BinaryOperation, OperationOverInstances
-from proveit.everythingLiteral import EVERYTHING
+from proveit import AssociativeOperation, BinaryOperation, OperationOverInstances, maybeFencedLatex, maybeFencedString, maybeFenced
 from proveit.common import a, b, c, d, f, k, l, m, n, r, v, w, x, y, z, A, P, S, aEtc, cEtc, vEtc, wEtc, xEtc, yEtc, zEtc
 from proveit.number.numberSets import *
+from __builtin__ import False
 #from variables import *
 #from variables import a, b
 #import variables as var
@@ -26,12 +25,16 @@ class DiscreteContiguousSet(BinaryOperation):
         self.lowerBound = lowerBound
         self.upperBound = upperBound
     
-    def formatted(self, formatType, fence=False):
-        if formatType == LATEX:
-                return r'\{'+self.lowerBound.formatted(formatType, fence=fence) +'\ldots '+ self.upperBound.formatted(formatType, fence=fence)+'\}'
-        else:
-            return r'\{'+self.lowerBound.formatted(formatType, fence=fence) +'...'+ self.upperBound.formatted(formatType, fence=fence)+'\}'
+    @classmethod
+    def operatorOfOperation(subClass):
+        return DISCRETECONTIGUOUSSET
+        
+    def string(self, **kwargs):
+        return '{'+self.lowerBound.string() +'...'+ self.upperBound.string()+'}'
 
+    def latex(self, **kwargs):
+        return r'\{'+self.lowerBound.latex() +'\ldots'+ self.upperBound.latex()+r'\}'
+        
     def deduceElemInSet(self, member):
         from integer.theorems import inInterval
         return inInterval.specialize({a:self.lowerBound, b:self.upperBound, n:member})
@@ -86,7 +89,7 @@ class DiscreteContiguousSet(BinaryOperation):
         deduceNegative(self.upperBound, assumptions=assumptions)
         return allInNegativeIntervalAreNegative.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})        
 
-DISCRETECONTIGUOUSSET = Literal(pkg, 'DISCRETECONTIGUOUSSET', operationMaker = lambda operands : DiscreteContiguousSet(*operands))
+DISCRETECONTIGUOUSSET = Literal(pkg, 'DISCRETECONTIGUOUSSET')
 
 class Interval(BinaryOperation):
     r'''
@@ -97,17 +100,21 @@ class Interval(BinaryOperation):
         BinaryOperation.__init__(self,operator,lowerBound,upperBound)
         self.lowerBound = lowerBound
         self.upperBound = upperBound
-        
+                
 class IntervalOO(Interval):
 
     def __init__(self,lowerBound,upperBound):
         Interval.__init__(self,INTERVALOO,lowerBound,upperBound)
         
-    def formatted(self, formatType, fence=False):
-        if formatType == LATEX:
-            return r'\left('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right)'
-        else:
-            return r'('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r')'
+    def string(self, **kwargs):
+        return '('+self.lowerBound.string() +','+ self.upperBound.string()+')'
+
+    def latex(self, **kwargs):
+        return r'\left('+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right)'
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return INTERVALOO
 
     def deduceElemInSet(self, member):
         from real.theorems import inIntervalOO
@@ -157,7 +164,7 @@ class IntervalOO(Interval):
         return relaxIntervalOOright.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
         
 
-INTERVALOO = Literal(pkg, 'INTERVALOO', operationMaker = lambda operands : IntervalOO(*operands))
+INTERVALOO = Literal(pkg, 'INTERVALOO')
 
 
 class IntervalOC(Interval):
@@ -165,12 +172,16 @@ class IntervalOC(Interval):
     def __init__(self,lowerBound,upperBound):
         Interval.__init__(self,INTERVALOC,lowerBound,upperBound)
         
-    def formatted(self, formatType, fence=False):
-        if formatType == LATEX:
-            return r'\left('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right]'
-        else:
-            return r'('+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r']'
+    @classmethod
+    def operatorOfOperation(subClass):
+        return INTERVALOC
+            
+    def string(self, **kwargs):
+        return '('+self.lowerBound.string() +','+ self.upperBound.string()+']'
 
+    def latex(self, **kwargs):
+        return r'\left('+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right]'
+        
     def deduceElemInSet(self, member):
         from real.theorems import inIntervalOC
         return inIntervalOC.specialize({a:self.lowerBound, b:self.upperBound, x:member})
@@ -212,18 +223,22 @@ class IntervalOC(Interval):
         return relaxIntervalOC.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
 
-INTERVALOC = Literal(pkg, 'INTERVALOC', operationMaker = lambda operands : IntervalOC(*operands))
+INTERVALOC = Literal(pkg, 'INTERVALOC')
 
 class IntervalCO(Interval):
 
     def __init__(self,lowerBound,upperBound):
         Interval.__init__(self,INTERVALCO,lowerBound,upperBound)
-        
-    def formatted(self, formatType, fence=False):
-        if formatType == LATEX:
-            return r'\left['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right)'
-        else:
-            return r'['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r')'
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return INTERVALCO
+             
+    def string(self, **kwargs):
+        return '['+self.lowerBound.string() +','+ self.upperBound.string()+')'
+
+    def latex(self, **kwargs):
+        return r'\left['+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right)'
 
     def deduceElemInSet(self, member):
         from real.theorems import inIntervalCO
@@ -266,18 +281,22 @@ class IntervalCO(Interval):
         return relaxIntervalCO.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
 
-INTERVALCO = Literal(pkg, 'INTERVALCO', operationMaker = lambda operands : IntervalCO(*operands))
+INTERVALCO = Literal(pkg, 'INTERVALCO')
 
 class IntervalCC(Interval):
     
     def __init__(self,lowerBound,upperBound):
         Interval.__init__(self,INTERVALCC,lowerBound,upperBound)
         
-    def formatted(self, formatType, fence=False):
-        if formatType == LATEX:
-            return r'\left['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r'\right]'
-        else:
-            return r'['+self.lowerBound.formatted(formatType,fence=fence)+r','+self.upperBound.formatted(formatType,fence=fence)+r']'
+    @classmethod
+    def operatorOfOperation(subClass):
+        return INTERVALCC
+            
+    def string(self, **kwargs):
+        return '['+self.lowerBound.string() +','+ self.upperBound.string()+']'
+
+    def latex(self, **kwargs):
+        return r'\left['+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right]'
 
     def deduceElemInSet(self, member):
         from real.theorems import inIntervalCC
@@ -312,7 +331,7 @@ class IntervalCC(Interval):
         deduceInReals(scaleFactor, assumptions=assumptions)
         return rescaleInIntervalCC.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
 
-INTERVALCC = Literal(pkg, 'INTERVALCC', operationMaker = lambda operands : IntervalCC(*operands))
+INTERVALCC = Literal(pkg, 'INTERVALCC')
 
 class OrderingRelation(BinaryOperation):
     r'''
@@ -321,7 +340,6 @@ class OrderingRelation(BinaryOperation):
     '''
     def __init__(self, operator,lhs, rhs):
         BinaryOperation.__init__(self,operator, lhs, rhs)
-        self.operator = operator
         self.lhs = lhs
         self.rhs = rhs
 
@@ -386,6 +404,10 @@ class LessThan(OrderingRelation):
         '''
         OrderingRelation.__init__(self, LESSTHAN,lhs,rhs)
         
+    @classmethod
+    def operatorOfOperation(subClass):
+        return LESSTHAN
+            
     def deduceInBooleans(self, assumptions=frozenset()):
         from real.theorems import lessThanInBools
         deduceInReals(self.lhs, assumptions)
@@ -467,7 +489,7 @@ class LessThan(OrderingRelation):
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
-LESSTHAN = Literal(pkg,'LESSTHAN', {STRING: r'<', LATEX:r'<'}, operationMaker = lambda operands : LessThan(*operands))
+LESSTHAN = Literal(pkg, r'<', r'<')
 
 class LessThanEquals(OrderingRelation):
     def __init__(self, lhs, rhs):
@@ -476,6 +498,10 @@ class LessThanEquals(OrderingRelation):
         '''
         OrderingRelation.__init__(self, LESSTHANEQUALS,lhs,rhs)
         
+    @classmethod
+    def operatorOfOperation(subClass):
+        return LESSTHANEQUALS
+            
     def deduceInBooleans(self, assumptions=frozenset()):
         from real.theorems import lessThanEqualsInBools
         deduceInReals(self.lhs, assumptions)
@@ -553,7 +579,7 @@ class LessThanEquals(OrderingRelation):
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
         
-LESSTHANEQUALS = Literal(pkg,'LESSTHANEQUALS', {STRING: r'<=', LATEX:r'\leq'}, operationMaker = lambda operands : LessThanEquals(*operands))
+LESSTHANEQUALS = Literal(pkg, r'<=', r'\leq')
 
 
 class GreaterThan(OrderingRelation):
@@ -563,6 +589,10 @@ class GreaterThan(OrderingRelation):
         '''
         OrderingRelation.__init__(self, GREATERTHAN,lhs,rhs)
         
+    @classmethod
+    def operatorOfOperation(subClass):
+        return GREATERTHAN
+            
     def deduceInBooleans(self, assumptions=frozenset()):
         from real.theorems import greaterThanInBools
         deduceInReals(self.lhs, assumptions)
@@ -643,7 +673,7 @@ class GreaterThan(OrderingRelation):
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
-GREATERTHAN = Literal(pkg,'GREATERTHAN', {STRING: r'>', LATEX:r'>'}, operationMaker = lambda operands : GreaterThan(*operands))
+GREATERTHAN = Literal(pkg, r'>', r'>')
 
 class GreaterThanEquals(OrderingRelation):
     def __init__(self, lhs, rhs):
@@ -652,6 +682,10 @@ class GreaterThanEquals(OrderingRelation):
         '''
         OrderingRelation.__init__(self, GREATERTHANEQUALS,lhs,rhs)
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return GREATERTHANEQUALS
+    
     def deduceInBooleans(self, assumptions=frozenset()):
         from real.theorems import greaterThanEqualsInBools
         deduceInReals(self.lhs, assumptions)
@@ -728,12 +762,16 @@ class GreaterThanEquals(OrderingRelation):
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
-GREATERTHANEQUALS = Literal(pkg,'GREATERTHANEQUALS', {STRING: r'>=', LATEX:r'\geq'}, operationMaker = lambda operands : GreaterThanEquals(*operands))
+GREATERTHANEQUALS = Literal(pkg, r'>=', r'\geq')
 
 class Min(Operation, NumberOp):
     def __init__(self, A, B):
         Operation.__init__(self, MIN, [A, B])
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return MIN
+    
     def _closureTheorem(self, numberSet):
         import real.theorems
         if numberSet == Reals:
@@ -741,11 +779,15 @@ class Min(Operation, NumberOp):
         elif numberSet == RealsPos:
             return real.theorems.minPosClosure            
 
-MIN = Literal(pkg, 'MIN', {STRING:'Min', LATEX:r'{\rm Min}'}, operationMaker = lambda operands : Min(*operands))
+MIN = Literal(pkg, 'Min', r'{\rm Min}')
 
 class Max(Operation, NumberOp):
     def __init__(self, A, B):
         Operation.__init__(self, MAX, [A, B])
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return MAX
 
     def _closureTheorem(self, numberSet):
         import real.theorems
@@ -754,12 +796,16 @@ class Max(Operation, NumberOp):
         elif numberSet == RealsPos:
             return real.theorems.maxPosClosure               
 
-MAX = Literal(pkg, 'MAX', {STRING:'Max', LATEX:r'{\rm Max}'}, operationMaker = lambda operands : Max(*operands))
+MAX = Literal(pkg, 'Max', r'{\rm Max}')
 
 class Abs(Operation, NumberOp):
     def __init__(self, A):
         Operation.__init__(self, ABS, A)
         self.operand = A
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return ABS
 
     def _closureTheorem(self, numberSet):
         import complex.theorems
@@ -772,11 +818,11 @@ class Abs(Operation, NumberOp):
         import complex.theorems
         return complex.theorems.absNotEqZero
     
-    def formatted(self, formatType, fence=False):
-        if formatType == STRING:
-            return '|'+self.operand.formatted(formatType, fence=fence)+'|'
-        elif formatType == LATEX:
-            return r'\left|'+self.operand.formatted(formatType, fence=fence)+r'\right|'
+    def string(self, **kwargs):
+        return '|'+self.operand.string()+'|'
+
+    def latex(self, **kwargs):
+        return r'\left|'+self.operand.latex()+r'\right|'
 
     def deduceGreaterThanEqualsZero(self, assumptions=frozenset()):
         from complex.theorems import absIsNonNeg
@@ -809,7 +855,7 @@ class Abs(Operation, NumberOp):
         return absElim.specialize({x:self.operand})
         
 
-ABS = Literal(pkg, 'ABS', operationMaker = lambda operands : Abs(*operands))
+ABS = Literal(pkg, 'ABS')
 
 class Add(AssociativeOperation, NumberOp):
     def __init__(self, *operands):
@@ -818,6 +864,10 @@ class Add(AssociativeOperation, NumberOp):
         '''
         AssociativeOperation.__init__(self, ADD, *operands)
         self.terms = self.operands
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return ADD
 
     def _closureTheorem(self, numberSet):
         import complex.theorems
@@ -966,7 +1016,7 @@ class Add(AssociativeOperation, NumberOp):
         ySub = self.operands[startIdx2:endIdx2]
         zSub = self.operands[endIdx2:] if endIdx2 is not None else []
         deduceInComplexes(self.operands, assumptions)
-        return addComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+        return addComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}, assumptions=assumptions)
     
     def group(self, startIdx=None, endIdx=None, assumptions=frozenset()):
         '''
@@ -1051,7 +1101,7 @@ class Add(AssociativeOperation, NumberOp):
             raise Exception("Sum joinoing currently only implemented for two summation terms.")
         return self.terms[0].join(self.terms[1], assumptions)
 
-ADD = Literal(pkg, 'ADD', {STRING: r'+', LATEX: r'+'}, operationMaker = lambda operands : Add(*operands))
+ADD = Literal(pkg, r'+', r'+')
 
 class Subtract(BinaryOperation, NumberOp):
     def __init__(self, operandA, operandB):
@@ -1060,6 +1110,10 @@ class Subtract(BinaryOperation, NumberOp):
         '''
         BinaryOperation.__init__(self, SUBTRACT, operandA, operandB)
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return SUBTRACT
+    
     def _closureTheorem(self, numberSet):
         import complex.theorems
         import real.theorems
@@ -1292,7 +1346,7 @@ class Subtract(BinaryOperation, NumberOp):
             eq.update(eq.eqExpr.rhs.simplification(assumptions)) # take care of double negation or zero negation
         return eq.eqExpr
 
-SUBTRACT = Literal(pkg, 'SUBTRACT', {STRING: r'-', LATEX: r'-'}, operationMaker = lambda operands : Subtract(*operands))
+SUBTRACT = Literal(pkg, r'-', r'-')
 
 class Multiply(AssociativeOperation, NumberOp):
     def __init__(self, *operands):
@@ -1302,6 +1356,10 @@ class Multiply(AssociativeOperation, NumberOp):
         AssociativeOperation.__init__(self, MULTIPLY, *operands)
         self.factors = operands
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return MULTIPLY
+    
     def _closureTheorem(self, numberSet):
         import complex.theorems
         import real.theorems
@@ -1390,7 +1448,7 @@ class Multiply(AssociativeOperation, NumberOp):
         ySub = self.operands[startIdx2:endIdx2]
         zSub = self.operands[endIdx2:] if endIdx2 is not None else []
         deduceInComplexes(self.operands, assumptions)
-        return multComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+        return multComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}, assumptions=assumptions)
 
     def group(self, startIdx=None, endIdx=None, assumptions=frozenset()):
         '''
@@ -1635,7 +1693,7 @@ class Multiply(AssociativeOperation, NumberOp):
         deduceInComplexes([aSub, bSub, cSub], assumptions=assumptions)
         return thm.specialize({a:aSub, b:bSub, c:cSub})
     
-MULTIPLY = Literal(pkg, 'MULTIPLY', {STRING: r'*', LATEX: r'\cdot'}, operationMaker = lambda operands : Multiply(*operands))
+MULTIPLY = Literal(pkg, r'*', r'\cdot')
 
 class Divide(BinaryOperation, NumberOp):
     def __init__(self, operandA, operandB):
@@ -1643,6 +1701,10 @@ class Divide(BinaryOperation, NumberOp):
         Divide two operands.
         '''
         BinaryOperation.__init__(self, DIVIDE, operandA, operandB)
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return DIVIDE
 
     def _closureTheorem(self, numberSet):
         import complex.theorems
@@ -1658,7 +1720,7 @@ class Divide(BinaryOperation, NumberOp):
         import complex.theorems
         return complex.theorems.divideNotEqZero
 
-DIVIDE = Literal(pkg, 'DIVIDE', {STRING: r'/', LATEX: r'\div'}, operationMaker = lambda operands : Divide(*operands))
+DIVIDE = Literal(pkg, r'/', r'\div')
 
 class Fraction(BinaryOperation, NumberOp):
     def __init__(self, operandA, operandB):
@@ -1669,6 +1731,10 @@ class Fraction(BinaryOperation, NumberOp):
         self.numerator = operandA
         self.denominator = operandB
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return FRACTION
+    
     def _closureTheorem(self, numberSet):
         import complex.theorems
         import real.theorems
@@ -1708,14 +1774,10 @@ class Fraction(BinaryOperation, NumberOp):
         '''
         return self.simplification(assumptions).rhs
         
-    def formatted(self, formatType, fence=False):
-        if formatType == LATEX:
-            return r'\frac{'+self.numerator.formatted(formatType, fence=False)+'}{'+ self.denominator.formatted(formatType, fence=False)+'}'
-        elif formatType == STRING:
-            return Divide(self.numerator, self.denominator).formatted(STRING)
-        else:
-            print "BAD FORMAT TYPE"
-            return None
+    def latex(self, **kwargs):
+        # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        return maybeFencedLatex(r'\frac{'+self.numerator.latex()+'}{'+self.denominator.latex()+r'\right}', **kwargs)
     
     def combineExponents(self, assumptions=frozenset()):
         from complex.theorems import fracIntExp, fracNatPosExp
@@ -1876,7 +1938,8 @@ class Fraction(BinaryOperation, NumberOp):
                     eqns.append(eqns[-1].rhs.group(startIdx=-num, assumptions=assumptions))           
         return Equation(*eqns).eqExpr # equating the lhs of the first equation to the rhs of the last equation
 
-FRACTION = Literal(pkg, 'FRACTION', operationMaker = lambda operands : Fraction(*operands))
+# like '/', but distinguishes it as a fraction with numerator over denominator (\frac in latex)
+FRACTION = Literal(pkg, '//') 
 
 class Exponentiate(Operation, NumberOp):
     def __init__(self, base, exponent):
@@ -1886,6 +1949,10 @@ class Exponentiate(Operation, NumberOp):
         Operation.__init__(self,EXPONENTIATE, (base, exponent))
         self.base = base
         self.exponent = exponent
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return EXPONENTIATE
 
     def _closureTheorem(self, numberSet):
         import natural.theorems
@@ -1949,28 +2016,18 @@ class Exponentiate(Operation, NumberOp):
     def _notEqZeroTheorem(self):
         import complex.theorems
         return complex.theorems.powNotEqZero
-        
-    def formatted(self, formatType, fence=False):
-        formattedBase = self.base.formatted(formatType, fence=True)
-        if isinstance(self.base, Exponentiate) or isinstance(self.base, Fraction):
-            # must fence nested powers
-            if formatType == LATEX:
-                formattedBase = r'\left(' + formattedBase + r'\right)'
-            elif formatType == STRING:
-                formattedBase = r'(' + formattedBase + r')'
-        if formatType == LATEX:
-            if fence:
-                return r'\left(' + formattedBase+'^{'+self.exponent.formatted(formatType, fence=False)+'}' + r'\right)'
-            else:
-                return formattedBase+'^{'+self.exponent.formatted(formatType, fence=False)+'}'
-        elif formatType == STRING:
-            if fence:
-                return '(' + formattedBase+'^('+self.exponent.formatted(formatType, fence=False)+'))'
-            else:
-                return formattedBase+'^{'+self.exponent.formatted(formatType, fence=False)+'}'            
-        else:
-            print "BAD FORMAT TYPE"
-            return None
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+            
+    def formatted(self, formatType, **kwargs):
+        inner_str = self.base.formatted(formatType, forceFence=True)+r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
+        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        return maybeFencedString(inner_str, **kwargs)
     
     def distributeExponent(self, assumptions=frozenset()):
         from complex.theorems import fracIntExpRev, fracNatPosExpRev
@@ -2034,7 +2091,7 @@ class Exponentiate(Operation, NumberOp):
         deduceInComplexes([a_, b_], assumptions)
         return thm.specialize({n:n_}).specialize({a:a_, b:b_})
     
-EXPONENTIATE = Literal(pkg, 'EXPONENTIATE', operationMaker = lambda operands : Exponentiate(*operands))
+EXPONENTIATE = Literal(pkg, 'Power')
 
 class Sqrt(Operation, NumberOp):
     def __init__(self, base):
@@ -2044,12 +2101,12 @@ class Sqrt(Operation, NumberOp):
         Operation.__init__(self, SQRT, (base))
         self.base = base
         
-    def formatted(self, formatType, fence=False):
-        formattedBase = self.base.formatted(formatType, fence=True)
-        if formatType == LATEX:
-            return r'\sqrt{' + formattedBase+'}'
-        else:
-            return Operation.formatted(self, formatType, fence)
+    @classmethod
+    def operatorOfOperation(subClass):
+        return SQRT
+            
+    def latex(self, **kwargs):
+        return r'\sqrt{' + self.base.latex()+'}'
     
     def distribute(self):
         '''
@@ -2072,7 +2129,7 @@ class Sqrt(Operation, NumberOp):
             return complex.theorems.sqrtClosure
 
 
-SQRT = Literal(pkg, 'SQRT', operationMaker = lambda operands : Sqrt(*operands))
+SQRT = Literal(pkg, 'SQRT')
 
 #def extractExpBase(exponentiateInstance):
 #    if not isinstance(exponentiateInstance,Exponentiate):
@@ -2108,7 +2165,11 @@ class Summation(OperationOverInstances, NumberOp):
             self.domain = DiscreteContiguousSet(Neg(infinity),infinity)
         elif self.domain == Naturals:
             self.domain = DiscreteContiguousSet(zero,infinity)
-        
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return SUMMATION
+            
     def _closureTheorem(self, numberSet):
         import natural.theorems
         import real.theorems
@@ -2128,8 +2189,8 @@ class Summation(OperationOverInstances, NumberOp):
                 
 #        self.domain = domain#self.domain already set
 
-    def formatted(self, formatType, fence=False):
-
+    def formatted(self, formatType, **kwargs):
+        fence = kwargs['fence'] if 'fence' in kwargs else False
         if isinstance(self.domain,DiscreteContiguousSet):
             lower = self.domain.lowerBound.formatted(formatType)
             upper = self.domain.upperBound.formatted(formatType)
@@ -2143,12 +2204,7 @@ class Summation(OperationOverInstances, NumberOp):
                     formattedInner += " | "
                 formattedInner += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             formattedInner += self.summand.formatted(formatType, fence=fence) 
-            if fence:
-                if formatType == LATEX:
-                    return r'\left(' + formattedInner + r'\right)'
-                else:
-                    return r'(' + formattedInner + r')'
-            else: return formattedInner
+            return maybeFenced(formatType, formattedInner, fence=fence)
         else:
             return OperationOverInstances.formatted(self, formatType, fence)
 
@@ -2338,7 +2394,7 @@ def summationMaker(operands):
     
 #SUMMATION = Literal(pkg, "SUMMATION", {STRING: r'Summation', LATEX: r'\sum'}, operationMaker = lambda operands : Summation(*OperationOverInstances.extractParameters(operands)))
 
-SUMMATION = Literal(pkg, "SUMMATION", {STRING: r'Summation', LATEX: r'\sum'}, operationMaker = summationMaker)
+SUMMATION = Literal(pkg,  r'Summation', r'\sum')
 
 class Neg(Operation, NumberOp):
     def __init__(self,A):
@@ -2346,6 +2402,10 @@ class Neg(Operation, NumberOp):
         self.operand = A
         #NumberOp.__init__(self, {Complexes:complex.theorems.negClosure})
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return NEG
+    
     def _closureTheorem(self, numberSet):
         import complex.theorems
         import real.theorems
@@ -2393,12 +2453,11 @@ class Neg(Operation, NumberOp):
         '''
         return self.simplification(assumptions).rhs
     
-    def formatted(self, formatType, fence=False):
-        outStr = ''
-        if fence: outStr += r'\left(' if formatType == LATEX else r'('
-        outStr += ('-'+self.operand.formatted(formatType, fence=True))
-        if fence: outStr += r'\right)' if formatType == LATEX else r')'
-        return outStr
+    def string(self, **kwargs):
+        return maybeFencedString('-'+self.operand.string(fence=True), **kwargs)
+
+    def latex(self, **kwargs):
+        return maybeFencedLatex('-'+self.operand.latex(fence=True), **kwargs)
 
     def distribute(self, assumptions=frozenset()):
         '''
@@ -2456,7 +2515,7 @@ class Neg(Operation, NumberOp):
         eqn2 = thm.specialize({x:operandFactorEqn.rhs.operands[0], y:operandFactorEqn.rhs.operands[1]})
         return eqn1.applyTransitivity(eqn2)
         
-NEG = Literal(pkg, 'NEG', operationMaker = lambda operands : Neg(*operands))
+NEG = Literal(pkg, 'NEG')
 
 class Integrate(OperationOverInstances, NumberOp):
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
@@ -2472,7 +2531,6 @@ class Integrate(OperationOverInstances, NumberOp):
         '''
         from number import infinity
         OperationOverInstances.__init__(self, INTEGRATE, index, integrand, domain=domain, conditions=conditions)
-        self.domain = domain
         if len(self.instanceVars) != 1:
             raise ValueError('Only one index allowed per integral!')
         elif isinstance(self.domain,DiscreteContiguousSet):
@@ -2482,6 +2540,10 @@ class Integrate(OperationOverInstances, NumberOp):
         self.index = self.instanceVars[0]
         self.integrand = self.instanceExpr
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return INTEGRATE
+    
     def _closureTheorem(self, numberSet):
         import real.theorems
         #import complex.theorems
@@ -2507,4 +2569,4 @@ def integrateMaker(operands):
     return Integrate(params['instanceVars'],params['instanceExpr'],params['domain'],params['conditions'])
 
 
-INTEGRATE = Literal(pkg, "INTEGRATE", {STRING: r'Integrate', LATEX: r'\int'}, operationMaker = integrateMaker)
+INTEGRATE = Literal(pkg, r'Integrate', r'\int')

@@ -1,14 +1,14 @@
-from proveit.expression import Expression, Literal, LATEX, Operation
-from proveit.multiExpression import Etcetera, ExpressionList, extractVar
+from proveit import Expression, Literal, Operation, Etcetera, ExpressionList
+from proveit import AssociativeOperation, OperationOverInstances
 from proveit.common import a, b, n
-from proveit.basiclogic import Forall, Implies, In, Or, NotEquals, AssociativeOperation, OperationOverInstances
-from proveit.basiclogic import generateSubExpressions
+from proveit.logic import Forall, Implies, InSet, Or, NotEquals
+from proveit.logic import generateSubExpressions
 
 pkg = __package__
 
 class RealsPosClass(Literal):
     def __init__(self, pkg):
-        Literal.__init__(self, pkg, 'RealsPos', {LATEX:r'\mathbb{R}^+'})
+        Literal.__init__(self, pkg, 'RealsPos', r'\mathbb{R}^+')
     
     def deduceMemberLowerBound(self, member):
         from real.theorems import inRealsPos_iff_positive
@@ -16,7 +16,7 @@ class RealsPosClass(Literal):
 
 class RealsNegClass(Literal):
     def __init__(self, pkg):
-        Literal.__init__(self, pkg, 'RealsNeg', {LATEX:r'\mathbb{R}^-'})
+        Literal.__init__(self, pkg, 'RealsNeg', r'\mathbb{R}^-')
     
     def deduceMemberUpperBound(self, member):
         from real.theorems import inRealsNeg_iff_negative
@@ -24,7 +24,7 @@ class RealsNegClass(Literal):
 
 class NaturalsClass(Literal):
     def __init__(self, pkg):
-        Literal.__init__(self, pkg, 'Naturals', {LATEX:r'\mathbb{N}'})
+        Literal.__init__(self, pkg, 'Naturals', r'\mathbb{N}')
     
     def deduceMemberLowerBound(self, member):
         from natural.theorems import naturalsLowerBound
@@ -32,7 +32,7 @@ class NaturalsClass(Literal):
 
 class NaturalsPosClass(Literal):
     def __init__(self, pkg):
-        Literal.__init__(self, pkg, 'NaturalsPos', {LATEX:r'\mathbb{N}^+'})
+        Literal.__init__(self, pkg, 'NaturalsPos', r'\mathbb{N}^+')
     
     def deduceMemberLowerBound(self, member):
         from natural.theorems import naturalsPosLowerBound
@@ -40,7 +40,7 @@ class NaturalsPosClass(Literal):
 
 class IntegersClass(Literal):
     def __init__(self, pkg):
-        Literal.__init__(self, pkg, 'Integers', {LATEX:r'\mathbb{Z}'})
+        Literal.__init__(self, pkg, 'Integers', r'\mathbb{Z}')
 
     def deduceInSetIsBool(self, element):
         from integer.theorems import inIntsIsBool
@@ -50,13 +50,13 @@ class IntegersClass(Literal):
         from integer.theorems import notInIntsIsBool
         return notInIntsIsBool.specialize({a:element})
 
-Reals = Literal(pkg,'Reals',{LATEX:r'\mathbb{R}'})    
+Reals = Literal(pkg,'Reals',r'\mathbb{R}')    
 RealsPos = RealsPosClass(pkg)
 RealsNeg = RealsNegClass(pkg)
 Integers = IntegersClass(pkg)
 Naturals = NaturalsClass(pkg)
 NaturalsPos = NaturalsPosClass(pkg)
-Complexes = Literal(pkg,'Complexes',{LATEX:r'\mathbb{C}'})
+Complexes = Literal(pkg,'Complexes',r'\mathbb{C}')
 
 class NumberOp:
     def __init__(self):
@@ -154,7 +154,7 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
     
     #print expr, numberSet
     try:
-        return In(expr, numberSet).checked(assumptions)
+        return InSet(expr, numberSet).prove(assumptions)
     except:
         pass # not so simple, keep trying (below)
         
