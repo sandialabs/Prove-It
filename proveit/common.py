@@ -72,22 +72,23 @@ Psi = Variable('Psi', r'\Psi')
 Upsilon = Variable('Upsilon', r'\Upsilon')
 Omega = Variable('Omega', r'\Omega')
 
-def etcMultiVar(stringFormat, latexFormat=None):
-    return Etcetera(MultiVariable(stringFormat, latexFormat))
+def multiAndEtcVar(stringFormat, latexFormat=None):
+    multiVar = MultiVariable(stringFormat, latexFormat)
+    return multiVar, Etcetera(multiVar)
 
-aEtc = etcMultiVar('a') # ..a..
-bEtc = etcMultiVar('b') # ..b..
-cEtc = etcMultiVar('c') # ..c..
-Aetc = etcMultiVar('A') # ..A..
-Betc = etcMultiVar('B') # ..B..
-Cetc = etcMultiVar('C') # ..C..
-Qetc = etcMultiVar('Q') # ..Q..
-Retc = etcMultiVar('R') # ..R..
-vEtc = etcMultiVar('v') # ..v..
-xEtc = etcMultiVar('x') # ..x..
-yEtc = etcMultiVar('y') # ..y..
-zEtc = etcMultiVar('z') # ..z..
-wEtc = etcMultiVar('w') # ..z..
+aMulti, aEtc = multiAndEtcVar('a') # ..a..
+bMulti, bEtc = multiAndEtcVar('b') # ..b..
+cMulti, cEtc = multiAndEtcVar('c') # ..c..
+Amulti, Aetc = multiAndEtcVar('A') # ..A..
+Bmulti, Betc = multiAndEtcVar('B') # ..B..
+Cmulti, Cetc = multiAndEtcVar('C') # ..C..
+Qmulti, Qetc = multiAndEtcVar('Q') # ..Q..
+Rmulti, Retc = multiAndEtcVar('R') # ..R..
+vMulti, vEtc = multiAndEtcVar('v') # ..v..
+xMulti, xEtc = multiAndEtcVar('x') # ..x..
+yMulti, yEtc = multiAndEtcVar('y') # ..y..
+zMulti, zEtc = multiAndEtcVar('z') # ..z..
+wMulti, wEtc = multiAndEtcVar('w') # ..z..
 fxEtc = Operation(f, xEtc) # f(..x..)
 fyEtc = Operation(f, yEtc) # f(..y..)
 fzEtc = Operation(f, zEtc) # f(..z..)
