@@ -1,5 +1,5 @@
 from proveit.expression import Literal, STRING, LATEX
-from proveit.number import Exponentiate, Abs, Add, Subtract, Neg, Multiply, Fraction, DiscreteContiguousSet
+from proveit.number import Exp, Abs, Add, Sub, Neg, Mult, Fraction, Interval
 from proveit.number.common import one, two
 from proveit.common import k, l, eps
 from proveit.physics.quantum.QPE.phaseEstOps import SubIndexed
@@ -32,7 +32,7 @@ psi_t = SubIndexed(psi_, t_)
 psi_next = SubIndexed(psi_, Add(k, one))
 psi_1 = SubIndexed(psi_, one)
 
-U_pow_two_pow_k = Exponentiate(U_, Exponentiate(two, k))
+U_pow_two_pow_k = Exp(U_, Exp(two, k))
 
 # m: Random variable for the measurement of Psi as an integer from the register's binary representation.
 m_ = Literal(pkg, 'm')
@@ -45,22 +45,22 @@ phase_m_ = Literal(pkg, 'phase_m', {LATEX:r'\varphi_m'})
 b_ = Literal(pkg, 'b')
 
 # 2^t
-two_pow_t = Exponentiate(two, t_)
+two_pow_t = Exp(two, t_)
 
 # 2^{t-1}
-two_pow_t_minus_one = Exponentiate(two, Subtract(t_, one))
+two_pow_t_minus_one = Exp(two, Sub(t_, one))
 
 # amplitude of output register as indexted
 alpha_ = Literal(pkg, 'alpha', {STRING:'alpha', LATEX:r'\alpha'})
 alpha_l = SubIndexed(alpha_, l)
 abs_alpha_l = Abs(alpha_l)
-alpha_l_sqrd = Exponentiate(Abs(alpha_l), two)
+alpha_l_sqrd = Exp(Abs(alpha_l), two)
 
 # delta: difference between the phase and the best phase_m
 delta_ = Literal(pkg, 'delta', {LATEX:r'\delta'})
 
-fullDomain = DiscreteContiguousSet(Add(Neg(Exponentiate(two, Subtract(t_, one))), one),
-                                                         Exponentiate(two, Subtract(t_, one)))
-negDomain = DiscreteContiguousSet(Add(Neg(two_pow_t_minus_one), one), Neg(Add(eps, one)))
-posDomain = DiscreteContiguousSet(Add(eps, one), two_pow_t_minus_one)
-epsDomain = DiscreteContiguousSet(one, Subtract(two_pow_t_minus_one, two))
+fullDomain = Interval(Add(Neg(Exp(two, Sub(t_, one))), one),
+                                                         Exp(two, Sub(t_, one)))
+negDomain = Interval(Add(Neg(two_pow_t_minus_one), one), Neg(Add(eps, one)))
+posDomain = Interval(Add(eps, one), two_pow_t_minus_one)
+epsDomain = Interval(one, Sub(two_pow_t_minus_one, two))

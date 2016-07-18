@@ -29,11 +29,11 @@ class TensorProd(AssociativeOperation):
         Distribute over the factor at the given index.
         '''
         from theorems import distributeTensorProdOverSum, distributeTensorProdOverSummation
-        from proveit.number import Add, Summation
+        from proveit.number import Add, Sum
         factor = self.factors[factorIdx]
         if isinstance(factor, Add):
             return distributeTensorProdOverSum.specialize({xEtc:self.factors[:factorIdx], yEtc:factor.terms, zEtc:self.factors[factorIdx+1:]})
-        elif isinstance(factor, Summation):
+        elif isinstance(factor, Sum):
             domain = factor.domain
             summand = factor.summand
             index = factor.index

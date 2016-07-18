@@ -1,7 +1,7 @@
 from proveit.common import A, B, C, D
 from proveit.expression import Variable, Literal, LATEX, STRING
 from proveit.multiExpression import Block
-from proveit.number import Exponentiate, Fraction, Sqrt
+from proveit.number import Exp, Fraction, Sqrt
 from proveit.number.common import zero, one, two
 from proveit.number.numberSets import Complexes
 from proveit.linalg import TensorExp, SU
@@ -42,9 +42,9 @@ WIRE_UP = Literal(pkg, 'WIRE_UP') # wire goes up to link with another wire
 WIRE_DN = Literal(pkg, 'WIRE_DN') # wire goes down to link with another wire
 WIRE_LINK = Literal(pkg, 'WIRE_LINK') # link destination for WIRE_UP or WIRE_DN
 
-QubitSpace = Exponentiate(Complexes, two)
-QubitRegisterSpace = lambda n : TensorExp(Exponentiate(Complexes, two), n) 
-RegisterSU = lambda n : SU(Exponentiate(two, n))
+QubitSpace = Exp(Complexes, two)
+QubitRegisterSpace = lambda n : TensorExp(Exp(Complexes, two), n) 
+RegisterSU = lambda n : SU(Exp(two, n))
 
 invRoot2 = Fraction(one, Sqrt(two))
 
