@@ -1,10 +1,15 @@
-from proveit.number.arithmeticOps import DiscreteContiguousSet, Interval, IntervalOO, IntervalOC, IntervalCO, IntervalCC
-from proveit.number.arithmeticOps import OrderingRelation, LessThan, LessThanEquals, GreaterThan, GreaterThanEquals
-from proveit.number.arithmeticOps import Abs, Add, Subtract, Multiply, Divide, Fraction, Exponentiate, Sqrt, Summation, Neg, Integrate
-from proveit.number.arithmeticOps import Min, Max
-from proveit.number.numberSets import Naturals, NaturalsPos, Integers, Reals, RealsNeg, RealsPos, Complexes
-from proveit.number.moduloOp import Mod, ModAbs
-from proveit.number.roundingOps import Floor, Ceil, Round
-from proveit.number.number import num
-
-Pow = Exponentiate
+from set import Integers, Naturals, NaturalsPos, Reals, RealsNeg, RealsPos, Complexes
+from set import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
+from set import num, e, pi, i, DigitLiteral, zero, one, two, three, four, five, six, seven, eight, nine, WholeDecimal
+from set import infinity
+from addition import Add
+from subtraction import Sub
+from negation import Neg
+from multiplication import Mult
+from division import Divide, Fraction
+from exponentiation import Exp, Sqrt
+from summation import Sum
+from integration import Int
+from modular import Abs, Mod, ModAbs
+from rounding import Floor, Ceil, Round
+from ordering import LessThan, LessThanEquals, GreaterThan, GreaterThanEquals, Min, Max
