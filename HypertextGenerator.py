@@ -86,7 +86,7 @@ class HypertextGenerator:
         
 
     def exprPage(self, fromPath, context, stmtOrExpr):
-        expr = stmtOrExpr.getExpression() if isinstance(stmtOrExpr, Statement) else stmtOrExpr
+        expr = stmtOrExpr.getExpression() if isinstance(stmtOrExpr, KnownTruth) else stmtOrExpr
         return self.exprHashFile(fromPath, context, '__expressions__', expr, lambda path : '<html><body><h1>Expression Tree</h1>' + self.genExpressionTreeHTML(path, expr) + '</html></body>')
     
     def unnamedTheoremPage(self, fromPath, context, prover):
@@ -103,7 +103,7 @@ class HypertextGenerator:
         return self.exprHashFile(fromPath, context, '__unnamed_theorems__', expr, genUnnamedTheoremPageFn)
         
     def linkedExpr(self, fromPath, context, stmtOrExpr):
-        expr = stmtOrExpr.getExpression() if isinstance(stmtOrExpr, Statement) else stmtOrExpr
+        expr = stmtOrExpr.getExpression() if isinstance(stmtOrExpr, KnownTruth) else stmtOrExpr
         return '<a class="exprLink" href="' + self.exprPage(fromPath, context, expr) + '"><math>' + expr.formatted(MATHML) + '</math></a>'
 
     def linkedUnnamedTheorem(self, fromPath, context, prover):            
