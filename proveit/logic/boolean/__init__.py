@@ -1,3 +1,6 @@
-from quantifiers import Forall, Exists, NotExists
-from boolSet import TRUE, FALSE, BOOLEANS, inBool, deduceInBool
-from boolOps import And, Or, Not, Implies, Iff, deriveStmtEqTrue
+from quantification import Forall, Exists, NotExists
+from proveit.logic.boolean.booleans import TRUE, FALSE, BOOLEANS, inBool, deduceInBool, deriveStmtEqTrue
+from conjunction import And, compose
+from disjunction import Or
+from negation import Not
+from implication import Implies, Iff

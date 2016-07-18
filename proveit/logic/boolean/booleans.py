@@ -1,4 +1,4 @@
-from proveit import Operation, Literal
+from proveit import Operation, Literal, USE_DEFAULTS
 from proveit.common import A, P
 
 class BooleanSet(Literal):
@@ -13,12 +13,15 @@ class BooleanSet(Literal):
         #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
         return unfoldInBool.specialize({A:element}).deriveConclusion().checked({inBool(element)})
     
-    def deduceElemInSet(self, element):
+    def deduceElemInSet(self, element, assumptions=USE_DEFAULTS):
         '''
-        From [(element = TRUE) or (element = FALSE)], derive and return [element in BOOLEANS].
+        Try to deduce that the given element is in the set of booleans under the given assumptions.
         '''   
         from proveit.logic import Or, Equals
         from theorems import foldInBool
+        return element.deduceInBool()
+        
+        
         # prerequisite = [(element = TRUE) or (element = FALSE)]
         prerequisite = Or(Equals(element, TRUE), Equals(element, FALSE))
         # [element in BOOLEANS] assuming prerequisite
@@ -30,8 +33,9 @@ class BooleanSet(Literal):
         if possible.
         '''        
         from proveit.logic import Forall, Equals
-        from theorems import falseEqFalse, trueEqTrue, forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
-        from boolOps import compose
+        from theorems import falseEqFalse, trueEqTrue 
+        from quantification.universal.theorems import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
+        from conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply evaluateForall method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == BOOLEANS), "May only apply evaluateForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply evaluateForall method of BOOLEANS to a forall statement with 1 instance variable"
@@ -76,7 +80,7 @@ class BooleanSet(Literal):
         Given forall_{A in BOOLEANS} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from theorems import unfoldForallOverBool
+        from quantification.universal.theorems import unfoldForallOverBool
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == BOOLEANS), "May only apply unfoldForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of BOOLEANS to a forall statement with 1 instance variable"
@@ -87,7 +91,7 @@ class BooleanSet(Literal):
         Given forall_{A in BOOLEANS} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from theorems import foldForallOverBool
+        from quantification.universal.theorems import foldForallOverBool
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == BOOLEANS), "May only apply foldAsForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of BOOLEANS to a forall statement with 1 instance variable"
@@ -101,19 +105,21 @@ class TrueLiteral(Literal):
         Literal.__init__(self, __package__, stringFormat='TRUE', latexFormat=r'\top')
     
     def evalEquality(self, other):
-        from boolOps import deriveStmtEqTrue
         from theorems import trueEqTrue, trueNotFalse
         if other == TRUE:
             return deriveStmtEqTrue(trueEqTrue)
         elif other == FALSE:
             return trueNotFalse.unfold().equateNegatedToFalse()
+    
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        from theorems import trueInBool
+        return trueInBool
         
 class FalseLiteral(Literal):
     def __init__(self):
         Literal.__init__(self, __package__, stringFormat='FALSE', latexFormat=r'\bot')
     
     def evalEquality(self, other):
-        from boolOps import deriveStmtEqTrue
         from axioms import falseNotTrue
         from theorems import falseEqFalse
         if other == FALSE:
@@ -121,12 +127,16 @@ class FalseLiteral(Literal):
         elif other == TRUE:
             return falseNotTrue.unfold().equateNegatedToFalse()
 
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        from theorems import falseInBool
+        return falseInBool
+
 BOOLEANS = BooleanSet()
 TRUE = TrueLiteral()
 FALSE = FalseLiteral()
 
 def inBool(element):
-    from proveit.logic.set.setOps import InSet
+    from proveit.logic.set_theory.setOps import InSet
     return InSet(element, BOOLEANS)
 
 def deduceInBool(expr):
@@ -136,3 +146,10 @@ def deduceInBool(expr):
     if hasattr(expr, 'deduceInBool'):
         return expr.deduceInBool()
     return inBool(expr)
+
+def deriveStmtEqTrue(statement):
+    '''
+    For a given statement, derive statement = TRUE assuming statement.
+    '''
+    from proveit.logic import Equals
+    return Equals(statement, TRUE).concludeBooleanEquality()

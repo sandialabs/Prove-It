@@ -3,7 +3,7 @@
 
 # In[1]:
 
-from proveit.logic import BOOLEANS, Forall, Exists, And, Or, Not, Implies, Iff, Equals, NotEquals, InSet, NotInSet, Singleton, Union, Intersection, Difference, SubsetEq, SupersetEq, SetOfAll
+from proveit.logic import BOOLEANS, Forall, Exists, And, Or, Not, Implies, Iff, Equals, NotEquals, InSet, NotInSet, Singleton, Union, Intersect, Difference, SubsetEq, SupersetEq, SetOfAll
 from proveit.common import f, x, y, A, B, C, S, P, fy, Px, Py, yEtc, fyEtc, Qetc, etc_QyEtc
 from proveit import beginTheorems, endTheorems
 
@@ -29,33 +29,7 @@ notInSingleton
 
 # In[6]:
 
-inAllButOne = Forall((x, S, y), Iff(InSet(x, Difference(S, Singleton(y))), 
-                                    And(InSet(x, S), NotEquals(x, y))))
-inAllButOne
-
-
 # In[7]:
-
-unfoldSubsetEq = Forall((A, B), Implies(SubsetEq(A, B), Forall(x, InSet(x, B), A)))
-unfoldSubsetEq
-
-
-# In[8]:
-
-foldSubsetEq = Forall((A, B), Implies(Forall(x, InSet(x, B), A), SubsetEq(A, B)))
-foldSubsetEq
-
-
-# In[9]:
-
-unfoldSupersetEq = Forall((A, B), Implies(SupersetEq(A, B), Forall(x, InSet(x, A), B)))
-unfoldSupersetEq
-
-
-# In[10]:
-
-foldSupersetEq = Forall((A, B), Implies(Forall(x, InSet(x, A), B), SupersetEq(A, B)))
-foldSupersetEq
 
 
 # In[11]:

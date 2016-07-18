@@ -70,7 +70,8 @@ class Equals(BinaryOperation):
         '''
         from proveit.logic import TRUE, FALSE        
         from proveit.logic.boolean.axioms import eqTrueElim
-        from proveit.logic.boolean.theorems import eqTrueRevElim, notFromEqFalse, notFromEqFalseRev
+        from proveit.logic.boolean.theorems import eqTrueRevElim
+        from proveit.logic.boolean.negation.theorems import notFromEqFalse, notFromEqFalseRev
         if self.lhs == TRUE:
             return eqTrueRevElim.specialize({A:self.rhs}).deriveConclusion() # A
         elif self.rhs == TRUE:
@@ -98,7 +99,8 @@ class Equals(BinaryOperation):
         '''
         from proveit.logic import TRUE, FALSE, Not        
         from proveit.logic.boolean.axioms import eqTrueIntro
-        from proveit.logic.boolean.theorems import eqTrueRevIntro, eqFalseFromNegation, eqFalseRevFromNegation
+        from proveit.logic.boolean.theorems import eqTrueRevIntro
+        from proveit.logic.boolean.negation.theorems import eqFalseFromNegation, eqFalseRevFromNegation
         if self.rhs == TRUE:
             return eqTrueIntro.specialize({A:self.lhs}).deriveConclusion()
         elif self.rhs == FALSE:
@@ -118,7 +120,7 @@ class Equals(BinaryOperation):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from proveit.logic.set.axioms import singletonDef
+        from proveit.logic.set_theory.axioms import singletonDef
         singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft()
     
     def _subFn(self, fnExpr, fnArg, subbing, replacement):
