@@ -160,7 +160,7 @@ class DerivationStep:
         return assumptions
         
     def getData(self, name):
-        if name == 'Statement':
+        if name == 'KnownTruth':
             return self.getStatement()
         elif name == 'Assumptions':
             return [assumption for assumption in self.getAssumptions()]
@@ -180,11 +180,11 @@ class DerivationStep:
         if isinstance(data, str):
             return data
         elif isinstance(data, collections.Iterable):
-            if all([isinstance(datum, Statement) for datum in data]):
+            if all([isinstance(datum, KnownTruth) for datum in data]):
                 return renderedExpr(tuple([datum.getExpression() for datum in data]))
             else:
                 return ", ".join([str(x) for x in data])
-        elif isinstance(data, Statement):
+        elif isinstance(data, KnownTruth):
             return renderedExpr(data.getExpression())
         else:
             return str(data)
@@ -196,7 +196,7 @@ class DerivationStep:
                     self._makeChild([childProver])
                 self.skipCompressedHypReasoning()
                 return
-                #assert self._makeProofTree(), "Statement was proven but unable to make a proof tree -- shouldn't legitimately happen"
+                #assert self._makeProofTree(), "KnownTruth was proven but unable to make a proof tree -- shouldn't legitimately happen"
                 #return
             prover = self.provers[0]
             childrenProvers = []
@@ -234,7 +234,7 @@ class DerivationStep:
                 self.children[0].parent = self
                     
     def _makeProofTree(self):
-        pvr2step = dict() # maps Statement.Prover to DerivationStep as the tree completes from the bottom up
+        pvr2step = dict() # maps KnownTruth.Prover to DerivationStep as the tree completes from the bottom up
         breadth1stQueue = list(self.provers)
         while len(breadth1stQueue) > 0:
             prover = breadth1stQueue.pop(0)
@@ -319,7 +319,7 @@ class SvgWidgetModel(QtCore.QAbstractItemModel):
         return idx
         
 class DerivationModel(SvgWidgetModel):
-    COLUMNS = ['Statement', 'Assumptions', 'Step Type', 'How Proven', 'Context', 'Proven']
+    COLUMNS = ['KnownTruth', 'Assumptions', 'Step Type', 'How Proven', 'Context', 'Proven']
     
     def __init__(self):
         SvgWidgetModel.__init__(self)
@@ -400,7 +400,7 @@ class DerivationModel(SvgWidgetModel):
         return self.createIndex(row, 0, parent_obj)
 
 class AxiomModel(SvgWidgetModel):
-    COLUMNS = ['Context/Name', 'Statement']
+    COLUMNS = ['Context/Name', 'KnownTruth']
     
     def __init__(self):
         SvgWidgetModel.__init__(self)
@@ -440,10 +440,10 @@ class AxiomModel(SvgWidgetModel):
         indexPtr = index.internalPointer()
         columnName = self.COLUMNS[index.column()]
         data = None
-        if isinstance(indexPtr, Context) and columnName != 'Statement':
+        if isinstance(indexPtr, Context) and columnName != 'KnownTruth':
             data = indexPtr
         elif isinstance(indexPtr, Expression):
-            if columnName == 'Statement':
+            if columnName == 'KnownTruth':
                 data = indexPtr.statement
             else:
                 data = indexPtr.statement.getRegisteredVar()
@@ -454,7 +454,7 @@ class AxiomModel(SvgWidgetModel):
                 return None
             if data == None:
                 return ''
-            if isinstance(data, Statement):
+            if isinstance(data, KnownTruth):
                 return renderedExpr(data.getExpression())
             return str(data)
         return None
@@ -625,7 +625,7 @@ class DerivationTreeViewer(QtGui.QWidget):
         self.selection_idx = current_idx
         selection = self.selection_idx.internalPointer()
         stmts = [prover.stmtToProve for prover in selection.provers]
-        stmtNodes = [ExpressionTreeNode(stmt.getExpression(), 'Statement') for stmt in stmts]
+        stmtNodes = [ExpressionTreeNode(stmt.getExpression(), 'KnownTruth') for stmt in stmts]
         assumptionNodes = [ExpressionTreeNode(assumption.getExpression(), 'Assumption') for assumption in selection.getAssumptions()]
         if self.exprTV != None:
             exprModel = ExpressionTreeModel(stmtNodes+assumptionNodes)
@@ -669,9 +669,9 @@ def showTreeView(stmtsOrProvers, onlyEssentialSteps=True, compressHypReasoning=T
     try:
         provers = []
         for stmtOrProver in stmtsOrProvers:
-            if isinstance(stmtOrProver, Statement):
+            if isinstance(stmtOrProver, KnownTruth):
                 provers.append(stmtOrProver.getOrMakeProver())
-            elif isinstance(stmtOrProver, Statement.Prover):
+            elif isinstance(stmtOrProver, KnownTruth.Prover):
                 provers.append(stmtOrProver)
         app = DerivationTreeViewer(provers, onlyEssentialSteps, compressHypReasoning, showExpressionTree)
         app.show()
