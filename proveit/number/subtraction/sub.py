@@ -1,7 +1,6 @@
 from proveit import Literal, BinaryOperation
 from proveit.logic import NotEquals, Equation
-from proveit.number.set import Naturals, NaturalsPos, Integers, Reals, Complexes
-from proveit.number.common import zero
+from proveit.number.set import Naturals, NaturalsPos, Integers, Reals, Complexes, zero
 from proveit.common import w, x, y, z, vEtc, wEtc, xEtc, yEtc, zEtc
 
 SUBTRACT = Literal(__package__, r'-', r'-')
