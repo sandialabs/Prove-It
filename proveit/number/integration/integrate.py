@@ -2,9 +2,9 @@ from proveit import Literal, OperationOverInstances
 from proveit.number.set import Interval, infinity, Reals, IntervalCC
 from proveit.number.negation import Neg
 
-INTEGRATE = Literal(__package__, r'Int', r'\int')
+INTEGRATE = Literal(__package__, r'Integrate', r'\int')
 
-class Int(OperationOverInstances):
+class Integrate(OperationOverInstances):
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
