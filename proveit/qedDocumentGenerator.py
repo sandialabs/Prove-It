@@ -145,7 +145,7 @@ class DocumentGenerator:
         Generate and write an expression tree restructured text file (if it doesn't already exist), 
         and return the reference.
         '''
-        expr = stmtOrExpr.getExpression() if isinstance(stmtOrExpr, Statement) else stmtOrExpr
+        expr = stmtOrExpr.getExpression() if isinstance(stmtOrExpr, KnownTruth) else stmtOrExpr
         return ':doc:`/' + self.hashRST(context, 'expressions_', expr, lambda out : self.genExpressionTree(expr, out)) + '`'
 
     def unnamedTheoremRef(self, context, prover):
