@@ -33,12 +33,12 @@ class BinaryOperation(Operation):
         self.rightOperand = B    
 
     def string(self, **kwargs):
-        return self.formatted('string', **kwargs)
+        return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        return self.formatted('latex', **kwargs)
+        return self._formatted('latex', **kwargs)
         
-    def formatted(self, formatType, **kwargs):
+    def _formatted(self, formatType, **kwargs):
         fence =  kwargs['fence'] if 'fence' in kwargs else False
         subLeftFence =  kwargs['subLeftFence'] if 'subLeftFence' in kwargs else True
         subRightFence =  kwargs['subRightFence'] if 'subRightFence' in kwargs else True
@@ -64,12 +64,12 @@ class AssociativeOperation(Operation):
                 raise ValueError("An AssociativeOperation must have at least 2 operands")  
     
     def string(self, **kwargs):
-        return self.formatted('string', **kwargs)
+        return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        return self.formatted('latex', **kwargs)
+        return self._formatted('latex', **kwargs)
     
-    def formatted(self, formatType, **kwargs):
+    def _formatted(self, formatType, **kwargs):
         '''
         Format the associative operation in the form "A * B * C" where '*' is a stand-in for
         the operator that is obtained from self.operator.formatted(formatType).
@@ -196,12 +196,12 @@ class OperationOverInstances(Operation):
         return operationClass(**operationClass.extractParameters(operands))
     
     def string(self, **kwargs):
-        return self.formatted('string', **kwargs)
+        return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        return self.formatted('latex', **kwargs)
+        return self._formatted('latex', **kwargs)
 
-    def formatted(self, formatType, fence=False):
+    def _formatted(self, formatType, fence=False):
         # override this default as desired
         implicitIvars = self.implicitInstanceVars(formatType)
         hasExplicitIvars = (len(implicitIvars) < len(self.instanceVars))
