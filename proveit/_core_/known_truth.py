@@ -49,6 +49,13 @@ class KnownTruth:
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
         self._unique_id = hash(self._unique_rep)
 
+    def deduceSideEffects(self):
+        '''
+        Deduce any side-effects that are obvious consequences arising from this truth.
+        Called after the corresponding Proof is complete.
+        '''
+        self.expr.deduceSideEffects(self.assumptions)
+
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
             return self._unique_id == other._unique_id

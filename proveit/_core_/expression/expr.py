@@ -99,10 +99,11 @@ class Expression:
     def prove(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to prove this expression automatically under the
-        given assumptions (if None, uses defaults.assumptions).  If this
-        fails, an exception will be thrown.  Otherwise, the KnownTruth that
-        proves this Expression under the set of assumptions (or a subset
-        of those) is returned.
+        given assumptions (if None, uses defaults.assumptions).  First
+        it tries to find an existing KnownTruth, then it tries a simple
+        proof by assumption (if self is contained in the assumptions),
+        then it attempts to call the conclude method.  If successful,
+        the KnownTruth is returned, otherwise an exception is raised.
         '''
         from proveit import KnownTruth
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -113,7 +114,30 @@ class Expression:
             # prove by assumption
             from proveit._core_.proof import Assumption
             return Assumption(self).provenTruth
-        raise ProofFailure('Unable to automatically prove ' + str(self) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+        try:
+            return self.conclude(assumptions)
+        except NotImplementedError:
+            raise ProofFailure('Unable to automatically prove ' + str(self) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+    
+    def conclude(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to conclude, via automation, that this statement is true
+        under the given assumptions.  Return the KnownTruth if successful,
+        or raise an exception.  This may be implemented for specific
+        Expression classes (or will raise a NotImplementedError).
+        '''
+        raise NotImplementedError('The conclude method has not been implemented for ' + str(self.__class__))
+    
+    def deduceSideEffects(self, assumptions):
+        '''
+        Deduce side effects, obvious and useful consequences that may be arise from
+        proving that this expression is known to be a true statement under the given
+        assumptions.  The default is to do nothing, but should be overridden as
+        appropriate.  There is no need to call this manually; it is called 
+        automatically when the corresponding KnownTruth is created.
+        '''
+        pass
+        
     
     '''
     def beginProof(self):
