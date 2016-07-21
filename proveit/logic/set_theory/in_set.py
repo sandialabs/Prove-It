@@ -35,7 +35,24 @@ class InSet(BinaryOperation):
         for Singleton or Union].
         '''
         return self.domain.unfoldElemInSet(self.element).checked({self})
+
+    def conclude(self, assumptions):
+        '''
+        Attempt to conclude that the element is in the domain by calling
+        'deduceInSet' on the element with the domain and assumptions.
+        '''
+        return self.element.deduceInSet(self.domain, assumptions)
+
     
+    def deduceSideEffects(self, assumptions):
+        '''
+        If the domain has a 'deduceMembershipSideEffects' method, it will be called
+        and given the element and assumptions.
+        '''
+        if hasattr(self.domain, 'deduceMembershipSideEffects'):
+            self.domain.deduceMembershipSideEffects(self.element, assumptions)
+    
+        
     """
     def concludeAsFolded(self):
         '''

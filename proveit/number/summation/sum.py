@@ -55,7 +55,7 @@ class Sum(OperationOverInstances):
                 
 #        self.domain = domain#self.domain already set
 
-    def formatted(self, formatType, **kwargs):
+    def _formatted(self, formatType, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
         if isinstance(self.domain,Interval):
             lower = self.domain.lowerBound.formatted(formatType)
@@ -72,7 +72,7 @@ class Sum(OperationOverInstances):
             formattedInner += self.summand.formatted(formatType, fence=fence) 
             return maybeFenced(formatType, formattedInner, fence=fence)
         else:
-            return OperationOverInstances.formatted(self, formatType, fence)
+            return OperationOverInstances._formatted(self, formatType, fence)
 
     def simplification(self, assumptions=frozenset()):
         '''

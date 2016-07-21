@@ -28,6 +28,8 @@ class Proof:
         self._unique_id = hash(self._unique_rep)
         # in case this new proof makes an old one obselete or is born obsolete itself:
         provenTruth._updateObsoleteProofs()
+        # may deduce any side-effects that are obvious consequences arising from this truth:
+        provenTruth.deduceSideEffects()
 
     def __eq__(self, other):
         if isinstance(other, Proof):

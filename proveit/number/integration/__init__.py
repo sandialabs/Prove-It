@@ -1,1 +1,1 @@
-from int import Int
+from proveit.number.integration.integrate import Integrate
