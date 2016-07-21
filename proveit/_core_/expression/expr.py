@@ -128,13 +128,13 @@ class Expression:
         '''
         raise NotImplementedError('The conclude method has not been implemented for ' + str(self.__class__))
     
-    def deduceSideEffects(self, assumptions):
+    def deduceSideEffects(self, known_truth):
         '''
         Deduce side effects, obvious and useful consequences that may be arise from
-        proving that this expression is known to be a true statement under the given
-        assumptions.  The default is to do nothing, but should be overridden as
-        appropriate.  There is no need to call this manually; it is called 
-        automatically when the corresponding KnownTruth is created.
+        proving that this expression is a known truth (under some set of assumptions).
+        The default is to do nothing, but should be overridden as appropriate.  
+        There is no need to call this manually; it is called automatically when
+        the corresponding KnownTruth is created.
         '''
         pass
         

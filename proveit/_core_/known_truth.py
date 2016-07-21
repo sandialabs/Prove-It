@@ -54,7 +54,7 @@ class KnownTruth:
         Deduce any side-effects that are obvious consequences arising from this truth.
         Called after the corresponding Proof is complete.
         '''
-        self.expr.deduceSideEffects(self.assumptions)
+        self.expr.deduceSideEffects(self)
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
