@@ -25,9 +25,6 @@ contradictionFromNegation
 notFromEqFalse = Forall(A, Implies(Equals(A, FALSE), Not(A)))
 notFromEqFalse
 
-notFromEqFalseRev = Forall(A, Implies(Equals(FALSE, A), Not(A)))
-notFromEqFalseRev
-
 doubleNegation = Forall(A, Implies(A, Not(Not(A))))
 doubleNegation
 
