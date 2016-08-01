@@ -9,9 +9,6 @@ from proveit.logic.common import PofTrue, PofFalse
 from proveit import beginTheorems, endTheorems
 
 
-# In[2]:
-
-# In[3]:
 beginTheorems(locals())
 
 trueEqTrue = Equals(TRUE, TRUE)
@@ -22,9 +19,6 @@ falseEqFalse
 
 eqTrueRevIntro = Forall(A, Implies(A, Equals(TRUE, A)))
 eqTrueRevIntro
-
-eqTrueRevElim = Forall(A, Implies(Equals(TRUE, A), A))
-eqTrueRevElim
 
 trueConclusion = Forall(A, Implies(A, TRUE))
 trueConclusion
