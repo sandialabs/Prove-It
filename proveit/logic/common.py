@@ -2,7 +2,7 @@
 
 from proveit import Operation
 from proveit.logic.boolean.booleans import TRUE, FALSE
-from equality.eqOps import Equals
+from equality.equals import Equals
 from proveit.common import P, fx, gx
 
 PofTrue = Operation(P, TRUE) # P(TRUE)
