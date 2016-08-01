@@ -33,14 +33,14 @@ class Storage:
                     # the latex files are the same, try to read the png file
                     if os.path.isfile(png_path):                        
                         # png file exists.  read and return the data.
-                        with open(png_path) as png_file:
+                        with open(png_path, 'rb') as png_file:
                             return png_file.read()
         # store the latex string in the latex file
-        with open(latex_path, 'w') as latex_file:
+        with open(latex_path, 'wb') as latex_file:
             latex_file.write(latex)
         # generate, store and return the png file
         png = self._generate_png(latex, configLatexToolFn)
-        with open(png_path, 'w') as png_file:
+        with open(png_path, 'wb') as png_file:
             png_file.write(png)
         return png
     
@@ -49,7 +49,10 @@ class Storage:
         LaTeXTool.clear_instance()
         lt = LaTeXTool.instance()
         lt.use_breqn = False
-        return latex_to_png(latex, backend='dvipng', wrap=True)
+        png = latex_to_png(latex, backend='dvipng', wrap=True)
+        if png is None:
+            raise Exception("Unable to use 'dvipng' backend to compile LaTeX.  Be sure a LaTeX distribution is installed.")
+        return png
        
     def _proveItObjId(self, proveItObject):
         '''
