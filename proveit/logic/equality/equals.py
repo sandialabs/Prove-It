@@ -1,17 +1,81 @@
-from proveit import BinaryOperation, USE_DEFAULTS
+from proveit import BinaryOperation, USE_DEFAULTS, ProofFailure, asExpression
 from proveit import Variable, MultiVariable, Literal, Operation, ExpressionList, Etcetera, ExpressionTensor, Block, safeDummyVar
 from proveit.common import A, P, X, f, x, y, z
+from transitivity_search import transitivitySearch
 
 pkg = __package__
 
 EQUALS = Literal(pkg, '=')
 
 class Equals(BinaryOperation):
+    # map Expressions to sets of KnownTruths of equalities that involve the Expression
+    # on the left hand or right hand side.
+    knownEqualities = dict()
+    
     def __init__(self, a, b):
         BinaryOperation.__init__(self, EQUALS, a, b)
         self.lhs = a
         self.rhs = b
-
+        
+    def deduceSideEffects(self, knownTruth):
+        '''
+        Record the knownTruth in Equals.knownEqualities, associated from
+        the left hand side and the right hand side.  This information may
+        be useful for concluding new equations via transitivity.  Also
+        derive the reversed form, as a side effect.  If the right side
+        is TRUE or FALSE, `deriveViaBooleanEquality` as a side effect.
+        '''
+        from proveit.logic import TRUE, FALSE
+        Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
+        Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
+        if (self.lhs != self.rhs):
+            # automatically derive the reversed form which is equivalent
+            self.deriveReversed(knownTruth.assumptions)
+        if self.rhs in (TRUE, FALSE):
+            # automatically derive A from A=TRUE or Not(A) from A=FALSE
+            self.deriveViaBooleanEquality(knownTruth.assumptions)
+        
+    def conclude(self, assumptions):
+        '''
+        Use other equalitieis that are known to be true to try to conclude 
+        this equality via transitivity.  For example, if a=b, b=c, and c=d are 
+        known truths (under the given assumptions), we can conclude that a=d
+        (under these assumptions).
+        '''
+        from proveit.logic import TRUE, FALSE
+        if self.lhs==self.rhs:
+            self.concludeViaReflexivity()
+        if self.lhs or self.rhs in (TRUE, FALSE):
+            try:
+                self.concludeBooleanEquality(assumptions)
+            except ProofFailure:
+                pass
+        # Use a breadth-first search approach to find the shortest
+        # path to get from one end-point to the other.
+        return transitivitySearch(self, assumptions)
+                
+    @staticmethod
+    def knownRelationsFromLeft(expr, assumptionsSet):
+        '''
+        For each KnownTruth that is an Equals involving the given expression on
+        the left hand side, yield the KnownTruth and the right hand side.
+        '''
+        for knownTruth in Equals.knownEqualities.get(expr, frozenset()):
+            if knownTruth.lhs == expr:
+                if assumptionsSet.issuperset(knownTruth.assumptions):
+                    yield (knownTruth, knownTruth.rhs)
+    
+    @staticmethod
+    def knownRelationsFromRight(expr, assumptionsSet):
+        '''
+        For each KnownTruth that is an Equals involving the given expression on
+        the right hand side, yield the KnownTruth and the left hand side.
+        '''
+        for knownTruth in Equals.knownEqualities.get(expr, frozenset()):
+            if knownTruth.rhs == expr:
+                if assumptionsSet.issuperset(knownTruth.assumptions):
+                    yield (knownTruth, knownTruth.lhs)
+            
     @classmethod
     def operatorOfOperation(subClass):
         return EQUALS    
@@ -26,7 +90,7 @@ class Equals(BinaryOperation):
             
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
-        From x = y derive y = x.
+        From x = y derive y = x.  This derivation is an automatic side-effect.
         '''
         from axioms import equalsSymmetry
         return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
@@ -38,6 +102,7 @@ class Equals(BinaryOperation):
         Also works more generally as long as there is a common side to the equations.
         '''
         from axioms import equalsTransitivity
+        otherEquality = asExpression(otherEquality)
         assert isinstance(otherEquality, Equals)
         if self.rhs == otherEquality.lhs:
             # from x = y, y = z, derive y = z => x = z assuing x = y
@@ -62,23 +127,19 @@ class Equals(BinaryOperation):
         '''
         return self.transitivityImpl(otherEquality, assumptions).deriveConclusion(assumptions)
         
-    def deriveViaBooleanEquality(self):
+    def deriveViaBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
-        From A = TRUE or TRUE = A derive A, or from A = FALSE or FALSE = A derive Not(A).
+        From A = TRUE derive A, or from A = FALSE derive Not(A).  This derivation
+        is an automatic side-effect.
         Note, see deriveStmtEqTrue or Not.equateNegatedToFalse for the reverse process.
         '''
         from proveit.logic import TRUE, FALSE        
         from proveit.logic.boolean.axioms import eqTrueElim
-        from proveit.logic.boolean.theorems import eqTrueRevElim
-        from proveit.logic.boolean.negation.theorems import notFromEqFalse, notFromEqFalseRev
-        if self.lhs == TRUE:
-            return eqTrueRevElim.specialize({A:self.rhs}).deriveConclusion() # A
-        elif self.rhs == TRUE:
-            return eqTrueElim.specialize({A:self.lhs}).deriveConclusion() # A
-        elif self.lhs == FALSE:
-            return notFromEqFalseRev.specialize({A:self.rhs}).deriveConclusion() # Not(A)            
+        from proveit.logic.boolean.negation.theorems import notFromEqFalse
+        if self.rhs == TRUE:
+            return eqTrueElim.specialize({A:self.lhs}).deriveConclusion(assumptions) # A
         elif self.rhs == FALSE:
-            return notFromEqFalse.specialize({A:self.lhs}).deriveConclusion() # Not(A)
+            return notFromEqFalse.specialize({A:self.lhs}).deriveConclusion(assumptions) # Not(A)
         
     def deriveContradiction(self):
         '''
@@ -91,7 +152,7 @@ class Equals(BinaryOperation):
         elif self.lhs == FALSE:
             return contradictionFromFalseEquivalenceReversed.specialize({A:self.rhs}).deriveConclusion()
     
-    def concludeBooleanEquality(self):
+    def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form (A=TRUE) assuming A, (TRUE=A) assuming A, 
         A=FALSE assuming Not(A), FALSE=A assuming Not(A), [Not(A)=FALSE] assuming A, or [FALSE=Not(A)] assuming A.
@@ -101,19 +162,19 @@ class Equals(BinaryOperation):
         from proveit.logic.boolean.theorems import eqTrueRevIntro
         from proveit.logic.boolean.negation.theorems import eqFalseFromNegation, eqFalseRevFromNegation
         if self.rhs == TRUE:
-            return eqTrueIntro.specialize({A:self.lhs}).deriveConclusion()
+            return eqTrueIntro.specialize({A:self.lhs}).deriveConclusion(assumptions)
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
-                return eqFalseFromNegation.specialize({A:self.lhs.operands}).deriveConclusion()
+                return eqFalseFromNegation.specialize({A:self.lhs.operands}).deriveConclusion(assumptions)
             else:
-                return Not(self.lhs).equateNegatedToFalse()
+                return Not(self.lhs).equateNegatedToFalse(assumptions)
         elif self.lhs == TRUE:
-            return eqTrueRevIntro.specialize({A:self.rhs}).deriveConclusion()
+            return eqTrueRevIntro.specialize({A:self.rhs}).deriveConclusion(assumptions)
         elif self.lhs == FALSE:
             if isinstance(self.rhs, Not):
-                return eqFalseRevFromNegation.specialize({A:self.rhs.operands}).deriveConclusion()
+                return eqFalseRevFromNegation.specialize({A:self.rhs.operands}).deriveConclusion(assumptions)
             else:
-                return Not(self.rhs).equateFalseToNegated()
+                return Not(self.rhs).equateFalseToNegated(assumptions)
     
     def deriveIsInSingleton(self):
         '''
