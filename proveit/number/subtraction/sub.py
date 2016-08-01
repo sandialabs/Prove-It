@@ -1,5 +1,5 @@
 from proveit import Literal, BinaryOperation
-from proveit.logic import NotEquals, Equation
+from proveit.logic import NotEquals
 from proveit.number.set import Naturals, NaturalsPos, Integers, Reals, Complexes, zero
 from proveit.common import w, x, y, z, vEtc, wEtc, xEtc, yEtc, zEtc
 

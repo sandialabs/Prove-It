@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, AssociativeOperation, Etcetera, MultiVariable
-from proveit.logic import Equation, Equals
+from proveit.logic import Equals
 from proveit.number.set import Reals, RealsPos, Complexes, zero, one
 from proveit.common import a, b, c, n, x, vEtc, wEtc, xEtc, yEtc, zEtc, S
 

@@ -1,5 +1,4 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex
-from proveit.logic import Equation
 from proveit.number.set import Integers, Reals, Complexes, zero
 from proveit.common import a, x, y, xEtc
 

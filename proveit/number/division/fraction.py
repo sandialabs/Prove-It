@@ -1,5 +1,4 @@
 from proveit import Literal, Operation, BinaryOperation, maybeFencedLatex, safeDummyVar
-from proveit.logic import Equation
 from proveit.common import w, x, y, z, xEtc
 # like '/', but distinguishes it as a fraction with numerator over denominator (\frac in latex)
 FRACTION = Literal(__package__, '//') 

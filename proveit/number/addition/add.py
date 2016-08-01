@@ -1,5 +1,4 @@
 from proveit import Literal, AssociativeOperation
-from proveit.logic import Equation
 from proveit.number.set import zero
 from proveit.common import x, y
 
