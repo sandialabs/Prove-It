@@ -9,6 +9,10 @@ class Expression:
     unique_id_map = dict() # map unique_id's to unique_rep's
     expr_to_prove = None # the theorem currently being proven (if there is one)
     
+    # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
+    # recursion in the `prove` method.
+    in_progress_to_conclude = set() 
+    
     def __init__(self, coreInfo, subExpressions=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
@@ -102,33 +106,56 @@ class Expression:
         given assumptions (if None, uses defaults.assumptions).  First
         it tries to find an existing KnownTruth, then it tries a simple
         proof by assumption (if self is contained in the assumptions),
-        then it attempts to call the conclude method.  If successful,
+        then it attempts to call the 'conclude' method.  If successful,
         the KnownTruth is returned, otherwise an exception is raised.
+        Cyclic attempts to `conclude` the same expression under the
+        same set of assumptions will be blocked, so `conclude` methods are
+        free make attempts that may be cyclic.
         '''
         from proveit import KnownTruth
         assumptions = defaults.checkedAssumptions(assumptions)
+        
+        # Prove each assumption, by assumption, to deduce any side-effects.
+        for assumption in assumptions:
+            if assumption is not self:
+                assumption.prove({assumption})
+        
         foundTruth = KnownTruth.findKnownTruth(self, assumptions)
         if foundTruth is not None: 
             return foundTruth # found an existing KnownTruth that does the job!
+            
         if self in assumptions:
             # prove by assumption
             from proveit._core_.proof import Assumption
             return Assumption(self).provenTruth
+                                                
+        # Use Expression.in_progress_to_conclude set to prevent an infinite recursion
+        in_progress_key = (self, tuple(sorted(assumptions)))
+        if in_progress_key in Expression.in_progress_to_conclude:
+            raise ProofFailure("Infinite 'conclude' recursion blocked for " + str(self) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+        Expression.in_progress_to_conclude.add(in_progress_key)        
+        
         try:
             return self.conclude(assumptions)
         except NotImplementedError:
             raise ProofFailure('Unable to automatically prove ' + str(self) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+        finally:
+            Expression.in_progress_to_conclude.remove(in_progress_key)
     
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude, via automation, that this statement is true
         under the given assumptions.  Return the KnownTruth if successful,
         or raise an exception.  This may be implemented for specific
-        Expression classes (or will raise a NotImplementedError).
+        Expression classes (or will raise a NotImplementedError).  It is called
+        by the `prove` method when no existing proof was found and it cannot
+        be proven trivially via assumption.  The `prove` method has a mechanism
+        to prevent infinite recursion, so there is no worries regarding cyclic
+        attempts of concluding an expression.
         '''
         raise NotImplementedError('The conclude method has not been implemented for ' + str(self.__class__))
     
-    def deduceSideEffects(self, known_truth):
+    def deduceSideEffects(self, knownTruth):
         '''
         Deduce side effects, obvious and useful consequences that may be arise from
         proving that this expression is a known truth (under some set of assumptions).
