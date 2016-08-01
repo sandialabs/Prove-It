@@ -136,7 +136,7 @@ TRUE = TrueLiteral()
 FALSE = FalseLiteral()
 
 def inBool(element):
-    from proveit.logic.set_theory.setOps import InSet
+    from proveit.logic.set_theory.in_set import InSet
     return InSet(element, BOOLEANS)
 
 def deduceInBool(expr):
