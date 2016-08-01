@@ -37,13 +37,7 @@ class KnownTruth:
         # and an unordered set (for convenience when checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
-        self._proof = proof
-        if self.expr in KnownTruth.lookup_dict:
-            # Another known truth for this expression
-            KnownTruth.lookup_dict[self.expr].append(self)
-        else:
-            # The first known truth recorded for this expression.
-            KnownTruth.lookup_dict[self.expr] = [self]               
+        self._proof = None # set this after the Proof does some initialization via _recordBestProof         
         # a unique representation for the KnownTruth comprises its expr and assumptions:
         self._unique_rep = hex(self.expr._unique_id) + ';[' + ','.join(hex(assumption._unique_id) for assumption in assumptions) + ']'
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
@@ -71,26 +65,49 @@ class KnownTruth:
         '''
         return self._proof
     
-    def _updateObsoleteProofs(self):
+    def _recordBestProof(self, newProof):
         '''
         After a Proof is finished being constructed, check to see if
         any proofs for this KnownTruth are obsolete; the new proof
-        might make an previous one obsolete, or it may be born
-        obsolete itself.
+        might make a previous one obsolete, or it may be born
+        obsolete itself.  A proof is obsolete if there exists a KnownTruth
+        with a subset of the assumptions required for that proof, or with
+        the same set of assumptions but fewer steps.  A tie goes to the
+        new proof, but note that the step number comparison will prevent
+        anything cyclic (since a proof for a KnownTruth that requires that
+        has that KnownTruth as a dependent will necessarily include the
+        number of steps of the original proof plus more).
         '''
+        if not self.expr in KnownTruth.lookup_dict:
+            # the first KnownTruth for this Expression
+            self._proof = newProof
+            KnownTruth.lookup_dict[self.expr] = [self]
+            return
         keptTruths = []
         bornObsolete = False
         for other in KnownTruth.lookup_dict[self.expr]:
-            if other == self: continue # that's not an "other"
-            if self.assumptionsSet.issubset(other.assumptionsSet):
-                other._updateProof(self._proof) # use the new proof that does the job as well or better
+            if self.assumptionsSet == other.assumptionsSet:
+                if newProof.numSteps <= other._proof.numSteps:
+                     # use the new proof that does the job as well or better
+                    other._updateProof(newProof)
+                else:
+                    # the new proof was born obsolete, taking more steps than an existing one
+                    self._proof = other._proof # use an old proof that does the job better
+                    keptTruths.append(other)
+                    bornObsolete = True
+            elif self.assumptionsSet.issubset(other.assumptionsSet):
+                # use the new proof that does the job better
+                other._updateProof(self._proof) 
             elif self.assumptionsSet.issuperset(other.assumptionsSet):
-                # the new proof was born obsolete
-                self._updateProof(other._proof) # use an old proof that does the job better
+                # the new proof was born obsolete, requiring more assumptions than an existing one
+                self._proof = other._proof # use an old proof that does the job better
+                keptTruths.append(other)
                 bornObsolete = True
             else:
+                # 'other' uses a different, non-redundant set of assumptions
                 keptTruths.append(other)
         if not bornObsolete:
+            self._proof = newProof
             keptTruths.append(self)
         # Remove the obsolete KnownTruths from the lookup_dict
         KnownTruth.lookup_dict[self.expr] = keptTruths
@@ -106,8 +123,6 @@ class KnownTruth:
             # remake the dependents and update their proofs
             dependentReplacement = oldDependentProof.remake()
             oldDependentProof.provenTruth._updateProof(dependentReplacement)
-        else:
-            self._proof = newProof # no dependents, just replace the proof
 
     def __setattr__(self, attr, value):
         '''
@@ -216,6 +231,12 @@ class KnownTruth:
         Return a string representation of the KnownTruth.
         '''
         return self.string()
+        
+    def __repr__(self):
+        '''
+        Return a string representation of the KnownTruth.
+        '''
+        return self.string()
 
     def _repr_png_(self):
         '''
@@ -235,5 +256,21 @@ class KnownTruth:
         for assumption in self.assumptions:
             assumption._config_latex_tool(lt)
 
+def asExpression(truthOrExpression):
+    '''
+    Return the argument as Expressions.  That is, if the argument is the
+    KnownTruth, yield its associated Expression.  If it is an Expression,
+    yield just that.  Otherwise, raise a TypeError.
+    '''
+    if isinstance(truthOrExpression, KnownTruth):
+        return truthOrExpression.expr
+    elif isinstance(truthOrExpression, Expression):
+        return truthOrExpression
+    else:
+        raise TypeError('Expected to be a KnownTruth or an Expression')
     
-
+def asExpressions(*truthOrExpressions):
+    '''
+    Return the arguments as a list of Expressions via asExpression.
+    '''
+    return [asExpression(truthOrExpression) for truthOrExpression in truthOrExpression]
