@@ -6,25 +6,31 @@ Methods for defining axioms and theorems.
 
 from expression.expr import Expression
 from proveit._core_.proof import Axiom, Theorem
+from proveit._core_.known_truth import KnownTruth
 
 _excludedLocalVars = None
 _specialStatementType = ''
 
 def _beginSpecialStatements(excludedLocalVars, specialStatementType):
     global _excludedLocalVars, _specialStatementType
-    _excludedLocalVars = set(excludedLocalVars.keys())
+    _excludedLocalVars = dict(excludedLocalVars)
     _specialStatementType = specialStatementType
 
 def _endSpecialStatements(localVars, specialStatementType, package):
+    global _includedVars
     assert specialStatementType == _specialStatementType, 'cannot end ' + specialStatementType + ' without beggining them.'
-    for name, expr in localVars.iteritems():
+
+    # exclude name/values in _excludedLocalVars or names that begin with an underscore
+    includedVars = {name:val for name,val in localVars.iteritems() \
+                    if _excludedLocalVars.get(name, None) is not val and name[0] != '_'}
+                    
+    for name, val in includedVars.iteritems():
         '''
         For each non-excluded Expression, state it, mark it as an axiom/theorem, and replace the
         Expression in the localVars with the KnownTruth.
         '''
-        if name in _excludedLocalVars: continue
-        if name[0] == '_': continue # skip variables whose name begins with underscore
-        assert isinstance(expr, Expression), 'Expecting only Expression statements for ' + _specialStatementType + ' variables.'
+        expr = val.expr if isinstance(val, KnownTruth) else val
+        assert isinstance(expr, Expression), 'Expecting only Expression statements for ' + _specialStatementType + ' variables: ' + name
         if _specialStatementType == 'axioms':
             localVars[name] = Axiom(expr, package, name).provenTruth
         if _specialStatementType == 'theorems':
