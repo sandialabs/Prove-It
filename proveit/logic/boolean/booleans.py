@@ -15,7 +15,7 @@ class BooleanSet(Literal):
     
     def deduceElemInSet(self, element, assumptions=USE_DEFAULTS):
         '''
-        Try to deduce that the given element is in the set of booleans under the given assumptions.
+        Try to deduce that the given element is in the set of Booleans under the given assumptions.
         '''   
         from proveit.logic import Or, Equals
         from theorems import foldInBool
@@ -77,25 +77,25 @@ class BooleanSet(Literal):
     
     def unfoldForall(self, forallStmt):
         '''
-        Given forall_{A in BOOLEANS} P(A), derive and return [P(TRUE) and P(FALSE)].
+        Given forall_{A in Booleans} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
         from quantification.universal.theorems import unfoldForallOverBool
-        assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of BOOLEANS to a forall statement"
-        assert(forallStmt.domain == BOOLEANS), "May only apply unfoldForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
-        assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of BOOLEANS to a forall statement with 1 instance variable"
+        assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Booleans to a forall statement"
+        assert(forallStmt.domain == Booleans), "May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain"
+        assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of Booleans to a forall statement with 1 instance variable"
         return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]): forallStmt.instanceExpr, A:forallStmt.instanceVars[0]}).deriveConclusion().checked({forallStmt})
 
     def foldAsForall(self, forallStmt):
         '''
-        Given forall_{A in BOOLEANS} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
+        Given forall_{A in Booleans} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
         from quantification.universal.theorems import foldForallOverBool
-        assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of BOOLEANS to a forall statement"
-        assert(forallStmt.domain == BOOLEANS), "May only apply foldAsForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
-        assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of BOOLEANS to a forall statement with 1 instance variable"
-        # [P(TRUE) and P(FALSE)] => forall_{A in BOOLEANS} P(A)
+        assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
+        assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
+        assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
+        # [P(TRUE) and P(FALSE)] => forall_{A in Booleans} P(A)
         folding = foldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]):forallStmt.instanceExpr, A:forallStmt.instanceVars[0]})
         folding.hypothesis.concludeViaComposition()
         return folding.deriveConclusion()
@@ -131,13 +131,13 @@ class FalseLiteral(Literal):
         from theorems import falseInBool
         return falseInBool
 
-BOOLEANS = BooleanSet()
+Booleans = BooleanSet()
 TRUE = TrueLiteral()
 FALSE = FalseLiteral()
 
 def inBool(element):
     from proveit.logic.set_theory.in_set import InSet
-    return InSet(element, BOOLEANS)
+    return InSet(element, Booleans)
 
 def deduceInBool(expr):
     '''

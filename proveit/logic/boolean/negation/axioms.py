@@ -1,4 +1,4 @@
-from proveit.logic import Equals, Not, Implies, Forall, TRUE, FALSE, BOOLEANS
+from proveit.logic import Equals, Not, Implies, Forall, TRUE, FALSE, Booleans
 from proveit.common import A
 from proveit import beginAxioms, endAxioms
 
@@ -16,7 +16,7 @@ implicitNotF
 implicitNotT = Forall(A, Implies(Equals(Not(A), FALSE), Equals(A, TRUE)))
 implicitNotT
 
-contradictoryValidation = Forall(A, Implies(Implies(Not(A), FALSE), A), domain=BOOLEANS)
+contradictoryValidation = Forall(A, Implies(Implies(Not(A), FALSE), A), domain=Booleans)
 contradictoryValidation
 
 endAxioms(locals(), __package__)
