@@ -3,7 +3,7 @@
 
 # In[1]:
 
-from proveit.logic import Forall, Exists, NotExists, BOOLEANS, TRUE, FALSE, inBool, Not, And, Or, Implies, Iff, Equals, NotEquals
+from proveit.logic import Forall, Exists, NotExists, Booleans, TRUE, FALSE, inBool, Not, And, Or, Implies, Iff, Equals, NotEquals
 from proveit.common import A, B, C, P, Q, R, S, x, y, PofA, Qetc, Retc, xEtc, yEtc, zEtc, PxEtc, PyEtc, PxyEtc, etc_QxEtc, etc_QyEtc, etc_RyEtc
 from proveit.logic.common import PofTrue, PofFalse
 from proveit import beginTheorems, endTheorems
@@ -44,7 +44,7 @@ trueInBool
 falseInBool = inBool(FALSE)
 falseInBool
 
-fromNotFalse = Forall(A, Implies(NotEquals(A, FALSE), A), domain=BOOLEANS)
+fromNotFalse = Forall(A, Implies(NotEquals(A, FALSE), A), domain=Booleans)
 fromNotFalse
 
 inBoolIfEqTrue = Forall(A, Implies(Equals(A, TRUE), inBool(A)))
