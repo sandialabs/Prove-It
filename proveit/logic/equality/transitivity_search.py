@@ -1,13 +1,15 @@
 from proveit import USE_DEFAULTS, defaults, KnownTruth, ProofFailure
 from proveit import Expression
 
-def transitivitySearch(relation, assumptionsSet):
+def transitivitySearch(relation, assumptions):
     '''
     Performs a breadth-first, bidirectional (meet in the middle) search attempting
     to prove the given relation by applying transitivity derivations.
     If successful, the generated KnownTruth is returned; otherwise a
     ProofFailure exception is raised.
     '''
+    
+    assumptionsSet = set(assumptions)
     
     if not isinstance(relation, Expression):
         raise TypeError('The relation is expected to be an Expression')
@@ -58,13 +60,13 @@ def transitivitySearch(relation, assumptionsSet):
                     else:
                         # bridge the left chain with the reversed right extension
                         fullChain = leftChains[newEndPoint] + list(reversed(newChains[newEndPoint]))
-                    applyTransitivities(fullChain, assumptions=assumptionsSet)
+                    applyTransitivities(fullChain, assumptions=assumptions)
                     try:
                         # try to prove the original relation, after applying the transitivities.
                         # if this does not work, the chain wasn't quite what we needed
                         # (this could happen, for example, if a strong inequality was desired
                         # but a weak inequality was produced) let's continue the search.
-                        return desiredRelation.prove(assumptionsSet)
+                        return desiredRelation.prove(assumptions)
                     except ProofFailure:
                         pass
         
