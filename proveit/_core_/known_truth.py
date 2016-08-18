@@ -138,11 +138,40 @@ class KnownTruth:
         '''
         The KnownTruth aquires the attributes of its Expression, so it will act
         like the Expression except it has additional (or possibly overridden) attributes.
+        When accessing functions of the Expression, if that function has 'assumptions'
+        as a keyword argument, the assumptions of the KnownTruth are automatically
+        included.
         '''
+        from proveit import defaults, USE_DEFAULTS
+        import inspect
+        
         # called only if the attribute does not exist in KnownTruth directly
         if name == 'png':
             raise AttributeError("Do not use the Expression version of the 'png' attribute.") 
-        return getattr(self.expr, name)
+        attr = getattr(self.expr, name)
+        
+        if hasattr(attr, '__call__') and 'assumptions' in inspect.getargspec(attr).args:
+            # The attribute is a callable function with 'assumptions' as an argument.
+            # Automatically include the KnownTruth assumptions.
+
+            # note, index zero is self.
+            assumptionsIndex = inspect.getargspec(attr).args.index('assumptions')-1
+            
+            def call_method_with_known_truth_assumptions(*args, **kwargs):
+                if len(args) > assumptionsIndex:
+                    args = list(args)
+                    assumptions = tuple(args[assumptionsIndex]) + self.assumptions
+                    args[assumptionsIndex] = defaults.checkedAssumptions(assumptions)
+                else:
+                    assumptions = kwargs.get('assumptions', USE_DEFAULTS)
+                    assumptions = defaults.checkedAssumptions(assumptions)
+                    assumptions = tuple(assumptions) + self.assumptions
+                    kwargs['assumptions'] = defaults.checkedAssumptions(assumptions)
+                return attr.__call__(*args, **kwargs)
+            return call_method_with_known_truth_assumptions
+        
+        return attr
+            
     
     def __dir__(self):
         '''
@@ -152,7 +181,7 @@ class KnownTruth:
         return sorted(set(self.__dict__.keys() + dir(self.expr)))
 
     @staticmethod
-    def findKnownTruth(expression, assumptions):
+    def findKnownTruth(expression, assumptionsSet):
         '''
         Try to find a KnownTruth for this expression that applies to
         the given set of assumptions (its assumptions are a subset
@@ -163,7 +192,7 @@ class KnownTruth:
         truths = KnownTruth.lookup_dict[expression]
         suitableTruths = []
         for truth in truths:
-            if truth.assumptionsSet.issubset(assumptions):
+            if truth.assumptionsSet.issubset(assumptionsSet):
                 suitableTruths.append(truth)
         if len(suitableTruths)==0: return None # no suitable truth
         # return one wih the fewest assumptions
