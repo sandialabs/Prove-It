@@ -1,5 +1,5 @@
-from proveit import BinaryOperation, USE_DEFAULTS, ProofFailure, asExpression
-from proveit import Variable, MultiVariable, Literal, Operation, ExpressionList, Etcetera, ExpressionTensor, Block, safeDummyVar
+from proveit import BinaryOperation, USE_DEFAULTS, ProofFailure
+from proveit import Variable, Literal, Operation, Lambda
 from proveit.common import A, P, X, f, x, y, z
 from transitivity_search import transitivitySearch
 
@@ -37,10 +37,12 @@ class Equals(BinaryOperation):
         
     def conclude(self, assumptions):
         '''
-        Use other equalitieis that are known to be true to try to conclude 
+        Use other equalities that are known to be true to try to conclude 
         this equality via transitivity.  For example, if a=b, b=c, and c=d are 
         known truths (under the given assumptions), we can conclude that a=d
-        (under these assumptions).
+        (under these assumptions).  Also, reflexive equations (x=x) are
+        concluded automatically, as are x=TRUE or TRUE=x given x
+        and x=FALSE or FALSE=x given Not(x).
         '''
         from proveit.logic import TRUE, FALSE
         if self.lhs==self.rhs:
@@ -94,38 +96,23 @@ class Equals(BinaryOperation):
         '''
         from axioms import equalsSymmetry
         return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
-
-    def transitivityImpl(self, otherEquality, assumptions=USE_DEFAULTS):
-        '''
-        From x = y (self) and the given y = z (otherEquality) derive and return 
-        (y=z) => (x = z) assuming self.
-        Also works more generally as long as there is a common side to the equations.
-        '''
-        from axioms import equalsTransitivity
-        otherEquality = asExpression(otherEquality)
-        assert isinstance(otherEquality, Equals)
-        if self.rhs == otherEquality.lhs:
-            # from x = y, y = z, derive y = z => x = z assuing x = y
-            result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConclusion(assumptions)
-            return result
-        elif self.lhs == otherEquality.lhs:
-            # from y = x and y = z, derive y = z => x = z assuing x = y
-            return self.deriveReversed(assumptions).transitivityImpl(otherEquality, assumptions)
-        elif self.lhs == otherEquality.rhs:
-            # from y = x and z = y, derive y = z => x = z assuing x = y
-            return self.deriveReversed(assumptions).transitivityImpl(otherEquality.deriveReversed(assumptions), assumptions)
-        elif self.rhs == otherEquality.rhs:
-            # from x = y and z = y, derive y = z => x = z assuing x = y
-            return self.transitivityImpl(otherEquality.deriveReversed(assumptions), assumptions)
-        else:
-            assert False, 'transitivity cannot be applied unless there is something in common in the equalities'
             
     def applyTransitivity(self, otherEquality, assumptions=USE_DEFAULTS):
         '''
         From x = y (self) and y = z (otherEquality) derive and return x = z.
         Also works more generally as long as there is a common side to the equations.
         '''
-        return self.transitivityImpl(otherEquality, assumptions).deriveConclusion(assumptions)
+        dummyVar = otherEquality.safeDummyVar()
+        if self.rhs == otherEquality.lhs:
+            return self.lhsSubstitute(Lambda(dummyVar, Equals(dummyVar, otherEquality.rhs)), assumptions)
+        elif self.rhs == otherEquality.rhs:
+            return self.lhsSubstitute(Lambda(dummyVar, Equals(otherEquality.lhs, dummyVar)), assumptions)
+        elif self.lhs == otherEquality.lhs:
+            return self.rhsSubstitute(Lambda(dummyVar, Equals(dummyVar, otherEquality.rhs)), assumptions)
+        elif self.lhs == otherEquality.rhs:
+            return self.rhsSubstitute(Lambda(dummyVar, Equals(otherEquality.lhs, dummyVar)), assumptions)
+        else:
+            raise TransitivityException(self, otherEquality)
         
     def deriveViaBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
@@ -141,16 +128,16 @@ class Equals(BinaryOperation):
         elif self.rhs == FALSE:
             return notFromEqFalse.specialize({A:self.lhs}).deriveConclusion(assumptions) # Not(A)
         
-    def deriveContradiction(self):
+    def deriveContradiction(self, assumptions=USE_DEFAULTS):
         '''
         From A=FALSE, derive A=>FALSE.
         '''
         from proveit.logic import FALSE        
         from theorems import contradictionFromFalseEquivalence, contradictionFromFalseEquivalenceReversed
         if self.rhs == FALSE:
-            return contradictionFromFalseEquivalence.specialize({A:self.lhs}).deriveConclusion()
+            return contradictionFromFalseEquivalence.specialize({A:self.lhs}).deriveConclusion(assumptions)
         elif self.lhs == FALSE:
-            return contradictionFromFalseEquivalenceReversed.specialize({A:self.rhs}).deriveConclusion()
+            return contradictionFromFalseEquivalenceReversed.specialize({A:self.rhs}).deriveConclusion(assumptions)
     
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
@@ -176,13 +163,14 @@ class Equals(BinaryOperation):
             else:
                 return Not(self.rhs).equateFalseToNegated(assumptions)
     
-    def deriveIsInSingleton(self):
+    def deriveIsInSingleton(self, assumptions=USE_DEFAULTS):
         '''
         From (x = y), derive (x in {y}).
         '''
         from proveit.logic.set_theory.axioms import singletonDef
-        singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeft()
+        singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeftViaEquivalence(assumptions)
     
+    """
     def _subFn(self, fnExpr, fnArg, subbing, replacement):
         if fnArg is None:
             dummyVar = safeDummyVar(self, fnExpr)
@@ -196,108 +184,90 @@ class Equals(BinaryOperation):
             if dummyVar not in fnExpr.freeVars():
                 raise Exception('Expression to be substituted is not found within the expression that the substitution is applied to.')
         return fnExpr, fnArg
+    """
     
-    def substitution(self, fnExpr, fnArg=None, assumptions=USE_DEFAULTS):
+    def _lambdaExpr(self, lambdaMap):
+        if hasattr(lambdaMap, 'lambdaMap'):
+            lambdaExpr = lambdaMap.lambdaMap()
+        else: lambdaExpr = lambdaMap
+        if not isinstance(lambdaExpr, Lambda):
+            raise TypeError('lambdaMap is expected to be a Lambda Expression return a Lambda Expression via calling lambdaMap()')
+        return lambdaExpr
+    
+    def substitution(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
-        From x = y, and given f(x), derive f(x)=f(y).  If fnArg is
-        supplied, then the f function is defined as the lambda function
-        f: fnArg -> fnExpr.  Otherwise, all occurences of self.lhs will be
-        replaced with self.rhs inside fnExpr for this substitution.
+        From x = y, and given f(x), derive f(x)=f(y).
+        f(x) is provided via lambdaMap as a Lambda expression or an 
+        object that returns a Lambda expression when calling lambdaMap()
+        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
+        particular)
         '''
         from axioms import substitution
-        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs, self.rhs)
-        assert isinstance(fnArg, Variable) or isinstance(fnArg, Etcetera) or isinstance(fnArg, Block)
-        return substitution.specialize({x:self.lhs, y:self.rhs, Operation(f, fnArg):fnExpr}).deriveConclusion(assumptions)
+        fxLambda = self._lambdaExpr(lambdaMap)
+        return substitution.specialize({x:self.lhs, y:self.rhs, f:fxLambda}, assumptions)
         
-    def lhsStatementSubstitution(self, fnExpr, fnArg=None):
-        '''
-        From x = y, and given P(y), derive P(y)=>P(x).  
-        If fnArg is supplied, then the P function is defined as the lambda function
-        P: fnArg -> fnExpr.  Otherwise, all occurences of self.rhs will be
-        replaced with self.lhs inside fnExpr for this substitution.        
-        '''
-        from theorems import lhsSubstitution
-        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.rhs, self.lhs)
-        assert isinstance(fnArg, Variable)
-        return lhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion()
-    
-    def rhsStatementSubstitution(self, fnExpr, fnArg=None, assumptions=USE_DEFAULTS):
-        '''
-        From x = y, and given P(x), derive P(x)=>P(y).  
-        If fnArg is supplied, then the P function is defined as the lambda function
-        P: fnArg -> fnExpr.  Otherwise, all occurences of self.lhs will be
-        replaced with self.rhs inside fnExpr for this substitution.   
-        '''
-        from theorems import rhsSubstitution
-        fnExpr, fnArg = self._subFn(fnExpr, fnArg, self.lhs, self.rhs)        
-        assert isinstance(fnArg, Variable)
-        return rhsSubstitution.specialize({x:self.lhs, y:self.rhs, Operation(P, fnArg):fnExpr}).deriveConclusion(assumptions=assumptions)
-
-    def lhsSubstitute(self, fnExpr, fnArg=None):
+    def lhsSubstitute(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
         From x = y, and given P(y), derive P(x) assuming P(y).  
-        If fnArg is supplied, then the P function is defined as the lambda function
-        P: fnArg -> fnExpr.  Otherwise, all occurences of self.rhs will be
-        replaced with self.lhs inside fnExpr for this substitution.   
+        P(x) is provided via lambdaMap as a Lambda expression or an 
+        object that returns a Lambda expression when calling lambdaMap()
+        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
+        particular).
         '''
-        substitution = self.lhsStatementSubstitution(fnExpr, fnArg)
-        return substitution.deriveConclusion()
+        from theorems import substitute
+        PxLambda = self._lambdaExpr(lambdaMap)
+        return substitute.specialize({x:self.rhs, y:self.lhs, P:PxLambda}, assumptions=assumptions)
         
-    def rhsSubstitute(self, fnExpr, fnArg=None, assumptions=USE_DEFAULTS):
+    def rhsSubstitute(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
         From x = y, and given P(x), derive P(y) assuming P(x).  
-        If fnArg is supplied, then the P function is defined as the lambda function
-        P: fnArg -> fnExpr.  Otherwise, all occurences of self.lhs will be
-        replaced with self.rhs inside fnExpr for this substitution.   
+        P(x) is provided via lambdaMap as a Lambda expression or an 
+        object that returns a Lambda expression when calling lambdaMap()
+        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
+        particular).
         '''
-        substitution = self.rhsStatementSubstitution(fnExpr, fnArg, assumptions)
-        return substitution.deriveConclusion()
-
-    def leftImplViaEquivalence(self):
-        '''
-        From A = B, derive B=>A
-        '''
-        return self.lhsStatementSubstitution(X, X)
-
-    def rightImplViaEquivalence(self):
-        '''
-        From A = B, derive A=>B
-        '''
-        return self.rhsStatementSubstitution(X, X)
+        from theorems import substitute
+        PxLambda = self._lambdaExpr(lambdaMap)
+        return substitute.specialize({x:self.lhs, y:self.rhs, P:PxLambda}, assumptions=assumptions)
         
-    def deriveRightViaEquivalence(self):
+    def deriveRightViaEquivalence(self, assumptions=USE_DEFAULTS):
         '''
         From A = B, derive B (the Right-Hand-Side) assuming A.
         '''
-        return self.rhsSubstitute(X, X)
+        return self.rhsSubstitute(Lambda(X, X), assumptions)
 
-    def deriveLeftViaEquivalence(self):
+    def deriveLeftViaEquivalence(self, assumptions=USE_DEFAULTS):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.
         '''
-        return self.lhsSubstitute(X, X)
+        return self.lhsSubstitute(Lambda(X, X), assumptions)
     
-    def deduceInBool(self):
+    def deduceInSet(self, domain):
         '''
-        Deduce and return that this equality statement is in the set of BOOLEANS.
+        If the domain is Booleans, deduce and return that this equality
+        statement is in the set of Booleans.
         '''
         from axioms import equalityInBool
-        return equalityInBool.specialize({x:self.lhs, y:self.rhs})
+        from proveit.logic import Booleans
+        if domain == Booleans:
+            return equalityInBool.specialize({x:self.lhs, y:self.rhs})
+        else:
+            raise ValueError('Can only deduce that an equality is in the set of Booleans')
     
-    def inBoolViaBooleanEquality(self):
+    def inBoolViaBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
-        From A=TRUE, A=FALSE, TRUE=A, or FALSE=A, derive and return inBool(A).
+        From A=TRUE, A=FALSE, TRUE=A, or FALSE=A, derive and return `A in Booleans`.
         '''
         from proveit.logic import TRUE, FALSE
         from proveit.logic.boolean.theorems import inBoolIfEqTrue, inBoolIfEqTrueRev, inBoolIfEqFalse, inBoolIfEqFalseRev
         if self.rhs == TRUE:
-            return inBoolIfEqTrue.specialize({A:self.lhs}).deriveConclusion().proven({self})
+            return inBoolIfEqTrue.specialize({A:self.lhs}).deriveConclusion(assumptions)
         if self.lhs == TRUE:
-            return inBoolIfEqTrueRev.specialize({A:self.rhs}).deriveConclusion().proven({self})
+            return inBoolIfEqTrueRev.specialize({A:self.rhs}).deriveConclusion(assumptions)
         if self.rhs == FALSE:
-            return inBoolIfEqFalse.specialize({A:self.lhs}).deriveConclusion().proven({self})
+            return inBoolIfEqFalse.specialize({A:self.lhs}).deriveConclusion(assumptions)
         if self.lhs == FALSE:
-            return inBoolIfEqFalseRev.specialize({A:self.rhs}).deriveConclusion().proven({self})
+            return inBoolIfEqFalseRev.specialize({A:self.rhs}).deriveConclusion(assumptions)
     
     def evaluate(self):
         '''
@@ -347,6 +317,8 @@ class Equals(BinaryOperation):
             
         return _evaluate(self, doEval)
         
+"""
+This is obsolete (mostly) -- use proveit.lambda_map techniques instead.
 
 def _autoSub(outcome, outerExpr, superExpr, subExpr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, suppressWarnings=False):
     if eqGenMethodArgs is None: eqGenMethodArgs = []
@@ -434,6 +406,10 @@ def autoStatementSubstitution(expr, eqGenMethodName, eqGenMethodArgs=None, eqGen
     '''
     if superExpr is None: superExpr = expr
     return _autoSub('statement_substitution', expr, superExpr, superExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)        
+"""
+
+"""
+Either move this elsewhere or use other techniques.  Perhaps no longer needed.
 
 def generateSubExpressions(expr, criteria=None, subExprClass=None):
     meetsCriteria = (subExprClass is None or isinstance(expr, subExprClass)) and \
@@ -447,3 +423,13 @@ def extractSubExpr(expr, criteria=None, subExprClass=None):
     for subExpr in generateSubExpressions(expr, criteria=criteria, subExprClass=subExprClass):
         return subExpr
     print "Sub expression meeting the criteria not found"
+
+"""
+
+class TransitivityException:
+    def __init__(self, expr1, expr2):
+        self.expr1 = expr1
+        self.expr2 = expr2
+    
+    def __str__(self):
+        return 'Transitivity cannot be applied unless there is something in common in the equalities'
