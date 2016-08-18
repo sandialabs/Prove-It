@@ -12,25 +12,28 @@ class Defaults:
         '''
         if assumptions is None:
             return self.assumptions
-        self._checkAssumptions(assumptions)
-        return assumptions
+        return tuple(self._checkAssumptions(assumptions))
     
     def _checkAssumptions(self, assumptions):
         '''
         Check that the given assumptions are valid -- an iterable
-        collection of Expressions.
+        collection of Expressions, and skip any repeats.
         '''
         from expression.expr import Expression
+        assumptionsSet = set()
         for assumption in assumptions:
             if not isinstance(assumption, Expression):
                 raise TypeError('The assumptions must be an iterable collection of Expression objects')
+            if assumption not in assumptionsSet:
+                yield assumption
+            assumptionsSet.add(assumption)
         
     def __setattr__(self, attr, value):
         '''
         When setting the assumptions, check that they are valid.
         '''
         if attr == 'assumptions' and hasattr(self, attr):
-            self._checkAssumptions(value)
+            value = tuple(self._checkAssumptions(value))
         self.__dict__[attr] = value             
 
 class InvalidAssumptions:
