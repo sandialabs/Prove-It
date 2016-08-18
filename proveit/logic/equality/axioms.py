@@ -18,8 +18,9 @@ equalityInBool
 
 # In[4]:
 
-equalsTransitivity = Forall((x, y, z), Implies(Equals(x, y), Implies(Equals(y, z), Equals(x, z))))
-equalsTransitivity
+# Obtain via substitution -- not an axiom!
+#equalsTransitivity = Forall((x, y, z), Implies(Equals(x, y), Implies(Equals(y, z), Equals(x, z))))
+#equalsTransitivity
 
 
 # In[5]:
@@ -42,7 +43,7 @@ notEqualsDef
 
 # In[8]:
 
-substitution = Forall((f, x, y), Implies(Equals(x, y), Equals(fx, fy)))
+substitution = Forall((f, x, y), Equals(fx, fy), conditions=Equals(x, y))
 substitution
 
 endAxioms(locals(), __package__)
