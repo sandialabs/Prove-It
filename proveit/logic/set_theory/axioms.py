@@ -3,7 +3,7 @@
 
 # In[1]:
 
-from proveit.logic import BOOLEANS, Forall, Exists, And, Or, Not, Implies, Iff, Equals, InSet, NotInSet, Singleton, SetOfAll, NOTHING
+from proveit.logic import Forall, Exists, And, Or, Not, Implies, Iff, Equals, InSet, NotInSet, Singleton, SetOfAll, NOTHING
 from proveit.common import x, y, z, A, B, C, S, f, P, fy, Py
 from proveit import beginAxioms, endAxioms
 
