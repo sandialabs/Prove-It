@@ -94,6 +94,15 @@ class Expression:
         '''
         raise MakeNotImplemented(subClass)
     
+    def coreInfo(self):
+        '''
+        Copy out the core information.
+        '''
+        return tuple(self._coreInfo)
+    
+    def subExpr(self, idx):
+        return self._subExpressions[idx]
+        
     def subExprIter(self):
         '''
         Iterator over the sub-expressions of this expression.
@@ -114,17 +123,18 @@ class Expression:
         '''
         from proveit import KnownTruth
         assumptions = defaults.checkedAssumptions(assumptions)
+        assumptionsSet = set(assumptions)
         
         # Prove each assumption, by assumption, to deduce any side-effects.
         for assumption in assumptions:
             if assumption is not self:
-                assumption.prove({assumption})
+                assumption.prove([assumption])
         
-        foundTruth = KnownTruth.findKnownTruth(self, assumptions)
+        foundTruth = KnownTruth.findKnownTruth(self, assumptionsSet)
         if foundTruth is not None: 
             return foundTruth # found an existing KnownTruth that does the job!
-            
-        if self in assumptions:
+        
+        if self in assumptionsSet:
             # prove by assumption
             from proveit._core_.proof import Assumption
             return Assumption(self).provenTruth
