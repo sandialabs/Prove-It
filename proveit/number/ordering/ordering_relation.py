@@ -1,4 +1,4 @@
-from proveit import BinaryOperation, safeDummyVar
+from proveit import BinaryOperation, safeDummyVar, ProofFailure, USE_DEFAULTS
 from proveit.logic import Equals
 from proveit.common import x, y
 
@@ -7,12 +7,69 @@ class OrderingRelation(BinaryOperation):
     Base class for all strict and non-strict inequalities.
     Do not construct an object of this class directly!  Instead, use LessThan, LessThanEquals etc.
     '''
+    
+    # map Expressions to sets KnownTruths of OrderingRelations that involve the Expression
+    # as a lower or upper bound respectively
+    knownLowerBounds = dict()    
+    knownUpperBounds = dict()    
+    
     def __init__(self, operator,lhs, rhs):
         BinaryOperation.__init__(self,operator, lhs, rhs)
         self.lhs = lhs
         self.rhs = rhs
 
-    def deriveReversed(self):
+    def deduceSideEffects(self, knownTruth):
+        '''
+        Automatically derive the reversed form as a side effect.
+        '''
+        if (self.lhs != self.rhs):
+            # automatically derive the reversed equivalent form
+            self.deriveReversed(knownTruth.assumptions)
+
+    def conclude(self, assumptions):
+        '''
+        Try to conclude the OrderingRelation using other OrderingRelations
+        or Equals that are known to be true via transitivity.
+        For example, if a<b, b=c, and c<=d are known
+        truths (under the given assumptions), we can conclude that a<d
+        (under these assumptions).
+        '''
+        from proveit.logic import transitivitySearch
+        # Use a breadth-first search approach to find the shortest
+        # path to get from one end-point to the other.
+        return transitivitySearch(self, assumptions)
+
+    @classmethod
+    def knownRelationsFromLeft(orderingClass, expr, assumptionsSet):
+        '''
+        Yield (KnownTruth, right-hand-side) pairs for < or <= relations,
+        if the class is a LesserRelation, or for > or >= relations, if
+        the class is a GreaterRelation, that involve the given expression
+        on the left side and are known to be true under the given 
+        assumptions.
+        '''
+        for knownTruth in orderingClass.knownLeftSides.get(expr, []):
+            if assumptionsSet.issuperset(knownTruth.assumptions):
+                yield (knownTruth, knownTruth.rhs)
+        for (knownTruth, otherExpr) in  Equals.knownRelationsFromLeft(expr, assumptionsSet):
+            yield (knownTruth, otherExpr)
+                
+    @classmethod
+    def knownRelationsFromRight(orderingClass, expr, assumptionsSet):
+        '''
+        Yield (KnownTruth, left-hand-side) pairs for < or <= relations,
+        if the class is a LesserRelation, or for > or >= relations, if
+        the class is a GreaterRelation, that involve the given expression
+        on the right side and are known to be true under the given 
+        assumptions.
+        '''
+        for knownTruth in orderingClass.knownRightSides.get(expr, []):
+            if assumptionsSet.issuperset(knownTruth.assumptions):
+                yield (knownTruth, knownTruth.lhs)
+        for (knownTruth, otherExpr) in  Equals.knownRelations(expr, assumptionsSet):
+            yield (knownTruth, otherExpr)
+    
+    def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From, e.g., x >= y derive y <= x etc.
         '''
@@ -20,16 +77,17 @@ class OrderingRelation(BinaryOperation):
         from greater_than import GREATERTHAN, GREATERTHANEQUALS
         from axioms import reverseGreaterThanEquals, reverseLessThanEquals, reverseGreaterThan, reverseLessThan
         if self.operator == LESSTHANEQUALS:
-            return reverseLessThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
+            return reverseLessThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
         elif self.operator == LESSTHAN:
-            return reverseLessThan.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
+            return reverseLessThan.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
         elif self.operator == GREATERTHANEQUALS:
-            return reverseGreaterThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
+            return reverseGreaterThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
         elif self.operator == GREATERTHAN:
-            return reverseGreaterThan.specialize({x:self.lhs, y:self.rhs}).deriveConclusion().checked({self})
+            return reverseGreaterThan.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
         else:
             raise ValueError("Invalid instance of OrderingRelation!")
-    def applyTransitivity(self, other):
+    
+    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         if isinstance(other,Equals):
             if other.lhs in (self.lhs, self.rhs):
                 subrule = other.rhsSubstitute
@@ -47,8 +105,8 @@ class OrderingRelation(BinaryOperation):
 #                    return other.rhsSubstitute(X,self.operator.operationMaker([X,self.rhs]))
 #                else:
 #                    return other.rhsSubstitute(X,
-        return self.transitivityImpl(other).deriveConclusion().checked({self, other})
-
+        return self.transitivityImpl(other).deriveConclusion(assumptions)
+        
     def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
         raise NotImplementedError('deriveShifted is implemented for each specific OrderingRelation')
 
