@@ -9,17 +9,8 @@ from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-# In[3]:
 
-lhsSubstitution = Forall((P, x, y), Implies(Equals(x, y), Implies(Py, Px)))
-lhsSubstitution
-
-
-# In[4]:
-
-rhsSubstitution = Forall((P, x, y), Implies(Equals(x, y), Implies(Px, Py)))
-rhsSubstitution
-
+substitute = Forall((P, x, y), Py, conditions=[Px, Equals(x, y)])
 
 # In[5]:
 
