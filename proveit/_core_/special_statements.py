@@ -31,9 +31,9 @@ def _endSpecialStatements(localVars, specialStatementType, package):
         '''
         expr = val.expr if isinstance(val, KnownTruth) else val
         assert isinstance(expr, Expression), 'Expecting only Expression statements for ' + _specialStatementType + ' variables: ' + name
-        if _specialStatementType == 'axioms':
+        if specialStatementType == 'axioms':
             localVars[name] = Axiom(expr, package, name).provenTruth
-        if _specialStatementType == 'theorems':
+        if specialStatementType == 'theorems':
             localVars[name] = Theorem(expr, package, name).provenTruth   
 
 def beginAxioms(excludedLocalVars):
