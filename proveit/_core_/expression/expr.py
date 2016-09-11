@@ -12,7 +12,7 @@ class Expression:
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
     in_progress_to_conclude = set() 
-    
+            
     def __init__(self, coreInfo, subExpressions=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
@@ -142,13 +142,13 @@ class Expression:
         # Use Expression.in_progress_to_conclude set to prevent an infinite recursion
         in_progress_key = (self, tuple(sorted(assumptions)))
         if in_progress_key in Expression.in_progress_to_conclude:
-            raise ProofFailure("Infinite 'conclude' recursion blocked for " + str(self) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+            raise ProofFailure(self, assumptions, "Infinite 'conclude' recursion blocked.")
         Expression.in_progress_to_conclude.add(in_progress_key)        
         
         try:
             return self.conclude(assumptions)
         except NotImplementedError:
-            raise ProofFailure('Unable to automatically prove ' + str(self) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+            raise ProofFailure(self, assumptions, "'conclude' method not implemented for proof automation")
         finally:
             Expression.in_progress_to_conclude.remove(in_progress_key)
     
@@ -165,9 +165,9 @@ class Expression:
         '''
         raise NotImplementedError('The conclude method has not been implemented for ' + str(self.__class__))
     
-    def deduceSideEffects(self, knownTruth):
+    def deriveSideEffects(self, knownTruth):
         '''
-        Deduce side effects, obvious and useful consequences that may be arise from
+        Derive side effects, obvious and useful consequences that may be arise from
         proving that this expression is a known truth (under some set of assumptions).
         The default is to do nothing, but should be overridden as appropriate.  
         There is no need to call this manually; it is called automatically when
@@ -378,8 +378,10 @@ class ScopingViolation(Exception):
         return self.message
 
 class ProofFailure(Exception):
-    def __init__(self, message):
+    def __init__(self, expr, assumptions, message):
+        self.expr = expr
         self.message = message
+        self.assumptions = assumptions
     def __str__(self):
-        return self.message
+        return "Unable to prove " + str(self.expr) + " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}: " + self.message
     
