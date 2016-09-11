@@ -30,8 +30,8 @@ class Proof:
         # in case this new proof makes an old one obselete or is born obsolete itself:
         provenTruth._recordBestProof(self)
         if provenTruth.proof() is self: # don't bother redoing side effects if this proof was born obsolete
-            # may deduce any side-effects that are obvious consequences arising from this truth:
-            provenTruth.deduceSideEffects()
+            # may derive any side-effects that are obvious consequences arising from this truth:
+            provenTruth.deriveSideEffects()
 
     def __eq__(self, other):
         if isinstance(other, Proof):
