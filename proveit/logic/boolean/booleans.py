@@ -1,4 +1,4 @@
-from proveit import Operation, Literal, USE_DEFAULTS
+from proveit import Operation, Literal, USE_DEFAULTS, ProofFailure
 from proveit.common import A, P
 
 class BooleanSet(Literal):
@@ -18,14 +18,19 @@ class BooleanSet(Literal):
         Try to deduce that the given element is in the set of Booleans under the given assumptions.
         '''   
         from proveit.logic import Or, Equals
-        from theorems import foldInBool
-        return element.deduceInBool()
-        
-        
-        # prerequisite = [(element = TRUE) or (element = FALSE)]
-        prerequisite = Or(Equals(element, TRUE), Equals(element, FALSE))
-        # [element in BOOLEANS] assuming prerequisite
-        return foldInBool.specialize({A:element}).deriveConclusion().checked({prerequisite})
+        from theorems import inBoolIfEqTrue, inBoolIfEqFalse
+        if hasattr(element, 'deduceInBool'):
+            return element.deduceInBool(assumptions=assumptions)
+        else:
+            try:
+                return inBoolIfEqTrue.specialize({A:element}, assumptions=assumptions)
+            except:
+                pass
+            try:
+                return inBoolIfEqFalse.specialize({A:element}, assumptions=assumptions)
+            except:
+                pass
+            raise ProofFailure(self, assumptions, str(element) + ' not proven to be equal to TRUE or FALSE.')
 
     def evaluateForall(self, forallStmt):
         '''
@@ -75,7 +80,7 @@ class BooleanSet(Literal):
                         evaluation = forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
         return evaluation.checked()
     
-    def unfoldForall(self, forallStmt):
+    def unfoldForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
         Given forall_{A in Booleans} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
@@ -84,9 +89,9 @@ class BooleanSet(Literal):
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of Booleans to a forall statement with 1 instance variable"
-        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]): forallStmt.instanceExpr, A:forallStmt.instanceVars[0]}).deriveConclusion().checked({forallStmt})
+        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]): forallStmt.instanceExpr, A:forallStmt.instanceVars[0]}).deriveConclusion(assumptions)
 
-    def foldAsForall(self, forallStmt):
+    def foldAsForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
         Given forall_{A in Booleans} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
         '''
@@ -97,8 +102,8 @@ class BooleanSet(Literal):
         assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
         # [P(TRUE) and P(FALSE)] => forall_{A in Booleans} P(A)
         folding = foldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]):forallStmt.instanceExpr, A:forallStmt.instanceVars[0]})
-        folding.hypothesis.concludeViaComposition()
-        return folding.deriveConclusion()
+        folding.hypothesis.concludeViaComposition(assumptions)
+        return folding.deriveConclusion(assumptions)
 
 class TrueLiteral(Literal):
     def __init__(self):

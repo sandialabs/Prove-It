@@ -1,5 +1,5 @@
-from proveit.logic import And, TRUE, Forall, inBool, BOOLEANS
-from proveit.common import A, B
+from proveit.logic import And, TRUE, Forall, inBool, Booleans
+from proveit.common import Aetc
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
@@ -7,10 +7,10 @@ beginTheorems(locals())
 trueAndTrue = And(TRUE, TRUE)
 trueAndTrue
 
-conjunctionIntro = Forall((A, B), And(A, B), conditions=(A, B))
+conjunctionIntro = Forall(Aetc, And(Aetc), conditions=[Aetc])
 conjunctionIntro
 
-conjunctionClosure = Forall((A, B), inBool(And(A, B)), domain=BOOLEANS)
+conjunctionClosure = Forall(Aetc, inBool(And(Aetc)), domain=Booleans)
 conjunctionClosure
 
 endTheorems(locals(), __package__)

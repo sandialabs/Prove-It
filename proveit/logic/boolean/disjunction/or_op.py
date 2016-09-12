@@ -1,6 +1,6 @@
-from proveit import Literal, AssociativeOperation
+from proveit import Literal, AssociativeOperation, USE_DEFAULTS, ProofFailure
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
-from proveit.common import A, B, C, y, xEtc, zEtc
+from proveit.common import A, B, C, Aetc, Cetc
 
 OR = Literal(__package__, stringFormat = 'or', latexFormat = r'\lor')
 
@@ -11,29 +11,43 @@ class Or(AssociativeOperation):
         '''
         AssociativeOperation.__init__(self, OR, *operands)
 
+    def conclude(self, assumptions):
+        '''
+        Try to automatically conclude this disjunction via any of its constituents.
+        That is, conclude some :math:`A \lor B \lor ... \lor Z` via and of
+        :math:'A', :math:'B', ..., or :math:'Z'.
+        '''
+        for operand in self.operands:
+            try:
+                operand.prove(assumptions)
+                return self.concludeViaExample(operand)
+            except:
+                pass
+        raise ProofFailure(self, assumptions, 'Unable to automatically conclude disjunction; none of the constituents are automatically provable.')
+
     @classmethod
     def operatorOfOperation(subClass):
         return OR
     
-    def deriveRightIfNotLeft(self):
+    def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
         '''
         from theorems import orImpliesRightIfNotLeft
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}).deriveConclusion()
+        return orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
 
-    def deriveLeftIfNotRight(self):
+    def deriveLeftIfNotRight(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return A assuming inBool(A), Not(B).
         '''
         from theorems import orImpliesLeftIfNotRight
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}).deriveConclusion()
+        return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
         
-    def deriveCommonConclusion(self, conclusion):
+    def deriveCommonConclusion(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.
         '''
@@ -46,7 +60,7 @@ class Or(AssociativeOperation):
         rightImplConclusion = Implies(rightOperand, conclusion)
         # (A=>C and B=>C) assuming A=>C, B=>C
         compose(leftImplConclusion, rightImplConclusion)
-        return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}).deriveConclusion().deriveConclusion()
+        return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
     def evaluate(self):
         '''
@@ -66,14 +80,12 @@ class Or(AssociativeOperation):
             elif A == FALSE and B == FALSE: return orFF
         return _evaluate(self, lambda : _evaluateBooleanBinaryOperation(self, baseEvalFn))
 
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
         '''
         from theorems import disjunctionClosure
-        leftInBool = deduceInBool(self.leftOperand)
-        rightInBool = deduceInBool(self.rightOperand)
-        return disjunctionClosure.specialize({A:self.hypothesis, B:self.conclusion})
+        return disjunctionClosure.specialize({Aetc:self.operands}, assumptions)
     
     def concludeViaExample(self, trueOperand):
         '''
@@ -82,4 +94,4 @@ class Or(AssociativeOperation):
         '''
         from theorems import orIfAny
         index = self.operands.index(trueOperand)
-        return orIfAny.specialize({xEtc:self.operands[:index], y:self.operands[index], zEtc:self.operands[index+1:]})
+        return orIfAny.specialize({Aetc:self.operands[:index], B:self.operands[index], Cetc:self.operands[index+1:]})

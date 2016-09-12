@@ -1,6 +1,6 @@
-from proveit import Literal, AssociativeOperation
+from proveit import Literal, AssociativeOperation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
-from proveit.common import A, B, C
+from proveit.common import A, B, C, Aetc
 
 AND = Literal(__package__, stringFormat = 'and', latexFormat = r'\land')
 
@@ -15,7 +15,24 @@ class And(AssociativeOperation):
     def operatorOfOperation(subClass):
         return AND
     
-    def deriveInPart(self, indexOrExpr):
+    def conclude(self, assumptions):
+        '''
+        Try to automatically conclude this conjunction via composing the constituents.
+        That is, conclude some :math:`A \land B \and ... \land Z` via
+        :math:'A', :math:'B', ..., :math:'Z' individually.
+        '''
+        return self.concludeViaComposition(assumptions)    
+    
+    def deriveSideEffects(self, knownTruth):
+        '''
+        From a conjunction, automatically derive the individual constituents.
+        That is, deduce :math:'A', :math:'B', ..., :math:'Z' from
+        :math:`A \land B \and ... \land Z`.
+        '''
+        for i in xrange(len(self.operands)):
+            self.deriveInPart(i, assumptions=knownTruth.assumptions)
+        
+    def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
@@ -23,34 +40,14 @@ class And(AssociativeOperation):
         from axioms import andImpliesEach
         from proveit.common import Aetc, Cetc
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
-        return andImpliesEach.specialize({Aetc:self.operands[:idx], B:self.operands[idx], Cetc:self.operands[idx+1:]}).deriveConclusion()
+        return andImpliesEach.specialize({Aetc:self.operands[:idx], B:self.operands[idx], Cetc:self.operands[idx+1:]}).deriveConclusion(assumptions)
     
-    def deriveLeft(self):
+    def concludeViaComposition(self, assumptions=USE_DEFAULTS):
         '''
-        From (A and B), derive and return A.
+        Prove and return some (A and B ... and ... Z) via A, B, ..., Z each proven individually.
+        See also the compose method to do this constructively.
         '''
-        assert len(self.operands) == 2
-        return self.deriveInPart(0)
-
-    def deriveRight(self):
-        '''
-        From (A and B), derive and return B.
-        '''
-        assert len(self.operands) == 2
-        return self.deriveInPart(1)
-        
-    def decompose(self):
-        '''
-        From (A and B), derive and return A, B as a tuple.
-        '''        
-        return (self.deriveLeft(), self.deriveRight())
-
-    def concludeViaComposition(self):
-        '''
-        Prove and return some (A and B) assuming A, B.  See also the compose method to
-        do this constructively.
-        '''
-        return compose(*self.operands)
+        return compose(self.operands, assumptions)
             
     def evaluate(self):
         '''
@@ -70,36 +67,17 @@ class And(AssociativeOperation):
             elif A == FALSE and B == FALSE: return andFF
         return _evaluate(self, lambda : _evaluateBooleanBinaryOperation(self, baseEvalFn))
 
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'and' expression is in the set of BOOLEANS.
         '''
         from theorems import conjunctionClosure
-        if len(self.operands) > 2:
-            raise Exception('Deducing more than binary conjunction in booleans has not been implemented')
-        inBools = {deduceInBool(operand) for operand in self.operands}
-        return conjunctionClosure.specialize({A:self.operands[0], B:self.operands[1]})
+        return conjunctionClosure.specialize({Aetc:self.operands}, assumptions=assumptions)
     
-def compose(*expressions):
+def compose(expressions, assumptions=USE_DEFAULTS):
     '''
     Returns [A and B and ...], the And operator applied to the collection of given arguments,
     derived from each separately.
     '''
-    from axioms import andComposition
     from theorems import conjunctionIntro
-    from proveit.logic.boolean import deriveStmtEqTrue
-    if len(expressions) == 2:
-        exprA, exprB = expressions
-        return conjunctionIntro.specialize({A:exprA, B:exprB})
-    else:
-        assert len(expressions) > 2, "Compose 2 or more expressions, but not less than 2."
-        rightComposition = compose(*expressions[1:])
-        # A and (B and ..C..) = TRUE, given A, B, ..C..
-        nestedAndEqT = deriveStmtEqTrue(compose(expressions[0], rightComposition))
-        # A and B and ..C.. = A and (B and ..C..)
-        compositionEquality = andComposition.specialize({A:expressions[0], B:rightComposition.operands[0], C:rightComposition.operands[1:]})
-        print nestedAndEqT
-        print compositionEquality
-        # [A and B and ..C..] given A, B, ..C..
-        return compositionEquality.applyTransitivity(nestedAndEqT).deriveViaBooleanEquality()
-    
+    return conjunctionIntro.specialize({Aetc:expressions}, assumptions=assumptions)

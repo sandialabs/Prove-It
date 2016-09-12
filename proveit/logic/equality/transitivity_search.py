@@ -49,26 +49,28 @@ def transitivitySearch(relation, assumptions):
                     raise TypeError(str(relation.__class__) + '.knownRelationsFromLeft and ' + str(relation.__class__) \
                                        + '.knownRelationsFromRight should yield (KnownTruth, Expression) pairs')
                 if newEndPoint not in endPoints:
-                    # we only care about new chains with new end-points.
+                    # We only care about new chains with new end-points.
                     newChains[newEndPoint] = chain + [relation]
-                if newEndPoint in otherEndPoints:
-                    # made it to the other side. we have a solution.
-                    # Apply transitivities to generate it and return this new known truth.
-                    if chains is leftChains:
-                        # bridge the left extension with the reversed right chain
-                        fullChain = newChains[newEndPoint] + list(reversed(rightChains[newEndPoint]))
-                    else:
-                        # bridge the left chain with the reversed right extension
-                        fullChain = leftChains[newEndPoint] + list(reversed(newChains[newEndPoint]))
-                    applyTransitivities(fullChain, assumptions=assumptions)
-                    try:
-                        # try to prove the original relation, after applying the transitivities.
-                        # if this does not work, the chain wasn't quite what we needed
-                        # (this could happen, for example, if a strong inequality was desired
-                        # but a weak inequality was produced) let's continue the search.
-                        return desiredRelation.prove(assumptions)
-                    except ProofFailure:
-                        pass
+                    
+                    # Do we have an end to end solution?
+                    if newEndPoint in otherEndPoints:
+                        # made it to the other side. we have a solution.
+                        # Apply transitivities to generate it and return this new known truth.
+                        if chains is leftChains:
+                            # bridge the left extension with the reversed right chain
+                            fullChain = newChains[newEndPoint] + list(reversed(rightChains[newEndPoint]))
+                        else:
+                            # bridge the left chain with the reversed right extension
+                            fullChain = leftChains[newEndPoint] + list(reversed(newChains[newEndPoint]))
+                        applyTransitivities(fullChain, assumptions=assumptions)
+                        try:
+                            # try to prove the original relation, after applying the transitivities.
+                            # if this does not work, the chain wasn't quite what we needed
+                            # (this could happen, for example, if a strong inequality was desired
+                            # but a weak inequality was produced) let's continue the search.
+                            return desiredRelation.prove(assumptions)
+                        except ProofFailure:
+                            pass
         
         # get the new unexplored chains and update the full set of chains with the new chains
         unexploredChains.clear()
@@ -76,7 +78,7 @@ def transitivitySearch(relation, assumptions):
                                 if endPoint not in chains})
         chains.update(newChains)
         
-    raise ProofFailure('No proof found via applying transitivity amongst known proven relations')
+    raise ProofFailure(relation, assumptions, 'No proof found via applying transitivity amongst known proven relations.')
                 
 def applyTransitivities(chain, assumptions=USE_DEFAULTS):
     '''

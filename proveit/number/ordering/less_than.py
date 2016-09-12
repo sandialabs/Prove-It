@@ -27,7 +27,7 @@ class LesserRelation(OrderingRelation):
         '''
         return self.rhs
     
-    def deduceSideEffects(self, knownTruth):
+    def deriveSideEffects(self, knownTruth):
         '''
         Record the knownTruth in LesserRelation.knownLeftSides and 
         LesserRelation.knownRightSides.  This information may
@@ -36,7 +36,7 @@ class LesserRelation(OrderingRelation):
         '''
         LesserRelation.knownLeftSides.setdefault(self.lhs, set()).add(knownTruth)
         LesserRelation.knownLeftSides.setdefault(self.rhs, set()).add(knownTruth)
-        OrderingRelation.deduceSideEffects(self, knownTruth)
+        OrderingRelation.deriveSideEffects(self, knownTruth)
     
 
 class LessThan(LesserRelation):

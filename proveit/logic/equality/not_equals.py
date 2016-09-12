@@ -1,6 +1,6 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS
 from equals import Equals
-from proveit.common import x, y, X
+from proveit.common import x, y, A, X
 
 NOTEQUALS = Literal(__package__, stringFormat = '!=', latexFormat = r'\neq')
 
@@ -13,6 +13,14 @@ class NotEquals(BinaryOperation):
     @classmethod
     def operatorOfOperation(subClass):
         return NOTEQUALS    
+    
+    def deriveSideEffects(self, knownTruth):
+        '''
+        Derive the reversed form, as a side effect.
+        '''
+        if (self.lhs != self.rhs):
+            # automatically derive the reversed form which is equivalent
+            self.deriveReversed(knownTruth.assumptions)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
@@ -31,7 +39,7 @@ class NotEquals(BinaryOperation):
         if self.rhs == FALSE:
             return fromNotFalse.specialize({A:self.lhs}).deriveConclusion(assumptions)
 
-    def concludeViaDoubleNegation(self):
+    def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form A != FALSE assuming A.
         Also see version in Not class.
@@ -48,12 +56,12 @@ class NotEquals(BinaryOperation):
         from axioms import notEqualsDef
         return notEqualsDef.specialize({x:self.lhs, y:self.rhs})
 
-    def unfold(self):
+    def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (x != y), derive and return Not(x=y).
         '''
         from theorems import unfoldNotEquals
-        return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion()
+        return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
 
     def evaluate(self):
         '''

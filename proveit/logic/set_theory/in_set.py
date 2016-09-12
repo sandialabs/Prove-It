@@ -11,14 +11,9 @@ class InSet(BinaryOperation):
     @classmethod
     def operatorOfOperation(subClass):
         return IN    
-    
-    def prove(self, assumptions=USE_DEFAULTS):
-        '''
-        Try to prove that the element is in the domain.
-        '''
-        return self.domain.deduceElemInSet(self.element, assumptions)
-    
+        
     """
+    # LEADS TO PARADOX.  ONLY ALLOWED WHEN THE DOMAIN IS A KNOWN SET.
     def deduceInBool(self):
         '''
         Deduce and return that this 'in' statement is in the set of BOOLEANS.
@@ -41,10 +36,10 @@ class InSet(BinaryOperation):
         Attempt to conclude that the element is in the domain by calling
         'deduceInSet' on the element with the domain and assumptions.
         '''
-        return self.element.deduceInSet(self.domain, assumptions)
+        return self.domain.deduceElemInSet(self.element, assumptions)
 
     
-    def deduceSideEffects(self, assumptions):
+    def deriveSideEffects(self, assumptions):
         '''
         If the domain has a 'deduceMembershipSideEffects' method, it will be called
         and given the element and assumptions.

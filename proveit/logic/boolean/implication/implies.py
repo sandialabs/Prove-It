@@ -15,6 +15,22 @@ class Implies(BinaryOperation):
     def operatorOfOperation(subClass):
         return IMPLIES    
 
+    def deriveSideEffects(self, knownTruth):
+        '''
+        From :math:`A \Rightarrow B`, derive B if :math:`A` can be proven.
+        From :math:`A \Rightarrow \bot`, automatically derive :math:`\lnot A` if :math:`A \in \mathbb{B}`.
+        From :math:`\lnot A \Rightarrow \bot`, automatically derive :math:`A` if :math:`A \in \mathbb{B}`.
+        '''
+        try:
+            self.deriveConclusion(knownTruth.assumptions)
+        except:
+            pass
+        if self.conclude == FALSE:
+            try:
+                self.deriveViaContradiction(knownTruth.assumptions)
+            except:
+                pass
+
     def deriveConclusion(self, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \Rightarrow B)` derive and return :math:`B` assuming :math:`A`.
@@ -32,19 +48,20 @@ class Implies(BinaryOperation):
         elif self.hypothesis == otherImpl.conclusion:
             return Implies(otherImpl.hypothesis, self.conclusion).proven(assumptions)
     
-    def deriveViaContradiction(self):
+    def deriveViaContradiction(self, assumptions=USE_DEFAULTS):
         r'''
-        From :math:`[\lnot A \Rightarrow \mathtt{FALSE}]`, derive and return :math:`A` assuming :math:`A \in \mathcal{B}`.
-        Or from :math:`[A \Rightarrow \mathtt{FALSE}]`, derive and return :math:`\lnot A` assuming :math:`A \in \mathcal{B}`.
+        From :math:`[\lnot A \Rightarrow \bot]`, derive and return :math:`A` assuming :math:`A \in \mathcal{B}`.
+        Or from :math:`[A \Rightarrow \bot]`, derive and return :math:`\lnot A` assuming :math:`A \in \mathcal{B}`.
         '''
         from proveit.logic.boolean.negation.axioms import contradictoryValidation
         from proveit.logic.boolean.negation.theorems import hypotheticalContradiction
-        assert self.conclusion == FALSE
+        if self.conclusion != FALSE:
+            raise ValueError('deriveViaContridiction method is only applicable if FALSE is implicated, not for ' + str(self))
         if isinstance(self.hypothesis, Not):
             stmt = self.hypothesis.operand
-            return contradictoryValidation.specialize({A:stmt}).deriveConclusion()
+            return contradictoryValidation.specialize({A:stmt}, assumptions).deriveConclusion(assumptions)
         else:
-            return hypotheticalContradiction.specialize({A:self.hypothesis}).deriveConclusion()
+            return hypotheticalContradiction.specialize({A:self.hypothesis}, assumptions).deriveConclusion(assumptions)
     
     def generalize(self, forallVars, domain=None, conditions=tuple()):
         r'''
@@ -94,7 +111,7 @@ class Implies(BinaryOperation):
         else:
             return transpositionToNegated.specialize({B:self.hypothesis, A:self.conclusion})
         
-    def transpose(self):
+    def transpose(self, assumptions=USE_DEFAULTS):
         '''
         Depending upon the form of self with respect to negation of the hypothesis and/or conclusion,
         will derive from self and return as follows:
@@ -104,7 +121,7 @@ class Implies(BinaryOperation):
         * From :math:`[A  \Rightarrow \lnot B]`, derive :math:`[B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`.
         * From :math:`[A  \Rightarrow B]`, derive :math:`[\lnot B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
         '''
-        return self.transposition().deriveConclusion()
+        return self.transposition().deriveConclusion(assumptions)
         
     def evaluate(self):
         '''

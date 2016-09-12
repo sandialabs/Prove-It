@@ -32,6 +32,10 @@ unfoldInBool
 foldInBool = Forall(A, Implies(Or(Equals(A, TRUE), Equals(A, FALSE)), inBool(A)))
 foldInBool
 
+inBoolIfEqTrue = Forall(A, inBool(A), conditions=[Equals(A, TRUE)])
+
+inBoolIfEqFalse = Forall(A, inBool(A), conditions=[Equals(A, FALSE)])
+
 trueNotFalse = NotEquals(TRUE, FALSE)
 trueNotFalse
 
@@ -46,18 +50,6 @@ falseInBool
 
 fromNotFalse = Forall(A, Implies(NotEquals(A, FALSE), A), domain=Booleans)
 fromNotFalse
-
-inBoolIfEqTrue = Forall(A, Implies(Equals(A, TRUE), inBool(A)))
-inBoolIfEqTrue
-
-inBoolIfEqTrueRev = Forall(A, Implies(Equals(TRUE, A), inBool(A)))
-inBoolIfEqTrueRev
-
-inBoolIfEqFalse = Forall(A, Implies(Equals(A, FALSE), inBool(A)))
-inBoolIfEqFalse
-
-inBoolIfEqFalseRev = Forall(A, Implies(Equals(FALSE, A), inBool(A)))
-inBoolIfEqFalseRev
 
 endTheorems(locals(), __package__)
 

@@ -17,12 +17,34 @@ class Iff(BinaryOperation):
     def operatorOfOperation(subClass):
         return IFF
         
+    def deriveSideEffects(self, knownTruth):
+        '''
+        From :math:`A \Leftrightarrow B`, automatically derive
+        :math:`A \Rightarrow B`, :math:`B \Rightarrow A`, :math:`B \Leftrightarrow A`,
+        and, if :math:`A \in \mathbb{B}` and :math:`B \in \mathbb{B}`, derive
+        :math:`A = B` as well.
+        '''
+        self.deriveLeftImplication(knownTruth.assumptions)
+        self.deriveRightImplication(knownTruth.assumptions)
+        self.deriveReversed(knownTruth.assumptions)
+        try:
+            self.deriveEquality(knownTruth.assumptions)
+        except:
+            pass
+            
+    def conclude(self, assumptions):
+        '''
+        Attempt to conclude :math:`A \Leftrightarrow B` automatically from
+        :math:`A \Rightarrow B` and :math:`B \Rightarrow A`.
+        '''
+        self.concludeViaComposition(assumptions)            
+
     def deriveLeftImplication(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return B=>A.
         '''
         from theorems import iffImpliesLeft
-        return iffImpliesLeft.specialize({A: self.A, B: self.B}).deriveConclusion(assumptions)
+        return iffImpliesLeft.specialize({A: self.A, B: self.B}, assumptions)
         
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         '''
@@ -35,7 +57,7 @@ class Iff(BinaryOperation):
         From (A<=>B) derive and return A=>B.
         '''
         from theorems import iffImpliesRight
-        return iffImpliesRight.specialize({A: self.A, B: self.B}).deriveConclusion(assumptions)
+        return iffImpliesRight.specialize({A: self.A, B: self.B}, assumptions)
 
     def deriveRight(self, assumptions=USE_DEFAULTS):
         '''
@@ -48,7 +70,7 @@ class Iff(BinaryOperation):
         From (A<=>B) derive and return (B<=>A).
         '''
         from theorems import iffSymmetry
-        return iffSymmetry.specialize({A:self.A, B:self.B}).deriveConclusion(assumptions)
+        return iffSymmetry.specialize({A:self.A, B:self.B}, assumptions)
     
     def applyTransitivity(self, otherIff, assumptions=USE_DEFAULTS):
         '''
@@ -108,13 +130,11 @@ class Iff(BinaryOperation):
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.
         '''
         from theorems import iffClosure
-        leftInBool = deduceInBool(self.A, assumptions)
-        rightInBool = deduceInBool(self.B, assumptions)
-        return iffClosure.specialize({A:self.hypothesis, B:self.conclusion})
+        return iffClosure.specialize({A:self.hypothesis, B:self.conclusion}, assumptions)
     
     def deriveEquality(self, assumptions=USE_DEFAULTS):
         '''
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
         from theorems import iffOverBoolImplEq
-        return iffOverBoolImplEq.specialize({A:self.A, B:self.B}).deriveConclusion(assumptions)
+        return iffOverBoolImplEq.specialize({A:self.A, B:self.B}, assumptions)

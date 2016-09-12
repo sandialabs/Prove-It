@@ -27,7 +27,7 @@ class GreaterRelation(OrderingRelation):
         '''
         return self.lhs
     
-    def deduceSideEffects(self, knownTruth):
+    def deriveSideEffects(self, knownTruth):
         '''
         Record the knownTruth in GreaterRelation.knownLeftSides and 
         GreaterRelation.knownRightSides.  This information may
@@ -36,7 +36,7 @@ class GreaterRelation(OrderingRelation):
         '''
         GreaterRelation.knownLeftSides.setdefault(self.lhs, set()).add(knownTruth)
         GreaterRelation.knownLeftSides.setdefault(self.rhs, set()).add(knownTruth)
-        OrderingRelation.deduceSideEffects(self, knownTruth)
+        OrderingRelation.deriveSideEffects(self, knownTruth)
 
 class GreaterThan(GreaterRelation):
     def __init__(self, lhs, rhs):

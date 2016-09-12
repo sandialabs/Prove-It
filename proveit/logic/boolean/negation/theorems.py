@@ -7,13 +7,10 @@ beginTheorems(locals())
 notFalse = Not(FALSE)
 notFalse
 
-notImpliesEqFalse = Forall(A, Implies(Not(A), Equals(A, FALSE)))
-notImpliesEqFalse
+eqFalseFromNot = Forall(A, Equals(A, FALSE), conditions=[Not(A)])
+eqFalseFromNot
 
-notImpliesEqFalseRev = Forall(A, Implies(Not(A), Equals(FALSE, A)))
-notImpliesEqFalseRev
-
-fromDoubleNegation = Forall(A, Implies(Not(Not(A)), A))
+fromDoubleNegation = Forall(A, A, conditions=[Not(Not(A))])
 fromDoubleNegation
 
 notTimpliesF = Implies(Not(TRUE), FALSE)
@@ -22,17 +19,14 @@ notTimpliesF
 contradictionFromNegation = Forall(A, Implies(Not(A), Implies(A, FALSE)))
 contradictionFromNegation
 
-notFromEqFalse = Forall(A, Implies(Equals(A, FALSE), Not(A)))
+notFromEqFalse = Forall(A, Not(A), conditions=[Equals(A, FALSE)])
 notFromEqFalse
 
-doubleNegation = Forall(A, Implies(A, Not(Not(A))))
+doubleNegation = Forall(A, Not(Not(A)), conditions=[A])
 doubleNegation
 
-eqFalseFromNegation = Forall(A, Implies(A, Equals(Not(A), FALSE)))
+eqFalseFromNegation = Forall(A, Equals(Not(A), FALSE), conditions=[A])
 eqFalseFromNegation
-
-eqFalseRevFromNegation = Forall(A, Implies(A, Equals(FALSE, Not(A))))
-eqFalseRevFromNegation
 
 doubleNegationEquiv = Forall(A, Equals(A, Not(Not(A))), domain=Booleans)
 doubleNegationEquiv

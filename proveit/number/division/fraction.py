@@ -58,7 +58,7 @@ class Fraction(BinaryOperation):
     def latex(self, **kwargs):
         # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
-        return maybeFencedLatex(r'\frac{'+self.numerator.latex()+'}{'+self.denominator.latex()+r'\right}', **kwargs)
+        return maybeFencedLatex(r'\frac{'+self.numerator.latex()+'}{'+self.denominator.latex()+'}', **kwargs)
     
     def combineExponents(self, assumptions=frozenset()):
         from theorems import fracIntExp, fracNatPosExp

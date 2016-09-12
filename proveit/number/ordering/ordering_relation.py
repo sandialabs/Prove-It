@@ -18,7 +18,7 @@ class OrderingRelation(BinaryOperation):
         self.lhs = lhs
         self.rhs = rhs
 
-    def deduceSideEffects(self, knownTruth):
+    def deriveSideEffects(self, knownTruth):
         '''
         Automatically derive the reversed form as a side effect.
         '''

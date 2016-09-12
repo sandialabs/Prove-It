@@ -17,7 +17,7 @@ class Equals(BinaryOperation):
         self.lhs = a
         self.rhs = b
         
-    def deduceSideEffects(self, knownTruth):
+    def deriveSideEffects(self, knownTruth):
         '''
         Record the knownTruth in Equals.knownEqualities, associated from
         the left hand side and the right hand side.  This information may
@@ -46,10 +46,10 @@ class Equals(BinaryOperation):
         '''
         from proveit.logic import TRUE, FALSE
         if self.lhs==self.rhs:
-            self.concludeViaReflexivity()
+            return self.concludeViaReflexivity()
         if self.lhs or self.rhs in (TRUE, FALSE):
             try:
-                self.concludeBooleanEquality(assumptions)
+                return self.concludeBooleanEquality(assumptions)
             except ProofFailure:
                 pass
         # Use a breadth-first search approach to find the shortest
@@ -124,9 +124,9 @@ class Equals(BinaryOperation):
         from proveit.logic.boolean.axioms import eqTrueElim
         from proveit.logic.boolean.negation.theorems import notFromEqFalse
         if self.rhs == TRUE:
-            return eqTrueElim.specialize({A:self.lhs}).deriveConclusion(assumptions) # A
+            return eqTrueElim.specialize({A:self.lhs}, assumptions) # A
         elif self.rhs == FALSE:
-            return notFromEqFalse.specialize({A:self.lhs}).deriveConclusion(assumptions) # Not(A)
+            return notFromEqFalse.specialize({A:self.lhs}, assumptions) # Not(A)
         
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         '''
@@ -141,34 +141,28 @@ class Equals(BinaryOperation):
     
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
-        Prove and return self of the form (A=TRUE) assuming A, (TRUE=A) assuming A, 
-        A=FALSE assuming Not(A), FALSE=A assuming Not(A), [Not(A)=FALSE] assuming A, or [FALSE=Not(A)] assuming A.
+        Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.
         '''
         from proveit.logic import TRUE, FALSE, Not        
         from proveit.logic.boolean.axioms import eqTrueIntro
-        from proveit.logic.boolean.theorems import eqTrueRevIntro
-        from proveit.logic.boolean.negation.theorems import eqFalseFromNegation, eqFalseRevFromNegation
+        from proveit.logic.boolean.negation.theorems import eqFalseFromNegation
         if self.rhs == TRUE:
-            return eqTrueIntro.specialize({A:self.lhs}).deriveConclusion(assumptions)
+            return eqTrueIntro.specialize({A:self.lhs}, assumptions)
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
-                return eqFalseFromNegation.specialize({A:self.lhs.operands}).deriveConclusion(assumptions)
+                return eqFalseFromNegation.specialize({A:self.lhs.operands}, assumptions)
             else:
                 return Not(self.lhs).equateNegatedToFalse(assumptions)
-        elif self.lhs == TRUE:
-            return eqTrueRevIntro.specialize({A:self.rhs}).deriveConclusion(assumptions)
-        elif self.lhs == FALSE:
-            if isinstance(self.rhs, Not):
-                return eqFalseRevFromNegation.specialize({A:self.rhs.operands}).deriveConclusion(assumptions)
-            else:
-                return Not(self.rhs).equateFalseToNegated(assumptions)
+        elif self.lhs == TRUE or self.lhs == FALSE:
+            return Equals(self.rhs, self.lhs).prove(assumptions).deriveReversed(assumptions)
+        raise ProofFailure(self, assumptions, "May only conclude via boolean equality if one side of the equality is TRUE or FALSE")
     
     def deriveIsInSingleton(self, assumptions=USE_DEFAULTS):
         '''
         From (x = y), derive (x in {y}).
         '''
         from proveit.logic.set_theory.axioms import singletonDef
-        singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeftViaEquivalence(assumptions)
+        return singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeftViaEquivalence(assumptions)
     
     """
     def _subFn(self, fnExpr, fnArg, subbing, replacement):
@@ -186,12 +180,13 @@ class Equals(BinaryOperation):
         return fnExpr, fnArg
     """
     
-    def _lambdaExpr(self, lambdaMap):
+    @staticmethod
+    def _lambdaExpr(lambdaMap):
         if hasattr(lambdaMap, 'lambdaMap'):
             lambdaExpr = lambdaMap.lambdaMap()
         else: lambdaExpr = lambdaMap
         if not isinstance(lambdaExpr, Lambda):
-            raise TypeError('lambdaMap is expected to be a Lambda Expression return a Lambda Expression via calling lambdaMap()')
+            raise TypeError('lambdaMap is expected to be a Lambda Expression or return a Lambda Expression via calling lambdaMap()')
         return lambdaExpr
     
     def substitution(self, lambdaMap, assumptions=USE_DEFAULTS):
@@ -203,8 +198,8 @@ class Equals(BinaryOperation):
         particular)
         '''
         from axioms import substitution
-        fxLambda = self._lambdaExpr(lambdaMap)
-        return substitution.specialize({x:self.lhs, y:self.rhs, f:fxLambda}, assumptions)
+        fxLambda = Equals._lambdaExpr(lambdaMap)
+        return substitution.specialize({x:self.lhs, y:self.rhs, f:fxLambda}, assumptions=assumptions)
         
     def lhsSubstitute(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
@@ -215,7 +210,7 @@ class Equals(BinaryOperation):
         particular).
         '''
         from theorems import substitute
-        PxLambda = self._lambdaExpr(lambdaMap)
+        PxLambda = Equals._lambdaExpr(lambdaMap)
         return substitute.specialize({x:self.rhs, y:self.lhs, P:PxLambda}, assumptions=assumptions)
         
     def rhsSubstitute(self, lambdaMap, assumptions=USE_DEFAULTS):
@@ -227,7 +222,7 @@ class Equals(BinaryOperation):
         particular).
         '''
         from theorems import substitute
-        PxLambda = self._lambdaExpr(lambdaMap)
+        PxLambda = Equals._lambdaExpr(lambdaMap)
         return substitute.specialize({x:self.lhs, y:self.rhs, P:PxLambda}, assumptions=assumptions)
         
     def deriveRightViaEquivalence(self, assumptions=USE_DEFAULTS):
@@ -242,33 +237,13 @@ class Equals(BinaryOperation):
         '''
         return self.lhsSubstitute(Lambda(X, X), assumptions)
     
-    def deduceInSet(self, domain):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        If the domain is Booleans, deduce and return that this equality
-        statement is in the set of Booleans.
+        Deduce and return that this equality statement is in the set of Booleans.
         '''
         from axioms import equalityInBool
-        from proveit.logic import Booleans
-        if domain == Booleans:
-            return equalityInBool.specialize({x:self.lhs, y:self.rhs})
-        else:
-            raise ValueError('Can only deduce that an equality is in the set of Booleans')
-    
-    def inBoolViaBooleanEquality(self, assumptions=USE_DEFAULTS):
-        '''
-        From A=TRUE, A=FALSE, TRUE=A, or FALSE=A, derive and return `A in Booleans`.
-        '''
-        from proveit.logic import TRUE, FALSE
-        from proveit.logic.boolean.theorems import inBoolIfEqTrue, inBoolIfEqTrueRev, inBoolIfEqFalse, inBoolIfEqFalseRev
-        if self.rhs == TRUE:
-            return inBoolIfEqTrue.specialize({A:self.lhs}).deriveConclusion(assumptions)
-        if self.lhs == TRUE:
-            return inBoolIfEqTrueRev.specialize({A:self.rhs}).deriveConclusion(assumptions)
-        if self.rhs == FALSE:
-            return inBoolIfEqFalse.specialize({A:self.lhs}).deriveConclusion(assumptions)
-        if self.lhs == FALSE:
-            return inBoolIfEqFalseRev.specialize({A:self.rhs}).deriveConclusion(assumptions)
-    
+        return equalityInBool.specialize({x:self.lhs, y:self.rhs})
+        
     def evaluate(self):
         '''
         Given operands that may be evaluated, derive and return this

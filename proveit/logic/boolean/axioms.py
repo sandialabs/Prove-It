@@ -20,10 +20,10 @@ boolsDef
 falseNotTrue = NotEquals(FALSE, TRUE)
 falseNotTrue
 
-eqTrueIntro = Forall(A, Implies(A, Equals(A, TRUE)))
+eqTrueIntro = Forall(A, Equals(A, TRUE), conditions=[A])
 eqTrueIntro
 
-eqTrueElim = Forall(A, Implies(Equals(A, TRUE), A))
+eqTrueElim = Forall(A, A, conditions=[Equals(A, TRUE)])
 eqTrueElim
 
 endAxioms(locals(), __package__)
