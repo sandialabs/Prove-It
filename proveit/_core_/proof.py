@@ -30,8 +30,10 @@ class Proof:
         # in case this new proof makes an old one obselete or is born obsolete itself:
         provenTruth._recordBestProof(self)
         if provenTruth.proof() is self: # don't bother redoing side effects if this proof was born obsolete
-            # may derive any side-effects that are obvious consequences arising from this truth:
-            provenTruth.deriveSideEffects()
+            # Axioms and Theorems will derive their side-effects after all of them are created; done in special_statements.py.
+            if not isinstance(self, Axiom) and not isinstance(self, Theorem):
+                # may derive any side-effects that are obvious consequences arising from this truth:
+                provenTruth.deriveSideEffects()
 
     def __eq__(self, other):
         if isinstance(other, Proof):
@@ -47,6 +49,10 @@ class Proof:
         Returns the up-to-date provenTruth objects from the requiredProofs.
         '''
         return [requiredProof.provenTruth for requiredProof in self.requiredProofs]
+    
+    def updatedDependents(self):
+        self.dependents = [dependent for dependent in self._dependents if dependent.provenTruth._proof is dependent]
+        return self.dependents
 
     def assumptions(self):
         return self.provenTruth.assumptions
@@ -340,7 +346,7 @@ class Specialization(Proof):
             domain = expr['domain'] if 'domain' in expr else None
             assert isinstance(lambdaExpr, Lambda), "Forall Operation bundledExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
             # extract the instance expression and instance variables from the lambda expression        
-            instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], list(lambdaExpr.expression['conditions'])
+            instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], lambdaExpr.expression['conditions']
             iVarSet = set().union(*[iVar.freeVars() for iVar in instanceVars])
             assert substitutingVars == iVarSet, 'The set of substituting variables must be that same as the set of Forall instance variables'
             for arg in lambdaExpr.arguments:
@@ -350,10 +356,10 @@ class Specialization(Proof):
             # just a relabeling
             expr = generalExpr
             instanceVars = []
-            conditions = []
+            conditions = ExpressionList([])
             domain = None
         # make substitutions in the condition
-        subbedConditions = [condition.substituted(subMap, relabelMap) for condition in conditions]
+        subbedConditions = conditions.substituted(subMap, relabelMap)
         # add conditions for satisfying the domain restriction if there is one
         if domain is not None:
             # extract all of the elements
