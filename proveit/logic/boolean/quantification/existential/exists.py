@@ -1,5 +1,5 @@
 from proveit import OperationOverInstances
-from proveit import Literal, Operation, ExpressionList, MultiVariable, Etcetera
+from proveit import Literal, Operation, ExpressionList, MultiVariable, Etcetera, USE_DEFAULTS
 from proveit.common import P, Q, S
 
 EXISTS = Literal(__package__, stringFormat='exists', latexFormat=r'\exists')
@@ -17,7 +17,14 @@ class Exists(OperationOverInstances):
 
     @classmethod
     def operatorOfOperation(subClass):
-        return EXISTS    
+        return EXISTS 
+           
+    def deriveSideEffects(self, knownTruth):
+        '''
+        From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
+        From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
+        '''
+        self.deriveNegatedForall(knownTruth.assumptions)
 
     def concludeViaExample(self, exampleInstance):
         '''
@@ -41,7 +48,7 @@ class Exists(OperationOverInstances):
         # exists_{..y.. | ..Q(..x..)..} P(..y..)]
         return existenceByExample.specialize({P_op:P_op_sub, Q_op:Q_op_sub, yEtc:self.instanceVars, S:self.domain}).specialize({xEtc:exampleInstance}).deriveConclusion().checked({exampleExpr, exampleConditions})
 
-    def deriveNegatedForall(self):
+    def deriveNegatedForall(self, assumptions=USE_DEFAULTS):
         '''
         From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
         From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
@@ -53,12 +60,12 @@ class Exists(OperationOverInstances):
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
         if isinstance(self.instanceExpr, Not):
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr.operand
-            return existsNotImpliesNotForall.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion().checked({self})
+            return existsNotImpliesNotForall.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
         else:
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-            return existsDef.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveRightViaEquivalence().checked({self})
+            return existsDef.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveRightViaEquivalence(assumptions)
     
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce, then return, that this exists expression is in the set of BOOLEANS as
         all exists expressions are (they are taken to be false when not true).
@@ -67,5 +74,5 @@ class Exists(OperationOverInstances):
         from proveit.common import xEtc        
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
-        return existsInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).checked()
+        return existsInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}, assumptions)
 

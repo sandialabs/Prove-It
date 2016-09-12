@@ -18,7 +18,26 @@ class Forall(OperationOverInstances):
     def operatorOfOperation(subClass):
         return FORALL    
         
-    def specialize(self, subMap=None, conditionAsHypothesis=False, assumptions=USE_DEFAULTS):
+    def deriveSideEffects(self, knownTruth):
+        '''
+        Automatically unfold the Forall statement if the domain has an 'unfoldForall' method.
+        '''
+        if hasattr(self.domain, 'unfoldForall'):
+            try:
+                self.unfold(knownTruth.assumptions)
+            except:
+                pass
+        
+    def conclude(self, assumptions):
+        '''
+        If the domain has a 'foldForall' method, attempt to conclude this Forall statement
+        via 'concludeAsFolded'.
+        '''
+        if hasattr(self.domain, 'foldAsForall'):
+            self.concludeAsFolded(assumptions)
+        raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method.")
+
+    def specialize(self, subMap=None, assumptions=USE_DEFAULTS, conditionAsHypothesis=False):
         '''
         From this Forall expression, and the condition if there is one,
         derive and return a specialized form.  If conditionAsHypothesis is True, 
@@ -53,7 +72,7 @@ class Forall(OperationOverInstances):
             return specialized.asImplication(self.conditions[0])
         return specialized
     
-    def unfold(self):
+    def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From this forall statement, derive an "unfolded" version dependent upon the domain of the forall,
         calling unfoldForall on the condition.
@@ -61,14 +80,14 @@ class Forall(OperationOverInstances):
         '''    
         assert self.hasDomain(), "Cannot unfold a forall statement with no domain"
         assert len(self.instanceVars)==1, "Cannot unfold a forall statement with more than 1 instance variable (not implemented beyond this)"
-        return self.domain.unfoldForall(self)
+        return self.domain.unfoldForall(self, assumptions)
     
     """
     def equateWithUnfolded(self):
         pass
     """
         
-    def concludeAsFolded(self):
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
         Conclude this forall statement from an "unfolded" version dependent upon the domain of the forall,
         calling foldAsForall on the condition.
@@ -76,9 +95,9 @@ class Forall(OperationOverInstances):
         '''    
         assert self.hasDomain(), "Cannot fold a forall statement with no domain"
         assert len(self.instanceVars)==1, "Cannot fold a forall statement with more than 1 instance variable (not implemented beyond this)"
-        return self.domain.foldAsForall(self)
+        return self.domain.foldAsForall(self, assumptions)
     
-    def deriveBundled(self):
+    def deriveBundled(self, assumptions=USE_DEFAULTS):
         '''
         From a nested forall statement, derive the bundled forall statement.  For example,
         forall_{x | Q(x)} forall_{y | R(y)} P(x, y) becomes forall_{x, y | Q(x), R(y)} P(x, y).
@@ -91,7 +110,7 @@ class Forall(OperationOverInstances):
         P_op, P_op_sub = Operation(P, composedInstanceVars), innerForall.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
         R_op, R_op_sub = Etcetera(Operation(MultiVariable(R), innerForall.instanceVars)), innerForall.conditions
-        return forallBundling.specialize({xEtc:self.instanceVars, yEtc:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion().checked({self})
+        return forallBundling.specialize({xEtc:self.instanceVars, yEtc:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion(assumptions)
 
     def _specializeUnravelingTheorem(self, theorem, *instanceVarLists):
         from proveit.common import xEtc, yEtc
@@ -115,7 +134,7 @@ class Forall(OperationOverInstances):
         R_op, R_op_sub = Etcetera(Operation(MultiVariable(R), innerVars)), innerConditions
         return theorem.specialize({xEtc:outerVars, yEtc:innerVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}) 
            
-    def deriveUnraveled(self, *instanceVarLists):
+    def deriveUnraveled(self, instanceVarLists, assumptions=USE_DEFAULTS):
         '''
         From a multi-variable forall statement, derive the nested, unravelled forall statement.  For example,
         forall_{x, y | Q(x), R(y)} P(x, y) becomes forall_{x | Q(x)} forall_{y | R(y)} P(x, y).
@@ -123,9 +142,9 @@ class Forall(OperationOverInstances):
         instanceVars, to indicate how to break up the nested forall statements.
         '''
         from theorems import forallUnraveling
-        return self._specializeUnravelingTheorem(forallUnraveling, *instanceVarLists).deriveConclusion().checked({self})
-
-    def deriveUnraveledEquiv(self, *instanceVarLists):
+        return self._specializeUnravelingTheorem(forallUnraveling, instanceVarLists).deriveConclusion(assumptions)
+        
+    def deriveUnraveledEquiv(self, instanceVarLists):
         '''
         From a multi-variable forall statement, derive its equivalence with a nested, unravelled forall statement.
         For example, forall_{x, y in DOMAIN | Q(x), R(y)} P(x, y) = forall_{x in DOMAIN | Q(x)} forall_{y in DOMAIN | R(y)} P(x, y).
@@ -133,7 +152,7 @@ class Forall(OperationOverInstances):
         instanceVars, to indicate how to break up the nested forall statements.
         '''
         from theorems import forallBundledEquiv
-        return self._specializeUnravelingTheorem(forallBundledEquiv, *instanceVarLists).checked()
+        return self._specializeUnravelingTheorem(forallBundledEquiv, instanceVarLists)
         
     def evaluate(self):
         '''
@@ -151,7 +170,7 @@ class Forall(OperationOverInstances):
             unravelledEval = unravelledEquiv.rhs.evaluate()
             return unravelledEquiv.applyTransitivity(unravelledEval).checked()            
 
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this forall expression is in the set of BOOLEANS,
         as all forall expressions are (they are taken to be false when not true).
@@ -164,4 +183,4 @@ class Forall(OperationOverInstances):
         print xEtc, self.instanceVars        
         print P_op, P_op_sub
         print Q_op, Q_op_sub
-        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).checked()
+        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain})

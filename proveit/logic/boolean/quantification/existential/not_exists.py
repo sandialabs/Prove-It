@@ -1,5 +1,5 @@
 from proveit import OperationOverInstances
-from proveit import Literal, Operation, MultiVariable, Etcetera
+from proveit import Literal, Operation, MultiVariable, Etcetera, USE_DEFAULTS
 from proveit.common import P, Q, S
 
 NOTEXISTS = Literal(__package__, stringFormat='notexists', latexFormat=r'\nexists')
@@ -19,26 +19,33 @@ class NotExists(OperationOverInstances):
     def operatorOfOperation(subClass):
         return NOTEXISTS    
         
-    def unfold(self):
+    def deriveSideEffects(self, knownTruth):
         '''
-        Deduce and return Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x)
+        Automatically derive the unfolded version, Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x).
+        '''
+        self.unfold(knownTruth.assumptions)
+        
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        Derive and return Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x)
         '''
         from theorems import notExistsUnfolding
         from proveit.common import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
-        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion().checked({self})
+        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
     
-    def concludeAsFolded(self):
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return some NotExists_{x | Q(x)} P(x) assuming Not(Exists_{x | Q(x)} P(x)).
+        This is automatically derived; see Not.deriveSideEffects(..) and Not.deriveNotExists(..).
         '''
         from theorems import notExistsFolding
         from proveit.common import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
         folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain})
-        return folding.deriveConclusion().checked({self.unfold()})
+        return folding.deriveConclusion(assumptions)
 
     """
     # MUST BE UPDATED

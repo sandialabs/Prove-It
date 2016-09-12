@@ -1,17 +1,17 @@
-from proveit.logic import Forall, Implies, BOOLEANS, And, Equals, TRUE, NotExists, Not, FALSE
+from proveit.logic import Forall, Implies, Booleans, And, Equals, TRUE, NotExists, Not, FALSE
 from proveit.common import A, B, P, S, PofA, xEtc, yEtc, Qetc, Retc, PxEtc, PxyEtc, etc_RyEtc, etc_QxEtc
 from proveit.logic.common import PofTrue, PofFalse
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-unfoldForallOverBool = Forall(P, Implies(Forall(A, PofA, domain=BOOLEANS), And(PofTrue, PofFalse)))
+unfoldForallOverBool = Forall(P, Implies(Forall(A, PofA, domain=Booleans), And(PofTrue, PofFalse)))
 unfoldForallOverBool
 
-foldForallOverBool = Forall(P, Implies(And(PofTrue, PofFalse), Forall(A, PofA, domain = BOOLEANS)))
+foldForallOverBool = Forall(P, Implies(And(PofTrue, PofFalse), Forall(A, PofA, domain = Booleans)))
 foldForallOverBool
 
-forallBoolEvalTrue = Forall(P, Implies(And(PofTrue, PofFalse), Equals(Forall(A, PofA, domain=BOOLEANS), TRUE)))
+forallBoolEvalTrue = Forall(P, Implies(And(PofTrue, PofFalse), Equals(Forall(A, PofA, domain=Booleans), TRUE)))
 forallBoolEvalTrue
 
 forallBundling = Forall((P, Qetc, Retc, S), Implies(Forall(xEtc, Forall(yEtc, PxyEtc, S, etc_RyEtc), S, etc_QxEtc), Forall((xEtc, yEtc), PxyEtc, S, (etc_QxEtc, etc_RyEtc))))
@@ -31,7 +31,7 @@ forallImpliesNotExistsNot
 
 def _forallBoolEvalFalse(PofTrueVal, PofFalseVal):
     return Forall(P, Implies(And(Equals(PofTrue, PofTrueVal), Equals(PofFalse, PofFalseVal)), 
-                             Equals(Forall(A, PofA, domain=BOOLEANS), FALSE)))
+                             Equals(Forall(A, PofA, domain=Booleans), FALSE)))
 
 forallBoolEvalFalseViaFF = _forallBoolEvalFalse(FALSE, FALSE)
 forallBoolEvalFalseViaFF
