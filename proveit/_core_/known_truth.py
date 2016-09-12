@@ -16,6 +16,11 @@ class KnownTruth:
     # of assumptions subsumes another.
     lookup_dict = dict()
 
+    # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
+    # recursion when deducing side effects after something is proven.
+    in_progress_to_derive_sideeffects = set() 
+
+
     def __init__(self, expression, assumptions, proof):
         '''
         Create a KnownTruth with the given Expression, set of assumptions, and proof.  These
@@ -43,12 +48,16 @@ class KnownTruth:
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
         self._unique_id = hash(self._unique_rep)
 
-    def deduceSideEffects(self):
+    def deriveSideEffects(self):
         '''
-        Deduce any side-effects that are obvious consequences arising from this truth.
+        Derive any side-effects that are obvious consequences arising from this truth.
         Called after the corresponding Proof is complete.
         '''
-        self.expr.deduceSideEffects(self)
+        if self not in KnownTruth.in_progress_to_derive_sideeffects:
+            # avoid infinite recursion by using in_progress_to_deduce_sideeffects
+            KnownTruth.in_progress_to_derive_sideeffects.add(self)        
+            self.expr.deriveSideEffects(self)
+            KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
@@ -58,6 +67,21 @@ class KnownTruth:
         return not self.__eq__(other)
     def __hash__(self):
         return self._unique_id
+        
+    def beginProof(self, presumes=tuple()):
+        '''
+        Begin a proof for a theorem.  Only use other theorems that are in 
+        the presumes list of theorems/packages or have been proven previously 
+        (in the certification database without this theorem being presumed).
+        '''
+        pass
+    
+    def qed(self):
+        '''
+        Complete a proof that began via `beginProof`, entering it into
+        the certification database.
+        '''
+        pass
 
     def proof(self):
         '''
@@ -75,7 +99,7 @@ class KnownTruth:
         the same set of assumptions but fewer steps.  A tie goes to the
         new proof, but note that the step number comparison will prevent
         anything cyclic (since a proof for a KnownTruth that requires that
-        has that KnownTruth as a dependent will necessarily include the
+        same KnownTruth as a dependent will necessarily include the
         number of steps of the original proof plus more).
         '''
         if not self.expr in KnownTruth.lookup_dict:
@@ -88,8 +112,9 @@ class KnownTruth:
         for other in KnownTruth.lookup_dict[self.expr]:
             if self.assumptionsSet == other.assumptionsSet:
                 if newProof.numSteps <= other._proof.numSteps:
-                     # use the new proof that does the job as well or better
-                    other._updateProof(newProof)
+                    if newProof.requiredProofs != other._proof.requiredProofs:
+                        # use the new (different) proof that does the job as well or better
+                        other._updateProof(newProof)
                 else:
                     # the new proof was born obsolete, taking more steps than an existing one
                     self._proof = other._proof # use an old proof that does the job better
@@ -117,7 +142,7 @@ class KnownTruth:
         Update the proof of this KnownTruth which has been made obsolete.
         Dependents of the old proof must also be updated.
         '''
-        oldDependents = self._proof._dependents
+        oldDependents = self._proof.updatedDependents()
         self._proof = newProof # set to the new proof
         for oldDependentProof in oldDependents:
             # remake the dependents and update their proofs
