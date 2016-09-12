@@ -36,6 +36,11 @@ def _endSpecialStatements(localVars, specialStatementType, package):
         if specialStatementType == 'theorems':
             localVars[name] = Theorem(expr, package, name).provenTruth   
 
+    for name, val in includedVars.iteritems():
+        # Now derive side effects, after all the Axioms/Theorems have been created
+        localVars[name].deriveSideEffects()
+            
+
 def beginAxioms(excludedLocalVars):
     _beginSpecialStatements(excludedLocalVars, 'axioms')
 
