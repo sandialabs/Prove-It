@@ -11,6 +11,10 @@ class Or(AssociativeOperation):
         '''
         AssociativeOperation.__init__(self, OR, *operands)
 
+    @classmethod
+    def operatorOfOperation(subClass):
+        return OR
+
     def conclude(self, assumptions):
         '''
         Try to automatically conclude this disjunction via any of its constituents.
@@ -24,10 +28,6 @@ class Or(AssociativeOperation):
             except:
                 pass
         raise ProofFailure(self, assumptions, 'Unable to automatically conclude disjunction; none of the constituents are automatically provable.')
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return OR
     
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
@@ -62,24 +62,33 @@ class Or(AssociativeOperation):
         compose(leftImplConclusion, rightImplConclusion)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
-    def evaluate(self):
+    def loadBaseEvaluations(self):
         '''
-        Given operands that evaluate to TRUE or FALSE, derive and
+        Import the base conjunction evaluations.  This will automatically
+        populate proveit._generic_.evaluatable.Evaluatable evaluations
+        for evaluating conjunction expressions.
+        '''
+        from axioms import orTT, orTF, orFT, orFF      
+
+    def _baseEvaluate(self):
+        '''
+        Given TRUE or FALSE operands, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from axioms import orComposition, orTT, orTF, orFT, orFF
-        if len(self.operands) >= 3:
-            # A or B or ..C.. = A or (B or ..C..)
-            compositionEquiv = orComposition.specialize({A:self.operands[0], B:self.operands[1], C:self.operands[2:]})
-            decomposedEval = compositionEquiv.rhs.evaluate()
-            return compositionEquiv.applyTransitivity(decomposedEval)
-        def baseEvalFn(A, B):
-            if A == TRUE and B == TRUE: return orTT
-            elif A == TRUE and B == FALSE: return orTF
-            elif A == FALSE and B == TRUE: return orFT
-            elif A == FALSE and B == FALSE: return orFF
-        return _evaluate(self, lambda : _evaluateBooleanBinaryOperation(self, baseEvalFn))
-
+        from theorems import disjunctionTrueEval, disjunctionFalseEval
+        trueIndex = -1
+        for i, operand in enumerate(self.operands):
+            if operand != TRUE and operand != FALSE:
+                raise ValueError("Operands must all be TRUE or FALSE when calling _baseEvaluate()")
+            if operand == TRUE:
+                trueIndex = i
+        if trueIndex >= 0:
+            # one operand is TRUE so the whole disjunction evaluates to TRUE.
+            return disjunctionTrueEval.specialize({Aetc:self.operands[:trueIndex], Cetc:self.operands[trueIndex+1:]})
+        else:
+            # no operand is TRUE so the whole disjunction evaluates to FALSE.
+            return disjunctionFalseEval.specialize({Aetc:self.operands})
+            
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.

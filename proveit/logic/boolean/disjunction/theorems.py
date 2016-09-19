@@ -1,4 +1,4 @@
-from proveit.logic import Or, TRUE, FALSE, Forall, Implies, Not, inBool, And, Booleans
+from proveit.logic import Or, TRUE, FALSE, Forall, Implies, Not, inBool, And, Booleans, Equals, Singleton
 from proveit.common import A, B, C, Aetc, Cetc
 from proveit import beginTheorems, endTheorems
 
@@ -12,6 +12,9 @@ trueOrFalse
 
 falseOrTrue = Or(FALSE, TRUE)
 falseOrTrue
+
+disjunctionTrueEval = Forall((Aetc, Cetc), Equals(Or(Aetc, TRUE, Cetc), TRUE), domain=Booleans)
+disjunctionFalseEval = Forall(Aetc, Equals(Or(Aetc), FALSE), domain=Singleton(FALSE))
 
 notOrFromNeither = Forall((A, B), Implies(Not(A), Implies(Not(B), Not(Or(A, B)))))
 notOrFromNeither
