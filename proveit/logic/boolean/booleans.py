@@ -119,6 +119,12 @@ class TrueLiteral(Literal):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         from theorems import trueInBool
         return trueInBool
+    
+    def isIrreducibleValue(self):
+        '''
+        TRUE is an irreducible value.
+        '''
+        return TRUE
         
 class FalseLiteral(Literal):
     def __init__(self):
@@ -135,6 +141,12 @@ class FalseLiteral(Literal):
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         from theorems import falseInBool
         return falseInBool
+
+    def isIrreducibleValue(self):
+        '''
+        FALSE is an irreducible value.
+        '''
+        return TRUE
 
 Booleans = BooleanSet()
 TRUE = TrueLiteral()
