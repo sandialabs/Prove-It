@@ -1,6 +1,6 @@
 from proveit import Literal, AssociativeOperation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
-from proveit.common import A, B, C, Aetc
+from proveit.common import A, B, Aetc, Cetc
 
 AND = Literal(__package__, stringFormat = 'and', latexFormat = r'\land')
 
@@ -48,25 +48,35 @@ class And(AssociativeOperation):
         See also the compose method to do this constructively.
         '''
         return compose(self.operands, assumptions)
-            
-    def evaluate(self):
+    
+    def loadBaseEvaluations(self):
         '''
-        Given operands that evaluate to TRUE or FALSE, derive and
+        Import the base conjunction evaluations.  This will automatically
+        populate proveit._generic_.evaluatable.Evaluatable evaluations
+        for evaluating conjunction expressions.
+        '''
+        from axioms import andTT, andTF, andFT, andFF        
+    
+    def _baseEvaluate(self):
+        '''
+        Given TRUE or FALSE operands, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from axioms import andComposition, andTT, andTF, andFT, andFF
-        if len(self.operands) >= 3:
-            # A and B and ..C.. = A and (B and ..C..)
-            compositionEquiv = andComposition.specialize({A:self.operands[0], B:self.operands[1], C:self.operands[2:]})
-            decomposedEval = compositionEquiv.rhs.evaluate()
-            return compositionEquiv.applyTransitivity(decomposedEval)
-        def baseEvalFn(A, B):
-            if A == TRUE and B == TRUE: return andTT
-            elif A == TRUE and B == FALSE: return andTF
-            elif A == FALSE and B == TRUE: return andFT
-            elif A == FALSE and B == FALSE: return andFF
-        return _evaluate(self, lambda : _evaluateBooleanBinaryOperation(self, baseEvalFn))
+        from theorems import conjunctionTrueEval, conjunctionFalseEval
+        falseIndex = -1
+        for i, operand in enumerate(self.operands):
+            if operand != TRUE and operand != FALSE:
+                raise ValueError("Operands must all be TRUE or FALSE when calling _baseEvaluate()")
+            if operand == FALSE:
+                falseIndex = i
+        if falseIndex >= 0:
+            # one operand is FALSE so the whole conjunction evaluates to FALSE.
+            return conjunctionFalseEval.specialize({Aetc:self.operands[:falseIndex], Cetc:self.operands[falseIndex+1:]})
+        else:
+            # no operand is FALSE so the whole disjunction evaluates to TRUE.
+            return conjunctionTrueEval.specialize({Aetc:self.operands})
 
+        
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'and' expression is in the set of BOOLEANS.
