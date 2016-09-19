@@ -24,8 +24,15 @@ class Equals(BinaryOperation):
         be useful for concluding new equations via transitivity.  Also
         derive the reversed form, as a side effect.  If the right side
         is TRUE or FALSE, `deriveViaBooleanEquality` as a side effect.
+        If this is a 1-step evaluation, an axiom or theorem whose
+        left side is an Evaluatable (proveit._generic_.evaluatable) and 
+        right side is an "irreducible value" 
+        (see proveit._generic_.evaluatable.isIrreduciblValue), 
+        store the KnownTruth in the Evaluatable.evaluations dictionary
+        automatically (mapping the lhs to the knownTruth).
         '''
         from proveit.logic import TRUE, FALSE
+        from proveit._generic_.evaluatable import Evaluatable, isIrreducibleValue
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
         if (self.lhs != self.rhs):
@@ -34,6 +41,10 @@ class Equals(BinaryOperation):
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             self.deriveViaBooleanEquality(knownTruth.assumptions)
+        if len(knownTruth.assumptions)==0 and isinstance(self.lhs, Evaluatable) and isIrreducibleValue(self.rhs):
+            if knownTruth.proof().numSteps <= 1:
+                Evaluatable.evaluations[self.lhs] = knownTruth
+            
         
     def conclude(self, assumptions):
         '''
