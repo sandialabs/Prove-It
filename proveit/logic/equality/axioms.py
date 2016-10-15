@@ -31,7 +31,7 @@ equalsReflexivity
 
 # In[6]:
 
-equalsSymmetry = Forall((x, y), Implies(Equals(x, y), Equals(y, x)))
+equalsSymmetry = Forall((x, y), Equals(y, x), conditions=[Equals(x, y)])
 equalsSymmetry
 
 
