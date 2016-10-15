@@ -106,22 +106,23 @@ class Equals(BinaryOperation):
         From x = y derive y = x.  This derivation is an automatic side-effect.
         '''
         from axioms import equalsSymmetry
-        return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
+        return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}, assumptions)
             
     def applyTransitivity(self, otherEquality, assumptions=USE_DEFAULTS):
         '''
         From x = y (self) and y = z (otherEquality) derive and return x = z.
         Also works more generally as long as there is a common side to the equations.
         '''
-        dummyVar = otherEquality.safeDummyVar()
+        from theorems import equalsTransitivity
+        # We can assume that y=x will be a KnownTruth if x=y is a KnownTruth because it is derived as a side-effect.
         if self.rhs == otherEquality.lhs:
-            return self.lhsSubstitute(Lambda(dummyVar, Equals(dummyVar, otherEquality.rhs)), assumptions)
+            return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions)
         elif self.rhs == otherEquality.rhs:
-            return self.lhsSubstitute(Lambda(dummyVar, Equals(otherEquality.lhs, dummyVar)), assumptions)
+            return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.lhs}, assumptions)
         elif self.lhs == otherEquality.lhs:
-            return self.rhsSubstitute(Lambda(dummyVar, Equals(dummyVar, otherEquality.rhs)), assumptions)
+            return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.rhs}, assumptions)
         elif self.lhs == otherEquality.rhs:
-            return self.rhsSubstitute(Lambda(dummyVar, Equals(otherEquality.lhs, dummyVar)), assumptions)
+            return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.lhs}, assumptions)
         else:
             raise TransitivityException(self, otherEquality)
         
