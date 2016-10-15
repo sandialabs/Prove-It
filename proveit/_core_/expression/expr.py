@@ -146,7 +146,12 @@ class Expression:
         Expression.in_progress_to_conclude.add(in_progress_key)        
         
         try:
-            return self.conclude(assumptions)
+            concludedTruth = self.conclude(assumptions)
+            if not isinstance(concludedTruth, KnownTruth):
+                raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
+            if concludedTruth.expr != self:
+               raise ValueError("'conclude' method should return a KnownTruth for this Expression object.")
+            return concludedTruth
         except NotImplementedError:
             raise ProofFailure(self, assumptions, "'conclude' method not implemented for proof automation")
         finally:
@@ -383,5 +388,8 @@ class ProofFailure(Exception):
         self.message = message
         self.assumptions = assumptions
     def __str__(self):
-        return "Unable to prove " + str(self.expr) + " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}: " + self.message
+        if self.expr is None:
+            return "Unable to prove " + str(self.expr) + " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}: " + self.message
+        else:
+            return "Proof step failed assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}: " + self.message
     
