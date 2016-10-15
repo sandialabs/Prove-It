@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
 from proveit.common import A, x, y, S
 
@@ -35,7 +35,8 @@ class Not(Operation):
         Can automatically conclude Not(Not(A)) from A.
         '''
         if isinstance(self.operand, Not):
-            self.concludeViaDoubleNegation(assumptions)
+            return self.concludeViaDoubleNegation(assumptions)
+        raise ProofFailure(self, assumptions, 'Can only automatically conclude double negations')
         
     @classmethod
     def operatorOfOperation(subClass):
