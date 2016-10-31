@@ -30,7 +30,7 @@ class And(AssociativeOperation):
         :math:`A \land B \and ... \land Z`.
         '''
         for i in xrange(len(self.operands)):
-            self.deriveInPart(i, assumptions=knownTruth.assumptions)
+            self.deriveInPart(i, assumptions=knownTruth.assumptions) # uses axiom
         
     def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
         r'''

@@ -19,16 +19,16 @@ class Not(Operation):
         '''
         from proveit.logic import Equals, InSet, Exists
         if self.operand != FALSE:
-            self.equateNegatedToFalse(knownTruth.assumptions)
-        self.deriveContradiction(knownTruth.assumptions)
+            self.tryDerivation(self.equateNegatedToFalse, knownTruth.assumptions)
+        self.tryDerivation(self.deriveContradiction, knownTruth.assumptions)
         if isinstance(self.operand, Not):
-            self.deriveViaDoubleNegation(knownTruth.assumptions)
+            self.tryDerivation(self.deriveViaDoubleNegation, knownTruth.assumptions)
         if isinstance(self.operand, Equals):
-            self.deriveNotEquals(knownTruth.assumptions)
+            self.tryDerivation(self.deriveNotEquals, knownTruth.assumptions)
         if isinstance(self.operand, InSet):
-            self.deriveNotIn(knownTruth.assumptions)
+            self.tryDerivation(self.deriveNotIn, knownTruth.assumptions)
         if isinstance(self.operand, Exists):
-            self.deriveNotExists(knownTruth.assumptions)
+            self.tryDerivation(self.deriveNotExists, knownTruth.assumptions)
     
     def conclude(self, assumptions):
         '''

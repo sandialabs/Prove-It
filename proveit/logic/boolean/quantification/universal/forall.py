@@ -23,10 +23,7 @@ class Forall(OperationOverInstances):
         Automatically unfold the Forall statement if the domain has an 'unfoldForall' method.
         '''
         if hasattr(self.domain, 'unfoldForall'):
-            try:
-                self.unfold(knownTruth.assumptions)
-            except:
-                pass
+            self.tryDerivation(self.unfold, knownTruth.assumptions)
         
     def conclude(self, assumptions):
         '''

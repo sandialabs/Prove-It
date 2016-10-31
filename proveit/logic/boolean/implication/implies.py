@@ -26,10 +26,7 @@ class Implies(BinaryOperation):
         except:
             pass
         if self.conclude == FALSE:
-            try:
-                self.deriveViaContradiction(knownTruth.assumptions)
-            except:
-                pass
+            self.tryDerivation(self.deriveViaContradiction, knownTruth.assumptions)
 
     def deriveConclusion(self, assumptions=USE_DEFAULTS):
         r'''

@@ -24,7 +24,7 @@ class Exists(OperationOverInstances):
         From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
         From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
         '''
-        self.deriveNegatedForall(knownTruth.assumptions)
+        self.tryDerivation(self.deriveNegatedForall, knownTruth.assumptions)
 
     def concludeViaExample(self, exampleInstance):
         '''

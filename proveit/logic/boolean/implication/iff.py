@@ -24,13 +24,10 @@ class Iff(BinaryOperation):
         and, if :math:`A \in \mathbb{B}` and :math:`B \in \mathbb{B}`, derive
         :math:`A = B` as well.
         '''
-        self.deriveLeftImplication(knownTruth.assumptions)
-        self.deriveRightImplication(knownTruth.assumptions)
-        self.deriveReversed(knownTruth.assumptions)
-        try:
-            self.deriveEquality(knownTruth.assumptions)
-        except:
-            pass
+        self.tryDerivation(self.deriveLeftImplication, knownTruth.assumptions)
+        self.tryDerivation(self.deriveRightImplication, knownTruth.assumptions)
+        self.tryDerivation(self.deriveReversed, knownTruth.assumptions)
+        self.tryDerivation(self.deriveEquality, knownTruth.assumptions)
             
     def conclude(self, assumptions):
         '''

@@ -23,7 +23,7 @@ class NotExists(OperationOverInstances):
         '''
         Automatically derive the unfolded version, Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x).
         '''
-        self.unfold(knownTruth.assumptions)
+        self.tryDerivation(self.unfold, knownTruth.assumptions)
         
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
