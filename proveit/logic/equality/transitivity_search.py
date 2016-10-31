@@ -8,7 +8,6 @@ def transitivitySearch(relation, assumptions):
     If successful, the generated KnownTruth is returned; otherwise a
     ProofFailure exception is raised.
     '''
-    
     assumptionsSet = set(assumptions)
     
     if not isinstance(relation, Expression):
@@ -23,12 +22,11 @@ def transitivitySearch(relation, assumptions):
     # Right chain values will be a list of relations that can take us from
     # relation.rhs to the right chain end-point.
     leftChains, rightChains = {relation.lhs:[]}, {relation.rhs:[]}
-    unexploredLeft, unexploredRight = leftChains, rightChains
+    unexploredLeft, unexploredRight = dict(leftChains), dict(rightChains)
     
     # while there is something left to explore on both side
     # (otherwise, we have hit a dead end on one of the sides)
     while len(unexploredLeft)>0 and len(unexploredRight)>0:
-        
         # choose the side with the fewest unexplored endpoints.
         # (bias on the left since left-to-right is a common convention)
         if len(unexploredLeft) <= len(unexploredRight):
