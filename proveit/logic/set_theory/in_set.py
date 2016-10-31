@@ -39,13 +39,13 @@ class InSet(BinaryOperation):
         return self.domain.deduceElemInSet(self.element, assumptions)
 
     
-    def deriveSideEffects(self, assumptions):
+    def deriveSideEffects(self, knownTruth):
         '''
         If the domain has a 'deduceMembershipSideEffects' method, it will be called
         and given the element and assumptions.
         '''
         if hasattr(self.domain, 'deduceMembershipSideEffects'):
-            self.domain.deduceMembershipSideEffects(self.element, assumptions)
+            self.tryDerivation(self.domain.deduceMembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
     
         
     """
