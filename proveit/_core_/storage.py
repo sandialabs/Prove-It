@@ -1,8 +1,13 @@
 import hashlib, os
+import re
 
 class Storage:
-    def __init__(self):
-        self.directory = ''
+    def __init__(self, directory='', refCounted=False):
+        self.directory = directory
+        if directory != '' and not os.path.isdir(self.directory):
+            # make the directory for the storage
+            os.makedirs(directory)
+        self.refCounted = True
         
         # For retrieved pv_it files that represent Prove-It object (Expressions, KnownTruths, and Proofs),
         # this maps the object to the pv_it file so we
@@ -84,7 +89,60 @@ class Storage:
             return 'Proof:' + self._proveItObjId(proof.provenTruth) + '[' + ','.join(self._proveItObjId(requiredProof) for requiredProof in proof.requiredProofs) + ']'
         else:
             raise NotImplementedError('Strorage only implemented for Expressions, Statements (effectively), and Proofs')
-        
+    
+    def _referencedObjIds(self, unique_rep):
+        '''
+        Given a unique representation string, returns the list of Prove-It objects
+        that are referenced.
+        '''
+        if unique_rep[:6] == 'Proof:':
+            return re.split("\[|,|\]",unique_rep[6:])
+        elif unique_rep[:11] == 'KnownTruth:':
+            return re.split("\[|,|\]",unique_rep[11:])
+        else:
+            # Assumed to be an expression then
+            subExprs = unique_rep.split(';')[-1]
+            return re.split("\[|,|\]",subExprs)            
+            
+    def _removeReference(self, proveItObjId):
+        '''
+        Decrement the reference count of the prove-it object with the given
+        storage identifier.  If the reference count goes down to zero, then
+        the files storing this prove-it object's data will be deleted
+        (and the directory if nothing else is in it).  Otherwise, the
+        .pv_it file is simply updated with the new reference count.
+        '''
+        if not self.refCounted:
+            raise Exception("Cannot remove a reference if reference counted wasn't enabled")
+        # replace ':' with os.path.sep within the Prove-It object id to object the filename
+        pv_it_filename = os.path.sep.join(proveItObjId.split(':'))
+        pv_it_dir = os.path.join(self.directory, '.pv_it')
+        with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
+            contents = f.read()
+            refCount, rep = contents.split('\n') 
+            refCount = int(refCount)
+            refCount -= 1
+            if refCount == 0:
+                # Reference count down to zero.  Remove references to
+                # referenced objects and then delete this prove-it object
+                # and everything associated with it.
+                for objId in self._referencedObjIds(rep):
+                    self._removeReference(objId)
+                # remove all files associated with this prove-it object 
+                # and perhaps the entire directory.
+                relpath, filename = os.path.split(pv_it_filename)
+                fileroot = filename[:-6]
+                for filename in os.listdir(os.path.join(pv_it_dir, relpath)):
+                    if filename[:len(fileroot)] == fileroot:
+                        os.remove(os.path.join(pv_it_dir, relpath, filename))
+                if len(os.listdir(pv_it_dir, relpath)) == 0:
+                    # the directory is now empty.  remove it.
+                    os.rmdir(os.path.join(pv_it_dir, relpath))
+            else:
+                # change the reference count in the file
+                with open(os.path.join(pv_it_dir, pv_it_filename), 'w') as f2:
+                    f2.write(str(refCount+1)+'\n')
+                    f2.write(str(rep))
     
     def _retrieve(self, proveItObject):
         '''
@@ -108,9 +166,18 @@ class Storage:
             if expr_file[-6:] == '.pv_it':
                 pv_it_filename = os.path.join(rep_hash, expr_file)
                 with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
-                    if f.read() == unique_rep:
+                    rep = contents = f.read()
+                    if self.refCounted:
+                        refCount, rep = contents.split('\n') 
+                        refCount = int(refCount)
+                    if rep == unique_rep:
                         # an existing file contains the exported expression
                         self._pv_it_filename = pv_it_filename
+                        if self.refCounted:
+                            # update the reference counter in the file
+                            with open(os.path.join(pv_it_dir, pv_it_filename), 'w') as f2:
+                                f2.write(str(refCount+1)+'\n')
+                                f2.write(str(rep))
                         return pv_it_filename
         # does not exist, create a new file (checking against an unlikely collision)
         index = 0
@@ -118,6 +185,9 @@ class Storage:
             index += 1
         pv_it_filename = os.path.join(rep_hash, str(index) + '.pv_it')
         with open(os.path.join(pv_it_dir, pv_it_filename), 'w') as f:
+            if self.refCounted:
+                # first write a reference count of 1
+                f.write(str(1) + '\n')
             f.write(unique_rep) # write the unique representation to a file
         # remember this for next time
         self._proveItObjects[proveItObject] = pv_it_filename
