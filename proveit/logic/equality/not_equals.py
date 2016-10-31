@@ -20,7 +20,7 @@ class NotEquals(BinaryOperation):
         '''
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
-            self.deriveReversed(knownTruth.assumptions)
+            self.tryDerivation(self.deriveReversed, knownTruth.assumptions)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''

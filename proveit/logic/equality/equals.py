@@ -37,14 +37,13 @@ class Equals(BinaryOperation):
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
-            self.deriveReversed(knownTruth.assumptions)
+            self.deriveReversed(knownTruth.assumptions) # uses an axiom
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
-            self.deriveViaBooleanEquality(knownTruth.assumptions)
+            self.tryDerivation(self.deriveViaBooleanEquality, knownTruth.assumptions)
         if len(knownTruth.assumptions)==0 and isinstance(self.lhs, Evaluatable) and isIrreducibleValue(self.rhs):
             if knownTruth.proof().numSteps <= 1:
                 Evaluatable.evaluations[self.lhs] = knownTruth
-            
         
     def conclude(self, assumptions):
         '''
