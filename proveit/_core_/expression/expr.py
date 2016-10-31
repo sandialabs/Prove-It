@@ -176,9 +176,22 @@ class Expression:
         proving that this expression is a known truth (under some set of assumptions).
         The default is to do nothing, but should be overridden as appropriate.  
         There is no need to call this manually; it is called automatically when
-        the corresponding KnownTruth is created.
+        the corresponding KnownTruth is created.  See tryDerivation which is
+        a convenient method for specific implementations of deriveSideEffects.
         '''
         pass
+    
+    def tryDerivation(method, *args, **kwargs):
+        '''
+        An implementation of deriveSideEffects may call tryDerivation to
+        simply attempt to derive a side-effect but skip it if it fails
+        (for example, not all conditions are met or if a theorem is
+        unavailable during a particular proof to avoid circular logic).
+        '''
+        try:
+            method(*args, **kwargs)
+        except:
+            pass
         
     
     '''
