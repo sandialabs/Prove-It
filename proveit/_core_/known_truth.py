@@ -15,6 +15,13 @@ class KnownTruth:
     # Expression under various assumptions.  Excludes redundancies in which one set
     # of assumptions subsumes another.
     lookup_dict = dict()
+    
+    # Call the beginProof method to begin a proof of a Theorem.
+    theoremBeingProven = None # Theorem being proven.
+    dependentTheoremsOfTheoremBeingProven = None # set theorems that depend upon (directly or indirectly) the theorem be proven
+    # Set of theorems/packages that are presumed to be True for the purposes of the proof being proven:
+    presumingTheorems = None # set of Theorem objects when in use
+    presumingPackages = None # set of package names or full theorem names when in use.
 
     # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
     # recursion when deducing side effects after something is proven.
@@ -71,17 +78,46 @@ class KnownTruth:
     def beginProof(self, presumes=tuple()):
         '''
         Begin a proof for a theorem.  Only use other theorems that are in 
-        the presumes list of theorems/packages or have been proven previously 
-        (in the certification database without this theorem being presumed).
+        the presumes list of theorems/packages or have already been
+        proven fully (down to the axioms) without depending upon this
+        theorem.  If there exists any presumed theorem that has
+        a direct or indirect dependence upon this theorem,
+        then a CircularLogic exception is raised. 
         '''
-        pass
+        from proof import Theorem
+        from proveit.certify import allDependents
+        theorem = self.proof()
+        if not isinstance(theorem, Theorem):
+            raise TypeError('Only begin a proof for a Theorem')
+        KnownTruth.theoremBeingProven = theorem
+        KnownTruth.dependentTheoremsOfTheoremBeingProven = allDependents(theorem)
+        KnownTruth.presumingTheorems = set()
+        KnownTruth.presumingPackages = set()
+        for presuming in presumes:
+            if isinstance(presuming, Theorem):
+                KnownTruth.presumingTheorems.add(presuming)
+            elif isinstance(presuming, str):
+                # may be a package or a full theorem name, to be precise
+                KnownTruth.presumingPackage.add(presuming)
+            else:
+                raise ValueError("'presumes' should be a collection of Theorems and strings, not " + presuming.__class__)
+        Theorem.updateUsability()
+        print "Beginning proof of"
+        return self
     
     def qed(self):
         '''
         Complete a proof that began via `beginProof`, entering it into
         the certification database.
         '''
-        pass
+        from proveit.certify import recordProof
+        if self.expr != KnownTruth.theoremBeingProven.provenTruth.expr:
+            raise Exception('qed does not match the theorem being proven')
+        if len(self.assumptions) > 0:
+            raise Exception('qed proof should not have any remaining assumptions')
+        proof = self.expr.prove().proof()
+        recordProof(KnownTruth.theoremBeingProven, proof)
+        return proof
 
     def proof(self):
         '''
@@ -102,6 +138,8 @@ class KnownTruth:
         same KnownTruth as a dependent will necessarily include the
         number of steps of the original proof plus more).
         '''
+        if not newProof.isUsable():
+            return # if it is not usable, forget it.
         if not self.expr in KnownTruth.lookup_dict:
             # the first KnownTruth for this Expression
             self._proof = newProof
@@ -110,7 +148,10 @@ class KnownTruth:
         keptTruths = []
         bornObsolete = False
         for other in KnownTruth.lookup_dict[self.expr]:
-            if self.assumptionsSet == other.assumptionsSet:
+            if other._proof is None or not other._proof.isUsable():
+                # use the new proof since the old one is unusable.
+                other._updateProof(self._proof)
+            elif self.assumptionsSet == other.assumptionsSet:
                 if newProof.numSteps <= other._proof.numSteps:
                     if newProof.requiredProofs != other._proof.requiredProofs:
                         # use the new (different) proof that does the job as well or better
@@ -140,14 +181,19 @@ class KnownTruth:
     def _updateProof(self, newProof):
         '''
         Update the proof of this KnownTruth which has been made obsolete.
-        Dependents of the old proof must also be updated.
+        Dependents of the old proof must also be updated.  If newProof
+        is None, the proof and its dependents are eliminated from memory.
         '''
-        oldDependents = self._proof.updatedDependents()
+        oldDependents = [] if self._proof is None else self._proof.updatedDependents()
         self._proof = newProof # set to the new proof
         for oldDependentProof in oldDependents:
-            # remake the dependents and update their proofs
-            dependentReplacement = oldDependentProof.remake()
-            oldDependentProof.provenTruth._updateProof(dependentReplacement)
+            if newProof is None:
+                # eliminating this proof and its dependents from memory 
+                oldDependentProof.provenTruth._updateProof(None)
+            else:                
+                # remake the dependents and update their proofs
+                dependentReplacement = oldDependentProof.remake()
+                oldDependentProof.provenTruth._updateProof(dependentReplacement)
 
     def __setattr__(self, attr, value):
         '''
@@ -185,7 +231,9 @@ class KnownTruth:
             def call_method_with_known_truth_assumptions(*args, **kwargs):
                 if len(args) > assumptionsIndex:
                     args = list(args)
-                    assumptions = tuple(args[assumptionsIndex]) + self.assumptions
+                    assumptions = args[assumptionsIndex]
+                    assumptions = defaults.checkedAssumptions(assumptions)                    
+                    assumptions += self.assumptions
                     args[assumptionsIndex] = defaults.checkedAssumptions(assumptions)
                 else:
                     assumptions = kwargs.get('assumptions', USE_DEFAULTS)
@@ -217,7 +265,7 @@ class KnownTruth:
         truths = KnownTruth.lookup_dict[expression]
         suitableTruths = []
         for truth in truths:
-            if truth.assumptionsSet.issubset(assumptionsSet):
+            if truth._proof is not None and truth.assumptionsSet.issubset(assumptionsSet):
                 suitableTruths.append(truth)
         if len(suitableTruths)==0: return None # no suitable truth
         # return one wih the fewest assumptions
@@ -291,6 +339,17 @@ class KnownTruth:
         Return a string representation of the KnownTruth.
         '''
         return self.string()
+    
+    def _storage(self):
+        '''
+        If the KnownTruth is for an Axiom or Theorem, use the _certified_
+        storage for the package.  Otherwise use the default storage.
+        '''
+        from proveit.certify import _makeStorage
+        from proof import Axiom, Theorem
+        if self._proof is not None and (isinstance(self._proof, Axiom) or isinstance(self._proof, Theorem)):
+            return _makeStorage(self._proof.package)
+        return storage
 
     def _repr_png_(self):
         '''
@@ -298,7 +357,7 @@ class KnownTruth:
         storage if it was generated previously.
         '''
         if not hasattr(self,'png'):
-            self.png = storage._retrieve_png(self, self.latex(), self._config_latex_tool)
+            self.png = self._storage()._retrieve_png(self, self.latex(), self._config_latex_tool)
         return self.png # previous stored or generated
     
     def _config_latex_tool(self, lt):
@@ -328,3 +387,4 @@ def asExpressions(*truthOrExpressions):
     Return the arguments as a list of Expressions via asExpression.
     '''
     return [asExpression(truthOrExpression) for truthOrExpression in truthOrExpression]
+

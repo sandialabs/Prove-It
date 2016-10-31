@@ -8,6 +8,7 @@ Proof objects form a DAG.
 """
 
 from proveit._core_.known_truth import KnownTruth
+from proveit._core_.expression.expr import ProofFailure
 from defaults import defaults
 from storage import storage
 
@@ -16,6 +17,23 @@ class Proof:
         assert isinstance(provenTruth, KnownTruth)
         self.provenTruth = provenTruth
         self.requiredProofs = [requiredTruth.proof() for requiredTruth in requiredTruths]
+        # Is this a usable Proof?  An unusable proof occurs when trying to prove a Theorem
+        # that must explicitly presume Theorems that are not fully known in order to
+        # avoid circular logic.
+        self._unusableTheorem = None # If unusable, this will point to the unusable theorem
+                                     # being applied directly or indirectly.
+        for requiredProof in self.requiredProofs:
+            if requiredProof._unusableTheorem is not None:
+                # Mark proofs as unusable when using an "unusable" theorem 
+                # directly or indirectly.  Theorems are marked as unusable 
+                # when a proof for some Theorem is being generated as a
+                # means to avoid circular logic.
+                self._unusableTheorem = requiredProof._unusableTheorem
+                if len(KnownTruth.in_progress_to_derive_sideeffects) == 0:
+                    # When not deriving a side-effect, raise an UnusableTheorem
+                    # exception when an attempt is made to use an "unusable" theorem
+                    # directly or indirectly.
+                    raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
         self.numSteps = sum(proof.numSteps for proof in self.requiredProofs) + 1
         if not hasattr(self, '_dependents'):
             self._dependents = [] # proofs that directly require this one
@@ -35,6 +53,14 @@ class Proof:
                 # may derive any side-effects that are obvious consequences arising from this truth:
                 provenTruth.deriveSideEffects()
 
+    def isUsable(self):
+        '''
+        Returns True iff this Proof is usable.  A Proof may be unable 
+        when trying to prove a Theorem.  Other Theorems must be explicitly 
+        presumed, or fully known, in order to avoid circular logic.
+        '''
+        return self._unusableTheorem is None
+
     def __eq__(self, other):
         if isinstance(other, Proof):
             return self._unique_id == other._unique_id
@@ -50,6 +76,18 @@ class Proof:
         '''
         return [requiredProof.provenTruth for requiredProof in self.requiredProofs]
     
+    def usedAxioms(self):
+        '''
+        Returns the set of axioms that are used directly (not via other theorems) in this proof. 
+        '''
+        return set().union(*[requiredProof.usedAxioms() for requiredProof in self.requiredProofs])
+
+    def usedTheorems(self):
+        '''
+        Returns the set of axioms that are used directly (not via other theorems) in this proof. 
+        '''
+        return set().union(*[requiredProof.usedTheorems() for requiredProof in self.requiredProofs])
+        
     def updatedDependents(self):
         self.dependents = [dependent for dependent in self._dependents if dependent.provenTruth._proof is dependent]
         return self.dependents
@@ -63,7 +101,7 @@ class Proof:
         the 'png' attribute which will be added whenever it is generated).  Also,
         _dependents is an exception which can be updated internally.
         '''
-        if attr != '_dependents' and hasattr(self, attr):
+        if attr != '_dependents' and attr != '_unusableTheorem' and hasattr(self, attr):
             raise Exception("Attempting to alter read-only value")
         self.__dict__[attr] = value 
     
@@ -135,15 +173,85 @@ class Axiom(Proof):
 
     def stepTypeLatex(self):
         return 'axiom'
+    
+    def usedAxioms(self):
+        return {self}
 
+    def __str__(self):
+        return self.package + '.' + self.name
+        
 class Theorem(Proof): 
+    allTheorems = []
+    
     def __init__(self, expr, package, name):
-        Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
+        if not isinstance(package, str):
+            raise ValueError("A theorem 'package' must be a string")
+        if not isinstance(name, str):
+            raise ValueError("A theorem 'name' must be a string")
         self.package = package
         self.name = name
+        self._setUsability()
+        Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
+        Theorem.allTheorems.append(self)
 
     def stepTypeLatex(self):
         return 'theorem'
+
+    def usedTheorems(self):
+        return {self}
+        
+    def __str__(self):
+        return self.package + '.' + self.name
+    
+    def containingPackages(self):
+        '''
+        Yields the packages that contain this Theorem at all levels
+        of the hierarchy; includes the full theorem name
+        (as the deepest level "package").
+        '''
+        s = str(self)
+        hierarchy = s.split('.')
+        for k in xrange(len(hierarchy)):
+            yield '.'.join(hierarchy[:k])
+     
+    @staticmethod
+    def updateUsability():
+        for theorem in Theorem.allTheorems:
+            theorem._setUsability()
+            if theorem._unusableTheorem is not None:
+                # propagate the fact that this proof is not usable
+                theorem.provenTruth._updateProof(None)
+    
+    def _setUsability(self):
+        '''
+        Sets the 'usable' attribute to False if a theorem
+        is being proven and this theorem is neither presumed
+        nor fully proven and independent of the theorem being
+        proven.  Sets it to True otherwise.  That is, 
+        ensure no circular logic is being employed when 
+        proving a theorem.  This applies when a proof has 
+        begun (see KnownTruth.beginProof in known_truth.py).  
+        When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
+        Otherwise only Theorems in the KnownTruth.presuming 
+        set (or whose packages is in the KnownTruth.presuming 
+        set) or Theorems that have been fully proven with no
+        direct/indirect dependence upon KnownTruth.theoremBeingProven
+        are allowed.
+        '''
+        from proveit.certify import isFullyProven
+        if KnownTruth.theoremBeingProven is None:
+            self._unusableTheorem = None # Nothing being proven, so all Theorems are usable
+            return
+        if self in KnownTruth.presumingTheorems or not KnownTruth.presumingPackages.isdisjoint(self.containingPackages()):
+            if self in KnownTruth.dependentTheoremsOfTheoremBeingProven:
+                raise CircularLogic(KnownTruth.theoremBeingProven, self)
+            self._unusableTheorem = None # This Theorem is usable because it is being presumed.
+        elif isFullyProven(self) and self != KnownTruth.theoremBeingProven and self not in KnownTruth.dependentTheoremsOfTheoremBeingProven:
+            self._unusableTheorem = None # This Theorem is usable because it has been fully proven as does not depend upon the Theorem being proven.
+        else:
+            # This Theorem is not usable during the proof (if it is needed, it must be
+            # presumed or fully proven).
+            self._unusableTheorem = self
 
 def _checkImplication(implicationExpr, hypothesisExpr, conclusionExpr):
     '''
@@ -165,7 +273,7 @@ class ModusPonens(Proof):
         try:
             implicationTruth = implicationExpr.prove(assumptions)
         except:
-            raise ModusPonensFailure('Implication is not proven: ' + str(implicationExpr) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+            raise ModusPonensFailure(self, assumptions, 'Implication is not proven')
         try:
             hypothesisTruth = implicationExpr.operands[0].prove(assumptions)
         except:
@@ -209,9 +317,9 @@ class Specialization(Proof):
         try:
             generalTruth = generalExpr.prove(assumptions)
         except:
-            raise Failure('Unproven general expression: ' + str(generalExpr) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+            raise Failure(self, assumptions, 'Unproven general expression: ' + str(generalExpr))
         # perform the appropriate substitution/relabeling
-        specializedExpr, subbedConditions, subMap, relabelMap = Specialization._specialized_expr(generalExpr, assumptions, subMap, relabelMap)
+        specializedExpr, instanceVars, subbedConditions, subMap, relabelMap = Specialization._specialized_expr(generalExpr, assumptions, subMap, relabelMap)
         # obtain the KnownTruths for the substituted conditions
         conditionTruths = []
         for conditionExpr in subbedConditions:
@@ -219,7 +327,7 @@ class Specialization(Proof):
                 # each substituted condition must be proven under the assumptions
                 conditionTruths.append(conditionExpr.prove(assumptions))
             except:
-                raise Failure('Unmet specialization condition: ' + str(conditionExpr) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+                raise Failure(self, assumptions, 'Unmet specialization condition: ' + str(conditionExpr))
         # remove any unnecessary assumptions (but keep the order that was provided)
         assumptionsSet = generalTruth.assumptionsSet
         for conditionTruth in conditionTruths:
@@ -228,6 +336,7 @@ class Specialization(Proof):
         # we have what we need; set up the Specialization Proof
         self.generalTruth = generalTruth
         self.conditionTruths = conditionTruths
+        self.instanceVars = instanceVars
         self.subMap = subMap
         self.relabelMap = relabelMap
         specializedTruth = KnownTruth(specializedExpr, assumptions, self)
@@ -239,8 +348,10 @@ class Specialization(Proof):
     def stepTypeLatex(self):
         outStr = r'$\begin{array}{l} '
         if self.subMap is not None and len(self.subMap) > 0:
+            # use the proper instance Variable order
+            iVars = sum([list(iVar.freeVars()) for iVar in self.instanceVars], [])            
             outStr += r'{\rm specialization~via} \\ '
-            outStr += r'\left\{' + ',~'.join(key.latex() + ': ' + val.latex() for key, val in self.subMap.iteritems()) + r'\right\}'
+            outStr += r'\left\{' + ',~'.join(iVar.latex() + ': ' + self.subMap[iVar].latex() for iVar in iVars) + r'\right\}'
         if self.relabelMap is not None and len(self.relabelMap) > 0:
             outStr += r'{\rm relabeling~via} \\ '
             outStr += r'\left\{' + ',~'.join(key.latex() + ': ' + val.latex() for key, val in self.relabelMap.iteritems()) + r'\right\}'
@@ -274,23 +385,23 @@ class Specialization(Proof):
         for key, sub in origRelabelItems:
             if isinstance(key, Variable):
                 if not isinstance(sub, Variable):
-                    raise RelabelingFailure('May only relabel a Variable to a Variable.')
+                    raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
                 relabelVar = key
             elif isBundledVar(key):                
                 sub = compositeExpression(sub)
                 if not isinstance(sub, ExpressionList):
-                    raise RelabelingFailure('May only relabel a Bundled Variable to a single (Bundled) Variable or list of (Bundled) Variables')
+                    raise RelabelingFailure(None, assumptions, 'May only relabel a Bundled Variable to a single (Bundled) Variable or list of (Bundled) Variables')
                 for v in sub:
                     if not isBundledVarOrVar(v) or (isBundledVar(v) and v.multiExprType != key.multiExprType):
-                        raise RelabelingFailure('May only relabel a Bundled Variable to Bundled Variables of the same type')
+                        raise RelabelingFailure(None, assumptions, 'May only relabel a Bundled Variable to Bundled Variables of the same type')
                 # change ..x..:expression_or_expressions to x:expressions
                 relabelVar = key.bundledExpr
             else:
-                raise RelabelingFailure("May only relabel a Variable or a Bundled Variable")                       
+                raise RelabelingFailure(None, assumptions, "May only relabel a Variable or a Bundled Variable")                       
             relabelMap[relabelVar] = sub
         for assumption in assumptions:
             if len(assumption.freeVars() & set(relabelMap.keys())) != 0:
-                raise RelabelingFailure('Cannot relabel using assumptions that involve any of the relabeling variables')        
+                raise RelabelingFailure(None, assumptions, 'Cannot relabel using assumptions that involve any of the relabeling variables')        
         # Process the substitution map, performming conversions of Operations and Etcetera-wrapped Operations/Variables
         substitutingVars = set()
         origSubMapItems = list(subMap.iteritems())
@@ -299,7 +410,7 @@ class Specialization(Proof):
             if isinstance(subKey, Variable):
                 # substitute a simple Variable
                 if not isinstance(sub, Expression) or isinstance(sub, Composite):
-                    raise SpecializationFailure('A normal Variable may be not be specialized to a composite Expression (only a Bundled Variable may be)')
+                    raise SpecializationFailure(None, assumptions, 'A normal Variable may be not be specialized to a composite Expression (only a Bundled Variable may be)')
                 subVar = subKey
                 subMap[subVar] = sub
             elif isBundledVar(subKey):
@@ -308,11 +419,11 @@ class Specialization(Proof):
                 sub = compositeExpression(sub)
                 if sub.__class__ != subKey.multiExprType:
                     if subKey.multiExprType == ExpressionList:
-                        raise SpecializationFailure('Etcetera Variables may only be specialized to a list of Expressions')
+                        raise SpecializationFailure(None, assumptions, 'Etcetera Variables may only be specialized to a list of Expressions')
                     elif subKey.multiExprType == ExpressionTensor:
-                        raise SpecializationFailure('Block Variables may only be specialized to a tensor of Expressions')
+                        raise SpecializationFailure(None, assumptions, 'Block Variables may only be specialized to a tensor of Expressions')
                     else:
-                        raise SpecializationFailure('Unknown Bundle type:' + str(subKey.multiExprType))
+                        raise SpecializationFailure(None, assumptions, 'Unknown Bundle type:' + str(subKey.multiExprType))
                 subMap[subVar] = sub
             elif isinstance(subKey, Operation) or isBundledOperation(subKey):
                 # Substitute an Operation, f(x):expression, or a Bundled operation like
@@ -323,7 +434,7 @@ class Specialization(Proof):
                 try:
                     if isinstance(subKey, Operation):
                         if not isinstance(sub, Expression) or isinstance(sub, Composite):
-                            raise SpecializationFailure('A normal operation may be not be specialized to a composite Expression (only a Bundled Operation may be)')                    
+                            raise SpecializationFailure(None, assumptions, 'A normal operation may be not be specialized to a composite Expression (only a Bundled Operation may be)')                    
                         lambdaExpr = sub
                         subVar = operation.operator
                         subMap[subVar] = Lambda(operation.operands, lambdaExpr)
@@ -332,11 +443,11 @@ class Specialization(Proof):
                         subVar = operation.operator #.variable
                         subMap[subVar] = ExpressionList([Lambda(operation.operands, lambdaExpr) for lambdaExpr in lambdaExpressions])
                 except TypeError as e:
-                    raise SpecializationFailure("Improper Operation substitution, error transforming to Lambda: " + e.message)
+                    raise SpecializationFailure(None, assumptions, "Improper Operation substitution, error transforming to Lambda: " + e.message)
                 except ValueError as e:
-                    raise SpecializationFailure("Improper Operation substitution, error transforming to Lambda: " + e.message)
+                    raise SpecializationFailure(None, assumptions, "Improper Operation substitution, error transforming to Lambda: " + e.message)
             else:
-                raise SpecializationFailure("Substitution may only map (Bundled) Variable types or (Bundled) Operations that have Variable operators")
+                raise SpecializationFailure(None, assumptions, "Substitution may only map (Bundled) Variable types or (Bundled) Operations that have Variable operators")
             substitutingVars.add(subVar)
         if len(subMap) > 0:
             # an actual Forall specialization
@@ -351,7 +462,7 @@ class Specialization(Proof):
             assert substitutingVars == iVarSet, 'The set of substituting variables must be that same as the set of Forall instance variables'
             for arg in lambdaExpr.arguments:
                 if isinstance(arg, Variable) and arg in substitutingVars and isinstance(substitutingVars, ExpressionList):
-                    raise SpecializationFailure("May only specialize a Forall instance variable with an ExpressionList if it is wrapped in Etcetera")
+                    raise SpecializationFailure(None, assumptions, "May only specialize a Forall instance variable with an ExpressionList if it is wrapped in Etcetera")
         else:
             # just a relabeling
             expr = generalExpr
@@ -367,7 +478,7 @@ class Specialization(Proof):
                 elementOrList = var.substituted(subMap, relabelMap)
                 for element in (elementOrList if isinstance(elementOrList, ExpressionList) else [elementOrList]):
                     subbedConditions.append(InSet(element, domain))
-        return expr.substituted(subMap, relabelMap), subbedConditions, subMap, relabelMap
+        return expr.substituted(subMap, relabelMap), instanceVars, subbedConditions, subMap, relabelMap
 
 class Generalization(Proof):
     def __init__(self, instanceTruth, newForallVars, newDomain=None, newConditions=tuple()):
@@ -379,11 +490,11 @@ class Generalization(Proof):
         assumptions -= set(newConditions)
         if newDomain is not None:
             assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars}
-        for assumption in assumptions:
-            if len(assumption.freeVars() & set(newForallVars)) != 0:
-                raise GeneralizationFailure('Cannot generalize using assumptions that involve any of the new forall variables unless they are conditions of the generalization')
         instanceExpr = instanceTruth.expr
         generalizedExpr = Forall(instanceVars=newForallVars, instanceExpr=instanceExpr, domain=newDomain, conditions=newConditions)
+        for assumption in assumptions:
+            if len(assumption.freeVars() & set(newForallVars)) != 0:
+                raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables unless they are conditions of the generalization')
         Generalization._checkGeneralization(generalizedExpr, instanceExpr)
         generalizedTruth = KnownTruth(generalizedExpr, assumptions, self)
         self.instanceTruth = instanceTruth
@@ -411,29 +522,33 @@ class Generalization(Proof):
         expr = lambdaExpr.expression['instance_expression']
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
 
-class ModusPonensFailure(Exception):
-    def __init__(self, message):
-        self.message = message
-    def __str__(self):
-        return self.message
+class ModusPonensFailure(ProofFailure):
+    def __init__(self, expr, assumptions, message):
+        ProofFailure.__init__(self, expr, assumptions, message)
 
-class SpecializationFailure(Exception):
-    def __init__(self, message):
-        self.message = message
-    def __str__(self):
-        return self.message
+class SpecializationFailure(ProofFailure):
+    def __init__(self, expr, assumptions, message):
+        ProofFailure.__init__(self, expr, assumptions, message)
 
-class RelabelingFailure(Exception):
-    def __init__(self, message):
-        self.message = message
-    def __str__(self):
-        return self.message
+class RelabelingFailure(ProofFailure):
+    def __init__(self, expr, assumptions, message):
+        ProofFailure.__init__(self, expr, assumptions, message)
     
-class GeneralizationFailure(Exception):
-    def __init__(self, message):
-        self.message = message
-    def __str__(self):
-        return self.message
+class GeneralizationFailure(ProofFailure):
+    def __init__(self, expr, assumptions, message):
+        ProofFailure.__init__(self, expr, assumptions, message)
 
-    
-    
+class UnusableTheorem(Exception):
+    def __init__(self, provingTheorem, unusableTheorem):
+        self.provingTheorem = provingTheorem
+        self.unusableTheorem = unusableTheorem
+    def __str__(self):
+        return str(self.unusableTheorem) + ' is not usable while proving ' + str(self.provingTheorem) + ' (it has not be presumed)'
+
+class CircularLogic(Exception):
+    def __init__(self, provingTheorem, presumedTheorem):
+        self.provingTheorem = provingTheorem
+        self.presumedTheorem = presumedTheorem
+    def __str__(self):
+        return str(self.presumedTheorem) + ' cannot be presumed while proving ' + str(self.provingTheorem) + ' due to a circular dependence'
+        
