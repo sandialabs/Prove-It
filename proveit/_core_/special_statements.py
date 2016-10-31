@@ -23,7 +23,7 @@ def _endSpecialStatements(localVars, specialStatementType, package):
     # exclude name/values in _excludedLocalVars or names that begin with an underscore
     includedVars = {name:val for name,val in localVars.iteritems() \
                     if _excludedLocalVars.get(name, None) is not val and name[0] != '_'}
-                    
+    definitions = dict()
     for name, val in includedVars.iteritems():
         '''
         For each non-excluded Expression, state it, mark it as an axiom/theorem, and replace the
@@ -35,11 +35,13 @@ def _endSpecialStatements(localVars, specialStatementType, package):
             localVars[name] = Axiom(expr, package, name).provenTruth
         if specialStatementType == 'theorems':
             localVars[name] = Theorem(expr, package, name).provenTruth   
+        definitions[name] = localVars[name]
 
     for name, val in includedVars.iteritems():
         # Now derive side effects, after all the Axioms/Theorems have been created
         localVars[name].deriveSideEffects()
-            
+    
+    return definitions
 
 def beginAxioms(excludedLocalVars):
     _beginSpecialStatements(excludedLocalVars, 'axioms')
@@ -48,8 +50,11 @@ def beginTheorems(excludedLocalVars):
     _beginSpecialStatements(excludedLocalVars, 'theorems')
 
 def endAxioms(localVars, package):
-    _endSpecialStatements(localVars, 'axioms', package)
+    from proveit.certify import setAxioms
+    definitions = _endSpecialStatements(localVars, 'axioms', package)
+    setAxioms(package, definitions)
 
 def endTheorems(localVars, package):
-    _endSpecialStatements(localVars, 'theorems', package)
-    
+    from proveit.certify import setTheorems
+    definitions = _endSpecialStatements(localVars, 'theorems', package)
+    setTheorems(package, definitions)
