@@ -16,7 +16,7 @@ class SupersetEq(BinaryOperation):
         From A superset B, derive and return (forall_{x in B} x in A).
         x will be relabeled if an elemInstanceVar is supplied.
         '''
-        from theorems import unfoldSupersetEq
+        from _theorems_ import unfoldSupersetEq
         return unfoldSupersetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().checked({self})
     
     def concludeAsFolded(self, elemInstanceVar=x):
@@ -24,5 +24,5 @@ class SupersetEq(BinaryOperation):
         Derive this folded version, A superset B, from the unfolded version,
         (forall_{x in B} x in A).
         '''
-        from theorems import foldSupersetEq
+        from _theorems_ import foldSupersetEq
         return foldSupersetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()

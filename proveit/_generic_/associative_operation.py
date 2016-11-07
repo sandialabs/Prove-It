@@ -1,12 +1,11 @@
-from evaluatable import Evaluatable
-from proveit import ExpressionList, Etcetera
+from proveit import Operation, ExpressionList, Etcetera
 
-class AssociativeOperation(Evaluatable):
+class AssociativeOperation(Operation):
     def __init__(self, operator, *operands):
         '''
         Represent an associative operator operating on any number of operands.
         '''
-        Evaluatable.__init__(self, operator, operands)   
+        Operation.__init__(self, operator, operands)   
         assert isinstance(self.operands, ExpressionList)
         # What is the sound of one (or no) hand clapping?  Who really cares?
         if len(self.operands) < 2:

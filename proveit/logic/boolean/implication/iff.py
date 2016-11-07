@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
 from proveit.logic.boolean.booleans import deduceInBool, TRUE, FALSE
 from proveit.logic.boolean.conjunction import compose
 from implies import Implies
@@ -24,10 +24,10 @@ class Iff(BinaryOperation):
         and, if :math:`A \in \mathbb{B}` and :math:`B \in \mathbb{B}`, derive
         :math:`A = B` as well.
         '''
-        self.tryDerivation(self.deriveLeftImplication, knownTruth.assumptions)
-        self.tryDerivation(self.deriveRightImplication, knownTruth.assumptions)
-        self.tryDerivation(self.deriveReversed, knownTruth.assumptions)
-        self.tryDerivation(self.deriveEquality, knownTruth.assumptions)
+        tryDerivation(self.deriveLeftImplication, knownTruth.assumptions)
+        tryDerivation(self.deriveRightImplication, knownTruth.assumptions)
+        tryDerivation(self.deriveReversed, knownTruth.assumptions)
+        tryDerivation(self.deriveEquality, knownTruth.assumptions)
             
     def conclude(self, assumptions):
         '''
@@ -40,7 +40,7 @@ class Iff(BinaryOperation):
         '''
         From (A<=>B) derive and return B=>A.
         '''
-        from theorems import iffImpliesLeft
+        from _theorems_ import iffImpliesLeft
         return iffImpliesLeft.specialize({A: self.A, B: self.B}, assumptions)
         
     def deriveLeft(self, assumptions=USE_DEFAULTS):
@@ -53,7 +53,7 @@ class Iff(BinaryOperation):
         '''
         From (A<=>B) derive and return A=>B.
         '''
-        from theorems import iffImpliesRight
+        from _theorems_ import iffImpliesRight
         return iffImpliesRight.specialize({A: self.A, B: self.B}, assumptions)
 
     def deriveRight(self, assumptions=USE_DEFAULTS):
@@ -66,7 +66,7 @@ class Iff(BinaryOperation):
         '''
         From (A<=>B) derive and return (B<=>A).
         '''
-        from theorems import iffSymmetry
+        from _theorems_ import iffSymmetry
         return iffSymmetry.specialize({A:self.A, B:self.B}, assumptions)
     
     def applyTransitivity(self, otherIff, assumptions=USE_DEFAULTS):
@@ -75,7 +75,7 @@ class Iff(BinaryOperation):
         (A <=> C) assuming self and otherIff.
         Also works more generally as long as there is a common side to the equations.
         '''
-        from theorems import iffTransitivity
+        from _theorems_ import iffTransitivity
         assert isinstance(otherIff, Iff)
         if self.B == otherIff.A:
             # from A <=> B, B <=> C, derive A <=> C
@@ -97,7 +97,7 @@ class Iff(BinaryOperation):
         '''
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
         '''
-        from axioms import iffDef
+        from _axioms_ import iffDef
         return iffDef.specialize({A:self.A, B:self.B})
     
     def concludeViaComposition(self, assumptions=USE_DEFAULTS):
@@ -109,29 +109,24 @@ class Iff(BinaryOperation):
         compose(AimplB, BimplA)
         return self.definition().deriveLeftViaEquivalence(assumptions)
     
-    def evaluate(self):
+    def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from theorems import iffTT, iffTF, iffFT, iffFF
-        def baseEvalFn(A, B):
-            if A == TRUE and B == TRUE: return iffTT
-            elif A == TRUE and B == FALSE: return iffTF
-            elif A == FALSE and B == TRUE: return iffFT
-            elif A == FALSE and B == FALSE: return iffFF
-        return _evaluate(self, lambda : _evaluateBooleanBinaryOperation(self, baseEvalFn))
+        from _theorems_ import iffTT, iffTF, iffFT, iffFF # load in truth-table evaluations
+        return BinaryOperation.evaluate(self, assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.
         '''
-        from theorems import iffClosure
+        from _theorems_ import iffClosure
         return iffClosure.specialize({A:self.hypothesis, B:self.conclusion}, assumptions)
     
     def deriveEquality(self, assumptions=USE_DEFAULTS):
         '''
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
-        from theorems import iffOverBoolImplEq
+        from _theorems_ import iffOverBoolImplEq
         return iffOverBoolImplEq.specialize({A:self.A, B:self.B}, assumptions)

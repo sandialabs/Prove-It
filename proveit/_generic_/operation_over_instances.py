@@ -1,8 +1,7 @@
-from evaluatable import Evaluatable
 from proveit import Operation, Etcetera, MultiVariable, Lambda, compositeExpression
 
 
-class OperationOverInstances(Evaluatable):
+class OperationOverInstances(Operation):
     def __init__(self, operator, instanceVars, instanceExpr, domain=None, conditions=tuple()):
         '''
         Create an Operation for the given operator over instances of the given instance Variables,
@@ -15,7 +14,7 @@ class OperationOverInstances(Evaluatable):
         (where '->' represents a Lambda and {...} represents an ExpressionDict):
           {'instance_mapping' : instanceVars -> {'expression':instanceExpr, 'conditions':conditions}, 'domain':domain}
         '''
-        Evaluatable.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain, conditions))
+        Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain, conditions))
         params = OperationOverInstances.extractParameters(self.operands)
         self.instanceVars = params['instanceVars']
         self.instanceExpr = params['instanceExpr']

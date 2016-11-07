@@ -1,4 +1,4 @@
-from proveit import OperationOverInstances
+from proveit import OperationOverInstances, tryDerivation
 from proveit import Literal, Operation, ExpressionList, MultiVariable, Etcetera, USE_DEFAULTS
 from proveit.common import P, Q, S
 
@@ -24,13 +24,13 @@ class Exists(OperationOverInstances):
         From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
         From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
         '''
-        self.tryDerivation(self.deriveNegatedForall, knownTruth.assumptions)
+        tryDerivation(self.deriveNegatedForall, knownTruth.assumptions)
 
     def concludeViaExample(self, exampleInstance):
         '''
         Conclude and return this [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] from P(..x..) and Q(..x..) and ..x.. in S, where ..x.. is the given exampleInstance.
         '''
-        from theorems import existenceByExample
+        from _theorems_ import existenceByExample
         from proveit.logic import InSet
         from proveit.common import xEtc, yEtc
         if len(self.instanceVars) > 1 and (not isinstance(exampleInstance, ExpressionList) or (len(exampleInstance) != len(self.instanceVars))):
@@ -53,8 +53,8 @@ class Exists(OperationOverInstances):
         From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
         From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
         '''
-        from axioms import existsDef
-        from theorems import existsNotImpliesNotForall
+        from _axioms_ import existsDef
+        from _theorems_ import existsNotImpliesNotForall
         from proveit.logic import Not
         from proveit.common import xEtc        
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
@@ -70,7 +70,7 @@ class Exists(OperationOverInstances):
         Deduce, then return, that this exists expression is in the set of BOOLEANS as
         all exists expressions are (they are taken to be false when not true).
         '''
-        from theorems import existsInBool
+        from _theorems_ import existsInBool
         from proveit.common import xEtc        
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions

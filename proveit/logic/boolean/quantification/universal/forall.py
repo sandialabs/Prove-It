@@ -1,4 +1,4 @@
-from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExpressionList, Operation, Etcetera, MultiVariable
+from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExpressionList, Operation, Etcetera, MultiVariable, tryDerivation
 from proveit.common import P, Q, R, S
 
 FORALL = Literal(__package__, stringFormat='forall', latexFormat=r'\forall')
@@ -23,7 +23,7 @@ class Forall(OperationOverInstances):
         Automatically unfold the Forall statement if the domain has an 'unfoldForall' method.
         '''
         if hasattr(self.domain, 'unfoldForall'):
-            self.tryDerivation(self.unfold, knownTruth.assumptions)
+            tryDerivation(self.unfold, knownTruth.assumptions)
         
     def conclude(self, assumptions):
         '''
@@ -99,7 +99,7 @@ class Forall(OperationOverInstances):
         From a nested forall statement, derive the bundled forall statement.  For example,
         forall_{x | Q(x)} forall_{y | R(y)} P(x, y) becomes forall_{x, y | Q(x), R(y)} P(x, y).
         '''
-        from theorems import forallBundling
+        from _theorems_ import forallBundling
         from proveit.common import xEtc, yEtc
         assert isinstance(self.instanceExpr, Forall), "Can only bundle nested forall statements"
         innerForall = self.instanceExpr
@@ -138,7 +138,7 @@ class Forall(OperationOverInstances):
         The instanceVarLists should be a list of lists of instanceVars, in the same order as the original
         instanceVars, to indicate how to break up the nested forall statements.
         '''
-        from theorems import forallUnraveling
+        from _theorems_ import forallUnraveling
         return self._specializeUnravelingTheorem(forallUnraveling, instanceVarLists).deriveConclusion(assumptions)
         
     def deriveUnraveledEquiv(self, instanceVarLists):
@@ -148,31 +148,30 @@ class Forall(OperationOverInstances):
         The instanceVarLists should be a list of lists of instanceVars, in the same order as the original
         instanceVars, to indicate how to break up the nested forall statements.
         '''
-        from theorems import forallBundledEquiv
+        from _theorems_ import forallBundledEquiv
         return self._specializeUnravelingTheorem(forallBundledEquiv, instanceVarLists)
         
-    def evaluate(self):
+    def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if possible
         by calling the condition's evaluateForall method
         '''
         from boolOps import _evaluate
-        assert self.hasDomain(), "Cannot evaluate a forall statement with no domain"
+        assert self.hasDomain(), "Cannot automatically evaluate a forall statement with no domain"
         if len(self.instanceVars) == 1:
-            # start with the first condition which may then nest over subsequent conditions
-            return _evaluate(self, lambda : self.domain.evaluateForall(self))
+            # Use the domain's evaluateForall method
+            return self.domain.evaluateForall(self, assumptions)
         else:
             # Evaluate an unravelled version
-            unravelledEquiv = self.deriveUnraveledEquiv(*[[var] for var in self.instanceVars]).checked()
-            unravelledEval = unravelledEquiv.rhs.evaluate()
-            return unravelledEquiv.applyTransitivity(unravelledEval).checked()            
+            unravelledEquiv = self.deriveUnraveledEquiv(*[[var] for var in self.instanceVars])
+            return unravelledEquiv.rhs.evaluate(assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this forall expression is in the set of BOOLEANS,
         as all forall expressions are (they are taken to be false when not true).
         '''
-        from axioms import forallInBool
+        from _axioms_ import forallInBool
         from proveit.common import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions

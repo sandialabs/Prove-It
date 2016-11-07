@@ -33,7 +33,7 @@ class Or(AssociativeOperation):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
         '''
-        from theorems import orImpliesRightIfNotLeft
+        from _theorems_ import orImpliesRightIfNotLeft
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
@@ -42,7 +42,7 @@ class Or(AssociativeOperation):
         '''
         From (A or B) derive and return A assuming inBool(A), Not(B).
         '''
-        from theorems import orImpliesLeftIfNotRight
+        from _theorems_ import orImpliesLeftIfNotRight
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
@@ -51,7 +51,7 @@ class Or(AssociativeOperation):
         '''
         From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.
         '''
-        from theorems import hypotheticalDisjunction
+        from _theorems_ import hypotheticalDisjunction
         from proveit.logic import Implies, compose
         # forall_{A in Bool, B in Bool, C in Bool} (A=>C and B=>C) => ((A or B) => C)
         assert len(self.operands) == 2
@@ -62,24 +62,19 @@ class Or(AssociativeOperation):
         compose(leftImplConclusion, rightImplConclusion)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
-    def loadBaseEvaluations(self):
+    def evaluate(self, assumptions=USE_DEFAULTS):
         '''
-        Import the base conjunction evaluations.  This will automatically
-        populate proveit._generic_.evaluatable.Evaluatable evaluations
-        for evaluating conjunction expressions.
-        '''
-        from axioms import orTT, orTF, orFT, orFF      
-
-    def _baseEvaluate(self):
-        '''
-        Given TRUE or FALSE operands, derive and
+        Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from theorems import disjunctionTrueEval, disjunctionFalseEval
+        from _axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations  
+        from _theorems_ import disjunctionTrueEval, disjunctionFalseEval
         trueIndex = -1
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:
-                raise ValueError("Operands must all be TRUE or FALSE when calling _baseEvaluate()")
+                # The operands are not always true/false, so try the default evaluate method
+                # which will attempt to evaluate each of the operands.
+                return AssociativeOperation.evaluate(self, assumptions)
             if operand == TRUE:
                 trueIndex = i
         if trueIndex >= 0:
@@ -93,7 +88,7 @@ class Or(AssociativeOperation):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
         '''
-        from theorems import disjunctionClosure
+        from _theorems_ import disjunctionClosure
         return disjunctionClosure.specialize({Aetc:self.operands}, assumptions)
     
     def concludeViaExample(self, trueOperand):
@@ -101,6 +96,6 @@ class Or(AssociativeOperation):
         From one true operand, conclude that this 'or' expression is true.
         Requires all of the operands to be in the set of BOOLEANS.
         '''
-        from theorems import orIfAny
+        from _theorems_ import orIfAny
         index = self.operands.index(trueOperand)
         return orIfAny.specialize({Aetc:self.operands[:index], B:self.operands[index], Cetc:self.operands[index+1:]})

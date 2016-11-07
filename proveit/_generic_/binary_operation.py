@@ -1,9 +1,9 @@
-from evaluatable import Evaluatable
+from proveit import Operation
 from fencing import maybeFenced
 
-class BinaryOperation(Evaluatable):
+class BinaryOperation(Operation):
     def __init__(self, operator, A, B):
-        Evaluatable.__init__(self, operator, (A, B))
+        Operation.__init__(self, operator, (A, B))
         self.leftOperand = A
         self.rightOperand = B    
 

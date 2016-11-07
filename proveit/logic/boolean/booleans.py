@@ -9,7 +9,7 @@ class BooleanSet(Literal):
         '''
         From inBool(Element), derive and return [(element = TRUE) or (element = FALSE)].
         '''
-        from theorems import unfoldInBool
+        from _theorems_ import unfoldInBool
         #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
         return unfoldInBool.specialize({A:element}).deriveConclusion().checked({inBool(element)})
     
@@ -18,7 +18,7 @@ class BooleanSet(Literal):
         Try to deduce that the given element is in the set of Booleans under the given assumptions.
         '''   
         from proveit.logic import Or, Equals
-        from theorems import inBoolIfEqTrue, inBoolIfEqFalse
+        from _theorems_ import inBoolIfEqTrue, inBoolIfEqFalse
         if hasattr(element, 'deduceInBool'):
             return element.deduceInBool(assumptions=assumptions)
         else:
@@ -32,17 +32,17 @@ class BooleanSet(Literal):
                 pass
             raise ProofFailure(self, assumptions, str(element) + ' not proven to be equal to TRUE or FALSE.')
 
-    def evaluateForall(self, forallStmt):
+    def evaluateForall(self, forallStmt, assumptions):
         '''
         Given a forall statement over the BOOLEANS domain, evaluate to TRUE or FALSE
         if possible.
         '''        
         from proveit.logic import Forall, Equals
-        from theorems import falseEqFalse, trueEqTrue 
-        from quantification.universal.theorems import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
+        from _theorems_ import falseEqFalse, trueEqTrue 
+        from quantification.universal._theorems_ import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
         from conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply evaluateForall method of BOOLEANS to a forall statement"
-        assert(forallStmt.domain == BOOLEANS), "May only apply evaluateForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
+        assert(forallStmt.domain == Booleans), "May only apply evaluateForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply evaluateForall method of BOOLEANS to a forall statement with 1 instance variable"
         instanceVar = forallStmt.instanceVars[0]
         instanceExpr = forallStmt.instanceExpr
@@ -53,39 +53,36 @@ class BooleanSet(Literal):
             # special case of Forall_{A in BOOLEANS} A
             falseEqFalse # FALSE = FALSE
             trueEqTrue # TRUE = TRUE
-            evaluation = forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr}).deriveConclusion()
+            return forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr}).deriveConclusion()
         else:
             # must evaluate for the TRUE and FALSE case separately
-            evalTrueInstance = trueInstance.evaluate().checked()
-            evalFalseInstance = falseInstance.evaluate().checked()
+            evalTrueInstance = trueInstance.evaluate(assumptions)
+            evalFalseInstance = falseInstance.evaluate(assumptions)
             if isinstance(evalTrueInstance, Equals) and isinstance(evalFalseInstance, Equals):
                 # proper evaluations for both cases (TRUE and FALSE)
                 trueCaseVal = evalTrueInstance.rhs
                 falseCaseVal = evalFalseInstance.rhs
                 if trueCaseVal == TRUE and falseCaseVal == TRUE:
                     # both cases are TRUE, so the forall over booleans is TRUE
-                    evalTrueInstance.deriveViaBooleanEquality().checked()
-                    evalFalseInstance.deriveViaBooleanEquality().checked()
-                    compose(evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality()).checked()
+                    compose(evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality())
                     forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar})
-                    evaluation = forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
+                    return forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
                 else:
                     # one case is FALSE, so the forall over booleans is FALSE
                     compose(evalTrueInstance, evalFalseInstance)
                     if trueCaseVal == FALSE and falseCaseVal == FALSE:
-                        evaluation = forallBoolEvalFalseViaFF.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
+                        return forallBoolEvalFalseViaFF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
                     elif trueCaseVal == FALSE and falseCaseVal == TRUE:
-                        evaluation = forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
+                        return forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
                     elif trueCaseVal == TRUE and falseCaseVal == FALSE:
-                        evaluation = forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}).deriveConclusion()
-        return evaluation.checked()
+                        return forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
     
     def unfoldForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
         Given forall_{A in Booleans} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from quantification.universal.theorems import unfoldForallOverBool
+        from quantification.universal._theorems_ import unfoldForallOverBool
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of Booleans to a forall statement with 1 instance variable"
@@ -96,7 +93,7 @@ class BooleanSet(Literal):
         Given forall_{A in Booleans} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from quantification.universal.theorems import foldForallOverBool
+        from quantification.universal._theorems_ import foldForallOverBool
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
@@ -110,14 +107,15 @@ class TrueLiteral(Literal):
         Literal.__init__(self, __package__, stringFormat='TRUE', latexFormat=r'\top')
     
     def evalEquality(self, other):
-        from theorems import trueEqTrue, trueNotFalse
+        from _theorems_ import trueEqTrue, trueNotFalse
+        from proveit.logic import Equals, TRUE
         if other == TRUE:
-            return deriveStmtEqTrue(trueEqTrue)
+            return trueEqTrue.evaluate()
         elif other == FALSE:
             return trueNotFalse.unfold().equateNegatedToFalse()
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
-        from theorems import trueInBool
+        from _theorems_ import trueInBool
         return trueInBool
     
     def isIrreducibleValue(self):
@@ -131,15 +129,16 @@ class FalseLiteral(Literal):
         Literal.__init__(self, __package__, stringFormat='FALSE', latexFormat=r'\bot')
     
     def evalEquality(self, other):
-        from axioms import falseNotTrue
-        from theorems import falseEqFalse
+        from _axioms_ import falseNotTrue
+        from _theorems_ import falseEqFalse
+        from proveit.logic import Equals, TRUE
         if other == FALSE:
-            return deriveStmtEqTrue(falseEqFalse)
+            return falseEqFalse.evaluate()
         elif other == TRUE:
             return falseNotTrue.unfold().equateNegatedToFalse()
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
-        from theorems import falseInBool
+        from _theorems_ import falseInBool
         return falseInBool
 
     def isIrreducibleValue(self):
@@ -163,10 +162,3 @@ def deduceInBool(expr):
     if hasattr(expr, 'deduceInBool'):
         return expr.deduceInBool()
     return inBool(expr)
-
-def deriveStmtEqTrue(statement):
-    '''
-    For a given statement, derive statement = TRUE assuming statement.
-    '''
-    from proveit.logic import Equals
-    return Equals(statement, TRUE).concludeBooleanEquality()

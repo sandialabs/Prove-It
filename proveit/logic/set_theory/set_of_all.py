@@ -44,7 +44,7 @@ class SetOfAll(OperationOverInstances):
         '''
         From (x in {Q(y) | P(y)}), derive and return P(x), where x is meant as the given element.
         '''
-        from theorems import unfoldSetOfAll, unfoldSimpleSetOfAll
+        from _theorems_ import unfoldSetOfAll, unfoldSimpleSetOfAll
         if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0] and len(self.conditions) == 1:
             Pop, Psub = Operation(P, self.instanceVars), self.conditions[0]
             return unfoldSimpleSetOfAll.specialize({Pop:Psub, x:element, y:self.instanceVars[0]}).deriveConclusion()
@@ -57,7 +57,7 @@ class SetOfAll(OperationOverInstances):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''   
-        from theorems import foldSetOfAll, foldSimpleSetOfAll
+        from _theorems_ import foldSetOfAll, foldSimpleSetOfAll
         if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0] and len(self.conditions) == 1:
             Pop, Psub = Operation(P, self.instanceVars), self.conditions[0]
             return foldSimpleSetOfAll.specialize({Pop:Psub, x:element, y:self.instanceVars[0]}).deriveConclusion()

@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
 
 IN = Literal(__package__, stringFormat = 'in', latexFormat = r'\in')
 
@@ -45,7 +45,7 @@ class InSet(BinaryOperation):
         and given the element and assumptions.
         '''
         if hasattr(self.domain, 'deduceMembershipSideEffects'):
-            self.tryDerivation(self.domain.deduceMembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
+            tryDerivation(self.domain.deduceMembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
     
         
     """

@@ -37,7 +37,7 @@ class And(AssociativeOperation):
         From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
         '''
-        from axioms import andImpliesEach
+        from _axioms_ import andImpliesEach
         from proveit.common import Aetc, Cetc
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         return andImpliesEach.specialize({Aetc:self.operands[:idx], B:self.operands[idx], Cetc:self.operands[idx+1:]}).deriveConclusion(assumptions)
@@ -49,24 +49,19 @@ class And(AssociativeOperation):
         '''
         return compose(self.operands, assumptions)
     
-    def loadBaseEvaluations(self):
+    def evaluate(self, assumptions=USE_DEFAULTS):
         '''
-        Import the base conjunction evaluations.  This will automatically
-        populate proveit._generic_.evaluatable.Evaluatable evaluations
-        for evaluating conjunction expressions.
-        '''
-        from axioms import andTT, andTF, andFT, andFF        
-    
-    def _baseEvaluate(self):
-        '''
-        Given TRUE or FALSE operands, derive and
+        Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from theorems import conjunctionTrueEval, conjunctionFalseEval
+        from _axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations    
+        from _theorems_ import conjunctionTrueEval, conjunctionFalseEval
         falseIndex = -1
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:
-                raise ValueError("Operands must all be TRUE or FALSE when calling _baseEvaluate()")
+                # The operands are not always true/false, so try the default evaluate method
+                # which will attempt to evaluate each of the operands.
+                return AssociativeOperation.evaluate(self, assumptions)
             if operand == FALSE:
                 falseIndex = i
         if falseIndex >= 0:
@@ -75,13 +70,12 @@ class And(AssociativeOperation):
         else:
             # no operand is FALSE so the whole disjunction evaluates to TRUE.
             return conjunctionTrueEval.specialize({Aetc:self.operands})
-
         
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'and' expression is in the set of BOOLEANS.
         '''
-        from theorems import conjunctionClosure
+        from _theorems_ import conjunctionClosure
         return conjunctionClosure.specialize({Aetc:self.operands}, assumptions=assumptions)
     
 def compose(expressions, assumptions=USE_DEFAULTS):
@@ -89,5 +83,5 @@ def compose(expressions, assumptions=USE_DEFAULTS):
     Returns [A and B and ...], the And operator applied to the collection of given arguments,
     derived from each separately.
     '''
-    from theorems import conjunctionIntro
+    from _theorems_ import conjunctionIntro
     return conjunctionIntro.specialize({Aetc:expressions}, assumptions=assumptions)

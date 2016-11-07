@@ -1,4 +1,4 @@
-from proveit import OperationOverInstances
+from proveit import OperationOverInstances, tryDerivation
 from proveit import Literal, Operation, MultiVariable, Etcetera, USE_DEFAULTS
 from proveit.common import P, Q, S
 
@@ -23,13 +23,13 @@ class NotExists(OperationOverInstances):
         '''
         Automatically derive the unfolded version, Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x).
         '''
-        self.tryDerivation(self.unfold, knownTruth.assumptions)
+        tryDerivation(self.unfold, knownTruth.assumptions)
         
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         Derive and return Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x)
         '''
-        from theorems import notExistsUnfolding
+        from _theorems_ import notExistsUnfolding
         from proveit.common import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
@@ -40,7 +40,7 @@ class NotExists(OperationOverInstances):
         Prove and return some NotExists_{x | Q(x)} P(x) assuming Not(Exists_{x | Q(x)} P(x)).
         This is automatically derived; see Not.deriveSideEffects(..) and Not.deriveNotExists(..).
         '''
-        from theorems import notExistsFolding
+        from _theorems_ import notExistsFolding
         from proveit.common import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
@@ -54,7 +54,7 @@ class NotExists(OperationOverInstances):
         Prove and return either some NotExists_{x | Q(x)} Not(P(x)) or NotExists_{x | Q(x)} P(x)
         assuming forall_{x | Q(x)} P(x) or assuming forall_{x | Q(x)} (P(x) != TRUE) respectively.
         '''
-        from theorems import forallImpliesNotExistsNot, existsDefNegation
+        from _theorems_ import forallImpliesNotExistsNot, existsDefNegation
         from proveit.logic.equality.eqOps import NotEquals
         from boolOps import Not
         from boolSet import TRUE

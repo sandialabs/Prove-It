@@ -19,7 +19,7 @@ class Intersect(AssociativeOperation):
         From [element in (A intersection B)], derive and return [(element in A) and (element in B)],
         where self represents (A intersection B). 
         '''
-        from axioms import intersectionDef
+        from _axioms_ import intersectionDef
         return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveRight()
 
     def deduceElemInSet(self, element):
@@ -27,5 +27,5 @@ class Intersect(AssociativeOperation):
         From  [(element in A) and (element in B)], derive and return [element in (A intersection B)],
         where self represents (A intersection B). 
         '''
-        from axioms import intersectionDef
+        from _axioms_ import intersectionDef
         return intersectionDef.specialize({x:element, A:self.operands[0], B:self.operands[1]}).deriveLeft()

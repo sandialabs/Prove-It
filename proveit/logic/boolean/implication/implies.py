@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS, compositeExpression
+from proveit import Literal, BinaryOperation, USE_DEFAULTS, compositeExpression, tryDerivation
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
 from proveit.logic.boolean.negation import Not
 from proveit.common import A, B
@@ -26,7 +26,7 @@ class Implies(BinaryOperation):
         except:
             pass
         if self.conclude == FALSE:
-            self.tryDerivation(self.deriveViaContradiction, knownTruth.assumptions)
+            tryDerivation(self.deriveViaContradiction, knownTruth.assumptions)
 
     def deriveConclusion(self, assumptions=USE_DEFAULTS):
         r'''
@@ -50,8 +50,8 @@ class Implies(BinaryOperation):
         From :math:`[\lnot A \Rightarrow \bot]`, derive and return :math:`A` assuming :math:`A \in \mathcal{B}`.
         Or from :math:`[A \Rightarrow \bot]`, derive and return :math:`\lnot A` assuming :math:`A \in \mathcal{B}`.
         '''
-        from proveit.logic.boolean.negation.axioms import contradictoryValidation
-        from proveit.logic.boolean.negation.theorems import hypotheticalContradiction
+        from proveit.logic.boolean.negation._axioms_ import contradictoryValidation
+        from proveit.logic.boolean.negation._theorems_ import hypotheticalContradiction
         if self.conclusion != FALSE:
             raise ValueError('deriveViaContridiction method is only applicable if FALSE is implicated, not for ' + str(self))
         if isinstance(self.hypothesis, Not):
@@ -97,7 +97,7 @@ class Implies(BinaryOperation):
         * For :math:`[A  \Rightarrow \lnot B]`, prove :math:`[A \Rightarrow \lnot B] \Rightarrow [B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`.
         * For :math:`[A  \Rightarrow B]`, prove :math:`[A \Rightarrow B] \Rightarrow [\lnot B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
         '''
-        from theorems import transpositionFromNegated, transpositionFromNegatedConclusion, transpositionFromNegatedHypothesis, transpositionToNegated
+        from _theorems_ import transpositionFromNegated, transpositionFromNegatedConclusion, transpositionFromNegatedHypothesis, transpositionToNegated
         from proveit.logic import Not
         if isinstance(self.hypothesis, Not) and isinstance(self.conclusion, Not):
             return transpositionFromNegated.specialize({B:self.hypothesis.operand, A:self.conclusion.operand})
@@ -120,25 +120,20 @@ class Implies(BinaryOperation):
         '''
         return self.transposition().deriveConclusion(assumptions)
         
-    def evaluate(self):
+    def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from axioms import impliesTF
-        from theorems import impliesTT, impliesFT, impliesFF
-        def baseEvalFn(A, B):
-            if A == TRUE and B == TRUE: return impliesTT
-            elif A == TRUE and B == FALSE: return impliesTF
-            elif A == FALSE and B == TRUE: return impliesFT
-            elif A == FALSE and B == FALSE: return impliesFF
-        return _evaluate(self, lambda : _evaluateBooleanBinaryOperation(self, baseEvalFn))
+        from _axioms_ import impliesTF # load in truth-table evaluations
+        from _theorems_ import impliesTT, impliesFT, impliesFF
+        return BinaryOperation.evaluate(self, assumptions)
     
     def deduceInBool(self):
         '''
         Attempt to deduce, then return, that this implication expression is in the set of BOOLEANS.
         '''
-        from theorems import implicationClosure
+        from _theorems_ import implicationClosure
         hypothesisInBool = deduceInBool(self.hypothesis)
         conclusionInBool = deduceInBool(self.conclusion)
         return implicationClosure.specialize({A:self.hypothesis, B:self.conclusion})

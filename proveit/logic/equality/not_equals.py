@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
 from equals import Equals
 from proveit.common import x, y, A, X
 
@@ -20,13 +20,13 @@ class NotEquals(BinaryOperation):
         '''
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
-            self.tryDerivation(self.deriveReversed, knownTruth.assumptions)
+            tryDerivation(self.deriveReversed, knownTruth.assumptions)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From x != y derive y != x.
         '''
-        from theorems import notEqualsSymmetry
+        from _theorems_ import notEqualsSymmetry
         return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
 
     def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
@@ -35,7 +35,7 @@ class NotEquals(BinaryOperation):
         Also see version in Not class.
         '''
         from proveit.logic import FALSE, inBool
-        from proveit.logic.boolean.theorems import fromNotFalse
+        from proveit.logic.boolean._theorems_ import fromNotFalse
         if self.rhs == FALSE:
             return fromNotFalse.specialize({A:self.lhs}).deriveConclusion(assumptions)
 
@@ -45,7 +45,7 @@ class NotEquals(BinaryOperation):
         Also see version in Not class.
         '''
         from proveit.logic import FALSE
-        from proveit.logic.boolean.theorems import notEqualsFalse
+        from proveit.logic.boolean._theorems_ import notEqualsFalse
         if self.rhs == FALSE:
             return notEqualsFalse.specialize({A:self.lhs}).deriveConclusion()
 
@@ -53,14 +53,14 @@ class NotEquals(BinaryOperation):
         '''
         Return (x != y) = Not(x=y) where self represents (x != y).
         '''
-        from axioms import notEqualsDef
+        from _axioms_ import notEqualsDef
         return notEqualsDef.specialize({x:self.lhs, y:self.rhs})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (x != y), derive and return Not(x=y).
         '''
-        from theorems import unfoldNotEquals
+        from _theorems_ import unfoldNotEquals
         return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
 
     def evaluate(self):
@@ -84,5 +84,5 @@ class NotEquals(BinaryOperation):
         '''
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
         '''
-        from theorems import notEqualsInBool
+        from _theorems_ import notEqualsInBool
         return notEqualsInBool.specialize({x:self.lhs, y:self.rhs})

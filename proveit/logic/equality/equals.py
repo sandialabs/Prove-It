@@ -1,4 +1,4 @@
-from proveit import BinaryOperation, USE_DEFAULTS, ProofFailure
+from proveit import BinaryOperation, USE_DEFAULTS, ProofFailure, tryDerivation
 from proveit import Variable, Literal, Operation, Lambda
 from proveit.common import A, P, X, f, x, y, z
 from transitivity_search import transitivitySearch
@@ -11,7 +11,11 @@ class Equals(BinaryOperation):
     # map Expressions to sets of KnownTruths of equalities that involve the Expression
     # on the left hand or right hand side.
     knownEqualities = dict()
-    
+
+    # Subset of knownEqualities that have irreducible values on the right
+    # hand side.
+    evaluations = dict()
+        
     def __init__(self, a, b):
         BinaryOperation.__init__(self, EQUALS, a, b)
         self.lhs = a
@@ -21,29 +25,24 @@ class Equals(BinaryOperation):
         '''
         Record the knownTruth in Equals.knownEqualities, associated from
         the left hand side and the right hand side.  This information may
-        be useful for concluding new equations via transitivity.  Also
-        derive the reversed form, as a side effect.  If the right side
-        is TRUE or FALSE, `deriveViaBooleanEquality` as a side effect.
-        If this is a 1-step evaluation, an axiom or theorem whose
-        left side is an Evaluatable (proveit._generic_.evaluatable) and 
-        right side is an "irreducible value" 
-        (see proveit._generic_.evaluatable.isIrreduciblValue), 
-        store the KnownTruth in the Evaluatable.evaluations dictionary
-        automatically (mapping the lhs to the knownTruth).
+        be useful for concluding new equations via transitivity. 
+        If the right hand side is an "irreducible value" (see 
+        isIrreducibleValue), also record it in Equals.evaluations for use
+        when the evaluate method is called.   Also derive the reversed 
+        form, as a side effect.  If the right side is TRUE or FALSE, 
+        `deriveViaBooleanEquality` as a side effect.
         '''
         from proveit.logic import TRUE, FALSE
-        from proveit._generic_.evaluatable import Evaluatable, isIrreducibleValue
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
+        if isIrreducibleValue(self.rhs):
+            Equals.evaluations.setdefault(self.lhs, set()).add(knownTruth)
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
             self.deriveReversed(knownTruth.assumptions) # uses an axiom
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
-            self.tryDerivation(self.deriveViaBooleanEquality, knownTruth.assumptions)
-        if len(knownTruth.assumptions)==0 and isinstance(self.lhs, Evaluatable) and isIrreducibleValue(self.rhs):
-            if knownTruth.proof().numSteps <= 1:
-                Evaluatable.evaluations[self.lhs] = knownTruth
+            tryDerivation(self.deriveViaBooleanEquality, knownTruth.assumptions)
         
     def conclude(self, assumptions):
         '''
@@ -96,7 +95,7 @@ class Equals(BinaryOperation):
         '''
         Prove and return self of the form x = x.
         '''
-        from axioms import equalsReflexivity
+        from _axioms_ import equalsReflexivity
         assert self.lhs == self.rhs
         return equalsReflexivity.specialize({x:self.lhs})
             
@@ -104,7 +103,7 @@ class Equals(BinaryOperation):
         '''
         From x = y derive y = x.  This derivation is an automatic side-effect.
         '''
-        from axioms import equalsSymmetry
+        from _axioms_ import equalsSymmetry
         return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}, assumptions)
             
     def applyTransitivity(self, otherEquality, assumptions=USE_DEFAULTS):
@@ -112,7 +111,7 @@ class Equals(BinaryOperation):
         From x = y (self) and y = z (otherEquality) derive and return x = z.
         Also works more generally as long as there is a common side to the equations.
         '''
-        from theorems import equalsTransitivity
+        from _theorems_ import equalsTransitivity
         # We can assume that y=x will be a KnownTruth if x=y is a KnownTruth because it is derived as a side-effect.
         if self.rhs == otherEquality.lhs:
             return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions)
@@ -132,8 +131,8 @@ class Equals(BinaryOperation):
         Note, see deriveStmtEqTrue or Not.equateNegatedToFalse for the reverse process.
         '''
         from proveit.logic import TRUE, FALSE        
-        from proveit.logic.boolean.axioms import eqTrueElim
-        from proveit.logic.boolean.negation.theorems import notFromEqFalse
+        from proveit.logic.boolean._axioms_ import eqTrueElim
+        from proveit.logic.boolean.negation._theorems_ import notFromEqFalse
         if self.rhs == TRUE:
             return eqTrueElim.specialize({A:self.lhs}, assumptions) # A
         elif self.rhs == FALSE:
@@ -144,7 +143,7 @@ class Equals(BinaryOperation):
         From A=FALSE, derive A=>FALSE.
         '''
         from proveit.logic import FALSE        
-        from theorems import contradictionFromFalseEquivalence, contradictionFromFalseEquivalenceReversed
+        from _theorems_ import contradictionFromFalseEquivalence, contradictionFromFalseEquivalenceReversed
         if self.rhs == FALSE:
             return contradictionFromFalseEquivalence.specialize({A:self.lhs}).deriveConclusion(assumptions)
         elif self.lhs == FALSE:
@@ -155,8 +154,8 @@ class Equals(BinaryOperation):
         Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.
         '''
         from proveit.logic import TRUE, FALSE, Not        
-        from proveit.logic.boolean.axioms import eqTrueIntro
-        from proveit.logic.boolean.negation.theorems import eqFalseFromNegation
+        from proveit.logic.boolean._axioms_ import eqTrueIntro
+        from proveit.logic.boolean.negation._theorems_ import eqFalseFromNegation
         if self.rhs == TRUE:
             return eqTrueIntro.specialize({A:self.lhs}, assumptions)
         elif self.rhs == FALSE:
@@ -172,7 +171,7 @@ class Equals(BinaryOperation):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from proveit.logic.set_theory.axioms import singletonDef
+        from proveit.logic.set_theory._axioms_ import singletonDef
         return singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeftViaEquivalence(assumptions)
     
     """
@@ -208,7 +207,7 @@ class Equals(BinaryOperation):
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular)
         '''
-        from axioms import substitution
+        from _axioms_ import substitution
         fxLambda = Equals._lambdaExpr(lambdaMap)
         return substitution.specialize({x:self.lhs, y:self.rhs, f:fxLambda}, assumptions=assumptions)
         
@@ -220,7 +219,7 @@ class Equals(BinaryOperation):
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular).
         '''
-        from theorems import substitute
+        from _theorems_ import substitute
         PxLambda = Equals._lambdaExpr(lambdaMap)
         return substitute.specialize({x:self.rhs, y:self.lhs, P:PxLambda}, assumptions=assumptions)
         
@@ -232,7 +231,7 @@ class Equals(BinaryOperation):
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular).
         '''
-        from theorems import substitute
+        from _theorems_ import substitute
         PxLambda = Equals._lambdaExpr(lambdaMap)
         return substitute.specialize({x:self.lhs, y:self.rhs, P:PxLambda}, assumptions=assumptions)
         
@@ -252,7 +251,7 @@ class Equals(BinaryOperation):
         '''
         Deduce and return that this equality statement is in the set of Booleans.
         '''
-        from axioms import equalityInBool
+        from _axioms_ import equalityInBool
         return equalityInBool.specialize({x:self.lhs, y:self.rhs})
         
     def evaluate(self):
@@ -302,6 +301,79 @@ class Equals(BinaryOperation):
                 return Equals(self, val)
             
         return _evaluate(self, doEval)
+
+def isIrreducibleValue(expr):
+    return (hasattr(expr, 'isIrreducibleValue') and expr.isIrreducibleValue())
+    
+def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
+    '''
+    Default attempt to evaluate the given expression under the given assumptions.
+    If successful, returns a KnownTruth (using a subset of the given assumptions)
+    that expresses an equality between the expression (on the left) and
+    and irreducible value (see isIrreducibleValue).  Specifically, this
+    method checks to see if an appropriate evaluation has already been
+    proven.  If not, but if it is an Operation, call the evaluate method on
+    all operands, make these substitions, then call evaluate on the expression
+    with operands substituted for irreducible values.  It also treats, as a
+    special case, evaluating the expression to be true if it is in the set
+    of assumptions [also see KnownTruth.evaluate and evaluateTruth].
+    '''
+    from proveit.lambda_map import globalRepl
+    from proveit.logic import Equals
+    from proveit import defaults
+    assumptionsSet = set(defaults.checkedAssumptions(assumptions))
+    # See if the expression already has a proven evaluation
+    if expr in Equals.evaluations:
+        for knownTruth in Equals.evaluations[expr]:
+            if assumptionsSet.issuperset(knownTruth.assumptions):
+                return knownTruth # found existing evaluation suitable for the assumptions
+        return Equals.evaluations[expr] # found existing evaluation
+    # see if the assumption is in the set of assumptions as a special case
+    if expr in assumptionsSet:
+        return evaluateTruth(expr, [expr]) # A=TRUE assuming A
+    if not isinstance(expr, Operation):
+        raise EvaluationError('Unknown evaluation: ' + str(expr))
+    # Any of the operands that are not irreducible values must be replaced with their evaluation
+    for operand in tuple(expr.operands):
+        if not isIrreducibleValue(operand):
+            # the operand is not an irreducible value so it must be evaluated
+            operandEval = operand.evaluate(assumptions=assumptions)
+            if not isIrreducibleValue(operandEval.rhs):
+                raise EvaluationError('Evaluations expected to be irreducible values')
+            # substitute in the evaluated value
+            expr = operandEval.substitution(globalRepl(expr, operand)).rhs
+    for operand in expr.operands:
+        if not isIrreducibleValue(operand.isIrreducibleValue()):
+            raise EvaluationError('All operands should be irreducible values')
+    evaluation = Equals(expr, expr.evaluate().rhs).prove(assumptions=assumptions)
+    # store it in the evaluations dictionary for next time
+    Equals.evaluations[expr] = evaluation
+    return evaluation  
+
+def evaluateTruth(expr, assumptions):
+    '''
+    Attempts to prove that the given expression equals TRUE under
+    the given assumptions via proving the expression.
+    Returns the resulting KnownTruth if successful.
+    '''
+    from proveit.logic import TRUE
+    return Equals(expr, TRUE).prove(assumptions)
+
+def proveByEval(expr, assumptions):
+    '''
+    Attempts to prove that the given expression is TRUE under the
+    given assumptions via evaluating that the expression is equal to true.
+    Returns the resulting KnownTruth if successful.
+    '''
+    return expr.evaluate(assumptions).deriveViaBooleanEquality()
+
+class EvaluationError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message
+        
+      
         
 """
 This is obsolete (mostly) -- use proveit.lambda_map techniques instead.

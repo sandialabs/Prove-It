@@ -23,6 +23,6 @@ class NotInSet(BinaryOperation):
         '''
         From (x != y), derive and return Not(x=y).
         '''
-        from theorems import unfoldNotIn
+        from _theorems_ import unfoldNotIn
         return unfoldNotIn.specialize({x:self.element, S:self.domain}).deriveConclusion().checked({self})
 

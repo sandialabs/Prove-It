@@ -16,7 +16,7 @@ class SubsetEq(BinaryOperation):
         From A subset B, derive and return (forall_{x in A} x in B).
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
-        from theorems import unfoldSubsetEq
+        from _theorems_ import unfoldSubsetEq
         return unfoldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion().checked({self})
     
     def concludeAsFolded(self, elemInstanceVar=x):
@@ -24,5 +24,5 @@ class SubsetEq(BinaryOperation):
         Derive this folded version, A subset B, from the unfolded version,
         (forall_{x in A} x in B).
         '''
-        from theorems import foldSubsetEq
+        from _theorems_ import foldSubsetEq
         return foldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:elemInstanceVar}).deriveConclusion()

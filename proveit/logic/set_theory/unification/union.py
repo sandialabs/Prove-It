@@ -20,7 +20,7 @@ class Union(AssociativeOperation):
         From [element in (A union B)], derive and return [(element in A) or (element in B)],
         where self represents (A union B). 
         '''
-        from axioms import unionDef
+        from _axioms_ import unionDef
         if len(self.operands) == 2:
             leftOperand, rightOperand = self.operands       
             return unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveRight()
@@ -30,7 +30,7 @@ class Union(AssociativeOperation):
         From [(element in A) or (element in B)], derive and return [element in (A union B)]
         where self represents (A union B).
         ''' 
-        from axioms import unionDef
+        from _axioms_ import unionDef
         if len(self.operands) == 2:
             leftOperand, rightOperand = self.operands              
             return unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveLeft()

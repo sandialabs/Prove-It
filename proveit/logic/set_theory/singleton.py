@@ -25,12 +25,12 @@ class Singleton(Operation):
         '''
         From [element in {y}], derive and return (element = y).
         '''
-        from axioms import singletonDef
+        from _axioms_ import singletonDef
         return singletonDef.specialize({x:element, y:self.elem}).deriveRightViaEquivalence()
     
     def deduceElemInSet(self, element):
         '''
         From (element = y), derive and return [element in {y}] where self represents {y}.
         '''   
-        from axioms import singletonDef
+        from _axioms_ import singletonDef
         return singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence()
