@@ -17,9 +17,6 @@ trueEqTrue
 falseEqFalse = Equals(FALSE, FALSE)
 falseEqFalse
 
-eqTrueRevIntro = Forall(A, Implies(A, Equals(TRUE, A)))
-eqTrueRevIntro
-
 trueConclusion = Forall(A, Implies(A, TRUE))
 trueConclusion
 
