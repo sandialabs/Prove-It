@@ -94,14 +94,22 @@ class KnownTruth:
         KnownTruth.presumingTheorems = set()
         KnownTruth.presumingPackages = set()
         for presuming in presumes:
+            if isinstance(presuming, KnownTruth):
+                presuming = presuming.asTheoremOrAxiom()
             if isinstance(presuming, Theorem):
                 KnownTruth.presumingTheorems.add(presuming)
             elif isinstance(presuming, str):
                 # may be a package or a full theorem name, to be precise
                 KnownTruth.presumingPackage.add(presuming)
             else:
-                raise ValueError("'presumes' should be a collection of Theorems and strings, not " + presuming.__class__)
+                raise ValueError("'presumes' should be a collection of Theorems and strings, not " + str(presuming.__class__))
         Theorem.updateUsability()
+        # check to see if the theorem was already proven before we started
+        for proof in theorem._possibleProofs:
+            if all(usedTheorem._unusableTheorem is None for usedTheorem in proof.usedTheorems()):
+                print "Theorem already proven.  Calling qed() method."
+                self._proof = proof
+                return self.qed()
         print "Beginning proof of"
         return self
     
@@ -125,6 +133,52 @@ class KnownTruth:
         '''
         return self._proof
     
+    def asTheoremOrAxiom(self):
+        '''
+        Assuming this KnownTruth represents a Theorem or Axiom, return 
+        the Theorem or Axiom object.
+        '''
+        from proof import Theorem, Axiom
+        # Get the theorem associated with the KnownTruth (or raise an exception if there is none)
+        if KnownTruth.theoremBeingProven is not None:
+            if self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
+                return KnownTruth.theoremBeingProven
+        if isinstance(self._proof, Theorem) or isinstance(self._proof, Axiom):
+            return self._proof
+        else:
+            raise ValueError("KnownTruth does not represent a theorem or axiom.")
+    
+    def printRequirements(self):
+        '''
+        Provided that this KnownTruth is known to represent a proven theorem,
+        print the set of axioms that are required directly or indirectly in
+        its proof as well as any required theorems that are unproven (if it
+        has not yet been proven completely).
+        '''
+        from proveit.certify import isFullyProven, allRequirements
+        # print the required axioms and unproven theorems 
+        requiredAxioms, requiredTheorems = allRequirements(self)
+        for axiom in sorted(requiredAxioms):
+            print axiom
+        if len(requiredTheorems) == 0:
+            assert isFullyProven(self), "certification database is corrupt"
+            print "Theorem is fully proven!"
+        if len(requiredTheorems) > 0:
+            assert not isFullyProven(self), "certification database is corrupt"
+            print "\nUnproven theorems:"
+            for theorem in sorted(requiredTheorems):
+                print theorem
+
+    def printDependents(self):
+        '''
+        Provided that this KnownTruth is known to represent a theorem or axiom,
+        print all theorems that are known to depend on it directly or indirectly.
+        '''
+        from proveit.certify import allDependents
+        dependents = allDependents(self)
+        for theorem in sorted(dependents):
+            print theorem
+        
     def _recordBestProof(self, newProof):
         '''
         After a Proof is finished being constructed, check to see if
@@ -138,6 +192,7 @@ class KnownTruth:
         same KnownTruth as a dependent will necessarily include the
         number of steps of the original proof plus more).
         '''
+        from proof import Theorem
         if not newProof.isUsable():
             return # if it is not usable, forget it.
         if not self.expr in KnownTruth.lookup_dict:
@@ -155,9 +210,15 @@ class KnownTruth:
                 if newProof.numSteps <= other._proof.numSteps:
                     if newProof.requiredProofs != other._proof.requiredProofs:
                         # use the new (different) proof that does the job as well or better
+                        if isinstance(newProof, Theorem):
+                            # newer proof is a theorem; record the existing proof as a possible proof for that theorem
+                            newProof._possibleProofs.append(other._proof)
                         other._updateProof(newProof)
                 else:
                     # the new proof was born obsolete, taking more steps than an existing one
+                    if isinstance(other._proof, Theorem):
+                        # the older proof is a theorem, recode the new proof as a possible proof for that theorem
+                        other._proof._possibleProofs.append(newProof)
                     self._proof = other._proof # use an old proof that does the job better
                     keptTruths.append(other)
                     bornObsolete = True
@@ -251,7 +312,7 @@ class KnownTruth:
         The KnownTruth aquires the attributes of its Expression as well as its
         own attributes.
         '''
-        return sorted(set(self.__dict__.keys() + dir(self.expr)))
+        return sorted(set(dir(self.__class__) + self.__dict__.keys() + dir(self.expr)))
 
     @staticmethod
     def findKnownTruth(expression, assumptionsSet):
@@ -294,6 +355,14 @@ class KnownTruth:
         if isinstance(hypothesis, KnownTruth):
             hypothesis = hypothesis.expr # we want the expression for this purpose
         return HypotheticalReasoning(self, hypothesis).provenTruth
+    
+    def evaluate(self):
+        '''
+        Calling evaluate on a KnownTruth results in deriving that its
+        expression is equal to TRUE, under the assumptions of the KnownTruth.
+        '''
+        from proveit import evaluateTruth
+        return evaluateTruth(self.expr, self.assumptions)
 
     def relabel(self, relabelMap):
         '''

@@ -190,6 +190,9 @@ class Theorem(Proof):
             raise ValueError("A theorem 'name' must be a string")
         self.package = package
         self.name = name
+        # keep track of proofs that may be used to prove the theorem
+        # before 'beginProof' is called so we will have the proof handy.
+        self._possibleProofs = []
         self._setUsability()
         Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
         Theorem.allTheorems.append(self)
@@ -277,7 +280,7 @@ class ModusPonens(Proof):
         try:
             hypothesisTruth = implicationExpr.operands[0].prove(assumptions)
         except:
-            raise ModusPonensFailure('Hypothesis is not proven: ' + str(implicationExpr.operands[0]) + ' assuming {' + ', '.join(str(assumption) for assumption in assumptions) + '}')
+            raise ModusPonensFailure(self, assumptions, 'Hypothesis is not proven')
         # remove any unnecessary assumptions (but keep the order that was provided)
         assumptionsSet = implicationTruth.assumptionsSet | hypothesisTruth.assumptionsSet
         assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]

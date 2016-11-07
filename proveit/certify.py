@@ -45,7 +45,7 @@ class _StoredSpecialStmt:
         '''
         # remove the reference to the expression to do reference counted
         # "garbage" collection in the packages database storage.
-        with open(os.join(self.path, 'expr.pv_it'), 'r') as f:
+        with open(os.path.join(self.path, 'expr.pv_it'), 'r') as f:
             expr_id = f.read()
             self.storage._removeReference(expr_id)
         # remove invalidated proofs that use this axiom/theorem
@@ -106,6 +106,12 @@ class _StoredAxiom(_StoredSpecialStmt):
         that can be converted to a string that expresses the package and name
         of the axiom).
         '''
+        from proveit import KnownTruth, Axiom
+        if isinstance(axiom, KnownTruth):
+            # attempt to get an Axiom object from the KnownTruth
+            axiom = axiom.asTheoremOrAxiom()
+            if not isinstance(axiom, Axiom):
+                raise ValueError('Expecting an Axiom not a Theorem')
         _StoredSpecialStmt.__init__(self, str(axiom), 'axiom')
 
 class _StoredTheorem(_StoredSpecialStmt):
@@ -116,6 +122,12 @@ class _StoredTheorem(_StoredSpecialStmt):
         that can be converted to a string that expresses the package and name
         of the axiom).
         '''
+        from proveit import KnownTruth, Theorem
+        if isinstance(theorem, KnownTruth):
+            # attempt to get an Axiom object from the KnownTruth
+            theorem = theorem.asTheoremOrAxiom()
+            if not isinstance(theorem, Theorem):
+                raise ValueError('Expecting an Theorem not a Axiom')
         _StoredSpecialStmt.__init__(self, str(theorem), 'theorem')
 
     def readDependencies(self):
@@ -181,7 +193,7 @@ class _StoredTheorem(_StoredSpecialStmt):
         # for each used axiom/theorem, record that it is used by the newly proven theorem
         storedUsedAxioms = [_StoredAxiom(axiom) for axiom in usedAxioms]
         storedUsedTheorems = [_StoredTheorem(theorem) for theorem in usedTheorems]
-        for storedUsedStmts, prevUsedStmts in ((storedUsedAxioms, prevUsedAxioms), (usedTheorems, storedUsedTheorems)):
+        for storedUsedStmts, prevUsedStmts in ((storedUsedAxioms, prevUsedAxioms), (storedUsedTheorems, prevUsedTheorems)):
             for storedUsedStmt in storedUsedStmts:
                 if str(storedUsedStmt) not in prevUsedStmts: # otherwise the link should already exist
                     with open(os.path.join(storedUsedStmt.path, 'usedBy.txt'), 'a') as usedByFile:
@@ -225,11 +237,12 @@ class _StoredTheorem(_StoredSpecialStmt):
             # This theorem has been completely proven.  Let the dependents know.
             dependentTheorems = self.readDependentTheorems()
             for dependent in dependentTheorems:
-                with open(os.path.join(_StoredTheorem(dependent).path, 'completeUsedTheorems.txt'), 'a') as f:
+                storedDependent = _StoredTheorem(dependent)
+                with open(os.path.join(storedDependent.path, 'completeUsedTheorems.txt'), 'a') as f:
                     f.write(str(self) + '\n')
                 # propagate this recursively in case self's theorem was the final
                 # theorem to complete the dependent
-                dependent._propagateCompletion()
+                storedDependent._propagateCompletion()
                         
     def removeProof(self):
         '''
@@ -239,7 +252,7 @@ class _StoredTheorem(_StoredSpecialStmt):
         wasComplete = self.isComplete() # was it complete before the proof was removed?
         # remove the reference to the proof to do reference counted
         # "garbage" collection in the packages database storage.
-        with open(os.join(self.path, 'proof.pv_it'), 'r') as f:
+        with open(os.path.join(self.path, 'proof.pv_it'), 'r') as f:
             proof_id = f.read()
             self.storage._removeReference(proof_id)
         # Remove obsolete usedBy links that refer to this theorem by its old proof
@@ -253,7 +266,7 @@ class _StoredTheorem(_StoredSpecialStmt):
         if wasComplete:
             dependentTheorems = self.readDependentTheorems()
             for dependent in dependentTheorems:
-                dependent._undoDependentCompletion(str(self))
+                _StoredTheorem(dependent)._undoDependentCompletion(str(self))
         # remove 'proof.pv_it', 'usedAxioms.txt', 'usedTheorems.txt', and 'completeUsedTheorems.txt' for the theorem
         os.remove(os.path.join(self.path, 'proof.pv_it'))
         os.remove(os.path.join(self.path, 'usedAxioms.txt'))
@@ -275,7 +288,7 @@ class _StoredTheorem(_StoredSpecialStmt):
         if wasComplete:
             dependentTheorems = self.readDependentTheorems()
             for dependent in dependentTheorems:
-                dependent._undoDependentCompletion(str(self))
+                _StoredTheorem(dependent)._undoDependentCompletion(str(self))
         
 def exportCertificates(packages):
     pass
@@ -283,11 +296,21 @@ def exportCertificates(packages):
 def importCertificates(certificates):
     pass
 
-def _makeStoredSpecialStmt(package, name, kind):
+def _makeStoredSpecialStmt(theoremOrAxiom, kind=None):
+    from proveit import Axiom, Theorem, KnownTruth 
+    if isinstance(theoremOrAxiom, KnownTruth):
+        # attempt to get a Theorem or Axiom object from the KnownTruth
+        theoremOrAxiom = theoremOrAxiom.asTheoremOrAxiom()
     if kind == 'axiom':
-        return _StoredAxiom(package + '.' + name)
+        return _StoredAxiom(theoremOrAxiom)
     elif kind == 'theorem':
-        return _StoredTheorem(package + '.' + name)
+        return _StoredTheorem(theoremOrAxiom)
+    elif isinstance(theoremOrAxiom, Axiom):
+        return _StoredAxiom(theoremOrAxiom)
+    elif isinstance(theoremOrAxiom, Theorem):
+        return _StoredTheorem(theoremOrAxiom)
+    else:
+        raise TypeError("theoremOrAxiom should be a string, Axiom, Theorem, or KnownTruth with a Theorem/Axiom proof")
 
 def _setSpecialStatements(package, kind, definitions):
     storage = _makeStorage(package)
@@ -302,7 +325,7 @@ def _setSpecialStatements(package, kind, definitions):
                 if name not in definitions:
                     # removed special statement that no longer exists
                     print 'Removing ' + kind + ': ' + package + '.' + name + ' from _certified_ database'
-                    _makeStoredSpecialStmt(package, name, kind).remove()
+                    _makeStoredSpecialStmt(package + '.' + name, kind[:-1]).remove()
                 previousDefIds[name] = f.read()
         except IOError:
             raise Exception('corrupted _certified_ directory')
@@ -310,7 +333,7 @@ def _setSpecialStatements(package, kind, definitions):
     for name, expr in definitions.iteritems():
         # add the expression to the "database" via the storage object.
         exprId = storage._proveItObjId(expr)
-        storedSpecialStmt = _makeStoredSpecialStmt(package, name, kind)
+        storedSpecialStmt = _makeStoredSpecialStmt(package + '.' + name, kind[:-1])
         if name in previousDefIds and previousDefIds[name] == exprId:
             continue # unchanged special statement
         if name not in previousDefIds:
@@ -334,9 +357,6 @@ def setAxioms(package, axioms):
 
 def setTheorems(package, theorems):
     _setSpecialStatements(package, 'theorems', theorems)
-
-def allDependents(theorem):
-    return _StoredTheorem(theorem).readDependentTheorems()
     
 def recordProof(theorem, proof):
     '''
@@ -347,8 +367,64 @@ def recordProof(theorem, proof):
     '''
     _StoredTheorem(theorem).recordProof(proof)
 
+def removeProof(theorem):
+    '''
+    Remove the proof for the given theorem and all obsolete dependency
+    links.
+    '''
+    _StoredTheorem(theorem).removeProof()
+    
 def hasProof(theorem):
     return _StoredTheorem(theorem).hasProof()
 
 def isFullyProven(theorem):
     return _StoredTheorem(theorem).isComplete()
+
+def allRequirements(theorem):
+    '''
+    Returns the set of axioms that are required (directly or indirectly)
+    by the theorem.  Also, if the given theorem is not completely proven,
+    return the set of unproven theorems that are required (directly or
+    indirectly).  Returns this axion set and theorem set as a tuple.
+    '''
+    if not hasProof(theorem):
+        raise Exception('The theorem must be proven in order to obtain its requirements')
+    storedTheorem = _StoredTheorem(theorem)
+    usedAxioms, usedTheorems = storedTheorem.readDependencies()
+    requiredAxioms = usedAxioms # just a start
+    requiredTheorems = set()
+    processed = set()
+    toProcess = usedTheorems
+    while len(toProcess) > 0:
+        nextTheorem = toProcess.pop()
+        storedTheorem = _StoredTheorem(nextTheorem)
+        if not storedTheorem.hasProof():
+            requiredTheorems.add(nextTheorem)
+            processed.add(nextTheorem)
+            continue
+        usedAxioms, usedTheorems = storedTheorem.readDependencies()
+        requiredAxioms.update(usedAxioms)
+        for usedTheorem in usedTheorems:
+            if usedTheorem not in processed:
+                toProcess.add(usedTheorem)
+        processed.add(nextTheorem)
+    return (requiredAxioms, requiredTheorems)
+
+def allDependents(theoremOrAxiom, kind=None):
+    '''
+    Returns the set of theorems that are known to depend upon the given 
+    theorem or axiom directly or indirectly.  kind must be 'axiom' or 'theorem'
+    if theoremOrAxiom is in the form of a string (or it should be an Axiom
+    or Theorem object).
+    '''
+    storedStmt = _makeStoredSpecialStmt(theoremOrAxiom, kind)
+    toProcess = set(storedStmt.readDependentTheorems())
+    processed = set()
+    while len(toProcess) > 0:
+        nextTheorem = toProcess.pop()
+        processed.add(nextTheorem)
+        storedTheorem = _StoredTheorem(nextTheorem)
+        dependents = set(storedTheorem.readDependentTheorems())
+        # add anything new to be processed
+        toProcess.update(dependents.difference(processed))
+    return processed

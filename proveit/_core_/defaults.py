@@ -11,7 +11,7 @@ class Defaults:
         that it is an iterable collection of Expressions.
         '''
         if assumptions is None:
-            return self.assumptions
+            return tuple(self.assumptions)
         return tuple(self._checkAssumptions(assumptions))
     
     def _checkAssumptions(self, assumptions):

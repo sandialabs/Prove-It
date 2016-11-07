@@ -156,7 +156,7 @@ class Expression:
             raise ProofFailure(self, assumptions, "'conclude' method not implemented for proof automation")
         finally:
             Expression.in_progress_to_conclude.remove(in_progress_key)
-    
+        
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude, via automation, that this statement is true
@@ -179,80 +179,10 @@ class Expression:
         the corresponding KnownTruth is created.  See tryDerivation which is
         a convenient method for specific implementations of deriveSideEffects.
         '''
-        pass
-    
-    def tryDerivation(method, *args, **kwargs):
-        '''
-        An implementation of deriveSideEffects may call tryDerivation to
-        simply attempt to derive a side-effect but skip it if it fails
-        (for example, not all conditions are met or if a theorem is
-        unavailable during a particular proof to avoid circular logic).
-        '''
-        try:
-            method(*args, **kwargs)
-        except:
-            pass
+        pass        
         
-    
-    '''
-    def beginProof(self):
-        # clear all the provers
-        from proveit._core_.known_truth import KnownTruth
-        from proveit._core_.prover import Prover
-
-        # forget that this is a theorem expression so that we generate a non-trivial proof:
-        for stmt in KnownTruth.statements.values():
-            # clear all of the statements to start fresh
-            stmt.proofNumber = float('inf')
-            stmt._prover = None
-            if stmt == self.statement:
-                stmt._isNamedTheorem = False
-        Prover._tmpProvers.clear()
-        for stmt in KnownTruth.statements.values():
-            # re-mark the axioms and theorems as proven (but not the special one we are trying to prove)
-            if stmt._isAxiom or stmt._isNamedTheorem:
-                Prover._markAsProven(stmt, Prover(stmt, []))
-                
-        Expression.expr_to_prove = self
-        return self
-    
     def qed(self):
-        """
-        proofsdir, proofname = os.path.split(filename)
-        # remove the file extension for the proof name
-        proofname = os.path.splitext(proofname)[0]
-        # remove any optional suffix after a space to go from the proof name to the theorem name
-        thmname = os.path.splitext(proofname)[0].split()[0]
-        theorems_abspath = os.path.abspath(os.path.join(proofsdir, '../theorems'))
-        theorems_relpath =  os.path.relpath(theorems_abspath, start=os.path.join(os.path.split(proveit.__file__)[0], '..'))
-        thm_import = __import__(theorems_relpath.replace(os.sep, '.'), fromlist=[thmname])
-        try:
-            thm = thm_import.__getattr__(thmname)
-        except AttributeError:
-            raise ProofFailure('Theorem named ' + thmname + ' does not exist')
-        if not thm == self:
-            raise ProofFailure('Theorem statement does not match qed expression:\n' + str(thm) + ' vs\n' + str(self))
-        # forget that this is a theorem expression so that we generate a non-trivial proof:
-        self.state()
-        self.statement._prover = None
-        self.proven()
-        pvit_path = os.path.join(os.path.split(filename)[0], '..', '__pv_it__')
-        pvit_proofs_path = os.path.join(pvit_path, 'proofs')
-        if not os.path.exists(pvit_proofs_path):
-            os.mkdir(pvit_proofs_path)
-        expressions_dir = os.path.join(pvit_path, 'expressions')
-        if not os.path.exists(expressions_dir):
-            os.mkdir(expressions_dir)
-        pvit_proof_filename = os.path.join(pvit_proofs_path, proofname + '.pv_it')
-        with open(pvit_proof_filename, 'w') as pvit_proof_file:
-            self.statement.getProver()._export_pvit(pvit_proofs_path, pvit_proof_file, expressions_dir)
-        """
-        if not Expression.expr_to_prove == self:
-            raise ProofFailure('Theorem statement does not match qed expression:\n' + str(Expression.expr_to_prove) + ' vs\n' + str(self))
-        self.proven()
-        self.statement._getProver().showProof()
-        return self
-    '''
+        return self.prove().qed()
         
     def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
@@ -339,8 +269,19 @@ class Expression:
         Prove self by calling self.evaluate() if it equates the expression to TRUE.
         The evaluate method must be implemented by the derived class.
         '''
-        return self.evaluate().deriveViaBooleanEquality()
+        from proveit import proveByEval
+        return proveByEval(self)
     
+    def evaluate(self, assumptions=USE_DEFAULTS):
+        '''
+        If possible, return a KnownTruth of this expression equal to its
+        irreducible value.  At the Expression level, this attempts to
+        prove the expression and, if successful, return this expression
+        equal to TRUE.  Override for other appropriate functionality.
+        '''
+        from proveit import defaultEvaluate
+        return defaultEvaluate(self, assumptions)
+        
     def _restrictionChecked(self, reservedVars):
         '''
         Check that a substituted expression (self) does not use any reserved variables
@@ -370,7 +311,20 @@ class Expression:
     def exprInfo(self, details=False):
         from proveit._core_.expression.expr_info import ExpressionInfo
         return ExpressionInfo(self, details)
-        
+
+def tryDerivation(method, *args, **kwargs):
+    '''
+    An implementation of deriveSideEffects may call tryDerivation to
+    simply attempt to derive a side-effect but skip it if it fails
+    (for example, not all conditions are met or if a theorem is
+    unavailable during a particular proof to avoid circular logic).
+    '''
+    try:
+        method(*args, **kwargs)
+    except:
+        pass
+
+
 class MakeNotImplemented(NotImplementedError):
     def __init__(self, exprSubClass):
         self.exprSubClass = exprSubClass
