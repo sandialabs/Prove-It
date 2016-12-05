@@ -7,7 +7,7 @@ class Storage:
         if directory != '' and not os.path.isdir(self.directory):
             # make the directory for the storage
             os.makedirs(directory)
-        self.refCounted = True
+        self.refCounted = refCounted
         
         # For retrieved pv_it files that represent Prove-It object (Expressions, KnownTruths, and Proofs),
         # this maps the object to the pv_it file so we
@@ -96,14 +96,36 @@ class Storage:
         that are referenced.
         '''
         if unique_rep[:6] == 'Proof:':
-            return re.split("\[|,|\]",unique_rep[6:])
+            objIds =  re.split("\[|,|\]",unique_rep[6:])
         elif unique_rep[:11] == 'KnownTruth:':
-            return re.split("\[|,|\]",unique_rep[11:])
+            objIds =  re.split("\[|,|\]",unique_rep[11:])
         else:
             # Assumed to be an expression then
             subExprs = unique_rep.split(';')[-1]
-            return re.split("\[|,|\]",subExprs)            
-            
+            objIds = re.split("\[|,|\]",subExprs) 
+        return [objId for objId in objIds if len(objId) > 0]           
+
+    def _addReference(self, proveItObjId):
+        '''
+        Increment the reference count of the prove-it object with the given
+        storage identifier.  The .pv_it file is  updated with the new 
+        reference count.
+        '''
+        if not self.refCounted:
+            raise Exception("Cannot add a reference if reference counted wasn't enabled")
+        # replace ':' with os.path.sep within the Prove-It object id to object the filename
+        pv_it_filename = os.path.sep.join(proveItObjId.split(':'))
+        pv_it_dir = os.path.join(self.directory, '.pv_it')
+        with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
+            contents = f.read()
+            refCount, rep = contents.split('\n') 
+            refCount = int(refCount)
+            refCount += 1
+            # change the reference count in the file
+            with open(os.path.join(pv_it_dir, pv_it_filename), 'w') as f2:
+                f2.write(str(refCount)+'\n')
+                f2.write(str(rep))
+                        
     def _removeReference(self, proveItObjId):
         '''
         Decrement the reference count of the prove-it object with the given
@@ -122,27 +144,28 @@ class Storage:
             refCount, rep = contents.split('\n') 
             refCount = int(refCount)
             refCount -= 1
-            if refCount == 0:
-                # Reference count down to zero.  Remove references to
-                # referenced objects and then delete this prove-it object
-                # and everything associated with it.
-                for objId in self._referencedObjIds(rep):
-                    self._removeReference(objId)
-                # remove all files associated with this prove-it object 
-                # and perhaps the entire directory.
-                relpath, filename = os.path.split(pv_it_filename)
-                fileroot = filename[:-6]
-                for filename in os.listdir(os.path.join(pv_it_dir, relpath)):
-                    if filename[:len(fileroot)] == fileroot:
-                        os.remove(os.path.join(pv_it_dir, relpath, filename))
-                if len(os.listdir(pv_it_dir, relpath)) == 0:
-                    # the directory is now empty.  remove it.
-                    os.rmdir(os.path.join(pv_it_dir, relpath))
-            else:
-                # change the reference count in the file
-                with open(os.path.join(pv_it_dir, pv_it_filename), 'w') as f2:
-                    f2.write(str(refCount+1)+'\n')
-                    f2.write(str(rep))
+        if refCount == 0:
+            # Reference count down to zero.  Remove references to
+            # referenced objects and then delete this prove-it object
+            # and everything associated with it.
+            for objId in self._referencedObjIds(rep):
+                self._removeReference(objId)
+            # remove all files associated with this prove-it object 
+            # and perhaps the entire directory.
+            relpath, filename = os.path.split(pv_it_filename)
+            fileroot = filename[:-6]
+            for filename in os.listdir(os.path.join(pv_it_dir, relpath)):
+                if filename[:len(fileroot)] == fileroot:
+                    os.remove(os.path.join(pv_it_dir, relpath, filename))
+            if len(os.listdir(os.path.join(pv_it_dir, relpath))) == 0:
+                # the directory is now empty.  remove it.
+                os.rmdir(os.path.join(pv_it_dir, relpath))
+        else:
+            # change the reference count in the file
+            with open(os.path.join(pv_it_dir, pv_it_filename), 'w') as f:
+                f.write(str(refCount)+'\n')
+                f.write(str(rep))
+
     
     def _retrieve(self, proveItObject):
         '''
@@ -166,18 +189,15 @@ class Storage:
             if expr_file[-6:] == '.pv_it':
                 pv_it_filename = os.path.join(rep_hash, expr_file)
                 with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
-                    rep = contents = f.read()
+                    contents = f.read()
                     if self.refCounted:
                         refCount, rep = contents.split('\n') 
-                        refCount = int(refCount)
+                    else: rep = contents
                     if rep == unique_rep:
                         # an existing file contains the exported expression
                         self._pv_it_filename = pv_it_filename
-                        if self.refCounted:
-                            # update the reference counter in the file
-                            with open(os.path.join(pv_it_dir, pv_it_filename), 'w') as f2:
-                                f2.write(str(refCount+1)+'\n')
-                                f2.write(str(rep))
+                        # remember this for next time
+                        self._proveItObjects[proveItObject] = pv_it_filename
                         return pv_it_filename
         # does not exist, create a new file (checking against an unlikely collision)
         index = 0
@@ -186,9 +206,14 @@ class Storage:
         pv_it_filename = os.path.join(rep_hash, str(index) + '.pv_it')
         with open(os.path.join(pv_it_dir, pv_it_filename), 'w') as f:
             if self.refCounted:
-                # first write a reference count of 1
-                f.write(str(1) + '\n')
+                # first write a reference count of 0 (until a reference is added)
+                f.write(str(0) + '\n')
             f.write(unique_rep) # write the unique representation to a file
+        # increment reference counts of the referenced objects
+        # (if reference counting is enabled)
+        if self.refCounted:
+            for objId in self._referencedObjIds(unique_rep):
+                self._addReference(objId)
         # remember this for next time
         self._proveItObjects[proveItObject] = pv_it_filename
         return pv_it_filename
@@ -217,3 +242,27 @@ class Storage:
         self.__setattr__(item, value)
     
 storage = Storage()
+
+
+def tex_escape(text):
+    """
+        :param text: a plain text message
+        :return: the message escaped to appear correctly in LaTeX
+    """
+    # This code was found on stackoverflow.com
+    conv = {
+        '&': r'\&',
+        '%': r'\%',
+        '$': r'\$',
+        '#': r'\#',
+        '_': r'\_',
+        '{': r'\{',
+        '}': r'\}',
+        '~': r'\textasciitilde{}',
+        '^': r'\^{}',
+        '\\': r'\textbackslash{}',
+        '<': r'\textless ',
+        '>': r'\textgreater ',
+    }
+    regex = re.compile('|'.join(re.escape(unicode(key)) for key in sorted(conv.keys(), key = lambda item: - len(item))))
+    return regex.sub(lambda match: conv[match.group()], text)
