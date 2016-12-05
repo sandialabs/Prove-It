@@ -10,7 +10,7 @@ Proof objects form a DAG.
 from proveit._core_.known_truth import KnownTruth
 from proveit._core_.expression.expr import ProofFailure
 from defaults import defaults
-from storage import storage
+from storage import storage, tex_escape
 
 class Proof:
     def __init__(self, provenTruth, requiredTruths):
@@ -89,8 +89,8 @@ class Proof:
         return set().union(*[requiredProof.usedTheorems() for requiredProof in self.requiredProofs])
         
     def updatedDependents(self):
-        self.dependents = [dependent for dependent in self._dependents if dependent.provenTruth._proof is dependent]
-        return self.dependents
+        self._dependents = [dependent for dependent in self._dependents if dependent.provenTruth._proof is dependent]
+        return self._dependents
 
     def assumptions(self):
         return self.provenTruth.assumptions
@@ -130,7 +130,7 @@ class Proof:
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
                 outStr += r'\multicolumn{3}{|l}{'
                 outStr += proof.stepTypeLatex() + ': '
-                outStr += proof.package + '.' + proof.name + r'} \\'  + '\n'
+                outStr += tex_escape(proof.package) + '.' + tex_escape(proof.name) + r'} \\'  + '\n'
             else:
                 requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
                 outStr += ', '.join(('$' + assumption.latex() + '$') for assumption in proof.assumptions()) \
@@ -193,8 +193,8 @@ class Theorem(Proof):
         # keep track of proofs that may be used to prove the theorem
         # before 'beginProof' is called so we will have the proof handy.
         self._possibleProofs = []
-        self._setUsability()
         Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
+        self._setUsability()
         Theorem.allTheorems.append(self)
 
     def stepTypeLatex(self):
@@ -276,11 +276,11 @@ class ModusPonens(Proof):
         try:
             implicationTruth = implicationExpr.prove(assumptions)
         except:
-            raise ModusPonensFailure(self, assumptions, 'Implication is not proven')
+            raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implicationExpr))
         try:
             hypothesisTruth = implicationExpr.operands[0].prove(assumptions)
         except:
-            raise ModusPonensFailure(self, assumptions, 'Hypothesis is not proven')
+            raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Hypothesis of %s is not proven'%str(implicationExpr))
         # remove any unnecessary assumptions (but keep the order that was provided)
         assumptionsSet = implicationTruth.assumptionsSet | hypothesisTruth.assumptionsSet
         assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
@@ -320,7 +320,7 @@ class Specialization(Proof):
         try:
             generalTruth = generalExpr.prove(assumptions)
         except:
-            raise Failure(self, assumptions, 'Unproven general expression: ' + str(generalExpr))
+            raise Failure(None, assumptions, 'Unproven general expression: ' + str(generalExpr))
         # perform the appropriate substitution/relabeling
         specializedExpr, instanceVars, subbedConditions, subMap, relabelMap = Specialization._specialized_expr(generalExpr, assumptions, subMap, relabelMap)
         # obtain the KnownTruths for the substituted conditions
@@ -330,7 +330,7 @@ class Specialization(Proof):
                 # each substituted condition must be proven under the assumptions
                 conditionTruths.append(conditionExpr.prove(assumptions))
             except:
-                raise Failure(self, assumptions, 'Unmet specialization condition: ' + str(conditionExpr))
+                raise Failure(specializedExpr, assumptions, 'Unmet specialization condition: ' + str(conditionExpr))
         # remove any unnecessary assumptions (but keep the order that was provided)
         assumptionsSet = generalTruth.assumptionsSet
         for conditionTruth in conditionTruths:
