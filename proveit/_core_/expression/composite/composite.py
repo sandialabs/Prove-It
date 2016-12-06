@@ -17,6 +17,7 @@ def compositeExpression(expressions):
     from expr_list import ExpressionList
     from named_exprs import NamedExpressions
     from expr_tensor import ExpressionTensor
+    from proveit._core_.known_truth import KnownTruth
     
     if isinstance(expressions, ExpressionList) or isinstance(expressions, NamedExpressions) or isinstance(expressions, ExpressionTensor):
         return expressions # already in a multi-expression wrapper
@@ -26,6 +27,8 @@ def compositeExpression(expressions):
         # A dictionary must be an NamedExpressions
         return NamedExpressions(expressions)
     else:
+        # convert KnownTruth objects to their represented expressions
+        expressions = [elem.expr if isinstance(elem, KnownTruth) else elem for elem in expressions]
         if all(isinstance(subExpr, Expression) for subExpr in expressions):
             # An iterable over only Expressions must be an exprlist
             return ExpressionList(*expressions)
