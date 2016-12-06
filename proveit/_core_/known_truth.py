@@ -84,6 +84,8 @@ class KnownTruth:
         a direct or indirect dependence upon this theorem,
         then a CircularLogic exception is raised. 
         '''
+        if KnownTruth.theoremBeingProven is not None:
+            raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  It is best to avoid having extraneous KnownTruth objects so each proof should be independent.")
         from proof import Theorem
         from proveit.certify import allDependents
         theorem = self.proof()
@@ -100,7 +102,7 @@ class KnownTruth:
                 KnownTruth.presumingTheorems.add(presuming)
             elif isinstance(presuming, str):
                 # may be a package or a full theorem name, to be precise
-                KnownTruth.presumingPackage.add(presuming)
+                KnownTruth.presumingPackages.add(presuming)
             else:
                 raise ValueError("'presumes' should be a collection of Theorems and strings, not " + str(presuming.__class__))
         Theorem.updateUsability()
@@ -111,7 +113,7 @@ class KnownTruth:
                 self._proof = proof
                 return self.qed()
         print "Beginning proof of"
-        return self
+        return self.expr
     
     def qed(self):
         '''
@@ -132,6 +134,14 @@ class KnownTruth:
         Returns the most up-to-date proof of this KnownTruth.
         '''
         return self._proof
+    
+    def isUsable(self):
+        '''
+        Returns True iff this KnownTruth has a "usable" proof.  Proofs
+        may be unusable when proving a theorem that is restricted with
+        respect to which theorems may be used (to avoid circular logic).
+        '''
+        return self._proof is None
     
     def asTheoremOrAxiom(self):
         '''
@@ -252,9 +262,8 @@ class KnownTruth:
                 # eliminating this proof and its dependents from memory 
                 oldDependentProof.provenTruth._updateProof(None)
             else:                
-                # remake the dependents and update their proofs
-                dependentReplacement = oldDependentProof.remake()
-                oldDependentProof.provenTruth._updateProof(dependentReplacement)
+                # remake the dependent proof to refer to this updated proof
+                oldDependentProof.remake()
 
     def __setattr__(self, attr, value):
         '''
@@ -457,3 +466,8 @@ def asExpressions(*truthOrExpressions):
     '''
     return [asExpression(truthOrExpression) for truthOrExpression in truthOrExpression]
 
+class ProofInitiationFailure(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message
