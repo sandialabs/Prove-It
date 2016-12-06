@@ -1,7 +1,8 @@
 from proveit import BinaryOperation, USE_DEFAULTS, ProofFailure, tryDerivation
-from proveit import Variable, Literal, Operation, Lambda
+from proveit import Literal, Operation, Lambda
 from proveit.common import A, P, X, f, x, y, z
 from transitivity_search import transitivitySearch
+from irreducible_value import IrreducibleValue
 
 pkg = __package__
 
@@ -61,6 +62,12 @@ class Equals(BinaryOperation):
                 return self.concludeBooleanEquality(assumptions)
             except ProofFailure:
                 pass
+        try:
+            # try to prove the equality via evaluation reduction.
+            # if that is possible, it is a relatively straightforward thing to do.
+            return BinaryOperation.conclude(assumptions)
+        except:
+            pass
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
         return transitivitySearch(self, assumptions)
@@ -254,57 +261,57 @@ class Equals(BinaryOperation):
         from _axioms_ import equalityInBool
         return equalityInBool.specialize({x:self.lhs, y:self.rhs})
         
-    def evaluate(self):
+    def evaluate(self, assumptions=USE_DEFAULTS):
         '''
-        Given operands that may be evaluated, derive and return this
-        expression equated to TRUE or FALSE.  If both sides equate to
-        the same, it will equate to TRUE.  Otherwise, it calls
-        evalEquality using the evaluated left and right hand sides
-        of the expression to determine the evaluation of the equality.
+        Given operands that may be evaluated to irreducible values that
+        may be compared, or if there is a known evaluation of this
+        equality, derive and return this expression equated to
+        TRUE or FALSE.
         '''
-        from proveit.logic import TRUE
-        from proveit.logic.boolean.boolOps import _evaluate
-        def doEval():
-            '''
-            Performs the actual work if we can't simply look up the evaluation.
-            '''
-            if self.lhs == self.rhs:
-                # simple case where both sides are the same, use reflexivity
-                return Equals(self.concludeViaReflexivity(), TRUE).concludeBooleanEquality()
-            
-            # evaluate both sides and see if simplification is possible
-            lhsSimpl = self.lhs
-            rhsSimpl = self.rhs
-            try:
-                lhsEval = self.lhs.evaluate()
-                lhsSimpl = lhsEval.rhs
-            except AttributeError:
-                lhsEval = None
-            try:
-                rhsEval = self.rhs.evaluate()
-                rhsSimpl = rhsEval.rhs
-            except AttributeError:
-                rhsEval = None
-    
-            if lhsEval is None and rhsEval is None:
-                # Cannot simplify further.  Use evalEquality.
-                return lhsSimpl.evalEquality(rhsSimpl)
-            else:         
-                # evaluate the simplified version
-                simplEval = Equals(lhsSimpl, rhsSimpl).evaluate()
-                val = simplEval.rhs
-                # Using substitution, go from simplEval to self=val
-                if lhsEval is not None:
-                    lhsEval.lhsSubstitute(Equals(Equals(X, rhsSimpl), val), X)
-                if rhsEval is not None:
-                    rhsEval.lhsSubstitute(Equals(Equals(self.lhs, X), val), X)
-                return Equals(self, val)
-            
-        return _evaluate(self, doEval)
+        if self.lhs == self.rhs:
+            # prove equality is true by reflexivity
+            return evaluateTruth(self.prove().expr, assumptions=[])
+        if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
+            # Irreducible values must know how to evaluate the equality
+            # between each other, where appropriate.
+            return self.lhs.evalEquality(self.rhs)
+        return BinaryOperation.evaluate(self, assumptions)
 
 def isIrreducibleValue(expr):
-    return (hasattr(expr, 'isIrreducibleValue') and expr.isIrreducibleValue())
+    return isinstance(expr, IrreducibleValue)
     
+def reduceOperands(operation, assumptions=USE_DEFAULTS):
+    '''
+    Attempt to return a provably equivalent expression whose operands
+    are all irreducible values (IrreducibleValue objects).
+    '''
+    from proveit.lambda_map import globalRepl
+    # Any of the operands that are not irreducible values must be replaced with their evaluation
+    expr = operation
+    for operand in tuple(expr.operands):
+        if not isIrreducibleValue(operand):
+            # the operand is not an irreducible value so it must be evaluated
+            operandEval = operand.evaluate(assumptions=assumptions)
+            if not isIrreducibleValue(operandEval.rhs):
+                raise EvaluationError('Evaluations expected to be irreducible values')
+            # substitute in the evaluated value
+            expr = operandEval.substitution(globalRepl(expr, operand)).rhs
+    for operand in expr.operands:
+        if not isIrreducibleValue(operand):
+            raise EvaluationError('All operands should be irreducible values')
+    return expr
+
+def proveViaReduction(expr, assumptions):
+    '''
+    Attempts to prove that the given expression is TRUE under the
+    given assumptions via evaluating that the expression is equal to true.
+    Returns the resulting KnownTruth if successful.
+    '''
+    reducedExpr = reduceOperands(expr, assumptions)
+    equiv =  Equals(expr, reducedExpr).prove(assumptions)
+    reducedExpr.prove(assumptions)
+    return equiv.deriveLeftViaEquivalence(assumptions)
+            
 def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
     '''
     Default attempt to evaluate the given expression under the given assumptions.
@@ -319,7 +326,6 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
     of assumptions [also see KnownTruth.evaluate and evaluateTruth].
     '''
     from proveit.lambda_map import globalRepl
-    from proveit.logic import Equals
     from proveit import defaults
     assumptionsSet = set(defaults.checkedAssumptions(assumptions))
     # See if the expression already has a proven evaluation
@@ -333,21 +339,10 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
         return evaluateTruth(expr, [expr]) # A=TRUE assuming A
     if not isinstance(expr, Operation):
         raise EvaluationError('Unknown evaluation: ' + str(expr))
-    # Any of the operands that are not irreducible values must be replaced with their evaluation
-    for operand in tuple(expr.operands):
-        if not isIrreducibleValue(operand):
-            # the operand is not an irreducible value so it must be evaluated
-            operandEval = operand.evaluate(assumptions=assumptions)
-            if not isIrreducibleValue(operandEval.rhs):
-                raise EvaluationError('Evaluations expected to be irreducible values')
-            # substitute in the evaluated value
-            expr = operandEval.substitution(globalRepl(expr, operand)).rhs
-    for operand in expr.operands:
-        if not isIrreducibleValue(operand.isIrreducibleValue()):
-            raise EvaluationError('All operands should be irreducible values')
-    evaluation = Equals(expr, expr.evaluate().rhs).prove(assumptions=assumptions)
+    reducedExpr = reduceOperands(expr, assumptions)
+    evaluation = Equals(expr, reducedExpr.evaluate().rhs).prove(assumptions=assumptions)
     # store it in the evaluations dictionary for next time
-    Equals.evaluations[expr] = evaluation
+    Equals.evaluations.setdefault(expr, set()).add(evaluation)
     return evaluation  
 
 def evaluateTruth(expr, assumptions):
@@ -358,14 +353,6 @@ def evaluateTruth(expr, assumptions):
     '''
     from proveit.logic import TRUE
     return Equals(expr, TRUE).prove(assumptions)
-
-def proveByEval(expr, assumptions):
-    '''
-    Attempts to prove that the given expression is TRUE under the
-    given assumptions via evaluating that the expression is equal to true.
-    Returns the resulting KnownTruth if successful.
-    '''
-    return expr.evaluate(assumptions).deriveViaBooleanEquality()
 
 class EvaluationError(Exception):
     def __init__(self, message):

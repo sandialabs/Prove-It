@@ -16,11 +16,22 @@ class NotEquals(BinaryOperation):
     
     def deriveSideEffects(self, knownTruth):
         '''
-        Derive the reversed form, as a side effect.
+        Derive the reversed and unfolded forms, as a side effect.
         '''
-        if (self.lhs != self.rhs):
-            # automatically derive the reversed form which is equivalent
-            tryDerivation(self.deriveReversed, knownTruth.assumptions)
+        # automatically derive the reversed form which is equivalent
+        tryDerivation(self.deriveReversed, knownTruth.assumptions)
+        tryDerivation(self.unfold, knownTruth.assumptions)
+    
+    def conclude(self, assumptions):
+        from proveit.logic import FALSE
+        from equals import isIrreducibleValue
+        if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
+            # prove that two irreducible values are not equal
+            return self.lhs.notEquals(self.rhs)
+        if self.lhs == FALSE or self.rhs == FALSE:
+            # prove something is not false by proving it to be true
+            return self.concludeViaDoubleNegation(assumptions)
+        return BinaryOperation.conclude(assumptions) # try the default (reduction)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
@@ -41,11 +52,15 @@ class NotEquals(BinaryOperation):
 
     def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         '''
-        Prove and return self of the form A != FALSE assuming A.
+        Prove and return self of the form A != FALSE or FALSE != A assuming A.
         Also see version in Not class.
         '''
         from proveit.logic import FALSE
         from proveit.logic.boolean._theorems_ import notEqualsFalse
+        if self.lhs == FALSE:
+            # switch left and right sides and prove it that way.
+            NotEquals(self.rhs, self.lhs).prove(assumptions)
+            return self.prove()
         if self.rhs == FALSE:
             return notEqualsFalse.specialize({A:self.lhs}).deriveConclusion()
 
@@ -63,22 +78,16 @@ class NotEquals(BinaryOperation):
         from _theorems_ import unfoldNotEquals
         return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
 
-    def evaluate(self):
+    def evaluate(self, assumptions=USE_DEFAULTS):
         '''
-        Given operands that may be evaluated, derive and return this
-        expression equated to TRUE or FALSE.  If both sides equate to
-        the same, it will equate to FALSE.  Otherwise, it calls
-        evalEquality using the evaluated left and right hand sides
-        of the expression to determine the evaluation of the equality.
+        Given operands that may be evaluated to irreducible values that
+        may be compared, or if there is a known evaluation of this
+        inequality, derive and return this expression equated to
+        TRUE or FALSE.
         '''
-        from proveit.logic.boolean.boolOps import _evaluate
-        def doEval():
-            '''
-            Performs the actual work if we can't simply look up the evaluation.
-            '''
-            unfoldedEvaluation = self.unfold().evaluate()
-            return self.definition().lhsSubstitute(Equals(X, unfoldedEvaluation.rhs), X)
-        return _evaluate(self, doEval)    
+        definitionEquality = self.definition()
+        unfoldedEvaluation = definitionEquality.rhs.evaluate(assumptions)        
+        return Equals(self, unfoldedEvaluation.rhs).prove(assumptions)
 
     def deduceInBool(self):
         '''
