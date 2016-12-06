@@ -5,30 +5,7 @@ the exprInfo() method of an Expression object.
 '''
 
 import re
-from proveit._core_.storage import storage
-
-def tex_escape(text):
-    """
-        :param text: a plain text message
-        :return: the message escaped to appear correctly in LaTeX
-    """
-    # This code was found on stackoverflow.com
-    conv = {
-        '&': r'\&',
-        '%': r'\%',
-        '$': r'\$',
-        '#': r'\#',
-        '_': r'\_',
-        '{': r'\{',
-        '}': r'\}',
-        '~': r'\textasciitilde{}',
-        '^': r'\^{}',
-        '\\': r'\textbackslash{}',
-        '<': r'\textless ',
-        '>': r'\textgreater ',
-    }
-    regex = re.compile('|'.join(re.escape(unicode(key)) for key in sorted(conv.keys(), key = lambda item: - len(item))))
-    return regex.sub(lambda match: conv[match.group()], text)
+from proveit._core_.storage import storage, tex_escape
 
 class ExpressionInfo:
     def __init__(self, expr, show_details):
