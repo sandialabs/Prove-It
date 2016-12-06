@@ -1,6 +1,5 @@
 from proveit import Operation, Etcetera, MultiVariable, Lambda, compositeExpression
 
-
 class OperationOverInstances(Operation):
     def __init__(self, operator, instanceVars, instanceExpr, domain=None, conditions=tuple()):
         '''
@@ -24,10 +23,10 @@ class OperationOverInstances(Operation):
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, domain, conditions):
         lambdaFn = Lambda(instanceVars, {'instance_expression':instanceExpr, 'conditions':compositeExpression(conditions)})
-        if domain is not None:
-            return {'instance_mapping':lambdaFn, 'domain':domain}
-        else:
+        if domain is None:
             return {'instance_mapping':lambdaFn}
+        else:
+            return {'instance_mapping':lambdaFn, 'domain':domain}
     
     @staticmethod
     def extractParameters(operands):
@@ -68,7 +67,7 @@ class OperationOverInstances(Operation):
         '''
         Returns True if this OperationOverInstances has conditions.
         '''
-        return self.conditions is not None and len(self.conditions) > 0
+        return len(self.conditions) > 0
 
     @classmethod
     def make(operationClass, coreInfo, subExpressions):
