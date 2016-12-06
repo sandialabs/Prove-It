@@ -23,6 +23,3 @@ class BinaryOperation(Operation):
         formattedOp = self.operator.formatted(formatType)
         innerStr = formattedLeft + ' ' + formattedOp + ' ' + formattedRight
         return maybeFenced(formatType, innerStr, fence=fence)
-
-    def evaluate(self):
-        pass
