@@ -109,7 +109,7 @@ class Expression:
         '''
         return iter(self._subExpressions)
     
-    def prove(self, assumptions=USE_DEFAULTS):
+    def prove(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Attempt to prove this expression automatically under the
         given assumptions (if None, uses defaults.assumptions).  First
@@ -138,6 +138,9 @@ class Expression:
             # prove by assumption
             from proveit._core_.proof import Assumption
             return Assumption(self).provenTruth
+        
+        if not automation:
+            raise ProofFailure(self, assumptions, "No pre-existing proof")
                                                 
         # Use Expression.in_progress_to_conclude set to prevent an infinite recursion
         in_progress_key = (self, tuple(sorted(assumptions)))
@@ -150,7 +153,7 @@ class Expression:
             if not isinstance(concludedTruth, KnownTruth):
                 raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
             if concludedTruth.expr != self:
-               raise ValueError("'conclude' method should return a KnownTruth for this Expression object.")
+                raise ValueError("'conclude' method should return a KnownTruth for this Expression object.")
             return concludedTruth
         except NotImplementedError:
             raise ProofFailure(self, assumptions, "'conclude' method not implemented for proof automation")
@@ -161,14 +164,15 @@ class Expression:
         '''
         Attempt to conclude, via automation, that this statement is true
         under the given assumptions.  Return the KnownTruth if successful,
-        or raise an exception.  This may be implemented for specific
-        Expression classes (or will raise a NotImplementedError).  It is called
+        or raise an exception.  By default, proveViaReduction is attempted,
+        but it may be overridden for other behavior.  This is called
         by the `prove` method when no existing proof was found and it cannot
         be proven trivially via assumption.  The `prove` method has a mechanism
-        to prevent infinite recursion, so there is no worries regarding cyclic
+        to prevent infinite recursion, so there are no worries regarding cyclic
         attempts of concluding an expression.
         '''
-        raise NotImplementedError('The conclude method has not been implemented for ' + str(self.__class__))
+        from proveit import proveViaReduction
+        return proveViaReduction(self, assumptions)
     
     def deriveSideEffects(self, knownTruth):
         '''
@@ -263,15 +267,7 @@ class Expression:
     def _specialize_or_relabel(self, subMap=None, relabelMap=None, assumptions=None):
         from proveit._core_.proof import Specialization
         return Specialization(self, subMap, relabelMap, assumptions).provenTruth
-    
-    def proveByEval(self):
-        '''
-        Prove self by calling self.evaluate() if it equates the expression to TRUE.
-        The evaluate method must be implemented by the derived class.
-        '''
-        from proveit import proveByEval
-        return proveByEval(self)
-    
+        
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         If possible, return a KnownTruth of this expression equal to its
@@ -354,9 +350,14 @@ class ProofFailure(Exception):
         self.expr = expr
         self.message = message
         self.assumptions = assumptions
+        
     def __str__(self):
-        if self.expr is None:
-            return "Unable to prove " + str(self.expr) + " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}: " + self.message
+        if len(self.assumptions) == 0: 
+            assumptionsStr = ""
         else:
-            return "Proof step failed assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}: " + self.message
+            assumptionsStr = " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}"
+        if self.expr is not None:
+            return "Unable to prove " + str(self.expr) + assumptionsStr + ": " + self.message
+        else:            
+            return "Proof step failed" + assumptionsStr + ": " + self.message
     
