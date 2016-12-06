@@ -7,12 +7,6 @@ class AssociativeOperation(Operation):
         '''
         Operation.__init__(self, operator, operands)   
         assert isinstance(self.operands, ExpressionList)
-        # What is the sound of one (or no) hand clapping?  Who really cares?
-        if len(self.operands) < 2:
-            # A single Etcetera operand is okay though (it will have to be replace with
-            # 2 or more items)
-            if len(self.operands) == 0 or not isinstance(self.operands[0], Etcetera):
-                raise ValueError("An AssociativeOperation must have at least 2 operands")  
     
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
@@ -25,6 +19,14 @@ class AssociativeOperation(Operation):
         Format the associative operation in the form "A * B * C" where '*' is a stand-in for
         the operator that is obtained from self.operator.formatted(formatType).
         '''
+        # Different formatting when there is 0 or 1 element, unless it is an Etcetera
+        if len(self.operands) < 2:
+            if len(self.operands) == 0 or not isinstance(self.operands[0], Etcetera):
+                if formatType == 'string':
+                    return Operation.string(self, **kwargs)
+                elif formatType == 'latex':
+                    return Operation.latex(self, **kwargs)
+                raise ValueError("Unexpected formatType: " + str(formatType))  
         fence =  kwargs['fence'] if 'fence' in kwargs else False
         subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
         formattedOperator = self.operator.formatted(formatType) 
