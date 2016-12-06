@@ -21,7 +21,7 @@ import os, shutil
 import proveit
 
 def _makeStorage(package):
-    return Storage(os.path.join(*([proveit.__path__[0]] + ['_certified_'] + package.split('.'))))
+    return Storage(os.path.join(*([proveit.__path__[0]] + ['_certified_'] + package.split('.'))), refCounted=True)
 
 class _StoredSpecialStmt:
     def __init__(self, stmtStr, stmtType):
@@ -165,6 +165,7 @@ class _StoredTheorem(_StoredSpecialStmt):
         # record the proof id
         with open(os.path.join(self.path, 'proof.pv_it'), 'w') as proofFile:
             proofFile.write(proofId)
+            self.storage._addReference(proofId)
         
         usedAxioms = [str(usedAxiom) for usedAxiom in proof.usedAxioms()]
         usedTheorems = [str(usedTheorem) for usedTheorem in proof.usedTheorems()]
@@ -319,23 +320,26 @@ def _setSpecialStatements(package, kind, definitions):
         os.mkdir(specialStatementsPath)
     # First get the previous special statement definitions to find out what has been added/changed/removed
     previousDefIds = dict()
+    toRemove = []
     for name in os.listdir(specialStatementsPath):
         try:
             with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
                 if name not in definitions:
-                    # removed special statement that no longer exists
-                    print 'Removing ' + kind + ': ' + package + '.' + name + ' from _certified_ database'
-                    _makeStoredSpecialStmt(package + '.' + name, kind[:-1]).remove()
+                    toRemove.append(name) # to remove special statement that no longer exists
                 previousDefIds[name] = f.read()
         except IOError:
             raise Exception('corrupted _certified_ directory')
+    # Remove the special statements that no longer exist
+    for name in toRemove:
+        print 'Removing ' + kind + ': ' + package + '.' + name + ' from _certified_ database'
+        _makeStoredSpecialStmt(package + '.' + name, kind[:-1]).remove()
     # Update the definitions
     for name, expr in definitions.iteritems():
         # add the expression to the "database" via the storage object.
         exprId = storage._proveItObjId(expr)
-        storedSpecialStmt = _makeStoredSpecialStmt(package + '.' + name, kind[:-1])
         if name in previousDefIds and previousDefIds[name] == exprId:
             continue # unchanged special statement
+        storedSpecialStmt = _makeStoredSpecialStmt(package + '.' + name, kind[:-1])
         if name not in previousDefIds:
             # added special statement
             print 'Adding new ' + kind + ' to _certified_ database: ' + package + '.' + name 
@@ -349,6 +353,7 @@ def _setSpecialStatements(package, kind, definitions):
             os.mkdir(specialStatementDir)
         with open(os.path.join(specialStatementDir, 'expr.pv_it'), 'w') as exprFile:
             exprFile.write(exprId)
+            storage._addReference(exprId)
         with open(os.path.join(specialStatementDir, 'usedBy.txt'), 'w') as exprFile:
             pass # usedBy.txt must be created but initially empty
 
