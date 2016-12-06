@@ -12,5 +12,5 @@ from _generic_ import maybeFencedString, maybeFencedLatex, maybeFenced
 from proveit.logic import Implies, Forall, InSet
 
 # These methods are called within the core as convenience methods (not really core concepts)
-from proveit.logic import defaultEvaluate, evaluateTruth, proveByEval
+from proveit.logic import reduceOperands, proveViaReduction, defaultEvaluate, evaluateTruth
 
