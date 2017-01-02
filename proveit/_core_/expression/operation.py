@@ -14,9 +14,6 @@ class Operation(Expression):
             raise TypeError('operator must be a Label-type Expression')
         self.operator = operator
         self.operands = compositeExpression(operands)
-        if isinstance(operator, Lambda):
-            if len(self.operands) != len(operator.arguments):
-                raise ValueError("Number of arguments and number of operands must match.")
         Expression.__init__(self, ['Operation'], [self.operator, self.operands])
 
     @classmethod
@@ -63,7 +60,7 @@ class Operation(Expression):
         according to subMap and/or relabeled according to relabelMap.
         '''
         from lambda_expr import Lambda
-        from bundle import extractVar, Etcetera
+        from bundle import Etcetera
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
         operator = self.operator
@@ -76,20 +73,20 @@ class Operation(Expression):
                 if subbedOperator != operator:
                     raise Exception('Not allowed to perform an Operation substition with any remaining Etcetera operands because the number of operands should be determined when substititing the operation.')
         if isinstance(subbedOperator, Lambda):
-            # Substitute the entire operation via a Lambda expression
+            # Substitute the entire operation via a Lambda body
             # For example, f(x, y) -> x + y.
-            if len(subbedOperands) != len(subbedOperator.arguments):
-                raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of arguments')
-            operandSubMap = {argument:operand for argument, operand in zip(subbedOperator.arguments, subbedOperands)}
+            if len(subbedOperands) != len(subbedOperator.parameters):
+                raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of parameters')
+            operandSubMap = {param:operand for param, operand in zip(subbedOperator.parameters, subbedOperands)}
             if not reservedVars is None:
-                # the reserved variables of the lambda expression excludes the lambda arguments
-                # (i.e., the arguments mask externally reserved variables).
-                lambdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if extractVar(k) not in subbedOperator.argVarSet}
+                # the reserved variables of the lambda body excludes the lambda parameters
+                # (i.e., the parameters mask externally reserved variables).
+                lambdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if k not in subbedOperator.parameterSet}
             else: lambdaExprReservedVars = None
-            return subbedOperator.expression._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, None)
+            return subbedOperator.body._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, None)
         # remake the Expression with substituted operator and/or operands
         return self.__class__.make(['Operation'], [subbedOperator, subbedOperands])
-        
+
     def usedVars(self):
         '''
         Returns the union of the operator and operands used variables.

@@ -74,52 +74,12 @@ class MultiVariable(Label):
         elif relabelMap is not None:
             subbed = relabelMap.get(self, self)
             if not isinstance(subbed, MultiVariable) and not isinstance(subbed, Variable):
-                raise ImproperRelabeling('May only relabel MultiVariable to Variable or MultiVariable (or a list/tensor of Variables within an Etcetera/Block)')
+                raise ImproperRelabeling('May only relabel MultiVariable to Variable or MultiVariable (or a list/tensor of Variables/MultiVariables within an Etcetera/Block)')
             if reservedVars is not None and subbed in reservedVars.keys():
                 if self != reservedVars[subbed]:
                     raise ScopingViolation("Relabeling in violation of Variable scoping restrictions.")
             return subbed
         return self
-        '''
-        from proveit._core_.expression.bundle import isBundledVarOrVar
-        subbed = None
-        whichKind = None
-        if (exprMap is not None) and (self in exprMap):
-            subbed = exprMap[self]
-            whichKind = 'substitute'
-        elif relabelMap is not None:
-            subbed = relabelMap.get(self, self)
-            whichKind = 'relabel'
-        if subbed is None:
-            return self
-        else:
-            if whichKind == 'relabel' and isinstance(subbed, MultiVariable):
-                if subbed.numIndices != self.numIndices:
-                    raise ValueError('Attempting to relabel a MultiVariable with another MultiVariable with a different number of indices')
-                # relabel the MultiVariable as another MultiVariable
-                if reservedVars is not None and subbed in reservedVars.keys():
-                    assert self == reservedVars[subbed], "Relabeling in violation of Variable restriction."  
-                return subbed    
-            subbed = compositeExpression(subbed)            
-            if self.numIndices == 1:             
-                if not isinstance(subbed, ExpressionList):
-                    raise TypeError('May only %s a single-axis MultiVariable with an ExpressionList'%whichKind) 
-            else:
-                if not isinstance(subbed, ExpressionTensor):
-                    raise TypeError('May only %s a multi-axis MultiVariable with an ExpressionTensor'%whichKind) 
-                if len(subbed.shape) != self.numIndices:
-                    raise ValueError('May only %s a multi-axis MultiVariable with an ExpressionTensor that has the appropriate dimensionality'%whichKind)
-            if whichKind == 'relabel':
-                for subVar in subbed.subExprGen():
-                    if not isBundledVarOrVar(subVar):
-                        raise TypeError('Must relabel a MultiVariable with a MultiVariable or list of Variables')
-                    if reservedVars is not None and subVar in reservedVars.keys():
-                        assert self == reservedVars[subVar], "Relabeling in violation of Variable restriction."
-            else:
-                for expr in subbed.subExprGen():
-                    expr._restrictionChecked(reservedVars)
-            return subbed
-        '''
 
     def usedVars(self):
         return {self}

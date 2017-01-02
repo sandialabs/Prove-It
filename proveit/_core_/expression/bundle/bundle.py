@@ -83,24 +83,4 @@ class Bundle(Expression):
         return set()
     
 
-def isBundledVar(expr):
-    # Is the expression a Bundled multivar (multivar wrapped in Bundle)?
-    return isinstance(expr, Bundle) and isinstance(expr.bundledExpr, MultiVariable)
-
-def isBundledVarOrVar(expr):
-    # Is the expression either a var a Bundled var (var wrapped in Bundle)?
-    return isinstance(expr, Variable) or isBundledVar(expr)
-
-def extractVar(expr):
-    # Return expr if it is a var, extract the var out of a Bundled var
-    # if it is one, or return None.
-    return expr.bundledExpr if isBundledVar(expr) else (expr if isinstance(expr, Variable) else None)
-
-def isBundledOperation(expr):
-    # Is the expression a Bundled operation (operation with a multivar operator wrapped in Bundle)?
-    from etcetera import Etcetera
-    return isinstance(expr, Etcetera) and isinstance(expr.bundledExpr, Operation) and \
-        isinstance(expr.bundledExpr.operator, MultiVariable)
-        
-
 

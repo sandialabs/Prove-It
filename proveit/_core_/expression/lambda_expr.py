@@ -2,34 +2,38 @@ from expr import Expression, MakeNotImplemented, ImproperSubstitution, ImproperR
 
 class Lambda(Expression):
     '''
-    A lambda-function expr.  A lambda function maps arguments to
-    an expression.  The arguments is an expr_list with each of its
-    expressions being either a Variable or a Bundled Variable 
-    (see multiExpression.py).  For example, (x, y) -> sin(x^2 + y).
+    A lambda-function Expression.  A lambda function maps parameters to
+    its body.  For example, (x, y) -> sin(x^2 + y), where (x, y) are the 
+    parameters and sin(x^2 + y) is the body.  Each parameter must be either
+    a Variable or MultiVariable.
     '''
-    def __init__(self, arguments, expression):
+    def __init__(self, parameters, body):
         '''
-        Initialize a Lambda expression given arguments and an expression.
-        Each argument in arguments must be a Variable or a Bundled Variable.
-        arguments may be an iterable of these or a single one that will be 
-        wrapped by expr_list.
+        Initialize a Lambda function expression given parameters and a body.
+        Each parameter in parameters must be a Variable or MultiVariable.
+        A single Variable/MultiVarable may be passed as parameters, but
+        will then become a list with a single element.
         '''
-        from composite import ExpressionList, singleOrCompositeExpression
-        from bundle.bundle import Bundle, isBundledVarOrVar, extractVar
-        self.arguments = arguments if isinstance(arguments, ExpressionList) else ExpressionList(arguments)
-        for var in self.arguments:
-            if not isBundledVarOrVar(var):
-                raise TypeError('Each element of the Lambda arguments must be a Variable or Bundled Variable')
-        self.argVarSet = {extractVar(arg) for arg in self.arguments}
-        if len(self.argVarSet) != len(self.arguments):
-            raise ValueError('Lambda argument Variables must be unique with respect to each other.')
-        expression = singleOrCompositeExpression(expression)
-        if not isinstance(expression, Expression):
-            raise TypeError('A Lambda expression must be of type Expression')
-        if isinstance(expression, Bundle):
-            raise TypeError('A Bundle must be within an ExpressionTensor or exprlist, not directly as a Lambda expression')
-        self.expression = expression
-        Expression.__init__(self, ['Lambda'], [self.arguments, self.expression])
+        from composite import singleOrCompositeExpression
+        from bundle import Bundle
+        from label import Variable, MultiVariable
+        if isinstance(parameters, Variable) or isinstance(parameters, MultiVariable):
+            self.parameters = [parameters]
+        else:
+            self.parameters = list(parameters)
+        for parameter in self.parameters:
+            if not isinstance(parameter, Variable) and not isinstance(parameter, MultiVariable):
+                raise TypeError('Each element of the Lambda parameters must be a Variable or MultiVariable')
+        self.parameterSet = set(self.parameters)
+        if len(self.parameterSet) != len(self.parameters):
+            raise ValueError('Lambda parameters Variables must be unique with respect to each other.')
+        body = singleOrCompositeExpression(body)
+        if not isinstance(body, Expression):
+            raise TypeError('A Lambda body must be of type Expression')
+        if isinstance(body, Bundle):
+            raise TypeError('A Bundle must be within an ExpressionTensor or exprlist, not directly as a Lambda body')
+        self.body = body
+        Expression.__init__(self, ['Lambda'], self.parameters + [self.body])
         
     @classmethod
     def make(subClass, coreInfo, subExpressions):
@@ -39,22 +43,22 @@ class Lambda(Expression):
             raise MakeNotImplemented(subClass)
         if len(subExpressions) != 2:
             raise ValueError('Expecting two subExpressions for a Lambda, not ' + str(len(subExpressions)))
-        arguments, expression = subExpressions[0], subExpressions[1]
-        return Lambda(arguments, expression)
+        parameters, body = subExpressions[:-1], subExpressions[-1]
+        return Lambda(parameters, body)
 
     def string(self, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
         outStr = '[' if fence else ''
-        outStr += '(' + ', '.join([var.string() for var in self.arguments]) + ') -> '
-        outStr += self.expression.string()
+        outStr += '(' + ', '.join([parameter.string() for parameter in self.parameters]) + ') -> '
+        outStr += self.body.string()
         if fence: outStr += ']'
         return outStr
     
     def latex(self, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
         outStr = r'\left[' if fence else ''
-        outStr += r'\left(' + ', '.join([var.latex() for var in self.arguments]) + r'\right) \mapsto '
-        outStr += self.expression.latex()
+        outStr += r'\left(' + ', '.join([parameter.latex() for parameter in self.parameters]) + r'\right) \mapsto '
+        outStr += self.body.latex()
         if fence: outStr += r'\right]'
         return outStr
         
@@ -62,62 +66,84 @@ class Lambda(Expression):
         '''
         Return this expression with its variables substituted 
         according to subMap and/or relabeled according to relabelMap.
-        The Lambda argument(s) have their own scope within the Lambda 
-        expression or domainCondition and do not get substituted.  They may be
-        relabeled, however.  Substitutions within the Lambda expression are 
-        restricted to exclude the Lambda argument(s) themselves (these Variables 
+        The Lambda parameters have their own scope within the Lambda 
+        body and do not get substituted.  They may be relabeled, however. 
+        Substitutions within the Lambda body are restricted to 
+        exclude the Lambda parameters themselves (these Variables 
         are reserved), consistent with any relabeling.
         '''
-        from composite import ExpressionList, NestedCompositeExpressionError
-        from bundle import extractVar
+        from proveit import ExpressionList, Composite, Variable, MultiVariable
+        from composite import singleOrCompositeExpression
         if (exprMap is not None) and (self in exprMap):
+            # the full expression is to be substituted
             return exprMap[self]._restrictionChecked(reservedVars)        
-        # Can't substitute the lambda argument variables; they are in a new scope.
-        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if extractVar(key) not in self.argVarSet}
+        if relabelMap is None: relabelMap = dict()
+        # Can't substitute the lambda parameters; they are in a new scope.
+        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterSet}
         # Handle relabeling and variable reservations consistent with relabeling.
         innerReservations = dict() if reservedVars is None else dict(reservedVars)
-        try:
-            newArgs = self.arguments.relabeled(relabelMap, reservedVars)
-        except NestedCompositeExpressionError as e:
-            raise ImproperRelabeling('May only relabel a Lambda argument with a composite expression if it was wrapped in the appropriate Bundle: ' + e.msg)
-        for arg in self.arguments:
-            # Here we enable an exception of relabeling to a reserved variable as
-            # long as we are relabeling the Lambda argument and internal variable together.
+        newParams = []
+        for parameter in self.parameters:
+            # Note that lambda parameters introduce a new scope and don't need to,
+            # themselves, be restriction checked.  But they generate new inner restrictions
+            # that disallow any substitution from a variable that isn't in the new scope
+            # to a variable that is in the new scope. 
             # For example, we can relabel y to z in (x, y) -> f(x, y), but not f to x. 
-            # Also works with Etcetera: (x, ..y..) -> f(x, ..y..) relabeled to (x, y, z) -> f(x, y, z).
-            newArg = arg.relabeled(relabelMap, reservedVars)
-            if isinstance(newArg, ExpressionList):
-                for x in newArg: innerReservations[extractVar(x)] = extractVar(arg)
-            else: innerReservations[extractVar(newArg)] = extractVar(arg)
-        # the lambda expression with the substitution:
-        subbedExpr = self.expression.substituted(innerExprMap, relabelMap, innerReservations)
+            # Also works with MultiVariables: (x, y*) -> f(x, ..,y*,..) relabeled to (x, y, z*) -> f(x, y, ..,z*,..).
+            if parameter in relabelMap:
+                relabeledParam = singleOrCompositeExpression(relabelMap[parameter])
+                if isinstance(parameter, Variable) and isinstance(relabeledParam, Composite):
+                    raise ImproperSubstitution('May not relabel a Variable to a Composite')
+                if isinstance(parameter, Variable) and isinstance(relabeledParam, MultiVariable):
+                    raise ImproperSubstitution('May not relabel a Variable to a MultiVariable')
+                if isinstance(relabeledParam, ExpressionList):
+                    # MultiVariable to a list
+                    for newParam in relabeledParam: 
+                        newParams.append(newParam)
+                        innerReservations[newParam] = parameter
+                elif isinstance(relabeledParam, Composite): # ExpressionTensor or NamedExpressions (why not?)
+                    # MultiVariable to a tensor
+                    for tensorKey in relabeledParam.keys():
+                        newParam = relabeledParam[tensorKey]
+                        newParams.append(newParam)
+                        innerReservations[newParam] = parameter
+                else: 
+                    # Variable to a Variable or MultiVariable to MultiVariable
+                    newParams.append(relabeledParam)
+                    innerReservations[relabeledParam] = parameter
+            else:
+                # Not relabeled
+                newParams.append(parameter)
+                innerReservations[parameter] = parameter
+        # the lambda body with the substitution:
+        subbedExpr = self.body.substituted(innerExprMap, relabelMap, innerReservations)
         try:
-            newLambda = Lambda(newArgs, subbedExpr)
+            newLambda = Lambda(newParams, subbedExpr)
         except TypeError as e:
             raise ImproperSubstitution(e.message)
         except ValueError as e:
             raise ImproperSubstitution(e.message)            
         return newLambda
-        
+                        
     def usedVars(self):
         '''
-        The used variables the lambda function are the used variables of the expression
-        plus the lambda argument variables.
+        The used variables of the lambda function are the used variables of the 
+        body plus the lambda parameters.
         '''
-        return self.expression.usedVars().union(set(self.argVarSet))
+        return self.body.usedVars().union(set(self.parameterSet))
         
     def freeVars(self):
         '''
-        The free variables the lambda function are the free variables of the expression
-        minus the lambda argument variables.  The lambda function binds those variables.
+        The free variables the lambda function are the free variables of the body
+        minus the lambda parameters.  The lambda function binds those variables.
         '''
-        innerFreeVs = set(self.expression.freeVars())
-        return innerFreeVs - self.argVarSet
+        innerFreeVs = set(self.body.freeVars())
+        return innerFreeVs - self.parameterSet
     
     def freeMultiVars(self):
         """
         Returns the used multi-variables that are not bound as an instance variable
         or wrapped in a Bundle (see multiExpression.py).
         """
-        innerFreeVs = set(self.expression.freeMultiVars())
-        return innerFreeVs - self.argVarSet
+        innerFreeVs = set(self.body.freeMultiVars())
+        return innerFreeVs - self.parameterSet
