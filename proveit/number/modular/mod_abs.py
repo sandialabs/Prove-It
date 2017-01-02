@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.number.set import Reals
+from proveit.number.sets import Reals
 
 MOD_ABS = Literal(__package__, 'MOD_ABS')
 

@@ -1,17 +1,26 @@
 from proveit import Operation
-from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, BOOLEANS
+from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, Booleans
 from proveit.number import Integers, Naturals, NaturalsPos, Interval, Reals, RealsPos, Complexes
 from proveit.number import Add, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
-from proveit.common import a, b, n, P
-from proveit.number.common import zero, one, two, three, four, five, six, seven, eight, nine
+from proveit.common import a, b, n, m, x, P, S
+from proveit.number import zero, one, two, three, four, five, six, seven, eight, nine
+from proveit.number.common import Pzero, Pm, P_mAddOne, Pn
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-inIntsIsBool = Forall(a, InSet(InSet(a, Integers), BOOLEANS))
+zeroInNats = InSet(zero, Naturals)
+
+successiveNats = Forall(n, InSet(Add(n, one), Naturals), domain=Naturals)
+
+inductionLemma = Forall(n, Forall(S, Implies(And(InSet(zero, S), Forall(x, InSet(Add(x,one), S), domain=S)), InSet(n, S))), domain=Naturals)
+
+induction = Forall(P, Implies(And(Pzero, Forall(m, P_mAddOne, domain=Naturals, conditions=[Pm])), Forall(n, Pn, Naturals)))
+
+inIntsIsBool = Forall(a, InSet(InSet(a, Integers), Booleans))
 inIntsIsBool
 
-notInIntsIsBool = Forall(a, InSet(NotInSet(a, Integers), BOOLEANS))
+notInIntsIsBool = Forall(a, InSet(NotInSet(a, Integers), Booleans))
 notInIntsIsBool
 
 intsInReals = Forall(a, InSet(a, Reals), domain=Integers)

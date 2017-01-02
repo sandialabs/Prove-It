@@ -7,6 +7,16 @@ from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
+multAssoc = Forall([xEtc,yEtc,zEtc],
+                  Equals(
+                        Mult(
+                                xEtc,yEtc,zEtc),
+                        Mult(
+                                xEtc,Mult(yEtc),zEtc)
+                        )
+                  )
+multAssoc
+
 multNatClosure = Forall((a, b), InSet(Mult(a, b), Naturals), domain=Naturals)
 multNatClosure
 

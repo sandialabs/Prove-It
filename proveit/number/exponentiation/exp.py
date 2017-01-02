@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, maybeFencedString
-from proveit.number.set import zero, one
+from proveit.number.sets import zero, one
 
 EXPONENTIATE = Literal(__package__, 'EXPONENTIATE')
 

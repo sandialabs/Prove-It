@@ -36,3 +36,4 @@ def num(x):
         assert False, 'num not implemented for anything except integers currently. plans to take in strings or floats with specified precision'
 
 infinity = Literal(__package__,'infinity',r'\infty')
+

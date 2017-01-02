@@ -1,5 +1,5 @@
 from proveit import Literal, AssociativeOperation
-from proveit.number.set import zero
+from proveit.number.sets import zero
 from proveit.common import x, y
 
 ADD = Literal(__package__, r'+', r'+')

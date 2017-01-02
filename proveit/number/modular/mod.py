@@ -1,5 +1,5 @@
 from proveit import Literal, BinaryOperation
-from proveit.number.set import Integers, Reals
+from proveit.number.sets import Integers, Reals
 from proveit.common import a, b
 
 MOD = Literal(__package__, 'mod', r'~\rm{mod}~')

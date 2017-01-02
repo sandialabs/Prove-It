@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.number.set import Integers, Naturals
+from proveit.number.sets import Integers, Naturals
 
 ROUND = Literal(__package__, 'Round', '{\rm Round}')
 

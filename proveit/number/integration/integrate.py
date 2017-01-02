@@ -1,5 +1,5 @@
 from proveit import Literal, OperationOverInstances
-from proveit.number.set import Interval, infinity, Reals, IntervalCC
+from proveit.number.sets import Interval, infinity, Reals, IntervalCC
 from proveit.number.negation import Neg
 
 INTEGRATE = Literal(__package__, r'Integrate', r'\int')

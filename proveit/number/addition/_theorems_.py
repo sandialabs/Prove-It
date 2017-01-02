@@ -34,6 +34,16 @@ addComm = Forall([vEtc,wEtc,xEtc,yEtc,zEtc],
                  )
 addComm
 
+addAssoc = Forall([xEtc,yEtc,zEtc],
+                  Equals(
+                        Add(
+                                xEtc,yEtc,zEtc),
+                        Add(
+                                xEtc,Add(yEtc),zEtc)
+                        ),
+                  )
+addAssoc
+
 addAssocRev = Forall([xEtc,yEtc,zEtc],
                   Equals(
                         Add(

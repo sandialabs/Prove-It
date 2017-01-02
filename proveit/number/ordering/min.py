@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.number.set import Reals, RealsPos
+from proveit.number.sets import Reals, RealsPos
 
 MIN = Literal(__package__, 'Min', r'{\rm Min}')
 

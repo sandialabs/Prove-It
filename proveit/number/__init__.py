@@ -1,7 +1,7 @@
-from set import Integers, Naturals, NaturalsPos, Reals, RealsNeg, RealsPos, Complexes
-from set import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
-from set import num, e, pi, i, DigitLiteral, zero, one, two, three, four, five, six, seven, eight, nine, WholeDecimal
-from set import infinity
+from sets import Integers, Naturals, NaturalsPos, Len, Reals, RealsNeg, RealsPos, Complexes
+from sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
+from sets import num, e, pi, i, DigitLiteral, zero, one, two, three, four, five, six, seven, eight, nine, WholeDecimal
+from sets import infinity
 from addition import Add
 from subtraction import Sub
 from negation import Neg

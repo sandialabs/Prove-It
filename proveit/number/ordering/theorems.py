@@ -1,4 +1,4 @@
-from proveit.logic import Forall, Implies, InSet, NotEquals, And, Or, BOOLEANS
+from proveit.logic import Forall, Implies, InSet, NotEquals, And, Or, Booleans
 from proveit.number import Integers, Reals, RealsPos
 from proveit.number import GreaterThan, GreaterThanEquals, LessThan, LessThanEquals, Min, Max, Add, Sub, Neg, Mult, Fraction
 from proveit.common import a, b, c, d, x
@@ -31,16 +31,16 @@ relaxLessThan = Forall([a,b],
                          conditions = LessThan(a,b))
 relaxLessThan
 
-lessThanInBools = Forall([a, b], InSet(LessThan(a, b), BOOLEANS), domain=Reals)
+lessThanInBools = Forall([a, b], InSet(LessThan(a, b), Booleans), domain=Reals)
 lessThanInBools
 
-lessThanEqualsInBools = Forall([a, b], InSet(LessThanEquals(a, b), BOOLEANS), domain=Reals)
+lessThanEqualsInBools = Forall([a, b], InSet(LessThanEquals(a, b), Booleans), domain=Reals)
 lessThanEqualsInBools
 
-greaterThanInBools = Forall([a, b], InSet(GreaterThan(a, b), BOOLEANS), domain=Reals)
+greaterThanInBools = Forall([a, b], InSet(GreaterThan(a, b), Booleans), domain=Reals)
 greaterThanInBools
 
-greaterThanEqualsInBools = Forall([a, b], InSet(GreaterThanEquals(a, b), BOOLEANS), domain=Reals)
+greaterThanEqualsInBools = Forall([a, b], InSet(GreaterThanEquals(a, b), Booleans), domain=Reals)
 greaterThanEqualsInBools
 
 notEqualsIsLessThanOrGreaterThan = Forall((a, x), Or(LessThan(x, a), GreaterThan(x, a)), domain=Reals, conditions=[NotEquals(x, a)])

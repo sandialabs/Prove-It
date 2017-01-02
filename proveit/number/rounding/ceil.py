@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.number.set import Integers, NaturalsPos
+from proveit.number.sets import Integers, NaturalsPos
 
 CEIL = Literal(__package__, 'Ceil')
 

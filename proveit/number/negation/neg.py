@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex
-from proveit.number.set import Integers, Reals, Complexes, zero
+from proveit.number.sets import Integers, Reals, Complexes, zero
 from proveit.common import a, x, y, xEtc
 
 NEG = Literal(__package__, 'NEG')

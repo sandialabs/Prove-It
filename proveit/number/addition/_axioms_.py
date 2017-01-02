@@ -1,7 +1,7 @@
 from proveit.logic import Forall, InSet, Iff, Equals
 from proveit.number import Naturals, NaturalsPos
 from proveit.number import Add, GreaterThanEquals
-from proveit.common import n, xEtc, yEtc, zEtc
+from proveit.common import n, x, xEtc, yEtc, zEtc
 from proveit.number.common import zero, one, two
 from proveit import beginAxioms, endAxioms
 
@@ -13,14 +13,11 @@ zeroAddOne
 oneAddOne = Equals(Add(one, one), two)
 oneAddOne
 
-addAssoc = Forall([xEtc,yEtc,zEtc],
-                  Equals(
-                        Add(
-                                xEtc,yEtc,zEtc),
-                        Add(
-                                xEtc,Add(yEtc),zEtc)
-                        ),
-                  )
-addAssoc
+# base case for composition
+addEmpty = Equals(Add(), zero)
+addEmpty
+
+addComposition = Forall((x, yEtc), Equals(Add(x, yEtc), Add(x, Add(yEtc))))
+addComposition
 
 endAxioms(locals(), __package__)

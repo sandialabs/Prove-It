@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.number.set import Reals, RealsPos
+from proveit.number.sets import Reals, RealsPos
 
 MAX = Literal(__package__, 'Max', r'{\rm Max}')
 
