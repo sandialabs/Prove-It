@@ -1,5 +1,5 @@
 from _core_ import defaults, USE_DEFAULTS, InvalidAssumptions, storage
-from _core_ import Expression, Operation, Lambda, Label, Variable, MultiVariable, Literal, Etcetera, Block, safeDummyVar, tryDerivation
+from _core_ import Expression, Operation, Lambda, Label, Variable, MultiVariable, Literal, Etcetera, Block, safeDummyVar, safeDefaultOrDummyVar, tryDerivation
 from _core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
 from _core_ import ExpressionList, ExpressionTensor, NamedExpressions, Composite, compositeExpression, singleOrCompositeExpression, NestedCompositeExpressionError
 from _core_ import beginAxioms, endAxioms, beginTheorems, endTheorems, KnownTruth, asExpression, asExpressions
