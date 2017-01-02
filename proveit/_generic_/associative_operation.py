@@ -23,13 +23,13 @@ class AssociativeOperation(Operation):
         if len(self.operands) < 2:
             if len(self.operands) == 0 or not isinstance(self.operands[0], Etcetera):
                 if formatType == 'string':
-                    return Operation.string(self, **kwargs)
-                elif formatType == 'latex':
-                    return Operation.latex(self, **kwargs)
+                    return '\left[' + self.operator.string(fence=True) +  '\right](' + self.operands.string(fence=False, subFence=False) + ')'
+                else:
+                    return '\left[' + self.operator.latex(fence=True) +  r'\right]\left(' + self.operands.latex(fence=False, subFence=False) + r'\right)'
                 raise ValueError("Unexpected formatType: " + str(formatType))  
         fence =  kwargs['fence'] if 'fence' in kwargs else False
         subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
-        formattedOperator = self.operator.formatted(formatType) 
+        formattedOperator = ' ' + self.operator.formatted(formatType) + ' '
         return self.operands.formatted(formatType, fence=fence, subFence=subFence, formattedOperator=formattedOperator)
         """
         outStr = ''
