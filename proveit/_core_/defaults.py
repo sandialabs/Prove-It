@@ -3,6 +3,7 @@ import hashlib, os
 class Defaults:
     def __init__(self):
         self.assumptions = frozenset()
+        self.automation = True
     
     def checkedAssumptions(self, assumptions):
         '''
