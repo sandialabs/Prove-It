@@ -1,15 +1,19 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS, compositeExpression, tryDerivation
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
 from proveit.logic.boolean.negation import Not
-from proveit.common import A, B
+from proveit.common import A, B, C
 
 IMPLIES = Literal(__package__, stringFormat = '=>', latexFormat = r'\Rightarrow')
 
 class Implies(BinaryOperation):
+    # map Expressions to sets of KnownTruths of implications that involve the Expression
+    # as the hypothesis or the conclusion
+    knownImplications = dict()    
+    
     def __init__(self, hypothesis, conclusion):
         BinaryOperation.__init__(self, IMPLIES, hypothesis, conclusion)
-        self.hypothesis = hypothesis
-        self.conclusion = conclusion
+        self.hypothesis = self.lhs = hypothesis
+        self.conclusion = self.rhs = conclusion
 
     @classmethod
     def operatorOfOperation(subClass):
@@ -17,17 +21,71 @@ class Implies(BinaryOperation):
 
     def deriveSideEffects(self, knownTruth):
         '''
-        From :math:`A \Rightarrow B`, derive B if :math:`A` can be proven.
-        From :math:`A \Rightarrow \bot`, automatically derive :math:`\lnot A` if :math:`A \in \mathbb{B}`.
-        From :math:`\lnot A \Rightarrow \bot`, automatically derive :math:`A` if :math:`A \in \mathbb{B}`.
+        Record the KnownTruth implication in the dictionary of knownImplications so we
+        can perform a search to later prove other implications via transitivity.
+        Also automatically derive the conclusion given the hypothesis as an added assumption.
+        From A => FALSE, automatically derive Not(A) if [A in Booleans].
+        From Not(A) => FALSE, automatically derive A if [A in Booleans].
         '''
+        Implies.knownImplications.setdefault(self.hypothesis, set()).add(knownTruth)
+        Implies.knownImplications.setdefault(self.conclusion, set()).add(knownTruth)
         try:
-            self.deriveConclusion(knownTruth.assumptions)
+            self.deriveConclusion(knownTruth.assumptions + (self.hypothesis,))
         except:
             pass
-        if self.conclude == FALSE:
+        if self.conclusion == FALSE:
             tryDerivation(self.deriveViaContradiction, knownTruth.assumptions)
+    
+    def conclude(self, assumptions):
+        '''
+        Try to automatically conclude this implication by reducing its operands
+        to true/false, or by doing a "transitivity" search amongst known true implications
+        whose assumptions are covered by the given assumptions.
+        '''
+        from _theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse
+        from proveit.logic import transitivitySearch        
+        if self in {trueImpliesTrue, falseImpliesTrue, falseImpliesFalse}:
+            # should be proven via one of the imported theorems as a simple special case
+            return self.prove()
+        try:
+            # try to prove the implication via evaluation reduction.
+            # if that is possible, it is a relatively straightforward thing to do.
+            return BinaryOperation.conclude(assumptions)
+        except:
+            pass
+        try:
+            # try to prove the implication via hypothetical reasoning.
+            return self.conclusion.prove(assumptions + (self.hypothesis,)).asImplication(self.hypothesis)
+        except:
+            pass
+        # Use a breadth-first search approach to find the shortest
+        # path to get from one end-point to the other.
+        return transitivitySearch(self, assumptions)
 
+    @staticmethod
+    def knownRelationsFromLeft(expr, assumptionsSet):
+        '''
+        For each KnownTruth that is an Implies involving the given expression on
+        the left hand side (the hypothesis), yield the KnownTruth and the right hand side
+        (the conclusions).
+        '''
+        for knownTruth in Implies.knownImplications.get(expr, frozenset()):
+            if knownTruth.hypothesis == expr:
+                if assumptionsSet.issuperset(knownTruth.assumptions):
+                    yield (knownTruth, knownTruth.conclusion)
+    
+    @staticmethod
+    def knownRelationsFromRight(expr, assumptionsSet):
+        '''
+        For each KnownTruth that is an Equals involving the given expression on
+        the right hand side (the conclusion), yield the KnownTruth and the left hand side
+        (the hypothesis).
+        '''
+        for knownTruth in Implies.knownImplications.get(expr, frozenset()):
+            if knownTruth.conclusion == expr:
+                if assumptionsSet.issuperset(knownTruth.assumptions):
+                    yield (knownTruth, knownTruth.hypothesis)
+                    
     def deriveConclusion(self, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \Rightarrow B)` derive and return :math:`B` assuming :math:`A`.
@@ -35,15 +93,15 @@ class Implies(BinaryOperation):
         from proveit._core_.proof import ModusPonens
         return ModusPonens(self, assumptions).provenTruth
                 
-    def applySyllogism(self, otherImpl, assumptions=USE_DEFAULTS):
+    def applyTransitivity(self, otherImpl, assumptions=USE_DEFAULTS):
         '''
         From :math:`A \Rightarrow B` (self) and a given :math:`B \Rightarrow C` (otherImpl), derive and return :math:`A \Rightarrow C`.
         '''
-        assert isinstance(otherImpl, Implies), "expected an Implies object"
+        from _theorems_ import implicationTransitivity
         if self.conclusion == otherImpl.hypothesis:
-            return Implies(self.hypothesis, otherImpl.conclusion).proven(assumptions)
+            return implicationTransitivity.specialize({A:self.hypothesis, B:self.conclusion, C:otherImpl.conclusion}, assumptions=assumptions)
         elif self.hypothesis == otherImpl.conclusion:
-            return Implies(otherImpl.hypothesis, self.conclusion).proven(assumptions)
+            return implicationTransitivity.specialize({A:otherImpl.hypothesis, B:self.hypothesis, C:self.conclusion}, assumptions=assumptions)
     
     def deriveViaContradiction(self, assumptions=USE_DEFAULTS):
         r'''

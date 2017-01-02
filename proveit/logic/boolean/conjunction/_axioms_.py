@@ -1,5 +1,5 @@
-from proveit.logic import Equals, And, TRUE, FALSE, Forall, Implies
-from proveit.common import A, B, Aetc, Betc, Cetc 
+from proveit.logic import Equals, And, TRUE, FALSE, Forall, Implies, inBool
+from proveit.common import A, B, Amulti, Bmulti, Cmulti, Aetc, Betc, Cetc 
 from proveit import beginAxioms, endAxioms
 
 beginAxioms(locals())
@@ -16,10 +16,12 @@ andFT
 andFF = Equals(And(FALSE, FALSE), FALSE)
 andFF
 
-andComposition = Forall((A, Betc), Equals(And(A, Betc), And(A, And(Betc))))
-andComposition
+# base case for composition with the And operation identity
+empytConjunction = Equals(And(), TRUE)
 
-andImpliesEach = Forall((Aetc, B, Cetc), Implies(And(Aetc, B, Cetc), B))
-andImpliesEach
+conjunctionComposition = Forall((A, Bmulti), Equals(And(A, Betc), And(A, And(Betc))))
+conjunctionComposition
+
+conjunctionForBooleansOnly = Forall((Amulti, B, Cmulti), inBool(B), conditions=inBool(And(Aetc, B, Cetc)))
 
 endAxioms(locals(), __package__)

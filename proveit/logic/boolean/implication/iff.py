@@ -31,17 +31,28 @@ class Iff(BinaryOperation):
             
     def conclude(self, assumptions):
         '''
-        Attempt to conclude :math:`A \Leftrightarrow B` automatically from
-        :math:`A \Rightarrow B` and :math:`B \Rightarrow A`.
+        Try to automatically conclude this bi-directional implication by 
+        reducing its operands to true/false.
         '''
-        self.concludeViaComposition(assumptions)            
+        from _theorems_ import trueIffTrue, falseIffFalse
+        if self in {trueIffTrue, falseIffFalse}:
+            # should be proven via one of the imported theorems as a simple special case
+            return self.prove() 
+        try:
+            # try to prove the bi-directional implication via evaluation reduction.
+            # if that is possible, it is a relatively straightforward thing to do.
+            return BinaryOperation.conclude(assumptions)
+        except:
+            pass
+        # the last attempt is to compose the Iff from the implications each way
+        return self.concludeViaComposition(assumptions)
 
     def deriveLeftImplication(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return B=>A.
         '''
         from _theorems_ import iffImpliesLeft
-        return iffImpliesLeft.specialize({A: self.A, B: self.B}, assumptions)
+        return iffImpliesLeft.specialize({A: self.A, B: self.B}, assumptions=assumptions)
         
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         '''
@@ -54,7 +65,7 @@ class Iff(BinaryOperation):
         From (A<=>B) derive and return A=>B.
         '''
         from _theorems_ import iffImpliesRight
-        return iffImpliesRight.specialize({A: self.A, B: self.B}, assumptions)
+        return iffImpliesRight.specialize({A: self.A, B: self.B}, assumptions=assumptions)
 
     def deriveRight(self, assumptions=USE_DEFAULTS):
         '''
@@ -67,7 +78,7 @@ class Iff(BinaryOperation):
         From (A<=>B) derive and return (B<=>A).
         '''
         from _theorems_ import iffSymmetry
-        return iffSymmetry.specialize({A:self.A, B:self.B}, assumptions)
+        return iffSymmetry.specialize({A:self.A, B:self.B}, assumptions=assumptions)
     
     def applyTransitivity(self, otherIff, assumptions=USE_DEFAULTS):
         '''
@@ -79,7 +90,7 @@ class Iff(BinaryOperation):
         assert isinstance(otherIff, Iff)
         if self.B == otherIff.A:
             # from A <=> B, B <=> C, derive A <=> C
-            compose(self, otherIff) # A <=> B and B <=> C
+            compose([self, otherIff], assumptions) # A <=> B and B <=> C
             return iffTransitivity.specialize({A:self.A, B:self.B, C:otherIff.B}).deriveConclusion(assumptions)
         elif self.A == otherIff.A:
             # from y = x and y = z, derive x = z
@@ -106,7 +117,7 @@ class Iff(BinaryOperation):
         '''
         AimplB = Implies(self.A, self.B) 
         BimplA = Implies(self.B, self.A) 
-        compose(AimplB, BimplA)
+        compose([AimplB, BimplA], assumptions)
         return self.definition().deriveLeftViaEquivalence(assumptions)
     
     def evaluate(self, assumptions=USE_DEFAULTS):
@@ -122,11 +133,11 @@ class Iff(BinaryOperation):
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.
         '''
         from _theorems_ import iffClosure
-        return iffClosure.specialize({A:self.hypothesis, B:self.conclusion}, assumptions)
+        return iffClosure.specialize({A:self.hypothesis, B:self.conclusion}, assumptions=assumptions)
     
     def deriveEquality(self, assumptions=USE_DEFAULTS):
         '''
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
         from _theorems_ import iffOverBoolImplEq
-        return iffOverBoolImplEq.specialize({A:self.A, B:self.B}, assumptions)
+        return iffOverBoolImplEq.specialize({A:self.A, B:self.B}, assumptions=assumptions)

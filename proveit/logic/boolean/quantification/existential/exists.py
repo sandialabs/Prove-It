@@ -1,6 +1,6 @@
 from proveit import OperationOverInstances, tryDerivation
-from proveit import Literal, Operation, ExpressionList, MultiVariable, Etcetera, USE_DEFAULTS
-from proveit.common import P, Q, S
+from proveit import Literal, Operation, ExpressionList, MultiVariable, USE_DEFAULTS
+from proveit.common import P, Q, S, xMulti, yMulti, Qmulti
 
 EXISTS = Literal(__package__, stringFormat='exists', latexFormat=r'\exists')
 
@@ -32,11 +32,10 @@ class Exists(OperationOverInstances):
         '''
         from _theorems_ import existenceByExample
         from proveit.logic import InSet
-        from proveit.common import xEtc, yEtc
         if len(self.instanceVars) > 1 and (not isinstance(exampleInstance, ExpressionList) or (len(exampleInstance) != len(self.instanceVars))):
             raise Exception('Number in exampleInstance list must match number of instance variables in the Exists expression')
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         # P(..x..) where ..x.. is the given exampleInstance
         exampleMapping = {instanceVar:exampleInstanceElem for instanceVar, exampleInstanceElem in zip(self.instanceVars, exampleInstance if isinstance(exampleInstance, ExpressionList) else [exampleInstance])}
         exampleExpr = self.instanceExpr.substituted(exampleMapping)
@@ -46,7 +45,7 @@ class Exists(OperationOverInstances):
             for iVar in self.instanceVars:
                 exampleConditions.append(InSet(iVar, self.domain))
         # exists_{..y.. | ..Q(..x..)..} P(..y..)]
-        return existenceByExample.specialize({P_op:P_op_sub, Q_op:Q_op_sub, yEtc:self.instanceVars, S:self.domain}).specialize({xEtc:exampleInstance}).deriveConclusion().checked({exampleExpr, exampleConditions})
+        return existenceByExample.specialize({P_op:P_op_sub, Q_op:Q_op_sub, multiY:self.instanceVars, S:self.domain}, {multiX:exampleInstance}).deriveConclusion()
 
     def deriveNegatedForall(self, assumptions=USE_DEFAULTS):
         '''
@@ -56,14 +55,13 @@ class Exists(OperationOverInstances):
         from _axioms_ import existsDef
         from _theorems_ import existsNotImpliesNotForall
         from proveit.logic import Not
-        from proveit.common import xEtc        
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         if isinstance(self.instanceExpr, Not):
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr.operand
-            return existsNotImpliesNotForall.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
+            return existsNotImpliesNotForall.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
         else:
             P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-            return existsDef.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveRightViaEquivalence(assumptions)
+            return existsDef.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}).deriveRightViaEquivalence(assumptions)
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -71,8 +69,7 @@ class Exists(OperationOverInstances):
         all exists expressions are (they are taken to be false when not true).
         '''
         from _theorems_ import existsInBool
-        from proveit.common import xEtc        
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
-        return existsInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}, assumptions)
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        return existsInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}, assumptions)
 

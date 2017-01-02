@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation
+from proveit import Literal, BinaryOperation, USE_DEFAULTS
 from proveit.common import x, S
 
 NOTIN = Literal(__package__, stringFormat = 'not in', latexFormat = r'\notin')
@@ -19,10 +19,9 @@ class NotInSet(BinaryOperation):
         '''
         self.domain.deduceNotInSetIsBool(self.element)
     
-    def unfold(self):
+    def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (x != y), derive and return Not(x=y).
         '''
         from _theorems_ import unfoldNotIn
-        return unfoldNotIn.specialize({x:self.element, S:self.domain}).deriveConclusion().checked({self})
-
+        return unfoldNotIn.specialize({x:self.element, S:self.domain}).deriveConclusion(assumptions)

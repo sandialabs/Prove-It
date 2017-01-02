@@ -1,4 +1,4 @@
-from proveit.logic import Equals, Not, Implies, Forall, TRUE, FALSE, Booleans
+from proveit.logic import Equals, Not, Implies, Forall, TRUE, FALSE, Booleans, inBool
 from proveit.common import A
 from proveit import beginAxioms, endAxioms
 
@@ -10,13 +10,9 @@ notF
 notT = Equals(Not(TRUE), FALSE)
 notT
 
-implicitNotF = Forall(A, Implies(Equals(Not(A), TRUE), Equals(A, FALSE)))
-implicitNotF
+negationForBooleansOnly = Forall(A, inBool(A), conditions=inBool(Not(A)))
 
-implicitNotT = Forall(A, Implies(Equals(Not(A), FALSE), Equals(A, TRUE)))
-implicitNotT
-
-contradictoryValidation = Forall(A, Implies(Implies(Not(A), FALSE), A), domain=Booleans)
-contradictoryValidation
+affirmViaContradiction = Forall(A, Implies(Implies(Not(A), FALSE), A), domain=Booleans)
+affirmViaContradiction
 
 endAxioms(locals(), __package__)

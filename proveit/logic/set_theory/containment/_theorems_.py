@@ -1,4 +1,4 @@
-from proveit.logic import Forall, Implies, SubsetEq, SupersetEq, InSet
+from proveit.logic import Forall, Implies, SubsetEq, SupersetEq, InSet, Equals
 from proveit.common import A, B, x
 from proveit import beginTheorems, endTheorems
 
@@ -15,6 +15,10 @@ unfoldSupersetEq
 
 foldSupersetEq = Forall((A, B), Implies(Forall(x, InSet(x, A), B), SupersetEq(A, B)))
 foldSupersetEq
+
+subsetEqViaEquality = Forall((A, B), SubsetEq(A, B), conditions=[Equals(A, B)])
+
+supersetEqViaEquality = Forall((A, B), SupersetEq(A, B), conditions=[Equals(A, B)])
 
 endTheorems(locals(), __package__)
 

@@ -1,5 +1,6 @@
 from proveit import Operation, Literal, USE_DEFAULTS, ProofFailure
 from proveit.common import A, P
+from proveit.logic.equality import IrreducibleValue
 
 class BooleanSet(Literal):
     def __init__(self):
@@ -37,7 +38,7 @@ class BooleanSet(Literal):
         Given a forall statement over the BOOLEANS domain, evaluate to TRUE or FALSE
         if possible.
         '''        
-        from proveit.logic import Forall, Equals
+        from proveit.logic import Forall, Equals, EvaluationError
         from _theorems_ import falseEqFalse, trueEqTrue 
         from quantification.universal._theorems_ import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
         from conjunction import compose
@@ -58,24 +59,27 @@ class BooleanSet(Literal):
             # must evaluate for the TRUE and FALSE case separately
             evalTrueInstance = trueInstance.evaluate(assumptions)
             evalFalseInstance = falseInstance.evaluate(assumptions)
-            if isinstance(evalTrueInstance, Equals) and isinstance(evalFalseInstance, Equals):
-                # proper evaluations for both cases (TRUE and FALSE)
-                trueCaseVal = evalTrueInstance.rhs
-                falseCaseVal = evalFalseInstance.rhs
-                if trueCaseVal == TRUE and falseCaseVal == TRUE:
-                    # both cases are TRUE, so the forall over booleans is TRUE
-                    compose(evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality())
-                    forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar})
-                    return forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+            if not isinstance(evalTrueInstance.expr, Equals) or not isinstance(evalFalseInstance.expr, Equals):
+                raise EvaluationError('Quantified instances must produce equalities as evaluations')            
+            # proper evaluations for both cases (TRUE and FALSE)
+            trueCaseVal = evalTrueInstance.rhs
+            falseCaseVal = evalFalseInstance.rhs
+            if trueCaseVal == TRUE and falseCaseVal == TRUE:
+                # both cases are TRUE, so the forall over booleans is TRUE
+                compose([evalTrueInstance.deriveViaBooleanEquality(), evalFalseInstance.deriveViaBooleanEquality()], assumptions)
+                forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar})
+                return forallBoolEvalTrue.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+            else:
+                # one case is FALSE, so the forall over booleans is FALSE
+                compose([evalTrueInstance, evalFalseInstance], assumptions)
+                if trueCaseVal == FALSE and falseCaseVal == FALSE:
+                    return forallBoolEvalFalseViaFF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+                elif trueCaseVal == FALSE and falseCaseVal == TRUE:
+                    return forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+                elif trueCaseVal == TRUE and falseCaseVal == FALSE:
+                    return forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
                 else:
-                    # one case is FALSE, so the forall over booleans is FALSE
-                    compose(evalTrueInstance, evalFalseInstance)
-                    if trueCaseVal == FALSE and falseCaseVal == FALSE:
-                        return forallBoolEvalFalseViaFF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
-                    elif trueCaseVal == FALSE and falseCaseVal == TRUE:
-                        return forallBoolEvalFalseViaFT.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
-                    elif trueCaseVal == TRUE and falseCaseVal == FALSE:
-                        return forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
+                    raise EvaluationError('Quantified instance evaluations must be TRUE or FALSE')         
     
     def unfoldForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
@@ -102,7 +106,7 @@ class BooleanSet(Literal):
         folding.hypothesis.concludeViaComposition(assumptions)
         return folding.deriveConclusion(assumptions)
 
-class TrueLiteral(Literal):
+class TrueLiteral(Literal, IrreducibleValue):
     def __init__(self):
         Literal.__init__(self, __package__, stringFormat='TRUE', latexFormat=r'\top')
     
@@ -113,18 +117,20 @@ class TrueLiteral(Literal):
             return trueEqTrue.evaluate()
         elif other == FALSE:
             return trueNotFalse.unfold().equateNegatedToFalse()
-    
+
+    def notEqual(self, other):
+        from _theorems_ import trueNotFalse
+        if other == FALSE:
+            return trueNotFalse
+        if other == TRUE:
+            raise ProofFailure("Cannot prove TRUE != TRUE since that statement is false")
+        raise ProofFailure("Inequality between TRUE and a non-boolean not defined")
+        
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         from _theorems_ import trueInBool
         return trueInBool
-    
-    def isIrreducibleValue(self):
-        '''
-        TRUE is an irreducible value.
-        '''
-        return TRUE
         
-class FalseLiteral(Literal):
+class FalseLiteral(Literal, IrreducibleValue):
     def __init__(self):
         Literal.__init__(self, __package__, stringFormat='FALSE', latexFormat=r'\bot')
     
@@ -137,22 +143,24 @@ class FalseLiteral(Literal):
         elif other == TRUE:
             return falseNotTrue.unfold().equateNegatedToFalse()
 
+    def notEqual(self, other):
+        from _theorems_ import falseNotTrue
+        if other == TRUE:
+            return falseNotTrue
+        if other == FALSE:
+            raise ProofFailure("Cannot prove FALSE != FALSE since that statement is false")
+        raise ProofFailure("Inequality between FALSE and a non-boolean not defined")
+
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         from _theorems_ import falseInBool
         return falseInBool
-
-    def isIrreducibleValue(self):
-        '''
-        FALSE is an irreducible value.
-        '''
-        return TRUE
 
 Booleans = BooleanSet()
 TRUE = TrueLiteral()
 FALSE = FalseLiteral()
 
 def inBool(element):
-    from proveit.logic.set_theory.in_set import InSet
+    from proveit.logic.set_theory import InSet
     return InSet(element, Booleans)
 
 def deduceInBool(expr):

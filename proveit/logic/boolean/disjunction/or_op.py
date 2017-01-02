@@ -1,6 +1,6 @@
 from proveit import Literal, AssociativeOperation, USE_DEFAULTS, ProofFailure
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
-from proveit.common import A, B, C, Aetc, Cetc
+from proveit.common import A, B, C, Amulti, Cmulti
 
 OR = Literal(__package__, stringFormat = 'or', latexFormat = r'\lor')
 
@@ -17,17 +17,28 @@ class Or(AssociativeOperation):
 
     def conclude(self, assumptions):
         '''
-        Try to automatically conclude this disjunction via any of its constituents.
-        That is, conclude some :math:`A \lor B \lor ... \lor Z` via and of
-        :math:'A', :math:'B', ..., or :math:'Z'.
+        Try to automatically conclude this disjunction.  If any of its
+        operands have pre-existing proofs, it will be proven via the orIfAny
+        theorem.  Otherwise, a reduction proof will be attempted 
+        (evaluating the operands).
         '''
-        for operand in self.operands:
-            try:
-                operand.prove(assumptions)
-                return self.concludeViaExample(operand)
-            except:
-                pass
-        raise ProofFailure(self, assumptions, 'Unable to automatically conclude disjunction; none of the constituents are automatically provable.')
+        from _theorems_ import trueOrTrue, trueOrFalse, falseOrTrue
+        from _theorems_ import orIfAny
+        if self in {trueOrTrue.expr, trueOrFalse.expr, falseOrTrue.expr}:
+            # should be proven via one of the imported theorems as a simple special case
+            return self.prove() 
+        if orIfAny.isUsable():
+            # Prove that the disjunction is true by proving that ANY of its operands is true.
+            # But don't use automation for these.
+            for operand in self.operands:
+                try:
+                    operand.prove(assumptions, automation=False)
+                    return self.concludeViaExample(operand)
+                except:
+                    pass
+        # Use the default when orIfAny is not a usable theorem or there are no pre-existing
+        # proofs for any of the operands.
+        return AssociativeOperation.conclude(self, assumptions)
     
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
@@ -59,7 +70,7 @@ class Or(AssociativeOperation):
         leftImplConclusion = Implies(leftOperand, conclusion)
         rightImplConclusion = Implies(rightOperand, conclusion)
         # (A=>C and B=>C) assuming A=>C, B=>C
-        compose(leftImplConclusion, rightImplConclusion)
+        compose([leftImplConclusion, rightImplConclusion], assumptions)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
     def evaluate(self, assumptions=USE_DEFAULTS):
@@ -79,17 +90,17 @@ class Or(AssociativeOperation):
                 trueIndex = i
         if trueIndex >= 0:
             # one operand is TRUE so the whole disjunction evaluates to TRUE.
-            return disjunctionTrueEval.specialize({Aetc:self.operands[:trueIndex], Cetc:self.operands[trueIndex+1:]})
+            return disjunctionTrueEval.specialize({Amulti:self.operands[:trueIndex], Cmulti:self.operands[trueIndex+1:]})
         else:
             # no operand is TRUE so the whole disjunction evaluates to FALSE.
-            return disjunctionFalseEval.specialize({Aetc:self.operands})
+            return disjunctionFalseEval.specialize({Amulti:self.operands})
             
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
         '''
         from _theorems_ import disjunctionClosure
-        return disjunctionClosure.specialize({Aetc:self.operands}, assumptions)
+        return disjunctionClosure.specialize({Amulti:self.operands}, assumptions)
     
     def concludeViaExample(self, trueOperand):
         '''
@@ -98,4 +109,4 @@ class Or(AssociativeOperation):
         '''
         from _theorems_ import orIfAny
         index = self.operands.index(trueOperand)
-        return orIfAny.specialize({Aetc:self.operands[:index], B:self.operands[index], Cetc:self.operands[index+1:]})
+        return orIfAny.specialize({Amulti:self.operands[:index], B:self.operands[index], Cmulti:self.operands[index+1:]})

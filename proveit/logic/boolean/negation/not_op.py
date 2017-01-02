@@ -32,11 +32,18 @@ class Not(Operation):
     
     def conclude(self, assumptions):
         '''
-        Can automatically conclude Not(Not(A)) from A.
+        Try to automatically conclude this negation via evaluation reductions
+        or double negation.
         '''
-        if isinstance(self.operand, Not):
+        from _theorems_ import notFalse
+        if self == notFalse.expr: return notFalse # simple special case
+        if isinstance(self.operand, Not) and isinstance(self.operand.operand, Not):
+            # try to conclude this as a double negation.  in fact,
+            # the expression being double-negated must be true in order
+            # for the double-negation to be true.
             return self.concludeViaDoubleNegation(assumptions)
-        raise ProofFailure(self, assumptions, 'Can only automatically conclude double negations')
+        # try to prove the negation via evaluation reduction.
+        return Operation.conclude(assumptions)        
         
     @classmethod
     def operatorOfOperation(subClass):
@@ -62,7 +69,7 @@ class Not(Operation):
         Attempt to deduce, then return, that this 'not' expression is in the set of BOOLEANS.
         '''
         from _theorems_ import negationClosure
-        return negationClosure.specialize({A:self.operand}, assumptions)
+        return negationClosure.specialize({A:self.operand}, assumptions=assumptions)
    
     def equateNegatedToFalse(self, assumptions=USE_DEFAULTS):
         r'''
@@ -70,7 +77,7 @@ class Not(Operation):
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         from _theorems_ import eqFalseFromNot
-        return eqFalseFromNot.specialize({A:self.operand}, assumptions)
+        return eqFalseFromNot.specialize({A:self.operand}, assumptions=assumptions)
     
     def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         r'''
@@ -79,7 +86,7 @@ class Not(Operation):
         '''
         from _theorems_ import fromDoubleNegation
         if isinstance(self.operand, Not):
-            return fromDoubleNegation.specialize({A:self.operand.operand}, assumptions)
+            return fromDoubleNegation.specialize({A:self.operand.operand}, aassumptions=assumptions)
         raise ValueError("deriveViaDoubleNegation does not apply to " + str(self) + " which is not of the form Not(Not(A))")
 
     def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
@@ -90,14 +97,14 @@ class Not(Operation):
         from _theorems_ import doubleNegation
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
-            return doubleNegation.specialize({A:stmt}, assumptions)
+            return doubleNegation.specialize({A:stmt}, assumptions=assumptions)
             
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
         From :math:`\lnot A`, derive and return :math:`A \Rightarrow \bot`.
         '''
-        from _theorems_ import contradictionFromNegation
-        return contradictionFromNegation.specialize({A:self.operand}).deriveConclusion(assumptions)
+        from _theorems_ import contradictionViaNegation
+        return contradictionViaNegation.specialize({A:self.operand}, assumptions=assumptions)
     
     def deriveNotEquals(self, assumptions=USE_DEFAULTS):
         r'''

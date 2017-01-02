@@ -7,6 +7,13 @@ beginTheorems(locals())
 notFalse = Not(FALSE)
 notFalse
 
+affirmViaFalseNegation = Forall(A, A, conditions=[Equals(Not(A), FALSE)])
+affirmViaFalseNegation
+
+denyViaTrueNegation = Forall(A, Not(A), conditions=[Equals(Not(A), TRUE)])
+denyViaTrueNegation
+
+
 eqFalseFromNot = Forall(A, Equals(A, FALSE), conditions=[Not(A)])
 eqFalseFromNot
 
@@ -16,8 +23,8 @@ fromDoubleNegation
 notTimpliesF = Implies(Not(TRUE), FALSE)
 notTimpliesF
 
-contradictionFromNegation = Forall(A, Implies(Not(A), Implies(A, FALSE)))
-contradictionFromNegation
+contradictionViaNegation = Forall(A, FALSE, conditions=[A, Not(A)])
+contradictionViaNegation
 
 notFromEqFalse = Forall(A, Not(A), conditions=[Equals(A, FALSE)])
 notFromEqFalse
@@ -28,11 +35,11 @@ doubleNegation
 eqFalseFromNegation = Forall(A, Equals(Not(A), FALSE), conditions=[A])
 eqFalseFromNegation
 
-doubleNegationEquiv = Forall(A, Equals(A, Not(Not(A))), domain=Booleans)
-doubleNegationEquiv
-
 negationClosure = Forall(A, inBool(Not(A)), domain=Booleans)
 negationClosure
+
+doubleNegationEquiv = Forall(A, Equals(A, Not(Not(A))), domain=Booleans)
+doubleNegationEquiv
 
 hypotheticalContradiction = Forall(A, Implies(Implies(A, FALSE), Not(A)), domain=Booleans)
 hypotheticalContradiction

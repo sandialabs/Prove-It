@@ -13,6 +13,13 @@ impliesFT
 impliesFF = Equals(Implies(FALSE, FALSE), TRUE)
 impliesFF
 
+trueImpliesTrue = Implies(TRUE, TRUE)
+falseImpliesTrue = Implies(TRUE, TRUE)
+falseImpliesFalse = Implies(FALSE, FALSE)
+
+implicationTransitivity = Forall((A, B, C), Implies(A, C), conditions=[Implies(A, B), Implies(B, C)])
+implicationTransitivity
+
 iffTT = Equals(Iff(TRUE, TRUE), TRUE)
 iffTT
 
@@ -25,6 +32,10 @@ iffTF
 iffFT = Equals(Iff(FALSE, TRUE), FALSE)
 iffFT
 
+trueIffTrue = Iff(TRUE, TRUE)
+falseIffFalse = Iff(FALSE, FALSE)
+
+
 iffImpliesRight = Forall((A, B), Implies(A, B), conditions=[Iff(A, B)])
 iffImpliesRight
 
@@ -34,7 +45,7 @@ iffImpliesLeft
 iffSymmetry = Forall((A, B), Iff(B, A), conditions=[Iff(A, B)])
 iffSymmetry
 
-iffTransitivity = Forall((A, B, C), Implies(And(Iff(A, B), Iff(B, C)), Iff(A, C)))
+iffTransitivity = Forall((A, B, C), Iff(A, C), conditions=[Iff(A, B), Iff(B, C)])
 iffTransitivity
 
 transpositionFromNegated = Forall((A, B), Implies(Implies(Not(B), Not(A)), Implies(A, B)), conditions=inBool(B))

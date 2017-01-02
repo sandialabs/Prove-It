@@ -11,12 +11,6 @@ trueAxiom
 boolsDef = Equals(Booleans, Union(Singleton(TRUE), Singleton(FALSE)))
 boolsDef
 
-boolsDef = Equals(Booleans, Union(Singleton(TRUE), Singleton(FALSE)))
-boolsDef
-
-boolsDef = Equals(Booleans, Union(Singleton(TRUE), Singleton(FALSE)))
-boolsDef
-
 falseNotTrue = NotEquals(FALSE, TRUE)
 falseNotTrue
 

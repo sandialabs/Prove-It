@@ -1,7 +1,7 @@
 from proveit import BinaryOperation, USE_DEFAULTS, ProofFailure, tryDerivation
 from proveit import Literal, Operation, Lambda
 from proveit.common import A, P, X, f, x, y, z
-from transitivity_search import transitivitySearch
+from proveit.logic.transitivity_search import transitivitySearch
 from irreducible_value import IrreducibleValue
 
 pkg = __package__
@@ -111,7 +111,7 @@ class Equals(BinaryOperation):
         From x = y derive y = x.  This derivation is an automatic side-effect.
         '''
         from _axioms_ import equalsSymmetry
-        return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}, assumptions)
+        return equalsSymmetry.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
             
     def applyTransitivity(self, otherEquality, assumptions=USE_DEFAULTS):
         '''
@@ -121,13 +121,13 @@ class Equals(BinaryOperation):
         from _theorems_ import equalsTransitivity
         # We can assume that y=x will be a KnownTruth if x=y is a KnownTruth because it is derived as a side-effect.
         if self.rhs == otherEquality.lhs:
-            return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions)
+            return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions=assumptions)
         elif self.rhs == otherEquality.rhs:
-            return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.lhs}, assumptions)
+            return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.lhs}, assumptions=assumptions)
         elif self.lhs == otherEquality.lhs:
-            return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.rhs}, assumptions)
+            return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.rhs}, assumptions=assumptions)
         elif self.lhs == otherEquality.rhs:
-            return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.lhs}, assumptions)
+            return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.lhs}, assumptions=assumptions)
         else:
             raise TransitivityException(self, otherEquality)
         
@@ -141,9 +141,9 @@ class Equals(BinaryOperation):
         from proveit.logic.boolean._axioms_ import eqTrueElim
         from proveit.logic.boolean.negation._theorems_ import notFromEqFalse
         if self.rhs == TRUE:
-            return eqTrueElim.specialize({A:self.lhs}, assumptions) # A
+            return eqTrueElim.specialize({A:self.lhs}, assumptions=assumptions) # A
         elif self.rhs == FALSE:
-            return notFromEqFalse.specialize({A:self.lhs}, assumptions) # Not(A)
+            return notFromEqFalse.specialize({A:self.lhs}, assumptions=assumptions) # Not(A)
         
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         '''
@@ -164,10 +164,10 @@ class Equals(BinaryOperation):
         from proveit.logic.boolean._axioms_ import eqTrueIntro
         from proveit.logic.boolean.negation._theorems_ import eqFalseFromNegation
         if self.rhs == TRUE:
-            return eqTrueIntro.specialize({A:self.lhs}, assumptions)
+            return eqTrueIntro.specialize({A:self.lhs}, assumptions=assumptions)
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
-                return eqFalseFromNegation.specialize({A:self.lhs.operands}, assumptions)
+                return eqFalseFromNegation.specialize({A:self.lhs.operands}, assumptions=assumptions)
             else:
                 return Not(self.lhs).equateNegatedToFalse(assumptions)
         elif self.lhs == TRUE or self.lhs == FALSE:

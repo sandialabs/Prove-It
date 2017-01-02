@@ -1,7 +1,7 @@
 from proveit import Literal, AssociativeOperation
 from proveit.common import x, A, B
 
-INTERSECT = Literal(__package__, stringFormat = 'intersection', latexFormat = r'\bigcap')
+INTERSECT = Literal(__package__, stringFormat = 'intersection', latexFormat = r'\cap')
 
 class Intersect(AssociativeOperation):
     def __init__(self, *operands):

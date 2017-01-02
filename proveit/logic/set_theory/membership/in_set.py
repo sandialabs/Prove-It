@@ -21,7 +21,7 @@ class InSet(BinaryOperation):
         self.domain.deduceInSetIsBool(self.element)
     """
     
-    def unfold(self):
+    def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (x in S), derive and return an unfolded version.
         Examples are: (x=y) from (x in {y}), ((x in A) or (x in B)) from (x in (A union B)).
@@ -29,7 +29,7 @@ class InSet(BinaryOperation):
         the unfoldElemInSet(...) method for each type [see unfoldElemInSet(..) defined
         for Singleton or Union].
         '''
-        return self.domain.unfoldElemInSet(self.element).checked({self})
+        return self.domain.unfoldElemInSet(self.element, assumptions=assumptions)
 
     def conclude(self, assumptions):
         '''
@@ -46,7 +46,7 @@ class InSet(BinaryOperation):
         '''
         if hasattr(self.domain, 'deduceMembershipSideEffects'):
             tryDerivation(self.domain.deduceMembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
-    
+        tryDerivation(self.unfold, assumptions=knownTruth.assumptions)    
         
     """
     def concludeAsFolded(self):

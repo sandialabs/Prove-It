@@ -1,4 +1,4 @@
-from proveit import Literal, Operation
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.common import x, y
 
 SINGLETON = Literal(__package__, stringFormat = 'SINGLETON')
@@ -21,16 +21,16 @@ class Singleton(Operation):
     def latex(self, **kwargs):
         return r'\{' + self.elem.latex() + r'\}'        
  
-    def unfoldElemInSet(self, element):
+    def unfoldElemInSet(self, element, assumptions=USE_DEFAULTS):
         '''
         From [element in {y}], derive and return (element = y).
         '''
         from _axioms_ import singletonDef
-        return singletonDef.specialize({x:element, y:self.elem}).deriveRightViaEquivalence()
+        return singletonDef.specialize({x:element, y:self.elem}).deriveRightViaEquivalence(assumptions=assumptions)
     
-    def deduceElemInSet(self, element):
+    def deduceElemInSet(self, element, assumptions=USE_DEFAULTS):
         '''
         From (element = y), derive and return [element in {y}] where self represents {y}.
         '''   
         from _axioms_ import singletonDef
-        return singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence()
+        return singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence(assumptions=assumptions)

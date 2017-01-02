@@ -11,6 +11,11 @@ class SupersetEq(BinaryOperation):
     def operatorOfOperation(subClass):
         return SUPERSET_EQ
 
+    def conclude(self, assumptions):
+        from _theorems_ import supersetEqViaEquality
+        if self.operands[0] == self.operands[1]:
+            return supersetEqViaEquality.specialize({A:self.operands[0], B:self.operands[1]})
+
     def unfold(self, elemInstanceVar=x):
         '''
         From A superset B, derive and return (forall_{x in B} x in A).

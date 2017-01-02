@@ -1,5 +1,5 @@
-from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExpressionList, Operation, Etcetera, MultiVariable, tryDerivation
-from proveit.common import P, Q, R, S
+from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExpressionList, Operation, tryDerivation, ProofFailure
+from proveit.common import P, Q, R, S, xMulti, yMulti, Qmulti, Rmulti
 
 FORALL = Literal(__package__, stringFormat='forall', latexFormat=r'\forall')
 
@@ -33,41 +33,6 @@ class Forall(OperationOverInstances):
         if hasattr(self.domain, 'foldAsForall'):
             self.concludeAsFolded(assumptions)
         raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method.")
-
-    def specialize(self, subMap=None, assumptions=USE_DEFAULTS, conditionAsHypothesis=False):
-        '''
-        From this Forall expression, and the condition if there is one,
-        derive and return a specialized form.  If conditionAsHypothesis is True, 
-        derive and return the implication with the condition as hypothesis 
-        and specialized form as the conclusion.  Any instance variables
-        excluded from subMap will default to themselves.  For items in
-        subMap that do not pertain to instance variables, an attempt to
-        relabel them will be made.
-        '''
-        from proveit._core_.proof import Specialization
-        # Note that we use freeVars to deal with Etcetera-wrapped Variables
-        iVarSet = set().union(*[iVar.freeVars() for iVar in self.instanceVars])
-        explicitlySubbed = set()
-        if subMap is None: subMap = dict()
-        # move subMap items into relabelMap for non-instance variables
-        origSubMapItems = list(subMap.iteritems())
-        subMap, relabelMap = dict(), dict()
-        subVars = set()
-        for key, val in origSubMapItems:
-            keyVars = key.freeVars()
-            subVars.update(keyVars)
-            if iVarSet.isdisjoint(keyVars):
-                relabelMap[key] = val
-            else:
-                subMap[key] = val
-                explicitlySubbed.update(keyVars)
-        # default instance variables to themselves
-        for var in iVarSet:
-            if var not in subVars: subMap[var] = var 
-        specialized = Specialization(self, subMap, relabelMap, assumptions).provenTruth
-        if conditionAsHypothesis and self.hasCondition():
-            return specialized.asImplication(self.conditions[0])
-        return specialized
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -100,17 +65,15 @@ class Forall(OperationOverInstances):
         forall_{x | Q(x)} forall_{y | R(y)} P(x, y) becomes forall_{x, y | Q(x), R(y)} P(x, y).
         '''
         from _theorems_ import forallBundling
-        from proveit.common import xEtc, yEtc
         assert isinstance(self.instanceExpr, Forall), "Can only bundle nested forall statements"
         innerForall = self.instanceExpr
         composedInstanceVars = ExpressionList([self.instanceVars, innerForall.instanceVars])
         P_op, P_op_sub = Operation(P, composedInstanceVars), innerForall.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
-        R_op, R_op_sub = Etcetera(Operation(MultiVariable(R), innerForall.instanceVars)), innerForall.conditions
-        return forallBundling.specialize({xEtc:self.instanceVars, yEtc:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion(assumptions)
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        R_op, R_op_sub = Operation(Rmulti, innerForall.instanceVars), innerForall.conditions
+        return forallBundling.specialize({xMulti:self.instanceVars, yMulti:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion(assumptions)
 
     def _specializeUnravelingTheorem(self, theorem, *instanceVarLists):
-        from proveit.common import xEtc, yEtc
         assert len(self.instanceVars) > 1, "Can only unravel a forall statement with multiple instance variables"
         if len(instanceVarLists) == 1:
             raise ValueError("instanceVarLists should be a list of 2 or more Variable lists")
@@ -127,9 +90,9 @@ class Forall(OperationOverInstances):
                 outerConditions.append(condition)
             else: innerConditions.append(condition)
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), outerVars)), outerConditions
-        R_op, R_op_sub = Etcetera(Operation(MultiVariable(R), innerVars)), innerConditions
-        return theorem.specialize({xEtc:outerVars, yEtc:innerVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}) 
+        Q_op, Q_op_sub = Operation(Qmulti, outerVars), outerConditions
+        R_op, R_op_sub = Operation(Rmulti, innerVars), innerConditions
+        return theorem.specialize({xMulti:outerVars, yMulti:innerVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}) 
            
     def deriveUnraveled(self, instanceVarLists, assumptions=USE_DEFAULTS):
         '''
@@ -156,7 +119,6 @@ class Forall(OperationOverInstances):
         From this forall statement, evaluate it to TRUE or FALSE if possible
         by calling the condition's evaluateForall method
         '''
-        from boolOps import _evaluate
         assert self.hasDomain(), "Cannot automatically evaluate a forall statement with no domain"
         if len(self.instanceVars) == 1:
             # Use the domain's evaluateForall method
@@ -172,11 +134,6 @@ class Forall(OperationOverInstances):
         as all forall expressions are (they are taken to be false when not true).
         '''
         from _axioms_ import forallInBool
-        from proveit.common import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
-        print forallInBool
-        print xEtc, self.instanceVars        
-        print P_op, P_op_sub
-        print Q_op, Q_op_sub
-        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain})
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})

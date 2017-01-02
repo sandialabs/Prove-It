@@ -23,6 +23,12 @@ trueConclusion
 selfImplication = Forall(A, Implies(A, A))
 selfImplication
 
+trueInBool = inBool(TRUE)
+trueInBool
+
+falseInBool = inBool(FALSE)
+falseInBool
+
 unfoldInBool = Forall(A, Implies(inBool(A), Or(Equals(A, TRUE), Equals(A, FALSE))))
 unfoldInBool
 
@@ -39,15 +45,8 @@ trueNotFalse
 notEqualsFalse = Forall(A, Implies(A, NotEquals(A, FALSE)))
 notEqualsFalse
 
-trueInBool = inBool(TRUE)
-trueInBool
-
-falseInBool = inBool(FALSE)
-falseInBool
-
 fromNotFalse = Forall(A, Implies(NotEquals(A, FALSE), A), domain=Booleans)
 fromNotFalse
-
 endTheorems(locals(), __package__)
 
 

@@ -1,7 +1,7 @@
 from proveit import Literal, AssociativeOperation
 from proveit.common import A, B, x
 
-UNION = Literal(__package__, stringFormat = 'union', latexFormat = r'\bigcup')
+UNION = Literal(__package__, stringFormat = 'union', latexFormat = r'\cup')
 
         
 class Union(AssociativeOperation):

@@ -1,6 +1,6 @@
 from proveit import OperationOverInstances, tryDerivation
 from proveit import Literal, Operation, MultiVariable, Etcetera, USE_DEFAULTS
-from proveit.common import P, Q, S
+from proveit.common import P, Q, S, xMulti
 
 NOTEXISTS = Literal(__package__, stringFormat='notexists', latexFormat=r'\nexists')
 
@@ -30,10 +30,9 @@ class NotExists(OperationOverInstances):
         Derive and return Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x)
         '''
         from _theorems_ import notExistsUnfolding
-        from proveit.common import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
-        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
+        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
     
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
@@ -41,10 +40,9 @@ class NotExists(OperationOverInstances):
         This is automatically derived; see Not.deriveSideEffects(..) and Not.deriveNotExists(..).
         '''
         from _theorems_ import notExistsFolding
-        from proveit.common import xEtc
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
-        folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xEtc:self.instanceVars, S:self.domain})
+        folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
         return folding.deriveConclusion(assumptions)
 
     """
