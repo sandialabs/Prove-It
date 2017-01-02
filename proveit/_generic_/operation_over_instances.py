@@ -1,4 +1,4 @@
-from proveit import Operation, Etcetera, MultiVariable, Lambda, compositeExpression
+from proveit import Operation, Etcetera, MultiVariable, Lambda, compositeExpression, NamedExpressions
 
 class OperationOverInstances(Operation):
     def __init__(self, operator, instanceVars, instanceExpr, domain=None, conditions=tuple()):
@@ -11,7 +11,7 @@ class OperationOverInstances(Operation):
         instanceVars and conditions may be singular or plural (iterable).
         Internally, this is represented as an Operation whose etcExpr is in the following form
         (where '->' represents a Lambda and {...} represents an ExpressionDict):
-          {'instance_mapping' : instanceVars -> {'expression':instanceExpr, 'conditions':conditions}, 'domain':domain}
+        [('instance_mapping', instanceVars -> [('expression',instanceExpr), ('conditions',conditions)], ('domain',domain)]
         '''
         Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain, conditions))
         params = OperationOverInstances.extractParameters(self.operands)
@@ -22,11 +22,11 @@ class OperationOverInstances(Operation):
     
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, domain, conditions):
-        lambdaFn = Lambda(instanceVars, {'instance_expression':instanceExpr, 'conditions':compositeExpression(conditions)})
+        lambdaFn = Lambda(instanceVars, NamedExpressions([('instance_expression',instanceExpr), ('conditions',compositeExpression(conditions))]))
         if domain is None:
-            return {'instance_mapping':lambdaFn}
+            return NamedExpressions([('instance_mapping',lambdaFn)])
         else:
-            return {'instance_mapping':lambdaFn, 'domain':domain}
+            return NamedExpressions([('instance_mapping',lambdaFn), ('domain',domain)])
     
     @staticmethod
     def extractParameters(operands):
@@ -36,9 +36,9 @@ class OperationOverInstances(Operation):
         '''
         domain = operands['domain'] if 'domain' in operands else None
         lambdaFn = operands['instance_mapping']
-        instanceVars = lambdaFn.arguments
-        conditions = lambdaFn.expression['conditions']
-        instanceExpr = lambdaFn.expression['instance_expression']
+        instanceVars = lambdaFn.parameters
+        conditions = lambdaFn.body['conditions']
+        instanceExpr = lambdaFn.body['instance_expression']
         return {'instanceVars':instanceVars, 'instanceExpr':instanceExpr, 'domain':domain, 'conditions':conditions}
         
     def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
@@ -107,8 +107,7 @@ class OperationOverInstances(Operation):
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
             if hasExplicitIvars:
-                outStr += self.instanceVars.formatted(formatType, fence=False)
-                #outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
+                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
             if self.hasDomain():
                 outStr += ' in ' if formatType == 'string' else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)
@@ -122,8 +121,7 @@ class OperationOverInstances(Operation):
             if fence: outStr += r'\left['
             outStr += self.operator.formatted(formatType) + '_{'
             if hasExplicitIvars:
-                outStr += self.instanceVars.formatted(formatType, fence=False)
-                #outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
+                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
             if self.hasDomain():
                 outStr += ' in ' if formatType == 'string' else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)
