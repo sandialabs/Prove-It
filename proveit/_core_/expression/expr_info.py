@@ -15,18 +15,33 @@ class ExpressionInfo:
         '''
         self.expr = expr
         self.show_details = show_details
-    
+
     def _getEnumeratedExpressions(self):
-        visitedExpressions = set()
-        nextExpressions = [self.expr]
+        '''
+        Returns a list of Expression objects that includes self and
+        all of its direct and indirect sub-Expressions.  Duplicates
+        will not be included, but they will be presented in an
+        order which makes it clear that the dependencies are
+        acyclic by making sure sub-Expressions always come later.
+        '''
+        # expressionsWithRepeats with the sub-Expressions.  
+        # Allow duplicates in a first pass.  Remove the duplicates in a second pass.
+        expressionQueue = [self.expr]
+        expressionsWithRepeats = []
+        while len(expressionQueue) > 0:
+            nextExpr = expressionQueue.pop(0)
+            expressionsWithRepeats.append(nextExpr)
+            expressionQueue += nextExpr._subExpressions
+        # Second pass: remove duplicates.  Requirements should always come later 
+        # (presenting the graph in a way that guarantees that it is acyclic).
+        visited = set()
         enumeratedExpressions = []
-        while len(nextExpressions) > 0:
-            nextExpr = nextExpressions.pop(0)
-            if nextExpr in visitedExpressions: continue # already showed that one
-            visitedExpressions.add(nextExpr)
-            enumeratedExpressions.append(nextExpr)
-            nextExpressions += nextExpr._subExpressions
-        return enumeratedExpressions
+        for expr in reversed(expressionsWithRepeats):
+            if expr in visited:
+                continue
+            enumeratedExpressions.insert(0, expr)
+            visited.add(expr)
+        return enumeratedExpressions  
 
     def string(self):
         from composite.named_exprs import NamedExpressions
@@ -53,8 +68,8 @@ class ExpressionInfo:
                 outStr += indent + r'operator: ' + str(exprNumMap[expr.operator]) + '\n'
                 outStr += indent + r'operands: ' + str(exprNumMap[expr.operands]) + '\n'
             elif isinstance(expr, Lambda):
-                outStr += indent + r'arguments: ' + str(exprNumMap[expr.arguments]) + '\n'
-                outStr += indent + r'expression: ' + str(exprNumMap[expr.expression]) + '\n'
+                outStr += indent + r'parameters: ' + ', '.join(str(exprNumMap[parameter]) for parameter in expr.parameters) + '\n'
+                outStr += indent + r'body: ' + str(exprNumMap[expr.body]) + '\n'
             else:
                 outStr += indent + r'sub-expressions: ' + ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions) + '\n'
         return outStr
@@ -86,8 +101,8 @@ class ExpressionInfo:
                 outStr += r'\end{array}$ \\' + '\n'
             elif isinstance(expr, Lambda):
                 outStr += r'$\begin{array}{l}' + '\n'
-                outStr += r'\rm{arguments}: ' + str(exprNumMap[expr.arguments]) + r' \\' + '\n'
-                outStr += r'\rm{expression}: ' + str(exprNumMap[expr.expression]) + r' \\' + '\n'
+                outStr += r'\rm{parameters}: ' + ', '.join(str(exprNumMap[parameter]) for parameter in expr.parameters) + r' \\' + '\n'
+                outStr += r'\rm{body}: ' + str(exprNumMap[expr.body]) + r' \\' + '\n'
                 outStr += r'\end{array}$ \\' + '\n'
             else:
                 outStr += ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions) + r'\\' + '\n'
@@ -96,7 +111,7 @@ class ExpressionInfo:
                     outStr += r' & \texttt{\textless stringFormat ' + tex_escape(expr.stringFormat) + r'\textgreater } & & \\' + '\n'
                 if isinstance(expr, Literal):
                     outStr += r' & \texttt{\textless context ' + tex_escape(expr.context) + r'\textgreater } & & \\' + '\n'
-                outStr += r' & \texttt{' + tex_escape(repr(expr.__class__)) + r'} & & \\' + '\n'
+                outStr += r' & \texttt{' + tex_escape(str(expr.__class__)) + r'} & & \\' + '\n'
         outStr += r'\hline' + '\n'
         outStr += r'\end{tabular}' + '\n'
         return outStr
