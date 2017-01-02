@@ -85,7 +85,7 @@ class _ExpresisonTensorBlockGhost:
         self.ghosted_block = ghosted_block
         self.block_coord = block_coord
     
-class ExpressionTensor(Composite, Expression, dict): 
+class ExpressionTensor(Composite, Expression): 
     '''
     An expr tensor is a composite expr represented as a dictionary mapping coordinates
     (as tuples of integers) to expr elements or Blocks.  Blocks have an extent greater
@@ -105,31 +105,33 @@ class ExpressionTensor(Composite, Expression, dict):
         '''
         from proveit._core_.expression.bundle.etcetera import Etcetera
         from proveit._core_.expression.bundle.block import Block
-        dict.__init__(self)
+        from proveit._core_ import KnownTruth
         if not isinstance(tensor, dict):
             tensor, _ = ExpressionTensor.TensorDictFromIterables(tensor)
 
         # Establish the shape and check for restriction violations:
-        self.shape = shape
+        elems = dict()
         fixed_shape = (shape is not None)
         # Build the ExpressionTensor dictionary, checking for coordinate, shape, or type errors
         for coord, element in tensor.iteritems():
             for i in coord:
                 if not isinstance(i, int) or i < 0:
                     raise ExpressionTensorIndexError('ExpressionTensor indices must be an iterable set of non-negative integers')
-            if self.shape is None:
-                self.shape = [0]*len(coord)
-            elif len(coord) != len(self.shape):
+            if shape is None:
+                shape = [0]*len(coord)
+            elif len(coord) != len(shape):
                 if fixed_shape:
                     raise ExpressionTensorShapeError('ExpressionTensor indices must have the same dimensionality as the specified shape')
                 else:
                     raise ExpressionTensorShapeError('ExpressionTensor indices must have consistent dimensionality')
             if fixed_shape:
-                if any(coord[axis] >= self.shape[axis] for axis in xrange(len(coord))):
+                if any(coord[axis] >= shape[axis] for axis in xrange(len(coord))):
                     raise ExpressionTensorShapeError('ExpressionTensor coordinate out the specified shape bounds')
             else:
                 for k, i in enumerate(coord):
-                    self.shape[k] = max(self.shape[k], i+1)
+                    shape[k] = max(shape[k], i+1)
+            if isinstance(element, KnownTruth):
+                element = element.expr # extract the Expression from the KnownTruth
             if not isinstance(element, Expression):
                 raise TypeError('Each ExpressionTensor element must be an expr')
             if isinstance(element, ExpressionTensor):
@@ -138,27 +140,28 @@ class ExpressionTensor(Composite, Expression, dict):
                 raise TypeError('May not nest an exprlist in an ExpressionTensors (do you need to wrap with an Operation?)')
             if isinstance(element, Etcetera):
                 raise TypeError('An Etcetera may be contained in an exprlist but not an ExpressionTensor')
-            self[coord] = element
-        self.shape = tuple(self.shape)
+            elems[coord] = element
         if alignmentCoordinates is None:
             # by default, eachvcoordinate within the tensor's shape is an alignment coordinate
-            alignmentCoordinates = [list(range(k)) for k in self.shape]
+            alignmentCoordinates = [list(range(k)) for k in shape]
         self.alignmentCoordinates = alignmentCoordinates
         # Check for overlap errors and add appropriate _ExpressionTensorGhost elements
         # that cover the regions of any Blocks.
-        for start_coord, element in self.iteritems():
+        for start_coord, element in elems.iteritems():
             if isinstance(element, Block):
                 block = element
-                if len(block.shape) != len(self.shape):
+                if len(block.shape) != len(shape):
                     raise ExpressionTensorShapeError("Block, with shape " + str(block.shape) + ", does not have the same dimensionality as the Tensor, with shape " + str(self.shape))
                 for block_coord in itertools.product([xrange(block_axis_extent) for block_axis_extent in block.shape]):
                     if sum(block_coord) == 0: continue # skip the origin where the Block is placed
                     coord = [start+shift for start, shift in zip(start_coord, block_coord)]
-                    if coord in self.keys():
+                    if coord in elems.keys():
                         raise ExpressionTensorOverlapError("ExpressionTensor Block overlaps another element")
-                    self[coord] = _ExpresisonTensorBlockGhost(block, block_coord)
-        sortedNonGhostKeys = [key for key in sorted(self.keys()) if not isinstance(self[key], _ExpresisonTensorBlockGhost)]
-        Expression.__init__(self, ['ExpressionTensor', str(self.shape), ';'.join(str(key) for key in sortedNonGhostKeys)], [self[key] for key in sortedNonGhostKeys])
+                    elems[coord] = _ExpresisonTensorBlockGhost(block, block_coord)
+        self.shape = tuple(shape)
+        self.elems = elems
+        sortedNonGhostKeys = [key for key in self.keys() if not isinstance(self.elems[key], _ExpresisonTensorBlockGhost)]
+        Expression.__init__(self, ['ExpressionTensor', str(self.shape), ';'.join(str(key) for key in sortedNonGhostKeys)], [self.elems[key] for key in sortedNonGhostKeys])
 
     @staticmethod
     def TensorDictFromIterables(tensor, pre_coord=tuple()):
@@ -167,10 +170,13 @@ class ExpressionTensor(Composite, Expression, dict):
         mapping multi-dimensional indices to expr elements.
         Returns a (tensor-dictionary, shape) tuple.
         '''
+        from proveit._core_ import KnownTruth        
         try:
             sub_tensors = []
             sub_shapes = []
             for i, element in enumerate(tensor):
+                if isinstance(element, KnownTruth):
+                    element = element.expr # extract the Expression from the KnownTruth
                 if isinstance(element, Expression):
                     sub_shapes.append(tuple())
                 else:
@@ -189,6 +195,27 @@ class ExpressionTensor(Composite, Expression, dict):
                 return {(i,):element for i, element in enumerate(tensor)}, (len(tensor),)
         except TypeError:
             raise TypeError('An ExpressionTensor must be a dictionary of indices to elements or a nested iterables of Expressions')
+    
+    def __getitem__(self, key):
+        return self.elems[key]
+
+    def __contains__(self, key):
+        return key in self.elems
+                        
+    def __len__(self):
+        return len(self.elems)
+        
+    def iteritems(self):
+        return self.elems.iteritems()
+
+    def itervalues(self):
+        return self.elems.itervalues()
+    
+    def keys(self):
+        '''
+        Return the tensor index keys in sorted order.
+        '''
+        return sorted(self.elems.keys())
 
     @classmethod
     def make(subClass, coreInfo, subExpressions):
@@ -204,7 +231,7 @@ class ExpressionTensor(Composite, Expression, dict):
         return ExpressionTensor(tensorDict, shape)
                    
     def string(self, fence=False):
-        return '{' + ', '.join(str(key) + ':' + self[key].string(fence=True) for key in sorted(self.keys())) + '}'
+        return '{' + ', '.join(str(key) + ':' + self[key].string(fence=True) for key in self.keys()) + '}'
     
     def _config_latex_tool(self, lt):
         Expression._config_latex_tool(self, lt)
@@ -233,7 +260,7 @@ class ExpressionTensor(Composite, Expression, dict):
         outStr += r'\\'
         isAlignmentRow = 0 in self.alignmentCoordinates[0]
         # next add the populated elements
-        for (r, c) in sorted(self.keys()):
+        for (r, c) in self.keys():
             element = self[(r, c)]
             blockAlignmentStr = ''
             if isAlignmentRow and current_col == -1:
