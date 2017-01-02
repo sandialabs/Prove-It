@@ -8,12 +8,12 @@ Proof objects form a DAG.
 """
 
 from proveit._core_.known_truth import KnownTruth
-from proveit._core_.expression.expr import ProofFailure
-from defaults import defaults
+from defaults import defaults, USE_DEFAULTS
 from storage import storage, tex_escape
+import re
 
 class Proof:
-    def __init__(self, provenTruth, requiredTruths):
+    def __init__(self, stepType, provenTruth, requiredTruths):
         assert isinstance(provenTruth, KnownTruth)
         self.provenTruth = provenTruth
         self.requiredProofs = [requiredTruth.proof() for requiredTruth in requiredTruths]
@@ -41,8 +41,10 @@ class Proof:
             if not hasattr(requiredProof, '_dependents'):
                 requiredProof._dependents = []
             requiredProof._dependents.append(self)
-        # a unique representation for the Proof comprises its provenTruth and requireProofs:
-        self._unique_rep = hex(self.provenTruth._unique_id) + ';[' + ','.join(hex(requiredProof._unique_id) for requiredProof in self.requiredProofs) + ']'
+        self._step_type = stepType
+        # The following is not only a unique representation, but also information to reconstruct the
+        # proof step: step type (and mapping information if it is a Specialization), provenTruth, and requiredProofs
+        self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
         self._unique_id = hash(self._unique_rep)
         # in case this new proof makes an old one obselete or is born obsolete itself:
@@ -53,6 +55,32 @@ class Proof:
                 # may derive any side-effects that are obvious consequences arising from this truth:
                 provenTruth.deriveSideEffects()
 
+    def _generate_unique_rep(self, objectRepFn):
+        '''
+        Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
+        '''
+        return self._generate_step_info(objectRepFn) + '[' + objectRepFn(self.provenTruth) + '];[' + ','.join(objectRepFn(requiredProof) for requiredProof in self.requiredProofs) + ']'
+
+    def _generate_step_info(self, objectRepFn):
+        '''
+        Generate information about this proof step.
+        Overridden by Specialization which also needs to including the mapping information
+        and uses the given function to obtain representations of sub-Object.      
+        '''
+        return self._step_type + ':'
+
+    @staticmethod
+    def _referencedObjIds(unique_rep):
+        '''
+        Given a unique representation string, returns the list of representations
+        of Prove-It objects that are referenced.
+        '''
+        # Skip the step type which is in the beginning and followed by a ':'
+        remaining = unique_rep.split(':', 1)[-1]
+        # Everything else that between the punctuation, ';', ':', ',', '{', '}', '[', ']' is a represented object.
+        objIds = re.split("\{|\[|,|:|;|\]|\}",remaining) 
+        return [objId for objId in objIds if len(objId) > 0]  
+                        
     def isUsable(self):
         '''
         Returns True iff this Proof is usable.  A Proof may be unable 
@@ -111,20 +139,39 @@ class Proof:
         '''
         raise NotImplementedError('Remake not implemented for ' + str(self.__class__))
 
-    def latex(self):
-        visited = set()
+    def enumeratedProofSteps(self):
+        '''
+        Returns a list of Proof objects that includes self and
+        all of its direct and indirect requirements.  Duplicates
+        will not be included, but they will be presented in an
+        order which makes it clear that the dependencies are
+        acyclic by making sure requirements come after dependents.
+        '''
+        # proofsWithRepeats with the required proofs.  Allow duplicates in a first
+        # pass.  Remove the duplicates in a second pass.
         proofQueue = [self]
-        enumeratedProofs = []
+        proofsWithRepeats = []
         while len(proofQueue) > 0:
             nextProof = proofQueue.pop(0)
-            if nextProof in visited: continue # already showed that one
-            visited.add(nextProof)
-            enumeratedProofs.append(nextProof)
+            proofsWithRepeats.append(nextProof)
             proofQueue += nextProof.requiredProofs
-        proofNumMap = {proof:k for k, proof in enumerate(enumeratedProofs)}
+        # Second pass: remove duplicates.  Requirements should always come later 
+        # (presenting the graph in a way that guarantees that it is acyclic).
+        visited = set()
+        proofSteps = []
+        for proof in reversed(proofsWithRepeats):
+            if proof in visited:
+                continue
+            proofSteps.insert(0, proof)
+            visited.add(proof)
+        return proofSteps        
+
+    def latex(self):
+        proofSteps = self.enumeratedProofSteps()
+        proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
         outStr = r'\begin{tabular}{rl|l|l|l}' + '\n'
         outStr += r' & \textbf{statement} & \textbf{assumptions} & \textbf{step type} & \textbf{requirements} \\' + '\n'
-        for k, proof in enumerate(enumeratedProofs):
+        for k, proof in enumerate(proofSteps):
             outStr += r'\hline' + '\n'
             outStr += str(k) + '. & $' + proof.provenTruth.expr.latex() + '$ & '
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
@@ -135,6 +182,9 @@ class Proof:
                 requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
                 outStr += ', '.join(('$' + assumption.latex() + '$') for assumption in proof.assumptions()) \
                     + ' & ' + proof.stepTypeLatex() + ' & ' + requiredProofNums + r' \\' + '\n'
+            if isinstance(proof, Specialization):
+                outStr += r'\hline' + '\n'
+                outStr += r' & \multicolumn{4}{c}{' + proof.mappingLatex() + r'} \\' + '\n'
         outStr += r'\hline' + '\n'
         outStr += r'\end{tabular}' + '\n'
         return outStr
@@ -160,14 +210,14 @@ class Proof:
 
 class Assumption(Proof): 
     def __init__(self, expr):
-        Proof.__init__(self, KnownTruth(expr, {expr}, self), [])
+        Proof.__init__(self, 'Assumption', KnownTruth(expr, {expr}, self), [])
         
     def stepTypeLatex(self):
         return 'assumption'
 
 class Axiom(Proof): 
     def __init__(self, expr, package, name):
-        Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
+        Proof.__init__(self, 'Axiom', KnownTruth(expr, frozenset(), self), [])
         self.package = package
         self.name = name
 
@@ -193,7 +243,7 @@ class Theorem(Proof):
         # keep track of proofs that may be used to prove the theorem
         # before 'beginProof' is called so we will have the proof handy.
         self._possibleProofs = []
-        Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
+        Proof.__init__(self, 'Theorem', KnownTruth(expr, frozenset(), self), [])
         self._setUsability()
         Theorem.allTheorems.append(self)
 
@@ -289,7 +339,7 @@ class ModusPonens(Proof):
         _checkImplication(implicationTruth.expr, hypothesisTruth.expr, conclusionTruth.expr)
         self.implicationTruth = implicationTruth
         self.hypothesisTruth = hypothesisTruth
-        Proof.__init__(self, conclusionTruth, [self.implicationTruth, self.hypothesisTruth])
+        Proof.__init__(self, 'ModusPonens', conclusionTruth, [self.implicationTruth, self.hypothesisTruth])
 
     def remake(self):
         return ModusPonens(self.implicationTruth.expr, assumptions=self.provenTruth.assumptions)
@@ -304,7 +354,7 @@ class HypotheticalReasoning(Proof):
         implicationExpr = Implies(hypothesisExpr, conclusionTruth.expr)
         implicationTruth = KnownTruth(implicationExpr, assumptions, self)
         self.conclusionTruth = conclusionTruth
-        Proof.__init__(self, implicationTruth, [self.conclusionTruth])
+        Proof.__init__(self, 'HypotheticalReasoning', implicationTruth, [self.conclusionTruth])
 
     def remake(self):
         return HypotheticalReasoning(self.conclusionTruth, self.provenTruth.expr.hypothesis)
@@ -313,16 +363,30 @@ class HypotheticalReasoning(Proof):
         return 'hypothetical reasoning'
 
 class Specialization(Proof):
-    def __init__(self, generalExpr, subMap, relabelMap, assumptions=None):
+    def __init__(self, generalTruth, numForallEliminations, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+        '''
+        Create the Specialization proof step that specializes the given general expression
+        using the substitution map (subMap) under the given assumptions.  
+        Eliminates the number of nested Forall operations as indicated, substituting
+        their instance variables according to subMap.  The default for any unspecified instance 
+        variable is to specialize it to itself, or, in the case of a bundled variable 
+        (Etcetera-wrapped MultiVariables), the default is to specialize it to an empty list.
+        Substitution of variables that are not instance variables of the Forall operations
+        being eliminated or to be relabeled.  Relabeling is limited to substituting
+        a Variable to another Variable or substituting a bundled variable to
+        another bundled variable or list of variables (bundled or not).
+        '''
         assumptions = defaults.checkedAssumptions(assumptions)
-        Failure = SpecializationFailure if subMap is not None and len(subMap) > 0 else RelabelingFailure
-        # obtain the KnownTruth for the general (universally quantified) expression
-        try:
-            generalTruth = generalExpr.prove(assumptions)
-        except:
-            raise Failure(None, assumptions, 'Unproven general expression: ' + str(generalExpr))
+        if relabelMap is None: relabelMap = dict()
+        if specializeMap is None: specializeMap = dict()
+        Failure = SpecializationFailure if numForallEliminations>0 else RelabelingFailure
+        if not isinstance(generalTruth, KnownTruth):
+            raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
+        if not generalTruth.assumptionsSet.issubset(assumptions):
+            raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
+        generalExpr = generalTruth.expr
         # perform the appropriate substitution/relabeling
-        specializedExpr, instanceVars, subbedConditions, subMap, relabelMap = Specialization._specialized_expr(generalExpr, assumptions, subMap, relabelMap)
+        specializedExpr, subbedConditions, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
         # obtain the KnownTruths for the substituted conditions
         conditionTruths = []
         for conditionExpr in subbedConditions:
@@ -339,172 +403,199 @@ class Specialization(Proof):
         # we have what we need; set up the Specialization Proof
         self.generalTruth = generalTruth
         self.conditionTruths = conditionTruths
-        self.instanceVars = instanceVars
-        self.subMap = subMap
-        self.relabelMap = relabelMap
+        self.mappedVarLists = mappedVarLists
+        self.mappings = mappings
         specializedTruth = KnownTruth(specializedExpr, assumptions, self)
-        Proof.__init__(self, specializedTruth, [generalTruth] + conditionTruths)
+        Proof.__init__(self, 'Specialization', specializedTruth, [generalTruth] + conditionTruths)
 
+    def _generate_step_info(self, objectRepFn):
+        '''
+        Generate information about this proof step, including mapping information for this specialization.
+        '''
+        mappingInfo = ';'.join(','.join(objectRepFn(var) + ':' + objectRepFn(self.mappings[var]) for var in mappedVars) \
+                                for mappedVars in self.mappedVarLists)
+        return self._step_type + ':{' + mappingInfo + '}'
+                                
     def remake(self):
         return Specialization(self.generalTruth.expr, self.subMap, self.relabelMap, assumptions = self.provenTruth.assumptions)
 
     def stepTypeLatex(self):
-        outStr = r'$\begin{array}{l} '
-        if self.subMap is not None and len(self.subMap) > 0:
-            # use the proper instance Variable order
-            iVars = sum([list(iVar.freeVars()) for iVar in self.instanceVars], [])            
-            outStr += r'{\rm specialization~via} \\ '
-            outStr += r'\left\{' + ',~'.join(iVar.latex() + ': ' + self.subMap[iVar].latex() for iVar in iVars) + r'\right\}'
-        if self.relabelMap is not None and len(self.relabelMap) > 0:
-            outStr += r'{\rm relabeling~via} \\ '
-            outStr += r'\left\{' + ',~'.join(key.latex() + ': ' + val.latex() for key, val in self.relabelMap.iteritems()) + r'\right\}'
-        outStr += r'\end{array}$'
+        if len(self.mappedVarLists) > 1:
+            return 'specialization'
+        return 'relabeling' # relabeling only
+    
+    def mappingLatex(self):
+        mappedVarLists = list(self.mappedVarLists)
+        if len(mappedVarLists[-1]) == 0:
+            # drop the last semicolon if no relabeling is necessary
+            mappedVarLists.pop()
+        outStr = r'$ \left\{' 
+        outStr += ' ;~'.join(',~'.join(var.latex() + ' : ' + self.mappings[var].latex() for var in mappedVars) \
+                            for mappedVars in mappedVarLists)
+        outStr += r'\right\} $'
         return outStr
 
     @staticmethod
-    def _specialized_expr(generalExpr, assumptions, subMap, relabelMap):
+    def _specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions):
         '''
-        State and return a tuple of (specialization, conditions).  The 
-        specialization derives from the given original statement and its conditions
-        via a specialization inference rule.  It is the specialized form of the 'original' 
-        expression by substituting one or more instance variables of outer Forall operations 
-        according to the substitution map (subMap) and/or relabeling variables 
-        according to the relabeling map (relabelMap).  Unless subMap is empty,
-        the outer Forall is eliminated in the process and as a result there may end 
-        up being free variables which can be considered to be "arbitrary" variables 
-        used in logical reasoning.  Eventually they should be bound again via 
-        generalization (the counterpart to specialization).
+        Return a tuple of (specialization, conditions).  The 
+        specialization derives from the given "general" expression and its conditions
+        via a specialization inference rule (or relabeling as a special case).
+        Eliminates the specified number of Forall operations, substituting all
+        of the corresponding instance variables according to the substitution
+        map dictionary (subMap), or defaulting basic instance variables as
+        themselves or bundled instance variables (Etcetera-wrapped or Block-wrapped 
+        MultiVariables) as empty lists. 
         '''
-        from proveit import Forall, InSet, Expression, Operation, Lambda, Variable, compositeExpression, ExpressionList, ExpressionTensor
-        from proveit._core_.expression.composite.composite import Composite
-        from proveit._core_.expression.bundle import isBundledVar, isBundledVarOrVar, isBundledOperation
+        from proveit import Forall, InSet, Lambda, ExpressionList
         
-        if subMap is None: subMap = dict()
-        if relabelMap is None: relabelMap = dict()
-        
-        # Check the relabelMap and convert Etcetera-wrapped relabelMap keys to Variable keys
-        origRelabelItems = list(relabelMap.iteritems())
-        relabelMap = dict()
-        for key, sub in origRelabelItems:
-            if isinstance(key, Variable):
-                if not isinstance(sub, Variable):
-                    raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
-                relabelVar = key
-            elif isBundledVar(key):                
-                sub = compositeExpression(sub)
-                if not isinstance(sub, ExpressionList):
-                    raise RelabelingFailure(None, assumptions, 'May only relabel a Bundled Variable to a single (Bundled) Variable or list of (Bundled) Variables')
-                for v in sub:
-                    if not isBundledVarOrVar(v) or (isBundledVar(v) and v.multiExprType != key.multiExprType):
-                        raise RelabelingFailure(None, assumptions, 'May only relabel a Bundled Variable to Bundled Variables of the same type')
-                # change ..x..:expression_or_expressions to x:expressions
-                relabelVar = key.bundledExpr
-            else:
-                raise RelabelingFailure(None, assumptions, "May only relabel a Variable or a Bundled Variable")                       
-            relabelMap[relabelVar] = sub
+        # check that the mappings are appropriate
+        for key, sub in relabelMap.items():
+            Specialization._checkRelabelMapping(key, sub, assumptions)
+            if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
         for assumption in assumptions:
             if len(assumption.freeVars() & set(relabelMap.keys())) != 0:
-                raise RelabelingFailure(None, assumptions, 'Cannot relabel using assumptions that involve any of the relabeling variables')        
-        # Process the substitution map, performming conversions of Operations and Etcetera-wrapped Operations/Variables
-        substitutingVars = set()
-        origSubMapItems = list(subMap.iteritems())
-        subMap = dict()
-        for subKey, sub in origSubMapItems:
-            if isinstance(subKey, Variable):
-                # substitute a simple Variable
-                if not isinstance(sub, Expression) or isinstance(sub, Composite):
-                    raise SpecializationFailure(None, assumptions, 'A normal Variable may be not be specialized to a composite Expression (only a Bundled Variable may be)')
-                subVar = subKey
-                subMap[subVar] = sub
-            elif isBundledVar(subKey):
-                # substitute an Etcetera-wrapped Variable -- sub in an ExpressionList
-                subVar = subKey.bundledExpr
-                sub = compositeExpression(sub)
-                if sub.__class__ != subKey.multiExprType:
-                    if subKey.multiExprType == ExpressionList:
-                        raise SpecializationFailure(None, assumptions, 'Etcetera Variables may only be specialized to a list of Expressions')
-                    elif subKey.multiExprType == ExpressionTensor:
-                        raise SpecializationFailure(None, assumptions, 'Block Variables may only be specialized to a tensor of Expressions')
-                    else:
-                        raise SpecializationFailure(None, assumptions, 'Unknown Bundle type:' + str(subKey.multiExprType))
-                subMap[subVar] = sub
-            elif isinstance(subKey, Operation) or isBundledOperation(subKey):
-                # Substitute an Operation, f(x):expression, or a Bundled operation like
-                # ..Q(x)..:expressions.
-                # These get converted in the subMap to a map of the operator Variable
-                # to a lambda, e.g. f:(x->expression) or Q:(x->expressions)
-                operation = subKey if isinstance(subKey, Operation) else subKey.bundledExpr
-                try:
-                    if isinstance(subKey, Operation):
-                        if not isinstance(sub, Expression) or isinstance(sub, Composite):
-                            raise SpecializationFailure(None, assumptions, 'A normal operation may be not be specialized to a composite Expression (only a Bundled Operation may be)')                    
-                        lambdaExpr = sub
-                        subVar = operation.operator
-                        subMap[subVar] = Lambda(operation.operands, lambdaExpr)
-                    else: 
-                        lambdaExpressions = compositeExpression(sub)
-                        subVar = operation.operator #.variable
-                        subMap[subVar] = ExpressionList([Lambda(operation.operands, lambdaExpr) for lambdaExpr in lambdaExpressions])
-                except TypeError as e:
-                    raise SpecializationFailure(None, assumptions, "Improper Operation substitution, error transforming to Lambda: " + e.message)
-                except ValueError as e:
-                    raise SpecializationFailure(None, assumptions, "Improper Operation substitution, error transforming to Lambda: " + e.message)
-            else:
-                raise SpecializationFailure(None, assumptions, "Substitution may only map (Bundled) Variable types or (Bundled) Operations that have Variable operators")
-            substitutingVars.add(subVar)
-        if len(subMap) > 0:
-            # an actual Forall specialization
-            assert isinstance(generalExpr, Forall), 'May only perform substitution specialization on Forall Expressions (relabeling would be okay)'
-            expr = generalExpr.operands
-            lambdaExpr = expr['instance_mapping']
+                raise RelabelingFailure(None, assumptions, 'Cannot relabel using assumptions that involve any of the relabeling variables')
+
+        for key, sub in specializeMap.iteritems():
+            Specialization._checkSpecializeMapping(key, sub, assumptions)
+            if key in relabelMap:
+                raise SpecializationFailure(None, assumptions, 'Attempting to specialize and relabel the same variable: %s'%str(key))
+        
+        # Eliminate the desired number of Forall operations and extracted appropriately mapped conditions
+        expr = generalExpr
+        remainingForallEliminations = numForallEliminations
+        partialMap = dict()
+        subbedConditions = []
+        mappedVarLists = []
+        while remainingForallEliminations>0:
+            remainingForallEliminations -= 1
+            if not isinstance(expr, Forall):
+                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+            expr = expr.operands
             domain = expr['domain'] if 'domain' in expr else None
-            assert isinstance(lambdaExpr, Lambda), "Forall Operation bundledExpr must be a Lambda function, or a dictionary mapping 'lambda' to a Lambda function"
-            # extract the instance expression and instance variables from the lambda expression        
-            instanceVars, expr, conditions  = lambdaExpr.arguments, lambdaExpr.expression['instance_expression'], lambdaExpr.expression['conditions']
-            iVarSet = set().union(*[iVar.freeVars() for iVar in instanceVars])
-            assert substitutingVars == iVarSet, 'The set of substituting variables must be that same as the set of Forall instance variables'
-            for arg in lambdaExpr.arguments:
-                if isinstance(arg, Variable) and arg in substitutingVars and isinstance(substitutingVars, ExpressionList):
-                    raise SpecializationFailure(None, assumptions, "May only specialize a Forall instance variable with an ExpressionList if it is wrapped in Etcetera")
+            lambdaExpr = expr['instance_mapping'];
+            assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
+            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['instance_expression'], lambdaExpr.body['conditions']
+            mappedVarLists.append(instanceVars)
+            # include the mapping for the current instance variables in the partial map
+            try:
+                partialMap.update({iVar:specializeMap[iVar] for iVar in instanceVars})
+            except KeyError:
+                raise SpecializationFailure(None, assumptions, 'Must specialize all of the instance variables of the Forall oeprations to be eliminated')
+            # make substitutions in the condition
+            subbedConditions += conditions.substituted(partialMap, relabelMap)
+            # add conditions for satisfying the domain restriction if there is one
+            if domain is not None:
+                # extract all of the elements
+                for iVar in instanceVars:
+                    elementOrList = iVar.substituted(partialMap, relabelMap)
+                    for element in (elementOrList if isinstance(elementOrList, ExpressionList) else [elementOrList]):
+                        subbedConditions.append(InSet(element, domain.substituted(partialMap, relabelMap)))
+                        
+        # sort the relabeling vars in order of their appearance in the original expression
+        relabelVars = []
+        visitedVars = set()
+        for var in generalExpr.orderOfAppearance(relabelMap.keys()):
+            if var not in visitedVars: # ensure no repeats
+                visitedVars.add(var)
+                relabelVars.append(var)
+        
+        mappedVarLists.append(relabelVars) # relabel vars always the last of the mapped variable lists
+        mappings = dict(specializeMap)
+        mappings.update(relabelMap) # mapping everything
+        
+        # Return the expression and conditions with substitutions and the information to reconstruct the specialization
+        return expr.substituted(specializeMap, relabelMap), subbedConditions, mappedVarLists, mappings
+
+    @staticmethod
+    def _checkRelabelMapping(key, sub, assumptions):
+        from proveit import Variable, MultiVariable, Composite, ExpressionList
+        if isinstance(key, Variable):
+            if not isinstance(sub, Variable):
+                raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
+        elif isinstance(key, MultiVariable):
+            if isinstance(sub, ExpressionList):
+                elems = sub
+            elif isinstance(sub, Composite):
+                elems = sub.values()
+            else:
+                raise RelabelingFailure(None, assumptions, 'May only relabel a MultiVariable to a Composite Expression (as a convention)')                
+            for elem in elems:
+                if not isinstance(elem, Variable) and not isinstance(sub, MultiVariable):
+                    raise RelabelingFailure(None, assumptions, 'May only relabel a MultiVariable to a Composite of Variables/MultiVariables')
         else:
-            # just a relabeling
-            expr = generalExpr
-            instanceVars = []
-            conditions = ExpressionList([])
-            domain = None
-        # make substitutions in the condition
-        subbedConditions = conditions.substituted(subMap, relabelMap)
-        # add conditions for satisfying the domain restriction if there is one
-        if domain is not None:
-            # extract all of the elements
-            for var in instanceVars:
-                elementOrList = var.substituted(subMap, relabelMap)
-                for element in (elementOrList if isinstance(elementOrList, ExpressionList) else [elementOrList]):
-                    subbedConditions.append(InSet(element, domain))
-        return expr.substituted(subMap, relabelMap), instanceVars, subbedConditions, subMap, relabelMap
+            raise RelabelingFailure(None, assumptions, "May only relabel a Variable or a MultiVariable")                       
+
+    @staticmethod
+    def _checkSpecializeMapping(key, sub, assumptions):
+        from proveit import Expression, Composite, Variable, MultiVariable
+        if isinstance(key, Variable):
+            # substitute a simple Variable
+            if not isinstance(sub, Expression) or isinstance(sub, Composite):
+                raise SpecializationFailure(None, assumptions, 'A normal Variable may be not be specialized to a composite Expression (only a MultiVariable may be)')
+        elif isinstance(key, MultiVariable):
+            if sub != key and not isinstance(sub, Composite):
+                raise SpecializationFailure(None, assumptions, 'A MultiVariable may only be specialized to a composite expression (or itself)')
+        else:
+            raise SpecializationFailure(None, assumptions, "May only specialize Forall instance Variables/MultiVariables")
+
 
 class Generalization(Proof):
-    def __init__(self, instanceTruth, newForallVars, newDomain=None, newConditions=tuple()):
-        from proveit import Forall, InSet
+    def __init__(self, instanceTruth, newForallVarLists, newDomains, newConditions=tuple()):
+        '''
+        A Generalization step wraps a KnownTruth (instanceTruth) in one or more Forall operations.
+        The number of Forall operations introduced is the number of lists in newForallVarLists
+        and the number of elements in newDomains.  The conditions are introduced in the
+        order they are given at the outermost level that is applicable.  For example,
+        if newForallVarLists is [[x, y], z], the newDomains are Integers and Reals, and the new 
+        conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
+            forall_{x, y in Integers | f(x, y)} forall_{z in Reals | g(y, z), h(z)} ...
+        '''
+        from proveit import KnownTruth, Forall, Variable, InSet
+        if not isinstance(instanceTruth, KnownTruth):
+            raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
         # the assumptions required for the generalization are the assumptions of
         # the original KnownTruth minus the all of the new conditions (including those
         # implied by the new domain).
         assumptions = set(instanceTruth.assumptions)
-        assumptions -= set(newConditions)
-        if newDomain is not None:
-            assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars}
-        instanceExpr = instanceTruth.expr
-        generalizedExpr = Forall(instanceVars=newForallVars, instanceExpr=instanceExpr, domain=newDomain, conditions=newConditions)
+        remainingConditions = list(newConditions)
+        expr = instanceTruth.expr
+        introducedForallVars = set()
+        if len(newForallVarLists) != len(newDomains):
+            raise GeneralizationFailure(None, assumptions, 'The number of forall variable lists and new domains does not match: %d vs %d'%(len(newForallVarLists), len(newDomains)))
+        for k, (newForallVars, newDomain) in enumerate(reversed(zip(newForallVarLists, newDomains))):
+            for forallVar in newForallVars:
+                if not isinstance(forallVar, Variable):
+                    raise GeneralizationFailure(None, assumptions, 'Forall variables of a generalization must be Variable objects')
+            introducedForallVars |= set(newForallVars)
+            newConditions = []
+            if k == len(newForallVarLists):
+                # the final introduced Forall operation must use all of the remaining conditions
+                newConditions = remainingConditions
+            else:
+                while len(remainingConditions) > 0 and not remainingConditions[-1].freeVars().isdisjoint(newForallVars):
+                    # This condition is applicable since one (or more) of its free variables is 
+                    # occurs as a new forall variable.
+                    newConditions.insert(0, remainingConditions.pop())            
+            # new conditions and domain can eliminate corresponding assumptions
+            assumptions -= set(newConditions)
+            if newDomain is not None:
+                assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars}
+            # create the new generalized expression
+            generalizedExpr = Forall(instanceVars=newForallVars, instanceExpr=expr, domain=newDomain, conditions=newConditions)
+            # make sure this is a proper generalization that doesn't break the logic:
+            Generalization._checkGeneralization(generalizedExpr, expr)
+            expr = generalizedExpr
         for assumption in assumptions:
-            if len(assumption.freeVars() & set(newForallVars)) != 0:
-                raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables unless they are conditions of the generalization')
-        Generalization._checkGeneralization(generalizedExpr, instanceExpr)
+            if not assumption.freeVars().isdisjoint(introducedForallVars):
+                raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
         generalizedTruth = KnownTruth(generalizedExpr, assumptions, self)
         self.instanceTruth = instanceTruth
         self.newForallVars = newForallVars
         self.newDomain = newDomain
         self.newConditions = newConditions
-        Proof.__init__(self, generalizedTruth, [self.instanceTruth])
+        Proof.__init__(self, 'Generalization', generalizedTruth, [self.instanceTruth])
 
     def remake(self):
         return Generalization(self.instanceTruth, self.newForallVars, self.newDomain, self.newConditions)
@@ -522,9 +613,25 @@ class Generalization(Proof):
         operands = generalizedExpr.operands
         lambdaExpr = operands['instance_mapping']
         assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
-        expr = lambdaExpr.expression['instance_expression']
+        expr = lambdaExpr.body['instance_expression']
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
 
+class ProofFailure(Exception):
+    def __init__(self, expr, assumptions, message):
+        self.expr = expr
+        self.message = message
+        self.assumptions = assumptions
+        
+    def __str__(self):
+        if len(self.assumptions) == 0: 
+            assumptionsStr = ""
+        else:
+            assumptionsStr = " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}"
+        if self.expr is not None:
+            return "Unable to prove " + str(self.expr) + assumptionsStr + ": " + self.message
+        else:            
+            return "Proof step failed" + assumptionsStr + ": " + self.message
+            
 class ModusPonensFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)

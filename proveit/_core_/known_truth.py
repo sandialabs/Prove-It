@@ -8,6 +8,8 @@ with possibly fewer assumptions, suffices).
 
 from proveit._core_.expression import Expression
 from storage import storage
+from defaults import defaults, USE_DEFAULTS
+import re
             
 class KnownTruth:
     
@@ -51,15 +53,33 @@ class KnownTruth:
         self.assumptionsSet = frozenset(assumptions)
         self._proof = None # set this after the Proof does some initialization via _recordBestProof         
         # a unique representation for the KnownTruth comprises its expr and assumptions:
-        self._unique_rep = hex(self.expr._unique_id) + ';[' + ','.join(hex(assumption._unique_id) for assumption in assumptions) + ']'
+        self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
         self._unique_id = hash(self._unique_rep)
 
+    def _generate_unique_rep(self, objectRepFn):
+        '''
+        Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
+        '''
+        return objectRepFn(self.expr) + ';[' + ','.join(objectRepFn(assumption) for assumption in self.assumptions) + ']'
+
+    @staticmethod
+    def _referencedObjIds(unique_rep):
+        '''
+        Given a unique representation string, returns the list of representations
+        of Prove-It objects that are referenced.
+        '''
+        # Everything between the punctuation, ';', '[', ']', ',', is a represented object.
+        objIds =  re.split(";|\[|,|\]",unique_rep)
+        return [objId for objId in objIds if len(objId) > 0]           
+                
     def deriveSideEffects(self):
         '''
         Derive any side-effects that are obvious consequences arising from this truth.
         Called after the corresponding Proof is complete.
         '''
+        if not defaults.automation:
+            return # automation disabled
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
             KnownTruth.in_progress_to_derive_sideeffects.add(self)        
@@ -121,6 +141,8 @@ class KnownTruth:
         the certification database.
         '''
         from proveit.certify import recordProof
+        if KnownTruth.theoremBeingProven is None:
+            raise Exception('No theorem being proven; cannot call qed method')
         if self.expr != KnownTruth.theoremBeingProven.provenTruth.expr:
             raise Exception('qed does not match the theorem being proven')
         if len(self.assumptions) > 0:
@@ -141,7 +163,7 @@ class KnownTruth:
         may be unusable when proving a theorem that is restricted with
         respect to which theorems may be used (to avoid circular logic).
         '''
-        return self._proof is None
+        return self._proof is not None
     
     def asTheoremOrAxiom(self):
         '''
@@ -340,17 +362,130 @@ class KnownTruth:
         if len(suitableTruths)==0: return None # no suitable truth
         # return one wih the fewest assumptions
         return min(suitableTruths, key=lambda truth : len(truth.assumptions))
+    
+    @staticmethod
+    def forgetKnownTruths():
+        KnownTruth.lookup_dict.clear()
 
-    def generalize(self, forallVars, domain=None, conditions=tuple()):
+    def relabel(self, relabelMap):
+        '''
+        Performs a relabeling derivation step, deriving another KnownTruth
+        from this KnownTruth, under the same assumptions, with relabeled
+        Variables/MultiVariables.  A Variable may only be relabeled to a Variable.
+        A MultiVariable may be relabeled to a Composite Expression (ExpressionList,
+        ExpressionTensor, or NamedExpressions as appropriate) of Variables/MultiVariables)
+        Returns the proven relabeled KnownTruth, or throws an exception if the proof fails.
+        '''
+        from proveit._core_.proof import Specialization
+        return Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions).provenTruth
+    
+    def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+        '''
+        Performs a specialize derivation step to be proven under the given
+        assumptions, in addition to the assumptions of the KnownTruth.
+        This will eliminate one or more nested Forall operations, specializing
+        the instance variables according to specializeMap.  Eliminates
+        the number of Forall operations required to utilize all of the
+        specializeMap keys.  The default mapping of all instance variables
+        is a mapping to itself (e.g., {x:x, y:y}).  Simultaneously, variables 
+        may be relabeled via relabelMap (see the relabel method).  Note, there 
+        is a difference between  making substitutons simultaneously versus 
+        in-series.  For example, the {x:y, y:x} mapping will swap x and y 
+        variables, but mapping {x:y} then {y:x} in series would set both 
+        variables to x.
+        Returns the proven specialized KnownTruth, or throws an exception if the
+        proof fails.        
+        '''
+        from proveit import Operation, Variable, MultiVariable, Composite, compositeExpression, ExpressionList, ExpressionTensor, Lambda
+        from proveit import Forall
+        from proof import Specialization, SpecializationFailure
+        
+        # if no specializeMap is provided, specialize a single Forall with default mappings (mapping instance variables to themselves)
+        if specializeMap is None: specializeMap = dict()
+        if relabelMap is None: relabelMap = dict()
+        
+        # Include the KnownTruth assumptions along with any provided assumptions
+        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions += self.assumptions
+
+        # For any entrys in the subMap with Operation keys, convert
+        # them to corresponding operator keys with Lambda substitutions.
+        # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
+        # For MultiVariable operators, there will be composite substitutions.
+        processedSubMap = dict()
+        for key, sub in specializeMap.iteritems():
+            if isinstance(key, Operation):
+                operation = key
+                subVar = operation.operator
+                if isinstance(key.operator, MultiVariable):
+                    lambdaExpressions = compositeExpression(sub)
+                    if lambdaExpressions.__class__ == ExpressionList:
+                        sub = ExpressionList([Lambda(operation.operands, lambdaExpr) for lambdaExpr in lambdaExpressions])
+                    elif lambdaExpressions.__class__ == ExpressionTensor:
+                        sub = ExpressionTensor({tensorKey:Lambda(operation.operands, lambdaExpr) for tensorKey, lambdaExpr in lambdaExpressions.iteritems()}, shape=lambdaExpressions.shape, alignmentCoordinates=lambdaExpressions.alignmentCoordinates)
+                else:
+                    if not isinstance(sub, Expression) or isinstance(sub, Composite):
+                        raise SpecializationFailure(None, assumptions, 'Only MultiVariable operations may be be specialized to a composite Expression')
+                    sub = Lambda(operation.operands, sub)
+                processedSubMap[subVar] = sub
+            elif isinstance(key, MultiVariable):
+                processedSubMap[key] = compositeExpression(sub) # MultiVariables map to a Composite
+            elif isinstance(key, Variable):
+                processedSubMap[key] = sub
+            else:
+                raise SpecializationFailure(None, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
+        remainingSubVars = set(processedSubMap.keys())
+        
+        # Determine the number of Forall eliminations.  There must be at least
+        # one (if zero is desired, relabel should be called instead).
+        # The number is determined by the instance variables that occur as keys
+        # in the subMap.
+        expr = self.expr
+        numForallEliminations = 0
+        while numForallEliminations==0 or len(remainingSubVars) > 0:
+            numForallEliminations += 1
+            if not isinstance(expr, Forall):
+                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+            expr = expr.operands
+            lambdaExpr = expr['instance_mapping'];
+            assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
+            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['instance_expression'], lambdaExpr.body['conditions']
+            for iVar in instanceVars:
+                if iVar in remainingSubVars:
+                    # remove this instance variable from the remaining substitution variables
+                    remainingSubVars.remove(iVar)
+                elif iVar not in processedSubMap:
+                    # default is to map instance variables to themselves
+                    processedSubMap[iVar] = iVar
+
+        # Make sure MultiVariables are relabeled to composite expressions, as a consistent convention
+        relabelMap = {key : compositeExpression(sub) if isinstance(key, MultiVariable) else sub for key, sub in relabelMap.iteritems()}
+        
+        return Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions).provenTruth
+        
+    def generalize(self, forallVarLists, domains=None, domain=None, conditions=tuple()):
         '''
         Performs a generalization derivation step.  Returns the
-        proven generalized KnownTruth.
+        proven generalized KnownTruth.  Can introduce any number of
+        nested Forall operations to wrap the original statement,
+        corresponding to the number of given forallVarLists and domains.
+        A single variable list or single variable and a single domain may 
+        be provided to introduce a single Forall wrapper.
         '''
         from proveit._core_.proof import Generalization
         from proveit import Variable
-        if isinstance(forallVars, Variable):
-            forallVars = [forallVars] # a single Variable to convert into a list of one
-        return Generalization(self, forallVars, domain, conditions).provenTruth
+        if isinstance(forallVarLists, Variable):
+            forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
+        else:
+            for forallVarListsElem in forallVarLists:
+                if isinstance(forallVarListsElem, Variable):
+                    # must be a single list, so let's convert it to a list of lists
+                    forallVarLists = [forallVarLists]
+        if domain is not None and domains is not None:
+            raise ValueError("Either specify a 'domain' or a list of 'domains' but not both")
+        if domains is None:
+            domains = [domain]*len(forallVarLists)
+        return Generalization(self, forallVarLists, domains, conditions).provenTruth
 
     def asImplication(self, hypothesis):
         '''
@@ -373,13 +508,6 @@ class KnownTruth:
         from proveit import evaluateTruth
         return evaluateTruth(self.expr, self.assumptions)
 
-    def relabel(self, relabelMap):
-        '''
-        Performs a relabeling derivation step, relabeling the Variables of the 
-        KnownTruth for the expr and the assumptions.
-        '''
-        return Expression.relabel(self.expr, relabelMap, assumptions=self.assumptions)
-
     def asImpl(self, hypothesis):
         '''
         Abbreviation for asImplication.
@@ -392,6 +520,8 @@ class KnownTruth:
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
+        if not self.isUsable():
+            raise Exception('KnownTruth unusable in this proof')
         if len(self.assumptions) > 0:
             return r'\{' + ','.join(assumption.latex() for assumption in self.assumptions) + r'\} \boldsymbol{\vdash} ' + self.expr.latex()
         return r'\boldsymbol{\vdash} ' + self.expr.latex()
@@ -402,6 +532,8 @@ class KnownTruth:
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
+        if not self.isUsable():
+            raise Exception('KnownTruth unusable in this proof')
         if len(self.assumptions) > 0:
             return r'{' + ','.join(assumption.string() for assumption in self.assumptions) + r'} |= ' + self.expr.string()
         return r'|= ' + self.expr.string()
@@ -416,6 +548,8 @@ class KnownTruth:
         '''
         Return a string representation of the KnownTruth.
         '''
+        if not self.isUsable():
+            raise Exception('KnownTruth unusable in this proof')
         return self.string()
     
     def _storage(self):
@@ -434,10 +568,20 @@ class KnownTruth:
         Generate a png image from the latex.  May be recalled from memory or
         storage if it was generated previously.
         '''
+        if not self.isUsable():
+            raise Exception('KnownTruth unusable in this proof')
         if not hasattr(self,'png'):
             self.png = self._storage()._retrieve_png(self, self.latex(), self._config_latex_tool)
         return self.png # previous stored or generated
-    
+
+    def generate_html(self):
+        '''
+        Generate the img html tag with encoded png data.
+        '''
+        self._repr_png_() # sets self.png
+        import base64
+        return '<img src="data:image/png;base64,' + base64.b64encode(self.png) + '">'        
+        
     def _config_latex_tool(self, lt):
         '''
         Configure the LaTeXTool from IPython.lib.latextools as required by all

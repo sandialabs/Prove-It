@@ -14,18 +14,19 @@ class Storage:
         # can recall this without searching the hard drive again.
         self._proveItObjects = dict()
         
-    def _retrieve_png(self, proveItObj, latex, configLatexToolFn, distinction=''):
+    def _retrieve_png(self, proveItObject, latex, configLatexToolFn, distinction=''):
         '''
-        Find the .png file for the stored Expression, KnownTruth, or Proof.
+        Find the .png file for the stored Expression or KnownTruth.
         If distinction is provided, this is an extra string that decorates
         the filename to distinguish it from the basic png of an Expression
         ['info' for exprInfo() png, 'details' for exprInfo(details=True) png].
-        Create it if it did not previously exist using pngGenFn.
-        If it existed or was generated, read the .png file; otherwise return None.
+        Create it if it did not previously exist using _generate_png.
+        Return the png data, storing it in a file for future reference if
+        self.directory is not None.
         '''
         if self.directory is None:
             return self._generate_png(latex, configLatexToolFn) # don't do any storage
-        pv_it_filename = self._retrieve(proveItObj)
+        pv_it_filename = self._retrieve(proveItObject)
         # generate the latex and png file paths, from pv_it_filename and the distinction 
         latex_path = os.path.join(self.directory, '.pv_it', pv_it_filename[:-6] + distinction + '.latex')
         png_path = os.path.join(self.directory, '.pv_it', pv_it_filename[:-6] + distinction + '.png')
@@ -65,45 +66,40 @@ class Storage:
         '''
         # Retrieve pv_it files for the list of objects
         pv_it_filename = self._retrieve(proveItObject)
-        # (replace os.path.sep within pv_it file paths with ':' to make this OS neutral just in case)
-        return ':'.join(pv_it_filename.split(os.path.sep))
+        # (replace os.path.sep within pv_it file paths with '/' to make this OS neutral just in case)
+        return '/'.join(pv_it_filename.split(os.path.sep))
     
     def _proveItObjUniqueRep(self, proveItObject):
         '''
         Generate a unique representation string for the given Prove-It object.
         '''
         from proveit import Expression, KnownTruth, Proof
-        if isinstance(proveItObject, KnownTruth):
-            # To uniquely identify a KnownTruth for displaying purposes, we need its Expression and list of assumptions
-            knownTruth = proveItObject
-            assumptions = knownTruth.assumptions
-            return 'KnownTruth:' + self._proveItObjId(knownTruth.expr) + '[' + ','.join(self._proveItObjId(assumption) for assumption in assumptions) + ']'          
-        elif isinstance(proveItObject, Expression):
-            # This unique_rep differs from expr._unique_rep because it is designed to avoid
-            # collisions in storage which may differ from in-memory collisions (collisions are unlikely, but let's stay safe).
-            expr = proveItObject
-            return str(expr.__class__) + '[' + ','.join(expr._coreInfo) + '];[' + ','.join(self._proveItObjId(subExpr) for subExpr in expr.subExprIter()) + ']'
+        prefix = None
+        if isinstance(proveItObject, Expression):
+            prefix = '' # No prefix for Expressions
+        elif isinstance(proveItObject, KnownTruth):
+            prefix = 'KnownTruth:' # prefix to indicate that it is a KnownTruth
         elif isinstance(proveItObject, Proof):
-            # The Proof is uniquely identified by its provenTruth and its requiredProofs (recursively)
-            proof = proveItObject
-            return 'Proof:' + self._proveItObjId(proof.provenTruth) + '[' + ','.join(self._proveItObjId(requiredProof) for requiredProof in proof.requiredProofs) + ']'
+            prefix = 'Proof:' # prefix to indicate that it is a Proof
         else:
             raise NotImplementedError('Strorage only implemented for Expressions, Statements (effectively), and Proofs')
+        # generate a unique representation using Prove-It object ids for this storage to
+        # represent other referenced Prove-It objects 
+        return prefix + proveItObject._generate_unique_rep(self._proveItObjId)
     
     def _referencedObjIds(self, unique_rep):
         '''
         Given a unique representation string, returns the list of Prove-It objects
         that are referenced.
         '''
+        from proveit import Expression, KnownTruth, Proof
         if unique_rep[:6] == 'Proof:':
-            objIds =  re.split("\[|,|\]",unique_rep[6:])
+            return Proof._referencedObjIds(unique_rep[6:])
         elif unique_rep[:11] == 'KnownTruth:':
-            objIds =  re.split("\[|,|\]",unique_rep[11:])
+            return KnownTruth._referencedObjIds(unique_rep[11:])
         else:
             # Assumed to be an expression then
-            subExprs = unique_rep.split(';')[-1]
-            objIds = re.split("\[|,|\]",subExprs) 
-        return [objId for objId in objIds if len(objId) > 0]           
+            return Expression._referencedObjIds(unique_rep)
 
     def _addReference(self, proveItObjId):
         '''
@@ -113,8 +109,8 @@ class Storage:
         '''
         if not self.refCounted:
             raise Exception("Cannot add a reference if reference counted wasn't enabled")
-        # replace ':' with os.path.sep within the Prove-It object id to object the filename
-        pv_it_filename = os.path.sep.join(proveItObjId.split(':'))
+        # replace '/' with os.path.sep within the Prove-It object id to object the filename
+        pv_it_filename = os.path.sep.join(proveItObjId.split('/'))
         pv_it_dir = os.path.join(self.directory, '.pv_it')
         with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
             contents = f.read()
@@ -136,8 +132,8 @@ class Storage:
         '''
         if not self.refCounted:
             raise Exception("Cannot remove a reference if reference counted wasn't enabled")
-        # replace ':' with os.path.sep within the Prove-It object id to object the filename
-        pv_it_filename = os.path.sep.join(proveItObjId.split(':'))
+        # replace '/' with os.path.sep within the Prove-It object id to object the filename
+        pv_it_filename = os.path.sep.join(proveItObjId.split('/'))
         pv_it_dir = os.path.join(self.directory, '.pv_it')
         with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
             contents = f.read()

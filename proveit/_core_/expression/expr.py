@@ -4,6 +4,7 @@ This is the expression module.
 
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.storage import storage
+import re
 
 class Expression:
     unique_id_map = dict() # map unique_id's to unique_rep's
@@ -26,13 +27,30 @@ class Expression:
                 raise TypeError('Expecting subExpression elements to be of Expression type')
         # unique_rep is a unique representation based upon the coreInfo and unique_id's of sub-Expressions
         self._coreInfo, self._subExpressions = coreInfo, subExpressions
-        self._unique_rep = str(self.__class__) + '[' + ','.join(self._coreInfo) + '];[' + ','.join(hex(expr._unique_id) for expr in subExpressions) + ']'
+        self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
         self._unique_id = hash(self._unique_rep)
         while self._unique_id in Expression.unique_id_map and Expression.unique_id_map[self._unique_id] != self._unique_rep:
             self._unique_id += 1
         Expression.unique_id_map[self._unique_id] = self._unique_rep
     
+    def _generate_unique_rep(self, objectRepFn):
+        '''
+        Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
+        '''
+        return str(self.__class__) + '[' + ','.join(self._coreInfo) + '];[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+    
+    @staticmethod
+    def _referencedObjIds(unique_rep):
+        '''
+        Given a unique representation string, returns the list of representations
+        of Prove-It objects that are referenced.
+        '''
+        # After the ';' comes the list of sub-Expressions.
+        subExprs = unique_rep.split(';')[-1]
+        objIds = re.split("\[|,|\]",subExprs) 
+        return [objId for objId in objIds if len(objId) > 0]  
+            
     def __setattr__(self, attr, value):
         '''
         Expressions should be read-only objects.  Attributes may be added, however; for example,
@@ -109,7 +127,7 @@ class Expression:
         '''
         return iter(self._subExpressions)
     
-    def prove(self, assumptions=USE_DEFAULTS, automation=True):
+    def prove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Attempt to prove this expression automatically under the
         given assumptions (if None, uses defaults.assumptions).  First
@@ -121,9 +139,11 @@ class Expression:
         same set of assumptions will be blocked, so `conclude` methods are
         free make attempts that may be cyclic.
         '''
-        from proveit import KnownTruth
+        from proveit import KnownTruth, ProofFailure
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptionsSet = set(assumptions)
+        if automation is USE_DEFAULTS:
+            automation = defaults.automation
         
         # Prove each assumption, by assumption, to deduce any side-effects.
         for assumption in assumptions:
@@ -171,8 +191,11 @@ class Expression:
         to prevent infinite recursion, so there are no worries regarding cyclic
         attempts of concluding an expression.
         '''
-        from proveit import proveViaReduction
-        return proveViaReduction(self, assumptions)
+        from proveit import proveViaReduction, ProofFailure
+        try:
+            return proveViaReduction(self, assumptions)
+        except:
+            raise ProofFailure(self, assumptions, "Unable to automatically conclude expression.")
     
     def deriveSideEffects(self, knownTruth):
         '''
@@ -244,30 +267,7 @@ class Expression:
         for _ in range (n):
             dummyVars.append(safeDummyVar(*([self] + dummyVars)))
         return dummyVars
-    
-    def relabel(self, relabelMap=None, assumptions=None):
-        '''
-        Performs a relabeling derivation step to be proven under the given
-        assumptions (if None, uses defaults.assumptions).  Returns
-        the proven relabeled KnownTruth, or throws an exception if the
-        proof fails.
-        '''
-        return self._specialize_or_relabel(subMap=None, relabelMap=relabelMap, assumptions=assumptions)
-    
-    def specialize(self, subMap=None, relabelMap=None, assumptions=None):
-        '''
-        Performs a specialize derivation step to be proven under the given
-        assumptions (if None, uses defaults.assumptions).  Returns
-        the proven relabeled KnownTruth, or throws an exception if the
-        proof fails.
-        '''
-        # Can be overridden by the Forall implementation
-        return self._specialize_or_relabel(subMap=subMap, relabelMap=relabelMap, assumptions=assumptions)
-
-    def _specialize_or_relabel(self, subMap=None, relabelMap=None, assumptions=None):
-        from proveit._core_.proof import Specialization
-        return Specialization(self, subMap, relabelMap, assumptions).provenTruth
-        
+            
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         If possible, return a KnownTruth of this expression equal to its
@@ -277,16 +277,27 @@ class Expression:
         '''
         from proveit import defaultEvaluate
         return defaultEvaluate(self, assumptions)
+    
+    def orderOfAppearance(self, subExpressions):
+        '''
+        Yields the given sub-Expressions in the order in which they
+        appear in this Expression.  There may be repeats.
+        '''
+        if self in subExpressions:
+            yield self
+        for subExpr in self._subExpressions:
+            for expr in subExpr.orderOfAppearance(subExpressions):
+                yield expr
         
     def _restrictionChecked(self, reservedVars):
         '''
         Check that a substituted expression (self) does not use any reserved variables
-        (arguments of a Lambda function Expression).
+        (parameters of a Lambda function Expression).
         '''
         if not reservedVars is None and not self.freeVars().isdisjoint(reservedVars.keys()):
-            raise ScopingViolation("Must not make substitution with reserved variables  (i.e., arguments of a Lambda function)")
+            raise ScopingViolation("Must not make substitution with reserved variables  (i.e., parameters of a Lambda function)")
         return self
-
+    
     def _repr_png_(self):
         '''
         Generate a png image from the latex.  May be recalled from memory or
@@ -303,7 +314,7 @@ class Expression:
         '''
         for sub_expr in self._subExpressions:
             sub_expr._config_latex_tool(lt)
-    
+
     def exprInfo(self, details=False):
         from proveit._core_.expression.expr_info import ExpressionInfo
         return ExpressionInfo(self, details)
@@ -345,19 +356,5 @@ class ScopingViolation(Exception):
     def __str__(self):
         return self.message
 
-class ProofFailure(Exception):
-    def __init__(self, expr, assumptions, message):
-        self.expr = expr
-        self.message = message
-        self.assumptions = assumptions
-        
-    def __str__(self):
-        if len(self.assumptions) == 0: 
-            assumptionsStr = ""
-        else:
-            assumptionsStr = " assuming {" + ", ".join(str(assumption) for assumption in self.assumptions) + "}"
-        if self.expr is not None:
-            return "Unable to prove " + str(self.expr) + assumptionsStr + ": " + self.message
-        else:            
-            return "Proof step failed" + assumptionsStr + ": " + self.message
+
     
