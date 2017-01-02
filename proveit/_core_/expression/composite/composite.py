@@ -23,18 +23,17 @@ def compositeExpression(expressions):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
         return ExpressionList(expressions) # a single expression that we will wrap in an ExpressionLIst
-    elif isinstance(expressions, dict) and len(expressions.keys()) > 0 and isinstance(expressions.keys()[0], str):
-        # A dictionary must be an NamedExpressions
-        return NamedExpressions(expressions)
     else:
-        # convert KnownTruth objects to their represented expressions
-        expressions = [elem.expr if isinstance(elem, KnownTruth) else elem for elem in expressions]
         if all(isinstance(subExpr, Expression) for subExpr in expressions):
             # An iterable over only Expressions must be an exprlist
             return ExpressionList(*expressions)
         else:
-            # Assume to be a tensor as a list of lists
-            return ExpressionTensor(expressions)
+            try:
+                # try to see if we can use expressions to generate a NamedExpressions object
+                return NamedExpressions(expressions)
+            except:        
+                # Assume to be a tensor as a list of lists
+                return ExpressionTensor(expressions)
 
 def singleOrCompositeExpression(exprOrExprs):
     '''
