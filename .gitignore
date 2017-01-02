@@ -1,1 +1,3 @@
 *.pyc
+.pv_it
+.ipynb_checkpoints
