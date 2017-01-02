@@ -38,7 +38,7 @@ class _StoredSpecialStmt:
     def __str__(self):
         return self.package + '.' + self.name
     
-    def remove(self):
+    def remove(self, keepPath=False):
         '''
         Remove the axiom or theorem and all references to it and any proofs
         that depend upon it.
@@ -52,8 +52,9 @@ class _StoredSpecialStmt:
         dependentTheorems = self.readDependentTheorems()
         for dependent in dependentTheorems:
             _StoredTheorem(dependent).removeProof()
-        # remove the entire directory for the axiom/theorem
-        shutil.rmtree(self.path)
+        if not keepPath:
+            # remove the entire directory for the axiom/theorem
+            shutil.rmtree(self.path)
         
     def readDependentTheorems(self):
         '''
@@ -259,9 +260,9 @@ class _StoredTheorem(_StoredSpecialStmt):
         # Remove obsolete usedBy links that refer to this theorem by its old proof
         prevUsedAxioms, prevUsedTheorems = self.readDependencies()
         for usedAxiom in prevUsedAxioms:
-            self._removeUsedByEntry(str(self))
+            _StoredAxiom(usedAxiom)._removeUsedByEntry(str(self))
         for usedTheorem in prevUsedTheorems:
-            self._removeUsedByEntry(str(self))
+            _StoredTheorem(usedTheorem)._removeUsedByEntry(str(self))
         # If it was previously complete before, we need to inform dependents that
         # it is not longer complete.
         if wasComplete:
@@ -346,7 +347,7 @@ def _setSpecialStatements(package, kind, definitions):
         elif previousDefIds[name] != exprId:
             # modified special statement. remove the old one first.
             print 'Modifying ' + kind + ' in _certified_ database: ' + package + '.' + name 
-            storedSpecialStmt.remove()
+            storedSpecialStmt.remove(keepPath=True)
         # record the axiom/theorem id (creating the directory if necessary)
         specialStatementDir = os.path.join(specialStatementsPath, name)
         if not os.path.isdir(specialStatementDir):
