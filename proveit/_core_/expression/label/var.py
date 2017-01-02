@@ -75,3 +75,9 @@ def safeDummyVar(*expressions):
     while DummyVariable(i) in usedVs:
         i += 1
     return DummyVariable(i)
+
+def safeDefaultOrDummyVar(defaultVar, *expressions):
+    usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])
+    if defaultVar not in usedVs:
+        return defaultVar
+    return safeDummyVar(*expressions)
