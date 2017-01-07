@@ -12,9 +12,6 @@ beginTheorems(locals())
 
 substitute = Forall((P, x, y), Py, conditions=[Px, Equals(x, y)])
 
-
-equalsTransitivity = Forall((x, y, z), Equals(x, z), conditions=[Equals(x, y), Equals(y, z)])
-
 # In[5]:
 
 unaryEvaluation = Forall((f, x, a, c), Implies(Equals(x, a), Implies(Equals(fa, c), Equals(fx, c))))
