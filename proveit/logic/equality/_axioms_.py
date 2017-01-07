@@ -18,9 +18,8 @@ equalityInBool
 
 # In[4]:
 
-# Obtain via substitution -- not an axiom!
-#equalsTransitivity = Forall((x, y, z), Implies(Equals(x, y), Implies(Equals(y, z), Equals(x, z))))
-#equalsTransitivity
+equalsTransitivity = Forall((x, y, z), Equals(x, z), conditions=[Equals(x, y), Equals(y, z)])
+equalsTransitivity
 
 
 # In[5]:

@@ -118,7 +118,7 @@ class Equals(BinaryOperation):
         From x = y (self) and y = z (otherEquality) derive and return x = z.
         Also works more generally as long as there is a common side to the equations.
         '''
-        from _theorems_ import equalsTransitivity
+        from _axioms_ import equalsTransitivity
         # We can assume that y=x will be a KnownTruth if x=y is a KnownTruth because it is derived as a side-effect.
         if self.rhs == otherEquality.lhs:
             return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions=assumptions)
@@ -340,6 +340,8 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
     if not isinstance(expr, Operation):
         raise EvaluationError('Unknown evaluation: ' + str(expr))
     reducedExpr = reduceOperands(expr, assumptions)
+    if reducedExpr == expr:
+        raise EvaluationError('Unable to evaluate: ' + str(expr))
     evaluation = Equals(expr, reducedExpr.evaluate().rhs).prove(assumptions=assumptions)
     # store it in the evaluations dictionary for next time
     Equals.evaluations.setdefault(expr, set()).add(evaluation)
