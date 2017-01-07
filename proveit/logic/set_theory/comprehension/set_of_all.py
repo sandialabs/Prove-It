@@ -51,7 +51,7 @@ class SetOfAll(OperationOverInstances):
         outStr += '}'
         return outStr
     
-    def unfoldElemInSet(self, element, assumptions=USE_DEFAULTS):
+    def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From (x in {y | Q(y)})_{y in S}, derive and return [(x in S) and Q(x)], where x is meant as the given element.
         From (x in {y | ..Q(y)..})_{y in S}, derive and return [(x in S) and ..Q(x)..], where x is meant as the given element.
@@ -71,7 +71,7 @@ class SetOfAll(OperationOverInstances):
             f_op, f_sub = Operation(f, self.instanceVars), self.instanceElement
             return unfoldComprehension.specialize({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {yMulti:self.instanceVars}).deriveConclusion(assumptions)
     
-    def deduceElemInSet(self, element, assumptions=USE_DEFAULTS):
+    def deduceMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''   

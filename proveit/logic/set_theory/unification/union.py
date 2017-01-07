@@ -15,7 +15,7 @@ class Union(AssociativeOperation):
     def operatorOfOperation(subClass):
         return UNION    
 
-    def unfoldElemInSet(self, element):
+    def unfoldMembership(self, element):
         '''
         From [element in (A union B)], derive and return [(element in A) or (element in B)],
         where self represents (A union B). 
@@ -25,7 +25,7 @@ class Union(AssociativeOperation):
             leftOperand, rightOperand = self.operands       
             return unionDef.specialize({x:element, A:leftOperand, B:rightOperand}).deriveRight()
 
-    def deduceElemInSet(self, element):
+    def deduceMembership(self, element):
         '''
         From [(element in A) or (element in B)], derive and return [element in (A union B)]
         where self represents (A union B).

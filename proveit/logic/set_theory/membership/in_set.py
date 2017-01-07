@@ -12,15 +12,6 @@ class InSet(BinaryOperation):
     def operatorOfOperation(subClass):
         return IN    
         
-    """
-    # LEADS TO PARADOX.  ONLY ALLOWED WHEN THE DOMAIN IS A KNOWN SET.
-    def deduceInBool(self):
-        '''
-        Deduce and return that this 'in' statement is in the set of BOOLEANS.
-        '''
-        self.domain.deduceInSetIsBool(self.element)
-    """
-    
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From (x in S), derive and return an unfolded version.
@@ -29,14 +20,18 @@ class InSet(BinaryOperation):
         the unfoldElemInSet(...) method for each type [see unfoldElemInSet(..) defined
         for Singleton or Union].
         '''
-        return self.domain.unfoldElemInSet(self.element, assumptions=assumptions)
+        if hasattr(self.domain, 'unfoldMembership'):
+            return self.domain.unfoldMembership(self.element, assumptions=assumptions)
+        raise AttributeError("'unfoldMembership' is not implemented for a domain of type " + str(self.domain.__class__))
 
     def conclude(self, assumptions):
         '''
         Attempt to conclude that the element is in the domain by calling
         'deduceInSet' on the element with the domain and assumptions.
         '''
-        return self.domain.deduceElemInSet(self.element, assumptions)
+        if hasattr(self.domain, 'deduceMembership'):
+            return self.domain.deduceMembership(self.element, assumptions)
+        raise AttributeError("'deduceMembership' is not implemented for a domain of type " + str(self.domain.__class__))
 
     
     def deriveSideEffects(self, knownTruth):
@@ -47,6 +42,14 @@ class InSet(BinaryOperation):
         if hasattr(self.domain, 'deduceMembershipSideEffects'):
             tryDerivation(self.domain.deduceMembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
         tryDerivation(self.unfold, assumptions=knownTruth.assumptions)    
+
+    def evaluate(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to evaluate whether element is or is not in the given domain.
+        '''
+        if hasattr(self.domain, 'evaluateMembership'):
+            return self.domain.evaluateMembership(self.element, assumptions)
+        raise AttributeError("'evaluateMembership' is not implemented for a domain of type " + str(self.domain.__class__))
         
     """
     def concludeAsFolded(self):
