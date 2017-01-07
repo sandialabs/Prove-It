@@ -477,10 +477,12 @@ class KnownTruth:
         if isinstance(forallVarLists, Variable):
             forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
         else:
-            for forallVarListsElem in forallVarLists:
-                if isinstance(forallVarListsElem, Variable):
-                    # must be a single list, so let's convert it to a list of lists
-                    forallVarLists = [forallVarLists]
+            if len(forallVarLists) == 0:
+                raise ValueError("Must provide at least one Variable to generalize over")
+            if isinstance(forallVarLists[0], Variable):
+                # must be a single list, so let's convert it to a list of lists
+                forallVarLists = [forallVarLists]
+                    
         if domain is not None and domains is not None:
             raise ValueError("Either specify a 'domain' or a list of 'domains' but not both")
         if domains is None:
