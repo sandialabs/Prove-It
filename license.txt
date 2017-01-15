@@ -1,0 +1,20 @@
+************************************************************************
+Prove-It 0.3:  Copyright 2017 Sandia Corporation
+
+Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+the U.S. Government retains certain rights in this software.
+
+All information contained herein is, and remains the property 
+of Sandia National Laboratories, the Department of Energy, or other
+federal agencies. The intellectual and technical concepts contained herein 
+are proprietary to Sandia National Laboratories, and are protected by copyright 
+law. Dissemination of this information or reproduction of this material is 
+strictly forbidden unless prior written permission is obtained from Sandia
+National Laboratories. 
+
+This software is not approved for public release, and should be treated as 
+proprietary data. All users of this code are required to sign and abide by the 
+terms of Sandia's Cyber Security Users Agreement. If you know of someone who 
+would like access to this code, please have them contact Wayne Witzel directly 
+at wwitzel@sandia.gov.
+************************************************************************
