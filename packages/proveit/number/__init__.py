@@ -1,3 +1,5 @@
+# Arithmetic and number theory concepts.
+
 from sets import Integers, Naturals, NaturalsPos, Len, Reals, RealsNeg, RealsPos, Complexes
 from sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from sets import num, e, pi, i, DigitLiteral, zero, one, two, three, four, five, six, seven, eight, nine, WholeDecimal

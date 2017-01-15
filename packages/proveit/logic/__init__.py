@@ -1,3 +1,5 @@
+# Boolean arithmetic, equality, and set theory.
+
 from boolean import And, Or, Not, Implies, Iff, compose
 from boolean import TRUE, FALSE, Booleans, inBool, deduceInBool
 from boolean import Forall, Exists, NotExists
