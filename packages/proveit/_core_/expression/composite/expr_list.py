@@ -97,9 +97,13 @@ class ExpressionList(Composite, Expression):
             for expr in self:
                 subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars)
                 if isinstance(expr, Etcetera):
-                    # expand the etcetera substitution              
+                    #  expand he etcetera substitution              
                     for etc_expr in subbed_expr if isinstance(subbed_expr, ExpressionList) else [subbed_expr]:
-                        yield etc_expr
+                        # if there are free multi-variables, re-bundle the element
+                        if len(etc_expr.freeMultiVars()) > 0:
+                            yield Etcetera(etc_expr)
+                        else:
+                            yield etc_expr
                 else: yield subbed_expr # yield an individual ExpressionList element
         return ExpressionList(*list(subbedGen()))
         

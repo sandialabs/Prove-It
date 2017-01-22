@@ -60,24 +60,37 @@ class Operation(Expression):
         according to subMap and/or relabeled according to relabelMap.
         '''
         from lambda_expr import Lambda
+        from label import MultiVariable
         from bundle import Etcetera
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
-        operator = self.operator
         subbedOperands = self.operands.substituted(exprMap, relabelMap, reservedVars)
         subbedOperator = self.operator.substituted(exprMap, relabelMap, reservedVars)
-        # Not allowed to substitute the operator or operation if there are Etcetera operands
+        # Performing an operation substitution where the operation takes a single MultiVariable parameter
+        # is treated as a special case
+        performingMultiVarOperationSub = False
+        if isinstance(subbedOperator, Lambda):
+            if any(isinstance(param, MultiVariable) for param in subbedOperator.parameters):
+                if len(subbedOperator.parameters) != 1:
+                    raise ImproperSubstitution('Only a single MultiVariable parameter is allowed in the specification of operation substitution to avoid ambiguity')
+                performingMultiVarOperationSub = True
+        # Except when performing a MultiVariable operation substitution,
+        # not allowed to substitute the operator or operation if there are Etcetera operands
         # because the number of operands should not be indeterminate when performing such a substition.
-        for subbedOperand in subbedOperands:
-            if isinstance(subbedOperand, Etcetera):
-                if subbedOperator != operator:
-                    raise Exception('Not allowed to perform an Operation substition with any remaining Etcetera operands because the number of operands should be determined when substititing the operation.')
+        if not performingMultiVarOperationSub:
+            for subbedOperand in subbedOperands:
+                if isinstance(subbedOperand, Etcetera):
+                    if subbedOperator != self.operator:
+                        raise Exception('Not allowed to perform a non-MultiVariable Operation substition with any remaining Etcetera operands because the number of operands should be determined when substititing the operation.')
         if isinstance(subbedOperator, Lambda):
             # Substitute the entire operation via a Lambda body
             # For example, f(x, y) -> x + y.
-            if len(subbedOperands) != len(subbedOperator.parameters):
-                raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of parameters')
-            operandSubMap = {param:operand for param, operand in zip(subbedOperator.parameters, subbedOperands)}
+            if performingMultiVarOperationSub: # operation takes a single MultiVariable parameter
+                operandSubMap = {subbedOperator.parameters[0] : subbedOperands}
+            else:
+                if len(subbedOperands) != len(subbedOperator.parameters):
+                    raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of parameters')
+                operandSubMap = {param:operand for param, operand in zip(subbedOperator.parameters, subbedOperands)}
             if not reservedVars is None:
                 # the reserved variables of the lambda body excludes the lambda parameters
                 # (i.e., the parameters mask externally reserved variables).

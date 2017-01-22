@@ -34,6 +34,8 @@ class Bundle(Expression):
         from the Bundle wrapping and incorporated into the multi-expr which contains it.
         '''
         from proveit._core_.expression.composite import compositeExpression
+        from etcetera import Etcetera
+        from block import Block
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         freeBundleVars = [multiVar for multiVar in self.bundledExpr.freeMultiVars()]
@@ -53,11 +55,12 @@ class Bundle(Expression):
                 assert False, "shouldn't happen"
             bundleVarSub = compositeExpression(subBundleVarMap[bundleVar])
             def substituteForElem(subElem):
+                if isinstance(subElem, Bundle): subElem = subElem.bundledExpr
                 subBundleVarMap[bundleVar] = subElem
                 return self.bundledExpr.substituted(subExprMap, subRelabelMap, reservedVars)
             if self.multiExprType == ExpressionList:
                 # expr_list bundle expansion
-                return ExpressionList(substituteForElem(subElem) for subElem in bundleVarSub)
+                return ExpressionList([substituteForElem(subElem) for subElem in bundleVarSub])
             elif self.multiExprType == ExpressionTensor:
                 # expr_tensor bundle expansion
                 return ExpressionTensor({key:substituteForElem(subElem) for key, subElem in bundleVarSub})
@@ -81,6 +84,3 @@ class Bundle(Expression):
         No free MultiVariables within a bundle.
         '''
         return set()
-    
-
-
