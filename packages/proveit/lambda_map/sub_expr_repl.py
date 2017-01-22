@@ -1,4 +1,5 @@
 from proveit import Expression, Lambda, ExpressionList, Composite, NamedExpressions
+from proveit import KnownTruth
 
 class SubExprRepl:
     '''
@@ -24,6 +25,8 @@ class SubExprRepl:
         that corresponds with an item/attribute of the currently
         mapped sub-Expression.
         '''
+        if isinstance(masterExpr, KnownTruth):
+            masterExpr = masterExpr.expr
         self.subExprPath = tuple(subExprPath)
         self.exprHierarchy = [masterExpr]
         expr = self.exprHierarchy[0]
@@ -115,21 +118,21 @@ class SubExprRepl:
         Returns the lambda function/map that the SubExprRepl is currently
         producing.
         '''
-        # build the lambda expression, starting with the lambda argument and
+        # build the lambda expression, starting with the lambda parameter and
         # working up the hierarchy.
         masterExpr = self.exprHierarchy[0]
         curSubExpr = self.exprHierarchy[-1]
         if isinstance(curSubExpr, Composite):
             dummyVars = masterExpr.safeDummyVars(len(curSubExpr))
-            lambdaArgs = dummyVars
+            lambdaParams = dummyVars
             lambdaExpr = curSubExpr.__class__.make(curSubExpr.coreInfo(), dummyVars)
         else:
             lambdaExpr = masterExpr.safeDummyVar()
-            lambdaArgs = [lambdaExpr]
+            lambdaParams = [lambdaExpr]
         for expr, idx in reversed(zip(self.exprHierarchy, self.subExprPath)):
             exprSubs = list(expr.subExprIter())
             lambdaExpr = expr.__class__.make(expr.coreInfo(), exprSubs[:idx] + [lambdaExpr] + exprSubs[idx+1:])
-        return Lambda(lambdaArgs, lambdaExpr)
+        return Lambda(lambdaParams, lambdaExpr)
     
     def _expr_rep(self):
         '''
@@ -137,14 +140,14 @@ class SubExprRepl:
         but the sub-Expressions that may be accessed more deeply.
         '''
         lambdaMap = self.lambdaMap()
-        lambdaArgs = lambdaMap.arguments
+        lambdaParams = lambdaMap.parameters
         curSubExpr = self.exprHierarchy[-1]
         if isinstance(curSubExpr, Composite):
             subExprs = list(curSubExpr.subExprIter())
         else:
             subExprs = [curSubExpr]
-        namedExprDict = {'lambda':lambdaMap}
-        namedExprDict.update({str(lambdaArg):subExpr for lambdaArg, subExpr in zip(lambdaArgs, subExprs)})
+        namedExprDict = [('lambda',lambdaMap)]
+        namedExprDict += [(str(lambdaParam), subExpr) for lambdaParam, subExpr in zip(lambdaParams, subExprs)]
         return NamedExpressions(namedExprDict)        
     
     def _repr_png_(self):
