@@ -49,7 +49,7 @@ class OrderingRelation(BinaryOperation):
         assumptions.
         '''
         for knownTruth in orderingClass.knownLeftSides.get(expr, []):
-            if assumptionsSet.issuperset(knownTruth.assumptions):
+            if knownTruth.isSufficient(assumptionsSet):
                 yield (knownTruth, knownTruth.rhs)
         for (knownTruth, otherExpr) in  Equals.knownRelationsFromLeft(expr, assumptionsSet):
             yield (knownTruth, otherExpr)
@@ -64,7 +64,7 @@ class OrderingRelation(BinaryOperation):
         assumptions.
         '''
         for knownTruth in orderingClass.knownRightSides.get(expr, []):
-            if assumptionsSet.issuperset(knownTruth.assumptions):
+            if knownTruth.isSufficient(assumptionsSet):
                 yield (knownTruth, knownTruth.lhs)
         for (knownTruth, otherExpr) in  Equals.knownRelations(expr, assumptionsSet):
             yield (knownTruth, otherExpr)
