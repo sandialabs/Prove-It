@@ -144,12 +144,7 @@ class Expression:
         assumptionsSet = set(assumptions)
         if automation is USE_DEFAULTS:
             automation = defaults.automation
-        
-        # Prove each assumption, by assumption, to deduce any side-effects.
-        for assumption in assumptions:
-            if assumption is not self:
-                assumption.prove([assumption])
-        
+                
         foundTruth = KnownTruth.findKnownTruth(self, assumptionsSet)
         if foundTruth is not None: 
             return foundTruth # found an existing KnownTruth that does the job!
@@ -191,11 +186,8 @@ class Expression:
         to prevent infinite recursion, so there are no worries regarding cyclic
         attempts of concluding an expression.
         '''
-        from proveit import proveViaReduction, ProofFailure
-        try:
-            return proveViaReduction(self, assumptions)
-        except:
-            raise ProofFailure(self, assumptions, "Unable to automatically conclude expression.")
+        from proveit import proveViaReduction
+        return proveViaReduction(self, assumptions)
     
     def deriveSideEffects(self, knownTruth):
         '''

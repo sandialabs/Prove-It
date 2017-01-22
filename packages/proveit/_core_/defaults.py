@@ -1,6 +1,8 @@
 import hashlib, os
 
 class Defaults:
+    provingAssumptions = set() # used to avoid infinite recursion
+    
     def __init__(self):
         self.assumptions = frozenset()
         self.automation = True
@@ -22,10 +24,19 @@ class Defaults:
         '''
         from expression.expr import Expression
         assumptionsSet = set()
-        for assumption in assumptions:
+        try:
+            assumptions = list(assumptions)
+        except TypeError:
+            raise TypeError('The assumptions must be an iterable collection of Expression objects')
+        for assumption in list(assumptions):
             if not isinstance(assumption, Expression):
                 raise TypeError('The assumptions must be an iterable collection of Expression objects')
             if assumption not in assumptionsSet:
+                # Prove each assumption, by assumption, to deduce any side-effects.
+                if assumption not in Defaults.provingAssumptions: # avoid infinite recursion
+                    Defaults.provingAssumptions.add(assumption)
+                    assumption.prove([assumption])
+                    Defaults.provingAssumptions.remove(assumption)   
                 yield assumption
             assumptionsSet.add(assumption)
         

@@ -29,11 +29,12 @@ class Proof:
                 # when a proof for some Theorem is being generated as a
                 # means to avoid circular logic.
                 self._unusableTheorem = requiredProof._unusableTheorem
-                if len(KnownTruth.in_progress_to_derive_sideeffects) == 0:
-                    # When not deriving a side-effect, raise an UnusableTheorem
-                    # exception when an attempt is made to use an "unusable" theorem
-                    # directly or indirectly.
-                    raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
+                # Raise an UnusableTheorem exception when an attempt is made 
+                # to use an "unusable" theorem directly or indirectly.
+                if len(KnownTruth.in_progress_to_derive_sideeffects) > 0:
+                    # occurred while deriving side-effects
+                    raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem, 'Happened while deriving side-effects -- proveit.tryDerivation method is recommended.')
+                raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
         self.numSteps = sum(proof.numSteps for proof in self.requiredProofs) + 1
         if not hasattr(self, '_dependents'):
             self._dependents = [] # proofs that directly require this one
@@ -49,7 +50,7 @@ class Proof:
         self._unique_id = hash(self._unique_rep)
         # in case this new proof makes an old one obselete or is born obsolete itself:
         provenTruth._recordBestProof(self)
-        if provenTruth.proof() is self: # don't bother redoing side effects if this proof was born obsolete
+        if provenTruth.proof() is self and self.isUsable(): # don't bother redoing side effects if this proof was born obsolete or unusable
             # Axioms and Theorems will derive their side-effects after all of them are created; done in special_statements.py.
             if not isinstance(self, Axiom) and not isinstance(self, Theorem):
                 # may derive any side-effects that are obvious consequences arising from this truth:
@@ -122,6 +123,15 @@ class Proof:
 
     def assumptions(self):
         return self.provenTruth.assumptions
+        
+    def _propagateUnusableTheorem(self, unusableTheorem):
+        '''
+        Propagate to proofs that are dependent upon an unusable theorem that
+        they are unusable due to this unusable theorem.
+        '''
+        self._unusableTheorem = unusableTheorem
+        for dependent in self._dependents:
+            dependent._propagateUnusableTheorem(unusableTheorem)        
 
     def __setattr__(self, attr, value):
         '''
@@ -264,16 +274,14 @@ class Theorem(Proof):
         '''
         s = str(self)
         hierarchy = s.split('.')
-        for k in xrange(len(hierarchy)):
+        for k in xrange(1, len(hierarchy)):
             yield '.'.join(hierarchy[:k])
+        yield s
      
     @staticmethod
     def updateUsability():
         for theorem in Theorem.allTheorems:
-            theorem._setUsability()
-            if theorem._unusableTheorem is not None:
-                # propagate the fact that this proof is not usable
-                theorem.provenTruth._updateProof(None)
+            theorem._setUsability()            
     
     def _setUsability(self):
         '''
@@ -299,12 +307,15 @@ class Theorem(Proof):
             if self in KnownTruth.dependentTheoremsOfTheoremBeingProven:
                 raise CircularLogic(KnownTruth.theoremBeingProven, self)
             self._unusableTheorem = None # This Theorem is usable because it is being presumed.
-        elif isFullyProven(self) and self != KnownTruth.theoremBeingProven and self not in KnownTruth.dependentTheoremsOfTheoremBeingProven:
-            self._unusableTheorem = None # This Theorem is usable because it has been fully proven as does not depend upon the Theorem being proven.
+        # Instead of allowing fully proven theorems to be used, force explicit declaration of 
+        # dependence so there is enough information to rederive all proofs after figuring out
+        # the proper order to do so.
+        #elif isFullyProven(self) and self != KnownTruth.theoremBeingProven and self not in KnownTruth.dependentTheoremsOfTheoremBeingProven:
+        #    self._unusableTheorem = None # This Theorem is usable because it has been fully proven as does not depend upon the Theorem being proven.
         else:
             # This Theorem is not usable during the proof (if it is needed, it must be
-            # presumed or fully proven).
-            self._unusableTheorem = self
+            # presumed or fully proven).  Propagate this fact to all dependents.
+            self._propagateUnusableTheorem(self)
 
 def _checkImplication(implicationExpr, hypothesisExpr, conclusionExpr):
     '''
@@ -417,7 +428,12 @@ class Specialization(Proof):
         return self._step_type + ':{' + mappingInfo + '}'
                                 
     def remake(self):
-        return Specialization(self.generalTruth.expr, self.subMap, self.relabelMap, assumptions = self.provenTruth.assumptions)
+        # relabeling variables are the last of the mappedVarLists, preceeding mappedVarLists
+        # are for the specializeMap
+        numForallEliminations = len(self.mappedVarLists)-1
+        specializeMap = {key:self.mappings[key] for varList in self.mappedVarLists[:-1] for key in varList}
+        relabelMap = {key:self.mappings[key] for key in self.mappedVarLists[-1]}
+        return Specialization(self.generalTruth, numForallEliminations, specializeMap, relabelMap, assumptions = self.provenTruth.assumptions)
 
     def stepTypeLatex(self):
         if len(self.mappedVarLists) > 1:
@@ -649,11 +665,12 @@ class GeneralizationFailure(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 class UnusableTheorem(Exception):
-    def __init__(self, provingTheorem, unusableTheorem):
+    def __init__(self, provingTheorem, unusableTheorem, extraMsg=''):
         self.provingTheorem = provingTheorem
         self.unusableTheorem = unusableTheorem
+        self.extraMsg = '; ' + extraMsg
     def __str__(self):
-        return str(self.unusableTheorem) + ' is not usable while proving ' + str(self.provingTheorem) + ' (it has not be presumed)'
+        return str(self.unusableTheorem) + ' is not usable while proving ' + str(self.provingTheorem) + ' (it has not been presumed)' + self.extraMsg
 
 class CircularLogic(Exception):
     def __init__(self, provingTheorem, presumedTheorem):
