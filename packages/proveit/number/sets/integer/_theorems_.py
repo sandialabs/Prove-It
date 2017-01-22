@@ -1,8 +1,9 @@
 from proveit import Operation
-from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, Booleans
+from proveit.logic import Forall, InSet, NotInSet, NotEquals, And, Implies, Equals, Booleans
 from proveit.number import Integers, Naturals, NaturalsPos, Interval, Reals, RealsPos, Complexes
 from proveit.number import Add, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
-from proveit.common import a, b, n, m, x, P, S
+from proveit.number import Len
+from proveit.common import a, b, n, m, x, y, P, S, xMulti, xEtc, PxEtc
 from proveit.number import zero, one, two, three, four, five, six, seven, eight, nine
 from proveit.number.common import Pzero, Pm, P_mAddOne, Pn
 from proveit import beginTheorems, endTheorems
@@ -16,6 +17,10 @@ successiveNats = Forall(n, InSet(Add(n, one), Naturals), domain=Naturals)
 inductionLemma = Forall(n, Forall(S, Implies(And(InSet(zero, S), Forall(x, InSet(Add(x,one), S), domain=S)), InSet(n, S))), domain=Naturals)
 
 induction = Forall(P, Implies(And(Pzero, Forall(m, P_mAddOne, domain=Naturals, conditions=[Pm])), Forall(n, Pn, Naturals)))
+
+zeroLenExprList = Equals(Len(), zero)
+
+multiVarInduction = Forall(P, Implies(Forall((xMulti, y), Implies(PxEtc, Operation(P, [xEtc, y]))), Forall(xMulti, PxEtc)))
 
 inIntsIsBool = Forall(a, InSet(InSet(a, Integers), Booleans))
 inIntsIsBool
