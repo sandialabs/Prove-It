@@ -5,19 +5,20 @@ from proveit import beginTheorems, endTheorems
 beginTheorems(locals())
 
 trueOrTrue = Or(TRUE, TRUE)
-trueOrTrue
 
 trueOrFalse = Or(TRUE, FALSE)
-trueOrFalse
 
 falseOrTrue = Or(FALSE, TRUE)
-falseOrTrue
+
+orIfBoth = Forall((A, B), Or(A, B), conditions=[A, B])
+
+orIfOnlyLeft = Forall((A, B), Or(A, B), conditions=[A, Not(B)])
+
+orIfOnlyRight = Forall((A, B), Or(A, B), conditions=[Not(A), B])
 
 orIfLeft = Forall((A, B), Or(A, B), domain=Booleans, conditions=[A])
-orIfLeft
 
 orIfRight = Forall((A, B), Or(A, B), domain=Booleans, conditions=[B])
-orIfRight
 
 orIfAny = Forall((Amulti, B, Cmulti), Or(Aetc, B, Cetc), domain=Booleans, conditions=[B])
 orIfAny
@@ -40,10 +41,8 @@ orImpliesRightIfNotLeft
 hypotheticalDisjunction = Forall((A, B, C), Implies(And(Implies(A, C), Implies(B, C)), Implies(Or(A, B), C)), domain=Booleans)
 hypotheticalDisjunction
 
-disjunctionBinaryClosure = Forall((A, B), inBool(Or(A, B)), domain=Booleans)
-disjunctionBinaryClosure
+binaryClosure = Forall((A, B), inBool(Or(A, B)), domain=Booleans)
 
-disjunctionClosure = Forall(multiA, inBool(Or(Aetc)), domain=Booleans)
-disjunctionClosure
+closure = Forall(Amulti, inBool(Or(Aetc)), domain=Booleans)
 
 endTheorems(locals(), __package__)

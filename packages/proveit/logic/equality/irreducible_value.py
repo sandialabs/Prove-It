@@ -1,7 +1,14 @@
 class IrreducibleValue:
     def __init__(self):
         pass
-        
+    
+    def evaluate(self):
+        '''
+        IrreducibleValues evaluate to themselves.
+        '''
+        from proveit.logic import Equals
+        return Equals(self, self).prove()
+    
     def evalEquality(self, otherIrreducible):
         '''
         Returns the evaluation of the equality between this irreducible

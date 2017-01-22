@@ -4,15 +4,15 @@ from proveit import beginAxioms, endAxioms
 
 beginAxioms(locals())
 
-notF = Equals(Not(FALSE), TRUE)
-notF
+# Implicit in the following set of axioms is that Not(A) is in Booleans iff
+# A is in Booleans.  Otherwise, Not(A) is simply undefined.
 
-notT = Equals(Not(TRUE), FALSE)
-notT
+negationIntro = Forall(A, Not(A), conditions=[Equals(A, FALSE)])
 
-negationForBooleansOnly = Forall(A, inBool(A), conditions=inBool(Not(A)))
+negationElim = Forall(A, Equals(A, FALSE), conditions=[Not(A)])
 
-affirmViaContradiction = Forall(A, Implies(Implies(Not(A), FALSE), A), domain=Booleans)
-affirmViaContradiction
+falsifiedNegationIntro = Forall(A, Equals(Not(A), FALSE), conditions=[A])
+
+falsifiedNegationElim = Forall(A, A, conditions=[Equals(Not(A), FALSE)])
 
 endAxioms(locals(), __package__)

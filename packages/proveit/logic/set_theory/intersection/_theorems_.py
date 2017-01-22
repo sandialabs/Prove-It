@@ -1,23 +1,26 @@
-from proveit.logic import Forall, Equals, And, Not, InSet, Intersect, Booleans, TRUE, FALSE
-from proveit.common import A, B, Cmulti, Cetc, x
+from proveit.logic import Forall, Equals, And, Or, InSet, NotInSet, Intersect, Etcetera, Booleans
+from proveit.common import A, B, Amulti, Aetc, x
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-intersectionFolding = Forall((x, A, B), InSet(x, Intersect(A, B)), conditions=[And(InSet(x, A), InSet(x, B))])
-intersectionFolding
+membershipEval = Forall((x, Amulti), Equals(InSet(x, Intersect(Amulti)), And(Etcetera(InSet(x, Amulti)))))
 
-intersectionUnfolding = Forall((x, A, B), And(InSet(x, A), InSet(x, B)), conditions=[InSet(x, Intersect(A, B))])
-intersectionUnfolding
+binaryNonMembershipEval = Forall((x, A, B), Equals(NotInSet(x, Intersect(A, B)), Or(NotInSet(x, A), NotInSet(x, B))))
 
-intersectionEvalTrue = Forall((x, A, B), Equals(InSet(x, Intersect(A, B)), TRUE), conditions=[InSet(x, A), InSet(x, B)])
-intersectionEvalTrue
+nonMembershipEval = Forall((x, Amulti), Equals(NotInSet(x, Intersect(Amulti)), Or(Etcetera(NotInSet(x, Amulti)))))
 
-intersectionEvalViaNotInLeft = Forall((x, A, B), Equals(InSet(x, Intersect(A, B)), FALSE), conditions=[Not(InSet(x, A)), InSet(InSet(x, B), Booleans)])
-intersectionEvalViaNotInLeft
+binaryMembershipFolding = Forall((x, A, B), InSet(x, Intersect(A, B)), conditions=[InSet(x, A), InSet(x, B)])
 
-intersectionEvalViaNotInRight = Forall((x, A, B), Equals(InSet(x, Intersect(A, B)), FALSE), conditions=[Not(InSet(x, B)), InSet(InSet(x, A), Booleans)])
-intersectionEvalViaNotInRight
+membershipFolding = Forall((x, Amulti), InSet(x, Intersect(Aetc)), conditions=[Etcetera(InSet(x, Amulti))])
+
+binaryMembershipUnfolding = Forall((x, A, B), And(InSet(x, A), InSet(x, B)), conditions=[InSet(x, Intersect(A, B))])
+
+membershipUnfolding = Forall((x, Amulti), And(Etcetera(InSet(x, Amulti))), conditions=[InSet(x, Intersect(Aetc))])
+
+binaryNonmembershipFolding = Forall((x, A, B), NotInSet(x, Intersect(A, B)), conditions=[Or(NotInSet(x, A), NotInSet(InSet(x, B)))])
+
+nonmembershipFolding = Forall((x, Amulti), NotInSet(x, Intersect(Amulti)), conditions=[Or(Etcetera(NotInSet(x, Amulti)))])
 
 endTheorems(locals(), __package__)
 

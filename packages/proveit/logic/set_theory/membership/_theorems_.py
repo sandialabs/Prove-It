@@ -1,14 +1,16 @@
-from proveit.logic import Booleans, Forall, Exists, And, Or, Not, Implies, Iff, Equals, NotEquals, InSet, NotInSet, Singleton, Union, Intersect, Difference, SubsetEq, SupersetEq, SetOfAll
+from proveit.logic import Booleans, FALSE, Forall, Exists, And, Or, Not, Implies, Iff, Equals, NotEquals, InSet, NotInSet, Singleton, Union, Intersect, Difference, SubsetEq, SupersetEq, SetOfAll
 from proveit.common import f, x, y, A, B, C, S, P, fy, Px, Py, xEtc, yEtc, fxEtc, fyEtc, Qetc, etc_Qx, etc_Qy, etc_QyEtc
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
 
-foldNotIn = Forall((x, S), Implies(Not(InSet(x, S)), NotInSet(x, S)))
-foldNotIn
+unfoldNotInSet = Forall((x, S), Not(InSet(x, S)), conditions=[NotInSet(x, S)])
 
-unfoldNotIn = Forall((x, S), Implies(NotInSet(x, S), Not(InSet(x, S))))
-unfoldNotIn
+foldNotInSet = Forall((x, S), NotInSet(x, S), conditions=[Not(InSet(x, S))])
+
+inSetEqFalseIfNotInSet = Forall((x, S), Equals(InSet(x, S), FALSE), conditions=[NotInSet(x, S)])
+
+notInSetEqFalseIfInSet = Forall((x, S), Equals(NotInSet(x, S), FALSE), conditions=[InSet(x, S)])
 
 endTheorems(locals(), __package__)

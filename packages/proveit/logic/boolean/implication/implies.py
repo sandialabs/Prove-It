@@ -71,7 +71,7 @@ class Implies(BinaryOperation):
         '''
         for knownTruth in Implies.knownImplications.get(expr, frozenset()):
             if knownTruth.hypothesis == expr:
-                if assumptionsSet.issuperset(knownTruth.assumptions):
+                if knownTruth.isSufficient(assumptionsSet):
                     yield (knownTruth, knownTruth.conclusion)
     
     @staticmethod
@@ -83,7 +83,7 @@ class Implies(BinaryOperation):
         '''
         for knownTruth in Implies.knownImplications.get(expr, frozenset()):
             if knownTruth.conclusion == expr:
-                if assumptionsSet.issuperset(knownTruth.assumptions):
+                if knownTruth.isSufficient(assumptionsSet):
                     yield (knownTruth, knownTruth.hypothesis)
                     
     def deriveConclusion(self, assumptions=USE_DEFAULTS):

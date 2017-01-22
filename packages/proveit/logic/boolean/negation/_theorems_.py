@@ -5,44 +5,32 @@ from proveit import beginTheorems, endTheorems
 beginTheorems(locals())
 
 notFalse = Not(FALSE)
-notFalse
 
-affirmViaFalseNegation = Forall(A, A, conditions=[Equals(Not(A), FALSE)])
-affirmViaFalseNegation
-
-denyViaTrueNegation = Forall(A, Not(A), conditions=[Equals(Not(A), TRUE)])
-denyViaTrueNegation
-
-
-eqFalseFromNot = Forall(A, Equals(A, FALSE), conditions=[Not(A)])
-eqFalseFromNot
-
-fromDoubleNegation = Forall(A, A, conditions=[Not(Not(A))])
-fromDoubleNegation
+# we derive these truth table theorems from stronger axioms
+notF = Equals(Not(FALSE), TRUE)
+notT = Equals(Not(TRUE), FALSE)
 
 notTimpliesF = Implies(Not(TRUE), FALSE)
-notTimpliesF
-
-contradictionViaNegation = Forall(A, FALSE, conditions=[A, Not(A)])
-contradictionViaNegation
-
-notFromEqFalse = Forall(A, Not(A), conditions=[Equals(A, FALSE)])
-notFromEqFalse
 
 doubleNegation = Forall(A, Not(Not(A)), conditions=[A])
-doubleNegation
 
-eqFalseFromNegation = Forall(A, Equals(Not(A), FALSE), conditions=[A])
-eqFalseFromNegation
+fromDoubleNegation = Forall(A, A, conditions=[Not(Not(A))])
 
-negationClosure = Forall(A, inBool(Not(A)), domain=Booleans)
-negationClosure
+contradictionViaNegation = Forall(A, FALSE, conditions=[A, Not(A)])
+
+closure = Forall(A, inBool(Not(A)), domain=Booleans)
+
+
+negationForBooleansOnly = Forall(A, inBool(A), conditions=inBool(Not(A)))
+
+
+
+
+
 
 doubleNegationEquiv = Forall(A, Equals(A, Not(Not(A))), domain=Booleans)
-doubleNegationEquiv
 
 hypotheticalContradiction = Forall(A, Implies(Implies(A, FALSE), Not(A)), domain=Booleans)
-hypotheticalContradiction
 
 
 endTheorems(locals(), __package__)

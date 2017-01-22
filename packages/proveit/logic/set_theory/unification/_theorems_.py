@@ -1,23 +1,26 @@
-from proveit.logic import Forall, Equals, Or, Not, InSet, Union, Booleans, TRUE, FALSE
-from proveit.common import A, B, Cmulti, Cetc, x
-from proveit import beginTheorems, endTheorems
+from proveit.logic import Forall, Equals, Or, And, InSet, NotInSet, Union, Booleans
+from proveit.common import A, B, Amulti, Aetc, x
+from proveit import Etcetera, beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-unionFolding = Forall((x, A, B), InSet(x, Union(A, B)), conditions=[Or(InSet(x, A), InSet(x, B))])
-unionFolding
+binaryMembershipUnfolding = Forall((x, A, B), Or(InSet(x, A), InSet(x, B)), conditions=[InSet(x, Union(A, B))])
 
-unionUnfolding = Forall((x, A, B), Or(InSet(x, A), InSet(x, B)), conditions=[InSet(x, Union(A, B))])
-unionUnfolding
+binaryMembershipFolding = Forall((x, A, B), InSet(x, Union(A, B)), conditions=[Or(InSet(x, A), InSet(x, B))])
 
-unionEvalFalse = Forall((x, A, B), Equals(InSet(x, Union(A, B)), FALSE), conditions=[Not(InSet(x, A)), Not(InSet(x, B))])
-unionEvalFalse
+binaryNonMembershipEquiv = Forall((x, A, B), Equals(NotInSet(x, Union(A, B)), And(NotInSet(x, A), NotInSet(x, B))))
 
-unionEvalViaInLeft = Forall((x, A, B), Equals(InSet(x, Union(A, B)), FALSE), conditions=[InSet(x, A), InSet(InSet(x, B), Booleans)])
-unionEvalViaInLeft
+binaryNonmembershipFolding = Forall((x, A, B), NotInSet(x, Union(A, B)), conditions=[NotInSet(x, A), NotInSet(x, B)])
 
-unionEvalViaInRight = Forall((x, A, B), Equals(InSet(x, Union(A, B)), FALSE), conditions=[InSet(x, B), InSet(InSet(x, A), Booleans)])
-unionEvalViaInRight
+membershipEquiv = Forall((x, Amulti), Equals(InSet(x, Union(Aetc)), Or(Etcetera(InSet(x, Amulti)))))
+
+nonMembershipEquiv = Forall((x, Amulti), Equals(NotInSet(x, Union(Amulti)), And(Etcetera(NotInSet(x, Amulti)))))
+
+membershipFolding = Forall((x, Amulti), InSet(x, Union(Aetc)), conditions=[Or(Etcetera(InSet(x, Amulti)))])
+
+membershipUnfolding = Forall((x, Amulti), Or(Etcetera(InSet(x, Amulti))), conditions=[InSet(x, Union(Aetc))])
+
+nonmembershipFolding = Forall((x, Amulti), NotInSet(x, Union(Aetc)), conditions=[Etcetera(NotInSet(x, Amulti))])
 
 endTheorems(locals(), __package__)
 

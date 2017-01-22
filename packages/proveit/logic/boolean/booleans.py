@@ -6,7 +6,21 @@ class BooleanSet(Literal):
     def __init__(self):
         Literal.__init__(self, __package__, stringFormat='BOOLEANS', latexFormat=r'\mathbb{B}')
 
-    def unfoldElemInSet(self, element):
+    def membershipEquivalence(self, element, assumptions=USE_DEFAULTS):
+        '''
+        Deduce [(element in Booleans) = [(element = TRUE) or (element = FALSE)].
+        '''
+        from _theorems_ import inBoolEquiv
+        return inBoolEquiv.specialize({A:element})
+
+    def nonMembershipEquivalence(self, element, assumptions=USE_DEFAULTS):
+        '''
+        Deduce [(element not in Booleans) = [(element != TRUE) and (element != FALSE)].
+        '''
+        from _theorems_ import notInBoolEquiv
+        return notInBoolEquiv.specialize({A:element})
+
+    def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From inBool(Element), derive and return [(element = TRUE) or (element = FALSE)].
         '''
@@ -14,24 +28,24 @@ class BooleanSet(Literal):
         #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
         return unfoldInBool.specialize({A:element}).deriveConclusion().checked({inBool(element)})
     
-    def deduceElemInSet(self, element, assumptions=USE_DEFAULTS):
+    def deduceMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         Try to deduce that the given element is in the set of Booleans under the given assumptions.
         '''   
-        from proveit.logic import Or, Equals
-        from _theorems_ import inBoolIfEqTrue, inBoolIfEqFalse
+        from proveit import SpecializationFailure
+        from _theorems_ import inBoolIfTrue, inBoolIfFalse
         if hasattr(element, 'deduceInBool'):
             return element.deduceInBool(assumptions=assumptions)
         else:
             try:
-                return inBoolIfEqTrue.specialize({A:element}, assumptions=assumptions)
-            except:
+                return inBoolIfTrue.specialize({A:element}, assumptions=assumptions)
+            except SpecializationFailure:
                 pass
             try:
-                return inBoolIfEqFalse.specialize({A:element}, assumptions=assumptions)
-            except:
+                return inBoolIfFalse.specialize({A:element}, assumptions=assumptions)
+            except SpecializationFailure:
                 pass
-            raise ProofFailure(self, assumptions, str(element) + ' not proven to be equal to TRUE or FALSE.')
+            raise ProofFailure(inBool(element), assumptions, str(element) + ' not proven to be equal to TRUE or FALSE.')
 
     def evaluateForall(self, forallStmt, assumptions):
         '''

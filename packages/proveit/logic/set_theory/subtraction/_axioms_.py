@@ -6,7 +6,6 @@ beginAxioms(locals())
 
 differenceDef = Forall((x, A, B), Equals(InSet(x, Difference(A, B)), 
                                       And(InSet(x, A), NotInSet(x, B))))
-differenceDef
 
 endAxioms(locals(), __package__)
 

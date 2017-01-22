@@ -2,7 +2,18 @@ from proveit import Literal, BinaryOperation, MultiVariable, Operation, Etcetera
 from proveit.common import A, B, x
 from proveit.common import f, S, Qmulti, xEtc
 
+SUBSET = Literal(__package__, stringFormat = 'subset', latexFormat = r'\subset')
 SUBSET_EQ = Literal(__package__, stringFormat = 'subseteq', latexFormat = r'\subseteq')
+
+class Subset(BinaryOperation):
+    def __init__(self, subset, superset):
+        BinaryOperation.__init__(self, SUBSET, subset, superset)
+        self.subset = subset
+        self.superset = superset
+
+    @classmethod
+    def operatorOfOperation(subClass):
+        return SUBSET
 
 class SubsetEq(BinaryOperation):
     def __init__(self, subset, superset):
@@ -30,7 +41,7 @@ class SubsetEq(BinaryOperation):
             
     def unfold(self, elemInstanceVar=x):
         '''
-        From A subset B, derive and return (forall_{x in A} x in B).
+        From A subseteq B, derive and return (forall_{x in A} x in B).
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
         from _theorems_ import unfoldSubsetEq
@@ -38,7 +49,7 @@ class SubsetEq(BinaryOperation):
     
     def concludeAsFolded(self, elemInstanceVar=x):
         '''
-        Derive this folded version, A subset B, from the unfolded version,
+        Derive this folded version, A subseteq B, from the unfolded version,
         (forall_{x in A} x in B).
         '''
         from _theorems_ import foldSubsetEq

@@ -31,15 +31,18 @@ class NotEquals(BinaryOperation):
         if self.lhs == FALSE or self.rhs == FALSE:
             # prove something is not false by proving it to be true
             return self.concludeViaDoubleNegation(assumptions)
-        return BinaryOperation.conclude(assumptions) # try the default (reduction)
+        try:
+            return self.concludeAsFolded(assumptions)
+        except:
+            return BinaryOperation.conclude(assumptions) # try the default (reduction)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From x != y derive y != x.
         '''
         from _theorems_ import notEqualsSymmetry
-        return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
-
+        return notEqualsSymmetry.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        
     def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         '''
         From A != FALSE, derive and return A assuming inBool(A).
@@ -76,8 +79,15 @@ class NotEquals(BinaryOperation):
         From (x != y), derive and return Not(x=y).
         '''
         from _theorems_ import unfoldNotEquals
-        return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
-
+        return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+    
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude (x != y) from Not(x = y).
+        '''
+        from _theorems_ import foldNotEquals
+        return foldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that may be evaluated to irreducible values that

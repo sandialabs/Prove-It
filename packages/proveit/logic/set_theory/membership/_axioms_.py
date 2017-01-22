@@ -7,7 +7,7 @@ beginAxioms(locals())
 allNotInNothing = Forall(x, NotInSet(x, NOTHING))
 allNotInNothing
 
-notInDef = Forall((x, S), Equals(NotInSet(x, S), Not(InSet(x, S))))
-notInDef
+notInSetDef = Forall((x, S), Equals(NotInSet(x, S), Not(InSet(x, S))))
+notInSetDef
 
 endAxioms(locals(), __package__)

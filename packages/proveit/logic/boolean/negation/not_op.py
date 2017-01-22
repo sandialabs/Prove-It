@@ -18,7 +18,7 @@ class Not(Operation):
         If this happens to be of the form :math:`\lnot(\exists ...)`, derive :math:`\nexists ...`.
         '''
         from proveit.logic import Equals, InSet, Exists
-        if self.operand != FALSE:
+        if self.operand != FALSE: # avoid infinite recursion
             tryDerivation(self.equateNegatedToFalse, knownTruth.assumptions)
         tryDerivation(self.deriveContradiction, knownTruth.assumptions)
         if isinstance(self.operand, Not):
@@ -42,8 +42,9 @@ class Not(Operation):
             # the expression being double-negated must be true in order
             # for the double-negation to be true.
             return self.concludeViaDoubleNegation(assumptions)
-        # try to prove the negation via evaluation reduction.
-        return Operation.conclude(assumptions)        
+        # conclude negation via evaluating the operand as false.
+        self.operand.evaluate(assumptions=assumptions)
+        return self.concludeViaFalsifiedNegation(assumptions=assumptions)
         
     @classmethod
     def operatorOfOperation(subClass):
@@ -61,7 +62,12 @@ class Not(Operation):
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from _axioms_ import notT, notF # load in truth-table evaluations
+        from _theorems_ import notT, notF # load in truth-table evaluations
+        from proveit.logic.boolean.negation._axioms_ import falsifiedNegationIntro
+        opValue = self.operand.evaluate(assumptions=assumptions).rhs
+        if opValue == TRUE:
+            # evaluate to FALSE via falsifiedNegationIntro
+            return falsifiedNegationIntro.specialize({A:self.operand}, assumptions=assumptions)
         return Operation.evaluate(self, assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
@@ -76,8 +82,8 @@ class Not(Operation):
         From :math:`\lnot A`, derive and return :math:`A = \bot`.
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
-        from _theorems_ import eqFalseFromNot
-        return eqFalseFromNot.specialize({A:self.operand}, assumptions=assumptions)
+        from _axioms_ import negationElim
+        return negationElim.specialize({A:self.operand}, assumptions=assumptions)
     
     def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         r'''
@@ -98,10 +104,17 @@ class Not(Operation):
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
             return doubleNegation.specialize({A:stmt}, assumptions=assumptions)
+
+    def concludeViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
+        r'''
+        Prove and return self of the from not(A) assuming A=FALSE.
+        '''
+        from _axioms_ import negationIntro
+        return negationIntro.specialize({A:self.operand}, assumptions=assumptions)                        
             
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
-        From :math:`\lnot A`, derive and return :math:`A \Rightarrow \bot`.
+        From not(A), and assuming A, derive and return FALSE.
         '''
         from _theorems_ import contradictionViaNegation
         return contradictionViaNegation.specialize({A:self.operand}, assumptions=assumptions)
@@ -113,7 +126,7 @@ class Not(Operation):
         from proveit.logic import Equals
         from proveit.logic.equality._theorems_ import foldNotEquals
         if isinstance(self.operand, Equals):
-            return foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}).deriveConclusion(assumptions)
+            return foldNotEquals.specialize({x:self.operand.lhs, y:self.operand.rhs}, assumptions=assumptions)
 
     def deriveNotIn(self, assumptions=USE_DEFAULTS):
         r'''
@@ -122,7 +135,7 @@ class Not(Operation):
         from proveit.logic import InSet
         from proveit.logic.set_theory._theorems_ import foldNotIn
         if isinstance(self.operand, InSet):
-            return foldNotIn.specialize({x:self.operand.element, S:self.operand.domain}).deriveConclusion(assumptions)
+            return foldNotIn.specialize({x:self.operand.element, S:self.operand.domain}, assumptions=assumptions)
 
     def deriveNotExists(self, assumptions=USE_DEFAULTS):
         r'''

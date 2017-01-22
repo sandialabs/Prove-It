@@ -20,21 +20,36 @@ class Singleton(Operation):
     
     def latex(self, **kwargs):
         return r'\{' + self.elem.latex() + r'\}'        
- 
+
+    def membershipEquivalence(self, element, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return and [element in {y}] = [element = y] where self = {y}.
+        '''
+        from _axioms_ import singletonDef
+        return singletonDef.specialize({x:element, y:self.elem})
+
+    def nonMembershipEquivalence(self, element):
+        '''
+        Deduce and return and [element not in {y}] = [element != y] where self = {y}.
+        '''
+        from _theorems_ import nonMembershipEquiv
+        return nonMembershipEquiv.specialize({x:element, y:self.elem})
+  
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From [element in {y}], derive and return (element = y).
         '''
-        from _axioms_ import singletonDef
-        return singletonDef.specialize({x:element, y:self.elem}).deriveRightViaEquivalence(assumptions=assumptions)
-    
+        from _theorems_ import unfoldSingleton
+        return unfoldSingleton.specialize({x:element, y:self.elem})
+            
     def deduceMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From (element = y), derive and return [element in {y}] where self represents {y}.
         '''   
-        from _axioms_ import singletonDef
-        return singletonDef.specialize({x:element, y:self.elem}).deriveLeftViaEquivalence(assumptions=assumptions)
+        from _theorems_ import foldSingleton
+        return foldSingleton.specialize({x:element, y:self.elem})
 
+    """
     def evaluateMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         Attempt to evaluate [element in {y}] to be TRUE or FALSE, dependent on whether or
@@ -50,5 +65,4 @@ class Singleton(Operation):
         elif evaluation == FALSE:
             # short proof that it evaluates to FALSE
             return inSingletonEvalFalse.specialize({x:element, y:self.elem})
-        
-        
+    """

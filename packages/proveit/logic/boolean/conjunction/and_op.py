@@ -1,4 +1,4 @@
-from proveit import Literal, AssociativeOperation, USE_DEFAULTS
+from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
 from proveit.common import A, B, Amulti, Cmulti
 
@@ -31,8 +31,12 @@ class And(AssociativeOperation):
         That is, deduce :math:'A', :math:'B', ..., :math:'Z' from
         :math:`A \land B \and ... \land Z`.
         '''
-        for i in xrange(len(self.operands)):
-            self.deriveInPart(i, assumptions=knownTruth.assumptions) # uses axiom
+        if len(self.operands) == 2:
+            tryDerivation(self.deriveLeft(assumptions=knownTruth.assumptions))
+            tryDerivation(self.deriveRight(assumptions=knownTruth.assumptions))
+        else:
+            for i in xrange(len(self.operands)):
+                tryDerivation(self.deriveInPart(i, assumptions=knownTruth.assumptions))
         
     def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
         r'''
@@ -83,11 +87,14 @@ class And(AssociativeOperation):
         falseIndex = -1
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:
-                # The operands are not always true/false, so try the default evaluate method
+                # The operands are not all true/false, so try the default evaluate method
                 # which will attempt to evaluate each of the operands.
                 return AssociativeOperation.evaluate(self, assumptions)
             if operand == FALSE:
                 falseIndex = i
+        if len(self.operands) == 2:
+            # This will automatically return andTT, andTF, andFT, or andFF
+            return AssociativeOperation.evaluate(self, assumptions)
         if falseIndex >= 0:
             # one operand is FALSE so the whole conjunction evaluates to FALSE.
             return conjunctionFalseEval.specialize({Amulti:self.operands[:falseIndex], Cmulti:self.operands[falseIndex+1:]})
