@@ -1,4 +1,5 @@
 *.pyc
+*.egg-info
 .pv_it
 .ipynb_checkpoints
 _certified_
