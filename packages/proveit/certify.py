@@ -21,7 +21,7 @@ import os, shutil
 import proveit
 
 def _makeStorage(package):
-    return Storage(os.path.join(*([proveit.__path__[0]] + ['_certified_'] + package.split('.'))), refCounted=True)
+    return Storage(os.path.join(*([proveit.__path__[0]] + ['..', '_certified_'] + package.split('.'))), refCounted=True)
 
 class _StoredSpecialStmt:
     def __init__(self, stmtStr, stmtType):
@@ -131,6 +131,12 @@ class _StoredTheorem(_StoredSpecialStmt):
                 raise ValueError('Expecting an Theorem not a Axiom')
         _StoredSpecialStmt.__init__(self, str(theorem), 'theorem')
 
+    def remove(self, keepPath=False):
+        if self.hasProof():
+            # must remove the proof first
+            self.removeProof()
+        _StoredSpecialStmt.remove(self, keepPath)
+
     def readDependencies(self):
         '''
         Returns the used set of axioms and theorems (as a tuple of sets
@@ -157,6 +163,11 @@ class _StoredTheorem(_StoredSpecialStmt):
         '''
         
         from proveit._core_ import Proof
+        
+        if self.hasProof():
+            # remove the old proof if one already exists
+            self.removeProof()
+            
         if not isinstance(proof, Proof):
             raise ValueError("Expecting 'proof' to be a Proof object")
         proofId = self.storage._proveItObjId(proof)
@@ -277,7 +288,7 @@ class _StoredTheorem(_StoredSpecialStmt):
 
     def _undoDependentCompletion(self, usedTheorem):
         '''
-        Due to the prove being removing, a dependent theorem is no longer complete.
+        Due to the proof being removed, a dependent theorem is no longer complete.
         This new status must be updated and propagated.
         '''
         wasComplete = self.isComplete() # was it complete before?
@@ -334,6 +345,7 @@ def _setSpecialStatements(package, kind, definitions):
     for name in toRemove:
         print 'Removing ' + kind + ': ' + package + '.' + name + ' from _certified_ database'
         _makeStoredSpecialStmt(package + '.' + name, kind[:-1]).remove()
+        
     # Update the definitions
     for name, expr in definitions.iteritems():
         # add the expression to the "database" via the storage object.
@@ -391,7 +403,7 @@ def allRequirements(theorem):
     Returns the set of axioms that are required (directly or indirectly)
     by the theorem.  Also, if the given theorem is not completely proven,
     return the set of unproven theorems that are required (directly or
-    indirectly).  Returns this axion set and theorem set as a tuple.
+    indirectly).  Returns this axiom set and theorem set as a tuple.
     '''
     if not hasProof(theorem):
         raise Exception('The theorem must be proven in order to obtain its requirements')
@@ -415,6 +427,32 @@ def allRequirements(theorem):
                 toProcess.add(usedTheorem)
         processed.add(nextTheorem)
     return (requiredAxioms, requiredTheorems)
+
+def allUsedTheorems(theorem):
+    '''
+    Returns the set of theorems used to prove the given theorem, directly
+    or indirectly.
+    '''
+    if not hasProof(theorem):
+        raise Exception('The theorem must be proven in order to obtain its requirements')
+    storedTheorem = _StoredTheorem(theorem)
+    _, usedTheorems = storedTheorem.readDependencies()
+    allUsedTheorems = set()
+    processed = set()
+    toProcess = usedTheorems
+    while len(toProcess) > 0:
+        nextTheorem = toProcess.pop()
+        allUsedTheorems.add(nextTheorem)
+        storedTheorem = _StoredTheorem(nextTheorem)
+        if not storedTheorem.hasProof():
+            processed.add(nextTheorem)
+            continue
+        _, usedTheorems = storedTheorem.readDependencies()
+        for usedTheorem in usedTheorems:
+            if usedTheorem not in processed:
+                toProcess.add(usedTheorem)
+        processed.add(nextTheorem)
+    return allUsedTheorems 
 
 def allDependents(theoremOrAxiom, kind=None):
     '''
