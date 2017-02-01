@@ -140,6 +140,7 @@ class Expression:
         free make attempts that may be cyclic.
         '''
         from proveit import KnownTruth, ProofFailure
+        from proveit import Not
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptionsSet = set(assumptions)
         if automation is USE_DEFAULTS:
@@ -164,31 +165,64 @@ class Expression:
         Expression.in_progress_to_conclude.add(in_progress_key)        
         
         try:
-            concludedTruth = self.conclude(assumptions)
+            concludedTruth = None
+            if isinstance(self, Not):
+                # if it is a Not expression, try concludeNegation on the operand
+                try:
+                    concludedTruth = self.operands[0].concludeNegation(assumptions=assumptions)
+                except NotImplementedError:
+                    pass # that didn't work, try conclude on the Not expression itself
+            if concludedTruth is None:
+                concludedTruth = self.conclude(assumptions)
             if not isinstance(concludedTruth, KnownTruth):
                 raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
             if concludedTruth.expr != self:
                 raise ValueError("'conclude' method should return a KnownTruth for this Expression object.")
+            if not concludedTruth.assumptionsSet.issubset(assumptionsSet):
+                raise ValueError("While proving " + str(self) + ", 'conclude' method returned a KnownTruth with extra assumptions: " + str(set(concludedTruth.assumptions) - assumptionsSet))
             return concludedTruth
         except NotImplementedError:
             raise ProofFailure(self, assumptions, "'conclude' method not implemented for proof automation")
         finally:
             Expression.in_progress_to_conclude.remove(in_progress_key)
-        
+
+    def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
+        '''
+        Attempt to prove the logical negation (Not) of this expression. 
+        If successful, the KnownTruth is returned, otherwise an exception
+        is raised.  By default, this simply calls prove on the negated
+        expression. Override `concludeNegation` for automation specific to
+        the type of expression being negated.      
+        '''
+        from proveit import Not
+        return Not(self).prove(assumptions=assumptions, automation=automation)
+                        
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude, via automation, that this statement is true
         under the given assumptions.  Return the KnownTruth if successful,
-        or raise an exception.  By default, proveViaReduction is attempted,
-        but it may be overridden for other behavior.  This is called
-        by the `prove` method when no existing proof was found and it cannot
-        be proven trivially via assumption.  The `prove` method has a mechanism
-        to prevent infinite recursion, so there are no worries regarding cyclic
-        attempts of concluding an expression.
+        or raise an exception.  By default, concludeViaReduction and
+        concludeViaImplication are attempted (in that order),
+        but this may be overridden with other behavior for each particular
+        Expression class.  This is called by the `prove` method when no 
+        existing proof was found and it cannot be proven trivially via assumption.
+        The `prove` method has a mechanism to prevent infinite recursion, 
+        so there are no worries regarding cyclic attempts to conclude an expression.
         '''
-        from proveit import proveViaReduction
-        return proveViaReduction(self, assumptions)
+        from proveit import concludeViaReduction, concludeViaImplication
+        try:
+            return concludeViaReduction(self, assumptions)
+        except:
+            return concludeViaImplication(self, assumptions)
     
+    def concludeNegation(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to conclude the negation of this expression under the given
+        assumptions, using automation specific to the type of expression being negated.
+        Return the KnownTruth if successful, or raise an exception.
+        '''
+        raise NotImplementedError("'concludeNegation' not implemented for " + str(self.__class__))
+        
     def deriveSideEffects(self, knownTruth):
         '''
         Derive side effects, obvious and useful consequences that may be arise from
