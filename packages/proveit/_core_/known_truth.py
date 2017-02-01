@@ -530,26 +530,31 @@ class KnownTruth:
         '''
         return self.asImplication(hypothesis)
 
-    def latex(self):
+    def raiseUnusableTheorem(self):
+        from proof import UnusableTheorem
+        if self._proof == self._proof._unusableTheorem:
+            raise UnusableTheorem(KnownTruth.theoremBeingProven, self._proof._unusableTheorem)        
+        else:
+            raise UnusableTheorem(KnownTruth.theoremBeingProven, self._proof._unusableTheorem, 'required to prove' + self.string(performUsabilityCheck=False)) 
+
+    def latex(self, performUsabilityCheck=False):
         '''
         If the KnownTruth was proven under any assumptions, display the 
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
-        if not self.isUsable():
-            raise Exception('KnownTruth unusable in this proof')
+        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
         if len(self.assumptions) > 0:
             return r'\{' + ','.join(assumption.latex() for assumption in self.assumptions) + r'\} \boldsymbol{\vdash} ' + self.expr.latex()
         return r'\boldsymbol{\vdash} ' + self.expr.latex()
 
-    def string(self):
+    def string(self, performUsabilityCheck=True):
         '''
         If the KnownTruth was proven under any assumptions, display the 
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
-        if not self.isUsable():
-            raise Exception('KnownTruth unusable in this proof')
+        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
         if len(self.assumptions) > 0:
             return r'{' + ','.join(assumption.string() for assumption in self.assumptions) + r'} |= ' + self.expr.string()
         return r'|= ' + self.expr.string()
@@ -564,8 +569,7 @@ class KnownTruth:
         '''
         Return a string representation of the KnownTruth.
         '''
-        if not self.isUsable():
-            raise Exception('KnownTruth unusable in this proof')
+        if not self.isUsable(): self.raiseUnusableTheorem()
         return self.string()
     
     def _storage(self):
@@ -584,8 +588,7 @@ class KnownTruth:
         Generate a png image from the latex.  May be recalled from memory or
         storage if it was generated previously.
         '''
-        if not self.isUsable():
-            raise Exception('KnownTruth unusable in this proof')
+        if not self.isUsable(): self.raiseUnusableTheorem()
         if not hasattr(self,'png'):
             self.png = self._storage()._retrieve_png(self, self.latex(), self._config_latex_tool)
         return self.png # previous stored or generated
