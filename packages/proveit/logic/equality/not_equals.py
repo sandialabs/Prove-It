@@ -20,6 +20,7 @@ class NotEquals(BinaryOperation):
         '''
         # automatically derive the reversed form which is equivalent
         tryDerivation(self.deriveReversed, knownTruth.assumptions)
+        tryDerivation(self.deriveViaDoubleNegation, knownTruth.assumptions)
         tryDerivation(self.unfold, knownTruth.assumptions)
     
     def conclude(self, assumptions):
@@ -48,10 +49,11 @@ class NotEquals(BinaryOperation):
         From A != FALSE, derive and return A assuming inBool(A).
         Also see version in Not class.
         '''
-        from proveit.logic import FALSE, inBool
+        from proveit.logic import FALSE
         from proveit.logic.boolean._theorems_ import fromNotFalse
         if self.rhs == FALSE:
-            return fromNotFalse.specialize({A:self.lhs}).deriveConclusion(assumptions)
+            return fromNotFalse.specialize({A:self.lhs})
+        raise ValueError("deriveViaDoubleNegation does not apply to " + str(self) + " which is not of the form A != FALSE")
 
     def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         '''
@@ -65,7 +67,7 @@ class NotEquals(BinaryOperation):
             NotEquals(self.rhs, self.lhs).prove(assumptions)
             return self.prove()
         if self.rhs == FALSE:
-            return notEqualsFalse.specialize({A:self.lhs}).deriveConclusion()
+            return notEqualsFalse.specialize({A:self.lhs}, assumptions=assumptions)
 
     def definition(self):
         '''
@@ -99,6 +101,21 @@ class NotEquals(BinaryOperation):
         unfoldedEvaluation = definitionEquality.rhs.evaluate(assumptions)        
         return Equals(self, unfoldedEvaluation.rhs).prove(assumptions)
 
+    def deriveContradiction(self, assumptions=USE_DEFAULTS):
+        r'''
+        From x != x, derive and return FALSE.
+        '''
+        from _theorems_ import notEqualsContradiction
+        return notEqualsContradiction.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+    
+    def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From x != x, derive the conclusion provided that the negated conclusion
+        implies x != x, and the conclusion is a Boolean.
+        '''
+        from proveit.logic.boolean.implication import affirmViaContradiction
+        return affirmViaContradiction(self, conclusion, assumptions)
+        
     def deduceInBool(self):
         '''
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.

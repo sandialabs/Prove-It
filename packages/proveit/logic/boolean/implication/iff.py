@@ -58,7 +58,8 @@ class Iff(BinaryOperation):
         '''
         From (A<=>B) derive and return A assuming B.
         '''
-        return self.deriveLeftImplication(assumptions).deriveConclusion(assumptions)
+        from _theorems_ import leftFromIff
+        return leftFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
 
     def deriveRightImplication(self, assumptions=USE_DEFAULTS):
         '''
@@ -71,7 +72,8 @@ class Iff(BinaryOperation):
         '''
         From (A<=>B) derive and return B assuming A.
         '''
-        return self.deriveRightImplication().deriveConclusion(assumptions)
+        from _theorems_ import rightFromIff
+        return rightFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''

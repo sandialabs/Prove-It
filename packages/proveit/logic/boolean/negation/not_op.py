@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, tryDerivation
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, tryDerivation, defaults
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
 from proveit.common import A, x, y, S
 
@@ -35,17 +35,23 @@ class Not(Operation):
         Try to automatically conclude this negation via evaluation reductions
         or double negation.
         '''
-        from _theorems_ import notFalse
-        if self == notFalse.expr: return notFalse # simple special case
-        if isinstance(self.operand, Not) and isinstance(self.operand.operand, Not):
-            # try to conclude this as a double negation.  in fact,
-            # the expression being double-negated must be true in order
-            # for the double-negation to be true.
-            return self.concludeViaDoubleNegation(assumptions)
-        # conclude negation via evaluating the operand as false.
+        # as a last resort (concludeNegation on the operand should have been
+        # tried first), conclude negation via evaluating the operand as false.
         self.operand.evaluate(assumptions=assumptions)
         return self.concludeViaFalsifiedNegation(assumptions=assumptions)
-        
+    
+    def concludeNegation(self, assumptions):
+        '''
+        Try to conclude the negation of this negation via double negation.  That
+        is, conclude Not(Not(A)), where self=Not(A), via proving A.
+        If that fails (e.g., an unusable theorem), call conclude on
+        Not(Not(A)) directly.
+        '''
+        try:
+            return Not(self).concludeViaDoubleNegation(assumptions)
+        except:
+            return Not(self).conclude(assumptions)
+            
     @classmethod
     def operatorOfOperation(subClass):
         return NOT
@@ -63,47 +69,79 @@ class Not(Operation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         from _theorems_ import notT, notF # load in truth-table evaluations
+        from _theorems_ import doubleNegationEquiv
         from proveit.logic.boolean.negation._axioms_ import falsifiedNegationIntro
+        if self.operand == TRUE: return notT
+        if self.operand == FALSE: return notF
         opValue = self.operand.evaluate(assumptions=assumptions).rhs
         if opValue == TRUE:
             # evaluate to FALSE via falsifiedNegationIntro
             return falsifiedNegationIntro.specialize({A:self.operand}, assumptions=assumptions)
         return Operation.evaluate(self, assumptions)
+    
+    def substituteInFalse(self, lambdaMap, assumptions=USE_DEFAULTS):
+        '''
+        Given Not(A), derive P(False) from P(A).
+        '''
+        from proveit.logic.equality._theorems_ import substituteInFalse
+        from proveit.logic import Equals
+        from proveit.common import P
+        Plambda = Equals._lambdaExpr(lambdaMap, self.operand)
+        return substituteInFalse.specialize({x:self.operand, P:Plambda}, assumptions=assumptions)            
 
+    def substituteFalsehood(self, lambdaMap, assumptions=USE_DEFAULTS):
+        '''
+        Given Not(A), derive P(A) from P(False).
+        '''
+        from proveit.logic.equality._theorems_ import substituteFalsehood
+        from proveit.logic import Equals
+        from proveit.common import P
+        Plambda = Equals._lambdaExpr(lambdaMap, self.operand)
+        return substituteFalsehood.specialize({x:self.operand, P:Plambda}, assumptions=assumptions)            
+                
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'not' expression is in the set of BOOLEANS.
         '''
-        from _theorems_ import negationClosure
-        return negationClosure.specialize({A:self.operand}, assumptions=assumptions)
+        from _theorems_ import closure
+        return closure.specialize({A:self.operand}, assumptions=assumptions)
    
     def equateNegatedToFalse(self, assumptions=USE_DEFAULTS):
         r'''
-        From :math:`\lnot A`, derive and return :math:`A = \bot`.
+        From Not(A), derive and return A = FALSE.
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         from _axioms_ import negationElim
         return negationElim.specialize({A:self.operand}, assumptions=assumptions)
     
+    def doubleNegationEquivalence(self, assumptions=USE_DEFAULTS):
+        r'''
+        Given Not(Not(A)), deduce and return Not(Not(A)) = A.
+        '''
+        from _theorems_ import doubleNegationEquiv
+        if isinstance(self.operand, Not):
+            return doubleNegationEquiv.specialize({A:self.operand.operand}, assumptions=assumptions)
+        raise ValueError("doubleNegationEquivalence does not apply to " + str(self) + " which is not of the form Not(Not(A))")
+    
     def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         r'''
-        From :math:`\lnot \lnot A`, derive and return :math:`A` assuming :math:`A \in \mathbb{B}`.
+        From Not(Not(A)), derive and return A.
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
         from _theorems_ import fromDoubleNegation
         if isinstance(self.operand, Not):
-            return fromDoubleNegation.specialize({A:self.operand.operand}, aassumptions=assumptions)
+            return fromDoubleNegation.specialize({A:self.operand.operand}, assumptions=assumptions)
         raise ValueError("deriveViaDoubleNegation does not apply to " + str(self) + " which is not of the form Not(Not(A))")
 
     def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         r'''
-        Prove and return self of the form :math:`\lnot \lnot A` assuming :math:`A`.
-        Also see version in NotEquals for :math:`A \neq \bot`.
+        Prove and return self of the form Not(Not(A)) assuming A.
+        Also see version in NotEquals for A != FALSE.
         '''
-        from _theorems_ import doubleNegation
+        from _theorems_ import toDoubleNegation
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
-            return doubleNegation.specialize({A:stmt}, assumptions=assumptions)
+            return toDoubleNegation.specialize({A:stmt}, assumptions=assumptions)
 
     def concludeViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
         r'''
@@ -116,8 +154,16 @@ class Not(Operation):
         r'''
         From not(A), and assuming A, derive and return FALSE.
         '''
-        from _theorems_ import contradictionViaNegation
-        return contradictionViaNegation.specialize({A:self.operand}, assumptions=assumptions)
+        from _theorems_ import negationContradiction
+        return negationContradiction.specialize({A:self.operand}, assumptions=assumptions)
+    
+    def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From Not(A), derive the conclusion provided that the negated conclusion
+        implies both Not(A) as well as A, and the conclusion is a Boolean.
+        '''
+        from proveit.logic.boolean.implication import affirmViaContradiction
+        return affirmViaContradiction(self, conclusion, assumptions)
     
     def deriveNotEquals(self, assumptions=USE_DEFAULTS):
         r'''

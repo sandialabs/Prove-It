@@ -158,7 +158,7 @@ class Equals(BinaryOperation):
         from _theorems_ import contradictionViaFalsification
         if self.rhs == FALSE:
             return contradictionViaFalsification.specialize({A:self.lhs}, assumptions=assumptions)
-        raise ProofFailure('Equals.deriveContradiction is only applicable if the right-hand-side is FALSE')
+        raise ValueError('Equals.deriveContradiction is only applicable if the right-hand-side is FALSE')
     
     def deriveViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
         '''
@@ -168,7 +168,7 @@ class Equals(BinaryOperation):
         from proveit.logic.boolean.negation._axioms_ import falsifiedNegationElim
         if isinstance(self.lhs, Not) and self.rhs == FALSE:
             return falsifiedNegationElim.specialize({A:self.lhs.operand}, assumptions=assumptions)
-        raise ProofFailure('Equals.deriveViaContradiction is only applicable if the left-hand-side is a Not operation and the right-hand-side is FALSE')
+        raise ValueError('Equals.deriveViaContradiction is only applicable if the left-hand-side is a Not operation and the right-hand-side is FALSE')
     
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
@@ -244,7 +244,21 @@ class Equals(BinaryOperation):
         which to perform a global replacement of self.rhs.
         '''
         from _theorems_ import lhsSubstitute
+        from _theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
+        from proveit.logic import TRUE, FALSE
         Plambda = Equals._lambdaExpr(lambdaMap, self.rhs)
+        try:
+            # try some alternative proofs that may be shorter, if they are usable
+            if self.rhs == TRUE: # substituteTruth may provide a shorter proof options
+                substituteTruth.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)
+            elif self.lhs == TRUE: # substituteInTrue may provide a shorter proof options
+                substituteInTrue.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)            
+            elif self.rhs == FALSE: # substituteFalsehood may provide a shorter proof options
+                substituteFalsehood.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)            
+            elif self.lhs == FALSE: # substituteInFalse may provide a shorter proof options
+                substituteInFalse.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)           
+        except:
+            pass 
         return lhsSubstitute.specialize({x:self.lhs, y:self.rhs, P:Plambda}, assumptions=assumptions)
         
     def rhsSubstitute(self, lambdaMap, assumptions=USE_DEFAULTS):
@@ -257,7 +271,21 @@ class Equals(BinaryOperation):
         which to perform a global replacement of self.lhs.
         '''
         from _theorems_ import rhsSubstitute
+        from _theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
+        from proveit.logic import TRUE, FALSE
         Plambda = Equals._lambdaExpr(lambdaMap, self.lhs)
+        try:
+            # try some alternative proofs that may be shorter, if they are usable
+            if self.lhs == TRUE: # substituteTruth may provide a shorter proof options
+                substituteTruth.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)
+            elif self.rhs == TRUE: # substituteInTrue may provide a shorter proof options
+                substituteInTrue.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)            
+            elif self.lhs == FALSE: # substituteFalsehood may provide a shorter proof options
+                substituteFalsehood.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)            
+            elif self.rhs == FALSE: # substituteInFalse may provide a shorter proof options
+                substituteInFalse.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)            
+        except:
+            pass
         return rhsSubstitute.specialize({x:self.lhs, y:self.rhs, P:Plambda}, assumptions=assumptions)
         
     def deriveRightViaEquivalence(self, assumptions=USE_DEFAULTS):
@@ -320,13 +348,18 @@ def reduceOperands(operation, assumptions=USE_DEFAULTS):
             raise EvaluationError('All operands should be irreducible values')
     return expr
 
-def proveViaReduction(expr, assumptions):
+def concludeViaReduction(expr, assumptions):
     '''
     Attempts to prove that the given expression is TRUE under the
     given assumptions via evaluating that the expression is equal to true.
     Returns the resulting KnownTruth if successful.
     '''
     from proveit.lambda_map import SubExprRepl
+    if not isinstance(expr, Operation):
+        # Can only really do reduction on an Operation.  But we can
+        # try to do a proof by evaluation.
+        expr.evaluate(assumptions)
+        return expr.prove(assumptions)
     # reduce the operands
     reducedExpr = reduceOperands(expr, assumptions)
     # prove the reduced version
@@ -375,9 +408,9 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
     if reducedExpr == expr:
         raise EvaluationError('Unable to evaluate: ' + str(expr))
     value = reducedExpr.evaluate().rhs
-    if value == TRUE:
-        # if it evaluates to true, also try proveViaReduction in case this results in a shorter proof
-        proveViaReduction(expr, assumptions)
+    if value == TRUE and isinstance(expr, Operation):
+        # if it evaluates to true, also try concludeViaReduction in case this results in a shorter proof
+        concludeViaReduction(expr, assumptions)
     evaluation = Equals(expr, value).prove(assumptions=assumptions)
     # store it in the evaluations dictionary for next time
     Equals.evaluations.setdefault(expr, set()).add(evaluation)

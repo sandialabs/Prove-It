@@ -1,4 +1,4 @@
-from proveit import Literal, AssociativeOperation, USE_DEFAULTS, ProofFailure
+from proveit import Literal, AssociativeOperation, USE_DEFAULTS, ProofFailure, defaults
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
 from proveit.common import A, B, C, Amulti, Cmulti
 
@@ -63,6 +63,15 @@ class Or(AssociativeOperation):
         # or there are no pre-existing proofs for any of the operands.
         return AssociativeOperation.conclude(self, assumptions)
     
+    def concludeNegation(self, assumptions):
+        from _theorems_ import falseOrFalseNegated, notOrFromNeither, notOrIfNotAny
+        if self == falseOrFalseNegated.operand:
+            return falseOrFalseNegated # the negation of (FALSE or FALSE)
+        elif len(self.operands)==2:
+            return notOrFromNeither.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        else:
+            return notOrIfNotAny.specialize({Amulti:self.operands}, assumptions=assumptions)
+        
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
@@ -120,7 +129,25 @@ class Or(AssociativeOperation):
         else:
             # no operand is TRUE so the whole disjunction evaluates to FALSE.
             return disjunctionFalseEval.specialize({Amulti:self.operands}, assumptions=assumptions)
+
+    def deriveContradiction(self, assumptions=USE_DEFAULTS):
+        r'''
+        From (A or B), and assuming not(A) and not(B), derive and return FALSE.
+        '''
+        from _theorems_ import binaryOrContradiction, orContradiction
+        if len(self.operands) == 2:
+            return binaryOrContradiction.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        else:
+            return orContradiction.specialize({Amulti:self.operands}, assumptions=assumptions)
             
+    def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B), derive the conclusion provided that the negated
+        conclusion implies both (A or B), not(A) and not(B), and the conclusion is a Boolean.
+        '''
+        from proveit.logic.boolean.implication import affirmViaContradiction
+        return affirmViaContradiction(self, conclusion, assumptions)
+                        
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.

@@ -4,13 +4,10 @@ from proveit import beginAxioms, endAxioms
 
 beginAxioms(locals())
 
-# It is tempting to think that we can simply derive this using
-# (TRUE => FALSE) = FALSE, and (FALSE => FALSE) = TRUE (the latter can
-# derived using hypothetical reasononing without an axiom).  However,
-# to get this from those, we ultimately need, it seems, some proofs
-# by contradiction that are enabled by this in the first place.
-contradictionEval = Forall(A, Equals(Implies(A, FALSE), Not(A)), domain=Booleans)
-#impliesTF = Equals(Implies(TRUE, FALSE), FALSE)
+# Conveys the defining properties of an implication with a FALSE conclusion
+# for any Boolean hypothesis.  This is defined in a manner that enables
+# proof by contradiction (reductio ad absurdum).
+impliesFalseDef = Forall(A, Equals(Implies(Not(A), FALSE), A), domain=Booleans)
 
 iffDef = Forall((A, B), Equals(Iff(A, B), And(Implies(A, B), Implies(B, A))))
 

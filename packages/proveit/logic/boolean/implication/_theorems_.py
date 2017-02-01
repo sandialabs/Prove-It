@@ -6,45 +6,78 @@ beginTheorems(locals())
 
 selfImplication = Forall(A, Implies(A, A))
 
-impliesTT = Equals(Implies(TRUE, TRUE), TRUE)
-
-impliesFT = Equals(Implies(FALSE, TRUE), TRUE)
-
-impliesFF = Equals(Implies(FALSE, FALSE), TRUE)
-
 trueImpliesTrue = Implies(TRUE, TRUE)
-
-falseImpliesTrue = Implies(TRUE, TRUE)
 
 falseImpliesFalse = Implies(FALSE, FALSE)
 
-affirmViaContradiction = Forall(A, Implies(Implies(Not(A), FALSE), A), domain=Booleans)
+falseImpliesTrue = Implies(FALSE, TRUE)
+
+impliesTT = Equals(Implies(TRUE, TRUE), TRUE)
+
+impliesFF = Equals(Implies(FALSE, FALSE), TRUE)
+
+impliesFT = Equals(Implies(FALSE, TRUE), TRUE)
+
+impliesTF = Equals(Implies(TRUE, FALSE), FALSE)
+
+trueImpliesFalseNegated = Not(Implies(TRUE, FALSE))
+
+contradictionElim = Forall(A, A, domain=Booleans, conditions=[Implies(Not(A), FALSE)])
 
 implicationTransitivity = Forall((A, B, C), Implies(A, C), conditions=[Implies(A, B), Implies(B, C)])
 
+trueIffTrue = Iff(TRUE, TRUE)
+
 iffTT = Equals(Iff(TRUE, TRUE), TRUE)
+
+falseIffFalse = Iff(FALSE, FALSE)
 
 iffFF = Equals(Iff(FALSE, FALSE), TRUE)
 
+trueIffFalseNegated = Not(Iff(TRUE, FALSE))
+
 iffTF = Equals(Iff(TRUE, FALSE), FALSE)
 
+falseIffTrueNegated = Not(Iff(FALSE, TRUE))
+
 iffFT = Equals(Iff(FALSE, TRUE), FALSE)
-
-trueIffTrue = Iff(TRUE, TRUE)
-
-falseIffFalse = Iff(FALSE, FALSE)
 
 iffImpliesRight = Forall((A, B), Implies(A, B), conditions=[Iff(A, B)])
 
 iffImpliesLeft = Forall((A, B), Implies(B, A), conditions=[Iff(A, B)])
 
+rightFromIff = Forall((A, B), B, conditions=[A, Iff(A, B)])
+
+leftFromIff = Forall((A, B), A, conditions=[Iff(A, B), B])
+
 iffSymmetry = Forall((A, B), Iff(B, A), conditions=[Iff(A, B)])
 
 iffTransitivity = Forall((A, B, C), Iff(A, C), conditions=[Iff(A, B), Iff(B, C)])
 
-transpositionFromNegated = Forall((A, B), Implies(Implies(Not(B), Not(A)), Implies(A, B)), conditions=inBool(B))
+affirmViaContradiction = Forall(A, A, domain=Booleans, conditions=[Implies(Not(A), FALSE)])
 
-doubleNegateConclusion = Forall((A, B), Implies(Implies(A, B), Implies(A, Not(Not(B)))), conditions=inBool(B))
+modusTollensAffirmation = Forall((A, B), A, domain=Booleans, conditions=[Implies(Not(A), B), Not(B)])
+
+denyViaContradiction = Forall(A, Not(A), domain=Booleans, conditions=[Implies(A, FALSE)])
+
+
+
+modusTollensDenial = Forall((A, B), Not(A), domain=Booleans, conditions=[Implies(A, B), Not(B)])
+
+
+fromContraposition = Forall((A, B), Implies(A, B), conditions=[Implies(Not(B), Not(A)), inBool(B)])
+
+
+toContraposition = Forall((A, B), Implies(Not(B), Not(A)), conditions=[Implies(A, B), inBool(A)])
+
+
+
+
+
+transpositionFromNegated = Forall((A, B), Implies(A, B), conditions=[Implies(Not(B), Not(A)), inBool(B)])
+
+
+doubleNegateConclusion = Forall((A, B), Implies(A, Not(Not(B))), conditions=[Implies(A, B), inBool(B)])
 
 transpositionFromNegatedHypothesis = Forall((A, B), Implies(Implies(Not(B), A), Implies(Not(A), B)), domain=Booleans)
 

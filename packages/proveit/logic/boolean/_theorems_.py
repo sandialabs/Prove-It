@@ -40,14 +40,14 @@ inBoolIfTrue = Forall(A, inBool(A), conditions=[A])
 inBoolIfFalse = Forall(A, inBool(A), conditions=[Not(A)])
 
 
+notEqualsFalse = Forall(A, NotEquals(A, FALSE), conditions=[A])
+
+fromNotFalse = Forall(A, A, domain=Booleans, conditions=[NotEquals(A, FALSE)])
+
+
 notInBoolEquiv = Forall(A, Equals(inBool(A), And(NotEquals(A, TRUE), NotEquals(A, FALSE))))
 
 
-notEqualsFalse = Forall(A, NotEquals(A, FALSE), conditions=[A])
-notEqualsFalse
-
-fromNotFalse = Forall(A, Implies(NotEquals(A, FALSE), A), domain=Booleans)
-fromNotFalse
 
 endTheorems(locals(), __package__)
 

@@ -157,6 +157,10 @@ class FalseLiteral(Literal, IrreducibleValue):
         elif other == TRUE:
             return falseNotTrue.unfold().equateNegatedToFalse()
 
+    def concludeNegation(self, assumptions):
+        from proveit.logic.boolean.negation._theorems_ import notFalse
+        return notFalse # the negation of FALSE
+
     def notEqual(self, other):
         from _theorems_ import falseNotTrue
         if other == TRUE:

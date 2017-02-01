@@ -1,26 +1,49 @@
-from proveit.logic import And, Implies, TRUE, FALSE, Forall, inBool, Booleans, Equals
-from proveit.common import A, B, Amulti, Cmulti, Aetc, Cetc
+from proveit.logic import And, Not, TRUE, FALSE, Forall, inBool, Booleans, Equals
+from proveit.common import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti, Aetc, Betc, Cetc, Detc, Eetc
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
 trueAndTrue = And(TRUE, TRUE)
-trueAndTrue
 
-leftFromConjunction = Forall((A, B), A, conditions=[And(A, B)])
-leftFromConjunction
+trueAndFalseNegated = Not(And(TRUE, FALSE))
 
-rightFromConjunction = Forall((A, B), B, conditions=[And(A, B)])
-rightFromConjunction
+falseAndTrueNegated = Not(And(FALSE, TRUE))
 
-anyFromConjunction = Forall((Amulti, B, Cmulti), B, conditions=[And(Aetc, B, Cetc)])
-anyFromConjunction
+falseAndFalseNegated = Not(And(FALSE, FALSE))
 
-binaryConjunctionIntro = Forall((A, B), And(A, B), conditions=[A, B])
-binaryConjunctionIntro
+andIfBoth = Forall((A, B), And(A, B), conditions=[A, B])
 
-conjunctionIntro = Forall(Amulti, And(Aetc), conditions=[Aetc])
-conjunctionIntro
+nandIfNotRight = Forall((A, B), Not(And(A, B)), conditions=[A, Not(B)])
+
+nandIfNotLeft = Forall((A, B), Not(And(A, B)), conditions=[Not(A), B])
+
+nandIfNeither = Forall((A, B), Not(And(A, B)), conditions=[Not(A), Not(B)])
+
+falsifiedAndIfNotRight = Forall((A, B), Equals(And(A, B), FALSE), conditions=[A, Not(B)])
+
+falsifiedAndIfNotLeft = Forall((A, B), Equals(And(A, B), FALSE), conditions=[Not(A), B])
+
+falsifiedAndIfNeither = Forall((A, B), Equals(And(A, B), FALSE), conditions=[Not(A), Not(B)])
+
+
+
+leftFromAnd = Forall((A, B), A, conditions=[And(A, B)])
+leftFromAnd
+
+rightFromAnd = Forall((A, B), B, conditions=[And(A, B)])
+rightFromAnd
+
+binaryCommutation = Forall((A, B), And(B, A), conditions=[And(A, B)])
+
+anyFromAnd = Forall((Amulti, B, Cmulti), B, conditions=[And(Aetc, B, Cetc)])
+anyFromAnd
+
+
+andIfAll = Forall(Amulti, And(Aetc), conditions=[Aetc])
+andIfAll
+
+andCommutation = Forall((Amulti, Bmulti, Cmulti, Dmulti, Emulti), And(Aetc, Betc, Cetc, Detc, Eetc), conditions=[And(Aetc, Detc, Cetc, Betc, Eetc)])
 
 conjunctionTrueEval = Forall(Amulti, Equals(And(Aetc), TRUE), conditions=[Aetc])
 conjunctionFalseEval = Forall((Amulti, Cmulti), Equals(And(Aetc, FALSE, Cetc), FALSE), domain=Booleans)

@@ -1,2 +1,2 @@
 from iff import Iff
-from implies import Implies
+from implies import Implies, concludeViaImplication, affirmViaContradiction

@@ -1,6 +1,6 @@
 from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
 from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
-from proveit.common import A, B, Amulti, Cmulti
+from proveit.common import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti
 
 AND = Literal(__package__, stringFormat = 'and', latexFormat = r'\land')
 
@@ -32,27 +32,27 @@ class And(AssociativeOperation):
         :math:`A \land B \and ... \land Z`.
         '''
         if len(self.operands) == 2:
-            tryDerivation(self.deriveLeft(assumptions=knownTruth.assumptions))
-            tryDerivation(self.deriveRight(assumptions=knownTruth.assumptions))
+            tryDerivation(self.deriveLeft, knownTruth.assumptions)
+            tryDerivation(self.deriveRight, knownTruth.assumptions)
         else:
             for i in xrange(len(self.operands)):
-                tryDerivation(self.deriveInPart(i, assumptions=knownTruth.assumptions))
+                tryDerivation(self.deriveInPart, i, knownTruth.assumptions)
         
     def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
         '''
-        from _theorems_ import anyFromConjunction, leftFromConjunction, rightFromConjunction
+        from _theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
         if len(self.operands)==2:
             if idx==0:
-                return leftFromConjunction.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+                return leftFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
             elif idx==1:
-                return rightFromConjunction.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-        return anyFromConjunction.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
+                return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return anyFromAnd.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
     
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         r'''
@@ -101,6 +101,35 @@ class And(AssociativeOperation):
         else:
             # no operand is FALSE so the whole disjunction evaluates to TRUE.
             return conjunctionTrueEval.specialize({Amulti:self.operands})
+    
+    def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
+        '''
+        Commute self.operands[startIdx1:endIdx1] with self.operands[startIdx2:endIdx2].  
+        The default, if no indices are provided, is to commute the first operand with the rest
+        (convenient especially when there are just two operands).
+        Derives and returns the new conjunction operation from the original.
+        '''
+        from _theorems_ import binaryCommutation, andCommutation
+        if startIdx1 is None and endIdx1 is None and startIdx2 is None and endIdx2 is None:
+            stattIdx1, endIdx1, startIdx2, endIdx2 = 0, 1, 1, None
+        nOperands = len(self.operands)
+        start1, stop1, _ = slice(startIdx1, endIdx1).indices(nOperands)
+        start2, stop2, _ = slice(startIdx2, endIdx2).indices(nOperands)
+        if start1  > start2:
+            # swap 1 and 2 so that 1 comes first
+            startIdx1, endIdx1, startIdx2, endIdx2 = startIdx2, endIdx2, startIdx1, endIdx2
+            start1, stop1, start2, stop2 = start2, stop2, start1, stop1
+        if len(self.operands)==2 and (start1,stop1,start2,stop2)==(0,1,1,2):
+            return binaryCommutation.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        
+        if stop1 > start2:
+            raise ValueError("Cannot commute overlapping sets of operands")
+        Asub = self.operands[:startIdx1] if startIdx1 is not None else []
+        Bsub = self.operands[startIdx1:endIdx1]
+        Csub = self.operands[endIdx1:startIdx2]
+        Dsub = self.operands[startIdx2:endIdx2]
+        Esub = self.operands[endIdx2:] if endIdx2 is not None else []
+        return andCommutation.specialize({Amulti:Asub, Bmulti:Bsub, Cmulti:Csub, Dmulti:Dsub, Emulti:Esub}, assumptions=assumptions)
         
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -114,7 +143,7 @@ def compose(expressions, assumptions=USE_DEFAULTS):
     Returns [A and B and ...], the And operator applied to the collection of given arguments,
     derived from each separately.
     '''
-    from _theorems_ import binaryConjunctionIntro, conjunctionIntro
+    from _theorems_ import andIfBoth, andIfAll
     if len(expressions)==2:
-        return binaryConjunctionIntro.specialize({A:expressions[0], B:expressions[1]}, assumptions=assumptions)
-    return conjunctionIntro.specialize({Amulti:expressions}, assumptions=assumptions)
+        return andIfBoth.specialize({A:expressions[0], B:expressions[1]}, assumptions=assumptions)
+    return andIfAll.specialize({Amulti:expressions}, assumptions=assumptions)
