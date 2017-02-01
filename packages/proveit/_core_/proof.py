@@ -317,40 +317,40 @@ class Theorem(Proof):
             # presumed or fully proven).  Propagate this fact to all dependents.
             self._propagateUnusableTheorem(self)
 
-def _checkImplication(implicationExpr, hypothesisExpr, conclusionExpr):
+def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
     '''
     Make sure the implicationExpr is a proper implication with
-    hypothesisExpr as the hypothesis and conclusionExpr as the conclusion.
+    antecedentExpr as the antecedent and consequentExpr as the consequent.
     '''
     from proveit import Implies
     assert isinstance(implicationExpr, Implies),  'The result of hypothetical reasoning must be an Implies operation'
     assert len(implicationExpr.operands)==2, 'Implications are expected to have two operands'
-    assert hypothesisExpr==implicationExpr.operands[0], 'The result of hypothetical reasoning must be an Implies operation with the proper hypothesis'
-    assert conclusionExpr==implicationExpr.operands[1], 'The result of hypothetical reasoning must be an Implies operation with the proper conclusion'
+    assert antecedentExpr==implicationExpr.operands[0], 'The result of hypothetical reasoning must be an Implies operation with the proper antecedent'
+    assert consequentExpr==implicationExpr.operands[1], 'The result of hypothetical reasoning must be an Implies operation with the proper consequent'
 
 class ModusPonens(Proof):
     def __init__(self, implicationExpr, assumptions=None):
         from proveit import Implies
         assumptions = defaults.checkedAssumptions(assumptions)
-        # obtain the implication and hypothesis KnownTruths
+        # obtain the implication and antecedent KnownTruths
         assert isinstance(implicationExpr, Implies) and len(implicationExpr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
         try:
             implicationTruth = implicationExpr.prove(assumptions)
         except:
             raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implicationExpr))
         try:
-            hypothesisTruth = implicationExpr.operands[0].prove(assumptions)
+            antecedentTruth = implicationExpr.operands[0].prove(assumptions)
         except:
-            raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Hypothesis of %s is not proven'%str(implicationExpr))
+            raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Antecedent of %s is not proven'%str(implicationExpr))
         # remove any unnecessary assumptions (but keep the order that was provided)
-        assumptionsSet = implicationTruth.assumptionsSet | hypothesisTruth.assumptionsSet
+        assumptionsSet = implicationTruth.assumptionsSet | antecedentTruth.assumptionsSet
         assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
         # we have what we need; set up the ModusPonens Proof        
-        conclusionTruth = KnownTruth(implicationExpr.operands[1], assumptions, self)
-        _checkImplication(implicationTruth.expr, hypothesisTruth.expr, conclusionTruth.expr)
+        consequentTruth = KnownTruth(implicationExpr.operands[1], assumptions, self)
+        _checkImplication(implicationTruth.expr, antecedentTruth.expr, consequentTruth.expr)
         self.implicationTruth = implicationTruth
-        self.hypothesisTruth = hypothesisTruth
-        Proof.__init__(self, 'ModusPonens', conclusionTruth, [self.implicationTruth, self.hypothesisTruth])
+        self.antecedentTruth = antecedentTruth
+        Proof.__init__(self, 'ModusPonens', consequentTruth, [self.implicationTruth, self.antecedentTruth])
 
     def remake(self):
         return ModusPonens(self.implicationTruth.expr, assumptions=self.provenTruth.assumptions)
@@ -359,16 +359,16 @@ class ModusPonens(Proof):
         return 'modus ponens'
 
 class HypotheticalReasoning(Proof):
-    def __init__(self, conclusionTruth, hypothesisExpr): 
+    def __init__(self, consequentTruth, antecedentExpr): 
         from proveit import Implies
-        assumptions = [assumption for assumption in conclusionTruth.assumptions if assumption != hypothesisExpr]
-        implicationExpr = Implies(hypothesisExpr, conclusionTruth.expr)
+        assumptions = [assumption for assumption in consequentTruth.assumptions if assumption != antecedentExpr]
+        implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
         implicationTruth = KnownTruth(implicationExpr, assumptions, self)
-        self.conclusionTruth = conclusionTruth
-        Proof.__init__(self, 'HypotheticalReasoning', implicationTruth, [self.conclusionTruth])
+        self.consequentTruth = consequentTruth
+        Proof.__init__(self, 'HypotheticalReasoning', implicationTruth, [self.consequentTruth])
 
     def remake(self):
-        return HypotheticalReasoning(self.conclusionTruth, self.provenTruth.expr.hypothesis)
+        return HypotheticalReasoning(self.consequentTruth, self.provenTruth.expr.antecedent)
 
     def stepTypeLatex(self):
         return 'hypothetical reasoning'
