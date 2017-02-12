@@ -227,7 +227,8 @@ class Expression:
         '''
         Derive side effects, obvious and useful consequences that may be arise from
         proving that this expression is a known truth (under some set of assumptions).
-        The default is to do nothing, but should be overridden as appropriate.  
+        The default is to do nothing, but should be overridden as appropriate.
+        It is best that the side effect derivations are trivial and limited.
         There is no need to call this manually; it is called automatically when
         the corresponding KnownTruth is created.  See tryDerivation which is
         a convenient method for specific implementations of deriveSideEffects.
