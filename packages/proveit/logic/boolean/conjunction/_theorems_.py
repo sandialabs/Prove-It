@@ -29,12 +29,14 @@ falsifiedAndIfNeither = Forall((A, B), Equals(And(A, B), FALSE), conditions=[Not
 
 
 leftFromAnd = Forall((A, B), A, conditions=[And(A, B)])
-leftFromAnd
 
 rightFromAnd = Forall((A, B), B, conditions=[And(A, B)])
-rightFromAnd
 
 binaryCommutation = Forall((A, B), And(B, A), conditions=[And(A, B)])
+
+
+
+eachInBool = Forall((Amulti, B, Cmulti), inBool(B), conditions=inBool(And(Aetc, B, Cetc)))
 
 anyFromAnd = Forall((Amulti, B, Cmulti), B, conditions=[And(Aetc, B, Cetc)])
 anyFromAnd

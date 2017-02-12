@@ -5,15 +5,6 @@ from proveit import beginTheorems, endTheorems, Operation
 
 beginTheorems(locals())
 
-unfoldForallOverBool = Forall(P, Implies(Forall(A, PofA, domain=Booleans), And(PofTrue, PofFalse)))
-unfoldForallOverBool
-
-foldForallOverBool = Forall(P, Implies(And(PofTrue, PofFalse), Forall(A, PofA, domain = Booleans)))
-foldForallOverBool
-
-forallBoolEvalTrue = Forall(P, Implies(And(PofTrue, PofFalse), Equals(Forall(A, PofA, domain=Booleans), TRUE)))
-forallBoolEvalTrue
-
 forallBundling = Forall((P, Qmulti, Rmulti, S), Implies(Forall(xMulti, Forall(yMulti, PxyEtc, S, etc_RyEtc), S, etc_QxEtc), Forall((xMulti, yMulti), PxyEtc, S, (etc_QxEtc, etc_RyEtc))))
 forallBundling
 

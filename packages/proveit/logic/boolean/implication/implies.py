@@ -1,5 +1,5 @@
 from proveit import Literal, BinaryOperation, defaults, USE_DEFAULTS, compositeExpression, tryDerivation, ProofFailure
-from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
+from proveit.logic.boolean.booleans import TRUE, FALSE
 from proveit.logic.boolean.negation import Not
 from proveit.common import A, B, C
 
@@ -220,7 +220,7 @@ class Implies(BinaryOperation):
 def concludeViaImplication(consequent, assumptions):
     derivedConsequents = set()
     if consequent in Implies.knownImplicationsOfConsequent:
-        for knownImplication in Implies.knownImplicationsOfConsequent[consequent]:
+        for knownImplication in set(Implies.knownImplicationsOfConsequent[consequent]):
             try:
                 derivedConsequents.add(knownImplication.expr.deriveConsequent(assumptions=assumptions))
             except:

@@ -1,5 +1,5 @@
 from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
-from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
+from proveit.logic.boolean.booleans import TRUE, FALSE, inBool
 from proveit.common import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti
 
 AND = Literal(__package__, stringFormat = 'and', latexFormat = r'\land')
@@ -28,16 +28,38 @@ class And(AssociativeOperation):
     def deriveSideEffects(self, knownTruth):
         '''
         From a conjunction, automatically derive the individual constituents.
-        That is, deduce :math:'A', :math:'B', ..., :math:'Z' from
-        :math:`A \land B \and ... \land Z`.
+        That is, deduce A, B, ..., Z from (A and B and ... and Z).
+        Also derive that this conjunction is in the set of Booleans
+        (which then propogates to its constituents being in the set of Booleans).
         '''
+        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
         if len(self.operands) == 2:
             tryDerivation(self.deriveLeft, knownTruth.assumptions)
             tryDerivation(self.deriveRight, knownTruth.assumptions)
         else:
             for i in xrange(len(self.operands)):
                 tryDerivation(self.deriveInPart, i, knownTruth.assumptions)
-        
+    
+    def deduceNegationSideEffects(self, knownTruth):
+        '''
+        From not(A and B and ... and Z), automatically deduce that the
+        conjunction is in the set of Booleans.
+        '''
+        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
+    
+    def deduceInBoolSideEffects(self, knownTruth):
+        '''
+        From (A and B) in Booleans deduce A in Booleans and B in Booleans, where self is (A and B).
+        '''
+        from _axioms_ import leftInBool, rightInBool
+        from _theorems_ import eachInBool
+        if len(self.operands) == 2:
+            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, knownTruth.assumptions)
+            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, knownTruth.assumptions)
+        else:
+            for k, operand in enumerate(self.operands):
+                eachInBool.specialize({Amulti:self.operands[:k], B:operand, Cmulti:self.operands[k+1:]})
+
     def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 

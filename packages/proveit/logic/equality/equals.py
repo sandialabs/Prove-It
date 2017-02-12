@@ -19,8 +19,8 @@ class Equals(BinaryOperation):
         
     def __init__(self, a, b):
         BinaryOperation.__init__(self, EQUALS, a, b)
-        self.lhs = a
-        self.rhs = b
+        self.lhs = self.operands[0]
+        self.rhs = self.operands[1]
         
     def deriveSideEffects(self, knownTruth):
         '''
@@ -50,6 +50,16 @@ class Equals(BinaryOperation):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             tryDerivation(self.deriveViaBooleanEquality, knownTruth.assumptions)
         
+    def deduceNegationSideEffects(self, knownTruth):
+        '''
+        From not(A = B) derive A != B.
+        From not(A = FALSE) derive A assuming (A in Booleans).
+        '''
+        from proveit.logic import FALSE, inBool
+        tryDerivation(self.deduceNotEquals, knownTruth.assumptions)
+        if self.rhs == FALSE:
+            tryDerivation(self.deduceViaNegatedFalsification, knownTruth.assumptions + (inBool(self.lhs),))
+                
     def conclude(self, assumptions):
         '''
         Use other equalities that are known to be true to try to conclude 
@@ -117,7 +127,14 @@ class Equals(BinaryOperation):
         '''
         from _theorems_ import equalsReversal
         return equalsReversal.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
-            
+
+    def deduceNotEquals(self, assumptions=USE_DEFAULTS):
+        r'''
+        Deduce x != y assuming not(x = y), where self is x=y.
+        '''
+        from _theorems_ import foldNotEquals
+        return foldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+                        
     def applyTransitivity(self, otherEquality, assumptions=USE_DEFAULTS):
         '''
         From x = y (self) and y = z (otherEquality) derive and return x = z.
@@ -169,6 +186,17 @@ class Equals(BinaryOperation):
         if isinstance(self.lhs, Not) and self.rhs == FALSE:
             return falsifiedNegationElim.specialize({A:self.lhs.operand}, assumptions=assumptions)
         raise ValueError('Equals.deriveViaContradiction is only applicable if the left-hand-side is a Not operation and the right-hand-side is FALSE')
+    
+    def deduceViaNegatedFalsification(self, assumptions=USE_DEFAULTS):
+        '''
+        From Not(A=FALSE) and assuming A in Booleans derive A, where self is A=FALSE.
+        '''
+        from proveit.logic.boolean import FALSE
+        from proveit.logic.boolean.negation._theorems_ import fromNegatedFalsification
+        if self.rhs == FALSE:
+            return fromNegatedFalsification.specialize({A:self.lhs}, assumptions=assumptions)
+        raise ValueError('Equals.deduceViaNegatedFalsification is only applicable if the right-hand-side is FALSE')
+        
     
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''

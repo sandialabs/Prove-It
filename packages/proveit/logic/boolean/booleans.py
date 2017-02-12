@@ -5,6 +5,14 @@ from proveit.logic.equality import IrreducibleValue
 class BooleanSet(Literal):
     def __init__(self):
         Literal.__init__(self, __package__, stringFormat='BOOLEANS', latexFormat=r'\mathbb{B}')
+    
+    def deduceMembershipSideEffects(self, element, knownTruth):
+        '''
+        Deduce side-effects when the element is proven to be in the set of Booleans
+        by calling 'deduceInBoolSideEffects' on the element if it has such a method.
+        '''
+        if hasattr(element, 'deduceInBoolSideEffects'):
+            return element.deduceInBoolSideEffects(knownTruth)
 
     def membershipEquivalence(self, element, assumptions=USE_DEFAULTS):
         '''
@@ -22,7 +30,7 @@ class BooleanSet(Literal):
 
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
-        From inBool(Element), derive and return [(element = TRUE) or (element = FALSE)].
+        From inBool(Element), derive and return [element or not(element)].
         '''
         from _theorems_ import unfoldInBool
         #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
@@ -32,20 +40,20 @@ class BooleanSet(Literal):
         '''
         Try to deduce that the given element is in the set of Booleans under the given assumptions.
         '''   
-        from proveit import SpecializationFailure
         from _theorems_ import inBoolIfTrue, inBoolIfFalse
+        try:
+            element.prove(assumptions=assumptions, automation=False)
+            return inBoolIfTrue.specialize({A:element}, assumptions=assumptions)
+        except:
+            pass
+        try:
+            element.disprove(assumptions=assumptions, automation=False)
+            return inBoolIfFalse.specialize({A:element}, assumptions=assumptions)
+        except:
+            pass
         if hasattr(element, 'deduceInBool'):
             return element.deduceInBool(assumptions=assumptions)
-        else:
-            try:
-                return inBoolIfTrue.specialize({A:element}, assumptions=assumptions)
-            except SpecializationFailure:
-                pass
-            try:
-                return inBoolIfFalse.specialize({A:element}, assumptions=assumptions)
-            except SpecializationFailure:
-                pass
-            raise ProofFailure(inBool(element), assumptions, str(element) + ' not proven to be equal to TRUE or FALSE.')
+        raise ProofFailure(inBool(element), assumptions, str(element) + ' not proven to be equal to TRUE or FALSE.')
 
     def evaluateForall(self, forallStmt, assumptions):
         '''
@@ -100,7 +108,7 @@ class BooleanSet(Literal):
         Given forall_{A in Booleans} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from quantification.universal._theorems_ import unfoldForallOverBool
+        from _theorems_ import unfoldForallOverBool
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of Booleans to a forall statement with 1 instance variable"
@@ -111,14 +119,12 @@ class BooleanSet(Literal):
         Given forall_{A in Booleans} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from quantification.universal._theorems_ import foldForallOverBool
+        from _theorems_ import foldForallOverBool
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
-        # [P(TRUE) and P(FALSE)] => forall_{A in Booleans} P(A)
-        folding = foldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]):forallStmt.instanceExpr, A:forallStmt.instanceVars[0]})
-        folding.hypothesis.concludeViaComposition(assumptions)
-        return folding.deriveConclusion(assumptions)
+        # forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)
+        return foldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]):forallStmt.instanceExpr}, {A:forallStmt.instanceVars[0]})
 
 class TrueLiteral(Literal, IrreducibleValue):
     def __init__(self):
@@ -177,14 +183,8 @@ Booleans = BooleanSet()
 TRUE = TrueLiteral()
 FALSE = FalseLiteral()
 
-def inBool(element):
+def inBool(*elements):
     from proveit.logic.set_theory import InSet
-    return InSet(element, Booleans)
-
-def deduceInBool(expr):
-    '''
-    Attempt to deduce, then return, that the given expression is in the set of booleans.
-    '''
-    if hasattr(expr, 'deduceInBool'):
-        return expr.deduceInBool()
-    return inBool(expr)
+    if len(elements) == 1:
+        return InSet(elements[0], Booleans)
+    return [InSet(element, Booleans) for element in elements]

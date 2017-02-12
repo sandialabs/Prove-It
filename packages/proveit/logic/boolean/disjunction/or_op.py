@@ -1,5 +1,5 @@
-from proveit import Literal, AssociativeOperation, USE_DEFAULTS, ProofFailure, defaults
-from proveit.logic.boolean.booleans import TRUE, FALSE, deduceInBool
+from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
+from proveit.logic.boolean.booleans import TRUE, FALSE, inBool
 from proveit.common import A, B, C, Amulti, Cmulti
 
 OR = Literal(__package__, stringFormat = 'or', latexFormat = r'\lor')
@@ -63,12 +63,52 @@ class Or(AssociativeOperation):
         # or there are no pre-existing proofs for any of the operands.
         return AssociativeOperation.conclude(self, assumptions)
     
+    def deriveSideEffects(self, knownTruth):
+        '''
+        From a disjunction, automatically derive that the disjunction
+        is in the set of Booleans (which then propogates to its constituents
+        being in the set of Booleans) except if this is the of form
+        [A or not(A)], the unfolding of [A in Boolean], to avoid and
+        infinite recursion.
+        '''
+        from proveit.logic import Not
+        if len(self.operands)==2:
+            if self.operands[1] == Not(self.operands[0]):
+                # (A or not(A)) is an unfolded Boolean
+                return # stop to avoid infinite recursion.
+        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
+    
+    def deduceNegationSideEffects(self, knownTruth):
+        '''
+        From not(A or B) derive not(A), not(B), and (A or B) in Booleans.
+        '''
+        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
+        if len(self.operands) == 2:
+            tryDerivation(self.deduceNotLeftIfNeither, knownTruth.assumptions)
+            tryDerivation(self.deduceNotRightIfNeither, knownTruth.assumptions)
+        else:
+            pass # should generalize to many operands
+
+    def deduceInBoolSideEffects(self, knownTruth):
+        '''
+        From [(A or B) in Booleans] deduce A in Booleans and B in Booleans, where self is (A or B).
+        '''
+        from _axioms_ import leftInBool, rightInBool
+        from _theorems_ import eachInBool
+        from proveit.logic import Equals
+        if len(self.operands) == 2:
+            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=knownTruth.assumptions)
+            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=knownTruth.assumptions)
+        else:
+            for k, operand in enumerate(self.operands):
+                eachInBool.specialize({Amulti:self.operands[:k], B:operand, Cmulti:self.operands[k+1:]})
+        
     def concludeNegation(self, assumptions):
-        from _theorems_ import falseOrFalseNegated, notOrFromNeither, notOrIfNotAny
+        from _theorems_ import falseOrFalseNegated, neitherIntro, notOrIfNotAny
         if self == falseOrFalseNegated.operand:
             return falseOrFalseNegated # the negation of (FALSE or FALSE)
         elif len(self.operands)==2:
-            return notOrFromNeither.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             return notOrIfNotAny.specialize({Amulti:self.operands}, assumptions=assumptions)
         
@@ -89,7 +129,40 @@ class Or(AssociativeOperation):
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+
+    def deriveViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B), and assuming A => C, B => C, and A, B, and C are Booleans,
+        derive and return the conclusion, C.  Self is (A or B).
+        '''
+        from _theorems_ import singularConstructiveDilemma
+        if len(self.operands) == 2:
+            return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
         
+    def concludeViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        
+        '''
+        pass
+
+    def deduceNotLeftIfNeither(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce not(A) assuming not(A or B) where self is (A or B). 
+        '''
+        from _theorems_ import notLeftIfNeither
+        assert len(self.operands) == 2
+        leftOperand, rightOperand = self.operands
+        return notLeftIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+
+    def deduceNotRightIfNeither(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce not(B) assuming not(A or B) where self is (A or B). 
+        '''
+        from _theorems_ import notRightIfNeither
+        assert len(self.operands) == 2
+        leftOperand, rightOperand = self.operands
+        return notRightIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+                                
     def deriveCommonConclusion(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.

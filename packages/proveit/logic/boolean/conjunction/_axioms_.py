@@ -5,23 +5,16 @@ from proveit import beginAxioms, endAxioms
 beginAxioms(locals())
 
 andTT = Equals(And(TRUE, TRUE), TRUE)
-andTT
-
 andTF = Equals(And(TRUE, FALSE), FALSE)
-andTF
-
 andFT = Equals(And(FALSE, TRUE), FALSE)
-andFT
-
 andFF = Equals(And(FALSE, FALSE), FALSE)
-andFF
 
-# base case for composition with the And operation identity
-empytConjunction = Equals(And(), TRUE)
+# Conjunction only well-defined when each input is a Boolean.
+leftInBool = Forall((A, B), inBool(A), conditions=[inBool(And(A, B))]) 
+rightInBool = Forall((A, B), inBool(B), conditions=[inBool(And(A, B))]) 
 
+# Definition of multi-operand conjunction
+empytConjunction = Equals(And(), TRUE) # base case
 conjunctionComposition = Forall((A, Bmulti), Equals(And(A, Betc), And(A, And(Betc))))
-conjunctionComposition
-
-conjunctionForBooleansOnly = Forall((Amulti, B, Cmulti), inBool(B), conditions=inBool(And(Aetc, B, Cetc)))
 
 endAxioms(locals(), __package__)

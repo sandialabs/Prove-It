@@ -18,11 +18,12 @@ fromDoubleNegation = Forall(A, A, conditions=[Not(Not(A))])
 
 negationContradiction = Forall(A, FALSE, conditions=[A, Not(A)])
 
+fromNegatedFalsification = Forall(A, A, domain=Booleans, conditions=[Not(Equals(A, FALSE))])
 
 closure = Forall(A, inBool(Not(A)), domain=Booleans)
 
 
-negationForBooleansOnly = Forall(A, inBool(A), conditions=inBool(Not(A)))
+operandInBool = Forall(A, inBool(A), conditions=inBool(Not(A)))
 
 doubleNegationEquiv = Forall(A, Equals(Not(Not(A)), A), domain=Booleans)
 

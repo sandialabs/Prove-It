@@ -26,6 +26,21 @@ class Exists(OperationOverInstances):
         '''
         tryDerivation(self.deriveNegatedForall, knownTruth.assumptions)
 
+    def deduceNegationSideEffects(self, knownTruth):
+        '''
+        From not(exists_{x | Q(x) P(x)) derive notexists_{x | Q(x) P(x).
+        '''
+        tryDerivation(self.deduceNotExists, knownTruth.assumptions)
+        
+    def deriveNotExists(self, assumptions=USE_DEFAULTS):
+        r'''
+        Deduce notexists_{x | Q(x) P(x) assuming not(exists_{x | Q(x) P(x)),
+        where self is exists_{x | Q(x) P(x).
+        '''
+        from not_exists import NotExists
+        notExistsExpr = NotExists(self.instanceVars, self.instanceExpr, domain=self.domain, conditions=self.conditions)
+        return notExistsExpr.concludeAsFolded(assumptions)
+        
     def concludeViaExample(self, exampleInstance):
         '''
         Conclude and return this [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] from P(..x..) and Q(..x..) and ..x.. in S, where ..x.. is the given exampleInstance.

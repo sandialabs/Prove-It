@@ -9,8 +9,4 @@ unfoldNotInSet = Forall((x, S), Not(InSet(x, S)), conditions=[NotInSet(x, S)])
 
 foldNotInSet = Forall((x, S), NotInSet(x, S), conditions=[Not(InSet(x, S))])
 
-inSetEqFalseIfNotInSet = Forall((x, S), Equals(InSet(x, S), FALSE), conditions=[NotInSet(x, S)])
-
-notInSetEqFalseIfInSet = Forall((x, S), Equals(NotInSet(x, S), FALSE), conditions=[InSet(x, S)])
-
 endTheorems(locals(), __package__)

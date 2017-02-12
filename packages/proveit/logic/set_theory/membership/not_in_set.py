@@ -6,8 +6,8 @@ NOTIN = Literal(__package__, stringFormat = 'not in', latexFormat = r'\notin')
 class NotInSet(BinaryOperation):
     def __init__(self, element, domain):
         BinaryOperation.__init__(self, NOTIN, element, domain)
-        self.element = element
-        self.domain = domain  
+        self.element = self.operands[0]
+        self.domain = self.operands[1]  
 
     @classmethod
     def operatorOfOperation(subClass):
@@ -58,15 +58,7 @@ class NotInSet(BinaryOperation):
         '''
         if hasattr(self.domain, 'deduceNonmembershipSideEffects'):
             tryDerivation(self.domain.deduceNonmembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
-        tryDerivation(self.unfold, assumptions=knownTruth.assumptions)    
-        tryDerivation(self.deriveInSetEqFalse, assumptions=knownTruth.assumptions)  
-        
-    def deriveInSetEqFalse(self, assumptions=USE_DEFAULTS):
-        '''
-        From (x not in S) derive and return [(x in S) = FALSE]
-        '''
-        from _theorems_ import inSetEqFalseIfNotInSet
-        return inSetEqFalseIfNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
+        tryDerivation(self.unfold, assumptions=knownTruth.assumptions)            
 
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''

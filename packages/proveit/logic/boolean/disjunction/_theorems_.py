@@ -19,7 +19,7 @@ orIfOnlyLeft = Forall((A, B), Or(A, B), conditions=[A, Not(B)])
 
 orIfOnlyRight = Forall((A, B), Or(A, B), conditions=[Not(A), B])
 
-notOrFromNeither = Forall((A, B), Not(Or(A, B)), conditions=[Not(A), Not(B)])
+neitherIntro = Forall((A, B), Not(Or(A, B)), conditions=[Not(A), Not(B)])
 
 binaryOrContradiction = Forall((A, B), FALSE, conditions=(Or(A, B), Not(A), Not(B)))
 
@@ -27,15 +27,29 @@ leftIfNotRight = Forall((A, B), A, domain=Booleans, conditions=(Or(A, B), Not(B)
 
 rightIfNotLeft = Forall((A, B), B, domain=Booleans, conditions=(Or(A, B), Not(A)))
 
-disjunctiveAffirmation = Forall((A, B, C), C, domain=Booleans, conditions=[Or(A, B), Implies(A, C), Implies(B, C)])
+singularConstructiveDilemma = Forall((A, B), Forall(C, C, conditions=[Or(A, B), Implies(A, C), Implies(B, C)]), domain=Booleans)
+
+
+
+
+notLeftIfNeither = Forall((A, B), Not(A), conditions=(Not(Or(A, B))))
+
+notRightIfNeither = Forall((A, B), Not(B), conditions=(Not(Or(A, B))))
+
+
+
+
 
 constructiveDilemma = Forall((A, B, C, D), Or(C, D), domain=Booleans, conditions=[Or(A, B), Implies(A, C), Implies(B, D)])
+destructiveDilemma = Forall((A, B, C, D), Or(Not(A), Not(B)), domain=Booleans, conditions=[Or(Not(C), Not(D)), Implies(A, C), Implies(B, D)])
 
 
 orIfLeft = Forall((A, B), Or(A, B), domain=Booleans, conditions=[A])
 
 orIfRight = Forall((A, B), Or(A, B), domain=Booleans, conditions=[B])
 
+
+eachInBool = Forall((Amulti, B, Cmulti), inBool(B), conditions=inBool(Or(Aetc, B, Cetc)))
 
 orIfAny = Forall((Amulti, B, Cmulti), Or(Aetc, B, Cetc), domain=Booleans, conditions=[B])
 

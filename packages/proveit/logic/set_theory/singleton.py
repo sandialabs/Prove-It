@@ -9,7 +9,7 @@ class Singleton(Operation):
     '''
     def __init__(self, elem):
         Operation.__init__(self, SINGLETON, elem)
-        self.elem = elem
+        self.elem = self.operands[0]
 
     @classmethod
     def operatorOfOperation(subClass):

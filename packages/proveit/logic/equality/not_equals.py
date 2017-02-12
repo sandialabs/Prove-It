@@ -7,8 +7,8 @@ NOTEQUALS = Literal(__package__, stringFormat = '!=', latexFormat = r'\neq')
 class NotEquals(BinaryOperation):
     def __init__(self, a, b):
         BinaryOperation.__init__(self, NOTEQUALS, a, b)
-        self.lhs = a
-        self.rhs = b
+        self.lhs = self.operands[0]
+        self.rhs = self.operands[1]
         
     @classmethod
     def operatorOfOperation(subClass):

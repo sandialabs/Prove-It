@@ -10,7 +10,7 @@ class SetOfAll(OperationOverInstances):
         {instanceElement | conditions}_{instanceVar \in S}
         '''
         OperationOverInstances.__init__(self, SET, instanceVars, instanceElement, domain, conditions)
-        self.instanceElement = instanceElement
+        self.instanceElement = self.instanceExpr
 
     @classmethod
     def operatorOfOperation(subClass):

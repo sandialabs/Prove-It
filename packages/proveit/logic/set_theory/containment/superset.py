@@ -7,8 +7,8 @@ SUPERSET_EQ = Literal(__package__, stringFormat = 'superseteq', latexFormat = r'
 class Superset(BinaryOperation):
     def __init__(self, superset, subset):
         BinaryOperation.__init__(self, SUPERSET, superset, subset)
-        self.subset = subset
-        self.superset = superset
+        self.subset = self.operands[0]
+        self.superset = self.operands[1]
 
     @classmethod
     def operatorOfOperation(subClass):

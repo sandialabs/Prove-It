@@ -56,13 +56,13 @@ iffTransitivity = Forall((A, B, C), Iff(A, C), conditions=[Iff(A, B), Iff(B, C)]
 
 affirmViaContradiction = Forall(A, A, domain=Booleans, conditions=[Implies(Not(A), FALSE)])
 
-modusTollensAffirmation = Forall((A, B), A, domain=Booleans, conditions=[Implies(Not(A), B), Not(B)])
+modusTollensAffirmation = Forall(A, Forall(B, A, conditions=[Implies(Not(A), B), Not(B)]), domain=Booleans)
+
+modusTollensDenial = Forall(A, Forall(B, Not(A), conditions=[Implies(A, B), Not(B)]), domain=Booleans)
+
 
 denyViaContradiction = Forall(A, Not(A), domain=Booleans, conditions=[Implies(A, FALSE)])
 
-
-
-modusTollensDenial = Forall((A, B), Not(A), domain=Booleans, conditions=[Implies(A, B), Not(B)])
 
 
 fromContraposition = Forall((A, B), Implies(A, B), conditions=[Implies(Not(B), Not(A)), inBool(B)])

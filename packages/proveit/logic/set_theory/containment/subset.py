@@ -8,8 +8,8 @@ SUBSET_EQ = Literal(__package__, stringFormat = 'subseteq', latexFormat = r'\sub
 class Subset(BinaryOperation):
     def __init__(self, subset, superset):
         BinaryOperation.__init__(self, SUBSET, subset, superset)
-        self.subset = subset
-        self.superset = superset
+        self.subset = self.operands[0]
+        self.superset = self.operands[1]
 
     @classmethod
     def operatorOfOperation(subClass):

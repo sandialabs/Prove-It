@@ -31,7 +31,7 @@ class Forall(OperationOverInstances):
         via 'concludeAsFolded'.
         '''
         if hasattr(self.domain, 'foldAsForall'):
-            self.concludeAsFolded(assumptions)
+            return self.concludeAsFolded(assumptions)
         raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method.")
     
     def unfold(self, assumptions=USE_DEFAULTS):
@@ -72,6 +72,13 @@ class Forall(OperationOverInstances):
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         R_op, R_op_sub = Operation(Rmulti, innerForall.instanceVars), innerForall.conditions
         return forallBundling.specialize({xMulti:self.instanceVars, yMulti:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion(assumptions)
+
+    def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+        '''
+        First attempt to prove that this Forall statement is true under the assumptions,
+        and then call specialize on the KnownTruth.
+        '''
+        return self.prove(assumptions).specialize(specializeMap, relabelMap, assumptions=assumptions)
 
     def _specializeUnravelingTheorem(self, theorem, *instanceVarLists):
         assert len(self.instanceVars) > 1, "Can only unravel a forall statement with multiple instance variables"

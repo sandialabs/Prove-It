@@ -6,8 +6,8 @@ IN = Literal(__package__, stringFormat = 'in', latexFormat = r'\in')
 class InSet(BinaryOperation):
     def __init__(self, element, domain):
         BinaryOperation.__init__(self, IN, element, domain)
-        self.element = element
-        self.domain = domain
+        self.element = self.operands[0]
+        self.domain = self.operands[1]
     
     @classmethod
     def operatorOfOperation(subClass):
@@ -19,9 +19,21 @@ class InSet(BinaryOperation):
         and given the element and assumptions.  Also, the 'unfold' method is called.
         '''
         if hasattr(self.domain, 'deduceMembershipSideEffects'):
-            tryDerivation(self.domain.deduceMembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
+            tryDerivation(self.domain.deduceMembershipSideEffects, self.element, knownTruth)
         tryDerivation(self.unfold, assumptions=knownTruth.assumptions)    
-        tryDerivation(self.deriveNotInSetEqFalse, assumptions=knownTruth.assumptions)    
+
+    def deduceNegationSideEffects(self, knownTruth):
+        '''
+        From not(x in S) derive x not in S.
+        '''
+        tryDerivation(self.deduceNotIn, knownTruth.assumptions)
+        
+    def deduceNotIn(self, assumptions=USE_DEFAULTS):
+        r'''
+        Deduce x not in S assuming not(A in S), where self = (x in S).
+        '''
+        from _theorems_ import foldNotInSet
+        return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
 
     def conclude(self, assumptions):
         '''
@@ -53,13 +65,6 @@ class InSet(BinaryOperation):
             return self.domain.unfoldMembership(self.element, assumptions=assumptions)
         raise AttributeError("'unfoldMembership' is not implemented for a domain of type " + str(self.domain.__class__))
     
-    def deriveNotInSetEqFalse(self, assumptions=USE_DEFAULTS):
-        '''
-        From (x in S) derive and return [(x not in S) = FALSE]
-        '''
-        from _theorems_ import notInSetEqFalseIfInSet
-        return notInSetEqFalseIfInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
-
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to evaluate whether element is or is not in the given domain.
