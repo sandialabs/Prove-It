@@ -247,7 +247,7 @@ class ExpressionTensor(Composite, Expression):
     def latex(self, fence=False):
         from proveit._core_.expression.bundle import Block
         if len(self.shape) != 2:
-            raise NotImplementedError('One 2-dimensional ExpressionTensor formatting has been implemented.')
+            raise NotImplementedError('Only 2-dimensional ExpressionTensor formatting has been implemented.')
         _, ncolumns = self.shape
         outStr = r'\xymatrix @*=<0em> @C=1em @R=.7em{' + '\n'
         current_row = -1
