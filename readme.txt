@@ -56,7 +56,9 @@ Installation instructions
    useful one is "proveit/logic/equality/equality_tutorial.ipynb" in the
    "packages" folder.  Furthermore, there are "_proofs_" folders in various
    packages with Jupyter notebooks that prove theorems of the package.  You
-   can peek at these for examples of how Prove-It works in practice.
+   can peek at these for examples of how Prove-It works in practice.  Note that 
+   "proofs" folders, without the underscores, are outdated proofs that will
+   likely fail to execute.
 
 4) It is intended that packages continue to be added and updated to cover
    an ever-expanding range of mathematical knowledge.  Packages may have
