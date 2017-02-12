@@ -4,8 +4,8 @@ from fencing import maybeFenced
 class BinaryOperation(Operation):
     def __init__(self, operator, A, B):
         Operation.__init__(self, operator, (A, B))
-        self.leftOperand = A
-        self.rightOperand = B    
+        self.leftOperand = self.operands[0]
+        self.rightOperand = self.operands[1]
 
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)

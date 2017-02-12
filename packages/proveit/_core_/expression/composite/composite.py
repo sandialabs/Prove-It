@@ -19,12 +19,15 @@ def compositeExpression(expressions):
     from expr_tensor import ExpressionTensor
     from proveit._core_.known_truth import KnownTruth
     
+    if isinstance(expressions, KnownTruth):
+        expressions = expressions.expr
+    
     if isinstance(expressions, ExpressionList) or isinstance(expressions, NamedExpressions) or isinstance(expressions, ExpressionTensor):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
         return ExpressionList(expressions) # a single expression that we will wrap in an ExpressionLIst
     else:
-        if all(isinstance(subExpr, Expression) for subExpr in expressions):
+        if all(isinstance(subExpr, Expression) or isinstance(subExpr, KnownTruth) for subExpr in expressions):
             # An iterable over only Expressions must be an exprlist
             return ExpressionList(*expressions)
         else:
@@ -40,6 +43,9 @@ def singleOrCompositeExpression(exprOrExprs):
     Put the approriate CompositeExpression wrapper around a list (iterable) or dictionary
     of Expressions, or simply return the given Expression if it is one.
     '''
+    from proveit._core_.known_truth import KnownTruth
+    if isinstance(exprOrExprs, KnownTruth):
+        exprOrExprs = exprOrExprs.expr
     if isinstance(exprOrExprs, Expression):
         return exprOrExprs
     else: return compositeExpression(exprOrExprs)
