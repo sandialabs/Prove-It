@@ -88,6 +88,8 @@ Installation instructions
 ******************************************************************************************
 Version history
 
+12 Feb. 2017 
+    - Moved repository to github.com/PyProveIt/Prove-It.
 12 Jan. 2017 - v0.3 
     - The code is now hosted on gitlab-ex.sandia.gov to make it accessible to
       collaborators.
