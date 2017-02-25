@@ -68,7 +68,7 @@ Installation instructions
    should be accessed, externally, at this top level.  For example, the
    "Or" class is contained in "proveit.logic.boolean.disjunction.or_op.py" but
    it can and should be accessed via "from proveit.logic import Or".
-   In this way, the sub-package structure and be useful for organization 
+   In this way, the sub-package structure can be useful for organization 
    purposes without being cumbersome to the user.  Here is the current list
    of top-level packages under development, with brief descriptions:
    
