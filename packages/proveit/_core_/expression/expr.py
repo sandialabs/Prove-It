@@ -173,7 +173,11 @@ class Expression:
                 except NotImplementedError:
                     pass # that didn't work, try conclude on the Not expression itself
             if concludedTruth is None:
-                concludedTruth = self.conclude(assumptions)
+                try:
+                    # trye the generic version for concluding the expression
+                    concludedTruth = self.genericConclude(assumptions)
+                except:
+                    concludedTruth = self.conclude(assumptions)
             if not isinstance(concludedTruth, KnownTruth):
                 raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
             if concludedTruth.expr != self:
@@ -197,15 +201,15 @@ class Expression:
         from proveit import Not
         return Not(self).prove(assumptions=assumptions, automation=automation)
                         
-    def conclude(self, assumptions=USE_DEFAULTS):
+    def genericConclude(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude, via automation, that this statement is true
         under the given assumptions.  Return the KnownTruth if successful,
-        or raise an exception.  By default, concludeViaReduction and
-        concludeViaImplication are attempted (in that order),
-        but this may be overridden with other behavior for each particular
-        Expression class.  This is called by the `prove` method when no 
-        existing proof was found and it cannot be proven trivially via assumption.
+        or raise an exception.  This generic version attempts concludeViaReduction
+        and concludeViaImplication in that order.  Implement the conclude
+        method for an implementation that is specific to this type of expression.
+        This is called by the `prove` method when no existing proof was found 
+        and it cannot be proven trivially via assumption.
         The `prove` method has a mechanism to prevent infinite recursion, 
         so there are no worries regarding cyclic attempts to conclude an expression.
         '''
@@ -214,12 +218,28 @@ class Expression:
             return concludeViaReduction(self, assumptions)
         except:
             return concludeViaImplication(self, assumptions)
+
+    def conclude(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to conclude this expression under the given assumptions, 
+        using automation specific to this type of expression.
+        Return the KnownTruth if successful, or raise an exception.
+        This is called by the `prove` method when no existing proof was found 
+        and it cannot be proven trivially via assumption or defaultConclude.
+        The `prove` method has a mechanism to prevent infinite recursion, 
+        so there are no worries regarding cyclic attempts to conclude an expression.
+        '''
+        raise NotImplementedError("'conclude' not implemented for " + str(self.__class__))
     
     def concludeNegation(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude the negation of this expression under the given
         assumptions, using automation specific to the type of expression being negated.
         Return the KnownTruth if successful, or raise an exception.
+        This is called by the `prove` method of the negated expression
+        when no existing proof for the negation was found.
+        The `prove` method has a mechanism to prevent infinite recursion, 
+        so there are no worries regarding cyclic attempts to conclude an expression.
         '''
         raise NotImplementedError("'concludeNegation' not implemented for " + str(self.__class__))
         
