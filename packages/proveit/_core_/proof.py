@@ -35,7 +35,6 @@ class Proof:
                     # occurred while deriving side-effects
                     raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem, 'Happened while deriving side-effects -- proveit.tryDerivation method is recommended.')
                 raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
-        self.numSteps = sum(proof.numSteps for proof in self.requiredProofs) + 1
         if not hasattr(self, '_dependents'):
             self._dependents = [] # proofs that directly require this one
         for requiredProof in self.requiredProofs:
@@ -48,6 +47,8 @@ class Proof:
         self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
         self._unique_id = hash(self._unique_rep)
+        # determine the number of unique steps required for this proof
+        self.numSteps = len(self.allRequiredProofs())
         # in case this new proof makes an old one obselete or is born obsolete itself:
         provenTruth._recordBestProof(self)
         if provenTruth.proof() is self and self.isUsable(): # don't bother redoing side effects if this proof was born obsolete or unusable
@@ -175,6 +176,13 @@ class Proof:
             proofSteps.insert(0, proof)
             visited.add(proof)
         return proofSteps        
+    
+    def allRequiredProofs(self):
+        '''
+        Returns the set of directly or indirectly required proofs.
+        '''
+        subProofSets = [requiredProof.allRequiredProofs() for requiredProof in self.requiredProofs]
+        return set([self]).union(*subProofSets)
 
     def latex(self):
         proofSteps = self.enumeratedProofSteps()
