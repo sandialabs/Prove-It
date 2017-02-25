@@ -1,4 +1,4 @@
-from proveit import BinaryOperation, USE_DEFAULTS, ProofFailure, tryDerivation
+from proveit import Expression, BinaryOperation, USE_DEFAULTS, ProofFailure, tryDerivation
 from proveit import Literal, Operation, Lambda
 from proveit.common import A, P, Q, f, x, y, z
 from proveit.logic.transitivity_search import transitivitySearch
@@ -177,6 +177,22 @@ class Equals(BinaryOperation):
             return contradictionViaFalsification.specialize({A:self.lhs}, assumptions=assumptions)
         raise ValueError('Equals.deriveContradiction is only applicable if the right-hand-side is FALSE')
     
+    def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From (A=FALSE), derive the conclusion provided that the negated conclusion
+        implies both (A=FALSE) as well as A, and the conclusion is a Boolean.
+        '''
+        from proveit.logic.boolean.implication import affirmViaContradiction
+        return affirmViaContradiction(self, conclusion, assumptions)
+
+    def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From (A=FALSE), derive the negated conclusion provided that the conclusion
+        implies both (A=FALSE) as well as A, and the conclusion is a Boolean.
+        '''
+        from proveit.logic.boolean.implication import denyViaContradiction
+        return denyViaContradiction(self, conclusion, assumptions)
+            
     def deriveViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
         '''
         From Not(A)=FALSE, derive A.
@@ -219,24 +235,8 @@ class Equals(BinaryOperation):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from proveit.logic.set_theory._axioms_ import singletonDef
-        return singletonDef.specialize({x:self.lhs, y:self.rhs}).deriveLeftViaEquivalence(assumptions)
-    
-    """
-    def _subFn(self, fnExpr, fnArg, subbing, replacement):
-        if fnArg is None:
-            dummyVar = safeDummyVar(self, fnExpr)
-            if isinstance(replacement, ExpressionList):
-                fnArg = Etcetera(MultiVariable(dummyVar))
-            elif isinstance(replacement, ExpressionTensor):
-                fnArg = Block(dummyVar)
-            else:
-                fnArg = dummyVar
-            fnExpr = fnExpr.substituted({subbing:fnArg})
-            if dummyVar not in fnExpr.freeVars():
-                raise Exception('Expression to be substituted is not found within the expression that the substitution is applied to.')
-        return fnExpr, fnArg
-    """
+        from proveit.logic.set_theory._theorems_ import foldSingleton
+        return foldSingleton.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     @staticmethod
     def _lambdaExpr(lambdaMap, defaultGlobalReplSubExpr):
@@ -329,7 +329,17 @@ class Equals(BinaryOperation):
         '''
         from _theorems_ import lhsViaEquivalence
         return lhsViaEquivalence.specialize({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
-            
+    
+    def otherSide(self, expr):
+        '''
+        Returns the 'other' side of the of the equation if the given expr is on one side.
+        '''
+        if expr == self.lhs:
+            return self.rhs
+        elif expr == self.rhs:
+            return self.lhs
+        raise ValueError('The given expression is expected to be one of the sides of the equation')
+        
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this equality statement is in the set of Booleans.
@@ -363,18 +373,19 @@ def reduceOperands(operation, assumptions=USE_DEFAULTS):
     '''
     # Any of the operands that are not irreducible values must be replaced with their evaluation
     expr = operation
-    for operand in tuple(expr.operands):
-        if not isIrreducibleValue(operand):
-            # the operand is not an irreducible value so it must be evaluated
-            operandEval = operand.evaluate(assumptions=assumptions)
-            if not isIrreducibleValue(operandEval.rhs):
-                raise EvaluationError('Evaluations expected to be irreducible values')
-            # substitute in the evaluated value
-            expr = operandEval.substitution(expr).rhs
-    for operand in expr.operands:
-        if not isIrreducibleValue(operand):
-            raise EvaluationError('All operands should be irreducible values')
-    return expr
+    while True:
+        allReduced = True
+        for operand in expr.operands:
+            if not isIrreducibleValue(operand):
+                # the operand is not an irreducible value so it must be evaluated
+                operandEval = operand.evaluate(assumptions=assumptions)
+                if not isIrreducibleValue(operandEval.rhs):
+                    raise EvaluationError('Evaluations expected to be irreducible values')
+                # substitute in the evaluated value
+                expr = operandEval.substitution(expr).rhs
+                allReduced = False
+                break # start over (there may have been multiple substitutions)
+        if allReduced: return expr
 
 def concludeViaReduction(expr, assumptions):
     '''
@@ -400,7 +411,7 @@ def concludeViaReduction(expr, assumptions):
     assert knownTruth.expr == expr, 'Equivalence substitutions did not work out as they should have'
     return knownTruth
             
-def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
+def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
     '''
     Default attempt to evaluate the given expression under the given assumptions.
     If successful, returns a KnownTruth (using a subset of the given assumptions)
@@ -418,6 +429,12 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
     if isinstance(expr, IrreducibleValue):
         IrreducibleValue.evaluate(expr)
     assumptionsSet = set(defaults.checkedAssumptions(assumptions))
+    # see if the expression is already known to be true as a special case
+    try:
+        expr.prove(assumptionsSet, automation=False)
+        return evaluateTruth(expr, assumptionsSet) # A=TRUE given A
+    except:
+        pass
     # See if the expression already has a proven evaluation
     if expr in Equals.evaluations:
         candidates = []
@@ -427,9 +444,19 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS):
         if len(candidates) >= 1:
             # return the "best" candidate with respect to fewest number of steps
             return min(candidates, key=lambda knownTruth: knownTruth.proof().numSteps)
-    # see if the assumption is in the set of assumptions as a special case
-    if expr in assumptionsSet:
-        return evaluateTruth(expr, [expr]) # A=TRUE assuming A
+    if not automation:
+        raise EvaluationError('Unknown evaluation (without automation): ' + str(expr))
+    # See if the expression is equal to something that has an evaluation or is 
+    # already known to be true.
+    if expr in Equals.knownEqualities:
+        for knownTruth in Equals.knownEqualities[expr]:
+            try:
+                if knownTruth.isSufficient(assumptionsSet):
+                    equivEval = defaultEvaluate(knownTruth.otherSide(expr), assumptions, automation=False)
+                    return Equals(expr, equivEval.rhs).prove(assumptions=assumptions) # via transitivity
+            except EvaluationError:
+                pass     
+    # try to evaluate via reduction
     if not isinstance(expr, Operation):
         raise EvaluationError('Unknown evaluation: ' + str(expr))
     reducedExpr = reduceOperands(expr, assumptions)
@@ -458,117 +485,6 @@ class EvaluationError(Exception):
         self.message = message
     def __str__(self):
         return self.message
-        
-      
-        
-"""
-This is obsolete (mostly) -- use proveit.lambda_map techniques instead.
-
-def _autoSub(outcome, outerExpr, superExpr, subExpr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, suppressWarnings=False):
-    if eqGenMethodArgs is None: eqGenMethodArgs = []
-    if eqGenKeywordArgs is None: eqGenKeywordArgs = dict()
-    meetsCriteria = (subExprClass is None or isinstance(subExpr, subExprClass)) and \
-        (criteria is None or criteria(subExpr))
-    if meetsCriteria and hasattr(subExpr, eqGenMethodName):
-        generatedEquality = None
-        try:
-            generatedEquality = getattr(subExpr, eqGenMethodName)(*eqGenMethodArgs, **eqGenKeywordArgs)
-        except Exception as e:
-            if not suppressWarnings:
-                print "Warning, failure in autosub attempt when applying '" + eqGenMethodName + "' method to " + str(subExpr) + ":"
-                print e
-                print "Continuing on"
-            
-        if generatedEquality is not None and isinstance(generatedEquality, Equals) and (generatedEquality.lhs == subExpr or generatedEquality.rhs == subExpr):
-            if superExpr == outerExpr:
-                # substitute all occurences
-                fnExpr, fnArgs = outerExpr, None 
-            else:
-                # substitute only occurences within superExpr
-                subbing = generatedEquality.lhs if generatedEquality.lhs == subExpr else generatedEquality.rhs
-                replacement = generatedEquality.rhs if generatedEquality.lhs == subExpr else generatedEquality.lhs
-                fnExpr, fnArgs = generatedEquality._subFn(superExpr, None, subbing, replacement)
-                fnExpr = outerExpr.substituted({superExpr:fnExpr})
-            if outcome == 'substitution':
-                return generatedEquality.substitution(fnExpr, fnArgs)
-            elif generatedEquality.lhs == subExpr:
-                if outcome == 'substitute':
-                    return generatedEquality.rhsSubstitute(fnExpr, fnArgs)
-                elif outcome == 'statement_substitution':
-                    return generatedEquality.rhsStatementSubstitute(fnExpr, fnArgs)
-            elif generatedEquality.rhs == subExpr:
-                if outcome == 'substitute':
-                    return generatedEquality.lhsSubstitute(fnExpr, fnArgs)
-                elif outcome == 'statement_substitution':
-                    return generatedEquality.lhsStatementSubstitute(fnExpr, fnArgs)
-    for subExpr in subExpr.subExprGen():
-        result = _autoSub(outcome, outerExpr, superExpr, subExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)
-        if result is not None: return result
-    return None            
-    
-def autoSubstitute(expr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, superExpr=None, suppressWarnings = False):
-    '''
-    From a given expr = P(x), derives and returns some P(y) via some x=y that is generated by
-    calling a method of the name eqGenMethodName on one of its sub-expressions.  eqGenMethodArgs
-    and eqGenKeywordArgs may be a list of arguments and/or a dictionary of keyword arguments
-    respectively to pass on to the eqGenMethodName method.  If provided, criteria, subExprClass,
-    and superExpr will force selectivity in choosing the sub-expression to generate x=y.
-    Specificially the sub-expression must be a sub-expression of superExpr (if provided)
-    beyond being a sub-expression of expr, it must be an instance of subExprClass (if provided), 
-    and the criteria method (if provide) must return true when passed in the sub-expression.
-    If superExpr is provided, replacements are only made within superExpr.
-    '''
-    if superExpr is None: superExpr = expr
-    return _autoSub('substitute', expr, superExpr, superExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)
-
-def autoSubstitution(expr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, superExpr=None, suppressWarnings = False):
-    '''
-    From a given expr = f(x), derives and returns some f(x) = f(y) via some x=y that is generated by
-    calling a method of the name eqGenMethodName on one of its sub-expressions.  eqGenMethodArgs
-    and eqGenKeywordArgs may be a list of arguments and/or a dictionary of keyword arguments
-    respectively to pass on to the eqGenMethodName method.  If provided, criteria, subExprClass,
-    and superExpr will force selectivity in choosing the sub-expression to generate x=y.
-    Specificially the sub-expression must be a sub-expression of superExpr (if provided)
-    beyond being a sub-expression of expr, it must be an instance of subExprClass (if provided), 
-    and the criteria method (if provide) must return true when passed in the sub-expression.
-    If superExpr is provided, replacements are only made within superExpr.
-    '''
-    if superExpr is None: superExpr = expr
-    return _autoSub('substitution', expr, superExpr, superExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)
-
-def autoStatementSubstitution(expr, eqGenMethodName, eqGenMethodArgs=None, eqGenKeywordArgs=None, criteria=None, subExprClass=None, superExpr=None, suppressWarnings = False):
-    '''
-    From a given expr = P(x), derives and returns some P(x) => P(y) via some x=y that is 
-    generated by calling a method of the name eqGenMethodName on one of its sub-expressions.
-    eqGenMethodArgs and eqGenKeywordArgs may be a list of arguments and/or a dictionary of 
-    keyword arguments respectively to pass on to the eqGenMethodName method.  If provided, 
-    criteria, subExprClass, and superExpr will force selectivity in choosing the sub-expression 
-    to generate x=y.  Specificially the sub-expression must be a sub-expression of superExpr 
-    (if provided) beyond being a sub-expression of expr, it must be an instance of subExprClass 
-    (if provided), and the criteria method (if provide) must return true when passed in the 
-    sub-expression. If superExpr is provided, replacements are only made within superExpr.
-    '''
-    if superExpr is None: superExpr = expr
-    return _autoSub('statement_substitution', expr, superExpr, superExpr, eqGenMethodName, eqGenMethodArgs, eqGenKeywordArgs, criteria, subExprClass, suppressWarnings)        
-"""
-
-"""
-Either move this elsewhere or use other techniques.  Perhaps no longer needed.
-
-def generateSubExpressions(expr, criteria=None, subExprClass=None):
-    meetsCriteria = (subExprClass is None or isinstance(expr, subExprClass)) and \
-        (criteria is None or criteria(expr))
-    if meetsCriteria: yield expr
-    for subExpr in expr.subExprGen():
-        for subSubExpr in generateSubExpressions(subExpr, criteria, subExprClass):
-            yield subSubExpr
-
-def extractSubExpr(expr, criteria=None, subExprClass=None):
-    for subExpr in generateSubExpressions(expr, criteria=criteria, subExprClass=subExprClass):
-        return subExpr
-    print "Sub expression meeting the criteria not found"
-
-"""
 
 class TransitivityException:
     def __init__(self, expr1, expr2):
