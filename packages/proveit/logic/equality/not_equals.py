@@ -103,19 +103,27 @@ class NotEquals(BinaryOperation):
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
-        From x != x, derive and return FALSE.
+        From x != y, and assuming x = y, derive and return FALSE.
         '''
         from _theorems_ import notEqualsContradiction
         return notEqualsContradiction.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
-        From x != x, derive the conclusion provided that the negated conclusion
-        implies x != x, and the conclusion is a Boolean.
+        From x != y, derive the conclusion provided that the negated conclusion
+        implies x != y and x = y, and the conclusion is a Boolean.
         '''
         from proveit.logic.boolean.implication import affirmViaContradiction
         return affirmViaContradiction(self, conclusion, assumptions)
-        
+
+    def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From x != y, derive the negated conclusion provided that the conclusion
+        implies x != y and x = y, and the conclusion is a Boolean.
+        '''
+        from proveit.logic.boolean.implication import denyViaContradiction
+        return denyViaContradiction(self, conclusion, assumptions)
+                        
     def deduceInBool(self):
         '''
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.

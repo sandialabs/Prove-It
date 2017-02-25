@@ -172,7 +172,15 @@ class Not(Operation):
         '''
         from proveit.logic.boolean.implication import affirmViaContradiction
         return affirmViaContradiction(self, conclusion, assumptions)
-            
+
+    def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From not(A), derive the negated conclusion provided that the conclusion
+        implies both not(A) as well as A, and the conclusion is a Boolean.
+        '''
+        from proveit.logic.boolean.implication import denyViaContradiction
+        return denyViaContradiction(self, conclusion, assumptions)
+                        
     def deduceDoubleNegationEquiv(self, assumptions=USE_DEFAULTS):
         '''
         For some not(not(A), derive and return A = not(not(A)) assuming A in Booleans.

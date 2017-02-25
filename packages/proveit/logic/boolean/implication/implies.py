@@ -240,6 +240,18 @@ def affirmViaContradiction(contradictoryExpr, conclusion, assumptions):
     '''
     from proveit.logic import Not
     assumptions = defaults.checkedAssumptions(assumptions)
-    assumptions += (Not(conclusion),)
-    return contradictoryExpr.deriveContradiction(assumptions).asImplication(Not(conclusion)).deriveViaContradiction(assumptions)
+    extendedAssumptions = assumptions + (Not(conclusion),)
+    return contradictoryExpr.deriveContradiction(extendedAssumptions).asImplication(Not(conclusion)).deriveViaContradiction(assumptions)
+
+def denyViaContradiction(contradictoryExpr, conclusion, assumptions):
+    '''
+    Deny the conclusion (affirm its negation) via reductio ad absurdum.
+    First calls deriveContradiction on the contradictoryExpr to derive FALSE,
+    then derive the negated conclusion after proving that the conclusion itself
+    implies FALSE.  The conclusion must be a Boolean.
+    '''
+    from proveit.logic import Not
+    assumptions = defaults.checkedAssumptions(assumptions)
+    extendedAssumptions = assumptions + (conclusion,)
+    return contradictoryExpr.deriveContradiction(extendedAssumptions).asImplication(conclusion).deriveViaContradiction(assumptions)
     

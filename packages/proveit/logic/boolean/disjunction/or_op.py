@@ -220,7 +220,15 @@ class Or(AssociativeOperation):
         '''
         from proveit.logic.boolean.implication import affirmViaContradiction
         return affirmViaContradiction(self, conclusion, assumptions)
-                        
+
+    def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B), derive the negated conclusion provided that the
+        conclusion implies both (A or B), not(A) and not(B), and the conclusion is a Boolean.
+        '''
+        from proveit.logic.boolean.implication import denyViaContradiction
+        return denyViaContradiction(self, conclusion, assumptions)
+                                                
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
