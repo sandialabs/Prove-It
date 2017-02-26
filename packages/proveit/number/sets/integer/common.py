@@ -5,7 +5,7 @@ ALL_DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 def num(x):
     from proveit.number import Neg
-    from proveit.number.set.integer.decimal import WholeDecimal
+    from proveit.number.sets.integer.decimal import WholeDecimal
     if x < 0:
         return Neg(num(abs(x)))
     if isinstance(x, int):

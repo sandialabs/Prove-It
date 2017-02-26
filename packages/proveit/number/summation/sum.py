@@ -37,7 +37,20 @@ class Sum(OperationOverInstances):
     @classmethod
     def operatorOfOperation(subClass):
         return SUMMATION
-            
+
+    @staticmethod
+    def extractParameters(operands):
+        '''
+        Extract the parameters from the OperationOverInstances operands:
+        instanceVars, instanceElement, conditions, domain
+        '''
+        params = OperationOverInstances.extractParameters(operands)
+        params['indices'] = params['instanceVars']
+        params['summand'] = params['instanceExpr']
+        params.pop('instanceVars')
+        params.pop('instanceExpr')
+        return params
+                                
     def _closureTheorem(self, numberSet):
         import theorems
         '''

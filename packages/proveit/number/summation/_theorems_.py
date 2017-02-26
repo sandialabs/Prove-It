@@ -2,19 +2,19 @@ from proveit import Operation
 from proveit.logic import Forall, Implies, InSet, Equals, SetOfAll
 from proveit.number import Integers, Reals, Complexes
 from proveit.number import Sum, Interval, Exp, Fraction, Sub, Add, LessThan, LessThanEquals
-from proveit.common import a, b, c, f, g, k, l, m, n, x, y, fa, fx, gx, gy, xEtc, P, R, S, PxEtc
+from proveit.common import a, b, c, f, g, k, l, m, n, x, y, fa, fx, gx, gy, xMulti, xEtc, P, R, S, PxEtc
 from proveit.number.common import zero, one, infinity
 
 from proveit import beginTheorems, endTheorems
 
 beginTheorems(locals())
 
-summationRealClosure = Forall([P, S], Implies(Forall(xEtc, InSet(PxEtc, Reals), domain=S), 
-                                              InSet(Sum(xEtc, PxEtc, domain=S), Reals)))
+summationRealClosure = Forall([P, S], Implies(Forall(xMulti, InSet(PxEtc, Reals), domain=S), 
+                                              InSet(Sum(xMulti, PxEtc, domain=S), Reals)))
 summationRealClosure
 
-summationComplexClosure = Forall([P, S], Implies(Forall(xEtc, InSet(PxEtc, Complexes), domain=S), 
-                                          InSet(Sum(xEtc, PxEtc, domain=S), Complexes)))
+summationComplexClosure = Forall([P, S], Implies(Forall(xMulti, InSet(PxEtc, Complexes), domain=S), 
+                                          InSet(Sum(xMulti, PxEtc, domain=S), Complexes)))
 summationComplexClosure
 
 
