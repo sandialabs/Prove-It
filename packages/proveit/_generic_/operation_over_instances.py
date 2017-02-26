@@ -22,11 +22,11 @@ class OperationOverInstances(Operation):
     
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, domain, conditions):
-        lambdaFn = Lambda(instanceVars, NamedExpressions([('instance_expression',instanceExpr), ('conditions',compositeExpression(conditions))]))
+        lambdaFn = Lambda(instanceVars, NamedExpressions([('iexpr',instanceExpr), ('conds',compositeExpression(conditions))]))
         if domain is None:
-            return NamedExpressions([('instance_mapping',lambdaFn)])
+            return NamedExpressions([('imap',lambdaFn)])
         else:
-            return NamedExpressions([('instance_mapping',lambdaFn), ('domain',domain)])
+            return NamedExpressions([('imap',lambdaFn), ('domain',domain)])
     
     @staticmethod
     def extractParameters(operands):
@@ -35,10 +35,10 @@ class OperationOverInstances(Operation):
         instanceVars, instanceExpr, conditions, domain
         '''
         domain = operands['domain'] if 'domain' in operands else None
-        lambdaFn = operands['instance_mapping']
+        lambdaFn = operands['imap'] # instance mapping
         instanceVars = lambdaFn.parameters
-        conditions = lambdaFn.body['conditions']
-        instanceExpr = lambdaFn.body['instance_expression']
+        conditions = lambdaFn.body['conds']
+        instanceExpr = lambdaFn.body['iexpr'] # instance expression
         return {'instanceVars':instanceVars, 'instanceExpr':instanceExpr, 'domain':domain, 'conditions':conditions}
         
     def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
