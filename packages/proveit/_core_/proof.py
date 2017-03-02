@@ -498,9 +498,9 @@ class Specialization(Proof):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             expr = expr.operands
             domain = expr['domain'] if 'domain' in expr else None
-            lambdaExpr = expr['instance_mapping'];
+            lambdaExpr = expr['imap'];
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['instance_expression'], lambdaExpr.body['conditions']
+            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conditions']
             mappedVarLists.append(instanceVars)
             # include the mapping for the current instance variables in the partial map
             try:
@@ -635,9 +635,9 @@ class Generalization(Proof):
         from proveit import Forall, Lambda
         assert isinstance(generalizedExpr, Forall), 'The result of a generalization must be a Forall operation'
         operands = generalizedExpr.operands
-        lambdaExpr = operands['instance_mapping']
+        lambdaExpr = operands['imap']
         assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
-        expr = lambdaExpr.body['instance_expression']
+        expr = lambdaExpr.body['iexpr']
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
 
 class ProofFailure(Exception):

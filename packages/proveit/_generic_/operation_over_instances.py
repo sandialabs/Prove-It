@@ -10,8 +10,8 @@ class OperationOverInstances(Operation):
         the condition(s) is/are satisfied.  Examples include forall, exists, summation, etc.
         instanceVars and conditions may be singular or plural (iterable).
         Internally, this is represented as an Operation whose etcExpr is in the following form
-        (where '->' represents a Lambda and {...} represents an ExpressionDict):
-        [('instance_mapping', instanceVars -> [('expression',instanceExpr), ('conditions',conditions)], ('domain',domain)]
+        (where '->' represents a Lambda and the list of tuples are NambedExpressions:
+        [('imap', instanceVars -> [('iexpr',instanceExpr), ('conditions',conditions)]), ('domain',domain)]
         '''
         Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain, conditions))
         params = OperationOverInstances.extractParameters(self.operands)

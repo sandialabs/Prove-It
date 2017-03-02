@@ -461,9 +461,9 @@ class KnownTruth:
             if not isinstance(expr, Forall):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             expr = expr.operands
-            lambdaExpr = expr['instance_mapping'];
+            lambdaExpr = expr['imap'];
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['instance_expression'], lambdaExpr.body['conditions']
+            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conditions']
             for iVar in instanceVars:
                 if iVar in remainingSubVars:
                     # remove this instance variable from the remaining substitution variables
