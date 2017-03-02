@@ -463,7 +463,7 @@ class KnownTruth:
             expr = expr.operands
             lambdaExpr = expr['imap'];
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conditions']
+            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
             for iVar in instanceVars:
                 if iVar in remainingSubVars:
                     # remove this instance variable from the remaining substitution variables

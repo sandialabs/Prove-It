@@ -500,7 +500,7 @@ class Specialization(Proof):
             domain = expr['domain'] if 'domain' in expr else None
             lambdaExpr = expr['imap'];
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conditions']
+            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
             mappedVarLists.append(instanceVars)
             # include the mapping for the current instance variables in the partial map
             try:
