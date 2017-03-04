@@ -89,18 +89,18 @@ class LessThan(LesserRelation):
 #                return other.               
         if other.lhs == self.rhs:
             if isinstance(other,LessThan):
-                result = lessThanTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion(assumptions)
+                result = lessThanTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 #print self,result
                 return result.checked({self})
             elif isinstance(other,LessThanEquals):
-                result = lessThanTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion(assumptions)
+                result = lessThanTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result
         elif other.rhs == self.lhs:
             if isinstance(other,LessThan):
-                result = lessThanTransLessThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion(assumptions)
+                result = lessThanTransLessThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
             elif isinstance(other,LessThanEquals):
-                result = lessThanTransLessThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion(assumptions)
+                result = lessThanTransLessThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
         else:
             raise ValueError("Cannot derive implication from input!")
@@ -200,19 +200,19 @@ class LessThanEquals(LesserRelation):
 #                return other.               
         if other.lhs == self.rhs:
             if isinstance(other,LessThan):
-                result = lessThanEqualsTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion(assumptions)
+                result = lessThanEqualsTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result.checked({self})
             elif isinstance(other,LessThanEquals):
-                result = lessThanEqualsTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion(assumptions)
+                result = lessThanEqualsTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result
         elif other.rhs == self.lhs:
             if isinstance(other,LessThan):
-                result = lessThanEqualsTransLessThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion(assumptions)
+                result = lessThanEqualsTransLessThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
             elif isinstance(other,LessThanEquals):
-                result = lessThanEqualsTransLessThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion(assumptions)
+                result = lessThanEqualsTransLessThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
-#           result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConclusion()
+#           result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConsequent()
         else:
             raise ValueError("Cannot derive implication from input!")
 

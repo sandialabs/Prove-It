@@ -88,17 +88,17 @@ class GreaterThan(GreaterRelation):
 #                return other.
         if other.lhs == self.rhs:
             if isinstance(other,GreaterThan):
-                result = greaterThanTransGreaterThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion(assumptions)
+                result = greaterThanTransGreaterThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result.checked({self})
             elif isinstance(other,GreaterThanEquals):
-                result = greaterThanTransGreaterThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion(assumptions)
+                result = greaterThanTransGreaterThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result
         elif other.rhs == self.lhs:
             if isinstance(other,GreaterThan):
-                result = greaterThanTransGreaterThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion(assumptions)
+                result = greaterThanTransGreaterThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
             elif isinstance(other,GreaterThanEquals):
-                result = greaterThanTransGreaterThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion(assumptions)
+                result = greaterThanTransGreaterThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
         else:
             raise ValueError("Cannot derive implication from input!")
@@ -199,17 +199,17 @@ class GreaterThanEquals(GreaterRelation):
 #                return other.
         if other.lhs == self.rhs:
             if isinstance(other,GreaterThan):
-                result = greaterThanEqualsTransGreaterThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                result = greaterThanEqualsTransGreaterThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent()
                 return result.checked({self})
             elif isinstance(other,GreaterThanEquals):
-                result = greaterThanEqualsTransGreaterThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConclusion()
+                result = greaterThanEqualsTransGreaterThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent()
                 return result
         elif other.rhs == self.lhs:
             if isinstance(other,GreaterThan):
-                result = greaterThanEqualsTransGreaterThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                result = greaterThanEqualsTransGreaterThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent()
                 return result
             elif isinstance(other,GreaterThanEquals):
-                result = greaterThanEqualsTransGreaterThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConclusion()
+                result = greaterThanEqualsTransGreaterThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent()
                 return result
         else:
             raise ValueError("Cannot derive implication from input!")

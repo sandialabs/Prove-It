@@ -77,13 +77,13 @@ class OrderingRelation(BinaryOperation):
         from greater_than import GREATERTHAN, GREATERTHANEQUALS
         from axioms import reverseGreaterThanEquals, reverseLessThanEquals, reverseGreaterThan, reverseLessThan
         if self.operator == LESSTHANEQUALS:
-            return reverseLessThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
+            return reverseLessThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConsequent(assumptions)
         elif self.operator == LESSTHAN:
-            return reverseLessThan.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
+            return reverseLessThan.specialize({x:self.lhs, y:self.rhs}).deriveConsequent(assumptions)
         elif self.operator == GREATERTHANEQUALS:
-            return reverseGreaterThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
+            return reverseGreaterThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConsequent(assumptions)
         elif self.operator == GREATERTHAN:
-            return reverseGreaterThan.specialize({x:self.lhs, y:self.rhs}).deriveConclusion(assumptions)
+            return reverseGreaterThan.specialize({x:self.lhs, y:self.rhs}).deriveConsequent(assumptions)
         else:
             raise ValueError("Invalid instance of OrderingRelation!")
     
@@ -105,7 +105,7 @@ class OrderingRelation(BinaryOperation):
 #                    return other.rhsSubstitute(X,self.operator.operationMaker([X,self.rhs]))
 #                else:
 #                    return other.rhsSubstitute(X,
-        return self.transitivityImpl(other).deriveConclusion(assumptions)
+        return self.transitivityImpl(other).deriveConsequent(assumptions)
         
     def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
         raise NotImplementedError('deriveShifted is implemented for each specific OrderingRelation')
