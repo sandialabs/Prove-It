@@ -506,7 +506,7 @@ class Specialization(Proof):
             try:
                 partialMap.update({iVar:specializeMap[iVar] for iVar in instanceVars})
             except KeyError:
-                raise SpecializationFailure(None, assumptions, 'Must specialize all of the instance variables of the Forall oeprations to be eliminated')
+                raise SpecializationFailure(None, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
             # make substitutions in the condition
             subbedConditions += conditions.substituted(partialMap, relabelMap)
             # add conditions for satisfying the domain restriction if there is one
