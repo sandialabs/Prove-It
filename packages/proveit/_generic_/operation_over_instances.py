@@ -35,10 +35,10 @@ class OperationOverInstances(Operation):
         instanceVars, instanceExpr, conditions, domain
         '''
         domain = operands['domain'] if 'domain' in operands else None
-        lambdaFn = operands['imap'] # instance mapping
-        instanceVars = lambdaFn.parameters
-        conditions = lambdaFn.body['conds']
-        instanceExpr = lambdaFn.body['iexpr'] # instance expression
+        instanceMapping = operands['imap'] # instance mapping
+        instanceVars = instanceMapping.parameters
+        conditions = instanceMapping.body['conds']
+        instanceExpr = instanceMapping.body['iexpr'] # instance expression
         return {'instanceVars':instanceVars, 'instanceExpr':instanceExpr, 'domain':domain, 'conditions':conditions}
         
     def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
