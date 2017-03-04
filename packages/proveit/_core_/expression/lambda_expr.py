@@ -49,7 +49,11 @@ class Lambda(Expression):
     def string(self, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
         outStr = '[' if fence else ''
-        outStr += '(' + ', '.join([parameter.string() for parameter in self.parameters]) + ') -> '
+        parameterListStr = ', '.join([parameter.string() for parameter in self.parameters])
+        if len(self.parameters) == 1:
+            outStr += parameterListStr + ' -> '
+        else:
+            outStr += '(' + parameterListStr + ') -> '
         outStr += self.body.string()
         if fence: outStr += ']'
         return outStr
@@ -57,7 +61,11 @@ class Lambda(Expression):
     def latex(self, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
         outStr = r'\left[' if fence else ''
-        outStr += r'\left(' + ', '.join([parameter.latex() for parameter in self.parameters]) + r'\right) \mapsto '
+        parameterListStr = ', '.join([parameter.latex() for parameter in self.parameters])
+        if len(self.parameters) == 1:
+            outStr +=  parameterListStr + r'\mapsto '
+        else:
+            outStr += r'\left(' + parameterListStr + r'\right) \mapsto '
         outStr += self.body.latex()
         if fence: outStr += r'\right]'
         return outStr
