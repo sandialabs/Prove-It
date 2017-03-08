@@ -15,6 +15,6 @@ rightInBool = Forall((A, B), inBool(B), conditions=[inBool(Or(A, B))])
 
 # Definition of multi-operand disjunction
 emptyDisjunction = Equals(Or(), FALSE) # base case
-disjunctionComposition = Forall((A, Bmulti), Equals(Or(A, Betc), Or(A, Or(Betc))))
+composition = Forall((A, Bmulti), Equals(Or(A, Betc), Or(A, Or(Betc))))
 
 endAxioms(locals(), __package__)

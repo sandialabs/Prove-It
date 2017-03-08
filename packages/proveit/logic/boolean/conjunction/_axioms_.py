@@ -14,7 +14,7 @@ leftInBool = Forall((A, B), inBool(A), conditions=[inBool(And(A, B))])
 rightInBool = Forall((A, B), inBool(B), conditions=[inBool(And(A, B))]) 
 
 # Definition of multi-operand conjunction
-empytConjunction = Equals(And(), TRUE) # base case
-conjunctionComposition = Forall((A, Bmulti), Equals(And(A, Betc), And(A, And(Betc))))
+emptyConjunction = Equals(And(), TRUE) # base case
+composition = Forall((A, Bmulti), Equals(And(A, Betc), And(A, And(Betc))))
 
 endAxioms(locals(), __package__)
