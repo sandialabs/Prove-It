@@ -471,7 +471,7 @@ class Specialization(Proof):
         themselves or bundled instance variables (Etcetera-wrapped or Block-wrapped 
         MultiVariables) as empty lists. 
         '''
-        from proveit import Forall, InSet, Lambda, ExpressionList
+        from proveit import Forall, InSet, Lambda, ExpressionList, Etcetera
         
         # check that the mappings are appropriate
         for key, sub in relabelMap.items():
@@ -515,7 +515,11 @@ class Specialization(Proof):
                 for iVar in instanceVars:
                     elementOrList = iVar.substituted(partialMap, relabelMap)
                     for element in (elementOrList if isinstance(elementOrList, ExpressionList) else [elementOrList]):
-                        subbedConditions.append(InSet(element, domain.substituted(partialMap, relabelMap)))
+                        inSetCondition = InSet(element, domain.substituted(partialMap, relabelMap))
+                        if len(element.freeMultiVars()) > 0:
+                            # if the element contains a free MultiVariable, wrap the InSet condition in an Etcetera
+                            inSetCondition = Etcetera(inSetCondition)
+                        subbedConditions.append(inSetCondition)
                         
         # sort the relabeling vars in order of their appearance in the original expression
         relabelVars = []
@@ -534,7 +538,7 @@ class Specialization(Proof):
 
     @staticmethod
     def _checkRelabelMapping(key, sub, assumptions):
-        from proveit import Variable, MultiVariable, Composite, ExpressionList
+        from proveit import Variable, MultiVariable, Composite, ExpressionList, compositeExpression
         if isinstance(key, Variable):
             if not isinstance(sub, Variable):
                 raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
@@ -544,9 +548,9 @@ class Specialization(Proof):
             elif isinstance(sub, Composite):
                 elems = sub.values()
             else:
-                raise RelabelingFailure(None, assumptions, 'May only relabel a MultiVariable to a Composite Expression (as a convention)')                
+                raise RelabelingFailure(None, assumptions, 'May only relabel a MultiVariable to a Composite Expression')                
             for elem in elems:
-                if not isinstance(elem, Variable) and not isinstance(sub, MultiVariable):
+                if not isinstance(elem, Variable) and not isinstance(elem, MultiVariable):
                     raise RelabelingFailure(None, assumptions, 'May only relabel a MultiVariable to a Composite of Variables/MultiVariables')
         else:
             raise RelabelingFailure(None, assumptions, "May only relabel a Variable or a MultiVariable")                       
@@ -576,7 +580,7 @@ class Generalization(Proof):
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z in Reals | g(y, z), h(z)} ...
         '''
-        from proveit import KnownTruth, Forall, Variable, InSet
+        from proveit import KnownTruth, Forall, Variable, MultiVariable, InSet, Etcetera
         if not isinstance(instanceTruth, KnownTruth):
             raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
         # the assumptions required for the generalization are the assumptions of
@@ -587,25 +591,29 @@ class Generalization(Proof):
         expr = instanceTruth.expr
         introducedForallVars = set()
         if len(newForallVarLists) != len(newDomains):
-            raise GeneralizationFailure(None, assumptions, 'The number of forall variable lists and new domains does not match: %d vs %d'%(len(newForallVarLists), len(newDomains)))
+            raise ValueError('The number of forall variable lists and new domains does not match: %d vs %d'%(len(newForallVarLists), len(newDomains)))
         for k, (newForallVars, newDomain) in enumerate(reversed(zip(newForallVarLists, newDomains))):
             for forallVar in newForallVars:
-                if not isinstance(forallVar, Variable):
-                    raise GeneralizationFailure(None, assumptions, 'Forall variables of a generalization must be Variable objects')
+                if not isinstance(forallVar, Variable) and not isinstance(forallVar, MultiVariable):
+                    raise ValueError('Forall variables of a generalization must be Variable objects')
             introducedForallVars |= set(newForallVars)
             newConditions = []
-            if k == len(newForallVarLists):
+            if k == len(newForallVarLists)-1:
                 # the final introduced Forall operation must use all of the remaining conditions
                 newConditions = remainingConditions
             else:
-                while len(remainingConditions) > 0 and not remainingConditions[-1].freeVars().isdisjoint(newForallVars):
-                    # This condition is applicable since one (or more) of its free variables is 
-                    # occurs as a new forall variable.
-                    newConditions.insert(0, remainingConditions.pop())            
+                # use the first applicable condition and all subsequent conditions in order to maintain the supplied order
+                applicableIndices = [i for i, remainingCondition in enumerate(remainingConditions) if not remainingCondition.freeVars().isdisjoint(newForallVars)]
+                if len(applicableIndices) > 0:
+                    j = min(applicableIndices)
+                    newConditions = remainingConditions[j:]
+                    remainingConditions = remainingConditions[:j]
             # new conditions and domain can eliminate corresponding assumptions
             assumptions -= set(newConditions)
             if newDomain is not None:
-                assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars}
+                assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars if isinstance(forallVar, Variable)}
+                # the InSet condition for MultiVariables should be wrapped in an Etcetera
+                assumptions -= {Etcetera(InSet(forallVar, newDomain)) for forallVar in newForallVars if isinstance(forallVar, MultiVariable)}
             # create the new generalized expression
             generalizedExpr = Forall(instanceVars=newForallVars, instanceExpr=expr, domain=newDomain, conditions=newConditions)
             # make sure this is a proper generalization that doesn't break the logic:

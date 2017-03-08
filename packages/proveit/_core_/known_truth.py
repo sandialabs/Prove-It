@@ -387,6 +387,8 @@ class KnownTruth:
         Returns the proven relabeled KnownTruth, or throws an exception if the proof fails.
         '''
         from proveit._core_.proof import Specialization
+        from proveit import MultiVariable, compositeExpression
+        relabelMap = {key : compositeExpression(sub) if isinstance(key, MultiVariable) else sub for key, sub in relabelMap.iteritems()}
         return Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions).provenTruth
     
     def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
@@ -474,7 +476,6 @@ class KnownTruth:
 
         # Make sure MultiVariables are relabeled to composite expressions, as a consistent convention
         relabelMap = {key : compositeExpression(sub) if isinstance(key, MultiVariable) else sub for key, sub in relabelMap.iteritems()}
-        
         return Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions).provenTruth
         
     def generalize(self, forallVarLists, domains=None, domain=None, conditions=tuple()):
@@ -487,10 +488,12 @@ class KnownTruth:
         be provided to introduce a single Forall wrapper.
         '''
         from proveit._core_.proof import Generalization
-        from proveit import Variable
-        if isinstance(forallVarLists, Variable):
+        from proveit import Variable, MultiVariable
+        if isinstance(forallVarLists, Variable) or isinstance(forallVarLists, MultiVariable):
             forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
         else:
+            if not hasattr(forallVarLists, '__len__'):
+                raise ValueError("Must supply generalize with a Variable or list of Variables")
             if len(forallVarLists) == 0:
                 raise ValueError("Must provide at least one Variable to generalize over")
             if isinstance(forallVarLists[0], Variable):
@@ -543,9 +546,11 @@ class KnownTruth:
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
+        from proveit import ExpressionList
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
         if len(self.assumptions) > 0:
-            return r'\{' + ','.join(assumption.latex() for assumption in self.assumptions) + r'\} \boldsymbol{\vdash} ' + self.expr.latex()
+            assumptionsStr = ExpressionList(self.assumptions).formatted('latex', fence=False)
+            return r'\{' + assumptionsStr + r'\} \boldsymbol{\vdash} ' + self.expr.latex()
         return r'\boldsymbol{\vdash} ' + self.expr.latex()
 
     def string(self, performUsabilityCheck=True):
@@ -554,9 +559,11 @@ class KnownTruth:
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
+        from proveit import ExpressionList
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
         if len(self.assumptions) > 0:
-            return r'{' + ','.join(assumption.string() for assumption in self.assumptions) + r'} |= ' + self.expr.string()
+            assumptionsStr = ExpressionList(self.assumptions).formatted('string', fence=False)
+            return r'{' +assumptionsStr + r'} |= ' + self.expr.string()
         return r'|= ' + self.expr.string()
 
     def __str__(self):
