@@ -12,7 +12,7 @@ theorem (e.g., for pedagogical reasons), the way to
 do this is to create multiple theorems (multiple names)
 for the same expression.  That way, the dependencies
 between theorem, which is important to track in
-order to prevent circular logic), will be unambiguous
+order to prevent circular logic, will be unambiguous
 (not confused with multiple proofs per theorem).
 """
 
@@ -369,12 +369,31 @@ def _setSpecialStatements(package, kind, definitions):
             storage._addReference(exprId)
         with open(os.path.join(specialStatementDir, 'usedBy.txt'), 'w') as exprFile:
             pass # usedBy.txt must be created but initially empty
+            
+def _getSpecialStatement(package, kind, name):
+    storage = _makeStorage(package)
+    specialStatementsPath = os.path.join(storage.directory, '_' + kind + '_')
+    try:
+        with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
+            exprId = f.read()
+            return storage.makeExpression(exprId)
+    except IOError:
+        raise Exception('corrupted _certified_ directory')
+
 
 def setAxioms(package, axioms):
     _setSpecialStatements(package, 'axioms', axioms)
 
 def setTheorems(package, theorems):
     _setSpecialStatements(package, 'theorems', theorems)
+
+def getAxiom(package, name):
+    from proveit import Axiom
+    return Axiom(_getSpecialStatement(package, 'axioms', name), package, name).provenTruth
+    
+def getTheorem(package, name):
+    from proveit import Theorem
+    return Theorem(_getSpecialStatement(package, 'theorems', name), package, name).provenTruth
     
 def recordProof(theorem, proof):
     '''
