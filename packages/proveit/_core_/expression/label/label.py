@@ -51,4 +51,4 @@ class Label(Expression):
             raise ValueError("Expecting " + labelClass.__name__ + " coreInfo to contain 3 items: '" + labelClass.__name + "', stringFormat, and latexFormat")
         if coreInfo[0] != labelClass.__name__:
             raise ValueError("Expecting coreInfo[0] to be '" + labelClass.__name__ + "'")
-        return labelClass(coreInfo[0], coreInfo[1])
+        return labelClass(coreInfo[1], coreInfo[2])

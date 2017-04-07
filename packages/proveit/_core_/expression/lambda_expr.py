@@ -41,8 +41,6 @@ class Lambda(Expression):
             raise ValueError("Expecting Lambda coreInfo to contain exactly one item: 'Lambda'")
         if subClass != Lambda: 
             raise MakeNotImplemented(subClass)
-        if len(subExpressions) != 2:
-            raise ValueError('Expecting two subExpressions for a Lambda, not ' + str(len(subExpressions)))
         parameters, body = subExpressions[:-1], subExpressions[-1]
         return Lambda(parameters, body)
 
@@ -54,7 +52,7 @@ class Lambda(Expression):
             outStr += parameterListStr + ' -> '
         else:
             outStr += '(' + parameterListStr + ') -> '
-        outStr += self.body.string()
+        outStr += self.body.string(fence=True)
         if fence: outStr += ']'
         return outStr
     
@@ -66,7 +64,7 @@ class Lambda(Expression):
             outStr +=  parameterListStr + r'\mapsto '
         else:
             outStr += r'\left(' + parameterListStr + r'\right) \mapsto '
-        outStr += self.body.latex()
+        outStr += self.body.latex(fence=True)
         if fence: outStr += r'\right]'
         return outStr
         

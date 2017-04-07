@@ -17,7 +17,7 @@ class Variable(Label):
     def make(subClass, coreInfo, subExpressions):
         if subClass != Variable: 
             raise MakeNotImplemented(subClass)
-        return Label._make(subClass, coreInfo, subExpressions)
+        return Variable._make(coreInfo, subExpressions)
         
     def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
