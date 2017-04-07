@@ -29,7 +29,7 @@ class NamedExpressions(Composite, Expression):
             if isinstance(val, Etcetera):
                 raise TypeError('An Etcetera may be contained in an ExpressionList but not in a NamedExpressions')
         self.keywords, self.elems = keywords, elems
-        Expression.__init__(self, ['NamedExpressions', ','.join(self.keys())], [self[key] for key in self.keys()])
+        Expression.__init__(self, ['NamedExpressions'] + self.keys(), [self[key] for key in self.keys()])
 
     def __getitem__(self, key):
         return self.elems[key]
@@ -59,19 +59,17 @@ class NamedExpressions(Composite, Expression):
     def make(subClass, coreInfo, subExpressions):
         if subClass != NamedExpressions: 
             MakeNotImplemented(subClass) 
-        if len(coreInfo) != 2:
-            raise ValueError("Expecting NamedExpressions coreInfo to contain excactly 2 items: 'NamedExpressions' and the keys")
         if coreInfo[0] != 'NamedExpressions':
             raise ValueError("Expecting NamedExpressions coreInfo[0] to be 'NamedExpressions'")
-        keys = coreInfo[1].split(',')
+        keys = coreInfo[1:]
         if len(subExpressions) != len(keys):
             raise ValueError("The number of sub-expressions, " + str(len(subExpressions)), ", expected to match the number of the NamedExpressions' keys, ", str(len(keys)))
         return NamedExpressions([(key,subExpression) for key, subExpression in zip(keys, subExpressions)])        
         
-    def string(self):
+    def string(self, **kwargs):
         return '{' + ', '.join(key + ':' + self[key].string(fence=True) for key in self.keys()) + '}'
 
-    def latex(self):
+    def latex(self, **kwargs):
         outStr = r'\left\{ \begin{array}{l}' + '\n'
         for key in self.keys():
             outStr += r'{\rm ' + key.replace('_', r'\_') + r'}: ' + self[key].latex(fence=True) + r'\\' + '\n'
