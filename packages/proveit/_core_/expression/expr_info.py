@@ -5,7 +5,7 @@ the exprInfo() method of an Expression object.
 '''
 
 import re
-from proveit._core_.storage import storage, tex_escape
+from proveit._core_.storage import storage
 
 class ExpressionInfo:
     def __init__(self, expr, show_details):
@@ -23,25 +23,11 @@ class ExpressionInfo:
         will not be included, but they will be presented in an
         order which makes it clear that the dependencies are
         acyclic by making sure sub-Expressions always come later.
+        Overriding the default parameter values can change the top-level
+        expression or the function used to obtain sub-expressions.
         '''
-        # expressionsWithRepeats with the sub-Expressions.  
-        # Allow duplicates in a first pass.  Remove the duplicates in a second pass.
-        expressionQueue = [self.expr]
-        expressionsWithRepeats = []
-        while len(expressionQueue) > 0:
-            nextExpr = expressionQueue.pop(0)
-            expressionsWithRepeats.append(nextExpr)
-            expressionQueue += nextExpr._subExpressions
-        # Second pass: remove duplicates.  Requirements should always come later 
-        # (presenting the graph in a way that guarantees that it is acyclic).
-        visited = set()
-        enumeratedExpressions = []
-        for expr in reversed(expressionsWithRepeats):
-            if expr in visited:
-                continue
-            enumeratedExpressions.insert(0, expr)
-            visited.add(expr)
-        return enumeratedExpressions  
+        from proveit._core_._dependency_graph import orderedDependencyNodes
+        return orderedDependencyNodes(self.expr, lambda expr : expr._subExpressions)
 
     def string(self):
         from composite.named_exprs import NamedExpressions
@@ -77,51 +63,31 @@ class ExpressionInfo:
     def __str__(self):
         return self.string()
     
-    def latex(self):
+    def _repr_html_(self):
         from composite.named_exprs import NamedExpressions
         from operation import Operation
         from lambda_expr import Lambda
         from label import Label, Literal
         enumeratedExpressions = self._getEnumeratedExpressions()
         exprNumMap = {expr:k for k, expr in enumerate(enumeratedExpressions)}
-        outStr = r'\begin{tabular}{rl|l|l}' + '\n'
-        outStr += r' & \textbf{expression} & \textbf{core type} & \textbf{sub-expressions} \\' + '\n'
+        html = '<table><tr><th colspan=2>expression</th><th>core type</th><th>sub-expressions</th></tr>\n'
         for k, expr in enumerate(enumeratedExpressions):
-            outStr += r'\hline' + '\n'
-            outStr += str(k) + '. & $' + expr.latex() + '$ & ' + expr._coreInfo[0] + ' & ' + '\n'
+            sub_expressions = ''
             if isinstance(expr, NamedExpressions):
-                outStr += r'$\begin{array}{l}' + '\n'
                 for key in sorted(expr.keys()):
-                    outStr += r'\rm{' + key.replace('_', r'\_') + '}: ' + str(exprNumMap[expr[key]]) + r'\\'  + '\n'
-                outStr += r'\end{array}$ \\' + '\n'
+                    sub_expressions += '%s: %d<br>'%(key, exprNumMap[expr[key]])
             elif isinstance(expr, Operation):
-                outStr += r'$\begin{array}{l}' + '\n'
-                outStr += r'\rm{operator}: ' + str(exprNumMap[expr.operator]) + r' \\' + '\n'
-                outStr += r'\rm{operands}: ' + str(exprNumMap[expr.operands]) + r' \\' + '\n'
-                outStr += r'\end{array}$ \\' + '\n'
+                sub_expressions = 'operator: %d<br>'%(exprNumMap[expr.operator])
+                sub_expressions += 'operands: %d<br>'%(exprNumMap[expr.operands])
             elif isinstance(expr, Lambda):
-                outStr += r'$\begin{array}{l}' + '\n'
-                outStr += r'\rm{parameters}: ' + ', '.join(str(exprNumMap[parameter]) for parameter in expr.parameters) + r' \\' + '\n'
-                outStr += r'\rm{body}: ' + str(exprNumMap[expr.body]) + r' \\' + '\n'
-                outStr += r'\end{array}$ \\' + '\n'
+                sub_expressions = 'parameters: %s<br>'%(', '.join(str(exprNumMap[parameter]) for parameter in expr.parameters))
+                sub_expressions += 'body: %d<br>'%(exprNumMap[expr.body])
             else:
-                outStr += ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions) + r'\\' + '\n'
-            if self.show_details:
-                if isinstance(expr, Label):
-                    outStr += r' & \texttt{\textless stringFormat ' + tex_escape(expr.stringFormat) + r'\textgreater } & & \\' + '\n'
-                if isinstance(expr, Literal):
-                    outStr += r' & \texttt{\textless context ' + tex_escape(expr.context) + r'\textgreater } & & \\' + '\n'
-                outStr += r' & \texttt{' + tex_escape(str(expr.__class__)) + r'} & & \\' + '\n'
-        outStr += r'\hline' + '\n'
-        outStr += r'\end{tabular}' + '\n'
-        return outStr
-
-    def _repr_png_(self):
-        if (not hasattr(self,'png') or self.png is None):
-            distinction = 'details' if self.show_details else 'info'
-            self.png = storage._retrieve_png(self.expr, self.latex(), self._config_latex_tool, distinction=distinction)
-        return self.png # previous stored or generated
-        
+                sub_expressions = ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions)
+            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td>\n'%(k, expr._repr_html_(), expr._coreInfo[0], sub_expressions)
+        html += '</table>\n'
+        return html
+    
     def _config_latex_tool(self, lt):
         '''
         Configure the LaTeXTool from IPython.lib.latextools as required by all

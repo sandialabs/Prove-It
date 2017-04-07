@@ -21,15 +21,15 @@ class Storage:
         the filename to distinguish it from the basic png of an Expression
         ['info' for exprInfo() png, 'details' for exprInfo(details=True) png].
         Create it if it did not previously exist using _generate_png.
-        Return the png data, storing it in a file for future reference if
-        self.directory is not None.
+        Return the png data and path where the png is stored (or None
+        if self.directory is None such that it is not stored).
         '''
         if self.directory is None:
-            return self._generate_png(latex, configLatexToolFn) # don't do any storage
+            return self._generate_png(latex, configLatexToolFn), None # don't do any storage
         pv_it_filename = self._retrieve(proveItObject)
         # generate the latex and png file paths, from pv_it_filename and the distinction 
-        latex_path = os.path.join(self.directory, '.pv_it', pv_it_filename[:-6] + distinction + '.latex')
-        png_path = os.path.join(self.directory, '.pv_it', pv_it_filename[:-6] + distinction + '.png')
+        latex_path = os.path.join(self.directory, '_pv_it_', pv_it_filename[:-6] + distinction + '.latex')
+        png_path = os.path.join(self.directory, '_pv_it_', pv_it_filename[:-6] + distinction + '.png')
         # check if the latex file exists, is consistent with the given latex string, and if the png
         # file exists.
         if os.path.isfile(latex_path):
@@ -40,7 +40,7 @@ class Storage:
                     if os.path.isfile(png_path):                        
                         # png file exists.  read and return the data.
                         with open(png_path, 'rb') as png_file:
-                            return png_file.read()
+                            return png_file.read(), png_path
         # store the latex string in the latex file
         with open(latex_path, 'wb') as latex_file:
             latex_file.write(latex)
@@ -48,7 +48,7 @@ class Storage:
         png = self._generate_png(latex, configLatexToolFn)
         with open(png_path, 'wb') as png_file:
             png_file.write(png)
-        return png
+        return png, png_path
     
     def _generate_png(self, latex, configLatexToolFn):
         from IPython.lib.latextools import latex_to_png, LaTeXTool
@@ -87,19 +87,19 @@ class Storage:
         # represent other referenced Prove-It objects 
         return prefix + proveItObject._generate_unique_rep(self._proveItObjId)
     
-    def _referencedObjIds(self, unique_rep):
+    def _extractReferencedObjIds(self, unique_rep):
         '''
         Given a unique representation string, returns the list of Prove-It objects
         that are referenced.
         '''
         from proveit import Expression, KnownTruth, Proof
         if unique_rep[:6] == 'Proof:':
-            return Proof._referencedObjIds(unique_rep[6:])
+            return Proof._extractReferencedObjIds(unique_rep[6:])
         elif unique_rep[:11] == 'KnownTruth:':
-            return KnownTruth._referencedObjIds(unique_rep[11:])
+            return KnownTruth._extractReferencedObjIds(unique_rep[11:])
         else:
             # Assumed to be an expression then
-            return Expression._referencedObjIds(unique_rep)
+            return Expression._extractReferencedObjIds(unique_rep)
 
     def _addReference(self, proveItObjId):
         '''
@@ -111,7 +111,7 @@ class Storage:
             raise Exception("Cannot add a reference if reference counted wasn't enabled")
         # replace '/' with os.path.sep within the Prove-It object id to object the filename
         pv_it_filename = os.path.sep.join(proveItObjId.split('/'))
-        pv_it_dir = os.path.join(self.directory, '.pv_it')
+        pv_it_dir = os.path.join(self.directory, '_pv_it_')
         with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
             contents = f.read()
             refCount, rep = contents.split('\n') 
@@ -134,7 +134,7 @@ class Storage:
             raise Exception("Cannot remove a reference if reference counted wasn't enabled")
         # replace '/' with os.path.sep within the Prove-It object id to object the filename
         pv_it_filename = os.path.sep.join(proveItObjId.split('/'))
-        pv_it_dir = os.path.join(self.directory, '.pv_it')
+        pv_it_dir = os.path.join(self.directory, '_pv_it_')
         with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
             contents = f.read()
             refCount, rep = contents.split('\n') 
@@ -144,7 +144,7 @@ class Storage:
             # Reference count down to zero.  Remove references to
             # referenced objects and then delete this prove-it object
             # and everything associated with it.
-            for objId in self._referencedObjIds(rep):
+            for objId in self._extractReferencedObjIds(rep):
                 self._removeReference(objId)
             # remove all files associated with this prove-it object 
             # and perhaps the entire directory.
@@ -171,7 +171,7 @@ class Storage:
         '''
         if proveItObject in self._proveItObjects:
             return self._proveItObjects[proveItObject]
-        pv_it_dir = os.path.join(self.directory, '.pv_it')
+        pv_it_dir = os.path.join(self.directory, '_pv_it_')
         unique_rep = self._proveItObjUniqueRep(proveItObject)
         # hash the unique representation and make a sub-directory of this hash value
         rep_hash = hashlib.sha1(unique_rep).hexdigest()
@@ -208,11 +208,73 @@ class Storage:
         # increment reference counts of the referenced objects
         # (if reference counting is enabled)
         if self.refCounted:
-            for objId in self._referencedObjIds(unique_rep):
+            for objId in self._extractReferencedObjIds(unique_rep):
                 self._addReference(objId)
         # remember this for next time
         self._proveItObjects[proveItObject] = pv_it_filename
         return pv_it_filename
+    
+    def makeExpression(self, exprId):
+        import importlib
+        exprClassMap = dict() # map expression class strings to Expression class objects
+        def importFn(exprClassStr):
+            splitExprClass = exprClassStr.split('.')
+            module = importlib.import_module('.'.join(splitExprClass[:-1]))
+            exprClassMap[exprClassStr] = getattr(module, splitExprClass[-1])
+        def exprBuilderFn(exprClassStr, exprInfo, subExpressions):
+            return exprClassMap[exprClassStr].make(exprInfo, subExpressions)
+        return self._makeExpression(exprId, importFn, exprBuilderFn)
+    
+    def _makeExpression(self, exprId, importFn, exprBuilderFn):
+        # (replace '/' within exprId with os.path.sep to convert it to a file name
+        # regardless of OS).
+        from proveit import Expression
+        from _dependency_graph import orderedDependencyNodes
+        pv_it_dir = os.path.join(self.directory, '_pv_it_') 
+        exprClassStrs = dict() # map expr-ids to Expression class string representations
+        coreInfoMap = dict() # map expr-ids to core information
+        subExprIdsMap = dict() # map expr-ids to list of sub-expression ids 
+        masterExprId = exprId
+        def getSubExprIds(exprId):
+            pv_it_filename = os.path.sep.join(exprId.split('/'))
+            with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
+                # extract the unique representation from the pv_it file
+                contents = f.read()
+                if self.refCounted:
+                    refCount, unique_rep = contents.split('\n') 
+                else: unique_rep = contents
+                # extract the Expression class from the unique representation 
+                exprClassStrs[exprId] = Expression._extractExprClass(unique_rep)
+                # extract the Expression "core information" from the unique representation
+                coreInfoMap[exprId] = Expression._extractCoreInfo(unique_rep)
+                # get the sub-expressions all sub-expressions
+                subExprIdsMap[exprId] = Expression._extractReferencedObjIds(unique_rep)
+                return subExprIdsMap[exprId]
+        exprIds = orderedDependencyNodes(exprId, getSubExprIds)
+        for exprId in reversed(exprIds):
+            importFn(exprClassStrs[exprId])
+        builtExprMap = dict() # map expr-ids to "built" expressions (whatever exprBuilderFn returns)
+        for exprId in reversed(exprIds):
+            subExpressions =  [builtExprMap[subExprId] for subExprId in subExprIdsMap[exprId]]
+            builtExprMap[exprId] = exprBuilderFn(exprClassStrs[exprId], coreInfoMap[exprId], subExpressions)
+        return builtExprMap[masterExprId]
+    """
+            
+        with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
+            # extract the unique representation from the pv_it file
+            contents = f.read()
+            if self.refCounted:
+                refCount, unique_rep = contents.split('\n') 
+            else: unique_rep = contents
+            # extract the Expression class from the unique representation 
+            exprClass = Expression._exprClass(unique_rep)
+            # determine the appropriate path for the Expression class
+            exprClassPaths[exprClass] = ...
+            # recurse for all sub-expressions
+            for objId in self._referencedObjIds(unique_rep):
+                exprClassPaths(objId, exprClassPaths)
+        return 
+    """ 
         
     
     def clear(self):
@@ -222,7 +284,7 @@ class Storage:
         regenerated.
         '''
         self._proveItObjects.clear()
-        pv_it_dir = os.path.join(self.directory, '.pv_it')
+        pv_it_dir = os.path.join(self.directory, '_pv_it_')
         if not os.path.isdir(pv_it_dir): return
         for hash_dir in os.listdir(pv_it_dir):
             hash_path = os.path.join(pv_it_dir, hash_dir)
@@ -238,27 +300,3 @@ class Storage:
         self.__setattr__(item, value)
     
 storage = Storage()
-
-
-def tex_escape(text):
-    """
-        :param text: a plain text message
-        :return: the message escaped to appear correctly in LaTeX
-    """
-    # This code was found on stackoverflow.com
-    conv = {
-        '&': r'\&',
-        '%': r'\%',
-        '$': r'\$',
-        '#': r'\#',
-        '_': r'\_',
-        '{': r'\{',
-        '}': r'\}',
-        '~': r'\textasciitilde{}',
-        '^': r'\^{}',
-        '\\': r'\textbackslash{}',
-        '<': r'\textless ',
-        '>': r'\textgreater ',
-    }
-    regex = re.compile('|'.join(re.escape(unicode(key)) for key in sorted(conv.keys(), key = lambda item: - len(item))))
-    return regex.sub(lambda match: conv[match.group()], text)

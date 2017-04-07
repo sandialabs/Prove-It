@@ -10,6 +10,7 @@ from proveit._core_.expression import Expression
 from storage import storage
 from defaults import defaults, USE_DEFAULTS
 import re
+import os
             
 class KnownTruth:
     
@@ -64,7 +65,7 @@ class KnownTruth:
         return objectRepFn(self.expr) + ';[' + ','.join(objectRepFn(assumption) for assumption in self.assumptions) + ']'
 
     @staticmethod
-    def _referencedObjIds(unique_rep):
+    def _extractReferencedObjIds(unique_rep):
         '''
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
@@ -590,23 +591,24 @@ class KnownTruth:
             return _makeStorage(self._proof.package)
         return storage
 
-    def _repr_png_(self):
+    def _repr_html_(self):
         '''
-        Generate a png image from the latex.  May be recalled from memory or
-        storage if it was generated previously.
+        Generate html to show the KnownTruth as a set of assumptions,
+        turnstile, then the statement expression.  Expressions are png's
+        compiled from the latex (that may be recalled from memory or storage 
+        if previously generated) with a links to
+        expr.ipynb notebooks for displaying the expression information.
         '''
+        from proveit import Set
         if not self.isUsable(): self.raiseUnusableTheorem()
-        if not hasattr(self,'png'):
-            self.png = self._storage()._retrieve_png(self, self.latex(), self._config_latex_tool)
-        return self.png # previous stored or generated
-
-    def generate_html(self):
-        '''
-        Generate the img html tag with encoded png data.
-        '''
-        self._repr_png_() # sets self.png
-        import base64
-        return '<img src="data:image/png;base64,' + base64.b64encode(self.png) + '">'        
+        html = ''
+        html += '<span style="font-size:20px;">'
+        if len(self.assumptions) > 0:
+            html += Set(*self.assumptions)._repr_html_()
+        html += ' &#x22A2; ' # turnstile symbol
+        html += self.expr._repr_html_()
+        html += '</span>'
+        return html
         
     def _config_latex_tool(self, lt):
         '''

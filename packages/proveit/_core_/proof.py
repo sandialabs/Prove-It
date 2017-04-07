@@ -9,7 +9,7 @@ Proof objects form a DAG.
 
 from proveit._core_.known_truth import KnownTruth
 from defaults import defaults, USE_DEFAULTS
-from storage import storage, tex_escape
+from storage import storage
 import re
 
 class Proof:
@@ -72,7 +72,7 @@ class Proof:
         return self._step_type + ':'
 
     @staticmethod
-    def _referencedObjIds(unique_rep):
+    def _extractReferencedObjIds(unique_rep):
         '''
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
@@ -158,24 +158,8 @@ class Proof:
         order which makes it clear that the dependencies are
         acyclic by making sure requirements come after dependents.
         '''
-        # proofsWithRepeats with the required proofs.  Allow duplicates in a first
-        # pass.  Remove the duplicates in a second pass.
-        proofQueue = [self]
-        proofsWithRepeats = []
-        while len(proofQueue) > 0:
-            nextProof = proofQueue.pop(0)
-            proofsWithRepeats.append(nextProof)
-            proofQueue += nextProof.requiredProofs
-        # Second pass: remove duplicates.  Requirements should always come later 
-        # (presenting the graph in a way that guarantees that it is acyclic).
-        visited = set()
-        proofSteps = []
-        for proof in reversed(proofsWithRepeats):
-            if proof in visited:
-                continue
-            proofSteps.insert(0, proof)
-            visited.add(proof)
-        return proofSteps        
+        from _dependency_graph import orderedDependencyNodes
+        return orderedDependencyNodes(self, lambda proof : proof.requiredProofs)
     
     def allRequiredProofs(self):
         '''
@@ -184,37 +168,27 @@ class Proof:
         subProofSets = [requiredProof.allRequiredProofs() for requiredProof in self.requiredProofs]
         return set([self]).union(*subProofSets)
 
-    def latex(self):
+    def _repr_html_(self):
         proofSteps = self.enumeratedProofSteps()
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
-        outStr = r'\begin{tabular}{rl|l|l|l}' + '\n'
-        outStr += r' & \textbf{statement} & \textbf{assumptions} & \textbf{step type} & \textbf{requirements} \\' + '\n'
+        html = '<table><tr><th colspan=2>statement</th><th>assumptions</th><th>step type</th><th>requirements</th></tr>\n'
         for k, proof in enumerate(proofSteps):
-            outStr += r'\hline' + '\n'
-            outStr += str(k) + '. & $' + proof.provenTruth.expr.latex() + '$ & '
+            html += '<tr><td>%d</td><td>%s</td>'%(k, proof.provenTruth.expr._repr_html_())
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
-                outStr += r'\multicolumn{3}{|l}{'
-                outStr += proof.stepTypeLatex() + ': '
-                outStr += tex_escape(proof.package) + '.' + tex_escape(proof.name) + r'} \\'  + '\n'
+                html += r'<td colspan=3>'
+                html += proof.stepType() + ': '
+                html += proof.package + '.' + proof.name
             else:
                 requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
-                outStr += ', '.join(('$' + assumption.latex() + '$') for assumption in proof.assumptions()) \
-                    + ' & ' + proof.stepTypeLatex() + ' & ' + requiredProofNums + r' \\' + '\n'
+                assumptionsStr = '<span style="font-size:20px;">'
+                assumptionsStr += ', '.join(assumption._repr_html_() for assumption in proof.assumptions())
+                assumptionsStr += '</span>'
+                html += '<td style="text-align:center">%s</td><td>%s</td><td>%s</td>'%(assumptionsStr, proof.stepType(), requiredProofNums)
+            html += '</tr>\n'
             if isinstance(proof, Specialization):
-                outStr += r'\hline' + '\n'
-                outStr += r' & \multicolumn{4}{c}{' + proof.mappingLatex() + r'} \\' + '\n'
-        outStr += r'\hline' + '\n'
-        outStr += r'\end{tabular}' + '\n'
-        return outStr
-
-    def _repr_png_(self):
-        if (not hasattr(self,'png') or self.png is None):
-            try:
-                self.png = storage._retrieve_png(self, self.latex(), self._config_latex_tool)
-            except:
-                return None # No png if it isn't proven
-        return self.png # previous stored or generated
-        
+                html += '<tr><td colspan=5 style="text-align:center">' + proof.mappingHTML() + '</td></tr>'
+        return html
+    
     def _config_latex_tool(self, lt):
         '''
         Configure the LaTeXTool from IPython.lib.latextools as required by all
@@ -230,7 +204,7 @@ class Assumption(Proof):
     def __init__(self, expr):
         Proof.__init__(self, 'Assumption', KnownTruth(expr, {expr}, self), [])
         
-    def stepTypeLatex(self):
+    def stepType(self):
         return 'assumption'
 
 class Axiom(Proof): 
@@ -239,7 +213,7 @@ class Axiom(Proof):
         self.package = package
         self.name = name
 
-    def stepTypeLatex(self):
+    def stepType(self):
         return 'axiom'
     
     def usedAxioms(self):
@@ -265,7 +239,7 @@ class Theorem(Proof):
         self._setUsability()
         Theorem.allTheorems.append(self)
 
-    def stepTypeLatex(self):
+    def stepType(self):
         return 'theorem'
 
     def usedTheorems(self):
@@ -363,7 +337,7 @@ class ModusPonens(Proof):
     def remake(self):
         return ModusPonens(self.implicationTruth.expr, assumptions=self.provenTruth.assumptions)
 
-    def stepTypeLatex(self):
+    def stepType(self):
         return 'modus ponens'
 
 class HypotheticalReasoning(Proof):
@@ -378,7 +352,7 @@ class HypotheticalReasoning(Proof):
     def remake(self):
         return HypotheticalReasoning(self.consequentTruth, self.provenTruth.expr.antecedent)
 
-    def stepTypeLatex(self):
+    def stepType(self):
         return 'hypothetical reasoning'
 
 class Specialization(Proof):
@@ -443,21 +417,27 @@ class Specialization(Proof):
         relabelMap = {key:self.mappings[key] for key in self.mappedVarLists[-1]}
         return Specialization(self.generalTruth, numForallEliminations, specializeMap, relabelMap, assumptions = self.provenTruth.assumptions)
 
-    def stepTypeLatex(self):
+    def stepType(self):
         if len(self.mappedVarLists) > 1:
             return 'specialization'
         return 'relabeling' # relabeling only
     
-    def mappingLatex(self):
-        mappedVarLists = list(self.mappedVarLists)
-        if len(mappedVarLists[-1]) == 0:
-            # drop the last semicolon if no relabeling is necessary
-            mappedVarLists.pop()
-        outStr = r'$ \left\{' 
-        outStr += ' ;~'.join(',~'.join(var.latex() + ' : ' + self.mappings[var].latex() for var in mappedVars) \
-                            for mappedVars in mappedVarLists)
-        outStr += r'\right\} $'
-        return outStr
+    def mappingHTML(self):
+        from proveit import Lambda, Set
+        mappedVarLists = self.mappedVarLists
+        html = '<span style="font-size:20px;">'
+        if len(mappedVarLists) == 1 or (len(mappedVarLists) == 2 and len(mappedVarLists[-1]) == 0):
+            # a single relabeling map, or a single specialization map with no relabeling map
+            mappedVars = mappedVarLists[0]
+            html += ', '.join(Lambda(var, self.mappings[var])._repr_html_() for var in mappedVars)
+        else:
+            html += ', '.join(Set(*[Lambda(var, self.mappings[var]) for var in mappedVars])._repr_html_() for mappedVars in mappedVarLists[:-1])
+            if len(mappedVarLists[-1]) > 0:
+                # the last group is the relabeling map, if there is one
+                mappedVars = mappedVarLists[-1]
+                html += ', relabeling ' + Set(*[Lambda(var, self.mappings[var]) for var in mappedVars])._repr_html_()
+        html += '</span>'
+        return html
 
     @staticmethod
     def _specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions):
@@ -632,7 +612,7 @@ class Generalization(Proof):
     def remake(self):
         return Generalization(self.instanceTruth, self.newForallVars, self.newDomain, self.newConditions)
 
-    def stepTypeLatex(self):
+    def stepType(self):
         return 'generalizaton'
     
     @staticmethod

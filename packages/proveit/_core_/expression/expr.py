@@ -5,10 +5,10 @@ This is the expression module.
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.storage import storage
 import re
+import os
 
 class Expression:
     unique_id_map = dict() # map unique_id's to unique_rep's
-    expr_to_prove = None # the theorem currently being proven (if there is one)
     
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
@@ -26,7 +26,7 @@ class Expression:
             if not isinstance(subExpression, Expression):
                 raise TypeError('Expecting subExpression elements to be of Expression type')
         # unique_rep is a unique representation based upon the coreInfo and unique_id's of sub-Expressions
-        self._coreInfo, self._subExpressions = coreInfo, subExpressions
+        self._coreInfo, self._subExpressions = tuple(coreInfo), subExpressions
         self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
         self._unique_id = hash(self._unique_rep)
@@ -39,9 +39,23 @@ class Expression:
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
         return str(self.__class__) + '[' + ','.join(self._coreInfo) + '];[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
-    
+
     @staticmethod
-    def _referencedObjIds(unique_rep):
+    def _extractExprClass(unique_rep):
+        '''
+        Return the class of the Expression with the given unique representation.
+        '''
+        return unique_rep[:unique_rep.find('[')]
+
+    @staticmethod
+    def _extractCoreInfo(unique_rep):
+        '''
+        Return the core information of the given unique representation.
+        '''
+        return re.split(',', unique_rep[unique_rep.find('[')+1:unique_rep.find(']')])
+        
+    @staticmethod
+    def _extractReferencedObjIds(unique_rep):
         '''
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
@@ -344,16 +358,28 @@ class Expression:
         if not reservedVars is None and not self.freeVars().isdisjoint(reservedVars.keys()):
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., parameters of a Lambda function)")
         return self
-    
-    def _repr_png_(self):
+
+    def _repr_html_(self):
         '''
-        Generate a png image from the latex.  May be recalled from memory or
-        storage if it was generated previously.
+        Generate html to show a png compiled from the latex (that may be recalled
+        from memory or storage if it was generated previously) with a link to
+        an expr.ipynb notebook for displaying the expression information.
         '''
         if not hasattr(self,'png'):
-            self.png = storage._retrieve_png(self, self.latex(), self._config_latex_tool)
-        return self.png # previous stored or generated
-    
+            self.png, self.png_path = storage._retrieve_png(self, self.latex(), self._config_latex_tool)
+        if self.png_path is not None:
+            storage_directory, _ = os.path.split(self.png_path)
+            exprNotebookPath = os.path.join(storage_directory, 'expr.ipynb')
+            html = '<a href="' + exprNotebookPath + '" target="_blank">'
+            html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
+            html += '</a>'
+        else:
+            # no storage. just include the png directly (encoded in base64)
+            import base64
+            # putting the image in <span>...</span> helps the alignment in IE11 for some unknown reason
+            html = '<span><img src="data:image/png;base64,' + base64.b64encode(self.png) + r'" style="display:inline;vertical-align:middle;" /></span>'
+        return html
+        
     def _config_latex_tool(self, lt):
         '''
         Configure the LaTeXTool from IPython.lib.latextools as required by all
