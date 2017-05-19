@@ -4,9 +4,11 @@ Define some custom magic for Prove-It in IPython notebooks.
 
 from IPython.core.magic import Magics, magics_class, line_magic, register_line_magic
 from IPython import get_ipython
-from special_statements import SpecialStatement
+from proveit._core_.expression import Expression
+from proveit._core_.context import Context
 import new
 import re
+import os
 
 class AssignmentBehaviorModifier:
     def __init__(self):
@@ -36,21 +38,23 @@ class AssignmentBehaviorModifier:
         self._setBehavior(lambda lhs: lhs)
     
     def specialStatements(self, shell):
-        shell.ex("from proveit._core_.special_statements import SpecialStatement")
-        self._setBehavior(lambda lhs: "SpecialStatement('%s', %s)"%(lhs,lhs))
+        shell.ex("from proveit._core_.special_expressions import SpecialExpression")
+        self._setBehavior(lambda lhs: "SpecialExpression('%s', %s)"%(lhs,lhs))
     
 
 assignmentBehaviorModifier = AssignmentBehaviorModifier()
 
+
 @magics_class
-class SpecialStatementsMagic(Magics):
+class ProveItMagic(Magics):
     "Magics that hold additional state"
 
     def __init__(self, shell):
         # You must call the parent constructor
-        super(SpecialStatementsMagic, self).__init__(shell)
-        self.package = None
-        self.special_statement_kind = None
+        super(ProveItMagic, self).__init__(shell)
+        self.kind = None
+        self.definitions = dict()
+        self.lowerCaseNames = set()
     
     def _set_package(self, line):
         '''
@@ -77,48 +81,107 @@ class SpecialStatementsMagic(Magics):
     
     @line_magic
     def begin_axioms(self, line):
-        if len(SpecialStatement.definitions) > 0 or self.special_statement_kind is not None:
-            raise ProveItMagicFailure("May only run %begin_axioms (or %begin-theorems) once per IPython session.")
+        if len(self.definitions) > 0 or self.kind is not None:
+            raise ProveItMagicFailure("May only run %begin_axioms (or %begin_theorems) once per IPython session.")
         self._set_package(line)
-        print "Defining axioms for package " + self.package
+        print "Defining axioms for package '" + self.package + "'"
         print "Subsequent end-of-cell assignments will define axioms"
         print "%end_axioms will finalize the definitions"
         assignmentBehaviorModifier.specialStatements(self.shell)
-        self.special_statement_kind = 'axioms'
+        self.kind = 'axioms'
 
     @line_magic
     def end_axioms(self, line):
-        if self.special_statement_kind != 'axioms':
-            raise ProveItMagicFailure("Must run %begin_axioms before %end_axioms")
-        SpecialStatement.finish(self.package, 'axioms')
+        self.finish('axioms')
 
     @line_magic
     def begin_theorems(self, line):
-        if len(SpecialStatement.definitions) > 0 or self.special_statement_kind is not None:
+        if len(self.definitions) > 0 or self.kind is not None:
             raise ProveItMagicFailure("May only run %begin_theorems (or %begin_axioms) once per IPython session.")
         self._set_package(line)
-        print "Defining theorems for package " + self.package
+        print "Defining theorems for package '" + self.package + "'"
         print "Subsequent end-of-cell assignments will define theorems"
         print "%end_theorems will finalize the definitions"
         assignmentBehaviorModifier.specialStatements(self.shell)
-        self.special_statement_kind = 'theorems'
+        self.kind = 'theorems'
 
     @line_magic
     def end_theorems(self, line):
-        if self.special_statement_kind != 'theorems':
-            raise ProveItMagicFailure("Must run %begin_theorems before %end_theorems")
-        SpecialStatement.finish(self.package, 'theorems')
+        self.finish('theorems')
     
+    @line_magic
+    def begin_common(self, line):
+        if len(self.definitions) > 0 or self.kind is not None:
+            raise ProveItMagicFailure("May only run %begin_common once per IPython session.")
+        self._set_package(line)
+        print "Defining common sub-expressions for package '" + self.package + "'"
+        print "Subsequent end-of-cell assignments will define common sub-expressions"
+        print "%end_common will finalize the definitions"
+        assignmentBehaviorModifier.specialStatements(self.shell)
+        self.kind = 'common'
+
+    @line_magic
+    def end_common(self, line):
+        self.finish('common')
+                
     @line_magic
     def begin_proof(self, line):
         assignmentBehaviorModifier.displayAssignment()
         pass
 
+    def finish(self, kind):
+        '''
+        Finish 'axioms', 'theorems', or 'common' for the Context
+        associated with the current working directory.
+        '''
+        if self.kind != kind:
+            raise ProveItMagicFailure("Must run %begin_%s before %end_%s"%(kind,kind))
+        context = Context() # context based upon current working directory
+        # Add the special statements to the certified database
+        if kind=='axioms':
+            context.setAxioms(self.definitions)
+        elif kind=='theorems':            
+            context.setTheorems(self.definitions)
+        elif kind=='common':
+            context.setCommonExpressions(self.definitions)
+        capitalizedKind = kind[0].upper() + kind[1:]
+        # make an _axioms_.py or _theorems_.py file for importing axioms/theorems
+        # from the certified database.
+        output = "import sys\n"
+        output += "from proveit._core_.context import Context, %s\n"%capitalizedKind
+        output += "sys.modules[__name__] = %s(Context(__file__)\n"%(capitalizedKind)
+        if os.path.isfile('_%s_.py'%kind):
+            with open('_%s_.py'%kind, 'r') as f:
+                if f.read() != output:
+                    raise ProveItMagicFailure("An existing _%s_.py must be removed before a proper one may be autogenerated"%kind)
+        else:        
+            with open('_%s_.py'%kind, 'w') as f:
+                f.write(output)
+        if kind=='common':
+            print "Common Expressions may be imported from autogenerated _%s_.py"%(capitalizedKind, kind)
+        else:
+            print "%s may be imported from autogenerated _%s_.py"%(capitalizedKind, kind)
+
+class SpecialExpression:    
+    def __init__(self, name, expr):
+        if not isinstance(expr, Expression):
+            raise ValueError("Right hand side of the special statement must be an Expression")
+        if proveItMagic.kind == 'axioms' or proveItMagic.kind == 'theorems':
+            if name.lower() in proveItMagic.lowerCaseNames:
+                raise ProveItMagicFailure("%s names must be unique regardless of capitalization"%SpecialExpression.kind[:-1])
+        self.name = name
+        self.expr = expr
+        proveItMagic.lowerCaseNames.add(name.lower())
+        proveItMagic.definitions[name] = expr
+
+    def _repr_html_(self):
+        return '<strong>' + self.name + '</strong>: ' + self.expr._repr_html_()
+
 # This class must then be registered with a manually created instance,
 # since its constructor has different arguments from the default:
 ip = get_ipython()
-specialStatementsMagic = SpecialStatementsMagic(ip)
-ip.register_magics(specialStatementsMagic)
+proveItMagic = ProveItMagic(ip)
+ip.register_magics(proveItMagic)
 
 @register_line_magic
 def display_assignment(line):

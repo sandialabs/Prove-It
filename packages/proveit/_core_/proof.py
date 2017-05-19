@@ -9,7 +9,7 @@ Proof objects form a DAG.
 
 from proveit._core_.known_truth import KnownTruth
 from defaults import defaults, USE_DEFAULTS
-from storage import storage
+from context import Context
 import re
 
 class Proof:
@@ -208,29 +208,40 @@ class Assumption(Proof):
         return 'assumption'
 
 class Axiom(Proof): 
-    def __init__(self, expr, package, name):
+    def __init__(self, expr, context, name):
+        if not isinstance(context, Context):
+            raise ValueError("An axiom 'context' must be a Context object")
+        if not isinstance(name, str):
+            raise ValueError("An axiom 'name' must be a string")
         Proof.__init__(self, 'Axiom', KnownTruth(expr, frozenset(), self), [])
-        self.package = package
+        self.context = context
         self.name = name
 
     def stepType(self):
         return 'axiom'
     
+    def _storedAxiom(self):
+        from storage import StoredAxiom
+        return StoredAxiom(self.context, self.name)
+        
     def usedAxioms(self):
         return {self}
+        
+    def allDependents(self):
+        return self._storedAxiom().allDependents()
 
     def __str__(self):
-        return self.package + '.' + self.name
+        return self.context.name + '.' + self.name
         
 class Theorem(Proof): 
     allTheorems = []
     
-    def __init__(self, expr, package, name):
-        if not isinstance(package, str):
-            raise ValueError("A theorem 'package' must be a string")
+    def __init__(self, expr, context, name):
+        if not isinstance(context, Context):
+            raise ValueError("A theorem 'package' must be a Context object")
         if not isinstance(name, str):
             raise ValueError("A theorem 'name' must be a string")
-        self.package = package
+        self.context = context
         self.name = name
         # keep track of proofs that may be used to prove the theorem
         # before 'beginProof' is called so we will have the proof handy.
@@ -246,7 +257,7 @@ class Theorem(Proof):
         return {self}
         
     def __str__(self):
-        return self.package + '.' + self.name
+        return self.context.name + '.' + self.name
     
     def containingPackages(self):
         '''
@@ -264,7 +275,57 @@ class Theorem(Proof):
     def updateUsability():
         for theorem in Theorem.allTheorems:
             theorem._setUsability()            
-    
+        
+    def _storedTheorem(self):
+        from storage import StoredTheorem
+        return StoredTheorem(self.context, self.name)
+        
+    def recordProof(self, proof):
+        '''
+        Record the given proof as the proof of this theorem.  Updates
+        dependency links (usedAxioms.txt, usedTheorems.txt, and usedBy.txt files)
+        and proven dependency indicators (various provenTheorems.txt files 
+        for theorems that depend upon the one being proven) appropriately.
+        '''
+        self._storedTheorem().recordProof(proof)    
+
+    def removeProof(self):
+        '''
+        Remove the proof for the given theorem and all obsolete dependency
+        links.
+        '''
+        self._storedTheorem().removeProof()
+        
+    def hasProof(self):
+        '''
+        Returns true if and only if this theorem has a recorded proof.
+        '''
+        return self._storedTheorem().hasProof()
+                
+    def isFullyProven(self, theorem):
+        '''
+        Returns true if and only if this theorem is fully proven
+        (it has a recorded proof and all dependent theorems are fully
+        proven, all the way to axioms which don't require proofs).
+        '''
+        return self._storedTheorem().isComplete()
+
+    def allRequirements(self):
+        '''
+        Returns the set of axioms that are required (directly or indirectly)
+        by the theorem.  Also, if the given theorem is not completely proven,
+        return the set of unproven theorems that are required (directly or
+        indirectly).  Returns this axiom set and theorem set as a tuple.
+        '''
+        return self._storedTheorem().allRequirements()
+
+    def allUsedTheorems(self):
+        '''
+        Returns the set of theorems used to prove the given theorem, directly
+        or indirectly.
+        '''
+        return self._storedTheorem().allUsedTheorems()
+        
     def _setUsability(self):
         '''
         Sets the 'usable' attribute to False if a theorem

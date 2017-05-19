@@ -146,7 +146,6 @@ class KnownTruth:
         Complete a proof that began via `beginProof`, entering it into
         the certification database.
         '''
-        from proveit.certify import recordProof
         if KnownTruth.theoremBeingProven is None:
             raise Exception('No theorem being proven; cannot call qed method')
         if self.expr != KnownTruth.theoremBeingProven.provenTruth.expr:
@@ -154,7 +153,7 @@ class KnownTruth:
         if len(self.assumptions) > 0:
             raise Exception('qed proof should not have any remaining assumptions')
         proof = self.expr.prove().proof()
-        recordProof(KnownTruth.theoremBeingProven, proof)
+        KnownTruth.theoremBeingProven.recordProof(proof)
         return proof
 
     def proof(self):
