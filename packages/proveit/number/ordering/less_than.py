@@ -39,7 +39,7 @@ class LesserRelation(OrderingRelation):
         OrderingRelation.deriveSideEffects(self, knownTruth)
     
 
-class LessThan(LesserRelation):
+class Less(LesserRelation):
     def __init__(self, lhs, rhs):
         r'''
         See if second number is at bigger than first.
@@ -88,18 +88,18 @@ class LessThan(LesserRelation):
 #            if other.lhs == self.lhs:
 #                return other.               
         if other.lhs == self.rhs:
-            if isinstance(other,LessThan):
+            if isinstance(other,Less):
                 result = lessThanTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 #print self,result
                 return result.checked({self})
-            elif isinstance(other,LessThanEquals):
+            elif isinstance(other,LessEq):
                 result = lessThanTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result
         elif other.rhs == self.lhs:
-            if isinstance(other,LessThan):
+            if isinstance(other,Less):
                 result = lessThanTransLessThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
-            elif isinstance(other,LessThanEquals):
+            elif isinstance(other,LessEq):
                 result = lessThanTransLessThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
         else:
@@ -138,7 +138,7 @@ class LessThan(LesserRelation):
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
-class LessThanEquals(LesserRelation):
+class LessEq(LesserRelation):
     def __init__(self, lhs, rhs):
         r'''
         See if second number is at least as big as first.
@@ -199,17 +199,17 @@ class LessThanEquals(LesserRelation):
 #            if other.lhs == self.lhs:
 #                return other.               
         if other.lhs == self.rhs:
-            if isinstance(other,LessThan):
+            if isinstance(other,Less):
                 result = lessThanEqualsTransLessThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result.checked({self})
-            elif isinstance(other,LessThanEquals):
+            elif isinstance(other,LessEq):
                 result = lessThanEqualsTransLessThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result
         elif other.rhs == self.lhs:
-            if isinstance(other,LessThan):
+            if isinstance(other,Less):
                 result = lessThanEqualsTransLessThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
-            elif isinstance(other,LessThanEquals):
+            elif isinstance(other,LessEq):
                 result = lessThanEqualsTransLessThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
 #           result = equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}).deriveConsequent()

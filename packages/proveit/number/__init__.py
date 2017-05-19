@@ -14,4 +14,4 @@ from summation import Sum
 from integration import Integrate
 from modular import Abs, Mod, ModAbs
 from rounding import Floor, Ceil, Round
-from ordering import LessThan, LessThanEquals, GreaterThan, GreaterThanEquals, Min, Max
+from ordering import Less, LessEq, Greater, GreaterEq, Min, Max

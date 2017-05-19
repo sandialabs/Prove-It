@@ -1,6 +1,6 @@
 from proveit.logic import Forall, Implies, InSet, NotEquals, And, Or, Booleans
 from proveit.number import Integers, Reals, RealsPos
-from proveit.number import GreaterThan, GreaterThanEquals, LessThan, LessThanEquals, Min, Max, Add, Sub, Neg, Mult, Fraction
+from proveit.number import Greater, GreaterEq, Less, LessEq, Min, Max, Add, Sub, Neg, Mult, Fraction
 from proveit.common import a, b, c, d, x
 from proveit.number.common import zero, one
 from proveit import beginTheorems, endTheorems
@@ -20,81 +20,81 @@ maxRealPosClosure = Forall((a, b), InSet(Max(a, b), RealsPos), domain=RealsPos)
 maxRealPosClosure
 
 relaxGreaterThan = Forall([a,b],
-                         GreaterThanEquals(a,b),
+                         GreaterEq(a,b),
                          domain = Reals,
-                         conditions = GreaterThan(a,b))
+                         conditions = Greater(a,b))
 relaxGreaterThan
 
 relaxLessThan = Forall([a,b],
-                         LessThanEquals(a,b),
+                         LessEq(a,b),
                          domain = Reals,
-                         conditions = LessThan(a,b))
+                         conditions = Less(a,b))
 relaxLessThan
 
-lessThanInBools = Forall([a, b], InSet(LessThan(a, b), Booleans), domain=Reals)
+lessThanInBools = Forall([a, b], InSet(Less(a, b), Booleans), domain=Reals)
 lessThanInBools
 
-lessThanEqualsInBools = Forall([a, b], InSet(LessThanEquals(a, b), Booleans), domain=Reals)
+lessThanEqualsInBools = Forall([a, b], InSet(LessEq(a, b), Booleans), domain=Reals)
 lessThanEqualsInBools
 
-greaterThanInBools = Forall([a, b], InSet(GreaterThan(a, b), Booleans), domain=Reals)
+greaterThanInBools = Forall([a, b], InSet(Greater(a, b), Booleans), domain=Reals)
 greaterThanInBools
 
-greaterThanEqualsInBools = Forall([a, b], InSet(GreaterThanEquals(a, b), Booleans), domain=Reals)
+greaterThanEqualsInBools = Forall([a, b], InSet(GreaterEq(a, b), Booleans), domain=Reals)
 greaterThanEqualsInBools
 
-notEqualsIsLessThanOrGreaterThan = Forall((a, x), Or(LessThan(x, a), GreaterThan(x, a)), domain=Reals, conditions=[NotEquals(x, a)])
+notEqualsIsLessThanOrGreaterThan = Forall((a, x), Or(Less(x, a), Greater(x, a)), domain=Reals, conditions=[NotEquals(x, a)])
 notEqualsIsLessThanOrGreaterThan
 
-shiftLessThanToLessThanEquals = Forall((a, b), LessThanEquals(a, b), domain=Integers, conditions=[LessThan(Sub(a, one), b)])
+shiftLessThanToLessThanEquals = Forall((a, b), LessEq(a, b), domain=Integers, conditions=[Less(Sub(a, one), b)])
 shiftLessThanToLessThanEquals
 
-lessThanEqualsAddRight = Forall([a, b, c], LessThanEquals(Add(a, c), Add(b, c)), domain=Reals, conditions=[LessThanEquals(a, b)])
+lessThanEqualsAddRight = Forall([a, b, c], LessEq(Add(a, c), Add(b, c)), domain=Reals, conditions=[LessEq(a, b)])
 lessThanEqualsAddRight
 
-lessThanEqualsAddLeft = Forall([a, b, c], LessThanEquals(Add(c, a), Add(c, b)), domain=Reals, conditions=[LessThanEquals(a, b)])
+lessThanEqualsAddLeft = Forall([a, b, c], LessEq(Add(c, a), Add(c, b)), domain=Reals, conditions=[LessEq(a, b)])
 lessThanEqualsAddLeft
 
-lessThanEqualsSubtract = Forall([a, b, c], LessThanEquals(Sub(a, c), Sub(b, c)), domain=Reals, conditions=[LessThanEquals(a, b)])
+lessThanEqualsSubtract = Forall([a, b, c], LessEq(Sub(a, c), Sub(b, c)), domain=Reals, conditions=[LessEq(a, b)])
 lessThanEqualsSubtract
 
-lessThanAddRight = Forall([a, b, c], LessThan(Add(a, c), Add(b, c)), domain=Reals, conditions=[LessThan(a, b)])
+lessThanAddRight = Forall([a, b, c], Less(Add(a, c), Add(b, c)), domain=Reals, conditions=[Less(a, b)])
 lessThanAddRight
 
-lessThanAddLeft = Forall([a, b, c], LessThan(Add(c, a), Add(c, b)), domain=Reals, conditions=[LessThan(a, b)])
+lessThanAddLeft = Forall([a, b, c], Less(Add(c, a), Add(c, b)), domain=Reals, conditions=[Less(a, b)])
 lessThanAddLeft
 
-lessThanSubtract = Forall([a, b, c], LessThan(Sub(a, c), Sub(b, c)), domain=Reals, conditions=[LessThan(a, b)])
+lessThanSubtract = Forall([a, b, c], Less(Sub(a, c), Sub(b, c)), domain=Reals, conditions=[Less(a, b)])
 lessThanSubtract
 
-greaterThanEqualsAddRight = Forall([a, b, c], GreaterThanEquals(Add(a, c), Add(b, c)), domain=Reals, conditions=[GreaterThanEquals(a, b)])
+greaterThanEqualsAddRight = Forall([a, b, c], GreaterEq(Add(a, c), Add(b, c)), domain=Reals, conditions=[GreaterEq(a, b)])
 greaterThanEqualsAddRight
 
-greaterThanEqualsAddLeft = Forall([a, b, c], GreaterThanEquals(Add(c, a), Add(c, b)), domain=Reals, conditions=[GreaterThanEquals(a, b)])
+greaterThanEqualsAddLeft = Forall([a, b, c], GreaterEq(Add(c, a), Add(c, b)), domain=Reals, conditions=[GreaterEq(a, b)])
 greaterThanEqualsAddLeft
 
-greaterThanEqualsSubtract = Forall([a, b, c], GreaterThanEquals(Sub(a, c), Sub(b, c)), domain=Reals, conditions=[GreaterThanEquals(a, b)])
+greaterThanEqualsSubtract = Forall([a, b, c], GreaterEq(Sub(a, c), Sub(b, c)), domain=Reals, conditions=[GreaterEq(a, b)])
 greaterThanEqualsSubtract
 
-greaterThanAddRight = Forall([a, b, c], GreaterThan(Add(a, c), Add(b, c)), domain=Reals, conditions=[GreaterThan(a, b)])
+greaterThanAddRight = Forall([a, b, c], Greater(Add(a, c), Add(b, c)), domain=Reals, conditions=[Greater(a, b)])
 greaterThanAddRight
 
-greaterThanAddLeft = Forall([a, b, c], GreaterThan(Add(c, a), Add(c, b)), domain=Reals, conditions=[GreaterThan(a, b)])
+greaterThanAddLeft = Forall([a, b, c], Greater(Add(c, a), Add(c, b)), domain=Reals, conditions=[Greater(a, b)])
 greaterThanAddLeft
 
-greaterThanSubtract = Forall([a, b, c], GreaterThan(Sub(a, c), Sub(b, c)), domain=Reals, conditions=[GreaterThan(a, b)])
+greaterThanSubtract = Forall([a, b, c], Greater(Sub(a, c), Sub(b, c)), domain=Reals, conditions=[Greater(a, b)])
 greaterThanSubtract
 
-negatedLessThan = Forall([a, b], GreaterThan(Neg(a), Neg(b)), domain=Reals, conditions=[LessThan(a, b)])
+negatedLessThan = Forall([a, b], Greater(Neg(a), Neg(b)), domain=Reals, conditions=[Less(a, b)])
 negatedLessThan
 
-negatedLessThanEquals = Forall([a, b], GreaterThanEquals(Neg(a), Neg(b)), domain=Reals, conditions=[LessThanEquals(a, b)])
+negatedLessThanEquals = Forall([a, b], GreaterEq(Neg(a), Neg(b)), domain=Reals, conditions=[LessEq(a, b)])
 negatedLessThanEquals
 
-negatedGreaterThan = Forall([a, b], LessThan(Neg(a), Neg(b)), domain=Reals, conditions=[GreaterThan(a, b)])
+negatedGreaterThan = Forall([a, b], Less(Neg(a), Neg(b)), domain=Reals, conditions=[Greater(a, b)])
 negatedGreaterThan
 
-negatedGreaterThanEquals = Forall([a, b], LessThanEquals(Neg(a), Neg(b)), domain=Reals, conditions=[GreaterThanEquals(a, b)])
+negatedGreaterThanEquals = Forall([a, b], LessEq(Neg(a), Neg(b)), domain=Reals, conditions=[GreaterEq(a, b)])
 negatedGreaterThanEquals
 
 endTheorems(locals(), __package__)

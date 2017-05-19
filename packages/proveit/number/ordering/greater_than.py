@@ -38,7 +38,7 @@ class GreaterRelation(OrderingRelation):
         GreaterRelation.knownLeftSides.setdefault(self.rhs, set()).add(knownTruth)
         OrderingRelation.deriveSideEffects(self, knownTruth)
 
-class GreaterThan(GreaterRelation):
+class Greater(GreaterRelation):
     def __init__(self, lhs, rhs):
         r'''
         See if first number is at least as big as second.
@@ -87,17 +87,17 @@ class GreaterThan(GreaterRelation):
 #            if other.lhs == self.lhs:
 #                return other.
         if other.lhs == self.rhs:
-            if isinstance(other,GreaterThan):
+            if isinstance(other,Greater):
                 result = greaterThanTransGreaterThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result.checked({self})
-            elif isinstance(other,GreaterThanEquals):
+            elif isinstance(other,GreaterEq):
                 result = greaterThanTransGreaterThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent(assumptions)
                 return result
         elif other.rhs == self.lhs:
-            if isinstance(other,GreaterThan):
+            if isinstance(other,Greater):
                 result = greaterThanTransGreaterThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
-            elif isinstance(other,GreaterThanEquals):
+            elif isinstance(other,GreaterEq):
                 result = greaterThanTransGreaterThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent(assumptions)
                 return result
         else:
@@ -137,7 +137,7 @@ class GreaterThan(GreaterRelation):
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
 
-class GreaterThanEquals(GreaterRelation):
+class GreaterEq(GreaterRelation):
     def __init__(self, lhs, rhs):
         r'''
         See if first number is at least as big as second.
@@ -198,17 +198,17 @@ class GreaterThanEquals(GreaterRelation):
 #            if other.lhs == self.lhs:
 #                return other.
         if other.lhs == self.rhs:
-            if isinstance(other,GreaterThan):
+            if isinstance(other,Greater):
                 result = greaterThanEqualsTransGreaterThanRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent()
                 return result.checked({self})
-            elif isinstance(other,GreaterThanEquals):
+            elif isinstance(other,GreaterEq):
                 result = greaterThanEqualsTransGreaterThanEqualsRight.specialize({x:self.lhs, y:self.rhs, z:other.rhs}).deriveConsequent()
                 return result
         elif other.rhs == self.lhs:
-            if isinstance(other,GreaterThan):
+            if isinstance(other,Greater):
                 result = greaterThanEqualsTransGreaterThanLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent()
                 return result
-            elif isinstance(other,GreaterThanEquals):
+            elif isinstance(other,GreaterEq):
                 result = greaterThanEqualsTransGreaterThanEqualsLeft.specialize({x:self.lhs, y:self.rhs, z:other.lhs}).deriveConsequent()
                 return result
         else:
