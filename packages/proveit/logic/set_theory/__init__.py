@@ -1,6 +1,6 @@
-from singleton import Singleton
-
 from membership import InSet, NotInSet
+from enumeration import Set
+from cardinality import Card
 from unification import Union
 from intersection import Intersect
 from containment import SupersetEq, SubsetEq

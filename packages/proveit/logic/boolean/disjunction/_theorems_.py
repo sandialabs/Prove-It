@@ -1,4 +1,4 @@
-from proveit.logic import Or, TRUE, FALSE, Forall, Implies, Not, inBool, And, Booleans, Equals, Singleton
+from proveit.logic import Or, TRUE, FALSE, Forall, Implies, Not, inBool, And, Booleans, Equals, Set
 from proveit.common import A, B, C, D, Amulti, Cmulti, Aetc, Cetc
 from proveit import Etcetera
 from proveit import beginTheorems, endTheorems
@@ -58,7 +58,7 @@ notOrIfNotAny = Forall((Amulti), Not(Or(Aetc)), domain=Booleans, conditions=[Etc
 orContradiction = Forall(Amulti, FALSE, conditions=(Or(Amulti), Etcetera(Not(Amulti))))
 
 disjunctionTrueEval = Forall((Amulti, Cmulti), Equals(Or(Aetc, TRUE, Cetc), TRUE), domain=Booleans)
-disjunctionFalseEval = Forall(Amulti, Equals(Or(Aetc), FALSE), domain=Singleton(FALSE))
+disjunctionFalseEval = Forall(Amulti, Equals(Or(Aetc), FALSE), domain=Set(FALSE))
 
 
 
