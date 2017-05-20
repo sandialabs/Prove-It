@@ -7,7 +7,6 @@ with possibly fewer assumptions, suffices).
 """
 
 from proveit._core_.expression import Expression
-from storage import storage
 from defaults import defaults, USE_DEFAULTS
 import re
 import os
@@ -579,17 +578,6 @@ class KnownTruth:
         if not self.isUsable(): self.raiseUnusableTheorem()
         return self.string()
     
-    def _storage(self):
-        '''
-        If the KnownTruth is for an Axiom or Theorem, use the _certified_
-        storage for the package.  Otherwise use the default storage.
-        '''
-        from proveit.certify import _makeStorage
-        from proof import Axiom, Theorem
-        if self._proof is not None and (isinstance(self._proof, Axiom) or isinstance(self._proof, Theorem)):
-            return _makeStorage(self._proof.package)
-        return storage
-
     def _repr_html_(self):
         '''
         Generate html to show the KnownTruth as a set of assumptions,

@@ -1,4 +1,4 @@
-from _core_ import defaults, USE_DEFAULTS, InvalidAssumptions, storage
+from _core_ import defaults, USE_DEFAULTS, InvalidAssumptions, Context
 from _core_ import Expression, Operation, Lambda, Label, Variable, MultiVariable, Literal, DuplicateLiteralError
 from _core_ import Etcetera, Block, safeDummyVar, safeDefaultOrDummyVar, tryDerivation
 from _core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure

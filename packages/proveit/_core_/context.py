@@ -42,29 +42,32 @@ class Context:
     # contexts.
     def __init__(self, path='.'):
         '''
-        Create a Context for the given path.  If no package
+        Create a Context for the given path.  If given a file name instead,
+        use the path of the containing directory.  If no path
         is provided, base the context on the current working directory.
         '''
-        abspath = os.path.abspath(path)
+        path = os.path.abspath(path)
+        if os.path.isfile(path):
+            path, _ = os.path.split(path)
         # the name of the context is based upon the directory, going
         # up the tree as long as there is an __init__.py file.
         self.name = ''
-        while os.path.isfile(os.path.join(path, '__init__.py')):
-            path, tail = os.path.split(path)
-            self.name = tail + '.' + self.name
+        remaining_path = path
+        while os.path.isfile(os.path.join(remaining_path, '__init__.py')):
+            remaining_path, tail = os.path.split(remaining_path)
+            self.name = tail if self.name=='' else (tail + '.' + self.name)
         # the root context tracks paths to external packages
         if self.name == '':
+            self.name = path
             raise ContextException(self, 'Context directory must have an __init__.py file')
         if '.' in self.name:
             self.rootContext = Context(path)
         else:
             self.rootContext = self # this is a root context
         # Create the Storage object for this Context
-        if abspath not in Context.storages:
-            Context.storages[abspath] = Storage(self, abspath)
-        self._storage = Context.storages[abspath]
-        if self.name == '':
-            self.name = os.path.split(path)[1]
+        if path not in Context.storages:
+            Context.storages[path] = Storage(self, path)
+        self._storage = Context.storages[path]
         # map common expression names to storage identifiers:
         self.common_expr_ids = None # read in when needed
     
@@ -76,10 +79,17 @@ class Context:
         return self.rootContext == self
     
     def getContext(self, context_name):
+        '''
+        Return the Context with the given name.
+        '''
         split_context_name = context_name.split('.')
         if split_context_name[0] == self.rootContext.name:
             # Context with the same root as this one
-            return Context(os.path.join(self._storage.directory, split_context_name[1:]))
+            path = self._storage.directory
+            if len(split_context_name) > 1:
+                # tack on the part beyond the root
+                path = os.path.join(path, split_context_name[1:])
+            return Context(path)
         else:
             # Context with a different root than this one; need to get the path of the other root.
             self._storage
@@ -120,10 +130,10 @@ class Context:
             storedSpecialStmt = self.getStoredStmt(self.name + '.' + name, kind[:-1])
             if name not in previousDefIds:
                 # added special statement
-                print 'Adding %s %s to %s context'%(kind, name, self.name)
+                print 'Adding %s %s to %s context'%(kind[:-1], name, self.name)
             elif previousDefIds[name] != exprId:
                 # modified special statement. remove the old one first.
-                print 'Modifying %s %s in %s context'%(kind, name, self.name)
+                print 'Modifying %s %s in %s context'%(kind[:-1], name, self.name)
                 storedSpecialStmt.remove(keepPath=True)
             # record the axiom/theorem id (creating the directory if necessary)
             specialStatementDir = os.path.join(specialStatementsPath, name)
@@ -216,7 +226,7 @@ class Context:
         '''
         if self.common_expr_ids is None:
             # while the names are read in, the expr id map will be generated
-            list(self.commonExpressionNames)
+            list(self.commonExpressionNames())
         # make the common expression for the given common expression name
         return self._storage.makeExpression(self.common_expr_ids[name])
     
@@ -255,16 +265,16 @@ class Axioms:
     the _certified_ database (returning the associated KnownTruth object).
     '''
     def __init__(self, context):
-        self._context = context
+        self.context = context
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self._context.getAxiomNames())
+        return sorted(self.__dict__.keys() + self.context.axiomNames())
 
     def __getattr__(self, name):
         try:
-            axiom = self._context.getAxiom(name)
+            axiom = self.context.getAxiom(name)
         except KeyError:
-            raise AttributeError("'" + name + "' axiom not found in '" + self._package + "'\n(make sure to execute the appropriate '_axioms_.ipynb' notebook after any changes)")
+            raise AttributeError("'" + name + "' axiom not found in '" + self.context.name + "'\n(make sure to execute the appropriate '_axioms_.ipynb' notebook after any changes)")
         axiom.deriveSideEffects()
         return axiom
     
@@ -274,16 +284,16 @@ class Theorems:
     the _certified_ database (returning the associated KnownTruth object).
     '''
     def __init__(self, context):
-        self._context = context
+        self.context = context
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self._context.getTheoremNames())
+        return sorted(self.__dict__.keys() + self._context.theoremNames())
                 
     def __getattr__(self, name):
         try:
-            theorem = self._context.getTheorem(name)
+            theorem = self.context.getTheorem(name)
         except KeyError:
-            raise AttributeError("'" + name + "' theorem not found in '" + self._package +  "'\n(make sure to execute the appropriate '_theorems_.ipynb' notebook after any changes)")
+            raise AttributeError("'" + name + "' theorem not found in '" + self.context.name +  "'\n(make sure to execute the appropriate '_theorems_.ipynb' notebook after any changes)")
         theorem.deriveSideEffects()
         return theorem
 
@@ -292,21 +302,21 @@ class CommonExpressions:
     Used in _common_.py modules for accessing common sub-expressions.
     '''
     def __init__(self, context):
-        self._context = context
+        self.context = context
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self._context.getCommonExpressionNames())
+        return sorted(self.__dict__.keys() + self.context.commonExpressionNames())
 
     def __getattr__(self, name):
         try:
-            return self._context.getCommonExpression(name)
+            return self.context.getCommonExpr(name)
         except KeyError:
-            raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self._package + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
+            raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self.context.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
 
 class ContextException(Exception):
     def __init__(self, context, message):
-        self.directory = context._storage.directory
+        self.context = context
         self.message = message
         
     def __str__(self):
-        return 'Context exception for %s: %s'%(self.directory, self.message)
+        return 'Exception for context %s: %s'%(self.context.name, self.message)

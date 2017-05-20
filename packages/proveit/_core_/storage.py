@@ -130,8 +130,7 @@ class Storage:
             pv_it_filename = proveItObjectOrFilename
         else:
             pv_it_filename = self._retrieve(proveItObjectOrFilename)
-        # (replace os.path.sep within pv_it file paths with '/' to make this OS neutral just in case)
-        return '/'.join(pv_it_filename.split(os.path.sep))
+        return pv_it_filename
     
     
     def _proveItObjUniqueRep(self, proveItObject):
@@ -172,8 +171,7 @@ class Storage:
         storage identifier.  The .pv_it file is  updated with the new 
         reference count.
         '''
-        # replace '/' with os.path.sep within the Prove-It object id to object the filename
-        pv_it_filename = os.path.sep.join(proveItObjId.split('/'))
+        pv_it_filename = proveItObjId # the id is the filename
         pv_it_dir = self.pv_it_dir
         with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
             contents = f.read()
@@ -190,12 +188,12 @@ class Storage:
         Return the reference coult of the prove-it object with the given
         storage identifier.
         '''
-        pv_it_filename = os.path.sep.join(proveItObjId.split('/'))
+        pv_it_filename = proveItObjId # the id is the filename
         pv_it_dir = self.pv_it_dir
         with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
             contents = f.read()
             refCount, rep = contents.split('\n') 
-            return refCount
+            return int(refCount)
                                                 
     def _removeReference(self, proveItObjId):
         '''
@@ -205,9 +203,9 @@ class Storage:
         (and the directory if nothing else is in it).  Otherwise, the
         .pv_it file is simply updated with the new reference count.
         '''
-        # replace '/' with os.path.sep within the Prove-It object id to object the filename
-        pv_it_filename = os.path.sep.join(proveItObjId.split('/'))
+        pv_it_filename = proveItObjId # the id is the filename
         pv_it_dir = self.pv_it_dir
+        refCount = self._getRefCount(proveItObjId)
         with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
             contents = f.read()
             refCount, rep = contents.split('\n') 
@@ -294,8 +292,6 @@ class Storage:
         return self._makeExpression(exprId, importFn, exprBuilderFn)
     
     def _makeExpression(self, exprId, importFn, exprBuilderFn):
-        # (replace '/' within exprId with os.path.sep to convert it to a file name
-        # regardless of OS).
         from proveit import Expression
         from _dependency_graph import orderedDependencyNodes
         pv_it_dir = self.pv_it_dir
@@ -304,7 +300,7 @@ class Storage:
         subExprIdsMap = dict() # map expr-ids to list of sub-expression ids 
         masterExprId = exprId
         def getSubExprIds(exprId):
-            pv_it_filename = os.path.sep.join(exprId.split('/'))
+            pv_it_filename = exprId # the id is the filename
             with open(os.path.join(pv_it_dir, pv_it_filename), 'r') as f:
                 # extract the unique representation from the pv_it file
                 contents = f.read()
@@ -333,12 +329,13 @@ class Storage:
         for sub_dir in os.listdir(self.pv_it_dir):
             if sub_dir == '_axioms_' or sub_dir == '_theorems_' or sub_dir == '_common_':
                 continue
-            pv_it_dir = os.join(self.pv_it_dir, sub_dir)
-            if os.isdir(pv_it_dir):
-                for pv_it_filename in os.listdir(pv_it_dir):
-                    if not os.isfile(pv_it_filename) or pv_it_filename[-6:] != '.pv_it':
+            sub_path = os.path.join(self.pv_it_dir, sub_dir)
+            if os.path.isdir(sub_path):
+                for pv_it_filename in os.listdir(sub_path):
+                    pv_it_filepath = os.path.join(sub_path, pv_it_filename)
+                    if not os.path.isfile(pv_it_filepath) or pv_it_filename[-6:] != '.pv_it':
                         continue
-                    objId = self._proveItObjId(pv_it_filename)
+                    objId = self._proveItObjId(os.path.join(sub_dir, pv_it_filename))
                     if self._getRefCount(objId) == 0:
                         self._removeReference(objId)
                         
@@ -357,7 +354,7 @@ class Storage:
         os.rmdir(pv_it_dir)
     
 class StoredSpecialStmt:
-    def __init__(self, context, kind, name):
+    def __init__(self, context, name, kind):
         '''
         Base class of StoredAxiom and StoredTheorem initialization.
         '''
@@ -365,9 +362,9 @@ class StoredSpecialStmt:
         self.name = name
         self.kind = kind
         if kind == 'axiom':
-            self.path = os.path.join(self.storage.directory, '_axioms_', self.name)
+            self.path = os.path.join(self.context._storage.directory, '_axioms_', self.name)
         elif kind == 'theorem':
-            self.path = os.path.join(self.storage.directory, '_theorems_', self.name) 
+            self.path = os.path.join(self.context._storage.directory, '_theorems_', self.name) 
         else:
             raise ValueError("kind must be 'axiom' or 'theorem'")
 

@@ -5,7 +5,6 @@ the exprInfo() method of an Expression object.
 '''
 
 import re
-from proveit._core_.storage import storage
 
 class ExpressionInfo:
     def __init__(self, expr, show_details):

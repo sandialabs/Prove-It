@@ -3,7 +3,7 @@ This is the expression module.
 """
 
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit._core_.storage import storage
+from proveit._core_.context import Context
 import re
 import os
 
@@ -365,19 +365,16 @@ class Expression:
         from memory or storage if it was generated previously) with a link to
         an expr.ipynb notebook for displaying the expression information.
         '''
+        context = Context()
         if not hasattr(self,'png'):
-            self.png, self.png_path = storage._retrieve_png(self, self.latex(), self._config_latex_tool)
+            self.png, png_path = context._stored_png(self, self.latex(), self._config_latex_tool)
+            self.png_path = os.path.relpath(png_path)
         if self.png_path is not None:
             storage_directory, _ = os.path.split(self.png_path)
             exprNotebookPath = os.path.join(storage_directory, 'expr.ipynb')
             html = '<a href="' + exprNotebookPath + '" target="_blank">'
             html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
-        else:
-            # no storage. just include the png directly (encoded in base64)
-            import base64
-            # putting the image in <span>...</span> helps the alignment in IE11 for some unknown reason
-            html = '<span><img src="data:image/png;base64,' + base64.b64encode(self.png) + r'" style="display:inline;vertical-align:middle;" /></span>'
         return html
         
     def _config_latex_tool(self, lt):
