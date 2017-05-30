@@ -1,17 +1,14 @@
 from proveit import Literal, Operation
 from proveit.number.sets import Integers, Naturals
 
-FLOOR = Literal(__package__, 'Floor')
-
 class Floor(Operation):
+    # operator of the Floor operation.
+    _operator_ = Literal(stringFormat='floor', context=__file__)
+    
     def __init__(self, A):
-        Operation.__init__(self, FLOOR, A)
+        Operation.__init__(self, Floor._operator_, A)
         self.operand = A
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return FLOOR
-    
     def _closureTheorem(self, numberSet):
         import theorems
         if numberSet == Naturals:

@@ -3,9 +3,6 @@ from proveit.logic import Equals
 from ordering_relation import OrderingRelation
 from proveit.common import a, b, x, y, z
 
-GREATERTHAN = Literal(__package__, r'>', r'>')
-GREATERTHANEQUALS = Literal(__package__, r'>=', r'\geq')
-
 class GreaterRelation(OrderingRelation):
     # map left-hand-sides to KnownTruths of GreaterRelation
     knownLeftSides = dict()    
@@ -39,16 +36,15 @@ class GreaterRelation(OrderingRelation):
         OrderingRelation.deriveSideEffects(self, knownTruth)
 
 class Greater(GreaterRelation):
+    # operator of the Greater operation.
+    _operator_ = Literal(stringFormat='>', context=__file__)
+    
     def __init__(self, lhs, rhs):
         r'''
         See if first number is at least as big as second.
         '''
-        OrderingRelation.__init__(self, GREATERTHAN,lhs,rhs)
+        OrderingRelation.__init__(self, Greater._operator_,lhs,rhs)
         
-    @classmethod
-    def operatorOfOperation(subClass):
-        return GREATERTHAN
-            
     def reversed(self):
         '''
         Returns the reversed inequality Expression.
@@ -138,15 +134,14 @@ class Greater(GreaterRelation):
 
 
 class GreaterEq(GreaterRelation):
+    # operator of the GreaterEq operation.
+    _operator_ = Literal(stringFormat='>=', latexFormat=r'\geq', context=__file__)
+
     def __init__(self, lhs, rhs):
         r'''
         See if first number is at least as big as second.
         '''
-        GreaterRelation.__init__(self, GREATERTHANEQUALS,lhs,rhs)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return GREATERTHANEQUALS
+        GreaterRelation.__init__(self, GreaterEq._operator_,lhs,rhs)
     
     def reversed(self):
         '''

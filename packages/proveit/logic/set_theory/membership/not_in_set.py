@@ -1,18 +1,15 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
 from proveit.common import x, S
 
-NOTIN = Literal(__package__, stringFormat = 'not in', latexFormat = r'\notin')
-
 class NotInSet(BinaryOperation):
+    # operator of the NotInSet operation
+    _operator_ = Literal(stringFormat='not-in', latexFormat=r'\notin', context=__file__)    
+    
     def __init__(self, element, domain):
-        BinaryOperation.__init__(self, NOTIN, element, domain)
+        BinaryOperation.__init__(self, NotInSet._operator_, element, domain)
         self.element = self.operands[0]
         self.domain = self.operands[1]  
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NOTIN    
-    
     def deduceInBool(self):
         '''
         Deduce and return that this 'not in' statement is in the set of BOOLEANS.

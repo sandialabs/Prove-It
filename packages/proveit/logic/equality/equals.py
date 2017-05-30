@@ -4,11 +4,10 @@ from proveit.common import A, P, Q, f, x, y, z
 from proveit.logic.transitivity_search import transitivitySearch
 from irreducible_value import IrreducibleValue
 
-pkg = __package__
-
-EQUALS = Literal(pkg, '=')
-
 class Equals(BinaryOperation):
+    # operator of the Equals operation
+    _operator_ = Literal(stringFormat='=', context=__file__)        
+    
     # map Expressions to sets of KnownTruths of equalities that involve the Expression
     # on the left hand or right hand side.
     knownEqualities = dict()
@@ -18,7 +17,7 @@ class Equals(BinaryOperation):
     evaluations = dict()
         
     def __init__(self, a, b):
-        BinaryOperation.__init__(self, EQUALS, a, b)
+        BinaryOperation.__init__(self, Equals._operator_, a, b)
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
         
@@ -109,10 +108,6 @@ class Equals(BinaryOperation):
                 if knownTruth.isSufficient(assumptionsSet):
                     yield (knownTruth, knownTruth.lhs)
             
-    @classmethod
-    def operatorOfOperation(subClass):
-        return EQUALS    
-
     def concludeViaReflexivity(self):
         '''
         Prove and return self of the form x = x.

@@ -188,17 +188,6 @@ class Proof:
             if isinstance(proof, Specialization):
                 html += '<tr><td colspan=5 style="text-align:center">' + proof.mappingHTML() + '</td></tr>'
         return html
-    
-    def _config_latex_tool(self, lt):
-        '''
-        Configure the LaTeXTool from IPython.lib.latextools as required by all
-        sub-expressions.
-        '''
-        self.provenTruth._config_latex_tool(lt)   
-        for assumption in self.assumptions():
-            assumption._config_latex_tool(lt)
-        for requiredProof in self.requiredProofs():
-            requiredProof._config_latex_tool(lt)
 
 class Assumption(Proof): 
     def __init__(self, expr):

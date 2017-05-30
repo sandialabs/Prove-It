@@ -2,18 +2,15 @@ from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
 from equals import Equals
 from proveit.common import x, y, A, X
 
-NOTEQUALS = Literal(__package__, stringFormat = '!=', latexFormat = r'\neq')
-
 class NotEquals(BinaryOperation):
+    # operator of the NotEquals operation
+    _operator_ = Literal(stringFormat='!=', latexFormat=r'\neq', context=__file__)
+    
     def __init__(self, a, b):
-        BinaryOperation.__init__(self, NOTEQUALS, a, b)
+        BinaryOperation.__init__(self, NotEquals._operator_, a, b)
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NOTEQUALS    
-    
+            
     def deriveSideEffects(self, knownTruth):
         '''
         Derive the reversed and unfolded forms, as a side effect.

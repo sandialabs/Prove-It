@@ -4,9 +4,10 @@ from proveit.number.sets import infinity, zero, RealInterval, Interval, Reals, I
 from proveit.number.negation import Neg
 from proveit.common import a, f, S, xEtc, yEtc, zEtc
 
-SUMMATION = Literal(__package__,  r'Sum', r'\sum')
-
 class Sum(OperationOverInstances):
+    # operator of the Sum operation.
+    _operator_ = Literal(stringFormat='Sum', latexFormat=r'\sum', context=__file__)   
+    
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
@@ -18,7 +19,7 @@ class Sum(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        OperationOverInstances.__init__(self, SUMMATION, indices, summand, domain=domain, conditions=conditions)
+        OperationOverInstances.__init__(self, Sum._operator_, indices, summand, domain=domain, conditions=conditions)
         if len(self.instanceVars) != 1:
             raise ValueError('Only one index allowed per integral!')
         
@@ -33,10 +34,6 @@ class Sum(OperationOverInstances):
             self.domain = Interval(Neg(infinity),infinity)
         elif self.domain == Naturals:
             self.domain = Interval(zero,infinity)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SUMMATION
 
     @staticmethod
     def extractParameters(operands):

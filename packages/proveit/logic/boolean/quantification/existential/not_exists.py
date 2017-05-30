@@ -2,9 +2,10 @@ from proveit import OperationOverInstances, tryDerivation
 from proveit import Literal, Operation, MultiVariable, Etcetera, USE_DEFAULTS
 from proveit.common import P, Q, S, xMulti
 
-NOTEXISTS = Literal(__package__, stringFormat='notexists', latexFormat=r'\nexists')
-
 class NotExists(OperationOverInstances):
+    # operator of the NotExists operation
+    _operator_ = Literal(stringFormat='notexists', latexFormat=r'\nexists', context=__file__)
+    
     def __init__(self, instanceVars, instanceExpr, domain=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
@@ -13,12 +14,8 @@ class NotExists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, NOTEXISTS, instanceVars, instanceExpr, domain, conditions)
+        OperationOverInstances.__init__(self, NotExists._operator_, instanceVars, instanceExpr, domain, conditions)
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NOTEXISTS    
-        
     def deriveSideEffects(self, knownTruth):
         '''
         Automatically derive the unfolded version, Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x).

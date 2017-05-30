@@ -1,3 +1,9 @@
-from irrational import e, pi
+from reals import RealsSet, RealsPosSet, RealsNegSet
+from irrational import IrrationalLiteral
 
-e, pi
+Reals = RealsSet()   
+RealsPos = RealsPosSet()
+RealsNeg = RealsNegSet()
+
+e = IrrationalLiteral('e')
+pi = IrrationalLiteral('pi', r'\pi')

@@ -1,10 +1,10 @@
 from proveit import Literal
 
-class ComplexLiteral(Literal):
+class ImaginaryLiteral(Literal):
     _inComplexesStmts = None # initializes when needed
 
-    def __init__(self, pkg, name, formatMap = None):
-        Literal.__init__(self, pkg, name, formatMap)
+    def __init__(self):
+        Literal.__init__(self, 'i', context=__file__)
     
     def deduceInComplexes(self):
         if ComplexLiteral._inComplexesStmts is None:
@@ -17,5 +17,3 @@ class ComplexLiteral(Literal):
             from complex.theorems import iNotZero
             ComplexLiteral._notZeroStmts = {'i':iNotZero}
         return ComplexLiteral._notZeroStmts[self.name]
-
-i = ComplexLiteral(__package__, 'i')

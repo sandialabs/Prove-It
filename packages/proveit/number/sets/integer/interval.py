@@ -1,19 +1,16 @@
 from proveit import Literal, BinaryOperation
 
-INTERVAL = Literal(__package__, 'INTERVAL')
-
 class Interval(BinaryOperation):
+    # operator of the Interval operation.
+    _operator_ = Literal(stringFormat='Interval',context=__file__)   
+    
     r'''
     Contiguous set of integers, from lowerBound to upperBound (both bounds to be interpreted inclusively)
     '''
     def __init__(self, lowerBound, upperBound):
-        BinaryOperation.__init__(self, INTERVAL, lowerBound, upperBound)
+        BinaryOperation.__init__(self, Interval._operator_, lowerBound, upperBound)
         self.lowerBound = lowerBound
         self.upperBound = upperBound
-    
-    @classmethod
-    def operatorOfOperation(subClass):
-        return INTERVAL
         
     def string(self, **kwargs):
         return '{'+self.lowerBound.string() +'...'+ self.upperBound.string()+'}'

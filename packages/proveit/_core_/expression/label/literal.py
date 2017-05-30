@@ -11,15 +11,18 @@ class Literal(Label):
     
     instances = dict() # map core information to Literal instances
     
-    def __init__(self, context, stringFormat, latexFormat=None):
+    def __init__(self, stringFormat, latexFormat=None, context=None):
         '''
         Create a Lateral.  If latexFormat is not supplied, the stringFormat is used for both.
         '''
-        try:
-            self.context = str(context)
-        except:
-            raise TypeError("'context' must be a string or package")
-        Label.__init__(self, stringFormat, latexFormat, 'Literal', [str(context)])
+        from proveit import Context
+        if context is None:
+            context = Context()
+        elif isinstance(context, str):
+            # convert a path string to a Context
+            context = Context(context)
+        self.context = context
+        Label.__init__(self, stringFormat, latexFormat, 'Literal', [context.name])
         if self._coreInfo in Literal.instances:
             raise DuplicateLiteralError("Only allowed to create one Literal with the same context and string/latex formats")
         Literal.instances[self._coreInfo] = self
@@ -40,10 +43,11 @@ class Literal(Label):
     
     @classmethod
     def make(literalClass, coreInfo, subExpressions):
+        from proveit import Context
         if len(subExpressions) > 0:
             raise ValueError('Not expecting any subExpressions of Literal')
         if len(coreInfo) != 4:
-            raise ValueError("Expecting " + literalClass.__name__ + " coreInfo to contain 4 items: '" + literalClass.__name + "', stringFormat, latexFormat, and the context")
+            raise ValueError("Expecting " + literalClass.__name__ + " coreInfo to contain 4 items: '" + literalClass.__name__ + "', stringFormat, latexFormat, and the context")
         if coreInfo[0] != 'Literal':
             raise ValueError("Expecting coreInfo[0] to be 'Literal'")
         coreInfo = tuple(coreInfo) # make it hashable
@@ -52,9 +56,10 @@ class Literal(Label):
         except KeyError:
             # If the Literal is not in the instances dictionary, just make it independently
             # without storing it in the instances dictionary.  This allows us to create
-            # Expression objects out of the _certified_ database without causing
+            # Expression objects out of the _pv_it_ database without causing
             # a DuplicateLiteralError.
-            madeObj = literalClass(coreInfo[3], coreInfo[1], coreInfo[2])
+            context = Context.getContext(coreInfo[3])
+            madeObj = literalClass(coreInfo[1], coreInfo[2], context)
             Literal.instances.pop(coreInfo)
             return madeObj
 

@@ -1,8 +1,8 @@
 from proveit import Literal
 
 class IntegerSet(Literal):
-    def __init__(self, pkg):
-        Literal.__init__(self, pkg, 'Integers', r'\mathbb{Z}')
+    def __init__(self):
+        Literal.__init__(self, 'Integers', r'\mathbb{Z}', context=__file__)
 
     def deduceInSetIsBool(self, element):
         from integer.theorems import inIntsIsBool
@@ -11,5 +11,3 @@ class IntegerSet(Literal):
     def deduceNotInSetIsBool(self, element):
         from integer.theorems import notInIntsIsBool
         return notInIntsIsBool.specialize({a:element})
-    
-Integers = IntegerSet(__package__)

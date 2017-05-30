@@ -3,20 +3,17 @@ from proveit.logic import Equals
 from proveit.number.sets import Reals, RealsPos, Complexes, zero, one
 from proveit.common import a, b, c, n, x, vEtc, wEtc, xEtc, yEtc, zEtc, S
 
-MULTIPLY = Literal(__package__, r'*', r'\cdot')
-
 class Mult(AssociativeOperation):
+    # operator of the Mult operation.
+    _operator_ = Literal(stringFormat='*', latexFormat=r'\cdot', context=__file__)
+    
     def __init__(self, *operands):
         r'''
         Multiply together any number of operands from first operand.
         '''
-        AssociativeOperation.__init__(self, MULTIPLY, *operands)
+        AssociativeOperation.__init__(self, Mult._operator_, *operands)
         self.factors = operands
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return MULTIPLY
-    
+   
     def _closureTheorem(self, numberSet):
         import theorems
         if numberSet == Reals:

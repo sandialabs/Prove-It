@@ -1,9 +1,10 @@
 from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExpressionList, Operation, tryDerivation, ProofFailure
 from proveit.common import P, Q, R, S, xMulti, yMulti, Qmulti, Rmulti
 
-FORALL = Literal(__package__, stringFormat='forall', latexFormat=r'\forall')
-
 class Forall(OperationOverInstances):
+    # operator of the Forall operation
+    _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall', context=__file__)
+    
     def __init__(self, instanceVars, instanceExpr, domain=None, conditions = tuple()):
         '''
         Create a Forall expression:
@@ -12,11 +13,7 @@ class Forall(OperationOverInstances):
         given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
         may be singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, FORALL, instanceVars, instanceExpr, domain, conditions)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return FORALL    
+        OperationOverInstances.__init__(self, Forall._operator_, instanceVars, instanceExpr, domain, conditions)
         
     def deriveSideEffects(self, knownTruth):
         '''

@@ -1,17 +1,14 @@
 from proveit import Literal, Operation
 from proveit.number.sets import Integers, Naturals
 
-ROUND = Literal(__package__, 'Round', '{\rm Round}')
-
 class Round(Operation):
+    # operator of the Round operation.
+    _operator_ = Literal(stringFormat='round', context=__file__)
+    
     def __init__(self, A):
-        Operation.__init__(self, ROUND, A)
+        Operation.__init__(self, Round._operator_, A)
         self.operand = A
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return ROUND
-        
     def _closureTheorem(self, numberSet):
         import theorems
         if numberSet == Naturals:

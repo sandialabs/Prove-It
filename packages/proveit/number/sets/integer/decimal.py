@@ -1,12 +1,12 @@
 from proveit import Literal, Operation
 
-
-WHOLE_DECIMAL = Literal(__package__, 'WHOLE_DECIMAL')
-
 class WholeDecimal(Operation):
+    # operator of the WholeDecimal operation.
+    _operator_ = Literal(stringFormat='WholeDecimal',context=__file__)   
+
     def __init__(self, digits):
         from proveit.number.set.integer.common import ALL_DIGITS
-        Operation.__init__(self, WHOLE_DECIMAL, digits)
+        Operation.__init__(self, WholeDecimal._operator_, digits)
         if len(digits) <= 1:
             raise Exception('A WholeDecimal should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
         self.digits = digits

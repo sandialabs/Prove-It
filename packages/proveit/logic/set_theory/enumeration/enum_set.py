@@ -1,19 +1,17 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.common import x, y, yMulti
 
-ENUM_SET = Literal(__package__, stringFormat = 'ENUM_SET')
-
 class Set(Operation):
     '''
     Defines a set with only one item.
     '''
+    
+    # operator of the Set operation
+    _operator_ = Literal(stringFormat='Set', context=__file__) 
+    
     def __init__(self, *elems):
-        Operation.__init__(self, ENUM_SET, elems)
+        Operation.__init__(self, Set._operator_, elems)
         self.elements = self.operands
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return ENUM_SET    
 
     def string(self, **kwargs):
         from proveit import ExpressionList

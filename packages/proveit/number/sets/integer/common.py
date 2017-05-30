@@ -1,5 +1,11 @@
 from proveit import Literal
+from naturals import NaturalsSet, NaturalsPosSet
+from integers import IntegerSet
 from digit import zero, one, two, three, four, five, six, seven, eight, nine
+
+Naturals = NaturalsSet()
+NaturalsPos = NaturalsPosSet()
+Integers = IntegerSet()
 
 ALL_DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
@@ -35,5 +41,5 @@ def num(x):
     else:
         assert False, 'num not implemented for anything except integers currently. plans to take in strings or floats with specified precision'
 
-infinity = Literal(__package__,'infinity',r'\infty')
+infinity = Literal('infinity',r'\infty')
 

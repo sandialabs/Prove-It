@@ -2,7 +2,7 @@
 Define some custom magic for Prove-It in IPython notebooks.
 '''
 
-from IPython.core.magic import Magics, magics_class, line_magic, register_line_magic
+from IPython.core.magic import Magics, magics_class, line_magic
 from IPython import get_ipython
 from proveit._core_.expression import Expression
 from proveit._core_.context import Context
@@ -23,9 +23,10 @@ class AssignmentBehaviorModifier:
         def new_run_cell(self, raw_cell, *args, **kwargs):
             lines = raw_cell.split('\n')
             last_line = lines[-1]
-            if re.match("[a-zA-Z_][a-zA-Z0-9_]*\s*=", last_line) is not None:
+            # look for one or more variables on the left side of an assignment
+            if re.match("[a-zA-Z_][a-zA-Z0-9_]*\s*(,\s*[a-zA-Z_][a-zA-Z0-9_]*)*\s*=", last_line) is not None:
                 lhs, rhs = last_line.split('=', 1)
-                lines.append(assignmentFn(lhs.strip()))
+                lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
             new_raw_cell = '\n'.join(lines)
             ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
         ipython.run_cell = new.instancemethod(new_run_cell, ipython)
@@ -34,12 +35,13 @@ class AssignmentBehaviorModifier:
         ipython = self.ipython
         ipython.run_cell = ipython.orig_run_cell
 
-    def displayAssignment(self):
-        self._setBehavior(lambda lhs: lhs)
+    def displayAssignment(self, shell):
+        shell.ex("from proveit._core_.magics import DisplayAssignment")
+        self._setBehavior(lambda varnames: "DisplayAssignment(" + ', '.join(varnames) + ")")
     
     def specialStatements(self, shell):
-        shell.ex("from proveit._core_.magics import SpecialExpression")
-        self._setBehavior(lambda lhs: "SpecialExpression('%s', %s)"%(lhs,lhs))
+        shell.ex("from proveit._core_.magics import SpecialExpressions")
+        self._setBehavior(lambda varnames: "SpecialExpressions([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])")
     
 
 assignmentBehaviorModifier = AssignmentBehaviorModifier()
@@ -55,36 +57,22 @@ class ProveItMagic(Magics):
         self.kind = None
         self.definitions = dict()
         self.lowerCaseNames = set()
+        self.context = None 
     
-    def _set_package(self, line):
-        '''
-        Set the package attribute as the given "line", if it is not empty.
-        If it is empty, set it according to the current working directory 
-        on up the chain as long as each directory has an __init__.py file.
-        For example, if the current working directory is
-        C:\users\wwitzel\Prove-It\packages\proveit\logic\equality,
-        the package will be "proveit.logic.equality" (given that __init__.py
-        is in the proveit, proveit\logic, and proveit\logic\equality
-        directorys, but not in the packages directory above it).
-        '''
-        import os
-        if len(line) > 0:
-            self.package = line
+    @line_magic
+    def display_assignments(self, line):
+        if line.strip() == 'off':
+            assignmentBehaviorModifier.resetBehavior()        
         else:
-            path = os.getcwd()
-            self.package = ''
-            while os.path.isfile(os.path.join(path, '__init__.py')):
-                path, tail = os.path.split(path)
-                self.package = tail + '.' + self.package
-            if self.package == '':
-                self.package = os.path.split(path)[1]
+            assignmentBehaviorModifier.displayAssignment(self.shell)
     
     @line_magic
     def begin_axioms(self, line):
+        # context based upon current working directory
+        self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
             raise ProveItMagicFailure("May only run %begin_axioms (or %begin_theorems) once per IPython session.")
-        self._set_package(line)
-        print "Defining axioms for package '" + self.package + "'"
+        print "Defining axioms for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define axioms"
         print "%end_axioms will finalize the definitions"
         assignmentBehaviorModifier.specialStatements(self.shell)
@@ -96,10 +84,11 @@ class ProveItMagic(Magics):
 
     @line_magic
     def begin_theorems(self, line):
+        # context based upon current working directory
+        self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
             raise ProveItMagicFailure("May only run %begin_theorems (or %begin_axioms) once per IPython session.")
-        self._set_package(line)
-        print "Defining theorems for package '" + self.package + "'"
+        print "Defining theorems for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define theorems"
         print "%end_theorems will finalize the definitions"
         assignmentBehaviorModifier.specialStatements(self.shell)
@@ -111,10 +100,11 @@ class ProveItMagic(Magics):
     
     @line_magic
     def begin_common(self, line):
+        # context based upon current working directory
+        self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
             raise ProveItMagicFailure("May only run %begin_common once per IPython session.")
-        self._set_package(line)
-        print "Defining common sub-expressions for package '" + self.package + "'"
+        print "Defining common sub-expressions for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define common sub-expressions"
         print "%end_common will finalize the definitions"
         assignmentBehaviorModifier.specialStatements(self.shell)
@@ -126,7 +116,7 @@ class ProveItMagic(Magics):
                 
     @line_magic
     def begin_proof(self, line):
-        assignmentBehaviorModifier.displayAssignment()
+        assignmentBehaviorModifier.displayAssignment(self.shell)
         pass
 
     def finish(self, kind):
@@ -136,8 +126,8 @@ class ProveItMagic(Magics):
         '''
         if self.kind != kind:
             raise ProveItMagicFailure("Must run %begin_%s before %end_%s"%(kind,kind))
-        context = Context() # context based upon current working directory
-        # Add the special statements to the certified database
+        # Add the special statements / expressions to the context
+        context = self.context
         if kind=='axioms':
             context._setAxioms(self.definitions)
         elif kind=='theorems':            
@@ -163,36 +153,35 @@ class ProveItMagic(Magics):
         else:
             print "%s may be imported from autogenerated _%s_.py"%(specialStatementsClassName, kind)
 
-class SpecialExpression:    
-    def __init__(self, name, expr):
-        if not isinstance(expr, Expression):
-            raise ValueError("Right hand side of the special statement must be an Expression")
-        if proveItMagic.kind == 'axioms' or proveItMagic.kind == 'theorems':
-            if name.lower() in proveItMagic.lowerCaseNames:
-                raise ProveItMagicFailure("%s names must be unique regardless of capitalization"%SpecialExpression.kind[:-1])
-        self.name = name
-        self.expr = expr
-        proveItMagic.lowerCaseNames.add(name.lower())
-        proveItMagic.definitions[name] = expr
+class DisplayAssignment:    
+    def __init__(self, *assignments):
+        self.assignments = list(assignments)
 
     def _repr_html_(self):
-        return '<strong>' + self.name + '</strong>: ' + self.expr._repr_html_()
+        return '\n'.join(((obj._repr_html_() if hasattr(obj, '_repr_html_') else repr(obj)) + '<br>') for obj in self.assignments)
+
+class SpecialExpressions:    
+    def __init__(self, names, exprs):
+        for expr in exprs:
+            if not isinstance(expr, Expression):
+                raise ValueError("Right hand side of assignment is expected to be Expression(s)")
+        self.names = list(names)
+        self.exprs = list(exprs)
+        for name, expr in zip(names, exprs):
+            if proveItMagic.kind == 'axioms' or proveItMagic.kind == 'theorems':
+                if name.lower() in proveItMagic.lowerCaseNames:
+                    raise ProveItMagicFailure("%s names must be unique regardless of capitalization"%proveItMagic.kind[:-1])
+            proveItMagic.lowerCaseNames.add(name.lower())
+            proveItMagic.definitions[name] = expr
+
+    def _repr_html_(self):
+        return '\n'.join(('<strong>' + name + '</strong>: ' + expr._repr_html_() + '<br>') for name, expr in zip(self.names, self.exprs))
 
 # This class must then be registered with a manually created instance,
 # since its constructor has different arguments from the default:
 ip = get_ipython()
 proveItMagic = ProveItMagic(ip)
 ip.register_magics(proveItMagic)
-
-@register_line_magic
-def display_assignment(line):
-    if line.strip() == 'off':
-        assignmentBehaviorModifier.resetBehavior()        
-    else:
-        assignmentBehaviorModifier.displayAssignment()
-
-# Delete to avoid name conflicts for automagic to work
-del display_assignment
 
 class ProveItMagicFailure(Exception):
     def __init__(self, message):

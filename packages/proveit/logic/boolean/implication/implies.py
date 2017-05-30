@@ -3,9 +3,9 @@ from proveit.logic.boolean.booleans import TRUE, FALSE
 from proveit.logic.boolean.negation import Not
 from proveit.common import A, B, C
 
-IMPLIES = Literal(__package__, stringFormat = '=>', latexFormat = r'\Rightarrow')
-
 class Implies(BinaryOperation):
+    _operator_ = Literal(stringFormat='=>', latexFormat=r'\Rightarrow', context=__file__)
+    
     # map Expressions to sets of KnownTruths of implications that involve the Expression
     # as the antecedent or the consequent
     knownImplications = dict()    
@@ -14,13 +14,9 @@ class Implies(BinaryOperation):
     knownImplicationsOfConsequent = dict()
     
     def __init__(self, antecedent, consequent):
-        BinaryOperation.__init__(self, IMPLIES, antecedent, consequent)
+        BinaryOperation.__init__(self, Implies._operator_, antecedent, consequent)
         self.antecedent = self.lhs = antecedent
         self.consequent = self.rhs = consequent
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return IMPLIES    
 
     def deriveSideEffects(self, knownTruth):
         '''

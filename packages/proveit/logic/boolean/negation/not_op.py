@@ -2,11 +2,12 @@ from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, tryDerivatio
 from proveit.logic.boolean.booleans import TRUE, FALSE
 from proveit.common import A, x, y, S
 
-NOT = Literal(__package__, stringFormat = 'not', latexFormat = r'\lnot')
-
 class Not(Operation):
+    # operator of the Not operation
+    _operator_ = Literal(stringFormat='not', latexFormat=r'\lnot', context=__file__)
+    
     def __init__(self, A):
-        Operation.__init__(self, NOT, A)
+        Operation.__init__(self, Not._operator_, A)
         self.operand = self.operands[0]
 
     def deriveSideEffects(self, knownTruth):
@@ -59,10 +60,6 @@ class Not(Operation):
             return Not(self).concludeViaDoubleNegation(assumptions)
         except:
             return Not(self).conclude(assumptions)
-            
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NOT
     
     def latex(self, fence=False):
         outStr = ''

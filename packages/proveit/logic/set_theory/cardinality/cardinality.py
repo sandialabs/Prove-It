@@ -1,16 +1,13 @@
 from proveit import Operation, Literal, USE_DEFAULTS
 
-CARDINALITY = Literal(__package__, stringFormat = 'card')
-
 class Card(Operation):
-    def __init__(self, domain):
-        Operation.__init__(self, CARDINALITY, domain)
-        self.domain = self.operands[0]
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return CARDINALITY
+    # operator of the Card operation
+    _operator_ = Literal(stringFormat='card', context=__file__)
 
+    def __init__(self, domain):
+        Operation.__init__(self, Card._operator_, domain)
+        self.domain = self.operands[0]
+    
     def string(self, fence=False):
         return '|' + self.domain.string(fence=False) + '|'
     

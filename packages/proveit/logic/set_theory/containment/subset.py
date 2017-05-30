@@ -2,29 +2,24 @@ from proveit import Literal, BinaryOperation, MultiVariable, Operation, Etcetera
 from proveit.common import A, B, x
 from proveit.common import f, S, Qmulti, xEtc
 
-SUBSET = Literal(__package__, stringFormat = 'subset', latexFormat = r'\subset')
-SUBSET_EQ = Literal(__package__, stringFormat = 'subseteq', latexFormat = r'\subseteq')
-
 class Subset(BinaryOperation):
+    # operator of the Subset operation
+    _operator_ = Literal(stringFormat='subset', latexFormat=r'\subset', context=__file__)    
+    
     def __init__(self, subset, superset):
-        BinaryOperation.__init__(self, SUBSET, subset, superset)
+        BinaryOperation.__init__(self, Subset._operator_, subset, superset)
         self.subset = self.operands[0]
         self.superset = self.operands[1]
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SUBSET
-
 class SubsetEq(BinaryOperation):
+    # operator of the SubsetEq operation
+    _operator_ = Literal(stringFormat='\subseteq', latexFormat=r'\subseteq', context=__file__)    
+
     def __init__(self, subset, superset):
-        BinaryOperation.__init__(self, SUBSET_EQ, subset, superset)
+        BinaryOperation.__init__(self, SubsetEq._operator_, subset, superset)
         self.subset = subset
         self.superset = superset
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SUBSET_EQ
-        
     def conclude(self, assumptions):
         from _theorems_ import subsetEqViaEquality
         if self.operands[0] == self.operands[1]:

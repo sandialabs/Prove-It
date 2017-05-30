@@ -1,20 +1,16 @@
 from proveit import Literal, AssociativeOperation, USE_DEFAULTS
 from proveit.common import A, B, x, Amulti
-
-UNION = Literal(__package__, stringFormat = 'union', latexFormat = r'\cup')
-
         
 class Union(AssociativeOperation):
+    # operator of the Intersect operation
+    _operator_ = Literal(stringFormat='union', latexFormat=r'\cup', context=__file__)    
+    
     def __init__(self, *operands):
         '''
         Union any number of sets: A union B union C
         '''
-        AssociativeOperation.__init__(self, UNION, *operands)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return UNION    
-
+        AssociativeOperation.__init__(self, Union._operator_, *operands)
+    
     def membershipEquivalence(self, element, assumptions=USE_DEFAULTS):
         '''
         Deduce and return and [element in (A union B ...)] = [(element in A) or (element in B) ...]

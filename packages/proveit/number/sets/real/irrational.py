@@ -5,8 +5,8 @@ class IrrationalLiteral(Literal):
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
     
-    def __init__(self, pkg, stringFormat, latexFormat = None):
-        Literal.__init__(self, pkg, stringFormat, latexFormat)
+    def __init__(self, stringFormat, latexFormat = None):
+        Literal.__init__(self, stringFormat, latexFormat, context=__file__)
     
     def deduceInRealsPos(self):
         if IrrationalLiteral._inRealsPosStmts is None:
@@ -25,6 +25,3 @@ class IrrationalLiteral(Literal):
             from real.theorems import eIsPositive, piIsPositive
             IrrationalLiteral._positiveStmts = {'e':eIsPositive, 'pi':piIsPositive}
         return IrrationalLiteral._positiveStmts[self.name]
-    
-e = IrrationalLiteral(__package__, 'e')
-pi = IrrationalLiteral(__package__, 'pi', r'\pi')

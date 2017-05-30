@@ -1,21 +1,18 @@
 from proveit import Literal, OperationOverInstances, Operation, Etcetera, safeDefaultOrDummyVar, USE_DEFAULTS
 from proveit.common import x, y, f, P, Q, Qmulti, S, yMulti, yEtc
 
-SET = Literal(__package__, 'SET')
-
 class SetOfAll(OperationOverInstances):
+    # operator of the SetOfAll operation
+    _operator_ = Literal(stringFormat='Set', context=__file__)    
+    
     def __init__(self, instanceVars, instanceElement, domain, conditions=tuple()):
         '''
         Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
         {instanceElement | conditions}_{instanceVar \in S}
         '''
-        OperationOverInstances.__init__(self, SET, instanceVars, instanceElement, domain, conditions)
+        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVars, instanceElement, domain, conditions)
         self.instanceElement = self.instanceExpr
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SET
-    
+        
     @staticmethod
     def extractParameters(operands):
         '''

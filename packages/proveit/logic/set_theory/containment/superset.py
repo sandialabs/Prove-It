@@ -1,28 +1,23 @@
 from proveit import Literal, BinaryOperation
 from proveit.common import A, B, x
 
-SUPERSET = Literal(__package__, stringFormat = 'superset', latexFormat = r'\supset')
-SUPERSET_EQ = Literal(__package__, stringFormat = 'superseteq', latexFormat = r'\supseteq')
-
 class Superset(BinaryOperation):
+    # operator of the Superset operation
+    _operator_ = Literal(stringFormat='superset', latexFormat=r'\supset', context=__file__)    
+    
     def __init__(self, superset, subset):
-        BinaryOperation.__init__(self, SUPERSET, superset, subset)
+        BinaryOperation.__init__(self, Superset._operator_, superset, subset)
         self.subset = self.operands[0]
         self.superset = self.operands[1]
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SUPERSET
         
 class SupersetEq(BinaryOperation):
+    # operator of the SupersetEq operation
+    _operator_ = Literal(stringFormat='superseteq', latexFormat=r'\supseteq', context=__file__)    
+    
     def __init__(self, superset, subset):
-        BinaryOperation.__init__(self, SUPERSET_EQ, superset, subset)
+        BinaryOperation.__init__(self, SupersetEq._operator_, superset, subset)
         self.superset = superset
         self.subset = subset
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SUPERSET_EQ
 
     def conclude(self, assumptions):
         from _theorems_ import supersetEqViaEquality

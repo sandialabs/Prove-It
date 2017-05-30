@@ -2,9 +2,10 @@ from proveit import OperationOverInstances, tryDerivation
 from proveit import Literal, Operation, ExpressionList, MultiVariable, USE_DEFAULTS
 from proveit.common import P, Q, S, xMulti, yMulti, Qmulti
 
-EXISTS = Literal(__package__, stringFormat='exists', latexFormat=r'\exists')
-
 class Exists(OperationOverInstances):
+    # operator of the Exists operation
+    _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', context=__file__)
+    
     def __init__(self, instanceVars, instanceExpr, domain=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
@@ -13,12 +14,8 @@ class Exists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, EXISTS, instanceVars, instanceExpr, domain, conditions)
+        OperationOverInstances.__init__(self, Exists._operator_, instanceVars, instanceExpr, domain, conditions)
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return EXISTS 
-           
     def deriveSideEffects(self, knownTruth):
         '''
         From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).

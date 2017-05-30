@@ -2,17 +2,14 @@ from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex
 from proveit.number.sets import Integers, Reals, Complexes, zero
 from proveit.common import a, x, y, xEtc
 
-NEG = Literal(__package__, 'NEG')
-
 class Neg(Operation):
+    # operator of the Neg operation.
+    _operator_ = Literal(stringFormat='Neg', context=__file__)
+    
     def __init__(self,A):
-        Operation.__init__(self, NEG, A)
+        Operation.__init__(self, Neg._operator_, A)
         self.operand = A
         #NumberOp.__init__(self, {Complexes:complex.theorems.negClosure})
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NEG
     
     def _closureTheorem(self, numberSet):
         import theorems

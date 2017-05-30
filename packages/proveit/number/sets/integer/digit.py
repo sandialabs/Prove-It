@@ -8,7 +8,7 @@ class DigitLiteral(Literal):
     
     def __init__(self, n):
         assert n >= 0 and n < 10, 'Digits are 0 through 9'
-        Literal.__init__(self, __package__, str(n))
+        Literal.__init__(self, str(n), context=__file__)
         self.n = n
     
     def deduceInNaturals(self):

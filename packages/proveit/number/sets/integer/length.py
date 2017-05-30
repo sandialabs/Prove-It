@@ -1,16 +1,13 @@
 from proveit import Operation, Literal, USE_DEFAULTS
 from proveit.common import xMulti, y
 
-LENGTH = Literal(__package__, stringFormat = 'length')
-
 class Len(Operation):
+    # operator of the Length operation.
+    _operator_ = Literal(stringFormat='length', context=__file__)   
+    
     def __init__(self, *operands):
-        Operation.__init__(self, LENGTH, operands)
+        Operation.__init__(self, Len._operator_, operands)
         
-    @classmethod
-    def operatorOfOperation(subClass):
-        return LENGTH
-
     def string(self, fence=False):
         return '|' + self.operands.string(fence=False) + '|'
     

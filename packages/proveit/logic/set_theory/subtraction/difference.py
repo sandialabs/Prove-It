@@ -1,15 +1,12 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS
 from proveit.common import x, A, B
 
-DIFFERENCE = Literal(__package__, '-')
-
 class Difference(BinaryOperation):
-    def __init__(self, A, B):
-        BinaryOperation.__init__(self, DIFFERENCE, A, B)
+    # operator of the Difference operation
+    _operator_ = Literal(stringFormat='-', context=__file__)    
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return DIFFERENCE
+    def __init__(self, A, B):
+        BinaryOperation.__init__(self, Difference._operator_, A, B)
 
     def evaluateMembership(self, element, assumptions=USE_DEFAULTS):
         '''

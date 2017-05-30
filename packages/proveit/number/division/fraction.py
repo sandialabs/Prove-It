@@ -1,21 +1,24 @@
 from proveit import Literal, Operation, BinaryOperation, maybeFencedLatex, safeDummyVar
 from proveit.common import w, x, y, z, xEtc
-# like '/', but distinguishes it as a fraction with numerator over denominator (\frac in latex)
-FRACTION = Literal(__package__, '//') 
 
 class Fraction(BinaryOperation):
+    # operator of the Fraction operation.
+    _operator_ = Literal(stringFormat='fraction', context=__file__)    
+    
     def __init__(self, operandA, operandB):
         r'''
         Divide two operands in fraction form.
         '''
-        BinaryOperation.__init__(self, FRACTION, operandA, operandB)
+        BinaryOperation.__init__(self, Fraction._operator_, operandA, operandB)
         self.numerator = operandA
         self.denominator = operandB
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return FRACTION
     
+    def string(self, **kwargs):
+        '''
+        Format as "fraction(A, B)".
+        '''
+        return Operation.string(**kwargs)
+
     def _closureTheorem(self, numberSet):
         import complex.theorems
         import real.theorems

@@ -1,18 +1,15 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
 from proveit.common import x, S
 
-IN = Literal(__package__, stringFormat = 'in', latexFormat = r'\in')
-
 class InSet(BinaryOperation):
+    # operator of the InSet operation
+    _operator_ = Literal(stringFormat='in', latexFormat=r'in', context=__file__)    
+    
     def __init__(self, element, domain):
-        BinaryOperation.__init__(self, IN, element, domain)
+        BinaryOperation.__init__(self, InSet._operator_, element, domain)
         self.element = self.operands[0]
         self.domain = self.operands[1]
     
-    @classmethod
-    def operatorOfOperation(subClass):
-        return IN    
-
     def deriveSideEffects(self, knownTruth):
         '''
         If the domain has a 'deduceMembershipSideEffects' method, it will be called

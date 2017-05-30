@@ -2,9 +2,10 @@ from proveit import Literal, OperationOverInstances
 from proveit.number.sets import Interval, infinity, Reals, IntervalCC
 from proveit.number.negation import Neg
 
-INTEGRATE = Literal(__package__, r'Integrate', r'\int')
-
 class Integrate(OperationOverInstances):
+    # operator of the Integrate operation.
+    _operator_ = Literal(stringFormat='Integrate', latexFormat=r'\int', context=__file__)    
+
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
@@ -16,7 +17,7 @@ class Integrate(OperationOverInstances):
         integrand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        OperationOverInstances.__init__(self, INTEGRATE, index, integrand, domain=domain, conditions=conditions)
+        OperationOverInstances.__init__(self, Integrate._operator_, index, integrand, domain=domain, conditions=conditions)
         if len(self.instanceVars) != 1:
             raise ValueError('Only one index allowed per integral!')
         elif isinstance(self.domain,Interval):
@@ -25,10 +26,6 @@ class Integrate(OperationOverInstances):
             self.domain = IntervalCC(Neg(infinity),infinity)
         self.index = self.instanceVars[0]
         self.integrand = self.instanceExpr
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return INTEGRATE
     
     def _closureTheorem(self, numberSet):
         import theorems

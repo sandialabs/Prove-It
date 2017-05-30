@@ -1,10 +1,5 @@
 from proveit import Literal, BinaryOperation
 
-INTERVALOO = Literal(__package__, 'INTERVALOO')
-INTERVALOC = Literal(__package__, 'INTERVALOC')
-INTERVALCO = Literal(__package__, 'INTERVALCO')
-INTERVALCC = Literal(__package__, 'INTERVALCC')
-
 class RealInterval(BinaryOperation):
     r'''
     Base class for all permutations of closed and open intervals.  
@@ -16,19 +11,17 @@ class RealInterval(BinaryOperation):
         self.upperBound = upperBound
                 
 class IntervalOO(RealInterval):
+    # operator of the IntervalOO operation.
+    _operator_ = Literal(stringFormat='IntervalOO',context=__file__)   
 
     def __init__(self,lowerBound,upperBound):
-        RealInterval.__init__(self,INTERVALOO,lowerBound,upperBound)
+        RealInterval.__init__(self,IntervalOO._operator_,lowerBound,upperBound)
         
     def string(self, **kwargs):
         return '('+self.lowerBound.string() +','+ self.upperBound.string()+')'
 
     def latex(self, **kwargs):
         return r'\left('+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right)'
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return INTERVALOO
 
     def deduceElemInSet(self, member):
         from real.theorems import inIntervalOO
@@ -78,14 +71,12 @@ class IntervalOO(RealInterval):
         return relaxIntervalOOright.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
 class IntervalOC(RealInterval):
+    # operator of the IntervalOC operation.
+    _operator_ = Literal(stringFormat='IntervalOC',context=__file__)   
 
     def __init__(self,lowerBound,upperBound):
-        RealInterval.__init__(self,INTERVALOC,lowerBound,upperBound)
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return INTERVALOC
-            
+        RealInterval.__init__(self,IntervalOC._operator_,lowerBound,upperBound)
+                    
     def string(self, **kwargs):
         return '('+self.lowerBound.string() +','+ self.upperBound.string()+']'
 
@@ -133,13 +124,11 @@ class IntervalOC(RealInterval):
         return relaxIntervalOC.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
 class IntervalCO(RealInterval):
+    # operator of the IntervalCO operation.
+    _operator_ = Literal(stringFormat='IntervalCO',context=__file__)   
 
     def __init__(self,lowerBound,upperBound):
-        RealInterval.__init__(self,INTERVALCO,lowerBound,upperBound)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return INTERVALCO
+        RealInterval.__init__(self,IntervalCO._operator_,lowerBound,upperBound)
              
     def string(self, **kwargs):
         return '['+self.lowerBound.string() +','+ self.upperBound.string()+')'
@@ -188,14 +177,12 @@ class IntervalCO(RealInterval):
         return relaxIntervalCO.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
 
 class IntervalCC(RealInterval):
+    # operator of the IntervalCC operation.
+    _operator_ = Literal(stringFormat='IntervalCC',context=__file__)   
     
     def __init__(self,lowerBound,upperBound):
-        RealInterval.__init__(self,INTERVALCC,lowerBound,upperBound)
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return INTERVALCC
-            
+        RealInterval.__init__(self,IntervalCC._operator_,lowerBound,upperBound)
+                    
     def string(self, **kwargs):
         return '['+self.lowerBound.string() +','+ self.upperBound.string()+']'
 

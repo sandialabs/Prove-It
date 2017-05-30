@@ -1,15 +1,20 @@
+import inspect
 from expr import Expression, ImproperSubstitution
 
 class Operation(Expression):    
     def __init__(self, operator, operands):
         '''
-        Create an operation with the given operator and operands.  The operator can be a 
-        Label or Lambda function.  The operands may be single expression that
+        Create an operation with the given operator and operands.  The operator must be
+        a Label (such as a Variable or a Literal).  The operands may be single expression that 
         will be then be wrapped by ExpressionList.
         '''
         from composite.composite import compositeExpression
         from label.label import Label
-        from lambda_expr import Lambda
+        from proveit import Context
+        if hasattr(self.__class__, '_operator_') and operator==self.__class__._operator_:
+            context = Context(inspect.getfile(self.__class__))
+            if operator.context != context:
+                raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
         if not isinstance(operator, Label):
             raise TypeError('operator must be a Label-type Expression')
         self.operator = operator
@@ -21,10 +26,11 @@ class Operation(Expression):
         '''
         Make the appropriate Operation.  coreInfo should equal ['Operation'].  The first 
         of the subExpressions should be the operator and the subsequent ones should be 
-        operands.  For Operation sub-classes that use a specific Literal operator, override
-        'operatorOfOperation' and the default behavior of 'make' will be to 
-        instantiate the Operation sub-class with just *operands (and checking that
-        the operator is consistent).  Override this method for any other behavior.
+        operands.  This implementation expects that the Operation sub-class to have a
+        class variable named '_operator_' that defines the Literal operator
+        of the class.  It will instantiate the Operation sub-class with just *operands 
+        and checking that the operator is consistent.  Override this method
+        if a different behavior is desired.
         '''
         if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
             raise ValueError("Expecting Operation coreInfo to contain exactly one item: 'Operation'")
@@ -32,7 +38,10 @@ class Operation(Expression):
             raise ValueError('Expecting at least one subExpression for an Operation, for the operator')
         operator, operands = subExpressions[0], subExpressions[1]
         if operationClass != Operation: 
-            subClassOperator = operationClass.operatorOfOperation()
+            try:
+                subClassOperator = operationClass._operator_
+            except:
+                raise OperationError("Operation sub-class is expected to have a class variable named '_operator_'")
             if subClassOperator != operator:
                 raise ValueError('Unexpected operator, ' + str(operator) + ', when making ' + str(operationClass)) 
             return operationClass(*operands)
@@ -118,3 +127,9 @@ class Operation(Expression):
         or wrapped in a Bundle (see multiExpression.py).
         """
         return self.operator.freeMultiVars().union(self.operands.freeMultiVars())
+
+class OperationError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message

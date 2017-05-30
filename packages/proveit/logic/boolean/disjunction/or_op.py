@@ -2,18 +2,15 @@ from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
 from proveit.logic.boolean.booleans import TRUE, FALSE, inBool
 from proveit.common import A, B, C, Amulti, Cmulti
 
-OR = Literal(__package__, stringFormat = 'or', latexFormat = r'\lor')
-
 class Or(AssociativeOperation):
+    # The operator of the Or operation
+    _operator_ = Literal(stringFormat='or', latexFormat=r'\lor', context=__file__)
+
     def __init__(self, *operands):
         '''
         Or together any number of operands: A or B or C
         '''
-        AssociativeOperation.__init__(self, OR, *operands)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return OR
+        AssociativeOperation.__init__(self, Or._operator_, *operands)
 
     def conclude(self, assumptions):
         '''

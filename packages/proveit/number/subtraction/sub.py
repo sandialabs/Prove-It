@@ -3,19 +3,16 @@ from proveit.logic import NotEquals
 from proveit.number.sets import Naturals, NaturalsPos, Integers, Reals, Complexes, zero
 from proveit.common import w, x, y, z, vEtc, wEtc, xEtc, yEtc, zEtc
 
-SUBTRACT = Literal(__package__, r'-', r'-')
-
 class Sub(BinaryOperation):
+    # operator of the Sub operation.
+    _operator_ = Literal(stringFormat='-', context=__file__)
+    
     def __init__(self, operandA, operandB):
         r'''
         Sub one number from another
         '''
-        BinaryOperation.__init__(self, SUBTRACT, operandA, operandB)
+        BinaryOperation.__init__(self, Sub._operator_, operandA, operandB)
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SUBTRACT
-    
     def _closureTheorem(self, numberSet):
         import theorems
         if numberSet == Reals:

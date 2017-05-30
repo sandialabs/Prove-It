@@ -1,20 +1,17 @@
 from proveit import Literal, Operation, maybeFencedString
 from proveit.number.sets import zero, one
 
-EXPONENTIATE = Literal(__package__, 'EXPONENTIATE')
-
 class Exp(Operation):
+    # operator of the Exp operation.
+    _operator_ = Literal(stringFormat='Exp', context=__file__)    
+    
     def __init__(self, base, exponent):
         r'''
         Raise base to exponent power.
         '''
-        Operation.__init__(self,EXPONENTIATE, (base, exponent))
+        Operation.__init__(self, Exp._operator_, (base, exponent))
         self.base = base
         self.exponent = exponent
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return EXPONENTIATE
 
     def _closureTheorem(self, numberSet):
         import natural.theorems

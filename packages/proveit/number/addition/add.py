@@ -2,19 +2,16 @@ from proveit import Literal, AssociativeOperation
 from proveit.number.sets import zero
 from proveit.common import x, y
 
-ADD = Literal(__package__, r'+', r'+')
-
 class Add(AssociativeOperation):
+    # operator of the Add operation
+    _operator_ = Literal(stringFormat='+', context=__file__)    
+    
     def __init__(self, *operands):
         r'''
         Add together any number of operands.
         '''
-        AssociativeOperation.__init__(self, ADD, *operands)
+        AssociativeOperation.__init__(self, Add._operator_, *operands)
         self.terms = self.operands
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return ADD
 
     def _closureTheorem(self, numberSet):
         import theorems

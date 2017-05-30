@@ -2,18 +2,15 @@ from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
 from proveit.logic.boolean.booleans import TRUE, FALSE, inBool
 from proveit.common import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti
 
-AND = Literal(__package__, stringFormat = 'and', latexFormat = r'\land')
-
 class And(AssociativeOperation):
+    # The operator of the And operation
+    _operator_ = Literal(stringFormat='and', latexFormat=r'\land', context=__file__)
+    
     def __init__(self, *operands):
         r'''
         And together any number of operands: :math:`A \land B \land C`
         '''
-        AssociativeOperation.__init__(self, AND, *operands)
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return AND
+        AssociativeOperation.__init__(self, And._operator_, *operands)
     
     def conclude(self, assumptions):
         '''

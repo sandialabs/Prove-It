@@ -1,18 +1,15 @@
 from proveit import Literal, AssociativeOperation, USE_DEFAULTS
 from proveit.common import x, A, B, Amulti
 
-INTERSECT = Literal(__package__, stringFormat = 'intersection', latexFormat = r'\cap')
-
 class Intersect(AssociativeOperation):
+    # operator of the Intersect operation
+    _operator_ = Literal(stringFormat='intersect', latexFormat=r'\cap', context=__file__)    
+    
     def __init__(self, *operands):
         '''
         Intersect any number of set: A intersect B intersect C
         '''
-        AssociativeOperation.__init__(self, INTERSECT, *operands)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return INTERSECT  
+        AssociativeOperation.__init__(self, Intersect._operator_, *operands)
 
     def membershipEquivalence(self, element, assumptions=USE_DEFAULTS):
         '''

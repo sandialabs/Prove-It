@@ -539,19 +539,6 @@ class KnownTruth:
         else:
             raise UnusableTheorem(KnownTruth.theoremBeingProven, self._proof._unusableTheorem, 'required to prove' + self.string(performUsabilityCheck=False)) 
 
-    def latex(self, performUsabilityCheck=False):
-        '''
-        If the KnownTruth was proven under any assumptions, display the 
-        double-turnstyle notation to show that the set of assumptions proves
-        the statement/expression.  Otherwise, simply display the expression.
-        '''
-        from proveit import ExpressionList
-        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
-        if len(self.assumptions) > 0:
-            assumptionsStr = ExpressionList(self.assumptions).formatted('latex', fence=False)
-            return r'\{' + assumptionsStr + r'\} \boldsymbol{\vdash} ' + self.expr.latex()
-        return r'\boldsymbol{\vdash} ' + self.expr.latex()
-
     def string(self, performUsabilityCheck=True):
         '''
         If the KnownTruth was proven under any assumptions, display the 
@@ -596,15 +583,6 @@ class KnownTruth:
         html += self.expr._repr_html_()
         html += '</span>'
         return html
-        
-    def _config_latex_tool(self, lt):
-        '''
-        Configure the LaTeXTool from IPython.lib.latextools as required by all
-        sub-expressions.
-        '''
-        self.expr._config_latex_tool(lt)
-        for assumption in self.assumptions:
-            assumption._config_latex_tool(lt)
 
 def asExpression(truthOrExpression):
     '''

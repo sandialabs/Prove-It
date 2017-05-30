@@ -3,9 +3,6 @@ from proveit.logic import Equals
 from ordering_relation import OrderingRelation
 from proveit.common import a, b, c, x, y, z
 
-LESSTHAN = Literal(__package__, r'<', r'<')
-LESSTHANEQUALS = Literal(__package__, r'<=', r'\leq')
-
 class LesserRelation(OrderingRelation):
     # map left-hand-sides to KnownTruths of LesserRelations
     knownLeftSides = dict()    
@@ -40,16 +37,15 @@ class LesserRelation(OrderingRelation):
     
 
 class Less(LesserRelation):
+    # operator of the Less operation.
+    _operator_ = Literal(stringFormat='<', context=__file__)
+    
     def __init__(self, lhs, rhs):
         r'''
         See if second number is at bigger than first.
         '''
-        OrderingRelation.__init__(self, LESSTHAN,lhs,rhs)
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return LESSTHAN
-            
+        OrderingRelation.__init__(self, Less._operator_,lhs,rhs)
+                    
     def reversed(self):
         '''
         Returns the reversed inequality Expression.
@@ -139,11 +135,14 @@ class Less(LesserRelation):
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
 class LessEq(LesserRelation):
+    # operator of the LessEq operation.
+    _operator_ = Literal(stringFormat='<=', latexFormat=r'\leq', context=__file__)
+    
     def __init__(self, lhs, rhs):
         r'''
         See if second number is at least as big as first.
         '''
-        LesserRelation.__init__(self, LESSTHANEQUALS,lhs,rhs)
+        LesserRelation.__init__(self, LessEq._operator_,lhs,rhs)
     
     @staticmethod
     def knownRelationsFromLeft(expr, assumptionsSet):
@@ -168,10 +167,6 @@ class LessEq(LesserRelation):
         from greater_than import GreaterThanEquals
         return GreaterThanEquals(self.rhs, self.lhs)
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return LESSTHANEQUALS
-            
     def deduceInBooleans(self, assumptions=frozenset()):
         from theorems import lessThanEqualsInBools
         deduceInReals(self.lhs, assumptions)

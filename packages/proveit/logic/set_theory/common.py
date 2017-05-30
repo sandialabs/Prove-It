@@ -1,5 +1,3 @@
 from proveit import Literal
 
-pkg = __package__
-
-NOTHING = Literal(pkg, stringFormat='NOTHING', latexFormat=r'\emptyset')
+NOTHING = Literal(stringFormat='nothing', latexFormat=r'\emptyset', context=__file__)

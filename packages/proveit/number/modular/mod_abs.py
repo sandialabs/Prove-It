@@ -1,17 +1,14 @@
 from proveit import Literal, Operation
 from proveit.number.sets import Reals
 
-MOD_ABS = Literal(__package__, 'MOD_ABS')
-
 class ModAbs(Operation):
+    # operator of the ModAbs operation.
+    _operator_ = Literal(stringFormat='ModAbs', context=__file__)
+    
     def __init__(self, value, divisor):
-        Operation.__init__(self, MOD_ABS, [value, divisor])
+        Operation.__init__(self, ModAbs._operator_, [value, divisor])
         self.value = value
         self.divisor = divisor
-    
-    @classmethod
-    def operatorOfOperation(subClass):
-        return MOD_ABS
         
     def string(self, **kwargs):
         return '|'+self.value.string(fence=False)+'|_{mod ' + self.divisor.string(fence=False) + '}'

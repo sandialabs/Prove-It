@@ -4,18 +4,15 @@ from proveit.logic.boolean.conjunction import compose
 from implies import Implies
 from proveit.common import A, B, C
 
-IFF = Literal(__package__, stringFormat = '<=>', latexFormat = r'\Leftrightarrow')
-
 # if and only if: A => B and B => A
 class Iff(BinaryOperation):
+    # The operator of the Iff operation
+    _operator_ = Literal(stringFormat='<=>', latexFormat=r'\Leftrightarrow', context=__file__)
+    
     def __init__(self, A, B):
-        BinaryOperation.__init__(self, IFF, A, B)
+        BinaryOperation.__init__(self, Iff._operator_, A, B)
         self.A = A
         self.B = B
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return IFF
         
     def deriveSideEffects(self, knownTruth):
         '''

@@ -4,7 +4,7 @@ from proveit.logic.equality import IrreducibleValue
 
 class BooleanSet(Literal):
     def __init__(self):
-        Literal.__init__(self, __package__, stringFormat='BOOLEANS', latexFormat=r'\mathbb{B}')
+        Literal.__init__(self, stringFormat='BOOLEANS', latexFormat=r'\mathbb{B}', context=__file__)
     
     def deduceMembershipSideEffects(self, element, knownTruth):
         '''
@@ -128,7 +128,7 @@ class BooleanSet(Literal):
 
 class TrueLiteral(Literal, IrreducibleValue):
     def __init__(self):
-        Literal.__init__(self, __package__, stringFormat='TRUE', latexFormat=r'\top')
+        Literal.__init__(self, stringFormat='TRUE', latexFormat=r'\top', context=__file__)
     
     def evalEquality(self, other):
         from _theorems_ import trueEqTrue, trueNotFalse
@@ -152,7 +152,7 @@ class TrueLiteral(Literal, IrreducibleValue):
         
 class FalseLiteral(Literal, IrreducibleValue):
     def __init__(self):
-        Literal.__init__(self, __package__, stringFormat='FALSE', latexFormat=r'\bot')
+        Literal.__init__(self, stringFormat='FALSE', latexFormat=r'\bot', context=__file__)
     
     def evalEquality(self, other):
         from _axioms_ import falseNotTrue

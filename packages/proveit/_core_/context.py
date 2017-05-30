@@ -34,6 +34,11 @@ class Context:
     expression, axiom, theorem, or theorem proof will be garbage collected.
     '''
     
+    # maps root context names to their directories.  A root context
+    # is one use containing directory has no __init__.py.  All context
+    # directories should have an __init__.py file.
+    _rootContextPaths = dict()
+    
     # track the storage object associated with each context, mapped
     # by the absolute path
     storages = dict()
@@ -52,16 +57,17 @@ class Context:
         # the name of the context is based upon the directory, going
         # up the tree as long as there is an __init__.py file.
         self.name = ''
-        remaining_path = path
-        while os.path.isfile(os.path.join(remaining_path, '__init__.py')):
-            remaining_path, tail = os.path.split(remaining_path)
+        remainingPath = path
+        while os.path.isfile(os.path.join(remainingPath, '__init__.py')):
+            remainingPath, tail = os.path.split(remainingPath)
             self.name = tail if self.name=='' else (tail + '.' + self.name)
         # the root context tracks paths to external packages
         if self.name == '':
             self.name = path
-            raise ContextException(self, 'Context directory must have an __init__.py file')
+            raise ContextException('%s context directory must have an __init__.py file'%path)
         if '.' in self.name:
-            self.rootContext = Context(path)
+            rootDirectory = os.path.join(remainingPath, self.name.split('.')[0])
+            self.rootContext = Context(rootDirectory)
         else:
             self.rootContext = self # this is a root context
         # Create the Storage object for this Context
@@ -71,29 +77,38 @@ class Context:
         # map common expression names to storage identifiers:
         self.common_expr_ids = None # read in when needed
     
+    def __eq__(self, other):
+        return self._storage is other._storage
+    
+    def __ne__(self, other):
+        return self._storage is not other._storage
+    
     def isRoot(self):
         '''
         Return True iff this Context is a "root" Context (no parent
         directory with an __init__.py file).
         '''
-        return self.rootContext == self
+        return self.rootContext is self
+
+    @staticmethod
+    def setRootContextPath(contextName, path):
+        if contextName in Context._rootContextPaths:
+            if Context._rootContextPaths[contextName] != path:
+                raise ContextException("Conflicting directory references to context '%s'"%contextName)
+        Context._rootContextPaths[contextName] = path 
     
-    def getContext(self, context_name):
+    @staticmethod
+    def getContext(contextName):
         '''
         Return the Context with the given name.
         '''
-        split_context_name = context_name.split('.')
-        if split_context_name[0] == self.rootContext.name:
-            # Context with the same root as this one
-            path = self._storage.directory
-            if len(split_context_name) > 1:
-                # tack on the part beyond the root
-                path = os.path.join(path, split_context_name[1:])
-            return Context(path)
-        else:
-            # Context with a different root than this one; need to get the path of the other root.
-            self._storage
-     
+        splitContextName = contextName.split('.')
+        rootName = splitContextName[0]
+        if rootName not in Context._rootContextPaths:
+            raise ContextException("Context root '%s' is unknown"%rootName)
+        rootDirectory = Context._rootContextPaths[rootName]
+        return Context(os.path.join(*([rootDirectory]+splitContextName[1:])))        
+         
     def _setAxioms(self, axiom_definitions):
         self._setSpecialStatements(axiom_definitions, 'axioms')
     
@@ -115,19 +130,19 @@ class Context:
                         toRemove.append(name) # to remove special statement that no longer exists
                     previousDefIds[name] = f.read()
             except IOError:
-                raise ContextException(self, 'corrupted _pv_it_ directory')
+                raise ContextException('Corrupted _pv_it_ directory: %s'%self._storage.directory)
         # Remove the special statements that no longer exist
         for name in toRemove:
             print 'Removing %s %s from %s context'%(kind, name, self.name)
-            self.getStoredStmt(self.name + '.' + name, kind[:-1]).remove()
+            Context.getStoredStmt(self.name + '.' + name, kind[:-1]).remove()
             
         # Update the definitions
         for name, expr in definitions.iteritems():
             # add the expression to the "database" via the storage object.
-            exprId = storage._proveItObjId(expr)
+            exprId = storage._proveItStorageId(expr)
             if name in previousDefIds and previousDefIds[name] == exprId:
                 continue # unchanged special statement
-            storedSpecialStmt = self.getStoredStmt(self.name + '.' + name, kind[:-1])
+            storedSpecialStmt = Context.getStoredStmt(self.name + '.' + name, kind[:-1])
             if name not in previousDefIds:
                 # added special statement
                 print 'Adding %s %s to %s context'%(kind[:-1], name, self.name)
@@ -163,11 +178,36 @@ class Context:
         self.common_expr_ids = dict()
         storage = self._storage
         commons_filename = os.path.join(self._storage.pv_it_dir, '_commons_.pv_it')
+        
+        # get any previous common expression ids to see if their reference
+        # count needs to be decremented.
+        old_expr_ids = set() 
+        if os.path.isfile(commons_filename):
+            with open(commons_filename, 'r') as f:
+                for line in f.readlines():
+                    name, expr_id = line.split()
+                    old_expr_ids.add(expr_id)
+        
+        # write new common expression ids
+        new_expr_ids = set()
         with open(commons_filename, 'w') as f:
             for name, expr in expr_definitions.iteritems():
-                exprId = storage._proveItObjId(expr)
-                self.common_expr_ids[name] = exprId
-                f.write(name + ' ' + exprId + '\n')
+                expr_id = storage._proveItStorageId(expr)
+                if expr_id in old_expr_ids:
+                    old_expr_ids.remove(expr_id) # same expression as before
+                else:
+                    # new expression not previously in the common expressions liest:
+                    new_expr_ids.add(expr_id) 
+                self.common_expr_ids[name] = expr_id
+                f.write(name + ' ' + expr_id + '\n')
+        
+        # remove references to old common expressions that are no longer a common expression
+        for expr_id in old_expr_ids:
+            storage._removedReference(expr_id) # remove reference to an old common expression
+        
+        # add references to new common expressions that were not preveiously a common expression
+        for expr_id in new_expr_ids:
+            storage._addReference(expr_id) # add reference to a new common expression
     
     def axiomNames(self):
         return self._getSpecialStatementNames('axioms')
@@ -200,24 +240,27 @@ class Context:
         expr = self._getSpecialStatementExpr('theorems', name)
         return Theorem(expr, self, name).provenTruth
     
-    def getStoredAxiom(self, fullname):
-        return self.getStoredStmt(fullname, 'axiom')
+    @staticmethod
+    def getStoredAxiom(fullname):
+        return Context.getStoredStmt(fullname, 'axiom')
 
-    def getStoredTheorem(self, fullname):
-        return self.getStoredStmt(fullname, 'theorem')
+    @staticmethod
+    def getStoredTheorem(fullname):
+        return Context.getStoredStmt(fullname, 'theorem')
                 
-    def getStoredStmt(self, fullname, kind):
+    @staticmethod
+    def getStoredStmt(fullname, kind):
         from storage import StoredAxiom, StoredTheorem
         split_name = fullname.split('.')
         context_name = '.'.join(split_name[:-1])
         stmt_name = split_name[-1]
-        context = self.getContext(context_name)
+        context = Context.getContext(context_name)
         if kind == 'axiom':
             return StoredAxiom(context, stmt_name)
         elif kind == 'theorem':
             return StoredTheorem(context, stmt_name)
         else:
-            raise ContextException(self, "Expecting kind to be 'axiom' or 'theorem' not '%s'"%kind)
+            raise ContextException("Expecting 'kind' to be 'axiom' or 'theorem' not '%s'"%kind)
 
     def getCommonExpr(self, name):
         '''
@@ -305,7 +348,7 @@ class CommonExpressions:
         self.context = context
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self.context.commonExpressionNames())
+        return sorted(self.__dict__.keys() + list(self.context.commonExpressionNames()))
 
     def __getattr__(self, name):
         try:
@@ -314,9 +357,8 @@ class CommonExpressions:
             raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self.context.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
 
 class ContextException(Exception):
-    def __init__(self, context, message):
-        self.context = context
+    def __init__(self, message):
         self.message = message
         
     def __str__(self):
-        return 'Exception for context %s: %s'%(self.context.name, self.message)
+        return self.message

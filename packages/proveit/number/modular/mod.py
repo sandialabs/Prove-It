@@ -2,17 +2,14 @@ from proveit import Literal, BinaryOperation
 from proveit.number.sets import Integers, Reals
 from proveit.common import a, b
 
-MOD = Literal(__package__, 'mod', r'~\rm{mod}~')
-
 class Mod(BinaryOperation):
+    # operator of the Mod operation.
+    _operator_ = Literal(stringFormat='mod', latexFormat=r'~\rm{mod}~', context=__file__)
+    
     def __init__(self, dividend, divisor):
-        BinaryOperation.__init__(self, MOD, dividend, divisor)
+        BinaryOperation.__init__(self, Mod._operator_, dividend, divisor)
         self.dividend = self.operands[0]
         self.divisor = self.operands[1]
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return MOD
 
     def _closureTheorem(self, numberSet):
         import theorems
