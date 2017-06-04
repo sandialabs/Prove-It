@@ -3,7 +3,7 @@ import shutil
 
 class Storage:
     '''
-    Manages the _pv_it_ directory of a Context, the distributed database
+    Manages the __pv_it directory of a Context, the distributed database
     of expressions, axioms, theorems, and proofs.
     '''
     
@@ -13,7 +13,7 @@ class Storage:
             raise ContextException("'context' should be a Context object")
         self.context = context
         self.directory = directory
-        self.pv_it_dir = os.path.join(self.directory, '_pv_it_')
+        self.pv_it_dir = os.path.join(self.directory, '__pv_it')
         if not os.path.isdir(self.pv_it_dir):
             # make the directory for the storage
             os.makedirs(self.pv_it_dir)
@@ -252,7 +252,7 @@ class Storage:
         Find the directory for the stored Expression, KnownTruth, or Proof.
         Create it if it did not previously exist.  Return the (context, hash_directory)
         pair, where the hash_directory is the directory name (within the context's
-        _pv_it_ directory) based upon a hash of the unique representation.
+        __pv_it directory) based upon a hash of the unique representation.
         '''
         if proveItObject in self._proveItObjects:
             return self._proveItObjects[proveItObject]
@@ -338,7 +338,7 @@ class Storage:
     
     def clean(self):
         '''
-        Clean the _pv_it_ directory by erasing anything with a reference
+        Clean the __pv_it directory by erasing anything with a reference
         count of zero.
         '''
         for sub_dir in os.listdir(self.pv_it_dir):
@@ -356,10 +356,10 @@ class Storage:
            
     def erase(self):
         '''
-        Erase the entire _pv_it_ directory.
+        Erase the entire __pv_it directory.
         '''
         self._proveItObjects.clear()
-        pv_it_dir = os.path.join(self.directory, '_pv_it_')
+        pv_it_dir = os.path.join(self.directory, '__pv_it')
         if not os.path.isdir(pv_it_dir): return
         for hash_dir in os.listdir(pv_it_dir):
             hash_path = os.path.join(pv_it_dir, hash_dir)
@@ -471,7 +471,7 @@ class StoredAxiom(StoredSpecialStmt):
     def __init__(self, context, name):
         '''
         Creates a StoredAxioms object for managing an axioms's
-        _pv_it_ database entries.
+        __pv_it database entries.
         '''
         StoredSpecialStmt.__init__(self, context, name, 'axiom')
 
@@ -479,7 +479,7 @@ class StoredTheorem(StoredSpecialStmt):
     def __init__(self, context, name):
         '''
         Creates a StoredTheorem object for managing a theorem's
-        _pv_it_ database entries.
+        __pv_it database entries.
         '''
         StoredSpecialStmt.__init__(self, context, name, 'theorem')
 

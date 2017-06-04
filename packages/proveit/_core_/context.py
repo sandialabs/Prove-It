@@ -12,7 +12,7 @@ methods for invoking theorems and automated derivations.  Proofs of
 the theorems are to be stored in a _proofs_ sub-directory as Jupyter
 notebooks named for the theorem to be proven.
 
-A _pv_it_ sub-directory is generated to store a distributed
+A __pv_it sub-directory is generated to store a distributed
 "database" of information pertaining to the context.  It stores Expression
 entries along with latex and png representations for convenience.  It
 enumerates the Axioms and the Theorems, pointing to these Expression entries.
@@ -21,11 +21,12 @@ the theorem proofs, and it stores theorem proof dependencies.
 '''
 
 import os
+from glob import glob
 from storage import Storage
 
 class Context:
     '''
-    A Context object provides an interface into the _pv_it_ database for access
+    A Context object provides an interface into the __pv_it database for access
     to the common expressions, axioms, theorems and associated proofs of a
     Prove-It context.  You can also store miscellaneous expressions (and
     their latex/png representations) generated in test/demonstration notebooks 
@@ -52,6 +53,9 @@ class Context:
         is provided, base the context on the current working directory.
         '''
         path = os.path.abspath(path)
+        # Makes the case be consistent in operating systems (i.e. Windows)
+        # with a case insensitive filesystem: 
+        path = os.path.normcase(path)
         if os.path.isfile(path):
             path, _ = os.path.split(path)
         # the name of the context is based upon the directory, going
@@ -92,9 +96,11 @@ class Context:
 
     @staticmethod
     def setRootContextPath(contextName, path):
+        path = os.path.normpath(os.path.abspath(path))
         if contextName in Context._rootContextPaths:
-            if Context._rootContextPaths[contextName] != path:
-                raise ContextException("Conflicting directory references to context '%s'"%contextName)
+            storedPath = Context._rootContextPaths[contextName]
+            if storedPath != path:
+                raise ContextException("Conflicting directory references to context '%s': %s vs %s"%(contextName, path, storedPath))
         Context._rootContextPaths[contextName] = path 
     
     @staticmethod
@@ -130,7 +136,7 @@ class Context:
                         toRemove.append(name) # to remove special statement that no longer exists
                     previousDefIds[name] = f.read()
             except IOError:
-                raise ContextException('Corrupted _pv_it_ directory: %s'%self._storage.directory)
+                raise ContextException('Corrupted __pv_it directory: %s'%self._storage.directory)
         # Remove the special statements that no longer exist
         for name in toRemove:
             print 'Removing %s %s from %s context'%(kind, name, self.name)
@@ -291,14 +297,14 @@ class Context:
     
     def clean(self):
         '''
-        Clean the corresponding _pv_it_ directory of any stored expressions
+        Clean the corresponding __pv_it directory of any stored expressions
         or proofs that have a reference count of zero.
         '''
         return self._storage.clean()
 
     def erase(self):
         '''
-        Erase the corresponding _pv_it_ directory entirely.
+        Erase the corresponding __pv_it directory entirely.
         '''
         return self._storage.erase()        
         
