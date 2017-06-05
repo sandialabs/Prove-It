@@ -107,12 +107,11 @@ class KnownTruth:
         if KnownTruth.theoremBeingProven is not None:
             raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  It is best to avoid having extraneous KnownTruth objects so each proof should be independent.")
         from proof import Theorem
-        from proveit.certify import allDependents, hasProof, allUsedTheorems
         theorem = self.proof()
         if not isinstance(theorem, Theorem):
             raise TypeError('Only begin a proof for a Theorem')
         KnownTruth.theoremBeingProven = theorem
-        KnownTruth.dependentTheoremsOfTheoremBeingProven = allDependents(theorem)
+        KnownTruth.dependentTheoremsOfTheoremBeingProven = theorem.allDependents()
         KnownTruth.presumingTheorems = set()
         KnownTruth.presumingPackages = set()
         for presuming in presumes:
@@ -125,10 +124,10 @@ class KnownTruth:
                 KnownTruth.presumingPackages.add(presuming)
             else:
                 raise ValueError("'presumes' should be a collection of Theorems and strings, not " + str(presuming.__class__))
-            if hasProof(presuming): # note, if presuming is a package name, hasProof will simply return False
+            if presuming.hasProof: # note, if presuming is a package name, hasProof will simply return False
                 # presume theorems (implicitly) that are used to prove 
                 # other presumed theorems (explicitly).
-                KnownTruth.presumingPackages.update(allUsedTheorems(presuming)) # actually theorems by full name
+                KnownTruth.presumingPackages.update(presuming.allUsedTheorems()) # actually theorems by full name
         Theorem.updateUsability()
         # check to see if the theorem was already proven before we started
         for proof in theorem._possibleProofs:

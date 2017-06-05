@@ -79,7 +79,10 @@ class Context:
             Context.storages[path] = Storage(self, path)
         self._storage = Context.storages[path]
         # map common expression names to storage identifiers:
-        self.common_expr_ids = None # read in when needed
+        self._common_expr_ids = None # read in when needed
+        # map expression objects to special statement kind and name
+        # (the kind is 'common', 'axiom', or 'theorem').
+        self._specialExpressions = dict()
     
     def __eq__(self, other):
         return self._storage is other._storage
@@ -172,7 +175,11 @@ class Context:
         try:
             with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
                 exprId = f.read()
-                return storage.makeExpression(exprId)
+                expr = storage.makeExpression(exprId)
+                if not hasattr(expr, 'context'):                
+                    expr.context = self
+                    self._specialExpressions[expr] = (kind, name)
+                return expr
         except IOError:
             raise KeyError("%s of name '%s' not found"%(kind[:-1], name))        
 
@@ -181,7 +188,7 @@ class Context:
         return os.listdir(specialStatementsPath)
             
     def _setCommonExpressions(self, expr_definitions):
-        self.common_expr_ids = dict()
+        self._common_expr_ids = dict()
         storage = self._storage
         commons_filename = os.path.join(self._storage.pv_it_dir, '_commons_.pv_it')
         
@@ -204,7 +211,7 @@ class Context:
                 else:
                     # new expression not previously in the common expressions liest:
                     new_expr_ids.add(expr_id) 
-                self.common_expr_ids[name] = expr_id
+                self._common_expr_ids[name] = expr_id
                 f.write(name + ' ' + expr_id + '\n')
         
         # remove references to old common expressions that are no longer a common expression
@@ -222,12 +229,12 @@ class Context:
         return self._getSpecialStatementNames('theorems')
     
     def commonExpressionNames(self):
-        self.common_expr_ids = dict()
+        self._common_expr_ids = dict()
         commons_filename = os.path.join(self._storage.pv_it_dir, '_commons_.pv_it')
         with open(commons_filename, 'r') as f:
             for line in f.readlines():
                 name, exprId = line.split()
-                self.common_expr_ids[name] = exprId
+                self._common_expr_ids[name] = exprId
                 yield name
     
     def getAxiom(self, name):
@@ -246,6 +253,13 @@ class Context:
         expr = self._getSpecialStatementExpr('theorems', name)
         return Theorem(expr, self, name).provenTruth
     
+    def proofNotebook(self, theorem_name):
+        '''
+        Return the path the the proof notebook, creating it if it does not
+        already exist.
+        '''
+        return self._storage.proofNotebook(theorem_name)
+        
     @staticmethod
     def getStoredAxiom(fullname):
         return Context.getStoredStmt(fullname, 'axiom')
@@ -273,11 +287,15 @@ class Context:
         Return the Expression of the common expression in this context
         with the given name.
         '''
-        if self.common_expr_ids is None:
+        if self._common_expr_ids is None:
             # while the names are read in, the expr id map will be generated
             list(self.commonExpressionNames())
         # make the common expression for the given common expression name
-        return self._storage.makeExpression(self.common_expr_ids[name])
+        expr = self._storage.makeExpression(self._common_expr_ids[name])
+        if not hasattr(expr, 'context'):
+            expr.context = self
+            self._specialExpressions[expr] = ('common', name)
+        return expr
     
     def _includeMutualReferences(self, otherContext):
         '''

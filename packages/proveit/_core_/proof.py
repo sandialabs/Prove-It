@@ -314,7 +314,14 @@ class Theorem(Proof):
         or indirectly.
         '''
         return self._storedTheorem().allUsedTheorems()
-        
+
+    def allDependents(self):
+        '''
+        Returns the set of theorems that are known to depend upon this
+        theorem directly or indirectly.
+        '''
+        return self._storedTheorem().allDependents()
+                
     def _setUsability(self):
         '''
         Sets the 'usable' attribute to False if a theorem
@@ -331,7 +338,7 @@ class Theorem(Proof):
         direct/indirect dependence upon KnownTruth.theoremBeingProven
         are allowed.
         '''
-        from proveit.certify import isFullyProven
+        #from proveit.certify import isFullyProven
         if KnownTruth.theoremBeingProven is None:
             self._unusableTheorem = None # Nothing being proven, so all Theorems are usable
             return

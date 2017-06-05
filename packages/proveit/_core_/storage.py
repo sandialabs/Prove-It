@@ -1,5 +1,7 @@
 import hashlib, os
 import shutil
+import sys
+import json
 
 class Storage:
     '''
@@ -241,6 +243,8 @@ class Storage:
             for objId in self._extractReferencedStorageIds(rep):
                 self._removeReference(objId)
             # remove the entire directory storing this prove-it object
+            for filename in os.listdir(hash_path):
+                os.remove(os.path.join(hash_path, filename))
             os.rmdir(hash_path)
         else:
             # change the reference count in the file
@@ -297,7 +301,53 @@ class Storage:
             proveItObject.context = self.context # note the context where it is stored
         return result
     
+    def createExpressionNotebook(self, expr):
+        '''
+        Create an expr.ipynb for the given Expression.
+        '''
+        from proveit import Expression
+        if not isinstance(expr, Expression):
+            raise ValueError("'expr' should be an Expression object")
+        imports = set()
+        subExprs = []
+        exprCode = self._exprBuildingCode(expr, imports, subExprs)
+    
+    def proofNotebook(self, theorem_name):
+        '''
+        Return the path the the proof notebook, creating it if it does not
+        already exist.
+        '''
+        import proveit
+        proofs_path = os.path.join(self.directory, '_proofs_')
+        filename = os.path.join(proofs_path, '%s.ipynb'%theorem_name)
+        if os.path.isfile(filename):
+            return filename # return the existing proof file
+        if not os.path.isdir(proofs_path):
+            # make the directory for the _proofs_
+            os.makedirs(proofs_path)            
+        # read the template and change the contexts as appropriate
+        proveit_path = os.path.split(proveit.__file__)[0]
+        with open(os.path.join(proveit_path, '..', '_proof_template_.ipynb'), 'r') as template:
+            nb = template.read()
+            nb = nb.replace('#THEOREM_NAME#', theorem_name)
+            theoremPath = os.path.join('..', '_theorems_.ipynb', '#%s'%theorem_name)
+            theoremPath = theoremPath.replace('\\', '\\\\')
+            nb = nb.replace('#THEOREM_PATH#', theoremPath)
+        # write the proof file
+        with open(filename, 'w') as proofFile:
+            proofFile.write(nb)
+        return filename # return the new proof file
+    
+    def _exprBuildingCode(self, expr, imports, subExprs):
+        if hasattr(expr, 'context') and expr.context is not None:
+            # the expression can be imported from a context
+            pass
+    
     def makeExpression(self, exprId):
+        '''
+        Return the Expression object that is represented in storage by
+        the given expression id.
+        '''
         import importlib
         exprClassMap = dict() # map expression class strings to Expression class objects
         def importFn(exprClassStr):
@@ -309,6 +359,9 @@ class Storage:
         return self._makeExpression(exprId, importFn, exprBuilderFn)
     
     def _makeExpression(self, exprId, importFn, exprBuilderFn):
+        '''
+        Helper method for makeExpression
+        '''
         from proveit import Expression
         from _dependency_graph import orderedDependencyNodes
         exprClassStrs = dict() # map expr-ids to Expression class string representations
@@ -379,9 +432,9 @@ class StoredSpecialStmt:
         self.name = name
         self.kind = kind
         if kind == 'axiom':
-            self.path = os.path.join(self.context._storage.directory, '_axioms_', self.name)
+            self.path = os.path.join(self.context._storage.pv_it_dir, '_axioms_', self.name)
         elif kind == 'theorem':
-            self.path = os.path.join(self.context._storage.directory, '_theorems_', self.name) 
+            self.path = os.path.join(self.context._storage.pv_it_dir, '_theorems_', self.name) 
         else:
             raise ValueError("kind must be 'axiom' or 'theorem'")
 
@@ -398,7 +451,7 @@ class StoredSpecialStmt:
         # "garbage" collection in the packages database storage.
         with open(os.path.join(self.path, 'expr.pv_it'), 'r') as f:
             expr_id = f.read()
-            self.storage._removeReference(expr_id)
+            self.context._storage._removeReference(expr_id)
         # remove invalidated proofs that use this axiom/theorem
         dependentTheorems = self.readDependentTheorems()
         for dependent in dependentTheorems:
@@ -523,10 +576,10 @@ class StoredTheorem(StoredSpecialStmt):
         # record the proof id
         if not isinstance(proof, Proof):
             raise ValueError("Expecting 'proof' to be a Proof object")
-        proofId = self.storage._proveItStorageId(proof)
+        proofId = self.context._storage._proveItStorageId(proof)
         with open(os.path.join(self.path, 'proof.pv_it'), 'w') as proofFile:
             proofFile.write(proofId)
-            self.storage._addReference(proofId)
+            self.context._storage._addReference(proofId)
         
         usedAxioms = [str(usedAxiom) for usedAxiom in proof.usedAxioms()]
         usedTheorems = [str(usedTheorem) for usedTheorem in proof.usedTheorems()]
@@ -619,7 +672,7 @@ class StoredTheorem(StoredSpecialStmt):
         # "garbage" collection in the packages database storage.
         with open(os.path.join(self.path, 'proof.pv_it'), 'r') as f:
             proof_id = f.read()
-            self.storage._removeReference(proof_id)
+            self.context._storage._removeReference(proof_id)
         # Remove obsolete usedBy links that refer to this theorem by its old proof
         prevUsedAxioms, prevUsedTheorems = self.readDependencies()
         for usedAxiom in prevUsedAxioms:
