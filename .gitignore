@@ -1,4 +1,7 @@
 *.pyc
 *.egg-info
 __pv_it
+_common_.py
+_axioms_.py
+_theorems_.py
 .ipynb_checkpoints
