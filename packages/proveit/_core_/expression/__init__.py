@@ -1,4 +1,4 @@
-from expr import Expression, MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, tryDerivation
+from expr import Expression, MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, tryDerivation, expressionDepth
 from operation import Operation
 from lambda_expr import Lambda
 from bundle import Block, Etcetera

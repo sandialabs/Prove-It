@@ -43,7 +43,9 @@ class Context:
     # track the storage object associated with each context, mapped
     # by the absolute path
     storages = dict()
-    
+
+    specialExprKindToModuleName = {'common':'_common_', 'axiom':'_axioms_', 'theorem':'_theorems_'}
+        
     # externals.txt at top level to track relative path to external
     # contexts.
     def __init__(self, path='.'):
@@ -53,6 +55,11 @@ class Context:
         is provided, base the context on the current working directory.
         '''
         path = os.path.abspath(path)
+        # if in a __pv_it_ directory, go to the containing context directory
+        splitpath = path.split(os.path.sep)
+        if '__pv_it' in splitpath:
+            num_up_levels = (len(splitpath)-splitpath.index('__pv_it'))
+            path = os.path.abspath(os.path.join(*([path] + ['..']*num_up_levels)))
         # Makes the case be consistent in operating systems (i.e. Windows)
         # with a case insensitive filesystem: 
         path = os.path.normcase(path)
@@ -78,11 +85,17 @@ class Context:
         if path not in Context.storages:
             Context.storages[path] = Storage(self, path)
         self._storage = Context.storages[path]
+        
         # map common expression names to storage identifiers:
         self._common_expr_ids = None # read in when needed
         # map expression objects to special statement kind and name
         # (the kind is 'common', 'axiom', or 'theorem').
         self._specialExpressions = dict()
+        
+        # Map 'common', 'axiom', and 'theorem' to respective modules.
+        # Base it upon the context name.
+        self._specialExprModules = {kind:self.name+'.%s'%module_name for kind, module_name in Context.specialExprKindToModuleName.iteritems()}
+        
     
     def __eq__(self, other):
         return self._storage is other._storage
@@ -119,10 +132,10 @@ class Context:
         return Context(os.path.join(*([rootDirectory]+splitContextName[1:])))        
          
     def _setAxioms(self, axiom_definitions):
-        self._setSpecialStatements(axiom_definitions, 'axioms')
+        self._setSpecialStatements(axiom_definitions, 'axiom')
     
     def _setTheorems(self, theorem_definitions):
-        self._setSpecialStatements(theorem_definitions, 'theorems')
+        self._setSpecialStatements(theorem_definitions, 'theorem')
     
     def _setSpecialStatements(self, definitions, kind):
         storage = self._storage
@@ -147,6 +160,10 @@ class Context:
             
         # Update the definitions
         for name, expr in definitions.iteritems():
+            # record the special expression in this context object
+            if not hasattr(expr, 'context'):                
+                expr.context = self
+                self._specialExpressions[expr] = (kind, name)            
             # add the expression to the "database" via the storage object.
             exprId = storage._proveItStorageId(expr)
             if name in previousDefIds and previousDefIds[name] == exprId:
@@ -205,6 +222,10 @@ class Context:
         new_expr_ids = set()
         with open(commons_filename, 'w') as f:
             for name, expr in expr_definitions.iteritems():
+                # record the special expression in this context object
+                if not hasattr(expr, 'context'): expr.context = self
+                self._specialExpressions[expr] = ('common', name) 
+                # get the expression id to be stored on '_commons_.pv_it'           
                 expr_id = storage._proveItStorageId(expr)
                 if expr_id in old_expr_ids:
                     old_expr_ids.remove(expr_id) # same expression as before
@@ -216,17 +237,17 @@ class Context:
         
         # remove references to old common expressions that are no longer a common expression
         for expr_id in old_expr_ids:
-            storage._removedReference(expr_id) # remove reference to an old common expression
+            storage._removeReference(expr_id, removingSpecialExpr=True) # remove reference to an old common expression
         
         # add references to new common expressions that were not preveiously a common expression
         for expr_id in new_expr_ids:
             storage._addReference(expr_id) # add reference to a new common expression
     
     def axiomNames(self):
-        return self._getSpecialStatementNames('axioms')
+        return self._getSpecialStatementNames('axiom')
     
     def theoremNames(self):
-        return self._getSpecialStatementNames('theorems')
+        return self._getSpecialStatementNames('theorem')
     
     def commonExpressionNames(self):
         self._common_expr_ids = dict()
@@ -242,7 +263,7 @@ class Context:
         Return the KnownTruth for the Axiom of the given name in this context.
         '''
         from proveit._core_.proof import Axiom
-        expr = self._getSpecialStatementExpr('axioms', name)
+        expr = self._getSpecialStatementExpr('axiom', name)
         return Axiom(expr, self, name).provenTruth
         
     def getTheorem(self, name):
@@ -250,16 +271,43 @@ class Context:
         Return the KnownTruth for the Theorem of the given name in this context.
         '''
         from proveit._core_.proof import Theorem
-        expr = self._getSpecialStatementExpr('theorems', name)
+        expr = self._getSpecialStatementExpr('theorem', name)
         return Theorem(expr, self, name).provenTruth
     
-    def proofNotebook(self, theorem_name):
+    def specialExpr(self, expr):
         '''
-        Return the path the the proof notebook, creating it if it does not
+        Return the kind and name of the special expression as a tuple,
+        assuming the 'expr' is a special expression of this Context.
+        '''
+        return self._specialExpressions[expr]
+    
+    def specialExprAddress(self, expr):
+        '''
+        A special expression "address" consists of a module and the name 
+        of the expression.
+        Provided that the given expression is one of the special expressions
+        of this context, return the address as a tuple.
+        '''
+        kind, name = self._specialExpressions[expr]
+        return self._specialExprModules[kind], name
+    
+    def proofNotebook(self, theoremName):
+        '''
+        Return the path of the proof notebook, creating it if it does not
         already exist.
         '''
-        return self._storage.proofNotebook(theorem_name)
+        return self._storage.proofNotebook(theoremName)
         
+    def expressionNotebook(self, expr, unofficialNameKindContext=None):
+        '''
+        Return the path of the expression notebook, creating it if it does not
+        already exist.
+        '''
+        # make sure the storage refers back to this specific Context object
+        self._storage.context = self
+        # use the Storage object to generate/grab the expression notebook.
+        return self._storage.expressionNotebook(expr, unofficialNameKindContext)        
+                
     @staticmethod
     def getStoredAxiom(fullname):
         return Context.getStoredStmt(fullname, 'axiom')
@@ -297,6 +345,12 @@ class Context:
             self._specialExpressions[expr] = ('common', name)
         return expr
     
+    def getStoredExpr(self, expr_id):
+        '''
+        Return the stored Expression with the given id (hash string).
+        '''
+        return self._storage.makeExpression(expr_id)
+    
     def _includeMutualReferences(self, otherContext):
         '''
         Include a reference between contexts if they have a different root.
@@ -331,8 +385,8 @@ class Axioms:
     Used in _axioms_.py modules for accessing Axioms from
     the _certified_ database (returning the associated KnownTruth object).
     '''
-    def __init__(self, context):
-        self.context = context
+    def __init__(self, filename):
+        self.context = Context(filename)
 
     def __dir__(self):
         return sorted(self.__dict__.keys() + self.context.axiomNames())
@@ -350,8 +404,8 @@ class Theorems:
     Used in _theorems_.py modules for accessing Theorems from
     the _certified_ database (returning the associated KnownTruth object).
     '''
-    def __init__(self, context):
-        self.context = context
+    def __init__(self, filename):
+        self.context = Context(filename)
 
     def __dir__(self):
         return sorted(self.__dict__.keys() + self._context.theoremNames())
@@ -368,8 +422,8 @@ class CommonExpressions:
     '''
     Used in _common_.py modules for accessing common sub-expressions.
     '''
-    def __init__(self, context):
-        self.context = context
+    def __init__(self, filename):
+        self.context = Context(filename)
 
     def __dir__(self):
         return sorted(self.__dict__.keys() + list(self.context.commonExpressionNames()))

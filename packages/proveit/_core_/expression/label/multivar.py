@@ -35,21 +35,28 @@ class MultiVariable(Label):
     def make(subClass, coreInfo, subExpressions):
         if subClass != MultiVariable: 
             raise MakeNotImplemented(subClass)
-        if len(subExpressions) > 0:
-            raise ValueError('Not expecting any subExpressions of Variable')
         if len(coreInfo) >= 5:
             raise ValueError("Expecting MultiVariable coreInfo to contain at least 5 items: 'MultiVariable', stringFormat, latexFormat, axis label stringFormat, axis label latexFormat")
         if len(coreInfo) % 2 == 0:
             raise ValueError("Expecting MultiVariable coreInfo to contain an odd number of items: 'MultiVariable' followed by stringFormat, latexFormat pairs for the axes' labels")
         if coreInfo[0] != "MultiVariable":
             raise ValueError("Expecting coreInfo[0] to be 'MultiVariable'")
-        stringFormat, latexFormat = coreInfo[1:3]
-        axesLabels = []
-        for axis in range((len(coreInfo) - 3)/2):
-            axisStringFormat, indexLatexFormat = coreInfo[3+2*axis:3+2*(axis+1)]
-            axesLabels.append(Label(axisStringFormat, indexLatexFormat))
-        return MultiVariable(stringFormat, latexFormat, axesLabels = axesLabels)
+        stringFormat, latexFormat = coreInfo[1:]
+        return MultiVariable(stringFormat, latexFormat, axesLabels=subExpressions)
 
+    def buildArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the MultiVariable.
+        '''
+        coreInfo = self.coreInfo()
+        stringFormat, latexFormat = coreInfo[1:]
+        axesLabels = list(self.subExprIter())
+        yield '"' + stringFormat + '"'
+        if latexFormat != stringFormat:
+            yield ('latexFormat', 'r"' + latexFormat + '"')
+        yield ('axesLabels', axesLabels)
+                             
     def string(self, **kwargs):
         indicesStr = ' '.join(self.axesLabels[k].string() for k in range(self.numIndices))
         return Label.string(self) + '_{' + indicesStr + '}'

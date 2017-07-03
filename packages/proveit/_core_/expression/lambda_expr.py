@@ -44,6 +44,18 @@ class Lambda(Expression):
         parameters, body = subExpressions[:-1], subExpressions[-1]
         return Lambda(parameters, body)
 
+    def buildArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Lambda expression.
+        '''
+        parameters, body = self.parameters, self.body
+        if len(parameters) == 1:
+            yield parameters[0]
+        else:
+            yield self.parameters
+        yield self.body
+
     def string(self, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
         outStr = '[' if fence else ''

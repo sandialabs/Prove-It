@@ -44,11 +44,21 @@ class Label(Expression):
         return [self.stringFormat, self.latexFormat]    
     
     @classmethod
-    def _make(labelClass, coreInfo, subExpressions):
+    def make(labelClass, coreInfo, subExpressions):
         if len(subExpressions) > 0:
-            raise ValueError('Not expecting any subExpressions of Variable')
+            raise ValueError('Not expecting any subExpressions of Label')
         if len(coreInfo) != 3:
             raise ValueError("Expecting " + labelClass.__name__ + " coreInfo to contain 3 items: '" + labelClass.__name + "', stringFormat, and latexFormat")
         if coreInfo[0] != labelClass.__name__:
             raise ValueError("Expecting coreInfo[0] to be '" + labelClass.__name__ + "'")
         return labelClass(coreInfo[1], coreInfo[2])
+
+    def buildArguments(self):
+        '''
+        Yield the argument values that could be used to recreate the 
+        Label (Variable or Literal).
+        '''
+        stringFormat, latexFormat = self.coreInfo()[1:]
+        yield '"' + stringFormat + '"'
+        if latexFormat != stringFormat:
+            yield ('latexFormat', 'r"' + latexFormat + '"')

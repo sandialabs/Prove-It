@@ -16,6 +16,13 @@ class Etcetera(Bundle):
             raise ValueError("Expecting exactly one sub-expression to make an Etcetera")
         return Etcetera(subExpressions[0])  
 
+    def buildArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Etcetera expression.
+        '''
+        yield self.subExpr(0)
+
     def string(self, **kwargs):
         return '..' + self.bundledExpr.string(fence=True) + '..'
     

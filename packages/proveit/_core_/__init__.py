@@ -1,7 +1,7 @@
 # Core Prove-It constructs required used to construct/verify proofs.
 
 from expression import Expression, Operation, Lambda, Label, Variable, MultiVariable, Literal, DuplicateLiteralError
-from expression import Etcetera, Block, safeDummyVar, safeDefaultOrDummyVar, tryDerivation
+from expression import Etcetera, Block, safeDummyVar, safeDefaultOrDummyVar, tryDerivation, expressionDepth
 from expression import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation
 from expression import ExpressionList, ExpressionTensor, NamedExpressions, Composite, compositeExpression, singleOrCompositeExpression, NestedCompositeExpressionError
 from known_truth import KnownTruth, asExpression, asExpressions

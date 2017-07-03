@@ -2,9 +2,10 @@ from proveit._core_.expression.expr import Expression
 
 class Composite:
     """
-    The base class for NamedExpressions, exprlist, and ExpressionTensor.
+    The base class for NamedExpressions, ExpressionList, and ExpressionTensor.
     """
     pass
+
 
 def compositeExpression(expressions):
     '''

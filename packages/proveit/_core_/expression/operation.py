@@ -21,22 +21,36 @@ class Operation(Expression):
         self.operands = compositeExpression(operands)
         Expression.__init__(self, ['Operation'], [self.operator, self.operands])
 
+    @staticmethod
+    def extractInitArgValue(argName, argIndex, operands):
+        '''
+        Given a name of one of the arguments of the __init__ method,
+        return the corresponding value contained in the 'operands'
+        composite expression (i.e., the operands of a constructed operation).
+        
+        Override this method if you cannot simply pass the operands directly
+        into the __init__ method.
+        '''
+        return None
+
     @classmethod
     def make(operationClass, coreInfo, subExpressions):
         '''
         Make the appropriate Operation.  coreInfo should equal ['Operation'].  The first 
         of the subExpressions should be the operator and the subsequent ones should be 
-        operands.  This implementation expects that the Operation sub-class to have a
+        operands.  This implementation expects the Operation sub-class to have a
         class variable named '_operator_' that defines the Literal operator
         of the class.  It will instantiate the Operation sub-class with just *operands 
         and checking that the operator is consistent.  Override this method
         if a different behavior is desired.
         '''
+        import inspect
         if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
             raise ValueError("Expecting Operation coreInfo to contain exactly one item: 'Operation'")
         if len(subExpressions) == 0:
             raise ValueError('Expecting at least one subExpression for an Operation, for the operator')
         operator, operands = subExpressions[0], subExpressions[1]
+        
         if operationClass != Operation: 
             try:
                 subClassOperator = operationClass._operator_
@@ -44,18 +58,56 @@ class Operation(Expression):
                 raise OperationError("Operation sub-class is expected to have a class variable named '_operator_'")
             if subClassOperator != operator:
                 raise ValueError('Unexpected operator, ' + str(operator) + ', when making ' + str(operationClass)) 
-            return operationClass(*operands)
+            if operationClass.extractInitArgValue == Operation.extractInitArgValue:
+                # By default, simply pass the operands directly into the __init__ method.
+                return operationClass(*operands)
+            else:       
+                # If extractInitArgValue is overridden, use it to determine how to pass
+                # the arguments into the __init__ method based upon the operands object.
+                args, varargs, varkw, defaults = inspect.getargsspec(operationClass.__init__)
+                argVals = [operationClass.extractInitArgValue(arg, operands) for arg in args]
+                if varargs is not None:
+                    argVals += operationClass.extractInitArgValue(varargs, operands)
+                kwArgVals = dict()
+                if varkw is not None:
+                    kwArgVals = operationClass.extractInitArgValue(varkw, operands)
+                return operationClass(*argVals, **kwArgVals)
         return Operation(operator, operands)
-
-    @classmethod
-    def operatorOfOperation(subClass):
+    
+    def buildArguments(self):
         '''
-        For Operation sub-classes that use a specific Literal operator, override this to return
-        that specific Literal.  Then the default 'make' method will then work my instantiating
-        the Operation sub-class with just the operands (and checking that the operator is
-        consistent).
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Operation.
         '''
-        raise NotImplementedError("operatorOfOperation not implemented. Cannot use default make method.")
+        from proveit import Literal
+        import inspect
+        operands = self.operands
+        operationClass = self.__class__
+        
+        if hasattr(operationClass, '_operator_') and isinstance(operationClass._operator_, Literal):
+            # The operationClass is for an Operation with a specific literal operator
+            if hasattr(operationClass, 'extractInitArgValue') and operationClass.extractInitArgValue != Operation.extractInitArgValue:
+                operands = self.operands
+                args, varargs, varkw, defaults = inspect.getargsspec(operationClass.__init__)
+                argVals = [operationClass.extractInitArgValue(arg, operands) for arg in args]
+                if varargs is not None:
+                    argVals += operationClass.extractInitArgValue(varargs, operands)
+                for argVal, default in zip(reversed(argVals), reversed(defaults)):
+                    if argVal != default: break # not the same as a default so everything before it must be explicitly specified
+                    argVals.pop(-1) # don't need this last argVal because it is the same as the default
+                for arg, val in zip(args, argVals):
+                    yield (arg, val)
+                if varkw is not None:
+                    kwArgVals = operationClass.extractInitArgValue(varkw, operands)
+                    for arg, val in kwArgVals.iteritems():
+                        yield (arg, val)
+            else:
+                for operand in operands:
+                    yield operand
+        else:
+            # An Operation with no specific literal operator
+            yield self.operator
+            yield self.operands
     
     def string(self, **kwargs):
         return self.operator.string(fence=True) +  '(' + self.operands.string(fence=False, subFence=False) + ')'

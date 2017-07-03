@@ -216,7 +216,15 @@ class ExpressionTensor(Composite, Expression):
         Return the tensor index keys in sorted order.
         '''
         return sorted(self.elems.keys())
-
+    
+    def buildArguments(self):
+        '''
+        Yield the argument (key, value) pairs that could be used to 
+        recreate the ExpressionTensor.
+        '''
+        for key, expr in self.iteritems():
+            yield (str(key), expr)
+                
     @classmethod
     def make(subClass, coreInfo, subExpressions):
         if subClass != ExpressionTensor: 

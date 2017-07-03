@@ -29,17 +29,24 @@ class OperationOverInstances(Operation):
             return NamedExpressions([('imap',lambdaFn), ('domain',domain)])
     
     @staticmethod
-    def extractParameters(operands):
+    def extractInitArgValue(argName, operands):
         '''
-        Extract the parameters from the OperationOverInstances operands:
-        instanceVars, instanceExpr, conditions, domain
+        Given a name of one of the arguments of the __init__ method,
+        return the corresponding value contained in the 'operands'
+        composite expression (i.e., the operands of a constructed operation).
+        
+        Override this if the __init__ argument names are different than the
+        default.
         '''
-        domain = operands['domain'] if 'domain' in operands else None
+        if argName=='domain':
+            return operands['domain'] if 'domain' in operands else None
         instanceMapping = operands['imap'] # instance mapping
-        instanceVars = instanceMapping.parameters
-        conditions = instanceMapping.body['conds']
-        instanceExpr = instanceMapping.body['iexpr'] # instance expression
-        return {'instanceVars':instanceVars, 'instanceExpr':instanceExpr, 'domain':domain, 'conditions':conditions}
+        if argName=='instanceVars':
+            return instanceMapping.parameters
+        elif argName=='instanceExpr':
+            return instanceMapping.body['iexpr'] 
+        elif argName=='conditions':
+            return instanceMapping.body['conds']
         
     def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
         '''
@@ -74,9 +81,10 @@ class OperationOverInstances(Operation):
         '''
         Make the appropriate OperationOverInstances.  coreInfo should equal ['Operation'].
         The first of the subExpressions should be the operator and the subsequent ones 
-        should be operands.  For OperationOverInstances sub-classes that use a specific Literal 
-        operator, override 'operatorOfOperation' and the default behavior of 'make' will be to 
-        instantiate the OperationOverInstances sub-class with extracted parameters of the operand:
+        should be operands.  This implementation expects the OperationOverInstances sub-class
+        to have a class variable named '_operator_' that defines the Literal operator
+        of the class and instantiates the OperationOverInstances sub-class with extracted 
+        parameters of the operand:
         'instanceVars', 'instanceExpr', 'domain', 'conditions'.  Override extractParameters if
         parameters are renamed.
         '''
@@ -85,10 +93,14 @@ class OperationOverInstances(Operation):
         if len(subExpressions) != 2:
             raise ValueError('Expecting exactly two subExpressions for an OperationOverInstances')
         operator, operands = subExpressions[0], subExpressions[1]
-        subClassOperator = operationClass.operatorOfOperation()
+        subClassOperator = operationClass._operator_
         if subClassOperator != operator:
             raise ValueError('Unexpected operator, ' + str(operator) + ', when making ' + str(operationClass)) 
         return operationClass(**operationClass.extractParameters(operands))
+    
+    def makeCode(self, classNameAbbrLookup=None, subExprNameLookup=None):
+        import inspect
+        return classNameAbbrLookup(self.__class__) +  '(' + ','.join(operand.makeCode(classNameAbbrLookup. subExprNameLookup) for operand in self.operands)
     
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)

@@ -38,7 +38,15 @@ class ExpressionList(Composite, Expression):
         if len(coreInfo) != 1 or coreInfo[0] != 'ExpressionList':
             raise ValueError("Expecting ExpressionList coreInfo to contain exactly one item: 'ExpressionList'")
         return ExpressionList(*subExpressions)        
-    
+
+    def buildArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the ExpressionList.
+        '''
+        for subExpr in self.subExprIter():
+            yield subExpr
+        
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 

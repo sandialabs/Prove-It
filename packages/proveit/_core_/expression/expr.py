@@ -359,7 +359,7 @@ class Expression:
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., parameters of a Lambda function)")
         return self
 
-    def _repr_html_(self):
+    def _repr_html_(self, unofficialNameKindContext=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
         from memory or storage if it was generated previously) with a link to
@@ -370,9 +370,8 @@ class Expression:
             self.png, png_path = context._stored_png(self, self.latex(), self._config_latex_tool)
             self.png_path = os.path.relpath(png_path)
         if self.png_path is not None:
-            storage_directory, _ = os.path.split(self.png_path)
-            exprNotebookPath = os.path.join(storage_directory, 'expr.ipynb')
-            html = '<a href="' + exprNotebookPath + '" target="_blank">'
+            exprNotebookPath = context.expressionNotebook(self, unofficialNameKindContext)
+            html = '<a href="' + os.path.relpath(exprNotebookPath) + '" target="_blank">'
             html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
         return html
@@ -401,6 +400,14 @@ def tryDerivation(method, *args, **kwargs):
     except:
         pass
 
+def expressionDepth(expr):
+    '''
+    Returns the depth of the expression tree for the given expression.
+    '''
+    subDepths = [expressionDepth(subExpr) for subExpr in expr.subExprIter()]
+    if len(subDepths)==0: 
+        return 1 # no sub-expressions
+    return max(subDepths)+1 # add 1 to the maximum of the sub-expression depths
 
 class MakeNotImplemented(NotImplementedError):
     def __init__(self, exprSubClass):

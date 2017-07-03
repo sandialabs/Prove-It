@@ -48,6 +48,17 @@ class Block(Bundle):
             raise ValueError("Expecting exactly one sub-expression to make a Block")
         return Block(subExpressions[0], shape, alignmentCoordinates)  
 
+    def buildArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Etcetera expression.
+        '''
+        defaultAlignmentCoords = [list(range(k)) for k in self.shape]
+        yield self.subExpr(0)
+        yield self.shape
+        if self.alignmentCoordinates != defaultAlignmentCoords:
+            yield self.alignmentCoordinates
+
     def string(self, **kwargs):
         return '[[' + self.bundledExpr.string(fence=False) + ']]'
     

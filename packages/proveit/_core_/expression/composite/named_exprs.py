@@ -54,7 +54,15 @@ class NamedExpressions(Composite, Expression):
 
     def values(self):
         return [self.elems[key] for key in self.keywords]
-        
+
+    def buildArguments(self):
+        '''
+        Yield the argument (name, value) pairs that could be used to 
+        recreate the NamedExpressions.  Wrap the names in quotation marks
+        '''
+        for name, expr in self.iteritems():
+            yield ('"' + str(name) + '"', expr)
+            
     @classmethod
     def make(subClass, coreInfo, subExpressions):
         if subClass != NamedExpressions: 

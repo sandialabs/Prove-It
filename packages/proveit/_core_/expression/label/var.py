@@ -12,13 +12,7 @@ class Variable(Label):
         Create a Variable.  If latexFormat is not supplied, the stringFormat is used for both.
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
-
-    @classmethod
-    def make(subClass, coreInfo, subExpressions):
-        if subClass != Variable: 
-            raise MakeNotImplemented(subClass)
-        return Variable._make(coreInfo, subExpressions)
-        
+                                        
     def substituted(self, exprMap, relabelMap = None, reservedVars = None):
         '''
         Returns this expression with the variables substituted 
