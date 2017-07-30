@@ -1,0 +1,11 @@
+sets
+addition
+subtraction
+negation
+ordering
+modular
+multiplication
+exponentiation
+summation
+product
+integration

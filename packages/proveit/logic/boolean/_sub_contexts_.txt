@@ -1,0 +1,5 @@
+implication
+negation
+conjunction
+disjunction
+quantification

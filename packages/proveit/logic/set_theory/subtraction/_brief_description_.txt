@@ -1,0 +1,1 @@
+Define a set by removing elements from an original set.

@@ -1,0 +1,1 @@
+basic logic concepts: boolean arithmetic, equality, and set theory.

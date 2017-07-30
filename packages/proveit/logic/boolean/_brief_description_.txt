@@ -1,0 +1,1 @@
+Boolean arithmetic operations: implication, negation, conjunction, disjunction, and universal/existential quantification.
