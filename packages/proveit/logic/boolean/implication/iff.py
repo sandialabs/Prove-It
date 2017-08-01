@@ -1,8 +1,7 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
-from proveit.logic.boolean.booleans import TRUE, FALSE
 from proveit.logic.boolean.conjunction import compose
 from implies import Implies
-from proveit.common import A, B, C
+from proveit._common_ import A, B, C
 
 # if and only if: A => B and B => A
 class Iff(BinaryOperation):

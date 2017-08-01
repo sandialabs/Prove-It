@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.common import xEtc
+from proveit._common_ import xEtc
 
 class Sqrt(Operation):
     # operator of the Exp operation.

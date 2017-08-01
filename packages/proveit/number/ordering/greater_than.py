@@ -1,7 +1,7 @@
 from proveit import Literal, USE_DEFAULTS
 from proveit.logic import Equals
 from ordering_relation import OrderingRelation
-from proveit.common import a, b, x, y, z
+from proveit._common_ import a, b, x, y, z
 
 class GreaterRelation(OrderingRelation):
     # map left-hand-sides to KnownTruths of GreaterRelation

@@ -1,6 +1,6 @@
 from proveit import Literal, BinaryOperation, MultiVariable, Operation, Etcetera
-from proveit.common import A, B, x
-from proveit.common import f, S, Qmulti, xEtc
+from proveit._common_ import A, B, x
+from proveit._common_ import f, S, Qmulti, xEtc
 
 class Subset(BinaryOperation):
     # operator of the Subset operation

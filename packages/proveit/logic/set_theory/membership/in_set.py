@@ -1,9 +1,9 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
-from proveit.common import x, S
+from proveit._common_ import x, S
 
 class InSet(BinaryOperation):
     # operator of the InSet operation
-    _operator_ = Literal(stringFormat='in', latexFormat=r'in', context=__file__)    
+    _operator_ = Literal(stringFormat='in', latexFormat=r'\in', context=__file__)    
     
     def __init__(self, element, domain):
         BinaryOperation.__init__(self, InSet._operator_, element, domain)
@@ -80,7 +80,7 @@ class InSet(BinaryOperation):
             if evaluation.rhs == TRUE:
                 self.domain.deduceMembership(self.element, assumptions)
             else:
-                self.domain.deduceNonMembership(self.element, assumptions)
+                self.domain.deduceNonmembership(self.element, assumptions)
         except:
             pass
         if evaluation is None:

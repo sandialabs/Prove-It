@@ -1,6 +1,6 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
 from equals import Equals
-from proveit.common import x, y, A, X
+from proveit._common_ import x, y, A, X
 
 class NotEquals(BinaryOperation):
     # operator of the NotEquals operation

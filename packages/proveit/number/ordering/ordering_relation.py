@@ -1,6 +1,6 @@
 from proveit import BinaryOperation, safeDummyVar, ProofFailure, USE_DEFAULTS
 from proveit.logic import Equals
-from proveit.common import x, y
+from proveit._common_ import x, y
 
 class OrderingRelation(BinaryOperation):
     r'''
@@ -73,16 +73,16 @@ class OrderingRelation(BinaryOperation):
         '''
         From, e.g., x >= y derive y <= x etc.
         '''
-        from less_than import LESSTHAN, LESSTHANEQUALS
-        from greater_than import GREATERTHAN, GREATERTHANEQUALS
+        from less_than import Less, LessEq
+        from greater_than import Greater, GreaterEq
         from axioms import reverseGreaterThanEquals, reverseLessThanEquals, reverseGreaterThan, reverseLessThan
-        if self.operator == LESSTHANEQUALS:
+        if self.operator == LessEq._operator_:
             return reverseLessThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConsequent(assumptions)
-        elif self.operator == LESSTHAN:
+        elif self.operator == Less._operator_:
             return reverseLessThan.specialize({x:self.lhs, y:self.rhs}).deriveConsequent(assumptions)
-        elif self.operator == GREATERTHANEQUALS:
+        elif self.operator == GreaterEq._operator_:
             return reverseGreaterThanEquals.specialize({x:self.lhs, y:self.rhs}).deriveConsequent(assumptions)
-        elif self.operator == GREATERTHAN:
+        elif self.operator == Greater._operator_:
             return reverseGreaterThan.specialize({x:self.lhs, y:self.rhs}).deriveConsequent(assumptions)
         else:
             raise ValueError("Invalid instance of OrderingRelation!")

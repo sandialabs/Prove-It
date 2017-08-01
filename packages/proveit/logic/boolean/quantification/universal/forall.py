@@ -1,5 +1,5 @@
 from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExpressionList, Operation, tryDerivation, ProofFailure
-from proveit.common import P, Q, R, S, xMulti, yMulti, Qmulti, Rmulti
+from proveit._common_ import P, Q, R, S, xMulti, yMulti, Qmulti, Rmulti
 
 class Forall(OperationOverInstances):
     # operator of the Forall operation

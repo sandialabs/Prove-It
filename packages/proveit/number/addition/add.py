@@ -1,6 +1,6 @@
 from proveit import Literal, AssociativeOperation
 from proveit.number.sets import zero
-from proveit.common import x, y
+from proveit._common_ import x, y
 
 class Add(AssociativeOperation):
     # operator of the Add operation

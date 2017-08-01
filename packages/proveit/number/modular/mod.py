@@ -1,6 +1,6 @@
 from proveit import Literal, BinaryOperation
 from proveit.number.sets import Integers, Reals
-from proveit.common import a, b
+from proveit._common_ import a, b
 
 class Mod(BinaryOperation):
     # operator of the Mod operation.

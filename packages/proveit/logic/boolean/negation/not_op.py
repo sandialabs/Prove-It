@@ -1,6 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, tryDerivation, defaults
-from proveit.logic.boolean.booleans import TRUE, FALSE
-from proveit.common import A, x, y, S
+from proveit._common_ import A, x, y, S
 
 class Not(Operation):
     # operator of the Not operation
@@ -75,6 +74,7 @@ class Not(Operation):
         '''
         from _theorems_ import notT, notF # load in truth-table evaluations
         from _theorems_ import doubleNegationEquiv
+        from proveit.logic.boolean._common_ import TRUE, FALSE
         from proveit.logic.boolean.negation._axioms_ import falsifiedNegationIntro
         if self.operand == TRUE: return notT
         if self.operand == FALSE: return notF

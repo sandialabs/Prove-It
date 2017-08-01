@@ -1,6 +1,6 @@
 from proveit import Expression, BinaryOperation, USE_DEFAULTS, ProofFailure, tryDerivation
 from proveit import Literal, Operation, Lambda
-from proveit.common import A, P, Q, f, x, y, z
+from proveit._common_ import A, P, Q, f, x, y, z
 from proveit.logic.transitivity_search import transitivitySearch
 from irreducible_value import IrreducibleValue
 

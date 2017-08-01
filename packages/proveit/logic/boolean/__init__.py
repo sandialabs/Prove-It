@@ -1,5 +1,6 @@
 from quantification import Forall, Exists, NotExists
-from proveit.logic.boolean.booleans import TRUE, FALSE, Booleans, inBool
+from _common_ import Booleans, TRUE, FALSE
+from booleans import inBool
 from conjunction import And, compose
 from disjunction import Or
 from negation import Not

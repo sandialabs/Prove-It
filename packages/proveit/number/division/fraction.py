@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, BinaryOperation, maybeFencedLatex, safeDummyVar
-from proveit.common import w, x, y, z, xEtc
+from proveit._common_ import w, x, y, z, xEtc
 
 class Fraction(BinaryOperation):
     # operator of the Fraction operation.

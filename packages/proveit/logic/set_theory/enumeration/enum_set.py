@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit.common import x, y, yMulti
+from proveit._common_ import x, y, yMulti
 
 class Set(Operation):
     '''
@@ -26,23 +26,23 @@ class Set(Operation):
         Deduce and return and [element in {x, y, ..}] = [(element=x) or (element=y) or ...] 
         where self = {y}.
         '''
-        from _axioms_ import singletonDef
-        from _theorems import membershipEquiv
+        from _axioms_ import enumSetDef
+        from _theorems_ import singletonDef
         if len(self.elements) == 1:
-            return singletonDef.specialize({x:element, y:self.elem})
+            return singletonDef.specialize({x:element, y:self.elements[0]})
         else:
-            return membershipEquiv.specialize({x:element, yMulti:self.elements})
+            return enumSetDef.specialize({x:element, yMulti:self.elements})
 
-    def nonMembershipEquivalence(self, element):
+    def nonmembershipEquivalence(self, element):
         '''
         Deduce and return and [element not in {x, y, ..}] = [(element != x) and (element != y) and ...]
         where self = {y}.
         '''
-        from _theorems_ import notInSingletonEquiv, nonMembershipEquiv
+        from _theorems_ import notInSingletonEquiv, nonmembershipEquiv
         if len(self.elements) == 1:
             return notInSingletonEquiv.specialize({x:element, y:self.elem})
         else:
-            return nonMembershipEquiv.specialize({x:element, yMulti:self.elements})
+            return nonmembershipEquiv.specialize({x:element, yMulti:self.elements})
   
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''

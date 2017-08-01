@@ -1,5 +1,5 @@
 from proveit import Literal
-from proveit.common import a
+from proveit._common_ import a
 
 class ComplexSet(Literal):
     def __init__(self):

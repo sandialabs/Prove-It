@@ -1,10 +1,11 @@
 from membership import InSet, NotInSet
 from enumeration import Set
-from cardinality import Card
+from containment import SupersetEq, SubsetEq
 from unification import Union
 from intersection import Intersect
-from containment import SupersetEq, SubsetEq
 from subtraction import Difference
 from comprehension import SetOfAll
+from disjointness import Disjoint, Distinct
+from cardinality import Card
 
-from common import NOTHING
+from _common_ import EmptySet

@@ -1,6 +1,6 @@
 from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
-from proveit.logic.boolean.booleans import TRUE, FALSE, inBool
-from proveit.common import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti
+from proveit.logic.boolean.booleans import inBool
+from proveit._common_ import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti
 
 class And(AssociativeOperation):
     # The operator of the And operation
@@ -103,6 +103,7 @@ class And(AssociativeOperation):
         '''
         from _axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations    
         from _theorems_ import conjunctionTrueEval, conjunctionFalseEval
+        from proveit.logic.boolean._common_ import TRUE, FALSE
         falseIndex = -1
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:

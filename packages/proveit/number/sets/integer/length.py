@@ -1,5 +1,5 @@
 from proveit import Operation, Literal, USE_DEFAULTS
-from proveit.common import xMulti, y
+from proveit._common_ import xMulti, y
 
 class Len(Operation):
     # operator of the Length operation.

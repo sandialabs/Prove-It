@@ -1,5 +1,5 @@
 from proveit import Literal, BinaryOperation
-from proveit.common import A, B, x
+from proveit._common_ import A, B, x
 
 class Superset(BinaryOperation):
     # operator of the Superset operation

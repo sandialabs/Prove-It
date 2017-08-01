@@ -1,7 +1,6 @@
 from proveit import Literal, BinaryOperation, defaults, USE_DEFAULTS, compositeExpression, tryDerivation, ProofFailure
-from proveit.logic.boolean.booleans import TRUE, FALSE
 from proveit.logic.boolean.negation import Not
-from proveit.common import A, B, C
+from proveit._common_ import A, B, C
 
 class Implies(BinaryOperation):
     _operator_ = Literal(stringFormat='=>', latexFormat=r'\Rightarrow', context=__file__)
@@ -27,6 +26,7 @@ class Implies(BinaryOperation):
         From A => FALSE, automatically derive Not(A) if [A in Booleans].
         From Not(A) => FALSE, automatically derive A if [A in Booleans].
         '''
+        from proveit.logic.boolean._common_ import FALSE
         Implies.knownImplications.setdefault(self.antecedent, set()).add(knownTruth)
         Implies.knownImplications.setdefault(self.consequent, set()).add(knownTruth)
         Implies.knownImplicationsOfConsequent.setdefault(self.consequent, set()).add(knownTruth)

@@ -1,5 +1,5 @@
 from proveit import Literal, OperationOverInstances, Operation, Etcetera, safeDefaultOrDummyVar, USE_DEFAULTS
-from proveit.common import x, y, f, P, Q, Qmulti, S, yMulti, yEtc
+from proveit._common_ import x, y, f, P, Q, Qmulti, S, yMulti, yEtc
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
@@ -12,17 +12,19 @@ class SetOfAll(OperationOverInstances):
         '''
         OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVars, instanceElement, domain, conditions)
         self.instanceElement = self.instanceExpr
-        
+
     @staticmethod
-    def extractParameters(operands):
+    def extractInitArgValue(argName, operands):
         '''
-        Extract the parameters from the OperationOverInstances operands:
-        instanceVars, instanceElement, conditions, domain
+        Given a name of one of the arguments of the __init__ method,
+        return the corresponding value contained in the 'operands'
+        composite expression (i.e., the operands of a constructed operation).
         '''
-        params = OperationOverInstances.extractParameters(operands)
-        params['instanceElement'] = params['instanceExpr']
-        params.pop('instanceExpr')
-        return params
+        if argName=='instanceElement':
+            instance_mapping = operands['imap'] # instance mapping
+            return instance_mapping.body['iexpr'] 
+        else:
+            return OperationOverInstances.extractInitArgValue(argName, operands)
         
     def _formatted(self, formatType, fence=False):
         outStr = ''

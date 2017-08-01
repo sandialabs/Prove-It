@@ -10,7 +10,22 @@ class DigitLiteral(Literal):
         assert n >= 0 and n < 10, 'Digits are 0 through 9'
         Literal.__init__(self, str(n), context=__file__)
         self.n = n
-    
+
+    def buildArguments(self):
+        '''
+        Yield the argument values that could be used to recreate this DigitLiteral.
+        '''
+        yield str(self.n)
+        
+    @staticmethod
+    def makeLiteral(string_format, latex_format, context):
+        '''
+        Make the DigitLiteral that matches the core information.
+        '''
+        from proveit import Context
+        assert context==Context(__file__), 'Expecting a different Context for a DigitLiteral'
+        return DigitLiteral(int(string_format))
+     
     def deduceInNaturals(self):
         if DigitLiteral._inNaturalsStmts is None:
             from natural.axioms import zeroInNaturals
@@ -40,13 +55,3 @@ class DigitLiteral(Literal):
             DigitLiteral._positiveStmts = {1:oneIsPositive, 2:twoIsPositive, 3:threeIsPositive, 4:fourIsPositive, 5:fiveIsPositive, 6:sixIsPositive, 7:sevenIsPositive, 8:eightIsPositive, 9:nineIsPositive}
         return DigitLiteral._positiveStmts[self.n]
         
-zero = DigitLiteral(0)
-one = DigitLiteral(1)
-two = DigitLiteral(2)
-three = DigitLiteral(3)
-four = DigitLiteral(4)
-five = DigitLiteral(5)
-six = DigitLiteral(6)
-seven = DigitLiteral(7)
-eight = DigitLiteral(8)
-nine = DigitLiteral(9)

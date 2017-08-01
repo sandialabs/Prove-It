@@ -1,45 +1,22 @@
 from proveit import Literal
 from naturals import NaturalsSet, NaturalsPosSet
 from integers import IntegerSet
-from digit import zero, one, two, three, four, five, six, seven, eight, nine
+from digit import DigitLiteral
 
 Naturals = NaturalsSet()
 NaturalsPos = NaturalsPosSet()
 Integers = IntegerSet()
 
-ALL_DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
+zero = DigitLiteral(0)
+one = DigitLiteral(1)
+two = DigitLiteral(2)
+three = DigitLiteral(3)
+four = DigitLiteral(4)
+five = DigitLiteral(5)
+six = DigitLiteral(6)
+seven = DigitLiteral(7)
+eight = DigitLiteral(8)
+nine = DigitLiteral(9)
 
-def num(x):
-    from proveit.number import Neg
-    from proveit.number.sets.integer.decimal import WholeDecimal
-    if x < 0:
-        return Neg(num(abs(x)))
-    if isinstance(x, int):
-        if x < 10:
-            if x == 0:
-                return zero
-            elif x == 1:
-                return one
-            elif x == 2:
-                return two
-            elif x == 3:
-                return three
-            elif x == 4:
-                return four
-            elif x == 5:
-                return five
-            elif x == 6:
-                return six
-            elif x == 7:
-                return seven
-            elif x == 8:
-                return 8
-            elif x == 9:
-                return 9
-        else:
-            return WholeDecimal([num(int(digit)) for digit in str(x)])
-    else:
-        assert False, 'num not implemented for anything except integers currently. plans to take in strings or floats with specified precision'
-
-infinity = Literal('infinity',r'\infty')
+infinity = Literal('infinity',r'\infty', __file__)
 

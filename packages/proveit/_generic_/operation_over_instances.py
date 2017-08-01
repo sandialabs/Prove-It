@@ -14,11 +14,10 @@ class OperationOverInstances(Operation):
         [('imap', instanceVars -> [('iexpr',instanceExpr), ('conditions',conditions)]), ('domain',domain)]
         '''
         Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain, conditions))
-        params = OperationOverInstances.extractParameters(self.operands)
-        self.instanceVars = params['instanceVars']
-        self.instanceExpr = params['instanceExpr']
-        self.domain = params['domain']
-        self.conditions = params['conditions']
+        self.instanceVars = OperationOverInstances.extractInitArgValue('instanceVars', self.operands)
+        self.instanceExpr = OperationOverInstances.extractInitArgValue('instanceExpr', self.operands)
+        self.domain = OperationOverInstances.extractInitArgValue('domain', self.operands)
+        self.conditions = OperationOverInstances.extractInitArgValue('conditions', self.operands)
     
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, domain, conditions):
@@ -38,15 +37,18 @@ class OperationOverInstances(Operation):
         Override this if the __init__ argument names are different than the
         default.
         '''
+        from proveit import singleOrCompositeExpression
         if argName=='domain':
             return operands['domain'] if 'domain' in operands else None
         instanceMapping = operands['imap'] # instance mapping
         if argName=='instanceVars':
-            return instanceMapping.parameters
+            return singleOrCompositeExpression(instanceMapping.parameters)
         elif argName=='instanceExpr':
             return instanceMapping.body['iexpr'] 
         elif argName=='conditions':
-            return instanceMapping.body['conds']
+            conditions = instanceMapping.body['conds']
+            if len(conditions)==0: return tuple()
+            return conditions
         
     def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
         '''
@@ -75,32 +77,6 @@ class OperationOverInstances(Operation):
         Returns True if this OperationOverInstances has conditions.
         '''
         return len(self.conditions) > 0
-
-    @classmethod
-    def make(operationClass, coreInfo, subExpressions):
-        '''
-        Make the appropriate OperationOverInstances.  coreInfo should equal ['Operation'].
-        The first of the subExpressions should be the operator and the subsequent ones 
-        should be operands.  This implementation expects the OperationOverInstances sub-class
-        to have a class variable named '_operator_' that defines the Literal operator
-        of the class and instantiates the OperationOverInstances sub-class with extracted 
-        parameters of the operand:
-        'instanceVars', 'instanceExpr', 'domain', 'conditions'.  Override extractParameters if
-        parameters are renamed.
-        '''
-        if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
-            raise ValueError("Expecting Operation coreInfo to contain exactly one item: 'Operation'")
-        if len(subExpressions) != 2:
-            raise ValueError('Expecting exactly two subExpressions for an OperationOverInstances')
-        operator, operands = subExpressions[0], subExpressions[1]
-        subClassOperator = operationClass._operator_
-        if subClassOperator != operator:
-            raise ValueError('Unexpected operator, ' + str(operator) + ', when making ' + str(operationClass)) 
-        return operationClass(**operationClass.extractParameters(operands))
-    
-    def makeCode(self, classNameAbbrLookup=None, subExprNameLookup=None):
-        import inspect
-        return classNameAbbrLookup(self.__class__) +  '(' + ','.join(operand.makeCode(classNameAbbrLookup. subExprNameLookup) for operand in self.operands)
     
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
@@ -155,10 +131,10 @@ class OperationOverInstances(Operation):
         Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..) = Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
         Works also when there is no domain S and/or no conditions ..Q...
         '''
-        from proveit.logic.axioms import instanceSubstitution
+        from proveit.logic.equality._axioms_ import instanceSubstitution
         from proveit.logic import Forall, Equals
         from proveit.number import num
-        from proveit.common import n, Q, Qetc, xEtc, yEtc, zEtc, etc_QxEtc, f, g, fxEtc, fyEtc, gxEtc, gzEtc, Upsilon, S
+        from proveit._common_ import n, Q, Qetc, xEtc, yEtc, zEtc, etc_QxEtc, f, g, fxEtc, fyEtc, gxEtc, gzEtc, Upsilon, S
         if not isinstance(equivalenceForallInstances, Forall):
             raise InstanceSubstitutionException("equivalenceForallInstances must be a forall expression", self, equivalenceForallInstances)
         if len(equivalenceForallInstances.instanceVars) != len(self.instanceVars):

@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, AssociativeOperation, Etcetera, MultiVariable
 from proveit.logic import Equals
 from proveit.number.sets import Reals, RealsPos, Complexes, zero, one
-from proveit.common import a, b, c, n, x, vEtc, wEtc, xEtc, yEtc, zEtc, S
+from proveit._common_ import a, b, c, n, x, vEtc, wEtc, xEtc, yEtc, zEtc, S
 
 class Mult(AssociativeOperation):
     # operator of the Mult operation.

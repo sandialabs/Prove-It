@@ -1,5 +1,5 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
-from proveit.common import x, S
+from proveit._common_ import x, S
 
 class NotInSet(BinaryOperation):
     # operator of the NotInSet operation
@@ -21,9 +21,9 @@ class NotInSet(BinaryOperation):
         Deduces and returns an equivalence for (x not in S), by definition.
         For example, (x not in {y}) = (x != y)
         '''
-        if hasattr(self.domain, 'nonMembershipEquivalence'):
-            return self.domain.nonMembershipEquivalence(self.element, assumptions=assumptions)
-        raise AttributeError("'nonMembershipEquivalence' is not implemented for a domain of type " + str(self.domain.__class__))            
+        if hasattr(self.domain, 'nonmembershipEquivalence'):
+            return self.domain.nonmembershipEquivalence(self.element, assumptions=assumptions)
+        raise AttributeError("'nonmembershipEquivalence' is not implemented for a domain of type " + str(self.domain.__class__))            
         
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -73,7 +73,7 @@ class NotInSet(BinaryOperation):
         # generates a shorter proof.
         try:
             if evaluation.rhs == TRUE:
-                self.domain.deduceNonMembership(self.element, assumptions)
+                self.domain.deduceNonmembership(self.element, assumptions)
             else:
                 self.domain.deduceMembership(self.element, assumptions)
         except:
