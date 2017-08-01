@@ -38,7 +38,11 @@ class Expression:
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
-        return str(self.__class__) + '[' + ','.join(self._coreInfo) + '];[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+        import sys
+        context = Context(sys.modules[self.__class__.__module__].__file__)
+        # get the full class path relative to the root context where the class is defined
+        class_path = context.name + '.' + self.__class__.__module__.split('.')[-1] + '.' + str(self.__class__).split('.')[-1]
+        return class_path + '[' + ','.join(self._coreInfo) + '];[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
 
     @staticmethod
     def _extractExprClass(unique_rep):
@@ -154,7 +158,7 @@ class Expression:
         free make attempts that may be cyclic.
         '''
         from proveit import KnownTruth, ProofFailure
-        from proveit import Not
+        from proveit.logic import Not
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptionsSet = set(assumptions)
         if automation is USE_DEFAULTS:
@@ -212,7 +216,7 @@ class Expression:
         expression. Override `concludeNegation` for automation specific to
         the type of expression being negated.      
         '''
-        from proveit import Not
+        from proveit.logic import Not
         return Not(self).prove(assumptions=assumptions, automation=automation)
                         
     def genericConclude(self, assumptions=USE_DEFAULTS):
@@ -227,7 +231,7 @@ class Expression:
         The `prove` method has a mechanism to prevent infinite recursion, 
         so there are no worries regarding cyclic attempts to conclude an expression.
         '''
-        from proveit import concludeViaReduction, concludeViaImplication
+        from proveit.logic import concludeViaReduction, concludeViaImplication
         try:
             return concludeViaReduction(self, assumptions)
         except:
@@ -336,7 +340,7 @@ class Expression:
         prove the expression and, if successful, return this expression
         equal to TRUE.  Override for other appropriate functionality.
         '''
-        from proveit import defaultEvaluate
+        from proveit.logic import defaultEvaluate
         return defaultEvaluate(self, assumptions)
     
     def orderOfAppearance(self, subExpressions):
@@ -359,13 +363,20 @@ class Expression:
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., parameters of a Lambda function)")
         return self
 
-    def _repr_html_(self, unofficialNameKindContext=None):
+    def _repr_html_(self, context=None, unofficialNameKindContext=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
         from memory or storage if it was generated previously) with a link to
         an expr.ipynb notebook for displaying the expression information.
+        If 'context' is provided, find the stored expression information in
+        that context; otherwise, use the default, current directory Context.
+        If 'unofficialNameKindContext' is provided, it should be the 
+        (name, kind, context) for a special expression that is not-yet-official
+        (%end_[common/axioms/theorems] has not been called yet in the special 
+        expressions notebook).
         '''
-        context = Context()
+        if context is None:
+            context = Context()
         if not hasattr(self,'png'):
             self.png, png_path = context._stored_png(self, self.latex(), self._config_latex_tool)
             self.png_path = os.path.relpath(png_path)

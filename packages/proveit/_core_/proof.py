@@ -177,7 +177,7 @@ class Proof:
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
                 html += r'<td colspan=3>'
                 html += proof.stepType() + ': '
-                html += proof.package + '.' + proof.name
+                html += str(proof.context) + '.' + proof.name
             else:
                 requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
                 assumptionsStr = '<span style="font-size:20px;">'
@@ -361,7 +361,7 @@ def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
     Make sure the implicationExpr is a proper implication with
     antecedentExpr as the antecedent and consequentExpr as the consequent.
     '''
-    from proveit import Implies
+    from proveit.logic import Implies
     assert isinstance(implicationExpr, Implies),  'The result of hypothetical reasoning must be an Implies operation'
     assert len(implicationExpr.operands)==2, 'Implications are expected to have two operands'
     assert antecedentExpr==implicationExpr.operands[0], 'The result of hypothetical reasoning must be an Implies operation with the proper antecedent'
@@ -369,7 +369,7 @@ def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
 
 class ModusPonens(Proof):
     def __init__(self, implicationExpr, assumptions=None):
-        from proveit import Implies
+        from proveit.logic import Implies
         assumptions = defaults.checkedAssumptions(assumptions)
         # obtain the implication and antecedent KnownTruths
         assert isinstance(implicationExpr, Implies) and len(implicationExpr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
@@ -399,7 +399,7 @@ class ModusPonens(Proof):
 
 class HypotheticalReasoning(Proof):
     def __init__(self, consequentTruth, antecedentExpr): 
-        from proveit import Implies
+        from proveit.logic import Implies
         assumptions = [assumption for assumption in consequentTruth.assumptions if assumption != antecedentExpr]
         implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
         implicationTruth = KnownTruth(implicationExpr, assumptions, self)
@@ -480,7 +480,8 @@ class Specialization(Proof):
         return 'relabeling' # relabeling only
     
     def mappingHTML(self):
-        from proveit import Lambda, Set
+        from proveit import Lambda
+        from proveit.logic import Set
         mappedVarLists = self.mappedVarLists
         html = '<span style="font-size:20px;">'
         if len(mappedVarLists) == 1 or (len(mappedVarLists) == 2 and len(mappedVarLists[-1]) == 0):
@@ -508,7 +509,8 @@ class Specialization(Proof):
         themselves or bundled instance variables (Etcetera-wrapped or Block-wrapped 
         MultiVariables) as empty lists. 
         '''
-        from proveit import Forall, InSet, Lambda, ExpressionList, Etcetera
+        from proveit import Lambda, ExpressionList, Etcetera
+        from proveit.logic import Forall, InSet
         
         # check that the mappings are appropriate
         for key, sub in relabelMap.items():
@@ -617,7 +619,8 @@ class Generalization(Proof):
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z in Reals | g(y, z), h(z)} ...
         '''
-        from proveit import KnownTruth, Forall, Variable, MultiVariable, InSet, Etcetera
+        from proveit import KnownTruth, Variable, MultiVariable, Etcetera
+        from proveit.logic import Forall, InSet
         if not isinstance(instanceTruth, KnownTruth):
             raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
         # the assumptions required for the generalization are the assumptions of
@@ -677,7 +680,8 @@ class Generalization(Proof):
         '''
         Make sure the generalizedExpr is a proper generalization of the instanceExpr.
         '''
-        from proveit import Forall, Lambda
+        from proveit import Lambda
+        from proveit.logic import Forall
         assert isinstance(generalizedExpr, Forall), 'The result of a generalization must be a Forall operation'
         operands = generalizedExpr.operands
         lambdaExpr = operands['imap']

@@ -45,7 +45,11 @@ class Storage:
                 with open(self.pathsFilename, 'w') as pathsFile:
                     # the first entry indicates the directory of this path
                     pathsFile.write('. ' + directory + '\n')
-        
+
+        # map expression objects to special expression kind and name
+        # for the associated context (the kind is 'common', 'axiom', or 'theorem').
+        self.specialExpressions = dict()
+                        
         # For retrieved pv_it files that represent Prove-It object (Expressions, KnownTruths, and Proofs),
         # this maps the object to the pv_it file so we
         # can recall this without searching the hard drive again.
@@ -155,19 +159,32 @@ class Storage:
             else:
                 return hash_directory
     
+    def _split(self, proveItStorageId):
+        '''
+        Split the given storage-id into a context name and the hash directory.
+        The context may be implicit (if in the same context it is referenced),
+        in which case the context name will be empty.
+        '''
+        if '.' in proveItStorageId:
+            # in a different context
+            splitId = proveItStorageId.split('.')
+            context_name, hash_directory = '.'.join(splitId[:-1]), splitId[-1]
+            return context_name, hash_directory
+        return '', proveItStorageId
+            
+    
     def _storagePath(self, proveItStorageId):
         '''
         Return the storage directory path for the Prove-It object with the given
         storage id.
         '''
         from context import Context
-        if '.' in proveItStorageId:
-            # in a different context
-            splitId = proveItStorageId.split('.')
-            context_name, hash_directory = '.'.join(splitId[:-1]), splitId[-1]
+        context_name, hash_directory = self._split(proveItStorageId)
+        if context_name == '':
+            return os.path.join(self.context._storage.pv_it_dir, hash_directory)
+        else:            
             pv_it_dir = Context.getContext(context_name)._storage.pv_it_dir
             return os.path.join(pv_it_dir, hash_directory)
-        return os.path.join(self.context._storage.pv_it_dir, proveItStorageId)
     
     def _proveItObjUniqueRep(self, proveItObject):
         '''
@@ -187,19 +204,28 @@ class Storage:
         # represent other referenced Prove-It objects 
         return prefix + proveItObject._generate_unique_rep(self._proveItStorageId)
     
-    def _extractReferencedStorageIds(self, unique_rep):
+    def _extractReferencedStorageIds(self, unique_rep, context_name=''):
         '''
         Given a unique representation string, returns the list of Prove-It
-        storage ids of objects that are referenced.
+        storage ids of objects that are referenced.  A context_name may be
+        given; if the Context is the one associated with this Storage object
+        then the default may be used.
         '''
         from proveit import Expression, KnownTruth, Proof
         if unique_rep[:6] == 'Proof:':
-            return Proof._extractReferencedObjIds(unique_rep[6:])
+            storage_ids = Proof._extractReferencedObjIds(unique_rep[6:])
         elif unique_rep[:11] == 'KnownTruth:':
-            return KnownTruth._extractReferencedObjIds(unique_rep[11:])
+            storage_ids = KnownTruth._extractReferencedObjIds(unique_rep[11:])
         else:
             # Assumed to be an expression then
-            return Expression._extractReferencedObjIds(unique_rep)
+            storage_ids = Expression._extractReferencedObjIds(unique_rep)
+        def relativeToExplicitPrefix(exprId, contextName):
+            # if the exprId is relative to the context it is in, make the context explicit
+            if '.' in exprId: return exprId # already has an explicit context
+            return contextName + '.' + exprId
+        if context_name != '':
+            return [relativeToExplicitPrefix(storage_id, context_name) for storage_id in storage_ids]
+        return storage_ids
 
     def _addReference(self, proveItStorageId):
         '''
@@ -234,7 +260,11 @@ class Storage:
         ref_count.txt file is simply updated with the new reference count.
         Return the new reference count and path to the hash directory.
         '''
+        context_name, hash_directory = self._split(proveItStorageId)
         hash_path = self._storagePath(proveItStorageId)
+        if not os.path.isdir(hash_path):
+            print "WARNING: Referenced '__pv_it' path, for removal, does not exist: %s"%hash_path
+            return # not there -- skip it
         with open(os.path.join(hash_path, 'ref_count.txt'), 'r') as f:
             ref_count = int(f.read().strip()) - 1
         if ref_count <= 0:
@@ -243,18 +273,10 @@ class Storage:
             # storage and everything associated with it.
             with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
                 rep = f.read()
-            for objId in self._extractReferencedStorageIds(rep):
+            for objId in self._extractReferencedStorageIds(rep, context_name):
                 self._removeReference(objId)
             # remove the entire directory storing this prove-it object
-            for filename in os.listdir(hash_path):
-                path = os.path.join(hash_path, filename)
-                if os.path.isdir(path):
-                    for sub_filename in os.listdir(path):
-                        os.remove(os.path.join(path, sub_filename))
-                    os.rmdir(path)
-                else:
-                    os.remove(path)
-            os.rmdir(hash_path)
+            self._erase_hash_directory(hash_path)
         else:
             # change the reference count in the file
             with open(os.path.join(hash_path, 'ref_count.txt'), 'w') as f:
@@ -265,6 +287,21 @@ class Storage:
                 name_path = os.path.join(hash_path, 'name.txt')
                 if os.path.isfile(name_path):
                     os.remove(name_path)
+    
+    def _erase_hash_directory(self, hash_path):
+        '''
+        Remove the entire directory storing this prove-it object.
+        '''
+        for filename in os.listdir(hash_path):
+            path = os.path.join(hash_path, filename)
+            if os.path.isdir(path):
+                for sub_filename in os.listdir(path):
+                    os.remove(os.path.join(path, sub_filename))
+                os.rmdir(path)
+            else:
+                os.remove(path)
+        os.rmdir(hash_path)
+        
     
     def _retrieve(self, proveItObject):
         '''
@@ -290,7 +327,14 @@ class Storage:
         index = 0
         while os.path.exists(hash_path + str(index)):
             indexed_hash_path = hash_path + str(index)
-            with open(os.path.join(indexed_hash_path, 'unique_rep.pv_it'), 'r') as f:
+            unique_rep_filename = os.path.join(indexed_hash_path, 'unique_rep.pv_it')
+            if not os.path.isfile(unique_rep_filename):
+                # folder does not contain a unique_rep.pv_it file;
+                # assume it was not erased properly a previous time 
+                # and try to remove it again.
+                self._erase_hash_directory(indexed_hash_path)
+                break
+            with open(unique_rep_filename, 'r') as f:
                 rep = f.read()
                 if rep == unique_rep: # found a match; it is already in storage
                     # remember this for next time
@@ -317,12 +361,15 @@ class Storage:
     def expressionNotebook(self, expr, unofficialNameKindContext=None):
         '''
         Return the path of the expression notebook, creating it if it
-        does not already exist.
+        does not already exist.  If 'unofficialNameKindContext' is provided,
+        it should be the (name, kind, context) for a special expression
+        that is not-yet-official (%end_[common/axioms/theorems] has not been
+        called yet in the special expressions notebook).
         '''
         import proveit
         from proveit import Expression, expressionDepth
         from context import Context
-
+        
         if not isinstance(expr, Expression):
             raise ValueError("'expr' should be an Expression object")
 
@@ -335,124 +382,145 @@ class Storage:
         # That way we will know whether or not the notebook needs to be
         # re-written (if we did not know it was a special expression before).
         try:
-            exprAddress = self.context.specialExprAddress(expr)
+            expr_address = self.context.specialExprAddress(expr)
         except KeyError:
-            exprAddress = None
-        needsRewriting = False
-        if exprAddress is not None:
+            expr_address = None
+        needs_rewriting = False
+        if expr_address is not None:
             special_expr_name_filename = os.path.join(self.pv_it_dir, hash_directory, 'name.txt')
             if not os.path.isfile(special_expr_name_filename):
-                needsRewriting = True
+                needs_rewriting = True
                 with open(special_expr_name_filename, 'w') as nameFile:
-                    nameFile.write(exprAddress[-1])
+                    nameFile.write(expr_address[-1])
         filename = os.path.join(self.pv_it_dir, hash_directory, 'expr.ipynb')
-        if not needsRewriting and os.path.isfile(filename):
+        if not needs_rewriting and os.path.isfile(filename):
             return filename # return the existing proof file
         
-        exprClasses = set()
-        unnamedSubExprOccurences = dict()
-        namedSubExprAddresses = dict()
+        expr_classes = set()
+        unnamed_subexpr_occurences = dict()
+        named_subexpr_addresses = dict()
         # maps each class name or special expression name to a list of objects being represented; that
         # way we will know whether we can use the abbreviated name or full address.
-        namedItems = dict() 
-        self._exprBuildingPrerequisites(expr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems)
+        named_items = dict() 
+        self._exprBuildingPrerequisites(expr, expr_classes, unnamed_subexpr_occurences, named_subexpr_addresses, named_items, isSubExpr=False)
         # find sub-expressions that are used multiple times, these ones will be assigned to a variable
-        multiUseSubExprs = [subExpr for subExpr, count in unnamedSubExprOccurences.iteritems() if count > 1]
+        multiuse_subexprs = [sub_expr for sub_expr, count in unnamed_subexpr_occurences.iteritems() if count > 1]
         # sort the multi-use sub-expressions so that the shallower ones come first
-        multiUseSubExprs = sorted(multiUseSubExprs, key = lambda expr : expressionDepth(expr))
+        multiuse_subexprs = sorted(multiuse_subexprs, key = lambda expr : expressionDepth(expr))
         
         # map modules to lists of objects to import from the module
-        fromImports = dict()
+        from_imports = dict()
         # set of modules to import directly
-        directImports = set()
+        direct_imports = set()
         # map from expression classes or special expressions to their names (abbreviated if there is no
         # ambiguity, otherwise using the full address).
-        itemNames = dict() 
-
-        for exprClass in exprClasses:
-            className = self.className(exprClass)
-            moduleName = self._moduleAbbreviatedName(exprClass.__module__, className)
-            isUnique = (len(namedItems[className]) == 1)
-            if isUnique:
-                fromImports.setdefault(moduleName, []).append(className)
-                itemNames[exprClass] = className
-            else:
-                directImports.add(moduleName)
-                itemNames[exprClass] = moduleName+'.'+className
-        for expr, exprAddress in namedSubExprAddresses.iteritems():
-            moduleName = exprAddress[0]
-            itemNames[expr] = objName = exprAddress[-1]
-            isUnique = (len(namedItems[objName]) == 1)
-            fromImports.setdefault(moduleName, []).append(objName)
+        item_names = dict() 
         
-        # see if we need to add anything to sys.path in order to import the module of this context
-        needs_sys_path_update = False
+        # populate fromImports, directImports, and itemNames
+        for expr_class in expr_classes:
+            class_name = self.className(expr_class)
+            module_name = self._moduleAbbreviatedName(expr_class.__module__, class_name)
+            is_unique = (len(named_items[class_name]) == 1)
+            if is_unique:
+                from_imports.setdefault(module_name, []).append(class_name)
+                item_names[expr_class] = class_name
+            else:
+                direct_imports.add(module_name)
+                item_names[expr_class] = module_name+'.'+class_name
+        for namedExpr, namedExprAddress in named_subexpr_addresses.iteritems():
+            if isinstance(namedExprAddress[0], str):
+                # Must be a special expression (axiom, theorem, or common expression)
+                moduleName = namedExprAddress[0]
+                item_names[namedExpr] = itemName = namedExprAddress[-1]
+                objName = itemName.split('.')[0] # split of '.expr' part if it is a Theorem or Axiom KnownTruth
+                moduleName = self._moduleAbbreviatedName(moduleName, objName)
+                is_unique = (len(named_items[itemName]) == 1)
+                from_imports.setdefault(moduleName, []).append(objName)
+            else:
+                # Expression must be an attribute of a class (e.g., '_operator_')
+                item_names[namedExpr] = item_names[namedExprAddress[0]] + '.' + namedExprAddress[1]
+        
+        # see if we need to add anything to the sys.path
+        needs_root_path = False # needs the root of this context added
+        needs_local_path = False # needs the local path added
         # first, see if we even need to import a module with the same root as our context
         context_root_name = self.context.name.split('.')[0]
-        for moduleName in itertools.chain(directImports, fromImports.keys()):
-            if moduleName.split('.')[0] == context_root_name:
-                needs_sys_path_update = True
+        for module_name in itertools.chain(direct_imports, from_imports.keys()):
+            if module_name.split('.')[0] == context_root_name:
+                needs_root_path = True
                 break
+            else:
+                module = importlib.import_module(module_name)
+                if not os.path.isabs(module.__file__):
+                    needs_local_path = True
         # if so, check to see if we can import the context without adding anything to sys.path
-        if needs_sys_path_update:
+        if needs_root_path:
             try:
-                context_import_file = importlib.import_module(self.context.name).__file__
+                root_context = self.context.rootContext
+                root_context_directory = root_context._storage.directory
+                context_import_file = importlib.import_module(root_context.name).__file__
                 context_import_path = os.path.join(context_import_file, '..')
-                if os.path.relpath(context_import_path, self.directory) == '.':
+                if os.path.relpath(context_import_path, root_context_directory) == '.':
                     # Assuming nothing was added to sys.path before calling this method,
                     # the expression notebook should be able to import the context's
                     # module without adding anything to sys.path 
-                    needs_sys_path_update = False
-            except:
+                    needs_root_path = False
+            except ImportError:
                 pass
         
         # generate the imports that we need (appending to sys.path if necessary).
-        importStmts = []
-        if needs_sys_path_update:
-            # add to the sys path something that goes up enough directory levels
-            # to where the root context starts, relative to the expression directory
-            # within the __pv_it directory
-            rel_context_path = os.path.join(['..']*(self.context.name.count('.')+2))
-            importStmts = ['import sys', 'sys.path.append("%s")'%rel_context_path]
+        import_stmts = []
+        if needs_root_path or needs_local_path:
+            # add to the sys path
+            import_stmts = ['import sys']
+            rel_paths = set()
+            if needs_local_path:
+                # go up 2 levels, where the local directory is
+                rel_paths.add(os.path.relpath('.', start=os.path.join(self.pv_it_dir, hash_directory)))
+            if needs_root_path:
+                # go up enough levels to the context root
+                rel_paths.add(os.path.join(*(['..']*(self.context.name.count('.')+2))))
+            for rel_path in rel_paths:
+                import_stmts.append(json.dumps('sys.path.append("%s")'%rel_path).strip('"'))
         # direct import statements
-        importStmts += ['import %s'%moduleName for moduleName in sorted(directImports)]
+        import_stmts += ['import %s'%module_name for module_name in sorted(direct_imports)]
         # from import statements
-        importStmts += ['from %s import '%moduleName + ', '.join(sorted(fromImports[moduleName])) for moduleName in sorted(fromImports.keys())]
+        import_stmts += ['from %s import '%module_name + ', '.join(sorted(from_imports[module_name])) for module_name in sorted(from_imports.keys())]
         # code to perform the required imports
-        importCode = '\\n",\n\t"'.join(importStmts)
+        import_code = '\\n",\n\t"'.join(import_stmts)
         
         # generate the code for building the expression
-        exprCode = ''
+        expr_code = ''
         idx = 0
-        for subExpr in multiUseSubExprs:
-            if hasattr(subExpr, 'context') and subExpr.context is not None:
+        for sub_expr in multiuse_subexprs:
+            if hasattr(sub_expr, 'context') and sub_expr.context is not None:
                 continue # this expression is pulled from a context and does not need to be built
             idx += 1
-            subExprName = 'subExpr%d'%idx
-            exprCode += subExprName + ' = ' + json.dumps(self._exprBuildingCode(subExpr, itemNames, isSubExpr=False)).strip('"') + '\\n",\n\t"'
-            itemNames[subExpr] = subExprName
-        exprCode += 'expr = ' + json.dumps(self._exprBuildingCode(expr, itemNames, isSubExpr=False)).strip('"')
+            sub_expr_name = 'subExpr%d'%idx
+            expr_code += sub_expr_name + ' = ' + json.dumps(self._exprBuildingCode(sub_expr, item_names, isSubExpr=True)).strip('"') + '\\n",\n\t"'
+            item_names[sub_expr] = sub_expr_name
+        expr_code += 'expr = ' + json.dumps(self._exprBuildingCode(expr, item_names, isSubExpr=False)).strip('"')
         
         # read the template and change the contexts as appropriate
         proveit_path = os.path.split(proveit.__file__)[0]
         if unofficialNameKindContext is not None:
             template_name = '_unofficial_special_expr_template_.ipynb'
             name, kind, context = unofficialNameKindContext
-        elif exprAddress is not None:
+        elif expr_address is not None:
             template_name = '_special_expr_template_.ipynb'
             kind, name = self.context.specialExpr(expr)
         else:
             template_name = '_expr_template_.ipynb'
         with open(os.path.join(proveit_path, '..', template_name), 'r') as template:
             nb = template.read()
-            nb = nb.replace('#EXPR#', exprCode)
-            nb = nb.replace('#IMPORTS#', importCode)
+            nb = nb.replace('#EXPR#', expr_code)
+            nb = nb.replace('#IMPORTS#', import_code)
             nb = nb.replace('#CONTEXT#', context.name)
             context_link = os.path.join('..', '..', '_context_.ipynb')
             nb = nb.replace('#CONTEXT_LINK#', context_link.replace('\\', '\\\\'))
             nb = nb.replace('#TYPE#', str(expr.__class__).split('.')[-1])
             #nb = nb.replace('#TYPE_LINK#', typeLink.replace('\\', '\\\\'))
-            if unofficialNameKindContext is not None or exprAddress is not None:
+            if unofficialNameKindContext is not None or expr_address is not None:
                 kindStr = kind[0].upper() + kind[1:]
                 if kind == 'common': kindStr = 'Common Expression'
                 nb = nb.replace('#KIND#', kindStr)
@@ -460,11 +528,32 @@ class Storage:
                 special_expr_link = os.path.join('..', '..', Context.specialExprKindToModuleName[kind] + '.ipynb')
                 nb = nb.replace('#SPECIAL_EXPR_LINK#', json.dumps(special_expr_link + '#' + name).strip('"'))
         # write the proof file
-        with open(filename, 'w') as exprFile:
-            exprFile.write(nb)
+        with open(filename, 'w') as expr_file:
+            expr_file.write(nb)
         return filename # return the new proof file
         
-    def _exprBuildingPrerequisites(self, expr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems):
+    def _exprBuildingPrerequisites(self, expr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems, isSubExpr=True):
+        '''
+        Given an Expression object (expr), visit all sub-expressions and obtain the set of 
+        represented Expression classes (exprClasses), the count for 'unnamed' sub-Expression
+        occurances (unnamedSubExprOccurances as an Expression:int dictionary),
+        the 'address' of all named sub-Expressions [namedSubExprAddresses as an
+        Expression:expression-address dictionary], and the Expression(s)/class(es) corresponding
+        to each named item (namedItems as a name:set dictionary).  The expression-address
+        is in the form (module, name) for special-expressions or (Expression class, '_operator_')
+        for a Literal operator.  When there are muliple items with the same name, full names 
+        must be used instead of abbreviations.
+        '''
+        from proveit import Operation, Expression, ExpressionList, NamedExpressions, ExpressionTensor
+        
+        if expr in Operation.operationClassOfOperator:
+            # the expression is an '_operator_' of an Operation class
+            operationClass = Operation.operationClassOfOperator[expr]
+            exprClasses.add(operationClass)
+            namedItems.setdefault(self.className(operationClass), set()).add(operationClass)
+            namedSubExprAddresses[operationClass._operator_] = (operationClass, '_operator_')
+            return
+            
         if hasattr(expr, 'context') and expr.context is not None:
             # expr may be a special expression from a context
             try:
@@ -476,12 +565,30 @@ class Storage:
                 return
             except KeyError:
                 pass
-        # recurse over the sub-expressions
-        for subExpr in expr.subExprIter():
-            self._exprBuildingPrerequisites(subExpr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems)
+        
+        # add to the unnamed sub-expression count
         unnamedSubExprOccurences[expr] = unnamedSubExprOccurences.get(expr, 0) + 1
-        exprClasses.add(expr.__class__)
-        namedItems.setdefault(self.className(expr.__class__), set()).add(expr.__class__)
+        if unnamedSubExprOccurences[expr] > 1:
+            return # already visited this -- no need to reprocess it
+        
+        if not isSubExpr or expr.__class__ not in (ExpressionList, NamedExpressions, ExpressionTensor): 
+            # add expr's class to exprClass and named items (unless it is a basic Composite sub-Expression
+            # in which case we'll use a python list or dictionary to represent the composite expression).
+            exprClasses.add(expr.__class__)
+            namedItems.setdefault(self.className(expr.__class__), set()).add(expr.__class__)
+                                
+        # recurse over the expression build arguments (e.g., the sub-Expressions
+        for arg in expr.buildArguments():
+            try:
+                if isinstance(arg[0], str):
+                    argname, arg = arg # splits into a name, argument pair
+            except:
+                pass
+            if not isinstance(arg, Expression) and not isinstance(arg, str):
+                raise TypeError("The arguments of %s.buildArguments() should be Expressions or strings" %str(expr.__class__))
+            if isinstance(arg, Expression):
+                subExpr = arg
+                self._exprBuildingPrerequisites(subExpr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems)
         
     def _moduleAbbreviatedName(self, moduleName, objName):
         '''
@@ -493,22 +600,27 @@ class Storage:
         proveit.logic.boolean.conjunction.and_op will be abbreviated
         to proveit.logic for the 'And' class.
         '''
-        assert hasattr(sys.modules[moduleName], objName)
-        splitModuleName = moduleName.split('.')
-        while len(splitModuleName) > 1:
-            curModule = sys.modules['.'.join(splitModuleName)]
-            parentModule = sys.modules['.'.join(splitModuleName[:-1])]
-            if not hasattr(parentModule, objName): break
-            if getattr(curModule, objName) == getattr(parentModule, objName):
-                splitModuleName = splitModuleName[:-1]
-        return '.'.join(splitModuleName)
+        module = importlib.import_module(moduleName)
+        if not os.path.isabs(module.__file__):
+            # convert a relative path to a path starting from the context root
+            abs_module_name = self.context.name + '.' + moduleName
+            if abs_module_name not in sys.modules:
+                return moduleName # just use the relative path
+        split_module_name = moduleName.split('.')
+        while len(split_module_name) > 1:
+            cur_module = sys.modules['.'.join(split_module_name)]
+            parent_module = sys.modules['.'.join(split_module_name[:-1])]
+            if not hasattr(parent_module, objName): break
+            if getattr(cur_module, objName) == getattr(parent_module, objName):
+                split_module_name = split_module_name[:-1]
+        return '.'.join(split_module_name)
     
     def className(self, exprClass):
         return str(exprClass).split('.')[-1]
     
     def _exprBuildingCode(self, expr, itemNames, isSubExpr=True):
         from proveit import Expression, Composite, ExpressionList, NamedExpressions, ExpressionTensor
-        
+                
         if expr is None: return 'None' # special 'None' case
         
         if expr in itemNames:
@@ -538,7 +650,7 @@ class Storage:
             if isinstance(expr, ExpressionList):
                 compositeStr = '[' + argStr + ']'
             else: # ExpressionTensor or NamedExpressions
-                compositeStr = '{' + arg.replace(' = ', ':') + '}'                    
+                compositeStr = '{' + argStr.replace(' = ', ':') + '}'                    
             if isSubExpr and expr.__class__ in (ExpressionList, NamedExpressions, ExpressionTensor): 
                 # It is a sub-Expression and a standard composite class.
                 # Just pass it in as an implicit composite expression (a list or dictionary).
@@ -569,7 +681,7 @@ class Storage:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
             theoremPath = os.path.join('..', '_theorems_.ipynb', '#%s'%theorem_name)
-            nb = nb.replace('#THEOREM_PATH#', json.dumps(theoremPath))
+            nb = nb.replace('#THEOREM_PATH#', json.dumps(theoremPath).strip('"'))
         # write the proof file
         with open(filename, 'w') as proofFile:
             proofFile.write(nb)
@@ -581,45 +693,85 @@ class Storage:
         the given expression id.
         '''
         import importlib
-        exprClassMap = dict() # map expression class strings to Expression class objects
+        from context import Context
+        expr_class_map = dict() # map expression class strings to Expression class objects
         def importFn(exprClassStr):
-            splitExprClass = exprClassStr.split('.')
-            module = importlib.import_module('.'.join(splitExprClass[:-1]))
-            exprClassMap[exprClassStr] = getattr(module, splitExprClass[-1])
-        def exprBuilderFn(exprClassStr, exprInfo, subExpressions):
-            return exprClassMap[exprClassStr].make(exprInfo, subExpressions)
+            split_expr_class = exprClassStr.split('.')
+            module = importlib.import_module('.'.join(split_expr_class[:-1]))
+            expr_class_map[exprClassStr] = getattr(module, split_expr_class[-1])
+        def exprBuilderFn(exprClassStr, exprInfo, subExpressions, context):
+            expr = expr_class_map[exprClassStr].make(exprInfo, subExpressions)
+            if context is not None and not hasattr(expr, 'context'):
+                expr.context = context
+            return expr
         return self._makeExpression(exprId, importFn, exprBuilderFn)
-    
+        
     def _makeExpression(self, exprId, importFn, exprBuilderFn):
         '''
         Helper method for makeExpression
         '''
         from proveit import Expression
         from _dependency_graph import orderedDependencyNodes
-        exprClassStrs = dict() # map expr-ids to Expression class string representations
-        coreInfoMap = dict() # map expr-ids to core information
-        subExprIdsMap = dict() # map expr-ids to list of sub-expression ids 
-        masterExprId = exprId
+        from context import Context
+        expr_class_strs = dict() # map expr-ids to lists of Expression class string representations
+        expr_class_rel_strs = dict() # relative paths of Expression classes that are local
+        core_info_map = dict() # map expr-ids to core information
+        sub_expr_ids_map = dict() # map expr-ids to list of sub-expression ids
+        context_map = dict() # map expr-ids to a Context 
+        master_expr_id = exprId
+        local_context_name = Context().name
+                
         def getSubExprIds(exprId):
+            context_name, hash_directory = self._split(exprId)
+            if context_name != '': context_map[exprId] = Context.getContext(context_name)
             hash_path = self._storagePath(exprId)
             with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
                 # extract the unique representation from the pv_it file
                 unique_rep = f.read()
                 # extract the Expression class from the unique representation 
-                exprClassStrs[exprId] = Expression._extractExprClass(unique_rep)
+                expr_class_str = Expression._extractExprClass(unique_rep)
+                if expr_class_str.find(local_context_name) == 0:
+                    # import locally if necessary
+                    expr_class_rel_strs[exprId] = expr_class_str[len(local_context_name)+1:]                
+                expr_class_strs[exprId] = expr_class_str
                 # extract the Expression "core information" from the unique representation
-                coreInfoMap[exprId] = Expression._extractCoreInfo(unique_rep)
+                core_info_map[exprId] = Expression._extractCoreInfo(unique_rep)
                 # get the sub-expressions all sub-expressions
-                subExprIdsMap[exprId] = Expression._extractReferencedObjIds(unique_rep)
-                return subExprIdsMap[exprId]
-        exprIds = orderedDependencyNodes(exprId, getSubExprIds)
-        for exprId in reversed(exprIds):
-            importFn(exprClassStrs[exprId])
-        builtExprMap = dict() # map expr-ids to "built" expressions (whatever exprBuilderFn returns)
-        for exprId in reversed(exprIds):
-            subExpressions =  [builtExprMap[subExprId] for subExprId in subExprIdsMap[exprId]]
-            builtExprMap[exprId] = exprBuilderFn(exprClassStrs[exprId], coreInfoMap[exprId], subExpressions)
-        return builtExprMap[masterExprId]        
+                sub_expr_ids_map[exprId] = self._extractReferencedStorageIds(unique_rep, context_name)
+                return sub_expr_ids_map[exprId]
+        
+        expr_ids = orderedDependencyNodes(exprId, getSubExprIds)
+        for expr_id in reversed(expr_ids):
+            if expr_id in expr_class_rel_strs:
+                # there exists a relative path
+                try:
+                    # First try the absolute path; that is preferred for
+                    # consistency sake (we want different imports of something
+                    # to be regarded as the same)
+                    importFn(expr_class_strs[expr_id])
+                except:
+                    # If importing the absolute path fails, maybe the relative
+                    # path will work.  This is needed to resolve, for example,
+                    # the issue that the proveit.logic package imports from
+                    # proveit.logic.boolean._common_ but we need to be able
+                    # to execute proveit.logic.boolean._common_.ipynb in
+                    # the first place which requires imports within 
+                    # proveit.logic.boolean.  The solution is to use relative
+                    # imports when executing proveit.logic.boolean._common_.ipynb
+                    # the first time but afterwards use absolute paths. 
+                    importFn(expr_class_rel_strs[expr_id])
+                    # use the relative path
+                    expr_class_strs[expr_id] = expr_class_rel_strs[expr_id]
+            else:
+                # there does not exist a relative path; 
+                # the absolute path is the only option.
+                importFn(expr_class_strs[expr_id])
+        built_expr_map = dict() # map expr-ids to "built" expressions (whatever exprBuilderFn returns)
+        for expr_id in reversed(expr_ids):
+            sub_expressions =  [built_expr_map[sub_expr_id] for sub_expr_id in sub_expr_ids_map[expr_id]]
+            context = context_map[expr_id] if expr_id in context_map else None
+            built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], sub_expressions, context)
+        return built_expr_map[master_expr_id]        
     
     def clean(self):
         '''
@@ -824,13 +976,16 @@ class StoredTheorem(StoredSpecialStmt):
         for prevUsedTheorem in prevUsedTheorems:
             if prevUsedTheorem not in usedTheorems:
                 Context.getStoredTheorem(prevUsedTheorem)._removeUsedByEntry(str(self))
+
+        storedUsedAxioms = [Context.getStoredAxiom(usedAxiom) for usedAxiom in usedAxioms]
+        storedUsedTheorems = [Context.getStoredTheorem(usedTheorem) for usedTheorem in usedTheorems]
         
         # record axioms/theorems that this theorem directly uses
-        for usedStmts, usedStmtsFilename in ((usedAxioms, 'usedAxioms.txt'), (usedTheorems, 'usedTheorems.txt')):
+        for storedUsedStmts, usedStmtsFilename in ((storedUsedAxioms, 'usedAxioms.txt'), (storedUsedTheorems, 'usedTheorems.txt')):
             with open(os.path.join(self.path, usedStmtsFilename), 'w') as usedStmtsFile:
-                for usedStmt in sorted(usedStmts):
-                    self.context._includeMutualReferences(usedStmt.context)
-                    usedStmtsFile.write(usedStmt + '\n')
+                for storedUsedStmt in sorted(storedUsedStmts):
+                    self.context._includeMutualReferences(storedUsedStmt.context)
+                    usedStmtsFile.write(str(storedUsedStmt) + '\n')
         
         # record any used theorems that are already completely proven
         with open(os.path.join(self.path, 'completeUsedTheorems.txt'), 'w') as completedTheoremsFile:
@@ -839,8 +994,6 @@ class StoredTheorem(StoredSpecialStmt):
                     completedTheoremsFile.write(usedTheorem + '\n')
         
         # for each used axiom/theorem, record that it is used by the newly proven theorem
-        storedUsedAxioms = [axiom._storedAxiom() for axiom in usedAxioms]
-        storedUsedTheorems = [theorem._storedTheorem() for theorem in usedTheorems]
         for storedUsedStmts, prevUsedStmts in ((storedUsedAxioms, prevUsedAxioms), (storedUsedTheorems, prevUsedTheorems)):
             for storedUsedStmt in storedUsedStmts:
                 if str(storedUsedStmt) not in prevUsedStmts: # otherwise the link should already exist
@@ -859,10 +1012,16 @@ class StoredTheorem(StoredSpecialStmt):
         return os.path.isfile(os.path.join(self.path, 'proof.pv_it'))
     
     def numUsedTheorems(self):
-        return self._countEntries('usedTheorems.txt')
+        try:
+            return self._countEntries('usedTheorems.txt')
+        except IOError:
+            return 0 # if the file is not there for some reason
 
     def numCompleteUsedTheorems(self):
-        return self._countEntries('completeUsedTheorems.txt')
+        try:
+            return self._countEntries('completeUsedTheorems.txt')
+        except IOError:
+            return 0 # if the file is not there for some reason
     
     def isComplete(self):
         '''
@@ -918,10 +1077,12 @@ class StoredTheorem(StoredSpecialStmt):
             for dependent in dependentTheorems:
                 Context.getStoredTheorem(dependent)._undoDependentCompletion(str(self))
         # remove 'proof.pv_it', 'usedAxioms.txt', 'usedTheorems.txt', and 'completeUsedTheorems.txt' for the theorem
-        os.remove(os.path.join(self.path, 'proof.pv_it'))
-        os.remove(os.path.join(self.path, 'usedAxioms.txt'))
-        os.remove(os.path.join(self.path, 'usedTheorems.txt'))
-        os.remove(os.path.join(self.path, 'completeUsedTheorems.txt'))
+        def removeIfExists(path):
+            if os.path.isfile(path): os.remove(path)
+        removeIfExists(os.path.join(self.path, 'proof.pv_it'))
+        removeIfExists(os.path.join(self.path, 'usedAxioms.txt'))
+        removeIfExists(os.path.join(self.path, 'usedTheorems.txt'))
+        removeIfExists(os.path.join(self.path, 'completeUsedTheorems.txt'))
 
     def allRequirements(self):
         '''

@@ -49,13 +49,14 @@ class MultiVariable(Label):
         Yield the argument values or (name, value) pairs
         that could be used to recreate the MultiVariable.
         '''
+        from proveit import compositeExpression
         coreInfo = self.coreInfo()
         stringFormat, latexFormat = coreInfo[1:]
         axesLabels = list(self.subExprIter())
         yield '"' + stringFormat + '"'
         if latexFormat != stringFormat:
             yield ('latexFormat', 'r"' + latexFormat + '"')
-        yield ('axesLabels', axesLabels)
+        yield ('axesLabels', compositeExpression(axesLabels))
                              
     def string(self, **kwargs):
         indicesStr = ' '.join(self.axesLabels[k].string() for k in range(self.numIndices))

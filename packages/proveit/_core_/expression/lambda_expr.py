@@ -1,4 +1,4 @@
-from expr import Expression, MakeNotImplemented, ImproperSubstitution, ImproperRelabeling
+from expr import Expression, MakeNotImplemented, ImproperSubstitution
 
 class Lambda(Expression):
     '''
@@ -20,7 +20,10 @@ class Lambda(Expression):
         if isinstance(parameters, Variable) or isinstance(parameters, MultiVariable):
             self.parameters = [parameters]
         else:
-            self.parameters = list(parameters)
+            try:
+                self.parameters = list(parameters)
+            except:
+                raise TypeError('Each element of the Lambda parameters must be a Variable or MultiVariable')
         for parameter in self.parameters:
             if not isinstance(parameter, Variable) and not isinstance(parameter, MultiVariable):
                 raise TypeError('Each element of the Lambda parameters must be a Variable or MultiVariable')
@@ -49,11 +52,9 @@ class Lambda(Expression):
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Lambda expression.
         '''
+        from proveit import singleOrCompositeExpression
         parameters, body = self.parameters, self.body
-        if len(parameters) == 1:
-            yield parameters[0]
-        else:
-            yield self.parameters
+        yield singleOrCompositeExpression(parameters)
         yield self.body
 
     def string(self, **kwargs):

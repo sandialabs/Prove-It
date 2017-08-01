@@ -407,7 +407,7 @@ class KnownTruth:
         proof fails.        
         '''
         from proveit import Operation, Variable, MultiVariable, Etcetera, Composite, compositeExpression, ExpressionList, ExpressionTensor, Lambda
-        from proveit import Forall
+        from proveit.logic import Forall
         from proof import Specialization, SpecializationFailure
         
         # if no specializeMap is provided, specialize a single Forall with default mappings (mapping instance variables to themselves)
@@ -491,11 +491,11 @@ class KnownTruth:
             forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
         else:
             if not hasattr(forallVarLists, '__len__'):
-                raise ValueError("Must supply generalize with a Variable or list of Variables")
+                raise ValueError("Must supply 'generalize' with a Variable/MultiVariable, list of Variable/MultiVariable, or list of Variable/MultiVariable lists.")
             if len(forallVarLists) == 0:
-                raise ValueError("Must provide at least one Variable to generalize over")
-            if isinstance(forallVarLists[0], Variable):
-                # must be a single list, so let's convert it to a list of lists
+                raise ValueError("Must provide at least one Variable/MultiVariable to generalize over")
+            if all(isinstance(x, Variable) or isinstance(x, MultiVariable) for x in forallVarLists):
+                # convert a list of Variable/MultiVariables to a list of lists
                 forallVarLists = [forallVarLists]
                     
         if domain is not None and domains is not None:
@@ -522,7 +522,7 @@ class KnownTruth:
         Calling evaluate on a KnownTruth results in deriving that its
         expression is equal to TRUE, under the assumptions of the KnownTruth.
         '''
-        from proveit import evaluateTruth
+        from proveit.logic import evaluateTruth
         return evaluateTruth(self.expr, self.assumptions)
 
     def asImpl(self, hypothesis):
@@ -572,7 +572,7 @@ class KnownTruth:
         if previously generated) with a links to
         expr.ipynb notebooks for displaying the expression information.
         '''
-        from proveit import Set
+        from proveit.logic import Set
         if not self.isUsable(): self.raiseUnusableTheorem()
         html = ''
         html += '<span style="font-size:20px;">'

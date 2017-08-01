@@ -1,7 +1,10 @@
 import inspect
 from expr import Expression, ImproperSubstitution
 
-class Operation(Expression):    
+class Operation(Expression):
+    # map _operator_ Literals to corresponding Operation classes
+    operationClassOfOperator = dict()
+    
     def __init__(self, operator, operands):
         '''
         Create an operation with the given operator and operands.  The operator must be
@@ -15,14 +18,21 @@ class Operation(Expression):
             context = Context(inspect.getfile(self.__class__))
             if operator.context != context:
                 raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
+            Operation.operationClassOfOperator[operator] = self.__class__
         if not isinstance(operator, Label):
             raise TypeError('operator must be a Label-type Expression')
         self.operator = operator
         self.operands = compositeExpression(operands)
         Expression.__init__(self, ['Operation'], [self.operator, self.operands])
+    
+    @classmethod
+    def _implicitOperator(operationClass):
+        if hasattr(operationClass, '_operator_'):
+            return operationClass._operator_
+        return None
 
     @staticmethod
-    def extractInitArgValue(argName, argIndex, operands):
+    def extractInitArgValue(argName, operands):
         '''
         Given a name of one of the arguments of the __init__ method,
         return the corresponding value contained in the 'operands'
@@ -31,7 +41,65 @@ class Operation(Expression):
         Override this method if you cannot simply pass the operands directly
         into the __init__ method.
         '''
-        return None
+        raise Exception("'extractInitArgValue' must be appropriately implemented if __init__ arguments do not fall into a simple 'default' scenario")
+    
+    @classmethod
+    def _extractInitArgs(operationClass, operator, operands):
+        '''
+        For a particular Operation class and given an operator and operands,
+        yield (name, value) pairs to pass into the initialization method
+        for creating the operation consistent with the given operator and operands.
+        '''
+        implicit_operator = (operator == operationClass._implicitOperator())
+        args, varargs, varkw, defaults = inspect.getargspec(operationClass.__init__)
+        args = args[1:] # skip over the 'self' arg
+        
+        if (varkw is None) and (operationClass.extractInitArgValue == Operation.extractInitArgValue):
+            # try some default scenarios (that do not involve keyword arguments
+            
+            # handle default implicit operator case
+            if implicit_operator and ((len(args)==0 and varargs is not None) or \
+                                        (len(args)==len(operands) and varargs is None)):
+                # yield each operand separately
+                for operand in operands:
+                    yield operand
+                return
+            
+            # handle default explicit operator case
+            if (not implicit_operator) and (varkw is None):
+                if varargs is None and len(args)==2: 
+                    # yield the operator and the operands as one
+                    yield operator
+                    yield operands
+                    return
+                if (varargs is not None and len(args)==1) or (len(args)==len(operands) and varargs is None):
+                    # yield the operator and each operand separately
+                    yield operator
+                    for operand in operands:
+                        yield operands
+                    return
+        
+        arg_vals = [operationClass.extractInitArgValue(arg, operands) for arg in args]
+        if varargs is not None:
+            arg_vals += operationClass.extractInitArgValue(varargs, operands)
+        if defaults is None: defaults = []
+        supplied_operator = False
+        for k, (arg, val) in enumerate(zip(args, arg_vals)):
+            if len(defaults)-len(args)+k >= 0:
+                if val == defaults[len(defaults)-len(args)+k]:
+                    continue # using the default value
+            if not implicit_operator and val is None:
+                if supplied_operator:
+                     raise Exception("Expecting 'extractInitArgValue' to assign the operator, and only the operator, to None (except when there is a default of None)"%operationClass)
+                val = operator
+                supplied_operator = True
+            yield (arg, val)
+        if not implicit_operator and not supplied_operator: 
+            raise Exception("Expecting one 'operator' argument that 'extractInitArgValue' assigns to None (for %s)"%operationClass)
+        if varkw is not None:
+            kw_arg_vals = operationClass.extractInitArgValue(varkw, operands)
+            for arg, val in kw_arg_vals.iteritems():
+                yield (arg, val)
 
     @classmethod
     def make(operationClass, coreInfo, subExpressions):
@@ -44,70 +112,30 @@ class Operation(Expression):
         and checking that the operator is consistent.  Override this method
         if a different behavior is desired.
         '''
-        import inspect
         if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
             raise ValueError("Expecting Operation coreInfo to contain exactly one item: 'Operation'")
         if len(subExpressions) == 0:
             raise ValueError('Expecting at least one subExpression for an Operation, for the operator')
         operator, operands = subExpressions[0], subExpressions[1]
-        
-        if operationClass != Operation: 
-            try:
-                subClassOperator = operationClass._operator_
-            except:
-                raise OperationError("Operation sub-class is expected to have a class variable named '_operator_'")
-            if subClassOperator != operator:
-                raise ValueError('Unexpected operator, ' + str(operator) + ', when making ' + str(operationClass)) 
-            if operationClass.extractInitArgValue == Operation.extractInitArgValue:
-                # By default, simply pass the operands directly into the __init__ method.
-                return operationClass(*operands)
-            else:       
-                # If extractInitArgValue is overridden, use it to determine how to pass
-                # the arguments into the __init__ method based upon the operands object.
-                args, varargs, varkw, defaults = inspect.getargsspec(operationClass.__init__)
-                argVals = [operationClass.extractInitArgValue(arg, operands) for arg in args]
-                if varargs is not None:
-                    argVals += operationClass.extractInitArgValue(varargs, operands)
-                kwArgVals = dict()
-                if varkw is not None:
-                    kwArgVals = operationClass.extractInitArgValue(varkw, operands)
-                return operationClass(*argVals, **kwArgVals)
-        return Operation(operator, operands)
+        args = []
+        kw_args = dict()
+        for arg in operationClass._extractInitArgs(operator, operands):
+            if isinstance(arg, Expression):
+                args.append(arg)
+            else: 
+                kw, val = arg
+                kw_args[kw] = val 
+        return operationClass(*args, **kw_args)
     
     def buildArguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Operation.
         '''
-        from proveit import Literal
-        import inspect
-        operands = self.operands
         operationClass = self.__class__
-        
-        if hasattr(operationClass, '_operator_') and isinstance(operationClass._operator_, Literal):
-            # The operationClass is for an Operation with a specific literal operator
-            if hasattr(operationClass, 'extractInitArgValue') and operationClass.extractInitArgValue != Operation.extractInitArgValue:
-                operands = self.operands
-                args, varargs, varkw, defaults = inspect.getargsspec(operationClass.__init__)
-                argVals = [operationClass.extractInitArgValue(arg, operands) for arg in args]
-                if varargs is not None:
-                    argVals += operationClass.extractInitArgValue(varargs, operands)
-                for argVal, default in zip(reversed(argVals), reversed(defaults)):
-                    if argVal != default: break # not the same as a default so everything before it must be explicitly specified
-                    argVals.pop(-1) # don't need this last argVal because it is the same as the default
-                for arg, val in zip(args, argVals):
-                    yield (arg, val)
-                if varkw is not None:
-                    kwArgVals = operationClass.extractInitArgValue(varkw, operands)
-                    for arg, val in kwArgVals.iteritems():
-                        yield (arg, val)
-            else:
-                for operand in operands:
-                    yield operand
-        else:
-            # An Operation with no specific literal operator
-            yield self.operator
-            yield self.operands
+
+        for arg in operationClass._extractInitArgs(self.operator, self.operands):
+            yield arg
     
     def string(self, **kwargs):
         return self.operator.string(fence=True) +  '(' + self.operands.string(fence=False, subFence=False) + ')'

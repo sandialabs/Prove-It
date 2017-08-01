@@ -56,9 +56,23 @@ class Label(Expression):
     def buildArguments(self):
         '''
         Yield the argument values that could be used to recreate the 
-        Label (Variable or Literal).
+        Label.  This is a default for simple Labels, Variables, or Literals.
         '''
-        stringFormat, latexFormat = self.coreInfo()[1:]
-        yield '"' + stringFormat + '"'
-        if latexFormat != stringFormat:
-            yield ('latexFormat', 'r"' + latexFormat + '"')
+        import inspect
+        init_args = inspect.getargspec(self.__class__.__init__)[0]
+        if len(init_args)==1:
+            return # no arguments (except self) are taken
+        if len(init_args)>=3 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat':
+            stringFormat, latexFormat = self.coreInfo()[1:3]
+            yield '"' + stringFormat + '"'
+            if latexFormat != stringFormat:
+                yield ('latexFormat', 'r"' + latexFormat + '"')
+        else:
+            raise LabelError("Must properly implement the 'buildArguments' method for class %s"%str(self.__class__))
+
+class LabelError:
+    def __init__(self, msg):
+        self.msg = msg
+    
+    def __str__(self):
+        return self.msg

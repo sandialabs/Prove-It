@@ -66,24 +66,37 @@ class ExpressionInfo:
         from composite.named_exprs import NamedExpressions
         from operation import Operation
         from lambda_expr import Lambda
-        from label import Label, Literal
-        enumeratedExpressions = self._getEnumeratedExpressions()
-        exprNumMap = {expr:k for k, expr in enumerate(enumeratedExpressions)}
+        
+        # get the enumerated sub-expressions; parents come before children.
+        enumerated_expressions = self._getEnumeratedExpressions()
+        expr_num_map = {expr:k for k, expr in enumerate(enumerated_expressions)}
+        
+        # map each sub-Expression to an appropriate Context
+        expr_context_map = dict() 
+        for expr in enumerated_expressions:
+            if hasattr(expr, 'context') and expr.context is not None:
+                expr_context_map[expr] = expr.context
+            if expr in expr_context_map:
+                for sub_expr in expr.subExprIter(): # propagate the context to its sub-expressions
+                    expr_context_map[sub_expr] = expr_context_map[expr]
+        
+        # generate the html as a table with the enumerated expressions on the rows.
         html = '<table><tr><th colspan=2>expression</th><th>core type</th><th>sub-expressions</th></tr>\n'
-        for k, expr in enumerate(enumeratedExpressions):
+        for k, expr in enumerate(enumerated_expressions):
             sub_expressions = ''
             if isinstance(expr, NamedExpressions):
                 for key in sorted(expr.keys()):
-                    sub_expressions += '%s: %d<br>'%(key, exprNumMap[expr[key]])
+                    sub_expressions += '%s: %d<br>'%(key, expr_num_map[expr[key]])
             elif isinstance(expr, Operation):
-                sub_expressions = 'operator: %d<br>'%(exprNumMap[expr.operator])
-                sub_expressions += 'operands: %d<br>'%(exprNumMap[expr.operands])
+                sub_expressions = 'operator: %d<br>'%(expr_num_map[expr.operator])
+                sub_expressions += 'operands: %d<br>'%(expr_num_map[expr.operands])
             elif isinstance(expr, Lambda):
-                sub_expressions = 'parameters: %s<br>'%(', '.join(str(exprNumMap[parameter]) for parameter in expr.parameters))
-                sub_expressions += 'body: %d<br>'%(exprNumMap[expr.body])
+                sub_expressions = 'parameters: %s<br>'%(', '.join(str(expr_num_map[parameter]) for parameter in expr.parameters))
+                sub_expressions += 'body: %d<br>'%(expr_num_map[expr.body])
             else:
-                sub_expressions = ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions)
-            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td>\n'%(k, expr._repr_html_(), expr._coreInfo[0], sub_expressions)
+                sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
+            context = expr_context_map[expr] if expr in expr_context_map else None
+            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td>\n'%(k, expr._repr_html_(context=context), expr._coreInfo[0], sub_expressions)
         html += '</table>\n'
         return html
     

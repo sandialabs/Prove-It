@@ -5,6 +5,7 @@ Define some custom magic for Prove-It in IPython notebooks.
 from IPython.core.magic import Magics, magics_class, line_magic
 from IPython import get_ipython
 from proveit._core_.expression import Expression
+from proveit._core_ import KnownTruth
 from proveit._core_.context import Context
 import ipywidgets as widgets
 import new
@@ -24,6 +25,7 @@ class AssignmentBehaviorModifier:
         ipython = self.ipython
         def new_run_cell(self, raw_cell, *args, **kwargs):
             lines = raw_cell.split('\n')
+            if len(lines)==0: return # nothing to run
             # find the last non-indented python statement in the cell
             idx = [k for k, line in enumerate(lines) if len(line) > 0 and re.match("\s", line[0]) is None][-1]
             last_python_stmt = '\n'.join(lines[idx:])
@@ -32,7 +34,7 @@ class AssignmentBehaviorModifier:
                 lhs, rhs = last_python_stmt.split('=', 1)
                 lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
             new_raw_cell = '\n'.join(lines)
-            ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
+            return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
         ipython.run_cell = new.instancemethod(new_run_cell, ipython)
     
     def resetBehavior(self):
@@ -46,6 +48,9 @@ class AssignmentBehaviorModifier:
 class SubContexts(widgets.VBox):
     '''
     A Jupyter VBox widget for editing the list of sub-contexts of a context and their descriptions.
+    At first, a static html version will be displayed with just an "Edit" button at the bottom.
+    When "Edit" is pressed, the html tables are made invisible via Javascript and the editable
+    version of the table is presented.
     '''
     def __init__(self):
         widgets.VBox.__init__(self, [])
@@ -125,6 +130,7 @@ class SubContexts(widgets.VBox):
             return
         with open('_sub_contexts_.txt', 'a') as f:
             f.write(subContextName + '\n')
+            self.subContexts.append(subContextName)
             self._addSubContextRow(subContextName)
     
     def moveUp(self, i):
@@ -159,14 +165,17 @@ class SubContexts(widgets.VBox):
 class ProveItMagic(Magics):
     "Magics that hold additional state"
 
-    def __init__(self, shell):
+    def __init__(self, shell, assignmentBehaviorModifier):
         # You must call the parent constructor
         super(ProveItMagic, self).__init__(shell)
         self.kind = None
         self.definitions = dict()
+        self.keys = [] # the keys of the definitions in the order they appear
         self.lowerCaseNames = set()
         self.context = None 
         self.ranFinish = False
+        self.assignmentBehaviorModifier = assignmentBehaviorModifier
+        assignmentBehaviorModifier.displayAssignments(ip)
     
     @line_magic
     def display_assignments(self, line):
@@ -184,6 +193,7 @@ class ProveItMagic(Magics):
         '''
         import proveit
         import ipywidgets as widgets
+        from IPython.display import display, HTML
         context = Context()
         proveit_path = os.path.split(proveit.__file__)[0]
         special_notebook_types = ('common', 'axioms', 'theorems')
@@ -200,10 +210,17 @@ class ProveItMagic(Magics):
                 # write the notebook file
                 with open(notebook_name, 'w') as notebook_file:
                     notebook_file.write(nb)
+        #special_notebooks_html = '<table>'
+        #for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_text):
+        #    special_notebooks_html += '<th><a href="_%s_.ipynb" target="_blank">%s</a></th>'%(special_notebook_type, special_notebook_text)
+        #special_notebooks_html += '</table>'
+        #display(HTML(special_notebooks_html))
+        
         special_notebook_links = []
         full_width_layout = widgets.Layout(width='100%', padding='5px')
         for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_text):
             special_notebook_links.append(widgets.HTML('<a href="_%s_.ipynb" target="_blank">%s</a>'%(special_notebook_type, special_notebook_text), layout=full_width_layout))
+        special_notebook_links = widgets.HBox(special_notebook_links)
             
         sub_contexts_label = widgets.Label('List of sub-contexts:', layout = widgets.Layout(width='100%'))
         sub_contexts = SubContexts()
@@ -213,44 +230,56 @@ class ProveItMagic(Magics):
             sub_contexts.addSubContext(add_context_widget.value)
             add_context_widget.value = ''
         add_context_widget.on_submit(addSubContext)
-        return widgets.VBox([widgets.HBox(special_notebook_links), sub_contexts_label, sub_contexts, add_context_widget])
+        #layout = widgets.Layout(display='flex', flex_flow='column-reverse')
+        #display(widgets.Button(description='Edit...', disabled=False, button_style='', tooltip='Edit the sub-contents list', layout=layout))
+        #layout = widgets.Layout(float='bottom')
+        display(widgets.VBox([special_notebook_links, sub_contexts_label, sub_contexts, add_context_widget]))
     
     @line_magic
     def begin_axioms(self, line):
         # context based upon current working directory
         self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
-            raise ProveItMagicFailure("May only run %begin_axioms (or %begin_theorems) once per IPython session.")
+            if self.kind != 'axioms':
+                raise ProveItMagicFailure("Run %begin_axioms in a separate notebook from %begin_%s."%self.kind)
+            print "WARNING: Re-running %begin_axioms does not reset previously defined axioms."
+            print "         It is suggested that you restart and run all cells after editing axioms."
         print "Defining axioms for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define axioms"
         print "%end_axioms will finalize the definitions"
-        self.kind = 'axiom'
+        self.kind = 'axioms'
 
     @line_magic
     def end_axioms(self, line):
-        self.finish('axiom')
+        self.finish('axioms')
 
     @line_magic
     def begin_theorems(self, line):
         # context based upon current working directory
         self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
-            raise ProveItMagicFailure("May only run %begin_theorems (or %begin_axioms) once per IPython session.")
+            if self.kind != 'theorems':
+                raise ProveItMagicFailure("Run %begin_theorems in a separate notebook from %begin_%s."%self.kind)
+            print "WARNING: Re-running %begin_theorems does not reset previously defined theorems."
+            print "         It is suggested that you restart and run all cells after editing theorems."
         print "Defining theorems for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define theorems"
         print "%end_theorems will finalize the definitions"
-        self.kind = 'theorem'
+        self.kind = 'theorems'
 
     @line_magic
     def end_theorems(self, line):
-        self.finish('theorem')
+        self.finish('theorems')
     
     @line_magic
     def begin_common(self, line):
         # context based upon current working directory
         self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
-            raise ProveItMagicFailure("May only run %begin_common once per IPython session.")
+            if self.kind != 'common':
+                raise ProveItMagicFailure("Run %begin_common in a separate notebook from %begin_%s."%self.kind)
+            print "WARNING: Re-running %begin_common does not reset previously defined common expressions."
+            print "         It is suggested that you restart and run all cells after editing the expressions."
         print "Defining common sub-expressions for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define common sub-expressions"
         print "%end_common will finalize the definitions"
@@ -271,30 +300,35 @@ class ProveItMagic(Magics):
     @line_magic
     def begin_proof(self, line):
         sys.path.append('..')
-        return Context('..').getTheorem(str(line.strip())).beginProof()
+        theorem_name = str(line.strip())
+        theorem = Context('..').getTheorem(theorem_name)
+        begin_proof_result = theorem.beginProof()
+        if isinstance(begin_proof_result, Expression):
+            # assign the theorem name to the theorem expression
+            # and display this assignment
+            theorem_expr = theorem.expr
+            self.shell.user_ns[theorem_name] = theorem_expr
+            return Assignments([theorem_name], [theorem_expr])
+        else:
+            # the theorem was already proven.
+            # show the proof.
+            return begin_proof_result
 
     def finish(self, kind):
         '''
-        Finish 'axiom's, 'theorem's, or 'common' for the Context
+        Finish 'axioms', 'theorems', or 'common' for the Context
         associated with the current working directory.
         '''
         if self.kind != kind:
             raise ProveItMagicFailure("Must run %begin_%s before %end_%s"%(kind,kind))
         # Add the special statements / expressions to the context
         context = self.context
-        if kind=='axiom':
-            context._setAxioms(self.definitions)
-        elif kind=='theorem':            
-            context._setTheorems(self.definitions)
+        if kind=='axioms':
+            context._setAxioms(self.keys, self.definitions)
+        elif kind=='theorems':            
+            context._setTheorems(self.keys, self.definitions)
         elif kind=='common':
-            context._setCommonExpressions(self.definitions)
-
-        # Update the expression notebooks now that these have been registered
-        # as special expressions.
-        for name, expr in self.definitions.iteritems():
-            # remake the expression notebooks using the special expressions of the context
-            context.expressionNotebook(expr)           
-        print "Expression notebooks have been updated"
+            context._setCommonExpressions(self.keys, self.definitions)
 
         # Make an _axioms_.py or _theorems_.py file for importing axioms/theorems
         # from the certified database.
@@ -311,6 +345,21 @@ class ProveItMagic(Magics):
             with open('_%s_.py'%kind, 'w') as f:
                 f.write(output)
                 
+        # Reload the modules; some may reload differently after the special expression module has been written.
+        # Do this before remaking the expression notebooks to make sure they are remade properly.
+	'''
+	for m in sys.modules.keys():
+	   del(sys.modules[m]) 
+	'''
+	   
+        # Update the expression notebooks now that these have been registered
+        # as special expressions.
+        for name, expr in self.definitions.iteritems():
+            # remake the expression notebooks using the special expressions of the context
+            context.expressionNotebook(expr)           
+        print "Expression notebooks have been updated"
+
+                                
         if kind=='common':
             print "Common expressions may be imported from autogenerated _%s_.py"%kind
         else:
@@ -319,31 +368,52 @@ class ProveItMagic(Magics):
 
 class Assignments:    
     def __init__(self, names, rightSides):
+        from proveit import singleOrCompositeExpression
         self.allExpressions = True
+        processedRightSides = []
         for rightSide in rightSides:
-            if not isinstance(rightSide, Expression):
+            if not isinstance(rightSide, KnownTruth):
+                try:
+                    # try to combine a composite expression if the right side is a
+                    # list or dictionary that should convert to an expression.
+                    rightSide = singleOrCompositeExpression(rightSide)
+                except:
+                    pass
+            if not isinstance(rightSide, Expression) and (rightSide is not None):
                 if proveItMagic.kind is not None:
                     raise ValueError("Right hand side of end-of-cell assignment(s) is expected to be Expression(s)")
                 else:
                     self.allExpressions = False
+            processedRightSides.append(rightSide)
         self.names = list(names)
-        self.rightSides = list(rightSides)
+        self.rightSides = processedRightSides
         for name, rightSide in zip(names, rightSides):
-            if proveItMagic.kind == 'axiom' or proveItMagic.kind == 'theorem':
-                if name.lower() in proveItMagic.lowerCaseNames:
+            if rightSide is None:
+                # unsetting a defintion
+                proveItMagic.lowerCaseNames.remove(name.lower())
+                proveItMagic.definitions.remove(name)
+                proveItMagic.keys.remove(name)
+                continue
+            if proveItMagic.kind == 'axioms' or proveItMagic.kind == 'theorems':
+                if name in proveItMagic.definitions:
+                    print 'WARNING: Redefining', name
+                elif name.lower() in proveItMagic.lowerCaseNames:
                     if not(proveItMagic.ranFinish and name in proveItMagic.definitions): # allowed to come back around after it finished once
                         raise ProveItMagicFailure("%s names must be unique regardless of capitalization"%proveItMagic.kind[:-1])
             proveItMagic.lowerCaseNames.add(name.lower())
             proveItMagic.definitions[name] = rightSide
+            proveItMagic.keys.append(name)
     
     def html_line(self, name, rightSide):
         lhs_html = name
-        if proveItMagic.kind == 'theorem':
+        if proveItMagic.kind == 'theorems':
             proofNotebook = proveItMagic.context.proofNotebook(name)
             lhs_html = '<a href="%s" target="_blank">%s</a>'%(os.path.relpath(proofNotebook), lhs_html)
         unofficialNameKindContext = None
         if proveItMagic.kind is not None:
-            unofficialNameKindContext = (name, proveItMagic.kind, proveItMagic.context)
+            kind = proveItMagic.kind
+            if kind=='axioms' or kind=='theorems': kind = kind[:-1]
+            unofficialNameKindContext = (name, kind, proveItMagic.context)
         rightSideStr = None
         if isinstance(rightSide, Expression):
             rightSideStr = rightSide._repr_html_(unofficialNameKindContext=unofficialNameKindContext)
@@ -351,12 +421,10 @@ class Assignments:
             rightSideStr = rightSide._repr_html_()
         if rightSideStr is None:
             rightSideStr = str(rightSide)
-            print rightSideStr
         return '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
 
     def _repr_html_(self):
-        if self.allExpressions:
-            return '\n'.join(self.html_line(name, rightSide) for name, rightSide in zip(self.names, self.rightSides))
+        return '\n'.join(self.html_line(name, rightSide) for name, rightSide in zip(self.names, self.rightSides))
         
     def __repr__(self):
         return '\n'.join('%s: %s'%(name, repr(rightSide)) for name, rightSide in zip(self.names, self.rightSides))
@@ -366,9 +434,8 @@ class Assignments:
 # since its constructor has different arguments from the default:
 ip = get_ipython()
 if ip is not None:
-    proveItMagic = ProveItMagic(ip)
     assignmentBehaviorModifier = AssignmentBehaviorModifier()
-    assignmentBehaviorModifier.displayAssignments(ip)
+    proveItMagic = ProveItMagic(ip, assignmentBehaviorModifier)
     ip.register_magics(proveItMagic)
 
 class ProveItMagicFailure(Exception):
