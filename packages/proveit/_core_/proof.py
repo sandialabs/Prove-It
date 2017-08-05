@@ -171,19 +171,16 @@ class Proof:
     def _repr_html_(self):
         proofSteps = self.enumeratedProofSteps()
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
-        html = '<table><tr><th colspan=2>statement</th><th>assumptions</th><th>step type</th><th>requirements</th></tr>\n'
+        html = '<table><tr><th colspan=2>statement</th><th>step type</th><th>requirements</th></tr>\n'
         for k, proof in enumerate(proofSteps):
-            html += '<tr><td>%d</td><td>%s</td>'%(k, proof.provenTruth.expr._repr_html_())
+            html += '<tr><td>%d</td><td>%s</td>'%(k, proof.provenTruth._repr_html_())
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
                 html += r'<td colspan=3>'
                 html += proof.stepType() + ': '
-                html += str(proof.context) + '.' + proof.name
+                html += '<a href="%s" target="_blank">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
             else:
                 requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
-                assumptionsStr = '<span style="font-size:20px;">'
-                assumptionsStr += ', '.join(assumption._repr_html_() for assumption in proof.assumptions())
-                assumptionsStr += '</span>'
-                html += '<td style="text-align:center">%s</td><td>%s</td><td>%s</td>'%(assumptionsStr, proof.stepType(), requiredProofNums)
+                html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
             html += '</tr>\n'
             if isinstance(proof, Specialization):
                 html += '<tr><td colspan=5 style="text-align:center">' + proof.mappingHTML() + '</td></tr>'
@@ -212,6 +209,12 @@ class Axiom(Proof):
     def _storedAxiom(self):
         from storage import StoredAxiom
         return StoredAxiom(self.context, self.name)
+    
+    def getLink(self):
+        '''
+        Return the HTML link to the axiom definition.
+        '''
+        return self._storedAxiom().getDefLink()
         
     def usedAxioms(self):
         return {self}
@@ -248,11 +251,9 @@ class Theorem(Proof):
     def __str__(self):
         return self.context.name + '.' + self.name
     
-    def containingPackages(self):
+    def containingPrefixes(self):
         '''
-        Yields the packages that contain this Theorem at all levels
-        of the hierarchy; includes the full theorem name
-        (as the deepest level "package").
+        Yields all containing context names and the full theorem name.
         '''
         s = str(self)
         hierarchy = s.split('.')
@@ -268,6 +269,12 @@ class Theorem(Proof):
     def _storedTheorem(self):
         from storage import StoredTheorem
         return StoredTheorem(self.context, self.name)
+
+    def getLink(self):
+        '''
+        Return the HTML link to the theorem proof file.
+        '''
+        return self._storedTheorem().getProofLink()
         
     def recordProof(self, proof):
         '''
@@ -342,7 +349,7 @@ class Theorem(Proof):
         if KnownTruth.theoremBeingProven is None:
             self._unusableTheorem = None # Nothing being proven, so all Theorems are usable
             return
-        if self in KnownTruth.presumingTheorems or not KnownTruth.presumingPackages.isdisjoint(self.containingPackages()):
+        if self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
             if self in KnownTruth.dependentTheoremsOfTheoremBeingProven:
                 raise CircularLogic(KnownTruth.theoremBeingProven, self)
             self._unusableTheorem = None # This Theorem is usable because it is being presumed.

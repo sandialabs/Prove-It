@@ -270,6 +270,8 @@ class ProveItMagic(Magics):
     @line_magic
     def end_theorems(self, line):
         self.finish('theorems')
+        # stash proof notebooks that are not active theorems.
+        self.context.stashExtraneousProofNotebooks()
     
     @line_magic
     def begin_common(self, line):
@@ -293,26 +295,41 @@ class ProveItMagic(Magics):
     def check_expr(self, line):
         _, hash_id = os.path.split(os.path.abspath('.'))
         context = Context()
-        if self.shell.user_ns['expr'] != context.getStoredExpr(hash_id):
-            raise ProveItMagicFailure("The build 'expr' does not match the stored Expression")
-        print "Passed sanity check: built 'expr' is the same as the stored Expression."
+        expr_name = line.strip()
+        if expr_name == '': 
+            expr_name = 'expr'
+            expr = self.shell.user_ns[expr_name]
+        else:
+            # actually a KnownTruth (from an Axiom or Theorem) converted to an Expression
+            expr = self.shell.user_ns[expr_name].expr
+        if expr != context.getStoredExpr(hash_id):
+            raise ProveItMagicFailure("The built '%s' does not match the stored Expression"%expr_name)
+        print "Passed sanity check: built '%s' is the same as the stored Expression."%expr_name
                                 
     @line_magic
     def begin_proof(self, line):
         sys.path.append('..')
-        theorem_name = str(line.strip())
-        theorem = Context('..').getTheorem(theorem_name)
-        begin_proof_result = theorem.beginProof()
+        theorem_name, requiring_str = str(line.strip()).split(' ', 1)
+        if not requiring_str.find('presuming ') == 0:
+            print "Format: %begin_proof <theorem_name> presuming [<list of theorems / context-names>]"
+            return
+        args = requiring_str.split(' ', 1)[-1].strip('[]').split()
+        theorem_truth = Context('..').getTheorem(theorem_name).provenTruth
+        begin_proof_result = theorem_truth.beginProof(args)
         if isinstance(begin_proof_result, Expression):
             # assign the theorem name to the theorem expression
             # and display this assignment
-            theorem_expr = theorem.expr
+            theorem_expr = theorem_truth.expr
             self.shell.user_ns[theorem_name] = theorem_expr
             return Assignments([theorem_name], [theorem_expr])
         else:
             # the theorem was already proven.
             # show the proof.
             return begin_proof_result
+    
+    @line_magic
+    def qed(self, line):
+        return KnownTruth.theoremBeingProven.provenTruth.qed()
 
     def finish(self, kind):
         '''
@@ -406,21 +423,23 @@ class Assignments:
     
     def html_line(self, name, rightSide):
         lhs_html = name
-        if proveItMagic.kind == 'theorems':
-            proofNotebook = proveItMagic.context.proofNotebook(name)
-            lhs_html = '<a href="%s" target="_blank">%s</a>'%(os.path.relpath(proofNotebook), lhs_html)
         unofficialNameKindContext = None
         if proveItMagic.kind is not None:
             kind = proveItMagic.kind
             if kind=='axioms' or kind=='theorems': kind = kind[:-1]
             unofficialNameKindContext = (name, kind, proveItMagic.context)
-        rightSideStr = None
+        rightSideStr, expr = None, None
         if isinstance(rightSide, Expression):
+            expr = rightSide
             rightSideStr = rightSide._repr_html_(unofficialNameKindContext=unofficialNameKindContext)
         elif hasattr(rightSide, '_repr_html_'):
             rightSideStr = rightSide._repr_html_()
         if rightSideStr is None:
             rightSideStr = str(rightSide)
+        if proveItMagic.kind == 'theorems':
+            assert expr is not None, "Expecting an expression for the theorem"
+            proofNotebook = proveItMagic.context.proofNotebook(name, expr)
+            lhs_html = '<a href="%s" target="_blank">%s</a>'%(os.path.relpath(proofNotebook), lhs_html)
         return '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
 
     def _repr_html_(self):

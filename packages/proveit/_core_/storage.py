@@ -4,6 +4,7 @@ import sys
 import importlib
 import itertools
 import json
+import re
 
 class Storage:
     '''
@@ -513,23 +514,46 @@ class Storage:
             template_name = '_expr_template_.ipynb'
         with open(os.path.join(proveit_path, '..', template_name), 'r') as template:
             nb = template.read()
-            nb = nb.replace('#EXPR#', expr_code)
+            if template_name != '_special_expr_template_.ipynb':
+                nb = nb.replace('#EXPR#', expr_code)
             nb = nb.replace('#IMPORTS#', import_code)
             nb = nb.replace('#CONTEXT#', context.name)
-            context_link = os.path.join('..', '..', '_context_.ipynb')
-            nb = nb.replace('#CONTEXT_LINK#', context_link.replace('\\', '\\\\'))
             nb = nb.replace('#TYPE#', str(expr.__class__).split('.')[-1])
             #nb = nb.replace('#TYPE_LINK#', typeLink.replace('\\', '\\\\'))
             if unofficialNameKindContext is not None or expr_address is not None:
-                kindStr = kind[0].upper() + kind[1:]
-                if kind == 'common': kindStr = 'Common Expression'
-                nb = nb.replace('#KIND#', kindStr)
+                kind_str = kind[0].upper() + kind[1:]
+                if kind == 'common': kind_str = 'Common Expression'
+                nb = nb.replace('#KIND#', kind_str)
                 nb = nb.replace('#SPECIAL_EXPR_NAME#', name)
-                special_expr_link = os.path.join('..', '..', Context.specialExprKindToModuleName[kind] + '.ipynb')
+                special_expr_link = '/'.join(['..', '..', Context.specialExprKindToModuleName[kind] + '.ipynb'])
                 nb = nb.replace('#SPECIAL_EXPR_LINK#', json.dumps(special_expr_link + '#' + name).strip('"'))
-        # write the proof file
+        # write the expression notebook
         with open(filename, 'w') as expr_file:
             expr_file.write(nb)
+        
+        # it this is a special expression also generate the dependencies notebook if it does not yet exist
+        if template_name == '_special_expr_template_.ipynb':
+            dependencies_filename = os.path.join(self.pv_it_dir, hash_directory, 'dependencies.ipynb')
+            # Even if the dependencies file exists, write over it since the expression notebook
+            # was rewritten.  This will guarantee the file is overwritten if it needs to be (the
+            # name or kind of the special expression changes) and not overwritten if the expression
+            # notebook was allowed to remain unchanged.
+            with open(os.path.join(proveit_path, '..', '_dependencies_template_.ipynb'), 'r') as template:
+                nb = template.read()
+                nb = nb.replace('#IMPORTS#', import_code)
+                nb = nb.replace('#CONTEXT#', context.name)
+                nb = nb.replace('#TYPE#', str(expr.__class__).split('.')[-1])
+                #nb = nb.replace('#TYPE_LINK#', typeLink.replace('\\', '\\\\'))
+                nb = nb.replace('#KIND#', kind_str)
+                nb = nb.replace('#SPECIAL_EXPR_NAME#', name)
+                nb = nb.replace('#SPECIAL_EXPR_LINK#', json.dumps(special_expr_link + '#' + name).strip('"'))  
+                if kind_str == 'Theorem':
+                    see_proof_str = '***see <a href=\\"../../_proofs_/%s.ipynb\\">proof</a>***'%name
+                else: see_proof_str = ''
+                nb = nb.replace('#SEE_PROOF#', see_proof_str)
+            with open(dependencies_filename, 'w') as dependencies_file:
+                dependencies_file.write(nb)
+            
         return filename # return the new proof file
         
     def _exprBuildingPrerequisites(self, expr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems, isSubExpr=True):
@@ -661,31 +685,108 @@ class Storage:
         else:
             return itemNames[expr.__class__] + '(' + argStr + ')'
     
-    def proofNotebook(self, theorem_name):
+    def proofNotebook(self, theorem_name, expr):
         '''
         Return the path of the proof notebook, creating it if it does not
         already exist.
         '''
-        import proveit
-        import json
+        context, hash_directory = self._retrieve(expr)
         proofs_path = os.path.join(self.directory, '_proofs_')
         filename = os.path.join(proofs_path, '%s.ipynb'%theorem_name)
         if os.path.isfile(filename):
-            return filename # return the existing proof file
+            existing_notebook_info = self._proofNotebookInfo(filename)
+            if existing_notebook_info == (theorem_name, hash_directory):
+                # The existing proof notebook uses the same theorem name (including capitalization)
+                # and hash directory, so let's keep it. 
+                return filename 
+            # The existing notebook does not use the same theorem name or hash directory,
+            # so let's stash it in a "~recovery~#" and regenerate it.
+            self._stashNotebook(filename)
         if not os.path.isdir(proofs_path):
             # make the directory for the _proofs_
             os.makedirs(proofs_path)            
-        # read the template and change the contexts as appropriate
-        proveit_path = os.path.split(proveit.__file__)[0]
-        with open(os.path.join(proveit_path, '..', '_proof_template_.ipynb'), 'r') as template:
-            nb = template.read()
-            nb = nb.replace('#THEOREM_NAME#', theorem_name)
-            theoremPath = os.path.join('..', '_theorems_.ipynb', '#%s'%theorem_name)
-            nb = nb.replace('#THEOREM_PATH#', json.dumps(theoremPath).strip('"'))
+        nb = self._generateGenericProofNotebook(theorem_name, hash_directory)
         # write the proof file
         with open(filename, 'w') as proofFile:
             proofFile.write(nb)
         return filename # return the new proof file
+    
+    def _generateGenericProofNotebook(self, theorem_name, hash_directory):
+        '''
+        Given a theorem name and hash directory, generate the generic start
+        of a proof notebook using the template.
+        '''
+        import proveit
+        # read the template and change the contexts as appropriate
+        proveit_path = os.path.split(proveit.__file__)[0]
+        with open(os.path.join(proveit_path, '..', '_proof_template_.ipynb'), 'r') as template:
+            nb = template.read()
+            nb = nb.replace('#HASH#', hash_directory)
+            nb = nb.replace('#THEOREM_NAME#', theorem_name)
+        return nb
+    
+    def _proofNotebookInfo(self, filename):
+        '''
+        From an existing proof notebook, extract the theorem name and
+        expression hash directory.
+        '''
+        with open(filename, 'r') as notebook:
+            nb = notebook.read()
+            # the theorem name should come after "_theorems_.ipynb#" in the notebook
+            match =  re.search(r'_theorems_\.ipynb\#([_a-z]\w*)', nb)
+            if match is None: return None
+            theorem_name = match.groups()[0]
+            # the expressioni hash should come between "__pv_it/" and "/dependencies.ipynb"
+            match =  re.search(r'__pv_it/(\w*)/dependencies\.ipynb', nb)
+            if match is None: return None
+            hash_directory = match.groups()[0]
+            return theorem_name, hash_directory
+        
+    def stashExtraneousProofNotebooks(self, theorem_names):
+        '''
+        For any proof notebooks for theorem names not included in the given 
+        theorem_names, stash them or remove them if they are generic notebooks.
+        '''
+        proofs_path = os.path.join(self.directory, '_proofs_')
+        for filename in os.listdir(proofs_path):
+            # see if this is a proof notebook that should be kept
+            if filename[:-len('.ipynb')] in theorem_names:
+                continue # this one is a keeper
+                
+            filename = os.path.join(proofs_path, filename)
+            if os.path.isdir(filename): continue # skip directories
+            
+            if "~stashed~" in filename:
+                continue # already a stashed notebook
+            
+            remove_file = False # may be set to True below if it is a generic notebook
+            
+            # next, let's see if this is a generic notebook by extracting
+            # its info, building the generic version, and comparing.
+            notebook_info = self._proofNotebookInfo(filename)
+            if notebook_info is not None:
+                generic_version = self._generateGenericProofNotebook(*notebook_info)        
+                with open(filename, 'r') as notebook:
+                    if generic_version == notebook.read():
+                        remove_file = True # just remove it, it is generic
+            
+            if remove_file:
+                os.remove(filename)
+            else:
+                self._stashNotebook(filename)
+    
+    def _stashNotebook(self, filename):
+        '''
+        Stash a notebook to a "~stashed~#" file using a '#' (number)
+        that has not been used yet.
+        '''
+        num = 1
+        filename_base = filename[:-len('.ipynb')]
+        while os.path.isfile(filename_base + "~stashed~%d.ipynb"%num):
+            num += 1
+        new_filename = filename_base + "~stashed~%d.ipynb"%num
+        print "Stashing %s to %s; it may or may not be needed."%(os.path.relpath(filename), os.path.relpath(new_filename))
+        os.rename(filename, new_filename)
         
     def makeExpression(self, exprId):
         '''
@@ -911,6 +1012,13 @@ class StoredAxiom(StoredSpecialStmt):
         __pv_it database entries.
         '''
         StoredSpecialStmt.__init__(self, context, name, 'axiom')
+    
+    def getDefLink(self):
+        '''
+        Return the link to the axiom definition in the _axioms_ notebook.
+        '''
+        axioms_notebook_link = os.path.relpath(os.path.join(self.context.getPath(), '_axioms_.ipynb'))
+        return axioms_notebook_link + '#' + self.name
 
 class StoredTheorem(StoredSpecialStmt):
     def __init__(self, context, name):
@@ -919,6 +1027,12 @@ class StoredTheorem(StoredSpecialStmt):
         __pv_it database entries.
         '''
         StoredSpecialStmt.__init__(self, context, name, 'theorem')
+
+    def getProofLink(self):
+        '''
+        Return the link to the theorem's proof notebook.
+        '''
+        return os.path.relpath(os.path.join(self.context.getPath(), '_proofs_', self.name + '.ipynb'))
 
     def remove(self, keepPath=False):
         if self.hasProof():
@@ -953,6 +1067,10 @@ class StoredTheorem(StoredSpecialStmt):
         from proveit._core_ import Proof
         from context import Context
         
+        # add a reference to the new proof
+        proofId = self.context._storage._proveItStorageId(proof)
+        self.context._storage._addReference(proofId)
+        
         if self.hasProof():
             # remove the old proof if one already exists
             self.removeProof()
@@ -960,10 +1078,8 @@ class StoredTheorem(StoredSpecialStmt):
         # record the proof id
         if not isinstance(proof, Proof):
             raise ValueError("Expecting 'proof' to be a Proof object")
-        proofId = self.context._storage._proveItStorageId(proof)
         with open(os.path.join(self.path, 'proof.pv_it'), 'w') as proofFile:
             proofFile.write(proofId)
-            self.context._storage._addReference(proofId)
         
         usedAxioms = [str(usedAxiom) for usedAxiom in proof.usedAxioms()]
         usedTheorems = [str(usedTheorem) for usedTheorem in proof.usedTheorems()]

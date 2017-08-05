@@ -23,7 +23,7 @@ class KnownTruth:
     dependentTheoremsOfTheoremBeingProven = None # set theorems that depend upon (directly or indirectly) the theorem be proven
     # Set of theorems/packages that are presumed to be True for the purposes of the proof being proven:
     presumingTheorems = None # set of Theorem objects when in use
-    presumingPackages = None # set of package names or full theorem names when in use.
+    presumingPrefixes = None # set of context names or full theorem names when in use.
 
     # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
     # recursion when deducing side effects after something is proven.
@@ -104,8 +104,9 @@ class KnownTruth:
         presumed theorem that has a direct or indirect dependence upon this 
         theorem then a CircularLogic exception is raised. 
         '''
+        from proveit import Context, ContextException
         if KnownTruth.theoremBeingProven is not None:
-            raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  It is best to avoid having extraneous KnownTruth objects so each proof should be independent.")
+            raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.")
         from proof import Theorem
         theorem = self.proof()
         if not isinstance(theorem, Theorem):
@@ -113,28 +114,39 @@ class KnownTruth:
         KnownTruth.theoremBeingProven = theorem
         KnownTruth.dependentTheoremsOfTheoremBeingProven = theorem.allDependents()
         KnownTruth.presumingTheorems = set()
-        KnownTruth.presumingPackages = set()
+        KnownTruth.presumingPrefixes = set()
         for presuming in presumes:
-            if isinstance(presuming, KnownTruth):
-                presuming = presuming.asTheoremOrAxiom()
-            if isinstance(presuming, Theorem):
-                KnownTruth.presumingTheorems.add(presuming)
-            elif isinstance(presuming, str):
-                # may be a package or a full theorem name, to be precise
-                KnownTruth.presumingPackages.add(presuming)
+            if not isinstance(presuming, str):
+                raise ValueError("'presumes' should be a collection of strings for context names and/or full theorem names")
+            theorem, context = None, None
+            
+            try:
+                if '.' in presuming:
+                    context_name, theorem_name = presuming.rsplit('.', 1)
+                    theorem = Context.getContext(context_name).getTheorem(theorem_name)
+            except (ContextException, KeyError):
+                pass
+                
+            if theorem is not None:
+                # add the theorem and any theorems used by that theorem to the set of presuming theorems
+                KnownTruth.presumingTheorems.add(theorem)
+                if theorem.hasProof():
+                    KnownTruth.presumingPrefixes.update(presuming.allUsedTheorems()) # actually theorems by full name                
             else:
-                raise ValueError("'presumes' should be a collection of Theorems and strings, not " + str(presuming.__class__))
-            if presuming.hasProof: # note, if presuming is a package name, hasProof will simply return False
-                # presume theorems (implicitly) that are used to prove 
-                # other presumed theorems (explicitly).
-                KnownTruth.presumingPackages.update(presuming.allUsedTheorems()) # actually theorems by full name
+                try:
+                    context = Context.getContext(context_name)
+                except ContextException:
+                    raise ValueError("'%s' not found as a known context or theorem"%presuming)
+                # the entire context is presumed (except where the dependencies become circular)
+                KnownTruth.presumingPrefixes.add(context)
+                
         Theorem.updateUsability()
         # check to see if the theorem was already proven before we started
         for proof in theorem._possibleProofs:
             if all(usedTheorem._unusableTheorem is None for usedTheorem in proof.usedTheorems()):
-                print "Theorem already proven.  Calling qed() method."
+                print '%s already proven.  Now just execute "%qed".'%self.asTheoremOrAxiom().name
                 self._proof = proof
-                return self.qed()
+                return self.expr
         print "Beginning proof of"
         self._proof._unusableTheorem = self._proof # can't use itself to prove itself
         return self.expr
@@ -235,6 +247,9 @@ class KnownTruth:
         number of steps of the original proof plus more).
         '''
         from proof import Theorem
+        if KnownTruth.theoremBeingProven is not None:
+            if self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
+                print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now just execute "%qed".'
         if not self.expr in KnownTruth.lookup_dict:
             # the first KnownTruth for this Expression
             self._proof = newProof
@@ -578,7 +593,7 @@ class KnownTruth:
         html += '<span style="font-size:20px;">'
         if len(self.assumptions) > 0:
             html += Set(*self.assumptions)._repr_html_()
-        html += ' &#x22A2; ' # turnstile symbol
+        html += ' &#x22A2;&nbsp;' # turnstile symbol
         html += self.expr._repr_html_()
         html += '</span>'
         return html

@@ -6,6 +6,6 @@ from expression import MakeNotImplemented, ImproperRelabeling, ImproperSubstitut
 from expression import ExpressionList, ExpressionTensor, NamedExpressions, Composite, compositeExpression, singleOrCompositeExpression, NestedCompositeExpressionError
 from known_truth import KnownTruth, asExpression, asExpressions
 from defaults import defaults, USE_DEFAULTS, InvalidAssumptions
-from context import Context
+from context import Context, ContextException
 from proof import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
 from proof import ProofFailure, ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure
