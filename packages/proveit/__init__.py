@@ -1,6 +1,6 @@
 from _core_ import defaults, USE_DEFAULTS, InvalidAssumptions, Context, ContextException
 from _core_ import Expression, Operation, Lambda, Label, Variable, MultiVariable, Literal, DuplicateLiteralError
-from _core_ import Etcetera, Block, safeDummyVar, safeDefaultOrDummyVar, tryDerivation, expressionDepth
+from _core_ import Etcetera, Block, safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from _core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
 from _core_ import ExpressionList, ExpressionTensor, NamedExpressions, Composite, compositeExpression, singleOrCompositeExpression, NestedCompositeExpressionError
 from _core_ import KnownTruth, asExpression, asExpressions
