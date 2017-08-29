@@ -5,3 +5,4 @@ _common_.py
 _axioms_.py
 _theorems_.py
 .ipynb_checkpoints
+*~stashed~*.ipynb
