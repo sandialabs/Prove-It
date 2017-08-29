@@ -43,32 +43,31 @@ class Variable(Label):
     def freeMultiVars(self):
         return set() # overridden in MultiVariable
 
-class DummyVariable(Variable):
-    def __init__(self, n):
-        '''
-        Given an integer n, produce a "dummy" Variable that is the (n+1) element
-        in the list: _X_, _Y_, _Z_, _XX_, _XY_, _XZ_, _YX_, _YY_, _YZ_, etc.
-        '''
-        m = n
-        powers_of_3 = [1, 3]
-        while m >= powers_of_3[-1]:
-            m -= powers_of_3[-1]
-            powers_of_3.append(powers_of_3[-1]*3)
-        letters = ''
-        powers_of_3.pop(-1)
-        while len(powers_of_3) > 0:
-            pow_of_3 = powers_of_3.pop(-1)
-            k = int(m / pow_of_3)
-            letters += chr(ord('X') + k)
-            m -= k*pow_of_3
-        Variable.__init__(self, '_' + letters + '_', latexFormat = r'{\_' + letters + r'\_}')
+def dummyVar(n):
+    '''
+    Given an integer n, produce a "dummy" Variable that is the (n+1) element
+    in the list: _X_, _Y_, _Z_, _XX_, _XY_, _XZ_, _YX_, _YY_, _YZ_, etc.
+    '''
+    m = n
+    powers_of_3 = [1, 3]
+    while m >= powers_of_3[-1]:
+        m -= powers_of_3[-1]
+        powers_of_3.append(powers_of_3[-1]*3)
+    letters = ''
+    powers_of_3.pop(-1)
+    while len(powers_of_3) > 0:
+        pow_of_3 = powers_of_3.pop(-1)
+        k = int(m / pow_of_3)
+        letters += chr(ord('X') + k)
+        m -= k*pow_of_3
+    return Variable('_' + letters + '_', latexFormat = r'{\_' + letters + r'\_}')
 
 def safeDummyVar(*expressions):
     usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])
     i = 0
-    while DummyVariable(i) in usedVs:
+    while dummyVar(i) in usedVs:
         i += 1
-    return DummyVariable(i)
+    return dummyVar(i)
 
 def safeDefaultOrDummyVar(defaultVar, *expressions):
     usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])

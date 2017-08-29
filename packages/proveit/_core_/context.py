@@ -21,6 +21,7 @@ the theorem proofs, and it stores theorem proof dependencies.
 '''
 
 import os
+import sys
 from glob import glob
 from storage import Storage
 
@@ -88,6 +89,10 @@ class Context:
             self.rootContext = Context(rootDirectory)
         else:
             self.rootContext = self # this is a root context
+            # add the path to the root context to the system path
+            root_package_path = os.path.abspath(os.path.join(path, '..'))
+            if root_package_path not in sys.path:
+                sys.path.append(root_package_path)
         # Create the Storage object for this Context
         if path not in Context.storages:
             Context.storages[path] = Storage(self, path)
@@ -161,44 +166,49 @@ class Context:
             try:
                 with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
                     if name not in definitions:
-                        toRemove.append(name) # to remove special statement that no longer exists
+                        # to remove special statement that no longer exists
+                        toRemove.append((name, Context.getStoredStmt(self.name + '.' + name, kind)))
                     previousDefIds[name] = f.read()
             except IOError:
                 raise ContextException('Corrupted __pv_it directory: %s'%self._storage.directory)
-        # Remove the special statements that no longer exist
-        for name in toRemove:
-            print 'Removing %s %s from %s context'%(kind, name, self.name)
-            Context.getStoredStmt(self.name + '.' + name, kind).remove()
-            
-        # Update the definitions
-        for name in names:
-            expr = definitions[name]
-            # record the special expression in this context object
-            if not hasattr(expr, 'context'):                
-                expr.context = self
-                self._storage.specialExpressions[expr] = (kind, name)            
-            # add the expression to the "database" via the storage object.
-            exprId = storage._proveItStorageId(expr)
-            if name in previousDefIds and previousDefIds[name] == exprId:
-                continue # unchanged special statement
-            storedSpecialStmt = Context.getStoredStmt(self.name + '.' + name, kind)
-            if name not in previousDefIds:
-                # added special statement
-                print 'Adding %s %s to %s context'%(kind, name, self.name)
-            elif previousDefIds[name] != exprId:
-                # modified special statement. remove the old one first.
-                print 'Modifying %s %s in %s context'%(kind, name, self.name)
-                storedSpecialStmt.remove(keepPath=True)
-            # record the axiom/theorem id (creating the directory if necessary)
-            specialStatementDir = os.path.join(specialStatementsPath, name)
-            if not os.path.isdir(specialStatementDir):
-                os.mkdir(specialStatementDir)
-            with open(os.path.join(specialStatementDir, 'expr.pv_it'), 'w') as exprFile:
-                exprFile.write(exprId)
-                storage._addReference(exprId)
-            with open(os.path.join(specialStatementDir, 'usedBy.txt'), 'w') as exprFile:
-                pass # usedBy.txt must be created but initially empty
         
+        # Update the definitions, writing axiom/theorem names to _axioms_.txt or _theorems_.txt
+        # in proper order.
+        with open(os.path.join(self._storage.pv_it_dir, '_%s_.txt'%kind), 'w') as f:            
+            for name in names:
+                f.write(name + '\n')
+                expr = definitions[name]
+                # record the special expression in this context object
+                if not hasattr(expr, 'context'):                
+                    expr.context = self
+                    self._storage.specialExpressions[expr] = (kind, name)            
+                # add the expression to the "database" via the storage object.
+                exprId = storage._proveItStorageId(expr)
+                if name in previousDefIds and previousDefIds[name] == exprId:
+                    continue # unchanged special statement
+                storedSpecialStmt = Context.getStoredStmt(self.name + '.' + name, kind)
+                if name not in previousDefIds:
+                    # added special statement
+                    print 'Adding %s %s to %s context'%(kind, name, self.name)
+                elif previousDefIds[name] != exprId:
+                    # modified special statement. remove the old one first.
+                    print 'Modifying %s %s in %s context'%(kind, name, self.name)
+                    storedSpecialStmt.remove(keepPath=True)
+                # record the axiom/theorem id (creating the directory if necessary)
+                specialStatementDir = os.path.join(specialStatementsPath, name)
+                if not os.path.isdir(specialStatementDir):
+                    os.mkdir(specialStatementDir)
+                with open(os.path.join(specialStatementDir, 'expr.pv_it'), 'w') as exprFile:
+                    exprFile.write(exprId)
+                    storage._addReference(exprId)
+                with open(os.path.join(specialStatementDir, 'usedBy.txt'), 'w') as exprFile:
+                    pass # usedBy.txt must be created but initially empty
+
+        # Remove the special statements that no longer exist
+        for name, stmt in toRemove:
+            print 'Removing %s %s from %s context'%(kind, name, self.name)
+            stmt.remove()
+                
     def _getSpecialStatementExpr(self, kind, name):
         storage = self._storage
         specialStatementsPath = os.path.join(storage.pv_it_dir, '_' + kind + 's_')
@@ -214,8 +224,12 @@ class Context:
             raise KeyError("%s of name '%s' not found"%(kind, name))        
 
     def _getSpecialStatementNames(self, kind):
-        specialStatementsPath = os.path.join(self._storage.pv_it_dir, '_' + kind + 's_')
-        return os.listdir(specialStatementsPath)
+        '''
+        Yield names of axioms/theorems.
+        '''
+        with open(os.path.join(self._storage.pv_it_dir, '_%s_.txt'%kind), 'r') as f:            
+            for line in f:
+                yield line.strip() # name of axiom or theorem
             
     def _setCommonExpressions(self, exprNames, exprDefinitions):
         self._common_expr_ids = dict()
@@ -258,10 +272,10 @@ class Context:
             storage._addReference(expr_id) # add reference to a new common expression
     
     def axiomNames(self):
-        return self._getSpecialStatementNames('axiom')
+        return list(self._getSpecialStatementNames('axiom'))
     
     def theoremNames(self):
-        return self._getSpecialStatementNames('theorem')
+        return list(self._getSpecialStatementNames('theorem'))
     
     def commonExpressionNames(self):
         self._common_expr_ids = dict()

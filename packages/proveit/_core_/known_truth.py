@@ -82,8 +82,17 @@ class KnownTruth:
             return # automation disabled
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
-            KnownTruth.in_progress_to_derive_sideeffects.add(self)        
-            self.expr.deriveSideEffects(self)
+            KnownTruth.in_progress_to_derive_sideeffects.add(self)   
+            # add the wildcard assumptions to include assumptions as needed
+            # while deriving side-effects.
+            assumptions = list(self.assumptions) + ['*']
+            for sideEffect in self.expr.sideEffects(self):
+                # attempt each side-effect derivation, specific to the
+                # type of Expression.
+                try:
+                    sideEffect(assumptions=assumptions)     
+                except:
+                    pass
             KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
 
     def __eq__(self, other):
@@ -108,38 +117,57 @@ class KnownTruth:
         if KnownTruth.theoremBeingProven is not None:
             raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.")
         from proof import Theorem
-        theorem = self.proof()
+        theorem = self.proof() # the trivial prove-by-theorem; not yet the actual, desired proof of the theorem
         if not isinstance(theorem, Theorem):
             raise TypeError('Only begin a proof for a Theorem')
         KnownTruth.theoremBeingProven = theorem
         KnownTruth.dependentTheoremsOfTheoremBeingProven = theorem.allDependents()
         KnownTruth.presumingTheorems = set()
         KnownTruth.presumingPrefixes = set()
+        
+        presumed_contexts = []
+        explicit_presumed_theorems = []
         for presuming in presumes:
             if not isinstance(presuming, str):
                 raise ValueError("'presumes' should be a collection of strings for context names and/or full theorem names")
-            theorem, context = None, None
-            
+            thm = None
+            context_name = presuming
             try:
                 if '.' in presuming:
                     context_name, theorem_name = presuming.rsplit('.', 1)
-                    theorem = Context.getContext(context_name).getTheorem(theorem_name)
+                    thm = Context.getContext(context_name).getTheorem(theorem_name)
             except (ContextException, KeyError):
-                pass
-                
-            if theorem is not None:
+                context_name = presuming # not a theorem; must be a context
+            
+            if thm is not None:
                 # add the theorem and any theorems used by that theorem to the set of presuming theorems
-                KnownTruth.presumingTheorems.add(theorem)
-                if theorem.hasProof():
-                    KnownTruth.presumingPrefixes.update(presuming.allUsedTheorems()) # actually theorems by full name                
+                KnownTruth.presumingTheorems.add(thm)
+                explicit_presumed_theorems.add(str(thm))
+                if thm.hasProof():
+                    # presume dependencies of presumed theorems
+                    KnownTruth.presumingPrefixes.update(thm.allUsedTheorems())               
             else:
                 try:
                     context = Context.getContext(context_name)
                 except ContextException:
                     raise ValueError("'%s' not found as a known context or theorem"%presuming)
                 # the entire context is presumed (except where the dependencies become circular)
-                KnownTruth.presumingPrefixes.add(context)
-                
+                KnownTruth.presumingPrefixes.add(context.name)
+                presumed_contexts.append(context.name)
+        
+        # presume all previous theorems and their dependencies
+        context = theorem.context
+        num_prev_thms = 0 # number of previous theorems within the context
+        for prev_thm_name in context.theoremNames():
+            if prev_thm_name == theorem.name:
+                break # concludes all "previous" theorems of the context
+            thm = context.getTheorem(prev_thm_name)
+            KnownTruth.presumingTheorems.add(thm)
+            if thm.hasProof():
+                # presume dependencies of presumed theorems
+                KnownTruth.presumingPrefixes.update(thm.allUsedTheorems())
+            num_prev_thms += 1
+        
         Theorem.updateUsability()
         # check to see if the theorem was already proven before we started
         for proof in theorem._possibleProofs:
@@ -147,7 +175,12 @@ class KnownTruth:
                 print '%s already proven.  Now just execute "%qed".'%self.asTheoremOrAxiom().name
                 self._proof = proof
                 return self.expr
-        print "Beginning proof of"
+        if len(presumed_contexts) > 0:
+            print "Presuming theorems in %s (except any that depend upon this theorem)."%', '.join(presumed_contexts)
+        if len(explicit_presumed_theorems) > 0:
+            print "Presuming %s theorems (and any of their dependencies)"%', '.join(explicit_presumed_theorems)
+        if num_prev_thms > 0:
+            print "Presuming previous theorems in this context (and any of their dependencies)."
         self._proof._unusableTheorem = self._proof # can't use itself to prove itself
         return self.expr
     
@@ -182,8 +215,8 @@ class KnownTruth:
     
     def isSufficient(self, assumptions):
         '''
-        Return True iff this KnownTruth is sufficient under the given assumptions;
-        usable and uses a subset of the given assumptions.
+        Return True iff the given assumptions satisfy the KnownTruth; 
+        the KnownTruth is usable and requires a subset of the given assumptions.
         '''
         return self.isUsable() and self.assumptionsSet.issubset(assumptions)
     
@@ -247,16 +280,16 @@ class KnownTruth:
         number of steps of the original proof plus more).
         '''
         from proof import Theorem
-        if KnownTruth.theoremBeingProven is not None:
-            if self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
-                print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now just execute "%qed".'
         if not self.expr in KnownTruth.lookup_dict:
             # the first KnownTruth for this Expression
             self._proof = newProof
             KnownTruth.lookup_dict[self.expr] = [self]
             return
         if not newProof.isUsable():
-            return # if it is not usable, forget it.
+            return # if it is not usable, we're done.
+        if KnownTruth.theoremBeingProven is not None:
+            if self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
+                print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".'
         keptTruths = []
         bornObsolete = False
         for other in KnownTruth.lookup_dict[self.expr]:

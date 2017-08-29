@@ -8,7 +8,7 @@ Proof objects form a DAG.
 """
 
 from proveit._core_.known_truth import KnownTruth
-from defaults import defaults, USE_DEFAULTS
+from defaults import defaults, USE_DEFAULTS, WILDCARD_ASSUMPTIONS
 from context import Context
 import re
 
@@ -22,6 +22,7 @@ class Proof:
         # avoid circular logic.
         self._unusableTheorem = None # If unusable, this will point to the unusable theorem
                                      # being applied directly or indirectly.
+        requiringUnusableTheorem = False
         for requiredProof in self.requiredProofs:
             if requiredProof._unusableTheorem is not None:
                 # Mark proofs as unusable when using an "unusable" theorem 
@@ -29,12 +30,9 @@ class Proof:
                 # when a proof for some Theorem is being generated as a
                 # means to avoid circular logic.
                 self._unusableTheorem = requiredProof._unusableTheorem
-                # Raise an UnusableTheorem exception when an attempt is made 
-                # to use an "unusable" theorem directly or indirectly.
-                if len(KnownTruth.in_progress_to_derive_sideeffects) > 0:
-                    # occurred while deriving side-effects
-                    raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem, 'Happened while deriving side-effects -- proveit.tryDerivation method is recommended.')
-                raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
+                # Raise an UnusableTheorem expection below (after calling _recordBestProof
+                # to indicate the proof even if it isn't usable).
+                requiringUnusableTheorem = True
         if not hasattr(self, '_dependents'):
             self._dependents = [] # proofs that directly require this one
         for requiredProof in self.requiredProofs:
@@ -49,13 +47,23 @@ class Proof:
         self._unique_id = hash(self._unique_rep)
         # determine the number of unique steps required for this proof
         self.numSteps = len(self.allRequiredProofs())
-        # in case this new proof makes an old one obselete or is born obsolete itself:
+        # if it is a Theorem, set its "usability", avoiding circular logic
+        if self.isUsable():
+            self._setUsability()
+        # this new proof may be the first proof, make an old one obselete, or be born obsolete itself.
         provenTruth._recordBestProof(self)
-        if provenTruth.proof() is self and self.isUsable(): # don't bother redoing side effects if this proof was born obsolete or unusable
+        if requiringUnusableTheorem:
+            # Raise an UnusableTheorem exception when an attempt is made 
+            # to use an "unusable" theorem directly or indirectly.
+            raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
+        if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             # Axioms and Theorems will derive their side-effects after all of them are created; done in special_statements.py.
             if not isinstance(self, Axiom) and not isinstance(self, Theorem):
                 # may derive any side-effects that are obvious consequences arising from this truth:
                 provenTruth.deriveSideEffects()
+    
+    def _setUsability(self):
+        pass # overloaded for the Theorem type Proof
 
     def _generate_unique_rep(self, objectRepFn):
         '''
@@ -238,8 +246,8 @@ class Theorem(Proof):
         # keep track of proofs that may be used to prove the theorem
         # before 'beginProof' is called so we will have the proof handy.
         self._possibleProofs = []
+        # Note that _setUsability will be called within Proof.__init__
         Proof.__init__(self, 'Theorem', KnownTruth(expr, frozenset(), self), [])
-        self._setUsability()
         Theorem.allTheorems.append(self)
 
     def stepType(self):
@@ -374,6 +382,19 @@ def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
     assert antecedentExpr==implicationExpr.operands[0], 'The result of hypothetical reasoning must be an Implies operation with the proper antecedent'
     assert consequentExpr==implicationExpr.operands[1], 'The result of hypothetical reasoning must be an Implies operation with the proper consequent'
 
+def _appendExtraAssumptions(assumptions, knownTruth):
+    '''
+    When WILDCARD_ASSUMPTIONS ('*') is used, we may need to append 
+    extra assumptions needed by the given knownTruth.
+    '''
+    assumptionsSet = set(assumptions)
+    containsWildcard = ('*' in assumptionsSet)
+    for assumption in knownTruth.assumptions:
+        if assumption not in assumptionsSet:
+            if not containsWildcard:
+                raise Exception("Should not have missing assumptions at this point unless the wildcard, '*', is being used.")
+            assumptions.append(assumption)
+
 class ModusPonens(Proof):
     def __init__(self, implicationExpr, assumptions=None):
         from proveit.logic import Implies
@@ -381,11 +402,17 @@ class ModusPonens(Proof):
         # obtain the implication and antecedent KnownTruths
         assert isinstance(implicationExpr, Implies) and len(implicationExpr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
         try:
+            # Must prove the implication under the given assumptions.
+            # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
             implicationTruth = implicationExpr.prove(assumptions)
+            _appendExtraAssumptions(assumptions, implicationTruth)
         except:
             raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implicationExpr))
         try:
+            # Must prove the antecedent under the given assumptions.
+            # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
             antecedentTruth = implicationExpr.operands[0].prove(assumptions)
+            _appendExtraAssumptions(assumptions, antecedentTruth)
         except:
             raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Antecedent of %s is not proven'%str(implicationExpr))
         # remove any unnecessary assumptions (but keep the order that was provided)
@@ -433,14 +460,20 @@ class Specialization(Proof):
         a Variable to another Variable or substituting a bundled variable to
         another bundled variable or list of variables (bundled or not).
         '''
-        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions = list(defaults.checkedAssumptions(assumptions))
         if relabelMap is None: relabelMap = dict()
         if specializeMap is None: specializeMap = dict()
         Failure = SpecializationFailure if numForallEliminations>0 else RelabelingFailure
         if not isinstance(generalTruth, KnownTruth):
             raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
+        if generalTruth.proof() is None:
+            raise  UnusableTheorem(KnownTruth.theoremBeingProven, generalTruth)
         if not generalTruth.assumptionsSet.issubset(assumptions):
-            raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
+            if '*' in assumptions:
+                # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
+                _appendExtraAssumptions(assumptions, generalTruth)
+            else:
+                raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
         generalExpr = generalTruth.expr
         # perform the appropriate substitution/relabeling
         specializedExpr, subbedConditions, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
@@ -449,7 +482,10 @@ class Specialization(Proof):
         for conditionExpr in subbedConditions:
             try:
                 # each substituted condition must be proven under the assumptions
-                conditionTruths.append(conditionExpr.prove(assumptions))
+                # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
+                conditionTruth = conditionExpr.prove(assumptions)
+                conditionTruths.append(conditionTruth)
+                _appendExtraAssumptions(assumptions, conditionTruth)
             except:
                 raise Failure(specializedExpr, assumptions, 'Unmet specialization condition: ' + str(conditionExpr))
         # remove any unnecessary assumptions (but keep the order that was provided)
@@ -524,6 +560,7 @@ class Specialization(Proof):
             Specialization._checkRelabelMapping(key, sub, assumptions)
             if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
         for assumption in assumptions:
+            if assumption == WILDCARD_ASSUMPTIONS: continue # ignore the wildcard for this purpose
             if len(assumption.freeVars() & set(relabelMap.keys())) != 0:
                 raise RelabelingFailure(None, assumptions, 'Cannot relabel using assumptions that involve any of the relabeling variables')
 
@@ -584,7 +621,7 @@ class Specialization(Proof):
 
     @staticmethod
     def _checkRelabelMapping(key, sub, assumptions):
-        from proveit import Variable, MultiVariable, Composite, ExpressionList, compositeExpression
+        from proveit import Variable, MultiVariable, Composite, ExpressionList
         if isinstance(key, Variable):
             if not isinstance(sub, Variable):
                 raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')

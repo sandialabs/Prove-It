@@ -164,12 +164,15 @@ class Expression:
         if automation is USE_DEFAULTS:
             automation = defaults.automation
                 
-        foundTruth = KnownTruth.findKnownTruth(self, assumptionsSet)
+        # Note: exclude WILDCARD_ASSUMPTIONS when looking for an existing proof.
+        #   (may not matter, but just in case).
+        foundTruth = KnownTruth.findKnownTruth(self, (assumptionsSet - {'*'}))
         if foundTruth is not None: 
             return foundTruth # found an existing KnownTruth that does the job!
         
-        if self in assumptionsSet:
-            # prove by assumption
+        if self in assumptionsSet or '*' in assumptionsSet:
+            # prove by assumption if self is in the list of assumptions or
+            # WILDCARD_ASSUMPTIONS is in the list of assumptions.
             from proveit._core_.proof import Assumption
             return Assumption(self).provenTruth
         
@@ -192,7 +195,7 @@ class Expression:
                     pass # that didn't work, try conclude on the Not expression itself
             if concludedTruth is None:
                 try:
-                    # trye the generic version for concluding the expression
+                    # try the generic version for concluding the expression
                     concludedTruth = self.genericConclude(assumptions)
                 except:
                     concludedTruth = self.conclude(assumptions)
@@ -261,17 +264,17 @@ class Expression:
         '''
         raise NotImplementedError("'concludeNegation' not implemented for " + str(self.__class__))
         
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        Derive side effects, obvious and useful consequences that may be arise from
-        proving that this expression is a known truth (under some set of assumptions).
-        The default is to do nothing, but should be overridden as appropriate.
-        It is best that the side effect derivations are trivial and limited.
+        Yield methods to attempt as side-effects when this expression
+        is proven as a known truth.  These should each accept an
+        'assumptions' parameter.
+        These should be obvious and useful consequences, trivial and limited.
         There is no need to call this manually; it is called automatically when
-        the corresponding KnownTruth is created.  See tryDerivation which is
-        a convenient method for specific implementations of deriveSideEffects.
+        the corresponding KnownTruth is created.
+        It also may be desirable to store the knownTruth for future automation.
         '''
-        pass        
+        return iter(())     
         
     def qed(self):
         return self.prove().qed()
@@ -398,18 +401,6 @@ class Expression:
     def exprInfo(self, details=False):
         from proveit._core_.expression.expr_info import ExpressionInfo
         return ExpressionInfo(self, details)
-
-def tryDerivation(method, *args, **kwargs):
-    '''
-    An implementation of deriveSideEffects may call tryDerivation to
-    simply attempt to derive a side-effect but skip it if it fails
-    (for example, not all conditions are met or if a theorem is
-    unavailable during a particular proof to avoid circular logic).
-    '''
-    try:
-        method(*args, **kwargs)
-    except:
-        pass
 
 def expressionDepth(expr):
     '''

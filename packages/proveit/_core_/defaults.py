@@ -29,16 +29,21 @@ class Defaults:
         except TypeError:
             raise TypeError('The assumptions must be an iterable collection of Expression objects')
         for assumption in list(assumptions):
-            if not isinstance(assumption, Expression):
-                raise TypeError('The assumptions must be an iterable collection of Expression objects')
             if assumption not in assumptionsSet:
+                if assumption==WILDCARD_ASSUMPTIONS:
+                    # just pass the wildcard assumption along
+                    yield assumption
+                    assumptionsSet.add(assumption)
+                    continue
+                if not isinstance(assumption, Expression):
+                    raise TypeError("The assumptions must be an iterable collection of Expression objects (or '*' as a wildcard to include anything else that is needed)")
                 # Prove each assumption, by assumption, to deduce any side-effects.
                 if assumption not in Defaults.provingAssumptions: # avoid infinite recursion
                     Defaults.provingAssumptions.add(assumption)
                     assumption.prove([assumption])
                     Defaults.provingAssumptions.remove(assumption)   
                 yield assumption
-            assumptionsSet.add(assumption)
+                assumptionsSet.add(assumption)
         
     def __setattr__(self, attr, value):
         '''
@@ -58,5 +63,12 @@ class InvalidAssumptions:
 # should be used.  This value is simply None, but with
 # USE_DEFAULTS, it is more explicit in the code.
 USE_DEFAULTS = None
+
+# use WILDCARD_ASSUMPTIONS (or simply '*'), in assumptions
+# lists to indicate that extra necessary assumptions should
+# be added automatically without trying to prove them from
+# other assumptions.  This is used in KnownTruth.deriveSideEffects
+# to derive side-effects with extra assumptions as needed.
+WILDCARD_ASSUMPTIONS = '*'
 
 defaults = Defaults()

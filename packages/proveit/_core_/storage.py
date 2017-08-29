@@ -396,7 +396,12 @@ class Storage:
         filename = os.path.join(self.pv_it_dir, hash_directory, 'expr.ipynb')
         if not needs_rewriting and os.path.isfile(filename):
             return filename # return the existing proof file
-        
+        elif os.path.isfile(filename):
+            special_name = expr_address[-1].split('.')[0] # strip of ".expr"
+            # Store the original version as orig_expr.ipynb.  It will be
+            # resurrected if the expression is no longer "special" but still used.
+            os.rename(filename, os.path.join(self.pv_it_dir, hash_directory, 'orig_expr.ipynb'))
+            print "%s expression notebook is being updated"%special_name
         expr_classes = set()
         unnamed_subexpr_occurences = dict()
         named_subexpr_addresses = dict()
@@ -431,12 +436,12 @@ class Storage:
         for namedExpr, namedExprAddress in named_subexpr_addresses.iteritems():
             if isinstance(namedExprAddress[0], str):
                 # Must be a special expression (axiom, theorem, or common expression)
-                moduleName = namedExprAddress[0]
+                module_name = namedExprAddress[0]
                 item_names[namedExpr] = itemName = namedExprAddress[-1]
                 objName = itemName.split('.')[0] # split of '.expr' part if it is a Theorem or Axiom KnownTruth
-                moduleName = self._moduleAbbreviatedName(moduleName, objName)
+                module_name = self._moduleAbbreviatedName(module_name, objName)
                 is_unique = (len(named_items[itemName]) == 1)
-                from_imports.setdefault(moduleName, []).append(objName)
+                from_imports.setdefault(module_name, []).append(objName)
             else:
                 # Expression must be an attribute of a class (e.g., '_operator_')
                 item_names[namedExpr] = item_names[namedExprAddress[0]] + '.' + namedExprAddress[1]
@@ -625,6 +630,7 @@ class Storage:
         to proveit.logic for the 'And' class.
         '''
         module = importlib.import_module(moduleName)
+            
         if not os.path.isabs(module.__file__):
             # convert a relative path to a path starting from the context root
             abs_module_name = self.context.name + '.' + moduleName
@@ -694,24 +700,31 @@ class Storage:
         proofs_path = os.path.join(self.directory, '_proofs_')
         filename = os.path.join(proofs_path, '%s.ipynb'%theorem_name)
         if os.path.isfile(filename):
-            existing_notebook_info = self._proofNotebookInfo(filename)
-            if existing_notebook_info == (theorem_name, hash_directory):
-                # The existing proof notebook uses the same theorem name (including capitalization)
-                # and hash directory, so let's keep it. 
-                return filename 
-            # The existing notebook does not use the same theorem name or hash directory,
-            # so let's stash it in a "~recovery~#" and regenerate it.
-            self._stashNotebook(filename)
+            # Check the theorem name and make sure the capitolization
+            # is the same.  If not, revise it appropriately.
+            existing_theorem_name = self._proofNotebookTheoremName(filename)
+            if existing_theorem_name != theorem_name:
+                # update with the new capitolization
+                with open(filename, 'r') as proof_notebook:
+                    nb = proof_notebook.read()
+                nb = nb.replace(existing_theorem_name, theorem_name)
+                # remove the file before creating again to force the new
+                # capitolization (e.g., in Windows where capitolization 
+                # can be flexible)
+                os.remove(filename) 
+                with open(filename, 'w') as proof_notebook:
+                    proof_notebook.write(nb)
+            return filename
         if not os.path.isdir(proofs_path):
             # make the directory for the _proofs_
             os.makedirs(proofs_path)            
-        nb = self._generateGenericProofNotebook(theorem_name, hash_directory)
+        nb = self._generateGenericProofNotebook(theorem_name)
         # write the proof file
-        with open(filename, 'w') as proofFile:
-            proofFile.write(nb)
+        with open(filename, 'w') as proof_notebook:
+            proof_notebook.write(nb)
         return filename # return the new proof file
     
-    def _generateGenericProofNotebook(self, theorem_name, hash_directory):
+    def _generateGenericProofNotebook(self, theorem_name):
         '''
         Given a theorem name and hash directory, generate the generic start
         of a proof notebook using the template.
@@ -721,33 +734,28 @@ class Storage:
         proveit_path = os.path.split(proveit.__file__)[0]
         with open(os.path.join(proveit_path, '..', '_proof_template_.ipynb'), 'r') as template:
             nb = template.read()
-            nb = nb.replace('#HASH#', hash_directory)
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
         return nb
     
-    def _proofNotebookInfo(self, filename):
+    def _proofNotebookTheoremName(self, filename):
         '''
-        From an existing proof notebook, extract the theorem name and
-        expression hash directory.
+        Return the theorem name extracted from the proof notebook.
         '''
-        with open(filename, 'r') as notebook:
-            nb = notebook.read()
+        with open(filename, 'r') as proof_notebook:
+            nb = proof_notebook.read()
             # the theorem name should come after "_theorems_.ipynb#" in the notebook
-            match =  re.search(r'_theorems_\.ipynb\#([_a-z]\w*)', nb)
+            match =  re.search(r'_theorems_\.ipynb\#([_a-zA-Z]\w*)', nb)
             if match is None: return None
-            theorem_name = match.groups()[0]
-            # the expressioni hash should come between "__pv_it/" and "/dependencies.ipynb"
-            match =  re.search(r'__pv_it/(\w*)/dependencies\.ipynb', nb)
-            if match is None: return None
-            hash_directory = match.groups()[0]
-            return theorem_name, hash_directory
-        
+            return match.groups()[0]
+            
     def stashExtraneousProofNotebooks(self, theorem_names):
         '''
         For any proof notebooks for theorem names not included in the given 
         theorem_names, stash them or remove them if they are generic notebooks.
         '''
         proofs_path = os.path.join(self.directory, '_proofs_')
+        if not os.path.isdir(proofs_path):
+            return # nothing to stash
         for filename in os.listdir(proofs_path):
             # see if this is a proof notebook that should be kept
             if filename[:-len('.ipynb')] in theorem_names:
@@ -763,9 +771,9 @@ class Storage:
             
             # next, let's see if this is a generic notebook by extracting
             # its info, building the generic version, and comparing.
-            notebook_info = self._proofNotebookInfo(filename)
-            if notebook_info is not None:
-                generic_version = self._generateGenericProofNotebook(*notebook_info)        
+            theorem_name = self._proofNotebookTheoremName(filename)
+            if theorem_name is not None:
+                generic_version = self._generateGenericProofNotebook(theorem_name)        
                 with open(filename, 'r') as notebook:
                     if generic_version == notebook.read():
                         remove_file = True # just remove it, it is generic
@@ -785,7 +793,7 @@ class Storage:
         while os.path.isfile(filename_base + "~stashed~%d.ipynb"%num):
             num += 1
         new_filename = filename_base + "~stashed~%d.ipynb"%num
-        print "Stashing %s to %s; it may or may not be needed."%(os.path.relpath(filename), os.path.relpath(new_filename))
+        print "Stashing %s to %s in case it is needed."%(os.path.relpath(filename), os.path.relpath(new_filename))
         os.rename(filename, new_filename)
         
     def makeExpression(self, exprId):
@@ -936,7 +944,22 @@ class StoredSpecialStmt:
         # "garbage" collection in the packages database storage.
         with open(os.path.join(self.path, 'expr.pv_it'), 'r') as f:
             expr_id = f.read()
-            self.context._storage._removeReference(expr_id)
+            storage = self.context._storage
+            storage._removeReference(expr_id)
+            hash_path = storage._storagePath(expr_id)
+            if not os.path.isdir(hash_path):
+                # remove name.txt that marks the stored expression as a special statement
+                special_name_file = os.path.join(hash_path, 'name.txt')
+                if os.path.isfile(special_name_file):
+                    os.remove(special_name_file)                    
+                # remove the "special" expression notebook 
+                expr_notebook = os.path.join(hash_path, 'expr.ipynb')
+                if os.path.isfile(expr_notebook):
+                    os.remove(expr_notebook)
+                # resurrect the original expression notebook
+                orig_expr_notebook = os.path.join(hash_path, 'orig_expr.ipynb')
+                if os.path.isfile(orig_expr_notebook):
+                    os.rename(orig_expr_notebook, expr_notebook)
         # remove invalidated proofs that use this axiom/theorem
         dependentTheorems = self.readDependentTheorems()
         for dependent in dependentTheorems:
@@ -950,7 +973,10 @@ class StoredSpecialStmt:
         Return the collection of theorems (as strings) that use this theorem/axiom directly.
         '''
         theorems = []
-        with open(os.path.join(self.path, 'usedBy.txt'), 'r') as usedByFile:
+        usedByFilename = os.path.join(self.path, 'usedBy.txt')
+        if not os.path.isfile(usedByFilename):
+            return theorems # return the empty list
+        with open(usedByFilename, 'r') as usedByFile:
             for line in usedByFile:
                 theorems.append(line.strip())
         return theorems
