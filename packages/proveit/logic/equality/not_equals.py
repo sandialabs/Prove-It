@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
+from proveit import Literal, BinaryOperation, USE_DEFAULTS
 from equals import Equals
 from proveit._common_ import x, y, A, X
 
@@ -11,14 +11,17 @@ class NotEquals(BinaryOperation):
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
             
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        Derive the reversed and unfolded forms, as a side effect.
+        Side-effect derivations to attempt automatically for
+        this NotEquals operation.
         '''
+        from proveit.logic import FALSE
         # automatically derive the reversed form which is equivalent
-        tryDerivation(self.deriveReversed, knownTruth.assumptions)
-        tryDerivation(self.deriveViaDoubleNegation, knownTruth.assumptions)
-        tryDerivation(self.unfold, knownTruth.assumptions)
+        yield self.deriveReversed # y != x from x != y
+        if self.rhs==FALSE:
+            yield self.deriveViaDoubleNegation # A from A != False and A in Booleans
+        yield self.unfold # Not(x=y) from x != y
     
     def conclude(self, assumptions):
         from proveit.logic import FALSE

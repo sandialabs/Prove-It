@@ -32,11 +32,11 @@ class SetOfAll(OperationOverInstances):
         formattedInstanceVars = ', '.join([var.formatted(formatType) for var in self.instanceVars])
         formattedInstanceElement = self.instanceElement.formatted(formatType, fence=innerFence)
         formattedDomain = self.domain.formatted(formatType, fence=True)
-        formattedConditions = self.conditions.formatted(formatType, fence=False) 
         if formatType == 'latex': outStr += r"\left\{"
         else: outStr += "{"
         outStr += formattedInstanceElement
         if len(self.conditions) > 0:
+            formattedConditions = self.conditions.formatted(formatType, fence=False) 
             if formatType == 'latex': outStr += r'~|~'
             else: outStr += ' s.t. ' # such that
             outStr += formattedConditions

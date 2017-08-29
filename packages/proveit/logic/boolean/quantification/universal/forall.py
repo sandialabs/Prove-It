@@ -1,4 +1,4 @@
-from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExpressionList, Operation, tryDerivation, ProofFailure
+from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExpressionList, Operation, ProofFailure
 from proveit._common_ import P, Q, R, S, xMulti, yMulti, Qmulti, Rmulti
 
 class Forall(OperationOverInstances):
@@ -15,12 +15,12 @@ class Forall(OperationOverInstances):
         '''
         OperationOverInstances.__init__(self, Forall._operator_, instanceVars, instanceExpr, domain, conditions)
         
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        Automatically unfold the Forall statement if the domain has an 'unfoldForall' method.
+        Side-effect derivations to attempt automatically for this forall operation.
         '''
         if hasattr(self.domain, 'unfoldForall'):
-            tryDerivation(self.unfold, knownTruth.assumptions)
+            yield self.unfold # derive an unfolded version (dependent upon the domain)
         
     def conclude(self, assumptions):
         '''

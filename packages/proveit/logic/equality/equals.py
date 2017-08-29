@@ -1,10 +1,10 @@
-from proveit import Expression, BinaryOperation, USE_DEFAULTS, ProofFailure, tryDerivation
+from proveit import Expression, BinaryOperation, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda
 from proveit._common_ import A, P, Q, f, x, y, z
-from proveit.logic.transitivity_search import transitivitySearch
+from proveit._generic_ import TransitiveRelation
 from irreducible_value import IrreducibleValue
 
-class Equals(BinaryOperation):
+class Equals(TransitiveRelation):
     # operator of the Equals operation
     _operator_ = Literal(stringFormat='=', context=__file__)        
     
@@ -21,16 +21,16 @@ class Equals(BinaryOperation):
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
         
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
         Record the knownTruth in Equals.knownEqualities, associated from
         the left hand side and the right hand side.  This information may
         be useful for concluding new equations via transitivity. 
         If the right hand side is an "irreducible value" (see 
         isIrreducibleValue), also record it in Equals.evaluations for use
-        when the evaluate method is called.   Also derive the reversed 
-        form, as a side effect.  If the right side is TRUE or FALSE, 
-        `deriveViaBooleanEquality` as a side effect.
+        when the evaluate method is called.   Some side-effects
+        derivations are also attempted depending upon the form of
+        this equality.
         '''
         from proveit.logic import TRUE, FALSE
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
@@ -39,25 +39,24 @@ class Equals(BinaryOperation):
             Equals.evaluations.setdefault(self.lhs, set()).add(knownTruth)
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
-            tryDerivation(self.deriveReversed, knownTruth.assumptions)
+            yield self.deriveReversed
         if self.rhs == FALSE:
             # derive lhs => FALSE from lhs = FALSE
-            tryDerivation(self.deriveContradiction, knownTruth.assumptions)
+            yield self.deriveContradiction
             # derive lhs from Not(lhs) = FALSE, if self is in this form
-            tryDerivation(self.deriveViaFalsifiedNegation, knownTruth.assumptions)
+            yield self.deriveViaFalsifiedNegation
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
-            tryDerivation(self.deriveViaBooleanEquality, knownTruth.assumptions)
+            yield self.deriveViaBooleanEquality
         
-    def deduceNegationSideEffects(self, knownTruth):
+    def negationSideEffects(self, knownTruth):
         '''
-        From not(A = B) derive A != B.
-        From not(A = FALSE) derive A assuming (A in Booleans).
+        Side-effect derivations to attempt automatically for a negated equation.        
         '''
         from proveit.logic import FALSE, inBool
-        tryDerivation(self.deduceNotEquals, knownTruth.assumptions)
+        yield self.deduceNotEquals # A != B from not(A=B)
         if self.rhs == FALSE:
-            tryDerivation(self.deduceViaNegatedFalsification, knownTruth.assumptions + (inBool(self.lhs),))
+            yield self.deduceViaNegatedFalsification # A from not(A=FALSE) and A in Booleans
                 
     def conclude(self, assumptions):
         '''
@@ -84,7 +83,7 @@ class Equals(BinaryOperation):
             pass
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
-        return transitivitySearch(self, assumptions)
+        return TransitiveRelation.conclude(self, assumptions)
                 
     @staticmethod
     def knownRelationsFromLeft(expr, assumptionsSet):
@@ -127,8 +126,8 @@ class Equals(BinaryOperation):
         r'''
         Deduce x != y assuming not(x = y), where self is x=y.
         '''
-        from _theorems_ import foldNotEquals
-        return foldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+        from not_equals import NotEquals
+        return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
                         
     def applyTransitivity(self, otherEquality, assumptions=USE_DEFAULTS):
         '''

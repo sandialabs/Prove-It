@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, defaults, USE_DEFAULTS, compositeExpression, tryDerivation, ProofFailure
+from proveit import Literal, BinaryOperation, defaults, USE_DEFAULTS, compositeExpression, ProofFailure
 from proveit.logic.boolean.negation import Not
 from proveit._common_ import A, B, C
 
@@ -17,25 +17,20 @@ class Implies(BinaryOperation):
         self.antecedent = self.lhs = antecedent
         self.consequent = self.rhs = consequent
 
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
         Record the KnownTruth implication in the knownImplications and knownImplicationsOfConsequent
         dictionaries so we can perform a search to later prove other implications via transitivity
         or conclude via implications (see concludeViaImplications).
-        Also automatically derive the consequent given the antecedent as an added assumption.
-        From A => FALSE, automatically derive Not(A) if [A in Booleans].
-        From Not(A) => FALSE, automatically derive A if [A in Booleans].
+        Yield side-effect derivations to attempt automatically.
         '''
         from proveit.logic.boolean._common_ import FALSE
         Implies.knownImplications.setdefault(self.antecedent, set()).add(knownTruth)
         Implies.knownImplications.setdefault(self.consequent, set()).add(knownTruth)
         Implies.knownImplicationsOfConsequent.setdefault(self.consequent, set()).add(knownTruth)
-        try:
-            self.deriveConsequent(knownTruth.assumptions + (self.antecedent,))
-        except:
-            pass
+        yield self.deriveConsequent # B given A=>B and A
         if self.consequent == FALSE:
-            tryDerivation(self.deriveViaContradiction, knownTruth.assumptions)
+            yield self.deriveViaContradiction # Not(A) given A=>FALSE or A given Not(A)=>FALSE
     
     def conclude(self, assumptions):
         '''
@@ -121,6 +116,7 @@ class Implies(BinaryOperation):
         From (Not(A) => FALSE), derive and return A assuming A in Booleans.
         Or from (A => FALSE), derive and return Not(A) assuming A in Booleans`.
         '''
+        from proveit.logic import FALSE
         from _theorems_ import affirmViaContradiction, denyViaContradiction
         if self.consequent != FALSE:
             raise ValueError('deriveViaContridiction method is only applicable if FALSE is implicated, not for ' + str(self))

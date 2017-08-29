@@ -1,5 +1,5 @@
 from proveit import Operation, Literal, USE_DEFAULTS
-from proveit._common_ import S, a, b
+from proveit._common_ import S, a, b, N, xMulti
 
 class Card(Operation):
     # operator of the Card operation
@@ -15,12 +15,15 @@ class Card(Operation):
     def latex(self, fence=False):
         return '|' + self.domain.latex(fence=False) + '|'
     
-    def extractDistinctElems(self, aVar=None, bVar=None, assumptions=USE_DEFAULTS):
+    def distinctSubsetExistence(self, elems=None, assumptions=USE_DEFAULTS):
         '''
         Assuming the cardinality of the domain can be proven to be >= 2,
         proves and returns that there exists distinct elements in that domain.
         '''
-        from _theorems_ import distinctElemExistence
-        if aVar is None: aVar = a
-        if bVar is None: bVar = b
-        return distinctElemExistence.specialize({S:self.domain, a:aVar, b:bVar}, assumptions=assumptions).deriveConclusion()
+        from proveit.number import num
+        from _theorems_ import distinctSubsetExistence, distinctPairExistence
+        if len(elems)==2:
+            aVar, bVar = elems            
+            return distinctPairExistence.specialize({S:self.domain}, relabelMap={a:aVar, b:bVar}, assumptions=assumptions)
+        else:
+            return distinctSubsetExistence.specialize({S:self.domain, N:num(len(elems))}, relabelMap={xMulti:elems}, assumptions=assumptions)

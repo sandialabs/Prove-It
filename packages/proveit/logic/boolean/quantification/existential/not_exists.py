@@ -1,4 +1,4 @@
-from proveit import OperationOverInstances, tryDerivation
+from proveit import OperationOverInstances
 from proveit import Literal, Operation, MultiVariable, Etcetera, USE_DEFAULTS
 from proveit._common_ import P, Q, S, xMulti
 
@@ -16,11 +16,11 @@ class NotExists(OperationOverInstances):
         '''
         OperationOverInstances.__init__(self, NotExists._operator_, instanceVars, instanceExpr, domain, conditions)
 
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        Automatically derive the unfolded version, Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x).
+        Side-effect derivations to attempt automatically for a NotExists operation.
         '''
-        tryDerivation(self.unfold, knownTruth.assumptions)
+        yield self.unfold # unfolded form: Not(Exists(..))
         
     def unfold(self, assumptions=USE_DEFAULTS):
         '''

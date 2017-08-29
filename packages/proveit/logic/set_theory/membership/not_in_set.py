@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
+from proveit import Literal, BinaryOperation, USE_DEFAULTS
 from proveit._common_ import x, S
 
 class NotInSet(BinaryOperation):
@@ -9,7 +9,25 @@ class NotInSet(BinaryOperation):
         BinaryOperation.__init__(self, NotInSet._operator_, element, domain)
         self.element = self.operands[0]
         self.domain = self.operands[1]  
+    
+    def sideEffects(self, knownTruth):
+        '''
+        Unfold x not-in S as Not(x in S) as an automatic side-effect.
+        '''
+        yield self.unfold
 
+    def deriveSideEffects(self, knownTruth):
+        '''
+        Unfold this NotInSet operation as a side-effect.  Also,
+        if the domain has a 'nonmembershipSideEffects' method, it will be called
+        and given the element and knownTruth and its yielded
+        side-effect derivations will also be attempted.
+        '''
+        yield self.unfold
+        if hasattr(self.domain, 'nonmembershipSideEffects'):
+            for sideEffect in self.domain.nonmembershipSideEffects(self.element, knownTruth):
+                yield sideEffect
+        
     def deduceInBool(self):
         '''
         Deduce and return that this 'not in' statement is in the set of BOOLEANS.
@@ -46,16 +64,7 @@ class NotInSet(BinaryOperation):
         Attempt to conclude x not in S via Not(x in S).
         '''
         from _theorems_ import foldNotInSet
-        return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
-    
-    def deriveSideEffects(self, knownTruth):
-        '''
-        If the domain has a 'deduceNonmembershipSideEffects' method, it will be called
-        and given the element and assumptions.  Also, the 'unfold' method is called.
-        '''
-        if hasattr(self.domain, 'deduceNonmembershipSideEffects'):
-            tryDerivation(self.domain.deduceNonmembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
-        tryDerivation(self.unfold, assumptions=knownTruth.assumptions)            
+        return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)        
 
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''

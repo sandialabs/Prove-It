@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, tryDerivation, defaults
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit._common_ import A, x, y, S
 
 class Not(Operation):
@@ -8,35 +8,32 @@ class Not(Operation):
     def __init__(self, A):
         Operation.__init__(self, Not._operator_, A)
         self.operand = self.operands[0]
-
-    def deriveSideEffects(self, knownTruth):
+    
+    def sideEffects(self, knownTruth):
         '''
-        From not(A) derive (A = FALSE) and (A in Booleans) as a side-effects.
-        From not(A) and assuming A, derive FALSE (contradiction).
-        From not(not(A)) derive A as a side-effect.
-        Furthermore, if the operand has a deriveNegationSideEffects method.
+        Side-effect derivations to attempt automatically.
         '''
-        from proveit.logic import Equals, InSet, Exists
+        from proveit.logic import FALSE
         if self.operand != FALSE: # avoid infinite recursion
-            tryDerivation(self.equateNegatedToFalse, knownTruth.assumptions)
+            yield self.equateNegatedToFalse # A=FALSE given Not(A)
         if isinstance(self.operand, Not):
-            tryDerivation(self.deriveViaDoubleNegation, knownTruth.assumptions)
+            yield self.deriveViaDoubleNegation # A given Not(Not(A))
         try:
             # derive the contradiction assuming the operand
-            tryDerivation(self.deriveContradiction, knownTruth.assumptions + (self.operand,))
+            yield self.deriveContradiction # FALSE given Not(A) and A
         except:
             pass # no contradiction
-        if hasattr(self.operand, 'deduceNegationSideEffects'):
-            return self.operand.deduceNegationSideEffects(knownTruth)
-        if isinstance(self.operand, Exists):
-            tryDerivation(self.deriveNotExists, knownTruth.assumptions)
+        if hasattr(self.operand, 'negationSideEffects'):
+            # derive negation side-effects for the specific type of
+            # expression being negated.
+            for negSideEffect in self.negationSideEffects():
+                yield negSideEffect
             
-    def deduceInBoolSideEffects(self, knownTruth):
+    def inBoolSideEffects(self, knownTruth):
         '''
         From not(A) in Booleans deduce A in Booleans, where self is not(A).
         '''
-        from _theorems_ import operandInBool
-        operandInBool.specialize({A:self.operand}, assumptions=knownTruth.assumptions)
+        yield self.deduceOperandInBool
         
     def conclude(self, assumptions):
         '''
@@ -110,7 +107,14 @@ class Not(Operation):
         '''
         from _theorems_ import closure
         return closure.specialize({A:self.operand}, assumptions=assumptions)
-   
+
+    def deduceOperandInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to deduce, then return, that the negated operand is in the set of BOOLEANS.
+        '''
+        from _theorems_ import operandInBool
+        operandInBool.specialize({A:self.operand}, assumptions=assumptions)
+          
     def equateNegatedToFalse(self, assumptions=USE_DEFAULTS):
         r'''
         From not(A), derive and return A = FALSE.

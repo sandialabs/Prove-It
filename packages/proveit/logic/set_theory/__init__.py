@@ -1,6 +1,6 @@
 from membership import InSet, NotInSet
 from enumeration import Set
-from containment import SupersetEq, SubsetEq
+from containment import SupersetEq, SubsetEq, Superset, Subset, NotSubsetEq, NotSupersetEq
 from unification import Union
 from intersection import Intersect
 from subtraction import Difference

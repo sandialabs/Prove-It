@@ -13,13 +13,14 @@ class BooleanSet(Literal):
     def __init__(self):
         Literal.__init__(self, stringFormat='BOOLEANS', latexFormat=r'\mathbb{B}')
     
-    def deduceMembershipSideEffects(self, element, knownTruth):
+    def membershipSideEffects(self, element, knownTruth):
         '''
-        Deduce side-effects when the element is proven to be in the set of Booleans
-        by calling 'deduceInBoolSideEffects' on the element if it has such a method.
+        Yield side-effect methods to try when the element is proven to be in the set of Booleans
+        by calling 'inBoolSideEffects' on the element if it has such a method.
         '''
-        if hasattr(element, 'deduceInBoolSideEffects'):
-            return element.deduceInBoolSideEffects(knownTruth)
+        if hasattr(element, 'inBoolSideEffects'):
+            for sideEffect in element.inBoolSideEffects(knownTruth):
+                yield sideEffect
 
     def membershipEquivalence(self, element, assumptions=USE_DEFAULTS):
         '''

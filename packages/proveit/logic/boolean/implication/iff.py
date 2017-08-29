@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
+from proveit import Literal, BinaryOperation, USE_DEFAULTS
 from proveit.logic.boolean.conjunction import compose
 from implies import Implies
 from proveit._common_ import A, B, C
@@ -13,17 +13,14 @@ class Iff(BinaryOperation):
         self.A = A
         self.B = B
         
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        From :math:`A \Leftrightarrow B`, automatically derive
-        :math:`A \Rightarrow B`, :math:`B \Rightarrow A`, :math:`B \Leftrightarrow A`,
-        and, if :math:`A \in \mathbb{B}` and :math:`B \in \mathbb{B}`, derive
-        :math:`A = B` as well.
+        Side-effect derivations to attempt automatically for a Iff operation.
         '''
-        tryDerivation(self.deriveLeftImplication, knownTruth.assumptions)
-        tryDerivation(self.deriveRightImplication, knownTruth.assumptions)
-        tryDerivation(self.deriveReversed, knownTruth.assumptions)
-        tryDerivation(self.deriveEquality, knownTruth.assumptions)
+        yield self.deriveLeftImplication # B=>A given A<=>B
+        yield self.deriveRightImplication # A=>B given A<=>B
+        yield self.deriveReversed # B<=>A given A<=>B
+        yield self.deriveEquality # A=B given A<=>B (assuming A and B are in booleans)
             
     def conclude(self, assumptions):
         '''
@@ -123,7 +120,7 @@ class Iff(BinaryOperation):
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from _theorems_ import iffTT, iffTF, iffFT, iffFF # load in truth-table evaluations
+        from _theorems_ import iffTT, iffTF, iffFT, iffFF # IMPORTANT: load in truth-table evaluations
         return BinaryOperation.evaluate(self, assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):

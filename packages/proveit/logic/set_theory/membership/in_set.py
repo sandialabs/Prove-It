@@ -1,42 +1,63 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
-from proveit._common_ import x, S
+from proveit import Literal, BinaryOperation, USE_DEFAULTS
 
 class InSet(BinaryOperation):
     # operator of the InSet operation
     _operator_ = Literal(stringFormat='in', latexFormat=r'\in', context=__file__)    
+    
+    # maps elements to InSet KnownTruths.  For exmple, map x to (x in S) if (x in S) is a KnownTruth.
+    knownMemberships = dict()
     
     def __init__(self, element, domain):
         BinaryOperation.__init__(self, InSet._operator_, element, domain)
         self.element = self.operands[0]
         self.domain = self.operands[1]
     
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        If the domain has a 'deduceMembershipSideEffects' method, it will be called
-        and given the element and assumptions.  Also, the 'unfold' method is called.
+        Store the proven membership in knownMemberships.
+        If the domain has a 'membershipSideEffects' method, it will be called
+        and given the element and knownTruth.  Also, the 'unfold' method is called.
         '''
-        if hasattr(self.domain, 'deduceMembershipSideEffects'):
-            tryDerivation(self.domain.deduceMembershipSideEffects, self.element, knownTruth)
-        tryDerivation(self.unfold, assumptions=knownTruth.assumptions)    
+        InSet.knownMemberships.setdefault(self.element, set()).add(knownTruth)
+        if hasattr(self.domain, 'membershipSideEffects'):
+                for sideEffect in self.domain.membershipSideEffects(self.element, knownTruth):
+                    yield sideEffect
+        yield self.unfold   
 
-    def deduceNegationSideEffects(self, knownTruth):
+    def negationSideEffects(self, knownTruth):
         '''
-        From not(x in S) derive x not in S.
+        Fold Not(x in S) as (x not-in S) as an automatic side-effect.
         '''
-        tryDerivation(self.deduceNotIn, knownTruth.assumptions)
+        yield self.deduceNotIn
         
     def deduceNotIn(self, assumptions=USE_DEFAULTS):
         r'''
         Deduce x not in S assuming not(A in S), where self = (x in S).
         '''
-        from _theorems_ import foldNotInSet
-        return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
+        from not_in_set import NotIn
+        yield NotIn(self.element, self.domain).concludeAsFolded(assumptions)
 
     def conclude(self, assumptions):
         '''
-        Attempt to conclude that the element is not in the domain by calling
-        'deduceMembership' on the domain with the element and assumptions.
+        Attempt to conclude that the element is not in the domain.
+        First, see if it is contained in a subset of the domain.  
+        If that fails, try calling 'deduceMembership' on the domain
+        with the element and assumptions parameters.
         '''
+        from proveit.logic import SubsetEq
+        from proveit import ProofFailure
+        # try to conclude some x in S
+        if self.element in InSet.knownMemberships:
+            for knownMembership in InSet.knownMemberships[self.element]:
+                if knownMembership.isSufficient(assumptions):
+                    try:
+                        # x in R is a known truth; if we can proof R subseteq S, we are done.
+                        subsetRelation = SubsetEq(knownMembership.domain, self.domain).prove(assumptions)
+                        # S is a superset of R, so now we can prove x in S.
+                        return subsetRelation.deriveSupsersetMembership(self.element, assumptions=assumptions)
+                    except ProofFailure:
+                        pass # no luck, keep trying
+        # could not prove it through a subset relationship, now try deduceMembership
         if hasattr(self.domain, 'deduceMembership'):
             return self.domain.deduceMembership(self.element, assumptions)
         raise AttributeError("'deduceMembership' is not implemented for a domain of type " + str(self.domain.__class__))

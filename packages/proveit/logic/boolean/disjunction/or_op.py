@@ -1,4 +1,4 @@
-from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
+from proveit import Literal, AssociativeOperation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
 from proveit._common_ import A, B, C, Amulti, Cmulti
 
@@ -60,45 +60,36 @@ class Or(AssociativeOperation):
         # or there are no pre-existing proofs for any of the operands.
         return AssociativeOperation.conclude(self, assumptions)
     
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        From a disjunction, automatically derive that the disjunction
-        is in the set of Booleans (which then propogates to its constituents
-        being in the set of Booleans) except if this is the of form
-        [A or not(A)], the unfolding of [A in Boolean], to avoid and
-        infinite recursion.
+        Side-effect derivations to attempt automatically.
         '''
         from proveit.logic import Not
+        '''
+        # This shouldn't be necessary, right; thinking this is obsolete
+        # given the infinite recursion protection.
         if len(self.operands)==2:
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
                 return # stop to avoid infinite recursion.
-        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
-    
-    def deduceNegationSideEffects(self, knownTruth):
         '''
-        From not(A or B) derive not(A), not(B), and (A or B) in Booleans.
-        '''
-        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
-        if len(self.operands) == 2:
-            tryDerivation(self.deduceNotLeftIfNeither, knownTruth.assumptions)
-            tryDerivation(self.deduceNotRightIfNeither, knownTruth.assumptions)
-        else:
-            pass # should generalize to many operands
+        yield self.deriveInBool
 
-    def deduceInBoolSideEffects(self, knownTruth):
+    def negationSideEffects(self, knownTruth):
         '''
-        From [(A or B) in Booleans] deduce A in Booleans and B in Booleans, where self is (A or B).
+        Side-effect derivations to attempt automatically for Not(A or B or .. or .. Z).
         '''
-        from _axioms_ import leftInBool, rightInBool
-        from _theorems_ import eachInBool
-        from proveit.logic import Equals
-        if len(self.operands) == 2:
-            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=knownTruth.assumptions)
-            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=knownTruth.assumptions)
-        else:
-            for k, operand in enumerate(self.operands):
-                eachInBool.specialize({Amulti:self.operands[:k], B:operand, Cmulti:self.operands[k+1:]})
+        yield self.deriveInBool # A or B or .. or .. Z in Booleans
+        if len(self.operands) == 2: # Not(A or B)
+            yield self.deduceNotLeftIfNeither # Not(A)
+            yield self.deduceNotRightIfNeither # Not(B)
+
+    def inBoolSideEffects(self, knownTruth):
+        '''
+        From (A or B or .. or Z) in Booleans deduce (A in Booleans), (B in Booleans), ...
+        (Z in Booleans).
+        '''
+        yield self.deducePartsInBool
         
     def concludeNegation(self, assumptions):
         from _theorems_ import falseOrFalseNegated, neitherIntro, notOrIfNotAny
@@ -108,7 +99,13 @@ class Or(AssociativeOperation):
             return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             return notOrIfNotAny.specialize({Amulti:self.operands}, assumptions=assumptions)
-        
+    
+    def deriveInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].
+        '''
+        inBool(self).conclude(assumptions=assumptions)
+    
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
@@ -135,7 +132,45 @@ class Or(AssociativeOperation):
         from _theorems_ import singularConstructiveDilemma
         if len(self.operands) == 2:
             return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
+
+    def deduceLeftInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce A in Booleans from (A or B) in Booleans.
+        '''
+        from _axioms_ import leftInBool
+        if len(self.operands) == 2:
+            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         
+    def deduceRightInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce B in Booleans from (A or B) in Booleans.
+        '''
+        from _axioms_ import rightInBool
+        if len(self.operands) == 2:
+            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+    def deducePartsInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
+        '''
+        Deduce A in Booleans, B in Booleans, ..., Z in Booleans
+        from (A or B or ... or Z) in Booleans.
+        '''
+        for i in xrange(len(self.operands)):
+            self.deducePartInBool(i, assumptions)        
+
+    def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
+        '''
+        Deduce X in Booleans from (A or B or .. or X or .. or Z) in Booleans
+        provided X by expression or index number.
+        '''
+        from _theorems_ import eachInBool
+        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
+        if idx < 0 or idx >= len(self.operands):
+            raise IndexError("Operand out of range: " + str(idx))
+        if len(self.operands)==2:
+            if idx==0: self.deduceLeftInBool(assumptions)
+            elif idx==1: self.deduceRightInBool(assumptions)
+        return eachInBool.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
+                
     def concludeViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         

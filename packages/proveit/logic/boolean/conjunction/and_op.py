@@ -1,4 +1,4 @@
-from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
+from proveit import Literal, AssociativeOperation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
 from proveit._common_ import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti
 
@@ -22,44 +22,43 @@ class And(AssociativeOperation):
         if self == trueAndTrue.expr: return trueAndTrue # simple special case
         return self.concludeViaComposition(assumptions)
     
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        From a conjunction, automatically derive the individual constituents.
-        That is, deduce A, B, ..., Z from (A and B and ... and Z).
-        Also derive that this conjunction is in the set of Booleans
-        (which then propogates to its constituents being in the set of Booleans).
+        Side-effect derivations to attempt automatically.
         '''
-        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
-        if len(self.operands) == 2:
-            tryDerivation(self.deriveLeft, knownTruth.assumptions)
-            tryDerivation(self.deriveRight, knownTruth.assumptions)
-        else:
-            for i in xrange(len(self.operands)):
-                tryDerivation(self.deriveInPart, i, knownTruth.assumptions)
-    
-    def deduceNegationSideEffects(self, knownTruth):
-        '''
-        From not(A and B and ... and Z), automatically deduce that the
-        conjunction is in the set of Booleans.
-        '''
-        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
-    
-    def deduceInBoolSideEffects(self, knownTruth):
-        '''
-        From (A and B) in Booleans deduce A in Booleans and B in Booleans, where self is (A and B).
-        '''
-        from _axioms_ import leftInBool, rightInBool
-        from _theorems_ import eachInBool
-        if len(self.operands) == 2:
-            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, knownTruth.assumptions)
-            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, knownTruth.assumptions)
-        else:
-            for k, operand in enumerate(self.operands):
-                eachInBool.specialize({Amulti:self.operands[:k], B:operand, Cmulti:self.operands[k+1:]})
+        yield self.deriveInBool
+        yield self.deriveParts
 
+    def negationSideEffects(self, knownTruth):
+        '''
+        Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
+        '''
+        yield self.deriveInBool # (A and B and ... and Z) in Booleans
+        
+    def inBoolSideEffects(self, knownTruth):
+        '''
+        From (A and B and .. and Z) in Booleans deduce (A in Booleans), (B in Booleans), ...
+        (Z in Booleans).
+        '''
+        yield self.deducePartsInBool
+ 
+    def deriveInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        From (A and B and ... and Z) derive [(A and B and ... and Z) in Booleans].
+        '''
+        inBool(self).conclude(assumptions=assumptions)
+    
+    def deriveParts(self, assumptions=USE_DEFAULTS):
+        r'''
+        From (A and B and ... and Z)` derive each operand:
+        A, B, ..., Z.
+        '''
+        for i in xrange(len(self.operands)):
+            self.deriveInPart(i, assumptions)        
+    
     def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
         r'''
-        From :math:`(A \land ... \land X \land ... \land Z)` derive :math:`X`.  indexOrExpr specifies 
+        From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
         '''
         from _theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
@@ -95,6 +94,44 @@ class And(AssociativeOperation):
         See also the compose method to do this constructively.
         '''
         return compose(self.operands, assumptions)
+    
+    def deduceLeftInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce A in Booleans from (A and B) in Booleans.
+        '''
+        from _axioms_ import leftInBool
+        if len(self.operands) == 2:
+            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        
+    def deduceRightInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce B in Booleans from (A and B) in Booleans.
+        '''
+        from _axioms_ import rightInBool
+        if len(self.operands) == 2:
+            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+    def deducePartsInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
+        '''
+        Deduce A in Booleans, B in Booleans, ..., Z in Booleans
+        from (A and B and ... and Z) in Booleans.
+        '''
+        for i in xrange(len(self.operands)):
+            self.deducePartInBool(i, assumptions)        
+
+    def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
+        '''
+        Deduce X in Booleans from (A and B and .. and X and .. and Z) in Booleans
+        provided X by expression or index number.
+        '''
+        from _theorems_ import eachInBool
+        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
+        if idx < 0 or idx >= len(self.operands):
+            raise IndexError("Operand out of range: " + str(idx))
+        if len(self.operands)==2:
+            if idx==0: self.deduceLeftInBool(assumptions)
+            elif idx==1: self.deduceRightInBool(assumptions)
+        return eachInBool.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
     
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''
