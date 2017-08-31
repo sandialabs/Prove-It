@@ -23,7 +23,7 @@ class Card(Operation):
         from proveit.number import num
         from _theorems_ import distinctSubsetExistence, distinctPairExistence
         if len(elems)==2:
-            aVar, bVar = elems            
+            aVar, bVar = elems
             return distinctPairExistence.specialize({S:self.domain}, relabelMap={a:aVar, b:bVar}, assumptions=assumptions)
         else:
             return distinctSubsetExistence.specialize({S:self.domain, N:num(len(elems))}, relabelMap={xMulti:elems}, assumptions=assumptions)

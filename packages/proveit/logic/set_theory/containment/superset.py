@@ -89,12 +89,12 @@ class SupersetEq(SupersetRelation):
         
     def conclude(self, assumptions):
         from _theorems_ import supersetEqViaEquality        
-        from _generic_ import TransitivityRelation
+        from proveit._generic_ import TransitiveRelation
         from proveit import ProofFailure
         
         try:
             # first attempt a transitivity search
-            return TransitivityRelation.conclude(assumptions)
+            return TransitiveRelation.conclude(self, assumptions)
         except ProofFailure:
             pass # transitivity search failed
         

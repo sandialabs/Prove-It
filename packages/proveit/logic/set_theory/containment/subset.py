@@ -90,12 +90,12 @@ class SubsetEq(SubsetRelation):
         
     def conclude(self, assumptions):
         from _theorems_ import subsetEqViaEquality
-        from _generic_ import TransitivityRelation
+        from proveit._generic_ import TransitiveRelation
         from proveit import ProofFailure
         
         try:
             # first attempt a transitivity search
-            return TransitivityRelation.conclude(assumptions)
+            return TransitiveRelation.conclude(self, assumptions)
         except ProofFailure:
             pass # transitivity search failed
         
@@ -104,13 +104,13 @@ class SubsetEq(SubsetRelation):
             return subsetEqViaEquality.specialize({A:self.operands[0], B:self.operands[1]})
             
         # Check for special case of [{x | Q*(x)}_{x \in S}] \subseteq S
-        from proveit.logic.set_theory._theorems_ import conditionedSubsetIsSubset
+        from proveit.logic.set_theory.comprehension._theorems_ import comprehensionIsSubset
         from proveit.logic import SetOfAll
         if isinstance(self.subset, SetOfAll):
             setOfAll = self.subset
             if len(setOfAll.instanceVars)==1 and setOfAll.instanceElement == setOfAll.instanceVars[0] and setOfAll.domain==self.superset:
-                Q_op, Q_op_sub = Etcetera(Operation(Qmulti, setOfAll.instanceVars)), setOfAll.conditions
-                return conditionedSubsetIsSubset.specialize({S:setOfAll.domain, Q_op:Q_op_sub, x:setOfAll.instanceVars[0]})        
+                Q_op, Q_op_sub = Operation(Qmulti, setOfAll.instanceVars), setOfAll.conditions
+                return comprehensionIsSubset.specialize({S:setOfAll.domain, Q_op:Q_op_sub}, relabelMap={x:setOfAll.instanceVars[0]}, assumptions=assumptions)
         
     def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
