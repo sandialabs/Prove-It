@@ -1,4 +1,4 @@
-from proveit import Operation, Etcetera, MultiVariable, Lambda, compositeExpression, NamedExpressions
+from proveit import Operation, Etcetera, Lambda, compositeExpression, NamedExpressions, USE_DEFAULTS
 
 class OperationOverInstances(Operation):
     def __init__(self, operator, instanceVars, instanceExpr, domain=None, conditions=tuple()):
@@ -47,7 +47,7 @@ class OperationOverInstances(Operation):
             return instanceMapping.body['iexpr'] 
         elif argName=='conditions':
             conditions = instanceMapping.body['conds']
-            if len(conditions)==0: return tuple()
+            #if len(conditions)==0: return tuple()
             return conditions
         
     def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
@@ -122,53 +122,59 @@ class OperationOverInstances(Operation):
 
         return outStr        
 
-    def instanceSubstitution(self, equivalenceForallInstances):
+    def instanceSubstitution(self, universality, assumptions=USE_DEFAULTS):
         '''
         Equate this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..),
         with one that substitutes instance expressions given some 
-        equivalenceForallInstances = forall_{..x.. in S | ..Q(..x..)..} f(..x..) = g(..x..).
-        Derive and return the following type of equality assuming equivalenceForallInstances:
+        universality = forall_{..x.. in S | ..Q(..x..)..} f(..x..) = g(..x..).
+        Derive and return the following type of equality assuming universality:
         Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..) = Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
         Works also when there is no domain S and/or no conditions ..Q...
         '''
-        from proveit.logic.equality._axioms_ import instanceSubstitution
+        from proveit.logic.equality._axioms_ import instanceSubstitution, noDomainInstanceSubstitution
         from proveit.logic import Forall, Equals
-        from proveit.number import num
-        from proveit._common_ import n, Q, Qetc, xEtc, yEtc, zEtc, etc_QxEtc, f, g, fxEtc, fyEtc, gxEtc, gzEtc, Upsilon, S
-        if not isinstance(equivalenceForallInstances, Forall):
-            raise InstanceSubstitutionException("equivalenceForallInstances must be a forall expression", self, equivalenceForallInstances)
-        if len(equivalenceForallInstances.instanceVars) != len(self.instanceVars):
-            raise InstanceSubstitutionException("equivalenceForallInstances must have the same number of variables as the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
-        if equivalenceForallInstances.domain != self.domain:
-            raise InstanceSubstitutionException("equivalenceForallInstances must have the same domain as the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
+        from proveit import KnownTruth
+        from proveit._common_ import n, Qmulti, xMulti, yMulti, zMulti, f, g, Upsilon, S
+        if isinstance(universality, KnownTruth):
+            universality = universality.expr
+        if not isinstance(universality, Forall):
+            raise InstanceSubstitutionException("'universality' must be a forall expression", self, universality)
+        if len(universality.instanceVars) != len(self.instanceVars):
+            raise InstanceSubstitutionException("'universality' must have the same number of variables as the OperationOverInstances having instances substituted", self, universality)
+        if universality.domain != self.domain:
+            raise InstanceSubstitutionException("'universality' must have the same domain as the OperationOverInstances having instances substituted", self, universality)
         # map from the forall instance variables to self's instance variables
-        iVarSubstitutions = {forallIvar:selfIvar for forallIvar, selfIvar in zip(equivalenceForallInstances.instanceVars, self.instanceVars)}
-        if equivalenceForallInstances.conditions.substituted(iVarSubstitutions) != self.conditions:
-            raise InstanceSubstitutionException("equivalenceForallInstances must have the same conditions as the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
-        if not isinstance(equivalenceForallInstances.instanceExpr, Equals):
-            raise InstanceSubstitutionException("equivalenceForallInstances be an equivalence within Forall: " + str(equivalenceForallInstances))
-        if equivalenceForallInstances.instanceExpr.lhs.substituted(iVarSubstitutions) != self.instanceExpr:
-            raise InstanceSubstitutionException("lhs of equivalence in equivalenceForallInstances must match the instance expression of the OperationOverInstances having instances substituted", self, equivalenceForallInstances)
+        iVarSubstitutions = {forallIvar:selfIvar for forallIvar, selfIvar in zip(universality.instanceVars, self.instanceVars)}
+        if universality.conditions.substituted(iVarSubstitutions) != self.conditions:
+            raise InstanceSubstitutionException("'universality' must have the same conditions as the OperationOverInstances having instances substituted", self, universality)
+        if not isinstance(universality.instanceExpr, Equals):
+            raise InstanceSubstitutionException("'universality' must be an equivalence within Forall: " + str(universality))
+        if universality.instanceExpr.lhs.substituted(iVarSubstitutions) != self.instanceExpr:
+            raise InstanceSubstitutionException("lhs of equivalence in 'universality' must match the instance expression of the OperationOverInstances having instances substituted", self, universality)
         f_op, f_op_sub = Operation(f, self.instanceVars), self.instanceExpr
-        g_op, g_op_sub = Operation(g, self.instanceVars), equivalenceForallInstances.instanceExpr.rhs.substituted(iVarSubstitutions)
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
-        return instanceSubstitution.specialize({Upsilon:self.operator, xEtc:self.instanceVars, yEtc:self.instanceVars, zEtc:self.instanceVars, \
-                                                Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub}).deriveConclusion()
+        g_op, g_op_sub = Operation(g, self.instanceVars), universality.instanceExpr.rhs.substituted(iVarSubstitutions)
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        if self.hasDomain():
+            return instanceSubstitution.specialize({Upsilon:self.operator, Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub}, 
+                                                    relabelMap={xMulti:universality.instanceVars, yMulti:self.instanceVars, zMulti:self.instanceVars}, assumptions=assumptions).deriveConsequent(assumptions=assumptions)
+        else:
+            return noDomainInstanceSubstitution.specialize({Upsilon:self.operator, Q_op:Q_op_sub, f_op:f_op_sub, g_op:g_op_sub}, 
+                                                             relabelMap={xMulti:universality.instanceVars, yMulti:self.instanceVars, zMulti:self.instanceVars}, assumptions=assumptions).deriveConsequent(assumptions=assumptions)
 
-    def substituteInstances(self, equivalenceForallInstances):
+    def substituteInstances(self, universality, assumptions=USE_DEFAULTS):
         '''
         Assuming this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..)
         to be a true statement, derive and return Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
-        given some equivalenceForallInstances = forall_{..x.. in S | ..Q(..x..)..} f(..x..) = g(..x..).
+        given some 'universality' = forall_{..x.. in S | ..Q(..x..)..} f(..x..) = g(..x..).
         Works also when there is no domain S and/or no conditions ..Q...
         '''
-        substitution = self.instanceSubstitution(equivalenceForallInstances)
-        return substitution.deriveRightViaEquivalence()
+        substitution = self.instanceSubstitution(universality, assumptions=assumptions)
+        return substitution.deriveRightViaEquivalence(assumptions=assumptions)
         
 class InstanceSubstitutionException(Exception):
-    def __init__(self, msg, operationOverInstances, equivalenceForallInstances):
+    def __init__(self, msg, operationOverInstances, universality):
         self.msg = msg
         self.operationOverInstances = operationOverInstances
-        self.equivalenceForallInstances = equivalenceForallInstances
+        self.universality = universality
     def __str__(self):
-        return self.msg + '.\n  operationOverInstances: ' + str(self.operationOverInstances) + '\n  equivalenceForallInstances: ' + str(self.equivalenceForallInstances)
+        return self.msg + '.\n  operationOverInstances: ' + str(self.operationOverInstances) + '\n  universality: ' + str(self.universality)
