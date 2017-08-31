@@ -51,7 +51,17 @@ class KnownTruth:
         # and an unordered set (for convenience when checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
-        self._proof = None # set this after the Proof does some initialization via _recordBestProof         
+        
+        # See if there is an existing KnownTruth that covers this one
+        # (has no more assumptions than this one) with a usable proof.
+        existingKnownTruth = KnownTruth.findKnownTruth(expression, assumptions)
+        if existingKnownTruth is not None:
+            # Use an existing proof
+            self._proof = existingKnownTruth.proof()
+        else:
+            # initialize _proof to None, to be changed later via _recordBestProof
+            self._proof = None
+             
         # a unique representation for the KnownTruth comprises its expr and assumptions:
         self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
         # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
