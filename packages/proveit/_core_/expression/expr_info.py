@@ -81,7 +81,7 @@ class ExpressionInfo:
                     expr_context_map[sub_expr] = expr_context_map[expr]
         
         # generate the html as a table with the enumerated expressions on the rows.
-        html = '<table><tr><th colspan=2>expression</th><th>core type</th><th>sub-expressions</th></tr>\n'
+        html = '<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>\n'
         for k, expr in enumerate(enumerated_expressions):
             sub_expressions = ''
             if isinstance(expr, NamedExpressions):
@@ -96,7 +96,7 @@ class ExpressionInfo:
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr] if expr in expr_context_map else None
-            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td>\n'%(k, expr._repr_html_(context=context), expr._coreInfo[0], sub_expressions)
+            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
         html += '</table>\n'
         return html
     

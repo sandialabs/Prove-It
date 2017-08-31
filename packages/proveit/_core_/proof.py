@@ -51,16 +51,18 @@ class Proof:
         if self.isUsable():
             self._setUsability()
         # this new proof may be the first proof, make an old one obselete, or be born obsolete itself.
+        hadPreviousProof = (provenTruth.proof() is not None and provenTruth.isUsable())
         provenTruth._recordBestProof(self)
         if requiringUnusableTheorem:
             # Raise an UnusableTheorem exception when an attempt is made 
             # to use an "unusable" theorem directly or indirectly.
             raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
         if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
-            # Axioms and Theorems will derive their side-effects after all of them are created; done in special_statements.py.
-            if not isinstance(self, Axiom) and not isinstance(self, Theorem):
-                # may derive any side-effects that are obvious consequences arising from this truth:
-                provenTruth.deriveSideEffects()
+            if not hadPreviousProof: # don't bother with side-effects if this was already proven (and usable); that should have been done already
+                # Axioms and Theorems will derive their side-effects after all of them are created; done in special_statements.py.
+                if not isinstance(self, Axiom) and not isinstance(self, Theorem):
+                    # may derive any side-effects that are obvious consequences arising from this truth:
+                    provenTruth.deriveSideEffects()
     
     def _setUsability(self):
         pass # overloaded for the Theorem type Proof
@@ -179,19 +181,19 @@ class Proof:
     def _repr_html_(self):
         proofSteps = self.enumeratedProofSteps()
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
-        html = '<table><tr><th colspan=2>statement</th><th>step type</th><th>requirements</th></tr>\n'
+        html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
         for k, proof in enumerate(proofSteps):
-            html += '<tr><td>%d</td><td>%s</td>'%(k, proof.provenTruth._repr_html_())
-            if isinstance(proof, Axiom) or isinstance(proof, Theorem):
-                html += r'<td colspan=3>'
-                html += proof.stepType() + ': '
-                html += '<a href="%s" target="_blank">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
-            else:
-                requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
-                html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
+            html += '<tr><td>%d</td>'%k
+            requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
+            html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
+            html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
             if isinstance(proof, Specialization):
-                html += '<tr><td colspan=5 style="text-align:center">' + proof.mappingHTML() + '</td></tr>'
+                html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof.mappingHTML() + '</td></tr>'
+            if isinstance(proof, Axiom) or isinstance(proof, Theorem):
+                html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
+                html += '<a href="%s" target="_blank">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
+                html += '</td></tr>'
         return html
 
 class Assumption(Proof): 
