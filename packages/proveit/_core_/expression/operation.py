@@ -1,5 +1,5 @@
 import inspect
-from expr import Expression, ImproperSubstitution
+from .expr import Expression, ImproperSubstitution
 
 class Operation(Expression):
     # map _operator_ Literals to corresponding Operation classes
@@ -11,12 +11,12 @@ class Operation(Expression):
         a Label (such as a Variable or a Literal).  The operands may be single expression that 
         will be then be wrapped by ExpressionList.
         '''
-        from composite.composite import compositeExpression
-        from label.label import Label
+        from .composite.composite import compositeExpression
+        from .label.label import Label
         from proveit import Context
         if hasattr(self.__class__, '_operator_') and operator==self.__class__._operator_:
             context = Context(inspect.getfile(self.__class__))
-            if operator.context != context:
+            if Expression.contexts[operator] != context:
                 raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
             Operation.operationClassOfOperator[operator] = self.__class__
         if not isinstance(operator, Label):

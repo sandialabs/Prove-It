@@ -10,6 +10,8 @@ import os
 class Expression:
     unique_id_map = dict() # map unique_id's to unique_rep's
     
+    contexts = dict() # map expression to contexts (for expressions that "belong" to a Context)
+    
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
     in_progress_to_conclude = set() 

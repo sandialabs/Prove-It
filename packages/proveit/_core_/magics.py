@@ -25,9 +25,14 @@ class AssignmentBehaviorModifier:
         ipython = self.ipython
         def new_run_cell(self, raw_cell, *args, **kwargs):
             lines = raw_cell.split('\n')
-            if len(lines)==0: return # nothing to run
             # find the last non-indented python statement in the cell
-            idx = [k for k, line in enumerate(lines) if len(line) > 0 and re.match("\s", line[0]) is None][-1]
+            non_indented_lines = [line for line in lines if len(line) > 0 and re.match("\s", line[0]) is None]
+            if len(non_indented_lines)==0: 
+                # no non-indented lines.  just run the cell normally.
+                new_raw_cell = '\n'.join(lines)
+                return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
+            # get the index of the last non-indented line
+            idx = [k for k, line in enumerate(non_indented_lines)][-1]
             last_python_stmt = '\n'.join(lines[idx:])
             # look for one or more variables on the left side of an assignment
             if re.match("[a-zA-Z_][a-zA-Z0-9_]*\s*(,\s*[a-zA-Z_][a-zA-Z0-9_]*)*\s*=", last_python_stmt) is not None:
@@ -194,6 +199,9 @@ class ProveItMagic(Magics):
         import proveit
         import ipywidgets as widgets
         from IPython.display import display, HTML
+        # create an '_init_.py' in the directory if there is not an existing one.
+        if not os.path.isfile('__init__.py'):
+            open('__init__.py', 'w').close() # create an empty __init__.py
         context = Context()
         proveit_path = os.path.split(proveit.__file__)[0]
         special_notebook_types = ('common', 'axioms', 'theorems')
@@ -289,6 +297,12 @@ class ProveItMagic(Magics):
 
     @line_magic
     def end_common(self, line):
+        # Record the context namees of common expressions referenced
+        # by this context's common expressions notebook...
+        self.context.recordReferencedCommons()
+        # and check for illegal mutual references.
+        if self.context.hasMutualReferencedCommons():
+            raise ProveItMagicFailure("Not allowed to have mutually dependent 'common expression' notebooks")
         self.finish('common')
 
     @line_magic
@@ -300,8 +314,10 @@ class ProveItMagic(Magics):
             expr_name = 'expr'
             expr = self.shell.user_ns[expr_name]
         else:
-            # actually a KnownTruth (from an Axiom or Theorem) converted to an Expression
-            expr = self.shell.user_ns[expr_name].expr
+            expr = self.shell.user_ns[expr_name]
+            if isinstance(expr, KnownTruth):
+                # actually a KnownTruth; convert to an Expression
+                expr = expr.expr
         if expr != context.getStoredExpr(hash_id):
             raise ProveItMagicFailure("The built '%s' does not match the stored Expression"%expr_name)
         print "Passed sanity check: built '%s' is the same as the stored Expression."%expr_name
@@ -350,7 +366,7 @@ class ProveItMagic(Magics):
         specialStatementsClassName = kind[0].upper() + kind[1:]
         if kind=='common': specialStatementsClassName = 'CommonExpressions'        
         output = "import sys\n"
-        output += "from proveit._core_.context import Context, %s\n"%specialStatementsClassName
+        output += "from proveit._core_.context import %s\n"%specialStatementsClassName
         output += "sys.modules[__name__] = %s(__file__)\n"%(specialStatementsClassName)        
         if os.path.isfile('_%s_.py'%kind):
             with open('_%s_.py'%kind, 'r') as f:

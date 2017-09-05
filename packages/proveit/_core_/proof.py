@@ -285,6 +285,14 @@ class Theorem(Proof):
         Return the HTML link to the theorem proof file.
         '''
         return self._storedTheorem().getProofLink()
+    
+    def recordPresumingInfo(self, presuming):
+        '''
+        Record information about what the proof of the theorem
+        presumes -- what other theorems/contexts the proof
+        is expected to depend upon.
+        '''
+        self._storedTheorem().recordPresumingInfo(presuming)
         
     def recordProof(self, proof):
         '''
@@ -360,14 +368,9 @@ class Theorem(Proof):
             self._unusableTheorem = None # Nothing being proven, so all Theorems are usable
             return
         if self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
-            if self in KnownTruth.dependentTheoremsOfTheoremBeingProven:
+            if self._storedTheorem().presumes(str(KnownTruth.theoremBeingProven)):
                 raise CircularLogic(KnownTruth.theoremBeingProven, self)
             self._unusableTheorem = None # This Theorem is usable because it is being presumed.
-        # Instead of allowing fully proven theorems to be used, force explicit declaration of 
-        # dependence so there is enough information to rederive all proofs after figuring out
-        # the proper order to do so.
-        #elif isFullyProven(self) and self != KnownTruth.theoremBeingProven and self not in KnownTruth.dependentTheoremsOfTheoremBeingProven:
-        #    self._unusableTheorem = None # This Theorem is usable because it has been fully proven as does not depend upon the Theorem being proven.
         else:
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all dependents.

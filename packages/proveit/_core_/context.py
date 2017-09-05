@@ -22,6 +22,7 @@ the theorem proofs, and it stores theorem proof dependencies.
 
 import os
 import sys
+import importlib
 from glob import glob
 from storage import Storage
 
@@ -89,10 +90,6 @@ class Context:
             self.rootContext = Context(rootDirectory)
         else:
             self.rootContext = self # this is a root context
-            # add the path to the root context to the system path
-            root_package_path = os.path.abspath(os.path.join(path, '..'))
-            if root_package_path not in sys.path:
-                sys.path.append(root_package_path)
         # Create the Storage object for this Context
         if path not in Context.storages:
             Context.storages[path] = Storage(self, path)
@@ -155,6 +152,7 @@ class Context:
         self._setSpecialStatements(theoremNames, theoremDefinitions, 'theorem')
     
     def _setSpecialStatements(self, names, definitions, kind):
+        from proveit import Expression
         storage = self._storage
         specialStatementsPath = os.path.join(storage.pv_it_dir, '_' + kind + 's_')
         if not os.path.isdir(specialStatementsPath):
@@ -179,18 +177,18 @@ class Context:
                 f.write(name + '\n')
                 expr = definitions[name]
                 # record the special expression in this context object
-                if not hasattr(expr, 'context'):                
-                    expr.context = self
+                if expr not in Expression.contexts:  
+                    Expression.contexts[expr] = self              
                     self._storage.specialExpressions[expr] = (kind, name)            
                 # add the expression to the "database" via the storage object.
-                exprId = storage._proveItStorageId(expr)
-                if name in previousDefIds and previousDefIds[name] == exprId:
+                expr_id = storage._proveItStorageId(expr)
+                if name in previousDefIds and previousDefIds[name] == expr_id:
                     continue # unchanged special statement
                 storedSpecialStmt = Context.getStoredStmt(self.name + '.' + name, kind)
                 if name not in previousDefIds:
                     # added special statement
                     print 'Adding %s %s to %s context'%(kind, name, self.name)
-                elif previousDefIds[name] != exprId:
+                elif previousDefIds[name] != expr_id:
                     # modified special statement. remove the old one first.
                     print 'Modifying %s %s in %s context'%(kind, name, self.name)
                     storedSpecialStmt.remove(keepPath=True)
@@ -199,8 +197,8 @@ class Context:
                 if not os.path.isdir(specialStatementDir):
                     os.mkdir(specialStatementDir)
                 with open(os.path.join(specialStatementDir, 'expr.pv_it'), 'w') as exprFile:
-                    exprFile.write(exprId)
-                    storage._addReference(exprId)
+                    exprFile.write(expr_id)
+                    storage._addReference(expr_id)
                 with open(os.path.join(specialStatementDir, 'usedBy.txt'), 'w') as exprFile:
                     pass # usedBy.txt must be created but initially empty
 
@@ -210,14 +208,15 @@ class Context:
             stmt.remove()
                 
     def _getSpecialStatementExpr(self, kind, name):
+        from proveit import Expression
         storage = self._storage
         specialStatementsPath = os.path.join(storage.pv_it_dir, '_' + kind + 's_')
         try:
             with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
-                exprId = f.read()
-                expr = storage.makeExpression(exprId)
-                if not hasattr(expr, 'context'):                
-                    expr.context = self
+                expr_id = f.read()
+                expr = storage.makeExpression(expr_id)
+                if expr not in Expression.contexts:  
+                    Expression.contexts[expr] = self              
                     self._storage.specialExpressions[expr] = (kind, name)
                 return expr
         except IOError:
@@ -232,6 +231,7 @@ class Context:
                 yield line.strip() # name of axiom or theorem
             
     def _setCommonExpressions(self, exprNames, exprDefinitions):
+        from proveit import Expression
         self._common_expr_ids = dict()
         storage = self._storage
         commons_filename = os.path.join(self._storage.pv_it_dir, '_commons_.pv_it')
@@ -251,7 +251,8 @@ class Context:
             for name in exprNames:
                 expr = exprDefinitions[name]
                 # record the special expression in this context object
-                if not hasattr(expr, 'context'): expr.context = self
+                if expr not in Expression.contexts:  
+                    Expression.contexts[expr] = self
                 self._storage.specialExpressions[expr] = ('common', name) 
                 # get the expression id to be stored on '_commons_.pv_it'           
                 expr_id = storage._proveItStorageId(expr)
@@ -283,9 +284,30 @@ class Context:
         if os.path.isfile(commons_filename):
             with open(commons_filename, 'r') as f:
                 for line in f.readlines():
-                    name, exprId = line.split()
-                    self._common_expr_ids[name] = exprId
+                    name, expr_id = line.split()
+                    self._common_expr_ids[name] = expr_id
                     yield name
+    
+    def recordReferencedCommons(self):
+        '''
+        Record the context names of any reference common expressions in storage
+        while creating the common expressions for this context
+        (for the purposes of checking for illegal mutual dependencies).
+        '''
+        self._storage.recordReferencedCommons(CommonExpressions.context_names_of_referenced_commons)
+
+    def referencedCommons(self):
+        '''
+        Return the stored set of context names of common expressions
+        referenced by the common expression notebook of this context.
+        '''
+        return self._storage.referencedCommons()    
+                        
+    def hasMutualReferencedCommons(self):
+        '''
+        Check for illecial mutual dependencies of common expression notebooks.
+        '''
+        self._storage.hasMutualReferencedCommons(CommonExpressions.context_names_of_referenced_commons)
     
     def getAxiom(self, name):
         '''
@@ -345,8 +367,8 @@ class Context:
         called yet in the special expressions notebook).
         '''
         # use the Storage object to generate/grab the expression notebook.
-        return self._storage.expressionNotebook(expr, unofficialNameKindContext)        
-                
+        return self._storage.expressionNotebook(expr, unofficialNameKindContext)
+                 
     @staticmethod
     def getStoredAxiom(fullname):
         return Context.getStoredStmt(fullname, 'axiom')
@@ -374,6 +396,7 @@ class Context:
         Return the Expression of the common expression in this context
         with the given name.
         '''
+        from proveit import Expression
         if self._common_expr_ids is None:
             # while the names are read in, the expr id map will be generated
             list(self.commonExpressionNames())
@@ -384,8 +407,8 @@ class Context:
             expr = self._storage.makeExpression(self._common_expr_ids[name])
         finally:
             Context.default = prev_context_default # reset the default Context 
-        if not hasattr(expr, 'context'):
-            expr.context = self
+        if expr not in Expression.contexts:
+            Expression.contexts[expr] = self
         self._storage.specialExpressions[expr] = ('common', name)
         return expr
     
@@ -468,8 +491,14 @@ class CommonExpressions:
     '''
     Used in _common_.py modules for accessing common sub-expressions.
     '''
+    
+    # Record the Context of all created CommonExpressions objects 
+    # (all refererenced _common_.py contexts).
+    context_names_of_referenced_commons = set()
+    
     def __init__(self, filename):
         self.context = Context(filename)
+        CommonExpressions.context_names_of_referenced_commons.add(self.context.name)
         self.__file__ = filename
 
     def __dir__(self):

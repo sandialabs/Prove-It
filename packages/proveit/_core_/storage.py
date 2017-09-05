@@ -13,7 +13,7 @@ class Storage:
     '''
     
     def __init__(self, context, directory):
-        from context import Context, ContextException
+        from .context import Context, ContextException
         if not isinstance(context, Context):
             raise ContextException("'context' should be a Context object")
         self.context = context
@@ -24,6 +24,22 @@ class Storage:
             os.makedirs(self.pv_it_dir)
         
         if self.context.isRoot():
+            # If this is a root context, let's add the directory above the root
+            # to sys.path if it is needed.
+            # try to import the root context; if it fails, we
+            # need to add the path
+            add_path = True # may set to False below
+            try:
+                if os.path.relpath(os.path.split(importlib.import_module(self.context.name).__file__)[0], self.directory) == '.':
+                    add_path = False
+            except:
+                pass # keep add_path as True
+            if add_path: # add the path to sys.path
+                root_package_path = os.path.abspath(os.path.join(self.directory, '..'))
+                sys.path.insert(1, root_package_path)
+            # indicate whether or not we needed to add the path to sys.path
+            self.addedPath = add_path             
+            
             # set of context root names that are referenced
             self.referencedContextRoots = set()
             # associate the context name with the directory
@@ -61,7 +77,7 @@ class Storage:
         The path has changed.  Update paths.txt locally, and update the path
         reference from other Context's.
         '''
-        from context import Context
+        from .context import Context
         myContextName = self.context.name
         # update the local paths.txt
         self._changePath('.', self.directory)
@@ -105,8 +121,9 @@ class Storage:
         Create it if it did not previously exist using _generate_png.
         Return the png data and path where the png is stored as a tuple.
         '''
-        if hasattr(expr, 'context') and expr.context != self.context:
-            return expr.context._stored_png(expr, latex, configLatexToolFn)
+        from proveit import Expression
+        if expr in Expression.contexts and Expression.contexts[expr] != self.context:
+            return Expression.contexts[expr]._stored_png(expr, latex, configLatexToolFn)
         (context, hash_directory) = self._retrieve(expr)
         assert context==self.context, "How did the context end up different from expected??"
         # generate the latex and png file paths, from pv_it_filename and the distinction 
@@ -179,7 +196,7 @@ class Storage:
         Return the storage directory path for the Prove-It object with the given
         storage id.
         '''
-        from context import Context
+        from .context import Context
         context_name, hash_directory = self._split(proveItStorageId)
         if context_name == '':
             return os.path.join(self.context._storage.pv_it_dir, hash_directory)
@@ -311,9 +328,15 @@ class Storage:
         pair, where the hash_directory is the directory name (within the context's
         __pv_it directory) based upon a hash of the unique representation.
         '''
+        from proveit import Expression
         if proveItObject in self._proveItObjects:
             return self._proveItObjects[proveItObject]
-        if hasattr(proveItObject, 'context') and proveItObject.context != self.context:
+        if isinstance(proveItObject, Expression):
+            expr = proveItObject
+            if expr in Expression.contexts and Expression.contexts[expr] != self.context:                
+                # stored in a different context
+                return Expression.contexts[expr]._storage._retrieve(proveItObject)
+        elif hasattr(proveItObject, 'context') and proveItObject.context != self.context:
             # stored in a different context
             return proveItObject.context._storage._retrieve(proveItObject)
         pv_it_dir = self.pv_it_dir
@@ -369,7 +392,7 @@ class Storage:
         '''
         import proveit
         from proveit import Expression, expressionDepth
-        from context import Context
+        from .context import Context
         
         if not isinstance(expr, Expression):
             raise ValueError("'expr' should be an Expression object")
@@ -450,29 +473,18 @@ class Storage:
         needs_root_path = False # needs the root of this context added
         needs_local_path = False # needs the local path added
         # first, see if we even need to import a module with the same root as our context
-        context_root_name = self.context.name.split('.')[0]
+        root_context = self.context.rootContext
+        context_root_name = root_context.name
         for module_name in itertools.chain(direct_imports, from_imports.keys()):
             if module_name.split('.')[0] == context_root_name:
-                needs_root_path = True
+                # If we needed to add a path to sys.path for the directory above the root context,
+                # we'll need to do that explicitly in our expression notebook.
+                needs_root_path = root_context._storage.addedPath
                 break
             else:
                 module = importlib.import_module(module_name)
                 if not os.path.isabs(module.__file__):
                     needs_local_path = True
-        # if so, check to see if we can import the context without adding anything to sys.path
-        if needs_root_path:
-            try:
-                root_context = self.context.rootContext
-                root_context_directory = root_context._storage.directory
-                context_import_file = importlib.import_module(root_context.name).__file__
-                context_import_path = os.path.join(context_import_file, '..')
-                if os.path.relpath(context_import_path, root_context_directory) == '.':
-                    # Assuming nothing was added to sys.path before calling this method,
-                    # the expression notebook should be able to import the context's
-                    # module without adding anything to sys.path 
-                    needs_root_path = False
-            except ImportError:
-                pass
         
         # generate the imports that we need (appending to sys.path if necessary).
         import_stmts = []
@@ -484,10 +496,12 @@ class Storage:
                 # go up 2 levels, where the local directory is
                 rel_paths.add(os.path.relpath('.', start=os.path.join(self.pv_it_dir, hash_directory)))
             if needs_root_path:
-                # go up enough levels to the context root
-                rel_paths.add(os.path.join(*(['..']*(self.context.name.count('.')+2))))
+                # go up enough levels to the context root;
+                # 2 levels to get out of the '__pv_it' folder and at least
+                # 1 more to get above the root context.
+                rel_paths.add(os.path.join(*(['..']*(self.context.name.count('.')+3))))
             for rel_path in rel_paths:
-                import_stmts.append(json.dumps('sys.path.append("%s")'%rel_path).strip('"'))
+                import_stmts.append(json.dumps('sys.path.insert(1, "%s")'%rel_path).strip('"'))
         # direct import statements
         import_stmts += ['import %s'%module_name for module_name in sorted(direct_imports)]
         # from import statements
@@ -583,12 +597,12 @@ class Storage:
             namedSubExprAddresses[operationClass._operator_] = (operationClass, '_operator_')
             return
             
-        if hasattr(expr, 'context') and expr.context is not None:
+        if expr in Expression.contexts:
             # expr may be a special expression from a context
             try:
                 # if it is a special expression in a context, 
                 # we want to be able to address it as such.
-                exprAddress = expr.context.specialExprAddress(expr)
+                exprAddress = Expression.contexts[expr].specialExprAddress(expr)
                 namedSubExprAddresses[expr] = exprAddress
                 namedItems.setdefault(exprAddress[-1], set()).add(expr)
                 return
@@ -700,21 +714,25 @@ class Storage:
         proofs_path = os.path.join(self.directory, '_proofs_')
         filename = os.path.join(proofs_path, '%s.ipynb'%theorem_name)
         if os.path.isfile(filename):
-            # Check the theorem name and make sure the capitolization
+            # Check the theorem name and make sure the capitalization
             # is the same.  If not, revise it appropriately.
             existing_theorem_name = self._proofNotebookTheoremName(filename)
-            if existing_theorem_name != theorem_name:
-                # update with the new capitolization
-                with open(filename, 'r') as proof_notebook:
-                    nb = proof_notebook.read()
-                nb = nb.replace(existing_theorem_name, theorem_name)
-                # remove the file before creating again to force the new
-                # capitolization (e.g., in Windows where capitolization 
-                # can be flexible)
-                os.remove(filename) 
-                with open(filename, 'w') as proof_notebook:
-                    proof_notebook.write(nb)
-            return filename
+            if existing_theorem_name is None:
+                # The format is not correct; stash this one and generate a new one.
+                self._stashNotebook(filename)
+            else:
+                if existing_theorem_name != theorem_name:
+                    # update with the new capitalization
+                    with open(filename, 'r') as proof_notebook:
+                        nb = proof_notebook.read()
+                    nb = nb.replace(existing_theorem_name, theorem_name)
+                    # remove the file before creating again to force the new
+                    # capitolization (e.g., in Windows where capitolization 
+                    # can be flexible)
+                    os.remove(filename) 
+                    with open(filename, 'w') as proof_notebook:
+                        proof_notebook.write(nb)
+                return filename
         if not os.path.isdir(proofs_path):
             # make the directory for the _proofs_
             os.makedirs(proofs_path)            
@@ -802,7 +820,7 @@ class Storage:
         the given expression id.
         '''
         import importlib
-        from context import Context
+        from proveit import Expression
         expr_class_map = dict() # map expression class strings to Expression class objects
         def importFn(exprClassStr):
             split_expr_class = exprClassStr.split('.')
@@ -810,8 +828,8 @@ class Storage:
             expr_class_map[exprClassStr] = getattr(module, split_expr_class[-1])
         def exprBuilderFn(exprClassStr, exprInfo, subExpressions, context):
             expr = expr_class_map[exprClassStr].make(exprInfo, subExpressions)
-            if context is not None and not hasattr(expr, 'context'):
-                expr.context = context
+            if context is not None and expr not in Expression.contexts:
+                Expression.contexts[expr] = context
             return expr
         return self._makeExpression(exprId, importFn, exprBuilderFn)
         
@@ -821,7 +839,7 @@ class Storage:
         '''
         from proveit import Expression
         from _dependency_graph import orderedDependencyNodes
-        from context import Context
+        from .context import Context
         expr_class_strs = dict() # map expr-ids to lists of Expression class string representations
         expr_class_rel_strs = dict() # relative paths of Expression classes that are local
         core_info_map = dict() # map expr-ids to core information
@@ -882,6 +900,42 @@ class Storage:
             built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], sub_expressions, context)
         return built_expr_map[master_expr_id]        
     
+    def recordReferencedCommons(self, contextNames):
+        '''
+        Record the context names of any reference common expressions in storage
+        while creating the common expressions for this context
+        (for the purposes of checking for illegal mutual dependencies).
+        '''
+        if contextNames == self.referencedCommons():
+            return # unchanged
+        referenced_commons_filename = os.path.join(self.pv_it_dir, '_referenced_commons_.txt')
+        with open(referenced_commons_filename, 'w') as f:
+            for context_name in contextNames:
+                f.write(context_name + '\n')
+
+    def referencedCommons(self):
+        '''
+        Return the stored set of context names of common expressions
+        referenced by the common expression notebook of this context.
+        '''
+        referenced_commons_filename = os.path.join(self.pv_it_dir, '_referenced_commons_.txt')
+        if os.path.isfile(referenced_commons_filename):
+            with open(referenced_commons_filename, 'r') as f:
+                return set(f.readlines())
+        return set() # empty set by default
+        
+    def hasMutualReferencedCommons(self, contextNames):
+        '''
+        Check for illecial mutual dependencies of common expression notebooks.
+        '''
+        from .context import Context
+        for context_name in contextNames:
+            context = Context.getContext(context_name)
+            other_referenced_commons = context.referencedCommons()
+            if context.name in other_referenced_commons:
+                return True
+        return False
+    
     def clean(self):
         '''
         Clean the __pv_it directory by erasing anything with a reference
@@ -939,7 +993,7 @@ class StoredSpecialStmt:
         Remove the axiom or theorem and all references to it and any proofs
         that depend upon it.
         '''
-        from context import Context
+        from .context import Context
         # remove the reference to the expression to do reference counted
         # "garbage" collection in the packages database storage.
         with open(os.path.join(self.path, 'expr.pv_it'), 'r') as f:
@@ -986,7 +1040,7 @@ class StoredSpecialStmt:
         Returns the set of theorems that are known to depend upon the given 
         theorem or axiom directly or indirectly.
         '''
-        from context import Context
+        from .context import Context
         toProcess = set(self.readDependentTheorems())
         processed = set()
         while len(toProcess) > 0:
@@ -1083,6 +1137,42 @@ class StoredTheorem(StoredSpecialStmt):
                 pass # no contribution if the file doesn't exist
         return (usedAxioms, usedTheorems)
 
+    def recordPresumingInfo(self, presuming):
+        '''
+        Record information about what the proof of the theorem
+        presumes -- what other theorems/contexts the proof
+        is expected to depend upon.
+        '''
+        presuming_str = (presuming if isinstance(presuming, str) else ', '.join(presuming))
+        presuming_file = os.path.join(self.path, 'presuming.txt')
+        if os.path.isfile(presuming_file):
+            with open(presuming_file, 'r') as f:
+                if presuming_str == f.read().strip():
+                    return # unchanged; don't need to record anything
+        with open(presuming_file, 'w') as f:
+            f.write(presuming_str + '\n')
+    
+    def presumes(self, other_theorem_str):
+        '''
+        Return True iff the things that this "stored" theorem 
+        presumes (or is intended to presume) include the other
+        theorem with the given string representation.
+        '''
+        presuming_file = os.path.join(self.path, 'presuming.txt')
+        if os.path.isfile(presuming_file):
+            with open(presuming_file, 'r') as f:
+                presuming_str = f.read().strip()
+                presuming = presuming_str.split(',')
+                for presume in presuming:
+                    presume = presume.strip()
+                    if other_theorem_str[:len(presume)] == presume:
+                        # 'presume' includes other_theorem_str (either the theorem
+                        # itself or a context containing it directly or indirectly).
+                        return True
+        # The default is False if no presuming info is stored
+        # for this theorem.
+        return False       
+    
     def recordProof(self, proof):
         '''
         Record the given proof as the proof of this stored theorem.  Updates
@@ -1091,8 +1181,8 @@ class StoredTheorem(StoredSpecialStmt):
         for theorems that depend upon this one) appropriately.
         '''
         from proveit._core_ import Proof
-        from context import Context
-        
+        from .context import Context
+              
         # add a reference to the new proof
         proofId = self.context._storage._proveItStorageId(proof)
         self.context._storage._addReference(proofId)
@@ -1181,7 +1271,7 @@ class StoredTheorem(StoredSpecialStmt):
         If this theorem is complete, then let its dependents know.  If this
         update causes a dependent to become complete, propagate the news onward.
         '''
-        from context import Context
+        from .context import Context
         if self.isComplete():
             print str(self) + ' has been completely proven'
             # This theorem has been completely proven.  Let the dependents know.
@@ -1199,7 +1289,7 @@ class StoredTheorem(StoredSpecialStmt):
         Erase the proof of this theorem from the database and all obsolete
         links/references.
         '''     
-        from context import Context 
+        from .context import Context 
         wasComplete = self.isComplete() # was it complete before the proof was removed?
         # remove the reference to the proof to do reference counted
         # "garbage" collection in the packages database storage.
@@ -1233,7 +1323,7 @@ class StoredTheorem(StoredSpecialStmt):
         return the set of unproven theorems that are required (directly or
         indirectly).  Returns this axiom set and theorem set as a tuple.
         '''
-        from context import Context
+        from .context import Context
         if not self.hasProof():
             raise Exception('The theorem must be proven in order to obtain its requirements')
         usedAxioms, usedTheorems = self.readDependencies()
@@ -1261,7 +1351,7 @@ class StoredTheorem(StoredSpecialStmt):
         Returns the set of theorems used to prove the given theorem, directly
         or indirectly.
         '''
-        from context import Context
+        from .context import Context
         if not self.hasProof():
             raise Exception('The theorem must be proven in order to obtain its requirements')
         _, usedTheorems = self.readDependencies()
@@ -1287,7 +1377,7 @@ class StoredTheorem(StoredSpecialStmt):
         Due to the proof being removed, a dependent theorem is no longer complete.
         This new status must be updated and propagated.
         '''
-        from context import Context
+        from .context import Context
         wasComplete = self.isComplete() # was it complete before?
         # remove the entry from completeUsedTheorems.txt
         self._removeEntryFromFile('completeUsedTheorems.txt', str(usedTheorem))

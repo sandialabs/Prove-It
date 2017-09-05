@@ -1,5 +1,5 @@
-from label import Label
-from var import Variable
+from .label import Label
+from .var import Variable
 
 class Literal(Label):
     """
@@ -15,7 +15,7 @@ class Literal(Label):
         '''
         Create a Literal.  If latexFormat is not supplied, the stringFormat is used for both.
         '''
-        from proveit import Context
+        from proveit import Context, Expression
         if context is None:
             # use the default
             context = Context.default
@@ -25,11 +25,11 @@ class Literal(Label):
         elif isinstance(context, str):
             # convert a path string to a Context
             context = Context(context)
-        self.context = context
         Label.__init__(self, stringFormat, latexFormat, 'Literal', [context.name])
         #if self._coreInfo in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same context and string/latex formats")
         Literal.instances[self._coreInfo] = self
+        Expression.contexts[self] = context
     
     @classmethod
     def instance(literalClass, context, stringFormat, latexFormat):

@@ -63,9 +63,10 @@ class ExpressionInfo:
         return self.string()
     
     def _repr_html_(self):
-        from composite.named_exprs import NamedExpressions
-        from operation import Operation
-        from lambda_expr import Lambda
+        from .composite.named_exprs import NamedExpressions
+        from .operation import Operation
+        from .lambda_expr import Lambda
+        from .expr import Expression
         
         # get the enumerated sub-expressions; parents come before children.
         enumerated_expressions = self._getEnumeratedExpressions()
@@ -74,8 +75,8 @@ class ExpressionInfo:
         # map each sub-Expression to an appropriate Context
         expr_context_map = dict() 
         for expr in enumerated_expressions:
-            if hasattr(expr, 'context') and expr.context is not None:
-                expr_context_map[expr] = expr.context
+            if expr in Expression.contexts:
+                expr_context_map[expr] = Expression.contexts[expr]
             if expr in expr_context_map:
                 for sub_expr in expr.subExprIter(): # propagate the context to its sub-expressions
                     expr_context_map[sub_expr] = expr_context_map[expr]

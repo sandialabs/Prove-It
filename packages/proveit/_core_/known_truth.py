@@ -20,7 +20,6 @@ class KnownTruth:
     
     # Call the beginProof method to begin a proof of a Theorem.
     theoremBeingProven = None # Theorem being proven.
-    dependentTheoremsOfTheoremBeingProven = None # set theorems that depend upon (directly or indirectly) the theorem be proven
     # Set of theorems/packages that are presumed to be True for the purposes of the proof being proven:
     presumingTheorems = None # set of Theorem objects when in use
     presumingPrefixes = None # set of context names or full theorem names when in use.
@@ -114,10 +113,10 @@ class KnownTruth:
     def __hash__(self):
         return self._unique_id
         
-    def beginProof(self, presumes=tuple()):
+    def beginProof(self, presuming=tuple()):
         '''
         Begin a proof for a theorem.  Only use other theorems that are in 
-        the presumes list of theorems/packages or theorems that are required,
+        the presuming list of theorems/packages or theorems that are required,
         directly or indirectly, in proofs of theorems that are explicitly 
         listed (these are implicitly presumed).  If there exists any 
         presumed theorem that has a direct or indirect dependence upon this 
@@ -130,24 +129,25 @@ class KnownTruth:
         theorem = self.proof() # the trivial prove-by-theorem; not yet the actual, desired proof of the theorem
         if not isinstance(theorem, Theorem):
             raise TypeError('Only begin a proof for a Theorem')
+        theorem.recordPresumingInfo(presuming)
+        print "Recorded 'presuming' information"
         KnownTruth.theoremBeingProven = theorem
-        KnownTruth.dependentTheoremsOfTheoremBeingProven = theorem.allDependents()
         KnownTruth.presumingTheorems = set()
         KnownTruth.presumingPrefixes = set()
         
         presumed_contexts = []
         explicit_presumed_theorems = []
-        for presuming in presumes:
+        for presume in presuming:
             if not isinstance(presuming, str):
                 raise ValueError("'presumes' should be a collection of strings for context names and/or full theorem names")
             thm = None
-            context_name = presuming
+            context_name = presume
             try:
-                if '.' in presuming:
-                    context_name, theorem_name = presuming.rsplit('.', 1)
+                if '.' in presume:
+                    context_name, theorem_name = presume.rsplit('.', 1)
                     thm = Context.getContext(context_name).getTheorem(theorem_name)
             except (ContextException, KeyError):
-                context_name = presuming # not a theorem; must be a context
+                context_name = presume # not a theorem; must be a context
             
             if thm is not None:
                 # add the theorem and any theorems used by that theorem to the set of presuming theorems
@@ -160,8 +160,8 @@ class KnownTruth:
                 try:
                     context = Context.getContext(context_name)
                 except ContextException:
-                    raise ValueError("'%s' not found as a known context or theorem"%presuming)
-                # the entire context is presumed (except where the dependencies become circular)
+                    raise ValueError("'%s' not found as a known context or theorem"%presume)
+                # the entire context is presumed (except where the presumption is mutual)
                 KnownTruth.presumingPrefixes.add(context.name)
                 presumed_contexts.append(context.name)
         
