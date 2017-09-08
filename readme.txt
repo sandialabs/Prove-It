@@ -19,7 +19,7 @@ specialization, generalization, or axiom elimination).  Axioms and theorems
 may be invoked indirectly via convenience methods or automation (methods
 that are automatically invoked when attempting to prove something or as
 side-effects when something is proven).  Theorem proofs and their axiom/
-theorem dependencies are stored a kind of database (filesystem based).  This
+theorem dependencies are stored in a kind of database (filesystem based).  This
 database is used to prevent circular logic. It also allows users to track 
 axioms and unproven theorems required by any particular proof.  Convenience
 methods and automation tools may be added which utilize new theorems and aid
