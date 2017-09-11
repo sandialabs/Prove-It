@@ -1,11 +1,14 @@
+mode: static
 sets
 addition
 subtraction
 negation
 ordering
-modular
 multiplication
+division
+modular
 exponentiation
 summation
 product
+differentiation
 integration

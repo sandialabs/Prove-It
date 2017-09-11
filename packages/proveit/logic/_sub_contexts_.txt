@@ -1,3 +1,4 @@
+mode: static
 boolean
 equality
 set_theory

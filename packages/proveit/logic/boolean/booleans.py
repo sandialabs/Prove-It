@@ -8,6 +8,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.split(__file__)[0], '..', 'equality'))
 from irreducible_value import IrreducibleValue
+sys.path.pop(-1) # we don't need that any more
 
 class BooleanSet(Literal):
     def __init__(self):
@@ -26,21 +27,21 @@ class BooleanSet(Literal):
         '''
         Deduce [(element in Booleans) = [(element = TRUE) or (element = FALSE)].
         '''
-        from _theorems_ import inBoolEquiv
+        from ._theorems_ import inBoolEquiv
         return inBoolEquiv.specialize({A:element})
 
     def nonMembershipEquivalence(self, element, assumptions=USE_DEFAULTS):
         '''
         Deduce [(element not in Booleans) = [(element != TRUE) and (element != FALSE)].
         '''
-        from _theorems_ import notInBoolEquiv
+        from ._theorems_ import notInBoolEquiv
         return notInBoolEquiv.specialize({A:element})
 
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From inBool(Element), derive and return [element or not(element)].
         '''
-        from _theorems_ import unfoldInBool
+        from ._theorems_ import unfoldInBool
         #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
         return unfoldInBool.specialize({A:element}).deriveConclusion().checked({inBool(element)})
     
@@ -48,7 +49,7 @@ class BooleanSet(Literal):
         '''
         Try to deduce that the given element is in the set of Booleans under the given assumptions.
         '''   
-        from _theorems_ import inBoolIfTrue, inBoolIfFalse
+        from ._theorems_ import inBoolIfTrue, inBoolIfFalse
         try:
             element.prove(assumptions=assumptions, automation=False)
             return inBoolIfTrue.specialize({A:element}, assumptions=assumptions)
@@ -69,9 +70,9 @@ class BooleanSet(Literal):
         if possible.
         '''        
         from proveit.logic import Forall, Equals, EvaluationError
-        from _theorems_ import falseEqFalse, trueEqTrue 
-        from _theorems_ import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
-        from _common_ import TRUE, FALSE, Booleans
+        from ._theorems_ import falseEqFalse, trueEqTrue 
+        from ._theorems_ import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
+        from ._common_ import TRUE, FALSE, Booleans
         from conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply evaluateForall method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply evaluateForall method of BOOLEANS to a forall statement with the BOOLEANS domain"
@@ -117,8 +118,8 @@ class BooleanSet(Literal):
         Given forall_{A in Booleans} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from _theorems_ import unfoldForallOverBool
-        from _common_ import Booleans
+        from ._theorems_ import unfoldForallOverBool
+        from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of Booleans to a forall statement with 1 instance variable"
@@ -129,8 +130,8 @@ class BooleanSet(Literal):
         Given forall_{A in Booleans} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from _theorems_ import foldForallOverBool
-        from _common_ import Booleans
+        from ._theorems_ import foldForallOverBool
+        from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
@@ -142,16 +143,16 @@ class TrueLiteral(Literal, IrreducibleValue):
         Literal.__init__(self, stringFormat='TRUE', latexFormat=r'\top')
     
     def evalEquality(self, other):
-        from _theorems_ import trueEqTrue, trueNotFalse
-        from proveit.logic import Equals, TRUE
+        from ._theorems_ import trueEqTrue, trueNotFalse
+        from .common import TRUE, FALSE
         if other == TRUE:
             return trueEqTrue.evaluate()
         elif other == FALSE:
             return trueNotFalse.unfold().equateNegatedToFalse()
 
     def notEqual(self, other):
-        from _theorems_ import trueNotFalse
-        from _common_ import TRUE, FALSE
+        from ._theorems_ import trueNotFalse
+        from ._common_ import TRUE, FALSE
         if other == FALSE:
             return trueNotFalse
         if other == TRUE:
@@ -167,10 +168,9 @@ class FalseLiteral(Literal, IrreducibleValue):
         Literal.__init__(self, stringFormat='FALSE', latexFormat=r'\bot')
     
     def evalEquality(self, other):
-        from _axioms_ import falseNotTrue
-        from _theorems_ import falseEqFalse
-        from _common_ import TRUE, FALSE
-        from proveit.logic import Equals, TRUE
+        from ._axioms_ import falseNotTrue
+        from ._theorems_ import falseEqFalse
+        from ._common_ import TRUE, FALSE
         if other == FALSE:
             return falseEqFalse.evaluate()
         elif other == TRUE:
@@ -181,8 +181,8 @@ class FalseLiteral(Literal, IrreducibleValue):
         return notFalse # the negation of FALSE
 
     def notEqual(self, other):
-        from _theorems_ import falseNotTrue
-        from _common_ import TRUE, FALSE
+        from _.theorems_ import falseNotTrue
+        from ._common_ import TRUE, FALSE
         if other == TRUE:
             return falseNotTrue
         if other == FALSE:
@@ -190,12 +190,12 @@ class FalseLiteral(Literal, IrreducibleValue):
         raise ProofFailure("Inequality between FALSE and a non-boolean not defined")
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
-        from _theorems_ import falseInBool
+        from ._theorems_ import falseInBool
         return falseInBool
 
 def inBool(*elements):
     from proveit.logic.set_theory import InSet
-    from _common_ import Booleans
+    from ._common_ import Booleans
     if len(elements) == 1:
         return InSet(elements[0], Booleans)
     return [InSet(element, Booleans) for element in elements]
