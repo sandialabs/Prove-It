@@ -567,7 +567,7 @@ class Storage:
                 nb = nb.replace('#SPECIAL_EXPR_NAME#', name)
                 nb = nb.replace('#SPECIAL_EXPR_LINK#', json.dumps(special_expr_link + '#' + name).strip('"'))  
                 if kind_str == 'Theorem':
-                    see_proof_str = '***see <a href=\\"../../_proofs_/%s.ipynb\\">proof</a>***'%name
+                    see_proof_str = '***see <a class=\\"ProveItLink\\" href=\\"../../_proofs_/%s.ipynb\\">proof</a>***'%name
                 else: see_proof_str = ''
                 nb = nb.replace('#SEE_PROOF#', see_proof_str)
             with open(dependencies_filename, 'w') as dependencies_file:
@@ -846,7 +846,10 @@ class Storage:
         sub_expr_ids_map = dict() # map expr-ids to list of sub-expression ids
         context_map = dict() # map expr-ids to a Context 
         master_expr_id = exprId
-        local_context_name = Context().name
+        try:
+            local_context_name = Context().name
+        except:
+            local_context_name = None
                 
         def getSubExprIds(exprId):
             context_name, hash_directory = self._split(exprId)
@@ -857,7 +860,7 @@ class Storage:
                 unique_rep = f.read()
                 # extract the Expression class from the unique representation 
                 expr_class_str = Expression._extractExprClass(unique_rep)
-                if expr_class_str.find(local_context_name) == 0:
+                if local_context_name is not None and expr_class_str.find(local_context_name) == 0:
                     # import locally if necessary
                     expr_class_rel_strs[exprId] = expr_class_str[len(local_context_name)+1:]                
                 expr_class_strs[exprId] = expr_class_str
@@ -908,7 +911,7 @@ class Storage:
         '''
         if contextNames == self.referencedCommons():
             return # unchanged
-        referenced_commons_filename = os.path.join(self.pv_it_dir, '_referenced_commons_.txt')
+        referenced_commons_filename = os.path.join(self.pv_it_dir, 'referenced_commons.txt')
         with open(referenced_commons_filename, 'w') as f:
             for context_name in contextNames:
                 f.write(context_name + '\n')
@@ -918,23 +921,24 @@ class Storage:
         Return the stored set of context names of common expressions
         referenced by the common expression notebook of this context.
         '''
-        referenced_commons_filename = os.path.join(self.pv_it_dir, '_referenced_commons_.txt')
+        referenced_commons_filename = os.path.join(self.pv_it_dir, 'referenced_commons.txt')
         if os.path.isfile(referenced_commons_filename):
             with open(referenced_commons_filename, 'r') as f:
-                return set(f.readlines())
+                return set([line.strip() for line in f.readlines()])
         return set() # empty set by default
         
-    def hasMutualReferencedCommons(self, contextNames):
+    def mutualReferencedCommons(self, contextNames):
         '''
-        Check for illecial mutual dependencies of common expression notebooks.
-        '''
+        Check for illegal mutual dependencies of common expression notebooks.
+        If there is one, return the name; otherwise return None.
+        '''        
         from .context import Context
         for context_name in contextNames:
-            context = Context.getContext(context_name)
-            other_referenced_commons = context.referencedCommons()
-            if context.name in other_referenced_commons:
-                return True
-        return False
+            other_context = Context.getContext(context_name)
+            other_referenced_commons = other_context.referencedCommons()
+            if self.context.name in other_referenced_commons:
+                return other_context.name
+        return None
     
     def clean(self):
         '''
@@ -979,9 +983,9 @@ class StoredSpecialStmt:
         self.name = name
         self.kind = kind
         if kind == 'axiom':
-            self.path = os.path.join(self.context._storage.pv_it_dir, '_axioms_', self.name)
+            self.path = os.path.join(self.context._storage.pv_it_dir, 'axioms', self.name)
         elif kind == 'theorem':
-            self.path = os.path.join(self.context._storage.pv_it_dir, '_theorems_', self.name) 
+            self.path = os.path.join(self.context._storage.pv_it_dir, 'theorems', self.name) 
         else:
             raise ValueError("kind must be 'axiom' or 'theorem'")
 

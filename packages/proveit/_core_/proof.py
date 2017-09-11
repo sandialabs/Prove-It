@@ -228,7 +228,13 @@ class Axiom(Proof):
         
     def usedAxioms(self):
         return {self}
-        
+    
+    def directDependents(self):
+        '''
+        Returns the theorems that depend directly upon this axioms.
+        '''
+        return self._storedAxiom().readDependentTheorems()
+    
     def allDependents(self):
         return self._storedAxiom().allDependents()
 
@@ -323,7 +329,7 @@ class Theorem(Proof):
         proven, all the way to axioms which don't require proofs).
         '''
         return self._storedTheorem().isComplete()
-
+        
     def allRequirements(self):
         '''
         Returns the set of axioms that are required (directly or indirectly)
@@ -340,6 +346,12 @@ class Theorem(Proof):
         '''
         return self._storedTheorem().allUsedTheorems()
 
+    def directDependents(self):
+        '''
+        Returns the theorems that depend directly upon this axioms.
+        '''
+        return self._storedTheorem().readDependentTheorems()
+        
     def allDependents(self):
         '''
         Returns the set of theorems that are known to depend upon this

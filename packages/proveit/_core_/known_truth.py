@@ -138,7 +138,7 @@ class KnownTruth:
         presumed_contexts = []
         explicit_presumed_theorems = []
         for presume in presuming:
-            if not isinstance(presuming, str):
+            if not isinstance(presume, str):
                 raise ValueError("'presumes' should be a collection of strings for context names and/or full theorem names")
             thm = None
             context_name = presume

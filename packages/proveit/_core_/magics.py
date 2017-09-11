@@ -4,6 +4,8 @@ Define some custom magic for Prove-It in IPython notebooks.
 
 from IPython.core.magic import Magics, magics_class, line_magic
 from IPython import get_ipython
+from IPython.display import display, HTML
+import nbformat
 from proveit._core_.expression import Expression
 from proveit._core_ import KnownTruth
 from proveit._core_.context import Context
@@ -60,17 +62,30 @@ class SubContexts(widgets.VBox):
     def __init__(self):
         widgets.VBox.__init__(self, [])
         if not os.path.isfile('_sub_contexts_.txt'):
-            open('_sub_contexts_.txt', 'w')
+            open('_sub_contexts_.txt', 'wt').close()
         self.smallButtonLayout = widgets.Layout(width='30px')
         self.subContextLinkLayout = widgets.Layout(width='20%')
         self.subContextDescriptionLayout = widgets.Layout(width='100%')
         self.subContexts = []
         self.subContextDescriptions = dict()
-        with open('_sub_contexts_.txt') as f:
-            for line in f.readlines():
-                sub_context_name = line.strip()
-                self.subContexts.append(sub_context_name)
-                self._addSubContextRow(sub_context_name)
+        prev_mode = 'static' # default toggles 'static' to 'interactive'
+        with open('_sub_contexts_.txt', 'rt') as f:
+            for k, line in enumerate(f.readlines()):
+                if k==0 and line[:5] == 'mode:': 
+                    # first line indicates interactive or static mode;
+                    # toggle relative to previous value
+                    prev_mode = line.split()[1].strip()
+                else:
+                    sub_context_name = line.strip()
+                    self.subContexts.append(sub_context_name)
+                    self._addSubContextRow(sub_context_name)
+        # mode toggles between 'static' and 'interactive'
+        if prev_mode == 'static':
+            self.mode = 'interactive'
+        else:
+            self.mode = 'static'
+        # write the new mode
+        self.rewriteSubContextTxt()
     
     def _addSubContextRow(self, subContextName):
         subContextDescription = self.readDescription(subContextName)
@@ -90,7 +105,7 @@ class SubContexts(widgets.VBox):
         dn_button.on_click(moveDown)
         delete_button = widgets.Button(description='', disabled=False, button_style='danger', tooltip='delete context', icon='trash', layout=small_button_layout)
         href = self.subContextNotebook(subContextName)
-        sub_context_link = widgets.HTML('<a href="%s" target="_blank">%s</a>'%(href,subContextName) , layout=sub_context_link_layout)
+        sub_context_link = widgets.HTML('<a class="ProveItLink" href="%s" target="_blank">%s</a>'%(href,subContextName) , layout=sub_context_link_layout)
         sub_context_description = widgets.Text(value=subContextDescription, placeholder='Add a brief description here...', layout=sub_context_description_layout)
         def setDescription(change):
             self.subContextDescriptions[subContextName] = change['new']
@@ -122,7 +137,7 @@ class SubContexts(widgets.VBox):
             context_html_segments = []
             for k, context_name_segment in enumerate(context_name_segments[:-1]):      
                 href = os.path.join(*(['..']*(len(context_name_segments) - k - 1) + ['_context_.ipynb']))
-                context_html_segments.append(r'<a href=\"%s\">%s</a>'%(json.dumps(href).strip('"'), context_name_segment))
+                context_html_segments.append(r'<a class="ProveItLink" href=\"%s\">%s</a>'%(json.dumps(href).strip('"'), context_name_segment))
             context_html_segments.append(context_name_segments[-1])
             nb = nb.replace('#CONTEXT#', '.'.join(context_html_segments))
         # write the notebook file
@@ -161,8 +176,12 @@ class SubContexts(widgets.VBox):
                 f.write(brief_description + '\n')
 
     def rewriteSubContextTxt(self):
-        # rewrite the sub_contexts.txt file with new information
-        with open('_sub_contexts_.txt', 'w') as f:
+        # rewrite the sub_contexts.txt file with new information.
+        with open('_sub_contexts_.txt', 'wt') as f:
+            if self.mode=='interactive':
+                f.write('mode: interactive\n')
+            else:
+                f.write('mode: static\n')
             for sub_context_name in self.subContexts:
                 f.write(sub_context_name + '\n')    
 
@@ -198,7 +217,6 @@ class ProveItMagic(Magics):
         '''
         import proveit
         import ipywidgets as widgets
-        from IPython.display import display, HTML
         # create an '_init_.py' in the directory if there is not an existing one.
         if not os.path.isfile('__init__.py'):
             open('__init__.py', 'w').close() # create an empty __init__.py
@@ -214,34 +232,43 @@ class ProveItMagic(Magics):
                 with open(os.path.join(proveit_path, '..', template_name), 'r') as template:
                     nb = template.read()
                     nb = nb.replace('#CONTEXT#', context.name)
-                    nb = nb.replace('#CONTEXT_LINK#', '_context_.ipynb')
                 # write the notebook file
                 with open(notebook_name, 'w') as notebook_file:
                     notebook_file.write(nb)
-        #special_notebooks_html = '<table>'
-        #for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_text):
-        #    special_notebooks_html += '<th><a href="_%s_.ipynb" target="_blank">%s</a></th>'%(special_notebook_type, special_notebook_text)
-        #special_notebooks_html += '</table>'
-        #display(HTML(special_notebooks_html))
-        
-        special_notebook_links = []
-        full_width_layout = widgets.Layout(width='100%', padding='5px')
-        for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_text):
-            special_notebook_links.append(widgets.HTML('<a href="_%s_.ipynb" target="_blank">%s</a>'%(special_notebook_type, special_notebook_text), layout=full_width_layout))
-        special_notebook_links = widgets.HBox(special_notebook_links)
-            
-        sub_contexts_label = widgets.Label('List of sub-contexts:', layout = widgets.Layout(width='100%'))
+                    
         sub_contexts = SubContexts()
-        #sub_context_widgets = widgets.VBox(sub_context_widgets)
-        add_context_widget = widgets.Text(value='', placeholder='Add sub-context...')
-        def addSubContext(sender):
-            sub_contexts.addSubContext(add_context_widget.value)
-            add_context_widget.value = ''
-        add_context_widget.on_submit(addSubContext)
-        #layout = widgets.Layout(display='flex', flex_flow='column-reverse')
-        #display(widgets.Button(description='Edit...', disabled=False, button_style='', tooltip='Edit the sub-contents list', layout=layout))
-        #layout = widgets.Layout(float='bottom')
-        display(widgets.VBox([special_notebook_links, sub_contexts_label, sub_contexts, add_context_widget]))
+        
+        if sub_contexts.mode == 'static':
+            special_notebooks_html = '<table>\n'
+            for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_text):
+                special_notebooks_html += '<th><a class="ProveItLink" href="_%s_.ipynb">%s</a></th>\n'%(special_notebook_type, special_notebook_text)
+            special_notebooks_html += '</table>\n'
+            if len(sub_contexts.subContexts) > 0:
+                special_notebooks_html += '<table>\n'
+                for name in sub_contexts.subContexts:
+                    description = sub_contexts.subContextDescriptions[name]
+                    href = sub_contexts.subContextNotebook(name)
+                    special_notebooks_html += '<tr><th><a class="ProveItLink" href="%s">%s</a></th><td>%s</td></tr>\n'%(href, name, description)
+                special_notebooks_html += '</table>\n'                
+            display(HTML(special_notebooks_html))
+        else:
+            special_notebook_links = []
+            full_width_layout = widgets.Layout(width='100%', padding='5px')
+            for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_text):
+                special_notebook_links.append(widgets.HTML('<a class="ProveItLink" href="_%s_.ipynb" target="_blank">%s</a>'%(special_notebook_type, special_notebook_text), layout=full_width_layout))
+            special_notebook_links = widgets.HBox(special_notebook_links)
+                
+            sub_contexts_label = widgets.Label('List of sub-contexts:', layout = widgets.Layout(width='100%'))
+            #sub_context_widgets = widgets.VBox(sub_context_widgets)
+            add_context_widget = widgets.Text(value='', placeholder='Add sub-context...')
+            def addSubContext(sender):
+                sub_contexts.addSubContext(add_context_widget.value)
+                add_context_widget.value = ''
+            add_context_widget.on_submit(addSubContext)
+            #layout = widgets.Layout(display='flex', flex_flow='column-reverse')
+            #display(widgets.Button(description='Edit...', disabled=False, button_style='', tooltip='Edit the sub-contents list', layout=layout))
+            #layout = widgets.Layout(float='bottom')
+            display(widgets.VBox([special_notebook_links, sub_contexts_label, sub_contexts, add_context_widget]))       
     
     @line_magic
     def begin_axioms(self, line):
@@ -301,8 +328,9 @@ class ProveItMagic(Magics):
         # by this context's common expressions notebook...
         self.context.recordReferencedCommons()
         # and check for illegal mutual references.
-        if self.context.hasMutualReferencedCommons():
-            raise ProveItMagicFailure("Not allowed to have mutually dependent 'common expression' notebooks")
+        mutual_referenced_commons_context = self.context.mutualReferencedCommons()
+        if mutual_referenced_commons_context is not None:
+            raise ProveItMagicFailure("Not allowed to have mutually dependent 'common expression' notebooks: %s._common_"%mutual_referenced_commons_context)
         self.finish('common')
 
     @line_magic
@@ -332,7 +360,8 @@ class ProveItMagic(Magics):
             return
         args = presuming_str.split(' ', 1)[-1].strip('[]').split(',')
         theorem_truth = Context('..').getTheorem(theorem_name).provenTruth
-        begin_proof_result = theorem_truth.beginProof([arg.strip() for arg in args])
+        presuming = [arg.strip() for arg in args if arg.strip() != '']
+        begin_proof_result = theorem_truth.beginProof(presuming)
         print "Beginning proof of"
         if isinstance(begin_proof_result, Expression):
             # assign the theorem name to the theorem expression
@@ -360,28 +389,10 @@ class ProveItMagic(Magics):
             context._setTheorems(self.keys, self.definitions)
         elif kind=='common':
             context._setCommonExpressions(self.keys, self.definitions)
-
-        # Make an _axioms_.py or _theorems_.py file for importing axioms/theorems
-        # from the certified database.
-        specialStatementsClassName = kind[0].upper() + kind[1:]
-        if kind=='common': specialStatementsClassName = 'CommonExpressions'        
-        output = "import sys\n"
-        output += "from proveit._core_.context import %s\n"%specialStatementsClassName
-        output += "sys.modules[__name__] = %s(__file__)\n"%(specialStatementsClassName)        
-        if os.path.isfile('_%s_.py'%kind):
-            with open('_%s_.py'%kind, 'r') as f:
-                if f.read() != output:
-                    raise ProveItMagicFailure("An existing _%s_.py must be removed before a proper one may be autogenerated"%kind)
-        else:        
-            with open('_%s_.py'%kind, 'w') as f:
-                f.write(output)
-                
-        # Reload the modules; some may reload differently after the special expression module has been written.
-        # Do this before remaking the expression notebooks to make sure they are remade properly.
-	'''
-	for m in sys.modules.keys():
-	   del(sys.modules[m]) 
-	'''
+        
+        # Make a _common_.py, _axioms_.py or _theorems_.py for importing
+        # expressions from the certified database.
+        context.makeSpecialExprModule(kind)
 	   
         # Update the expression notebooks now that these have been registered
         # as special expressions.
@@ -394,8 +405,45 @@ class ProveItMagic(Magics):
         elif kind=='common':
             print "Common expressions may be imported from autogenerated _%s_.py"%kind
         else:
-            print "%s may be imported from autogenerated _%s_.py"%(specialStatementsClassName, kind)
+            print "%s may be imported from autogenerated _%s_.py"%((kind[0].upper() + kind[1:]), kind)
         self.ranFinish = True            
+    
+    @line_magic
+    def dependencies(self, line):
+        '''
+        Show the dependencies of an axiom or theorem.
+        '''
+        from .proof import Theorem
+        name = line.strip()
+        known_truth = self.shell.user_ns[line.strip()]
+        proof = known_truth.proof() # Axiom or Theorem
+        
+        def displaySpecialStmt(stmt):
+            '''
+            Given an Axiom or Theorem, display HTML with a link
+            to the definition.
+            '''
+            expr = stmt.provenTruth.expr
+            display(HTML('<strong><a class="ProveItLink" href="%s">%s</a>:</strong> %s<br>'%(stmt.getLink(), stmt.name, expr._repr_html_())))
+        
+        if isinstance(proof, Theorem):
+            required_axioms, required_unproven_theorems = proof.allRequirements()
+            if len(required_unproven_theorems) > 0:
+                display(HTML('<h3>Unproven theorems required (directly or indirectly) to prove %s</h3>'%name))
+                for required_unproven_theorem in required_unproven_theorems:
+                    displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
+            if len(required_axioms) > 0:
+                display(HTML('<h3>Axioms required (directly or indirectly) to prove %s</h3>'%name))
+                for required_axiom in required_axioms:       
+                    displaySpecialStmt(Context.findAxiom(required_axiom))
+        
+        dependents = proof.directDependents()
+        if len(dependents) == 0:
+            display(HTML('<h3>No theorems depend upon %s</h3>'%name))
+        else:
+            display(HTML('<h3>Theorems that depend directly on %s</h3>'%name))
+            for dependent in proof.directDependents():
+                displaySpecialStmt(Context.findTheorem(dependent))
 
 class Assignments:    
     def __init__(self, names, rightSides, beginningProof=False):
@@ -458,12 +506,12 @@ class Assignments:
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
             proofNotebook = proveItMagic.context.proofNotebook(name, expr)
-            lhs_html = '<a href="%s" target="_blank">%s</a>'%(os.path.relpath(proofNotebook), lhs_html)
+            lhs_html = '<a class="ProveItLink" href="%s" target="_blank">%s</a>'%(os.path.relpath(proofNotebook), lhs_html)
         html = '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
             expr_notebook_path = proveItMagic.context.expressionNotebook(expr)
             dependencies_notebook_path = os.path.join(os.path.split(expr_notebook_path)[0], 'dependencies.ipynb')
-            html += '(see <a href="%s" target="_blank">dependencies</a>)'%(os.path.relpath(dependencies_notebook_path))
+            html += '(see <a class="ProveItLink" href="%s" target="_blank">dependencies</a>)'%(os.path.relpath(dependencies_notebook_path))
         return html
 
     def _repr_html_(self):
