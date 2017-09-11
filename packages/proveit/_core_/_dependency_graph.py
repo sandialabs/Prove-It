@@ -15,7 +15,7 @@ def orderedDependencyNodes(rootNode, requirementsFn):
     will only depend upon nodes that come later in the list (the root node
     will necessarily come first).
     '''
-    # nodesWithRepeats allow duplicates dependent nodes in a first pass.
+    # nodesWithRepeats allows duplicate dependent nodes in a first pass.
     # Remove the duplicates in a second pass below.
     queue = [rootNode]
     nodesWithRepeats = []
