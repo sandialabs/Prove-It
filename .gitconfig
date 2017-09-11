@@ -1,4 +1,0 @@
-[filter "clean_ipynb"]
-        smudge = cat
-        clean = python -m ipynb_drop_output
-
