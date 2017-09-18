@@ -1,8 +1,7 @@
 from proveit import Expression, BinaryOperation, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda
+from proveit import TransitiveRelation, IrreducibleValue, isIrreducibleValue
 from proveit._common_ import A, P, Q, f, x, y, z
-from proveit._generic_ import TransitiveRelation
-from irreducible_value import IrreducibleValue
 
 class Equals(TransitiveRelation):
     # operator of the Equals operation
@@ -356,9 +355,6 @@ class Equals(TransitiveRelation):
             # between each other, where appropriate.
             return self.lhs.evalEquality(self.rhs)
         return BinaryOperation.evaluate(self, assumptions)
-
-def isIrreducibleValue(expr):
-    return isinstance(expr, IrreducibleValue)
     
 def reduceOperands(operation, assumptions=USE_DEFAULTS):
     '''
@@ -381,6 +377,7 @@ def reduceOperands(operation, assumptions=USE_DEFAULTS):
                 break # start over (there may have been multiple substitutions)
         if allReduced: return expr
 
+"""
 def concludeViaReduction(expr, assumptions):
     '''
     Attempts to prove that the given expression is TRUE under the
@@ -404,6 +401,7 @@ def concludeViaReduction(expr, assumptions):
         knownTruth = operand.evaluate(assumptions=assumptions).lhsSubstitute(subExprRepl, assumptions)
     assert knownTruth.expr == expr, 'Equivalence substitutions did not work out as they should have'
     return knownTruth
+"""
             
 def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
     '''
@@ -419,7 +417,7 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
     of assumptions [also see KnownTruth.evaluate and evaluateTruth].
     '''
     from proveit import defaults
-    from proveit.logic import TRUE
+    from proveit.logic import TRUE, FALSE
     if isinstance(expr, IrreducibleValue):
         IrreducibleValue.evaluate(expr)
     assumptionsSet = set(defaults.checkedAssumptions(assumptions))
@@ -429,7 +427,12 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
         return evaluateTruth(expr, assumptionsSet) # A=TRUE given A
     except:
         pass
-    # See if the expression already has a proven evaluation
+    # see if the negation of the expression is already known to be true as a special case
+    try:
+        expr.disprove(assumptionsSet, automation=False)
+        return evaluateFalsehood(expr, assumptionsSet) # A=FALSE given Not(A)
+    except:
+        pass    # See if the expression already has a proven evaluation
     if expr in Equals.evaluations:
         candidates = []
         for knownTruth in Equals.evaluations[expr]:
@@ -457,9 +460,22 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
     if reducedExpr == expr:
         raise EvaluationError('Unable to evaluate: ' + str(expr))
     value = reducedExpr.evaluate().rhs
-    if value == TRUE and isinstance(expr, Operation):
-        # if it evaluates to true, also try concludeViaReduction in case this results in a shorter proof
-        concludeViaReduction(expr, assumptions)
+    if value == TRUE:
+        # Attempt to evaluate via proving the expression;
+        # This should result in a shorter proof if allowed
+        # (e.g., if theorems are usable).
+        try:
+            evaluateTruth(expr, assumptions)
+        except:
+            pass
+    if value == FALSE:
+        # Attempt to evaluate via disproving the expression;
+        # This should result in a shorter proof if allowed
+        # (e.g., if theorems are usable).
+        try:
+            evaluateFalsehood(expr, assumptions)
+        except:
+            pass
     evaluation = Equals(expr, value).prove(assumptions=assumptions)
     # store it in the evaluations dictionary for next time
     Equals.evaluations.setdefault(expr, set()).add(evaluation)
@@ -469,10 +485,19 @@ def evaluateTruth(expr, assumptions):
     '''
     Attempts to prove that the given expression equals TRUE under
     the given assumptions via proving the expression.
-    Returns the resulting KnownTruth if successful.
+    Returns the resulting KnownTruth evaluation if successful.
     '''
     from proveit.logic import TRUE
     return Equals(expr, TRUE).prove(assumptions)
+
+def evaluateFalsehood(expr, assumptions):
+    '''
+    Attempts to prove that the given expression equals FALSE under
+    the given assumptions via disproving the expression.
+    Returns the resulting KnownTruth evaluationn if successful.
+    '''
+    from proveit.logic import FALSE
+    return Equals(expr, FALSE).prove(assumptions)
 
 class EvaluationError(Exception):
     def __init__(self, message):

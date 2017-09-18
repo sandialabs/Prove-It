@@ -8,12 +8,13 @@ from _core_ import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalR
 from _core_ import ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure
 from _generic_ import BinaryOperation, AssociativeOperation, OperationOverInstances, InstanceSubstitutionException
 from _generic_ import maybeFencedString, maybeFencedLatex, maybeFenced
+from _generic_ import TransitiveRelation, transitivitySearch, IrreducibleValue, isIrreducibleValue
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet
 
 # These methods are called within the core as convenience methods (not really core concepts)
-#from proveit.logic import reduceOperands, concludeViaReduction, defaultEvaluate, evaluateTruth, concludeViaImplication
+#from proveit.logic import reduceOperands, defaultEvaluate, evaluateTruth, concludeViaImplication
 # `Not` is used for the disprove convenience method (but not really a core concept)
 #from proveit.logic import Not
 # `Set` is used within the core for displaying assumptions sets and specialization mappings (but not really a core concept)

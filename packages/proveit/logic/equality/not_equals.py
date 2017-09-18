@@ -25,7 +25,7 @@ class NotEquals(BinaryOperation):
     
     def conclude(self, assumptions):
         from proveit.logic import FALSE
-        from equals import isIrreducibleValue
+        from proveit import isIrreducibleValue
         if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
             # prove that two irreducible values are not equal
             return self.lhs.notEquals(self.rhs)

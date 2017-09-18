@@ -1,3 +1,12 @@
+'''
+The evaluation of an expression (see the evaluate method
+of Expression) should reduce to an IrreducibleValue --
+a value that cannot be reduced to anything more fundamental.
+Classes used to represent expressions that are irreducible
+(TRUE, FALSE, basic numbers, etc) should inherit from
+IrreducibleValue.
+'''
+
 class IrreducibleValue:
     def __init__(self):
         pass
@@ -22,4 +31,6 @@ class IrreducibleValue:
         the other irreducible value, returning the KnownTruth.
         '''
         raise NotImplementedError("notEqual method must be implemented by IrreducibleValue objects")
-        
+
+def isIrreducibleValue(expr):
+    return isinstance(expr, IrreducibleValue)

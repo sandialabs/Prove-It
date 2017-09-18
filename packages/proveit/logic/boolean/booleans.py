@@ -1,14 +1,6 @@
 from proveit import Operation, Literal, USE_DEFAULTS, ProofFailure
+from proveit import IrreducibleValue
 from proveit._common_ import A, P
-
-# import IrreducibleValue from proveit.logic.equality without
-# importing the proveit.logic package since that won't work until the
-# proveit.logic.boolean._commons_ have been generated.
-import sys
-import os
-sys.path.append(os.path.join(os.path.split(__file__)[0], '..', 'equality'))
-from irreducible_value import IrreducibleValue
-sys.path.pop(-1) # we don't need that any more
 
 class BooleanSet(Literal):
     def __init__(self):
@@ -142,6 +134,10 @@ class TrueLiteral(Literal, IrreducibleValue):
     def __init__(self):
         Literal.__init__(self, stringFormat='TRUE', latexFormat=r'\top')
     
+    def conclude(self, assumptions):
+        from ._axioms_ import trueAxiom
+        return trueAxiom
+    
     def evalEquality(self, other):
         from ._theorems_ import trueEqTrue, trueNotFalse
         from .common import TRUE, FALSE
@@ -199,3 +195,12 @@ def inBool(*elements):
     if len(elements) == 1:
         return InSet(elements[0], Booleans)
     return [InSet(element, Booleans) for element in elements]
+
+try:
+    # Import some fundamental axioms and theorems without quantifiers.
+    # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+    from ._axioms_ import trueAxiom, boolsDef, falseNotTrue
+    from ._theorems_ import trueEqTrue, falseEqFalse, trueNotFalse, trueInBool, falseInBool
+except:
+    pass
+    
