@@ -1,3 +1,4 @@
+mode: static
 membership
 enumeration
 containment
