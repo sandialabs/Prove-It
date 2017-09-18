@@ -197,9 +197,10 @@ class Expression:
                     pass # that didn't work, try conclude on the Not expression itself
             if concludedTruth is None:
                 try:
-                    # try the generic version for concluding the expression
-                    concludedTruth = self.genericConclude(assumptions)
+                    # first attempt to prove via implication
+                    concludedTruth = self.concludeViaImplication(assumptions)
                 except:
+                    # try the 'conclude' method of the specific Expression class
                     concludedTruth = self.conclude(assumptions)
             if not isinstance(concludedTruth, KnownTruth):
                 raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
@@ -224,24 +225,6 @@ class Expression:
         from proveit.logic import Not
         return Not(self).prove(assumptions=assumptions, automation=automation)
                         
-    def genericConclude(self, assumptions=USE_DEFAULTS):
-        '''
-        Attempt to conclude, via automation, that this statement is true
-        under the given assumptions.  Return the KnownTruth if successful,
-        or raise an exception.  This generic version attempts concludeViaReduction
-        and concludeViaImplication in that order.  Implement the conclude
-        method for an implementation that is specific to this type of expression.
-        This is called by the `prove` method when no existing proof was found 
-        and it cannot be proven trivially via assumption.
-        The `prove` method has a mechanism to prevent infinite recursion, 
-        so there are no worries regarding cyclic attempts to conclude an expression.
-        '''
-        from proveit.logic import concludeViaReduction, concludeViaImplication
-        try:
-            return concludeViaReduction(self, assumptions)
-        except:
-            return concludeViaImplication(self, assumptions)
-
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude this expression under the given assumptions, 
@@ -253,7 +236,15 @@ class Expression:
         so there are no worries regarding cyclic attempts to conclude an expression.
         '''
         raise NotImplementedError("'conclude' not implemented for " + str(self.__class__))
-    
+
+    def concludeViaImplication(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to conclude this expression via applying
+        modus ponens of known implications.
+        '''
+        from proveit.logic import concludeViaImplication
+        return concludeViaImplication(self, assumptions)
+        
     def concludeNegation(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude the negation of this expression under the given
@@ -341,9 +332,7 @@ class Expression:
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         If possible, return a KnownTruth of this expression equal to its
-        irreducible value.  At the Expression level, this attempts to
-        prove the expression and, if successful, return this expression
-        equal to TRUE.  Override for other appropriate functionality.
+        irreducible value.  Override for other appropriate functionality.
         '''
         from proveit.logic import defaultEvaluate
         return defaultEvaluate(self, assumptions)

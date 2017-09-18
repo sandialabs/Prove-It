@@ -753,6 +753,8 @@ class Storage:
         with open(os.path.join(proveit_path, '..', '_proof_template_.ipynb'), 'r') as template:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
+            context_links = self.context.links(os.path.join(self.directory, '_proofs_'))
+            nb = nb.replace('#CONTEXT#', context_links)
         return nb
     
     def _proofNotebookTheoremName(self, filename):
@@ -775,6 +777,9 @@ class Storage:
         if not os.path.isdir(proofs_path):
             return # nothing to stash
         for filename in os.listdir(proofs_path):
+            if os.path.splitext(filename)[-1] != '.ipynb':
+                continue # just concerned with notebooks
+                
             # see if this is a proof notebook that should be kept
             if filename[:-len('.ipynb')] in theorem_names:
                 continue # this one is a keeper
@@ -1147,14 +1152,14 @@ class StoredTheorem(StoredSpecialStmt):
         presumes -- what other theorems/contexts the proof
         is expected to depend upon.
         '''
-        presuming_str = (presuming if isinstance(presuming, str) else ', '.join(presuming))
+        presuming_str = '\n'.join(presuming) + '\n'
         presuming_file = os.path.join(self.path, 'presuming.txt')
         if os.path.isfile(presuming_file):
             with open(presuming_file, 'r') as f:
-                if presuming_str == f.read().strip():
+                if presuming_str == f.read():
                     return # unchanged; don't need to record anything
         with open(presuming_file, 'w') as f:
-            f.write(presuming_str + '\n')
+            f.write(presuming_str)
     
     def presumes(self, other_theorem_str):
         '''
@@ -1165,10 +1170,9 @@ class StoredTheorem(StoredSpecialStmt):
         presuming_file = os.path.join(self.path, 'presuming.txt')
         if os.path.isfile(presuming_file):
             with open(presuming_file, 'r') as f:
-                presuming_str = f.read().strip()
-                presuming = presuming_str.split(',')
-                for presume in presuming:
+                for presume in f.readlines():
                     presume = presume.strip()
+                    if presume == '': continue
                     if other_theorem_str[:len(presume)] == presume:
                         # 'presume' includes other_theorem_str (either the theorem
                         # itself or a context containing it directly or indirectly).

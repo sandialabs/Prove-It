@@ -23,6 +23,7 @@ class KnownTruth:
     # Set of theorems/packages that are presumed to be True for the purposes of the proof being proven:
     presumingTheorems = None # set of Theorem objects when in use
     presumingPrefixes = None # set of context names or full theorem names when in use.
+    qedInProgress = False # set to true when "%qed" is in progress
 
     # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
     # recursion when deducing side effects after something is proven.
@@ -150,9 +151,11 @@ class KnownTruth:
                 context_name = presume # not a theorem; must be a context
             
             if thm is not None:
+                if thm.context == theorem.context:
+                    raise ValueError("Do not presume any theorem in this context; prior theorems are implicit and later theorems are off limits")                    
                 # add the theorem and any theorems used by that theorem to the set of presuming theorems
                 KnownTruth.presumingTheorems.add(thm)
-                explicit_presumed_theorems.add(str(thm))
+                explicit_presumed_theorems.append(str(thm))
                 if thm.hasProof():
                     # presume dependencies of presumed theorems
                     KnownTruth.presumingPrefixes.update(thm.allUsedTheorems())               
@@ -161,6 +164,8 @@ class KnownTruth:
                     context = Context.getContext(context_name)
                 except ContextException:
                     raise ValueError("'%s' not found as a known context or theorem"%presume)
+                if context == theorem.context:
+                    raise ValueError("Do not presume the current context; prior theorems are implicit and later theorems are off limits")
                 # the entire context is presumed (except where the presumption is mutual)
                 KnownTruth.presumingPrefixes.add(context.name)
                 presumed_contexts.append(context.name)
@@ -182,13 +187,12 @@ class KnownTruth:
         # check to see if the theorem was already proven before we started
         for proof in theorem._possibleProofs:
             if all(usedTheorem._unusableTheorem is None for usedTheorem in proof.usedTheorems()):
-                print '%s already proven.  Now just execute "%qed".'%self.asTheoremOrAxiom().name
-                self._proof = proof
+                proof.provenTruth._recordBestProof(proof)
                 return self.expr
         if len(presumed_contexts) > 0:
             print "Presuming theorems in %s (except any that depend upon this theorem)."%', '.join(presumed_contexts)
         if len(explicit_presumed_theorems) > 0:
-            print "Presuming %s theorems (and any of their dependencies)"%', '.join(explicit_presumed_theorems)
+            print "Presuming %s theorem(s) (and any of their dependencies)"%', '.join(explicit_presumed_theorems)
         if num_prev_thms > 0:
             print "Presuming previous theorems in this context (and any of their dependencies)."
         self._proof._unusableTheorem = self._proof # can't use itself to prove itself
@@ -205,8 +209,12 @@ class KnownTruth:
             raise Exception('qed does not match the theorem being proven')
         if len(self.assumptions) > 0:
             raise Exception('qed proof should not have any remaining assumptions')
+        KnownTruth.qedInProgress = True
         proof = self.expr.prove().proof()
+        if not proof.isUsable():
+            proof.provenTruth.raiseUnusableTheorem()
         KnownTruth.theoremBeingProven.recordProof(proof)
+        KnownTruth.qedInProgress = False
         return proof
 
     def proof(self):
@@ -221,7 +229,7 @@ class KnownTruth:
         may be unusable when proving a theorem that is restricted with
         respect to which theorems may be used (to avoid circular logic).
         '''
-        return self._proof._unusableTheorem is None
+        return self._proof is not None and self._proof._unusableTheorem is None
     
     def isSufficient(self, assumptions):
         '''
@@ -296,10 +304,12 @@ class KnownTruth:
             KnownTruth.lookup_dict[self.expr] = [self]
             return
         if not newProof.isUsable():
-            return # if it is not usable, we're done.
-        if KnownTruth.theoremBeingProven is not None:
-            if self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
-                print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".'
+            # if it is not usable, we're done.
+            if self._proof is None:
+                # but first set _proof to the newProof if there 
+                # is not another one.
+                self._proof = newProof
+            return 
         keptTruths = []
         bornObsolete = False
         for other in KnownTruth.lookup_dict[self.expr]:
@@ -334,6 +344,9 @@ class KnownTruth:
                 # 'other' uses a different, non-redundant set of assumptions
                 keptTruths.append(other)
         if not bornObsolete:
+            if KnownTruth.theoremBeingProven is not None:
+                if not KnownTruth.qedInProgress and len(self.assumptions)==0 and self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
+                    print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".'
             self._proof = newProof
             keptTruths.append(self)
         # Remove the obsolete KnownTruths from the lookup_dict
@@ -351,7 +364,8 @@ class KnownTruth:
         if not wasUsable: return  # not usable, don't update dependents
         for oldDependentProof in oldDependents:
             # remake the dependent proof to refer to this updated proof
-            oldDependentProof.remake()
+            if oldDependentProof.isUsable(): # (if it's usable)
+                oldDependentProof.remake()
 
     def __setattr__(self, attr, value):
         '''

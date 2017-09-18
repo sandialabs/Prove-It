@@ -23,6 +23,7 @@ the theorem proofs, and it stores theorem proof dependencies.
 import os
 import sys
 import importlib
+import json
 from glob import glob
 from storage import Storage
 
@@ -110,6 +111,15 @@ class Context:
     
     def __str__(self):
         return self.name
+    
+    def links(self, from_directory='.'):
+        context_name_segments = self.name.split('.')
+        context_html_segments = []
+        for k, context_name_segment in enumerate(context_name_segments):      
+            path = os.path.join(*([self._storage.directory] + ['..']*(len(context_name_segments) - k - 1) + ['_context_.ipynb']))
+            relpath = os.path.relpath(path, start=from_directory)
+            context_html_segments.append(r'<a class=\"ProveItLink\" href=\"%s\">%s</a>'%(json.dumps(relpath).strip('"'), context_name_segment))
+        return '.'.join(context_html_segments)
     
     def isRoot(self):
         '''

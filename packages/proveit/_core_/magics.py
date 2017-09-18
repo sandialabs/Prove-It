@@ -132,14 +132,8 @@ class SubContexts(widgets.VBox):
         proveit_path = os.path.split(proveit.__file__)[0]
         with open(os.path.join(proveit_path, '..', '_context_template_.ipynb'), 'r') as template:
             nb = template.read()
-            sub_context = Context(subContextName)
-            context_name_segments = sub_context.name.split('.')
-            context_html_segments = []
-            for k, context_name_segment in enumerate(context_name_segments[:-1]):      
-                href = os.path.join(*(['..']*(len(context_name_segments) - k - 1) + ['_context_.ipynb']))
-                context_html_segments.append(r'<a class="ProveItLink" href=\"%s\">%s</a>'%(json.dumps(href).strip('"'), context_name_segment))
-            context_html_segments.append(context_name_segments[-1])
-            nb = nb.replace('#CONTEXT#', '.'.join(context_html_segments))
+            super_context_links = Context('.').links(from_directory=subContextName)
+            nb = nb.replace('#CONTEXT#', super_context_links + '.' + subContextName)
         # write the notebook file
         with open(notebook_name, 'w') as notebook_file:
             notebook_file.write(nb)
