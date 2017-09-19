@@ -309,15 +309,15 @@ class KnownTruth:
                 # but first set _proof to the newProof if there 
                 # is not another one.
                 self._proof = newProof
-            return 
+            return
         keptTruths = []
         bornObsolete = False
         for other in KnownTruth.lookup_dict[self.expr]:
-            if not other._proof.isUsable():
-                # use the new proof since the old one is unusable.
-                other._updateProof(newProof)
-            elif self.assumptionsSet == other.assumptionsSet:
-                if newProof.numSteps <= other._proof.numSteps:
+            if self.assumptionsSet == other.assumptionsSet:
+                if not other._proof.isUsable():
+                    # use the new proof since the old one is unusable.
+                    other._updateProof(newProof)
+                elif newProof.numSteps <= other._proof.numSteps:
                     if newProof.requiredProofs != other._proof.requiredProofs:
                         # use the new (different) proof that does the job as well or better
                         if isinstance(newProof, Theorem):
@@ -335,13 +335,14 @@ class KnownTruth:
             elif self.assumptionsSet.issubset(other.assumptionsSet):
                 # use the new proof that does the job better
                 other._updateProof(newProof) 
-            elif self.assumptionsSet.issuperset(other.assumptionsSet):
+            elif self.assumptionsSet.issuperset(other.assumptionsSet) and other._proof.isUsable():
                 # the new proof was born obsolete, requiring more assumptions than an existing one
                 self._proof = other._proof # use an old proof that does the job better
                 keptTruths.append(other)
                 bornObsolete = True
             else:
-                # 'other' uses a different, non-redundant set of assumptions
+                # 'other' uses a different, non-redundant set of assumptions or 
+                # uses a subset of the assumptions but is unusable
                 keptTruths.append(other)
         if not bornObsolete:
             if KnownTruth.theoremBeingProven is not None:
