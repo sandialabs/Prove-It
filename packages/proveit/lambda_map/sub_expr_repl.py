@@ -150,8 +150,8 @@ class SubExprRepl:
         namedExprDict += [(str(lambdaParam), subExpr) for lambdaParam, subExpr in zip(lambdaParams, subExprs)]
         return NamedExpressions(namedExprDict)        
     
-    def _repr_png_(self):
-        return self._expr_rep()._repr_png_()
+    def _repr_html_(self):
+        return self._expr_rep()._repr_html_()
 
     def _repr_(self):
         return self._expr_rep()._repr_()
