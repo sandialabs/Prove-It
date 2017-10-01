@@ -93,14 +93,13 @@ class KnownTruth:
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
             KnownTruth.in_progress_to_derive_sideeffects.add(self)   
-            # add the wildcard assumptions to include assumptions as needed
-            # while deriving side-effects.
-            assumptions = list(self.assumptions) + ['*']
             for sideEffect in self.expr.sideEffects(self):
-                # attempt each side-effect derivation, specific to the
+                # Attempt each side-effect derivation, specific to the
                 # type of Expression.
                 try:
-                    sideEffect(assumptions=assumptions)     
+                    # use the default assumptions which are temporarily set to the
+                    # assumptions utilized in the last derivation step.
+                    sideEffect(assumptions=defaults.assumptions)     
                 except:
                     pass
             KnownTruth.in_progress_to_derive_sideeffects.remove(self)        

@@ -9,7 +9,10 @@ import re
 class Storage:
     '''
     Manages the __pv_it directory of a Context, the distributed database
-    of expressions, axioms, theorems, and proofs.
+    of expressions, axioms, theorems, and proofs.  Additionally manages
+    the _sub_contexts_.txt file which is in the main directory because it
+    should be committed to the repository (unlike the __pv_it directory
+    which can all be re-generated).
     '''
     
     def __init__(self, context, directory):
@@ -19,9 +22,10 @@ class Storage:
         self.context = context
         self.directory = directory
         self.pv_it_dir = os.path.join(self.directory, '__pv_it')
-        if not os.path.isdir(self.pv_it_dir):
+        self.referenced_dir = os.path.join(self.pv_it_dir, '_referenced_')
+        if not os.path.isdir(self.referenced_dir):
             # make the directory for the storage
-            os.makedirs(self.pv_it_dir)
+            os.makedirs(self.referenced_dir)
         
         if self.context.isRoot():
             # If this is a root context, let's add the directory above the root
@@ -63,6 +67,16 @@ class Storage:
                     # the first entry indicates the directory of this path
                     pathsFile.write('. ' + directory + '\n')
 
+        # create the _sub_contexts_.txt file if it does not already exist
+        sub_contexts_path = os.path.join(self.directory, '_sub_contexts_.txt')
+        if not os.path.isfile(sub_contexts_path):
+            open(sub_contexts_path, 'wt').close()
+        
+        self.subContextNames = []
+        with open(sub_contexts_path, 'rt') as f:
+            for k, line in enumerate(f.readlines()):
+                self.subContextNames.append(line.strip())
+
         # map expression objects to special expression kind and name
         # for the associated context (the kind is 'common', 'axiom', or 'theorem').
         self.specialExpressions = dict()
@@ -71,6 +85,28 @@ class Storage:
         # this maps the object to the pv_it file so we
         # can recall this without searching the hard drive again.
         self._proveItObjects = dict()
+    
+    def getSubContextNames(self):
+        '''
+        Return the sub-context names as indicated in the _sub_contexts_.txt files.
+        '''
+        return self.subContextNames
+        
+    def setSubContextNames(self, subContextNames):
+        '''
+        Set the sub-context names listed in the _sub_contexts_.txt files.
+        '''
+        self.subContextNames = subContextNames
+        with open(os.path.join(self.directory, '_sub_contexts_.txt'), 'wt') as f:
+            for sub_context_name in self.subContextNames:
+                f.write(sub_context_name + '\n')
+                
+    def appendSubContextNames(self, subContextName):
+        '''
+        Append the sub-context name to the _sub_contexts_.txt list.
+        '''
+        with open(os.path.join(self.directory, '_sub_contexts_.txt'), 'a') as f:
+            f.write(subContextName + '\n')
         
     def _updatePath(self):
         '''
@@ -250,7 +286,7 @@ class Storage:
         Increment the reference count of the prove-it object with the given
         storage identifier.  The ref_count.txt file is updated with the new 
         reference count.
-        '''        
+        '''
         hash_path = self._storagePath(proveItStorageId)
         file_path = os.path.join(hash_path, 'ref_count.txt')
         with open(file_path, 'r') as f:
@@ -908,31 +944,31 @@ class Storage:
             built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], sub_expressions, context)
         return built_expr_map[master_expr_id]        
     
-    def recordReferencedCommons(self, contextNames):
+    def recordReferencedContexts(self, contextNames):
         '''
         Record the context names of any reference common expressions in storage
         while creating the common expressions for this context
         (for the purposes of checking for illegal mutual dependencies).
         '''
-        if contextNames == self.referencedCommons():
+        if contextNames == self.referencedContexts():
             return # unchanged
-        referenced_commons_filename = os.path.join(self.pv_it_dir, 'referenced_commons.txt')
+        referenced_commons_filename = os.path.join(self.referenced_dir, 'contexts.txt')
         with open(referenced_commons_filename, 'w') as f:
             for context_name in contextNames:
                 f.write(context_name + '\n')
 
-    def referencedCommons(self):
+    def referencedContexts(self):
         '''
         Return the stored set of context names of common expressions
         referenced by the common expression notebook of this context.
         '''
-        referenced_commons_filename = os.path.join(self.pv_it_dir, 'referenced_commons.txt')
+        referenced_commons_filename = os.path.join(self.referenced_dir, 'contexts.txt')
         if os.path.isfile(referenced_commons_filename):
             with open(referenced_commons_filename, 'r') as f:
                 return set([line.strip() for line in f.readlines()])
         return set() # empty set by default
         
-    def mutualReferencedCommons(self, contextNames):
+    def mutualReferencedContexts(self, contextNames):
         '''
         Check for illegal mutual dependencies of common expression notebooks.
         If there is one, return the name; otherwise return None.
@@ -940,10 +976,56 @@ class Storage:
         from .context import Context
         for context_name in contextNames:
             other_context = Context.getContext(context_name)
-            other_referenced_commons = other_context.referencedCommons()
-            if self.context.name in other_referenced_commons:
+            other_referenced_contexts = other_context.referencedContexts()
+            if self.context.name in other_referenced_contexts:
                 return other_context.name
         return None
+    
+    def referenceDisplayedExpressions(self, name):
+        '''
+        Reference displayed expressions, recorded under the given name
+        in the __pv_it directory.  If the same name is reused,
+        any expressions that are not displayed this time that
+        were displayed last time will be unreferenced.
+        '''
+        from proveit import Expression
+        
+        reference_file = os.path.join(self.referenced_dir, name + '_displayed.pv_it')
+        
+        # read in previous "displayed" expressions
+        previous = set()
+        if os.path.isfile(reference_file):
+            with open(reference_file, 'r') as f:
+                for line in f.readlines():
+                    previous.add(line.strip())
+        
+        # grab the current "displayed" expressions    
+        current = {self._proveItStorageId(expr) for expr in Expression.displayed_expressions}
+        
+        # dereference old ones
+        for old_ref in previous - current:
+            self._removeReference(old_ref)
+        
+        # reference new one
+        for new_ref in current - previous:
+            self._addReference(new_ref)
+        
+        with open(reference_file, 'w') as f:
+            for cur_ref in current:
+                f.write(cur_ref + '\n')            
+    
+    def clearDisplayedExpressionReferences(self):
+        '''
+        Remove all of the references to displayed expressions in this context.
+        '''
+        suffix = '_displayed.pv_it'
+        for filename in os.listdir(self.reference_dir):
+            if filename[-len(suffix):] == suffix:
+                displayed_ref_path = os.path.join(self.reference_dir, filename)
+                with open(displayed_ref_path, 'r') as f:
+                    for ref in f.readlines():
+                        self._removeReference(ref.strip())
+                os.remove(displayed_ref_path)            
     
     def clean(self):
         '''
@@ -951,11 +1033,11 @@ class Storage:
         count of zero.
         '''
         for sub_dir in os.listdir(self.pv_it_dir):
-            if sub_dir == '_axioms_' or sub_dir == '_theorems_':
+            if sub_dir == '_referenced_':
                 continue
             sub_path = os.path.join(self.pv_it_dir, sub_dir)
             if os.path.isdir(sub_path):
-                # assume this is a hash directory for a prove-it object if it isn't _axioms_ or _theorems_
+                # assume this is a hash directory for a prove-it object if it isn't in '_referenced_'
                 hash_directory = sub_dir 
                 if self._getRefCount(hash_directory) == 0:
                     self._removeReference(hash_directory)
@@ -988,9 +1070,9 @@ class StoredSpecialStmt:
         self.name = name
         self.kind = kind
         if kind == 'axiom':
-            self.path = os.path.join(self.context._storage.pv_it_dir, 'axioms', self.name)
+            self.path = os.path.join(self.context._storage.referenced_dir, 'axioms', self.name)
         elif kind == 'theorem':
-            self.path = os.path.join(self.context._storage.pv_it_dir, 'theorems', self.name) 
+            self.path = os.path.join(self.context._storage.referenced_dir, 'theorems', self.name) 
         else:
             raise ValueError("kind must be 'axiom' or 'theorem'")
 
@@ -1240,7 +1322,6 @@ class StoredTheorem(StoredSpecialStmt):
                     with open(os.path.join(storedUsedStmt.path, 'usedBy.txt'), 'a') as usedByFile:
                         usedByFile.write(str(self) + '\n')
         
-        print str(self) + ' has a proof'
         # if this proof is complete (all of the theorems that it uses are complete) then
         # propagate this information to the theorems that depend upon this one.
         self._propagateCompletion()
@@ -1281,7 +1362,6 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         from .context import Context
         if self.isComplete():
-            print str(self) + ' has been completely proven'
             # This theorem has been completely proven.  Let the dependents know.
             dependentTheorems = self.readDependentTheorems()
             for dependent in dependentTheorems:

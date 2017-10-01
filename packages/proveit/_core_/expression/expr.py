@@ -9,6 +9,7 @@ import os
 
 class Expression:
     unique_id_map = dict() # map unique_id's to unique_rep's
+    displayed_expressions = set() # set of expressions for which __repr_html__ has been called this session
     
     contexts = dict() # map expression to contexts (for expressions that "belong" to a Context)
     
@@ -176,7 +177,7 @@ class Expression:
             # prove by assumption if self is in the list of assumptions or
             # WILDCARD_ASSUMPTIONS is in the list of assumptions.
             from proveit._core_.proof import Assumption
-            return Assumption(self).provenTruth
+            return Assumption(self, assumptions).provenTruth
         
         if not automation:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
@@ -202,6 +203,8 @@ class Expression:
                 except:
                     # try the 'conclude' method of the specific Expression class
                     concludedTruth = self.conclude(assumptions)
+            if concludedTruth is None:
+                raise ProofFailure(self, assumptions, "Failure to automatically 'conclude'")
             if not isinstance(concludedTruth, KnownTruth):
                 raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
             if concludedTruth.expr != self:
@@ -379,6 +382,7 @@ class Expression:
             html = '<a href="' + os.path.relpath(exprNotebookPath) + '" target="_blank">'
             html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
+        Expression.displayed_expressions.add(self) # record as a "displayed" expression
         return html
         
     def _config_latex_tool(self, lt):

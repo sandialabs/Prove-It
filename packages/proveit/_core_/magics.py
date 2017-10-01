@@ -52,67 +52,91 @@ class AssignmentBehaviorModifier:
         shell.ex("from proveit._core_.magics import Assignments")
         self._setBehavior(lambda varnames: "Assignments([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])")
 
-class SubContexts(widgets.VBox):
+class ContextInterface:
     '''
-    A Jupyter VBox widget for editing the list of sub-contexts of a context and their descriptions.
-    At first, a static html version will be displayed with just an "Edit" button at the bottom.
-    When "Edit" is pressed, the html tables are made invisible via Javascript and the editable
-    version of the table is presented.
+    A SubContexts object is an interface for the _sub_contexts_.txt file
+    which stores the names of the sub-contexts of the context in the current
+    directory and also tracks whether it is in interactive or state mode.
+    With each %context execution (in the _context_.ipynb notebook), the
+    mode is toggled.  If in interactive mode, the SUbContexts object is
+    responsible for creating the interactive widget to add/modify/remove
+    sub-contexts and edit their brief descriptions.
     '''
     def __init__(self):
-        widgets.VBox.__init__(self, [])
-        if not os.path.isfile('_sub_contexts_.txt'):
-            open('_sub_contexts_.txt', 'wt').close()
-        self.smallButtonLayout = widgets.Layout(width='30px')
-        self.subContextLinkLayout = widgets.Layout(width='20%')
-        self.subContextDescriptionLayout = widgets.Layout(width='100%')
-        self.subContexts = []
+        self.context = Context() # context of the current working directory
+        self.subContextNames = list(self.context.getSubContextNames())
         self.subContextDescriptions = dict()
+        
+        # read the previous 'mode' (interactive or static) and toggle it.
         prev_mode = 'static' # default toggles 'static' to 'interactive'
-        with open('_sub_contexts_.txt', 'rt') as f:
-            for k, line in enumerate(f.readlines()):
-                if k==0 and line[:5] == 'mode:': 
-                    # first line indicates interactive or static mode;
-                    # toggle relative to previous value
-                    prev_mode = line.split()[1].strip()
+        if os.path.isfile('_mode_.txt'):
+            with open('_mode_.txt', 'rt') as f:
+                prev_mode = f.read().strip()
+                # mode toggles between 'static' and 'interactive'
+                if prev_mode == 'static':
+                    self.mode = 'interactive'
+                    # in interactive mode, sub-contexts are presented in an interactive widget
+                    self.widget = widgets.VBox()
+                    self.smallButtonLayout = widgets.Layout(width='30px')
+                    self.subContextLinkLayout = widgets.Layout(width='20%')
+                    self.subContextDescriptionLayout = widgets.Layout(width='80%')
                 else:
-                    sub_context_name = line.strip()
-                    self.subContexts.append(sub_context_name)
-                    self._addSubContextRow(sub_context_name)
-        # mode toggles between 'static' and 'interactive'
-        if prev_mode == 'static':
-            self.mode = 'interactive'
-        else:
-            self.mode = 'static'
-        # write the new mode
-        self.rewriteSubContextTxt()
+                    self.mode = 'static'
+        
+        # write the new mode that has been toggled
+        with open('_mode_.txt', 'w') as f:
+            f.write(self.mode + '\n')
+        
+        # register each sub-context name, reading their brief descriptions and
+        # creating widgets if in interactive mode
+        for sub_context_name in self.subContextNames:
+            self._addSubContextRow(sub_context_name)
     
     def _addSubContextRow(self, subContextName):
         subContextDescription = self.readDescription(subContextName)
-        small_button_layout = self.smallButtonLayout
-        sub_context_link_layout = self.subContextLinkLayout
-        sub_context_description_layout = self.subContextDescriptionLayout
-        #rename_button =  widgets.Button(description='', disabled=False, button_style='', tooltip='rename', icon='pencil', layout=small_button_layout)
-        up_button = widgets.Button(description='', disabled=False, button_style='', tooltip='move up', icon='chevron-up', layout=small_button_layout)
-        dn_button = widgets.Button(description='', disabled=False, button_style='', tooltip='move down', icon='chevron-down', layout=small_button_layout)
-        def moveUp(sender):
-            idx = self.subContexts.index(subContextName)
-            self.moveUp(idx)
-        def moveDown(sender):
-            idx = self.subContexts.index(subContextName)
-            self.moveUp(idx+1)
-        up_button.on_click(moveUp)
-        dn_button.on_click(moveDown)
-        delete_button = widgets.Button(description='', disabled=False, button_style='danger', tooltip='delete context', icon='trash', layout=small_button_layout)
-        href = self.subContextNotebook(subContextName)
-        sub_context_link = widgets.HTML('<a class="ProveItLink" href="%s" target="_blank">%s</a>'%(href,subContextName) , layout=sub_context_link_layout)
-        sub_context_description = widgets.Text(value=subContextDescription, placeholder='Add a brief description here...', layout=sub_context_description_layout)
-        def setDescription(change):
-            self.subContextDescriptions[subContextName] = change['new']
-            self.writeDescriptionFile(subContextName)
-        sub_context_description.observe(setDescription, names='value')
-        self.children = self.children + (widgets.HBox([sub_context_link, sub_context_description, up_button, dn_button, delete_button]),)
-        #self.children = self.children + (widgets.HBox([sub_context_link, rename_button, sub_context_description, up_button, dn_button, delete_button]),)
+        self.subContextDescriptions[subContextName] = subContextDescription
+        if self.mode == 'interactive':
+            small_button_layout = self.smallButtonLayout
+            sub_context_link_layout = self.subContextLinkLayout
+            sub_context_description_layout = self.subContextDescriptionLayout
+            #rename_button =  widgets.Button(description='', disabled=False, button_style='', tooltip='rename', icon='pencil', layout=small_button_layout)
+            up_button = widgets.Button(description='', disabled=False, button_style='', tooltip='move up', icon='chevron-up', layout=small_button_layout)
+            dn_button = widgets.Button(description='', disabled=False, button_style='', tooltip='move down', icon='chevron-down', layout=small_button_layout)
+            delete_button = widgets.Button(description='', disabled=False, button_style='danger', tooltip='delete context', icon='trash', layout=small_button_layout)
+            href = self.subContextNotebook(subContextName)
+            sub_context_link = widgets.HTML('<a class="ProveItLink" href="%s" target="_blank">%s</a>'%(href,subContextName) , layout=sub_context_link_layout)
+            sub_context_description = widgets.Text(value=subContextDescription, placeholder='Add a brief description here...', layout=sub_context_description_layout)
+            def setDescription(change):
+                self.subContextDescriptions[subContextName] = change['new']
+                self.writeDescriptionFile(subContextName)
+            sub_context_description.observe(setDescription, names='value')
+            row_widget = widgets.VBox([widgets.HBox([sub_context_link, sub_context_description, up_button, dn_button, delete_button])])
+            self.widget.children = self.widget.children + (row_widget,)
+            def moveUp(sender):
+                idx = self.subContextNames.index(subContextName)
+                self.moveUp(idx)
+            def moveDown(sender):
+                idx = self.subContextNames.index(subContextName)
+                self.moveUp(idx+1)
+            def deleteSubContext(sender):
+                # before deleting a sub-context, we need confirmation by entering the sub-context name
+                delete_msg = widgets.Label("To remove (unlink) sub-context, enter its name as confirmation", layout={'width':'350px', 'max_width':'350px'})
+                verification_text = widgets.Text(layout=widgets.Layout(flex_grow=2, max_width='500px'))
+                cancel_button = widgets.Button(description='cancel', disabled=False, tooltip='cancel', layout={'width':'80px'})
+                cancel_button.on_click(dismissDelete)
+                verification_text.observe(monitorConfirmation)
+                row_widget.children = (row_widget.children[0], widgets.HBox([delete_msg, verification_text, cancel_button], layout={'justify_content':'flex-end'}))
+            def dismissDelete(sender):
+                # dismiss the delete confirmation/message by removing all be the first row in the row_widget
+                row_widget.children = (row_widget.children[0],)
+            def monitorConfirmation(change):
+                # check to see if the user has entered the sub-context name for confirmation
+                if change['new'] == subContextName:
+                    # delete context has been 
+                    self.deleteSubContext(subContextName)
+            up_button.on_click(moveUp)
+            dn_button.on_click(moveDown)
+            delete_button.on_click(deleteSubContext)
     
     def subContextNotebook(self, subContextName):
         '''
@@ -140,18 +164,58 @@ class SubContexts(widgets.VBox):
         return notebook_name        
     
     def addSubContext(self, subContextName):
-        if subContextName in self.subContexts:
+        '''
+        Add a new sub-context with the given name.
+        '''
+        if subContextName in self.subContextNames:
             return
-        with open('_sub_contexts_.txt', 'a') as f:
-            f.write(subContextName + '\n')
-            self.subContexts.append(subContextName)
-            self._addSubContextRow(subContextName)
+        self.context.appendSubContextName(subContextName)
+    
+    def deleteSubContext(self, contextNameToDelete):
+        '''
+        Delete (unlink) a sub-context with the given name as long as there are not external
+        references to its expressions.  Either way, the directory will remain.
+        Only files in the __pv_it directories are cleared (recursively in all sub-sub contexts,
+        etc) and the current directory's context will no longer link to it.  That is
+        why we use the term 'unlinked'.  It may be resurrected by adding the sub-context
+        with the same name back in.
+        '''
+        context = Context(contextNameToDelete)
+        context.clearAll()
+        num_stored_expressions = context.numAllStoredExpressions()
+        def dismiss(sender):
+            if num_stored_expressions == 0:
+                # Successful removal; we need to remove the deleted sub-context name from
+                # the self.subContextNames list, the displayed widgets, and the list in _sub_contexts_.txt.
+                new_sub_contexts = []
+                new_widget_children = []
+                for k, sub_context_name in enumerate(self.subContextNames):
+                    if sub_context_name != contextNameToDelete:
+                        new_sub_contexts.append(sub_context_name)
+                        new_widget_children.append(self.widget.children[k])
+                self.subContextNames.append(new_sub_contexts)
+                self.updateSubContextNames()
+                self.widget.children = new_widget_children
+            else:
+                # dismiss the delete confirmation/message by removing all be the first row in the row_widget
+                row_widget.children = (row_widget.children[0],)
+        if num_stored_expressions == 0:
+            msg = 'Removing (unlinking) sub-context; add it again to resurrect it or delete the directory to make it permanent'
+            msg_width = '600px'
+        else:
+            msg = 'Context removal cancelled; there are external references to its expressions',
+            msg_width = '450px'
+        row_widget = self.widget.children[self.subContextNames.index(contextNameToDelete)]
+        delete_msg = widgets.Label(msg, layout={'width':msg_width, 'max_width':msg_width})
+        gotit_button = widgets.Button(description='got it', disabled=False, tooltip='got it', layout={'width':'80px'})
+        gotit_button.on_click(dismiss)
+        row_widget.children = (row_widget.children[0], widgets.HBox([delete_msg, gotit_button], layout=widgets.Layout(justify_content='flex-end')))
     
     def moveUp(self, i):
-        if i<=0 or i==len(self.children): return # can't move the first entry up or go beyond the last entry
-        self.children = self.children[:i-1] + (self.children[i], self.children[i-1]) + self.children[i+1:]
-        self.subContexts = self.subContexts[:i-1] + [self.subContexts[i], self.subContexts[i-1]] + self.subContexts[i+1:]
-        self.rewriteSubContextTxt()
+        if i<=0 or i==len(self.widget.children): return # can't move the first entry up or go beyond the last entry
+        self.widget.children = self.widget.children[:i-1] + (self.widget.children[i], self.widget.children[i-1]) + self.widget.children[i+1:]
+        self.subContextNames = self.subContextNames[:i-1] + [self.subContextNames[i], self.subContextNames[i-1]] + self.subContextNames[i+1:]
+        self.updateSubContextNames()
 
     def readDescription(self, subContextName):
         brief_description = ''
@@ -169,15 +233,13 @@ class SubContexts(widgets.VBox):
             with open(brief_description_filename, 'w') as f:
                 f.write(brief_description + '\n')
 
-    def rewriteSubContextTxt(self):
+    def updateSubContextNames(self):
+        '''
+        Update the stored sub-context names (in the _sub_contexts_.txt file) with
+        self.subContextNames
+        '''
         # rewrite the sub_contexts.txt file with new information.
-        with open('_sub_contexts_.txt', 'wt') as f:
-            if self.mode=='interactive':
-                f.write('mode: interactive\n')
-            else:
-                f.write('mode: static\n')
-            for sub_context_name in self.subContexts:
-                f.write(sub_context_name + '\n')    
+        self.context.setSubContextNames(self.subContextNames)
 
 @magics_class
 class ProveItMagic(Magics):
@@ -216,8 +278,8 @@ class ProveItMagic(Magics):
             open('__init__.py', 'w').close() # create an empty __init__.py
         context = Context()
         proveit_path = os.path.split(proveit.__file__)[0]
-        special_notebook_types = ('common', 'axioms', 'theorems')
-        special_notebook_text = ('common expressions', 'axioms', 'theorems')
+        special_notebook_types = ('common', 'axioms', 'theorems', 'demonstrations')
+        special_notebook_texts = ('common expressions', 'axioms', 'theorems', 'demonstrations')
         for special_notebook_type in special_notebook_types:
             notebook_name = '_%s_.ipynb'%special_notebook_type
             if not os.path.isfile(notebook_name):
@@ -230,25 +292,25 @@ class ProveItMagic(Magics):
                 with open(notebook_name, 'w') as notebook_file:
                     notebook_file.write(nb)
                     
-        sub_contexts = SubContexts()
+        context_interface = ContextInterface()
         
-        if sub_contexts.mode == 'static':
+        if context_interface.mode == 'static':
             special_notebooks_html = '<table>\n'
-            for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_text):
-                special_notebooks_html += '<th><a class="ProveItLink" href="_%s_.ipynb">%s</a></th>\n'%(special_notebook_type, special_notebook_text)
+            for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_texts):
+                special_notebooks_html += '<th><a class="ProveItLink" href="_%s_.ipynb" target="_blank">%s</a></th>\n'%(special_notebook_type, special_notebook_text)
             special_notebooks_html += '</table>\n'
-            if len(sub_contexts.subContexts) > 0:
+            if len(context_interface.subContextNames) > 0:
                 special_notebooks_html += '<table>\n'
-                for name in sub_contexts.subContexts:
-                    description = sub_contexts.subContextDescriptions[name]
-                    href = sub_contexts.subContextNotebook(name)
+                for name in context_interface.subContextNames:
+                    description = context_interface.subContextDescriptions[name]
+                    href = context_interface.subContextNotebook(name)
                     special_notebooks_html += '<tr><th><a class="ProveItLink" href="%s">%s</a></th><td>%s</td></tr>\n'%(href, name, description)
                 special_notebooks_html += '</table>\n'                
             display(HTML(special_notebooks_html))
         else:
             special_notebook_links = []
             full_width_layout = widgets.Layout(width='100%', padding='5px')
-            for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_text):
+            for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_texts):
                 special_notebook_links.append(widgets.HTML('<a class="ProveItLink" href="_%s_.ipynb" target="_blank">%s</a>'%(special_notebook_type, special_notebook_text), layout=full_width_layout))
             special_notebook_links = widgets.HBox(special_notebook_links)
                 
@@ -256,16 +318,15 @@ class ProveItMagic(Magics):
             #sub_context_widgets = widgets.VBox(sub_context_widgets)
             add_context_widget = widgets.Text(value='', placeholder='Add sub-context...')
             def addSubContext(sender):
-                sub_contexts.addSubContext(add_context_widget.value)
+                context_interface.addSubContext(add_context_widget.value)
                 add_context_widget.value = ''
             add_context_widget.on_submit(addSubContext)
             #layout = widgets.Layout(display='flex', flex_flow='column-reverse')
             #display(widgets.Button(description='Edit...', disabled=False, button_style='', tooltip='Edit the sub-contents list', layout=layout))
             #layout = widgets.Layout(float='bottom')
-            display(widgets.VBox([special_notebook_links, sub_contexts_label, sub_contexts, add_context_widget]))       
+            display(widgets.VBox([special_notebook_links, sub_contexts_label, context_interface.widget, add_context_widget]))       
     
-    @line_magic
-    def begin_axioms(self, line):
+    def begin_axioms(self):
         # context based upon current working directory
         self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
@@ -276,16 +337,12 @@ class ProveItMagic(Magics):
         print "Defining axioms for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define axioms"
         print "%end_axioms will finalize the definitions"
-        self.kind = 'axioms'
 
-    @line_magic
-    def end_axioms(self, line):
+    def end_axioms(self):
         self.finish('axioms')
 
-    @line_magic
-    def begin_theorems(self, line):
+    def begin_theorems(self):
         # context based upon current working directory
-        self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'theorems':
                 raise ProveItMagicFailure("Run %begin_theorems in a separate notebook from %begin_%s."%self.kind)
@@ -293,19 +350,14 @@ class ProveItMagic(Magics):
             print "         It is suggested that you restart and run all cells after editing theorems."
         print "Defining theorems for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define theorems"
-        print "%end_theorems will finalize the definitions"
-        self.kind = 'theorems'
+        print "'%end theorems' will finalize the definitions"
 
-    @line_magic
-    def end_theorems(self, line):
+    def end_theorems(self):
         self.finish('theorems')
         # stash proof notebooks that are not active theorems.
         self.context.stashExtraneousProofNotebooks()
     
-    @line_magic
-    def begin_common(self, line):
-        # context based upon current working directory
-        self.context = Context()
+    def begin_common(self):
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'common':
                 raise ProveItMagicFailure("Run %begin_common in a separate notebook from %begin_%s."%self.kind)
@@ -314,19 +366,44 @@ class ProveItMagic(Magics):
         print "Defining common sub-expressions for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define common sub-expressions"
         print "%end_common will finalize the definitions"
-        self.kind = 'common'
 
-    @line_magic
-    def end_common(self, line):
+    def end_common(self):
         # Record the context namees of common expressions referenced
         # by this context's common expressions notebook...
-        self.context.recordReferencedCommons()
+        self.context.recordReferencedContexts()
         # and check for illegal mutual references.
-        mutual_referenced_commons_context = self.context.mutualReferencedCommons()
+        mutual_referenced_commons_context = self.context.mutualReferencedContexts()
         if mutual_referenced_commons_context is not None:
             raise ProveItMagicFailure("Not allowed to have mutually dependent 'common expression' notebooks: %s._common_"%mutual_referenced_commons_context)
         self.finish('common')
+    
+    @line_magic
+    def begin(self, line):
+        kind = line.strip()
+        # context based upon current working directory
+        self.context = Context()        
+        if kind == 'axioms':
+            self.begin_axioms()
+        elif kind == 'theorems':
+            self.begin_theorems()
+        elif kind == 'common':
+            self.begin_common()
+        self.kind = kind
 
+    @line_magic
+    def end(self, line):
+        kind = line.strip()
+        if kind == 'axioms':
+            self.end_axioms()
+        elif kind == 'theorems':
+            self.end_theorems()
+        elif kind == 'common':
+            self.end_common()
+        # reference any expressions that were displayed:
+        self.context.referenceDisplayedExpressions(kind)
+        # clean unreferenced expressions:
+        self.context.clean()
+        
     @line_magic
     def check_expr(self, line):
         _, hash_id = os.path.split(os.path.abspath('.'))
@@ -366,7 +443,11 @@ class ProveItMagic(Magics):
     
     @line_magic
     def qed(self, line):
-        return KnownTruth.theoremBeingProven.provenTruth.qed()
+        proof = KnownTruth.theoremBeingProven.provenTruth.qed()
+        self.context.referenceDisplayedExpressions('_proof_' + KnownTruth.theoremBeingProven.name)
+        # clean unreferenced expressions:
+        self.context.clean()
+        return proof
 
     def finish(self, kind):
         '''
@@ -454,7 +535,7 @@ class Assignments:
                 except:
                     pass
             if not isinstance(rightSide, Expression) and (rightSide is not None):
-                if proveItMagic.kind is not None:
+                if proveItMagic.kind in ('axioms', 'theorems', 'common'):
                     raise ValueError("Right hand side of end-of-cell assignment(s) is expected to be Expression(s)")
                 else:
                     self.allExpressions = False
@@ -485,7 +566,7 @@ class Assignments:
     def html_line(self, name, rightSide):
         lhs_html = name
         unofficialNameKindContext = None
-        if proveItMagic.kind is not None:
+        if proveItMagic.kind in ('axioms', 'theorems', 'common'):
             kind = proveItMagic.kind
             if kind=='axioms' or kind=='theorems': kind = kind[:-1]
             unofficialNameKindContext = (name, kind, proveItMagic.context)

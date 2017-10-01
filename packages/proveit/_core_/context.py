@@ -94,6 +94,10 @@ class Context:
         # Create the Storage object for this Context
         if path not in Context.storages:
             Context.storages[path] = Storage(self, path)
+            # if the _sub_contexts_.txt file has not been created, make an empty one
+            sub_contexts_path = os.path.join(path, '_sub_contexts_.txt')
+            if not os.path.isfile(sub_contexts_path):
+                open(sub_contexts_path, 'wt').close()
         self._storage = Context.storages[path]
         
         # map common expression names to storage identifiers:
@@ -154,7 +158,23 @@ class Context:
             raise ContextException("Context root '%s' is unknown"%rootName)
         rootDirectory = Context._rootContextPaths[rootName]
         return Context(os.path.join(*([rootDirectory]+splitContextName[1:])))        
-         
+        
+    def getSubContextNames(self):
+        return self._storage.getSubContextNames()
+
+    def getSubContexts(self):
+        '''
+        Yield the Context objects for the sub-contexts.
+        '''
+        for sub_context_name in self._storage.getSubContextNames():
+            yield Context(self.join(self._storage.directory, sub_context_name))
+
+    def setSubContextNames(self, subContextNames):
+        return self._storage.setSubContextNames(subContextNames)
+
+    def appendSubContextNames(self, subContextName):
+        return self._storage.appendSubContextNames(subContextName)
+                
     def _setAxioms(self, axiomNames, axiomDefinitions):
         self._setSpecialStatements(axiomNames, axiomDefinitions, 'axiom')
     
@@ -164,9 +184,9 @@ class Context:
     def _setSpecialStatements(self, names, definitions, kind):
         from proveit import Expression
         storage = self._storage
-        specialStatementsPath = os.path.join(storage.pv_it_dir, kind + 's')
+        specialStatementsPath = os.path.join(storage.referenced_dir, kind + 's')
         if not os.path.isdir(specialStatementsPath):
-            os.mkdir(specialStatementsPath)
+            os.makedirs(specialStatementsPath)
         # First get the previous special statement definitions to find out what has been added/changed/removed
         previousDefIds = dict()
         toRemove = []
@@ -182,7 +202,7 @@ class Context:
         
         # Update the definitions, writing axiom/theorem names to axioms.txt or theorems.txt
         # in proper order.
-        with open(os.path.join(self._storage.pv_it_dir, '%ss.txt'%kind), 'w') as f:            
+        with open(os.path.join(self._storage.referenced_dir, '%ss.txt'%kind), 'w') as f:            
             for name in names:
                 f.write(name + '\n')
                 expr = definitions[name]
@@ -220,7 +240,7 @@ class Context:
     def _getSpecialStatementExpr(self, kind, name):
         from proveit import Expression
         storage = self._storage
-        specialStatementsPath = os.path.join(storage.pv_it_dir, kind + 's')
+        specialStatementsPath = os.path.join(storage.referenced_dir, kind + 's')
         try:
             with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
                 expr_id = f.read()
@@ -236,7 +256,7 @@ class Context:
         '''
         Yield names of axioms/theorems.
         '''
-        with open(os.path.join(self._storage.pv_it_dir, '%ss.txt'%kind), 'r') as f:            
+        with open(os.path.join(self._storage.referenced_dir, '%ss.txt'%kind), 'r') as f:            
             for line in f:
                 yield line.strip() # name of axiom or theorem
             
@@ -244,7 +264,7 @@ class Context:
         from proveit import Expression
         self._common_expr_ids = dict()
         storage = self._storage
-        commons_filename = os.path.join(self._storage.pv_it_dir, 'commons.pv_it')
+        commons_filename = os.path.join(self._storage.referenced_dir, 'commons.pv_it')
         
         # get any previous common expression ids to see if their reference
         # count needs to be decremented.
@@ -282,6 +302,14 @@ class Context:
         for expr_id in new_expr_ids:
             storage._addReference(expr_id) # add reference to a new common expression
     
+    def getSubContexts(self):
+        '''
+        Return the l
+        '''
+        sub_contexts_path = os.path.join(self._storage.directory, '_sub_contexts_.txt')
+        if not os.path.isfile(sub_contexts_path):
+            open(sub_contexts_path, 'wt').close()
+    
     def makeSpecialExprModule(self, kind):
         '''
         Make a _common_.py, _axioms_.py, or _theorems_.py file for importing
@@ -309,7 +337,7 @@ class Context:
     
     def commonExpressionNames(self):
         self._common_expr_ids = dict()
-        commons_filename = os.path.join(self._storage.pv_it_dir, 'commons.pv_it')
+        commons_filename = os.path.join(self._storage.referenced_dir, 'commons.pv_it')
         if os.path.isfile(commons_filename):
             with open(commons_filename, 'r') as f:
                 for line in f.readlines():
@@ -317,27 +345,36 @@ class Context:
                     self._common_expr_ids[name] = expr_id
                     yield name
     
-    def recordReferencedCommons(self):
+    def recordReferencedContexts(self):
         '''
         Record the context names of any reference common expressions in storage
         while creating the common expressions for this context
         (for the purposes of checking for illegal mutual dependencies).
         '''
-        self._storage.recordReferencedCommons(CommonExpressions.context_names_of_referenced_commons)
+        self._storage.recordReferencedContexts(CommonExpressions.context_names_of_referenced_commons)
 
-    def referencedCommons(self):
+    def referencedContexts(self):
         '''
         Return the stored set of context names of common expressions
         referenced by the common expression notebook of this context.
         '''
-        return self._storage.referencedCommons()    
+        return self._storage.referencedContexts()    
+    
+    def referenceDisplayedExpressions(self, name):
+        '''
+        Reference displayed expressions, recorded under the given name
+        in the __pv_it directory.  If the same name is reused,
+        any expressions that are not displayed this time that
+        were displayed last time will be unreferenced.
+        '''
+        self._storage.referenceDisplayedExpressions(name)
                         
-    def mutualReferencedCommons(self):
+    def mutualReferencedContexts(self):
         '''
         Check for illegal mutual dependencies of common expression notebooks.
         If there is one, return the name; otherwise return None.
         '''
-        return self._storage.mutualReferencedCommons(CommonExpressions.context_names_of_referenced_commons)
+        return self._storage.mutualReferencedContexts(CommonExpressions.context_names_of_referenced_commons)
     
     def getAxiom(self, name):
         '''
@@ -494,13 +531,42 @@ class Context:
         or proofs that have a reference count of zero.
         '''
         return self._storage.clean()
-
-    def erase(self):
+    
+    def clear(self):
         '''
-        Erase the corresponding __pv_it directory entirely.
+        Remove reference counts to all common expressions, axioms,
+        theorems, and recorded displayed expressions and then
+        clean the __pv_it folder of any stored expressions with
+        zero reference counts.  Note that this can, in principle
+        (assuming nothing is corrupted), be undone by re-executing
+        the notebooks that generated these in the first place.
         '''
-        return self._storage.erase()        
+        self._setTheorems([], dict())
+        self._setAxioms([], dict())
+        self._setCommonExpressions([], dict())
+        self._storage.clearDisplayedExpressionReferences()
+        self.clean()
         
+    def clearAll(self):
+        '''
+        Clear (see clear method) this context and all sub-contexts.
+        '''
+        for sub_context in self.subContexts():
+            sub_context.clear()
+        self.clear()
+
+    def numStoredExpressions(self):
+        '''
+        Return the number of expressions stored in the __pv_it directory.
+        '''
+        return self._storage.numStoredExpressions()        
+
+    def numAllStoredExpressions(self):
+        '''
+        Return the number of expressions stored in the __pv_it directory.
+        '''
+        return self.numStoredExpressions() + sum([sub_context.numStoredExpressions() for sub_context in self.subContexts()], 0)
+                
 class Axioms:
     '''
     Used in _axioms_.py modules for accessing Axioms from

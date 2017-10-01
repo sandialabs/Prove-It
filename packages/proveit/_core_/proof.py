@@ -14,6 +14,9 @@ import re
 
 class Proof:
     def __init__(self, stepType, provenTruth, requiredTruths):
+        # USEFUL FOR TRACKING DERIVED SIDE-EFFECTS
+        #if not isinstance(self, Theorem) and not isinstance(self, Axiom):
+        #    print "prove", provenTruth.expr
         assert isinstance(provenTruth, KnownTruth)
         self.provenTruth = provenTruth
         self.requiredProofs = [requiredTruth.proof() for requiredTruth in requiredTruths]
@@ -63,7 +66,7 @@ class Proof:
                 if not isinstance(self, Axiom) and not isinstance(self, Theorem):
                     # may derive any side-effects that are obvious consequences arising from this truth:
                     provenTruth.deriveSideEffects()
-    
+        
     def _setUsability(self):
         pass # overloaded for the Theorem type Proof
 
@@ -197,8 +200,17 @@ class Proof:
         return html
 
 class Assumption(Proof): 
-    def __init__(self, expr):
-        Proof.__init__(self, 'Assumption', KnownTruth(expr, {expr}, self), [])
+    def __init__(self, expr, assumptions=None):
+        assumptions = list(defaults.checkedAssumptions(assumptions))
+        if expr not in assumptions:
+            assumptions.append(expr) # an Assumption proof must assume itself; that's what it does.
+        prev_default_assumptions = defaults.assumptions
+        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        try:
+            Proof.__init__(self, 'Assumption', KnownTruth(expr, {expr}, self), [])
+        finally:
+            # restore the original default assumptions
+            defaults.assumptions = prev_default_assumptions            
         
     def stepType(self):
         return 'assumption'
@@ -416,31 +428,37 @@ class ModusPonens(Proof):
     def __init__(self, implicationExpr, assumptions=None):
         from proveit.logic import Implies
         assumptions = defaults.checkedAssumptions(assumptions)
-        # obtain the implication and antecedent KnownTruths
-        assert isinstance(implicationExpr, Implies) and len(implicationExpr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
+        prev_default_assumptions = defaults.assumptions
+        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
-            # Must prove the implication under the given assumptions.
-            # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
-            implicationTruth = implicationExpr.prove(assumptions)
-            _appendExtraAssumptions(assumptions, implicationTruth)
-        except:
-            raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implicationExpr))
-        try:
-            # Must prove the antecedent under the given assumptions.
-            # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
-            antecedentTruth = implicationExpr.operands[0].prove(assumptions)
-            _appendExtraAssumptions(assumptions, antecedentTruth)
-        except:
-            raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Antecedent of %s is not proven'%str(implicationExpr))
-        # remove any unnecessary assumptions (but keep the order that was provided)
-        assumptionsSet = implicationTruth.assumptionsSet | antecedentTruth.assumptionsSet
-        assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
-        # we have what we need; set up the ModusPonens Proof        
-        consequentTruth = KnownTruth(implicationExpr.operands[1], assumptions, self)
-        _checkImplication(implicationTruth.expr, antecedentTruth.expr, consequentTruth.expr)
-        self.implicationTruth = implicationTruth
-        self.antecedentTruth = antecedentTruth
-        Proof.__init__(self, 'ModusPonens', consequentTruth, [self.implicationTruth, self.antecedentTruth])
+            # obtain the implication and antecedent KnownTruths
+            assert isinstance(implicationExpr, Implies) and len(implicationExpr.operands)==2, 'The implication of a modus ponens proof must refer to an Implies expression with two operands'
+            try:
+                # Must prove the implication under the given assumptions.
+                # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
+                implicationTruth = implicationExpr.prove(assumptions)
+                _appendExtraAssumptions(assumptions, implicationTruth)
+            except:
+                raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implicationExpr))
+            try:
+                # Must prove the antecedent under the given assumptions.
+                # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
+                antecedentTruth = implicationExpr.operands[0].prove(assumptions)
+                _appendExtraAssumptions(assumptions, antecedentTruth)
+            except:
+                raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Antecedent of %s is not proven'%str(implicationExpr))
+            # remove any unnecessary assumptions (but keep the order that was provided)
+            assumptionsSet = implicationTruth.assumptionsSet | antecedentTruth.assumptionsSet
+            assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
+            # we have what we need; set up the ModusPonens Proof        
+            consequentTruth = KnownTruth(implicationExpr.operands[1], assumptions, self)
+            _checkImplication(implicationTruth.expr, antecedentTruth.expr, consequentTruth.expr)
+            self.implicationTruth = implicationTruth
+            self.antecedentTruth = antecedentTruth
+            Proof.__init__(self, 'ModusPonens', consequentTruth, [self.implicationTruth, self.antecedentTruth])
+        finally:
+            # restore the original default assumptions
+            defaults.assumptions = prev_default_assumptions
 
     def remake(self):
         return ModusPonens(self.implicationTruth.expr, assumptions=self.provenTruth.assumptions)
@@ -452,10 +470,16 @@ class HypotheticalReasoning(Proof):
     def __init__(self, consequentTruth, antecedentExpr): 
         from proveit.logic import Implies
         assumptions = [assumption for assumption in consequentTruth.assumptions if assumption != antecedentExpr]
-        implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
-        implicationTruth = KnownTruth(implicationExpr, assumptions, self)
-        self.consequentTruth = consequentTruth
-        Proof.__init__(self, 'HypotheticalReasoning', implicationTruth, [self.consequentTruth])
+        prev_default_assumptions = defaults.assumptions
+        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        try:
+            implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
+            implicationTruth = KnownTruth(implicationExpr, assumptions, self)
+            self.consequentTruth = consequentTruth
+            Proof.__init__(self, 'HypotheticalReasoning', implicationTruth, [self.consequentTruth])
+        finally:
+            # restore the original default assumptions
+            defaults.assumptions = prev_default_assumptions
 
     def remake(self):
         return HypotheticalReasoning(self.consequentTruth, self.provenTruth.expr.antecedent)
@@ -478,45 +502,51 @@ class Specialization(Proof):
         another bundled variable or list of variables (bundled or not).
         '''
         assumptions = list(defaults.checkedAssumptions(assumptions))
-        if relabelMap is None: relabelMap = dict()
-        if specializeMap is None: specializeMap = dict()
-        Failure = SpecializationFailure if numForallEliminations>0 else RelabelingFailure
-        if not isinstance(generalTruth, KnownTruth):
-            raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
-        if generalTruth.proof() is None:
-            raise  UnusableTheorem(KnownTruth.theoremBeingProven, generalTruth)
-        if not generalTruth.assumptionsSet.issubset(assumptions):
-            if '*' in assumptions:
-                # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
-                _appendExtraAssumptions(assumptions, generalTruth)
-            else:
-                raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
-        generalExpr = generalTruth.expr
-        # perform the appropriate substitution/relabeling
-        specializedExpr, subbedConditions, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
-        # obtain the KnownTruths for the substituted conditions
-        conditionTruths = []
-        for conditionExpr in subbedConditions:
-            try:
-                # each substituted condition must be proven under the assumptions
-                # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
-                conditionTruth = conditionExpr.prove(assumptions)
-                conditionTruths.append(conditionTruth)
-                _appendExtraAssumptions(assumptions, conditionTruth)
-            except:
-                raise Failure(specializedExpr, assumptions, 'Unmet specialization condition: ' + str(conditionExpr))
-        # remove any unnecessary assumptions (but keep the order that was provided)
-        assumptionsSet = generalTruth.assumptionsSet
-        for conditionTruth in conditionTruths:
-            assumptionsSet |= conditionTruth.assumptionsSet
-        assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
-        # we have what we need; set up the Specialization Proof
-        self.generalTruth = generalTruth
-        self.conditionTruths = conditionTruths
-        self.mappedVarLists = mappedVarLists
-        self.mappings = mappings
-        specializedTruth = KnownTruth(specializedExpr, assumptions, self)
-        Proof.__init__(self, 'Specialization', specializedTruth, [generalTruth] + conditionTruths)
+        prev_default_assumptions = defaults.assumptions
+        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        try:
+            if relabelMap is None: relabelMap = dict()
+            if specializeMap is None: specializeMap = dict()
+            Failure = SpecializationFailure if numForallEliminations>0 else RelabelingFailure
+            if not isinstance(generalTruth, KnownTruth):
+                raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
+            if generalTruth.proof() is None:
+                raise  UnusableTheorem(KnownTruth.theoremBeingProven, generalTruth)
+            if not generalTruth.assumptionsSet.issubset(assumptions):
+                if '*' in assumptions:
+                    # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
+                    _appendExtraAssumptions(assumptions, generalTruth)
+                else:
+                    raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
+            generalExpr = generalTruth.expr
+            # perform the appropriate substitution/relabeling
+            specializedExpr, subbedConditions, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
+            # obtain the KnownTruths for the substituted conditions
+            conditionTruths = []
+            for conditionExpr in subbedConditions:
+                try:
+                    # each substituted condition must be proven under the assumptions
+                    # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
+                    conditionTruth = conditionExpr.prove(assumptions)
+                    conditionTruths.append(conditionTruth)
+                    _appendExtraAssumptions(assumptions, conditionTruth)
+                except:
+                    raise Failure(specializedExpr, assumptions, 'Unmet specialization condition: ' + str(conditionExpr))
+            # remove any unnecessary assumptions (but keep the order that was provided)
+            assumptionsSet = generalTruth.assumptionsSet
+            for conditionTruth in conditionTruths:
+                assumptionsSet |= conditionTruth.assumptionsSet
+            assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
+            # we have what we need; set up the Specialization Proof
+            self.generalTruth = generalTruth
+            self.conditionTruths = conditionTruths
+            self.mappedVarLists = mappedVarLists
+            self.mappings = mappings
+            specializedTruth = KnownTruth(specializedExpr, assumptions, self)
+            Proof.__init__(self, 'Specialization', specializedTruth, [generalTruth] + conditionTruths)
+        finally:
+            # restore the original default assumptions
+            defaults.assumptions = prev_default_assumptions
 
     def _generate_step_info(self, objectRepFn):
         '''
@@ -688,47 +718,54 @@ class Generalization(Proof):
         # the original KnownTruth minus the all of the new conditions (including those
         # implied by the new domain).
         assumptions = set(instanceTruth.assumptions)
-        remainingConditions = list(newConditions)
-        expr = instanceTruth.expr
-        introducedForallVars = set()
-        if len(newForallVarLists) != len(newDomains):
-            raise ValueError('The number of forall variable lists and new domains does not match: %d vs %d'%(len(newForallVarLists), len(newDomains)))
-        for k, (newForallVars, newDomain) in enumerate(reversed(zip(newForallVarLists, newDomains))):
-            for forallVar in newForallVars:
-                if not isinstance(forallVar, Variable) and not isinstance(forallVar, MultiVariable):
-                    raise ValueError('Forall variables of a generalization must be Variable objects')
-            introducedForallVars |= set(newForallVars)
-            newConditions = []
-            if k == len(newForallVarLists)-1:
-                # the final introduced Forall operation must use all of the remaining conditions
-                newConditions = remainingConditions
-            else:
-                # use the first applicable condition and all subsequent conditions in order to maintain the supplied order
-                applicableIndices = [i for i, remainingCondition in enumerate(remainingConditions) if not remainingCondition.freeVars().isdisjoint(newForallVars)]
-                if len(applicableIndices) > 0:
-                    j = min(applicableIndices)
-                    newConditions = remainingConditions[j:]
-                    remainingConditions = remainingConditions[:j]
-            # new conditions and domain can eliminate corresponding assumptions
-            assumptions -= set(newConditions)
-            if newDomain is not None:
-                assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars if isinstance(forallVar, Variable)}
-                # the InSet condition for MultiVariables should be wrapped in an Etcetera
-                assumptions -= {Etcetera(InSet(forallVar, newDomain)) for forallVar in newForallVars if isinstance(forallVar, MultiVariable)}
-            # create the new generalized expression
-            generalizedExpr = Forall(instanceVars=newForallVars, instanceExpr=expr, domain=newDomain, conditions=newConditions)
-            # make sure this is a proper generalization that doesn't break the logic:
-            Generalization._checkGeneralization(generalizedExpr, expr)
-            expr = generalizedExpr
-        for assumption in assumptions:
-            if not assumption.freeVars().isdisjoint(introducedForallVars):
-                raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
-        generalizedTruth = KnownTruth(generalizedExpr, assumptions, self)
-        self.instanceTruth = instanceTruth
-        self.newForallVars = newForallVars
-        self.newDomain = newDomain
-        self.newConditions = newConditions
-        Proof.__init__(self, 'Generalization', generalizedTruth, [self.instanceTruth])
+        prev_default_assumptions = defaults.assumptions
+        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        try:
+            remainingConditions = list(newConditions)
+            expr = instanceTruth.expr
+            introducedForallVars = set()
+            if len(newForallVarLists) != len(newDomains):
+                raise ValueError('The number of forall variable lists and new domains does not match: %d vs %d'%(len(newForallVarLists), len(newDomains)))
+            for k, (newForallVars, newDomain) in enumerate(reversed(zip(newForallVarLists, newDomains))):
+                for forallVar in newForallVars:
+                    if not isinstance(forallVar, Variable) and not isinstance(forallVar, MultiVariable):
+                        raise ValueError('Forall variables of a generalization must be Variable objects')
+                introducedForallVars |= set(newForallVars)
+                newConditions = []
+                if k == len(newForallVarLists)-1:
+                    # the final introduced Forall operation must use all of the remaining conditions
+                    newConditions = remainingConditions
+                else:
+                    # use the first applicable condition and all subsequent conditions in order to maintain the supplied order
+                    applicableIndices = [i for i, remainingCondition in enumerate(remainingConditions) if not remainingCondition.freeVars().isdisjoint(newForallVars)]
+                    if len(applicableIndices) > 0:
+                        j = min(applicableIndices)
+                        newConditions = remainingConditions[j:]
+                        remainingConditions = remainingConditions[:j]
+                # new conditions and domain can eliminate corresponding assumptions
+                assumptions -= set(newConditions)
+                if newDomain is not None:
+                    assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars if isinstance(forallVar, Variable)}
+                    # the InSet condition for MultiVariables should be wrapped in an Etcetera
+                    assumptions -= {Etcetera(InSet(forallVar, newDomain)) for forallVar in newForallVars if isinstance(forallVar, MultiVariable)}
+                # create the new generalized expression
+                generalizedExpr = Forall(instanceVars=newForallVars, instanceExpr=expr, domain=newDomain, conditions=newConditions)
+                # make sure this is a proper generalization that doesn't break the logic:
+                Generalization._checkGeneralization(generalizedExpr, expr)
+                expr = generalizedExpr
+            for assumption in assumptions:
+                if not assumption.freeVars().isdisjoint(introducedForallVars):
+                    raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
+            generalizedTruth = KnownTruth(generalizedExpr, assumptions, self)
+            self.instanceTruth = instanceTruth
+            self.newForallVars = newForallVars
+            self.newDomain = newDomain
+            self.newConditions = newConditions
+            Proof.__init__(self, 'Generalization', generalizedTruth, [self.instanceTruth])
+        finally:
+            # restore the original default assumptions
+            defaults.assumptions = prev_default_assumptions
+            
 
     def remake(self):
         return Generalization(self.instanceTruth, self.newForallVars, self.newDomain, self.newConditions)
