@@ -19,55 +19,36 @@ class Interval(BinaryOperation):
         return r'\{'+self.lowerBound.latex() +' \dots '+ self.upperBound.latex()+r'\}'
         
     def deduceElemInSet(self, member):
-        from integer.theorems import inInterval
+        from integer._theorems_ import inInterval
         return inInterval.specialize({a:self.lowerBound, b:self.upperBound, n:member})
 
     def deduceMemberLowerBound(self, member, assumptions=frozenset()):
-        from integer.theorems import intervalLowerBound
-        from numberSets import deduceInIntegers
-        deduceInIntegers(self.lowerBound, assumptions=assumptions)
-        deduceInIntegers(self.upperBound, assumptions=assumptions)
+        from integer._theorems_ import intervalLowerBound
         return intervalLowerBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
     
     def deduceMemberUpperBound(self, member, assumptions=frozenset()):
-        from integer.theorems import intervalUpperBound
-        from numberSets import deduceInIntegers
-        deduceInIntegers(self.lowerBound, assumptions=assumptions)
-        deduceInIntegers(self.upperBound, assumptions=assumptions)
+        from integer._theorems_ import intervalUpperBound
         return intervalUpperBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
     def deduceMemberInIntegers(self, member, assumptions=frozenset()):
-        from integer.theorems import allInDiscreteInterval_InInts
-        from numberSets import deduceInIntegers
-        deduceInIntegers(self.lowerBound, assumptions=assumptions)
-        deduceInIntegers(self.upperBound, assumptions=assumptions)
+        from integer._theorems_ import allInDiscreteInterval_InInts
         return allInDiscreteInterval_InInts.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
     def deduceMemberInNaturals(self, member, assumptions=frozenset()):
-        from natural.theorems import allInDiscreteInterval_InNats
+        from natural._theorems_ import allInDiscreteInterval_InNats
         from numberSets import deduceInNaturals
         deduceInNaturals(self.lowerBound, assumptions=assumptions)
         deduceInNaturals(self.upperBound, assumptions=assumptions)
         return allInDiscreteInterval_InNats.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
     def deduceMemberInNaturalsPos(self, member, assumptions=frozenset()):
-        from natural.theorems import allInDiscreteInterval_InNatsPos
-        from numberSets import deduceInNaturalsPos
-        deduceInIntegers(self.lowerBound, assumptions=assumptions)
-        deduceInIntegers(self.upperBound, assumptions=assumptions)
-        deducePositive(self.lowerBound, assumptions=assumptions)
+        from natural._theorems_ import allInDiscreteInterval_InNatsPos
         return allInDiscreteInterval_InNatsPos.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
     def deduceMemberIsPositive(self, member, assumptions=frozenset()):
-        from integer.theorems import allInPositiveIntervalArePositive
-        deduceInIntegers(self.lowerBound, assumptions=assumptions)
-        deduceInIntegers(self.upperBound, assumptions=assumptions)
-        deducePositive(self.lowerBound, assumptions=assumptions)
+        from integer._theorems_ import allInPositiveIntervalArePositive
         return allInPositiveIntervalArePositive.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})        
         
     def deduceMemberIsNegative(self, member, assumptions=frozenset()):
-        from integer.theorems import allInNegativeIntervalAreNegative
-        deduceInIntegers(self.lowerBound, assumptions=assumptions)
-        deduceInIntegers(self.upperBound, assumptions=assumptions)
-        deduceNegative(self.upperBound, assumptions=assumptions)
+        from integer._theorems_ import allInNegativeIntervalAreNegative
         return allInNegativeIntervalAreNegative.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})        

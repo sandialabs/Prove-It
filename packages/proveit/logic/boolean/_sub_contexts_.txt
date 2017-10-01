@@ -1,4 +1,3 @@
-mode: static
 implication
 negation
 conjunction

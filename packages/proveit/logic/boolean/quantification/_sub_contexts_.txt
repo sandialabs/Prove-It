@@ -1,3 +1,2 @@
-mode: static
 universal
 existential

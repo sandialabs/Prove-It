@@ -42,6 +42,8 @@ class BooleanSet(Literal):
         Try to deduce that the given element is in the set of Booleans under the given assumptions.
         '''   
         from ._theorems_ import inBoolIfTrue, inBoolIfFalse
+        if hasattr(element, 'deduceInBool'):
+            return element.deduceInBool(assumptions=assumptions)
         try:
             element.prove(assumptions=assumptions, automation=False)
             return inBoolIfTrue.specialize({A:element}, assumptions=assumptions)
@@ -52,8 +54,6 @@ class BooleanSet(Literal):
             return inBoolIfFalse.specialize({A:element}, assumptions=assumptions)
         except:
             pass
-        if hasattr(element, 'deduceInBool'):
-            return element.deduceInBool(assumptions=assumptions)
         raise ProofFailure(inBool(element), assumptions, str(element) + ' not proven to be equal to TRUE or FALSE.')
 
     def evaluateForall(self, forallStmt, assumptions):
@@ -140,7 +140,7 @@ class TrueLiteral(Literal, IrreducibleValue):
     
     def evalEquality(self, other):
         from ._theorems_ import trueEqTrue, trueNotFalse
-        from .common import TRUE, FALSE
+        from ._common_ import TRUE, FALSE
         if other == TRUE:
             return trueEqTrue.evaluate()
         elif other == FALSE:
@@ -156,7 +156,7 @@ class TrueLiteral(Literal, IrreducibleValue):
         raise ProofFailure("Inequality between TRUE and a non-boolean not defined")
         
     def deduceInBool(self, assumptions=USE_DEFAULTS):
-        from _theorems_ import trueInBool
+        from ._theorems_ import trueInBool
         return trueInBool
         
 class FalseLiteral(Literal, IrreducibleValue):

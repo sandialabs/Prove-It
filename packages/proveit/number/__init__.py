@@ -8,7 +8,7 @@ from addition import Add
 from subtraction import Sub
 from negation import Neg
 from multiplication import Mult
-from division import Divide, Fraction
+from division import Divide, Frac
 from exponentiation import Exp, Sqrt
 from summation import Sum
 from integration import Integrate

@@ -28,7 +28,7 @@ class Not(Operation):
         if hasattr(self.operand, 'negationSideEffects'):
             # derive negation side-effects for the specific type of
             # expression being negated.
-            for negSideEffect in self.negationSideEffects():
+            for negSideEffect in self.operand.negationSideEffects(knownTruth):
                 yield negSideEffect
             
     def inBoolSideEffects(self, knownTruth):

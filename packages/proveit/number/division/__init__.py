@@ -1,2 +1,2 @@
 from divide import Divide
-from fraction import Fraction
+from frac import Frac

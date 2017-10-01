@@ -1,4 +1,3 @@
-mode: static
 sets
 addition
 subtraction

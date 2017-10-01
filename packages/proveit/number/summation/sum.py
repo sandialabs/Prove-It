@@ -36,17 +36,17 @@ class Sum(OperationOverInstances):
             self.domain = Interval(zero,infinity)
 
     @staticmethod
-    def extractParameters(operands):
+    def extractInitArgValue(argName, operands):
         '''
-        Extract the parameters from the OperationOverInstances operands:
-        instanceVars, instanceElement, conditions, domain
+        Given a name of one of the arguments of the __init__ method,
+        return the corresponding value contained in the 'operands'
+        composite expression (i.e., the operands of a constructed operation).
         '''
-        params = OperationOverInstances.extractParameters(operands)
-        params['indices'] = params['instanceVars']
-        params['summand'] = params['instanceExpr']
-        params.pop('instanceVars')
-        params.pop('instanceExpr')
-        return params
+        if argName=='indices':
+            argName='instanceVars'
+        elif argName=='summand':
+            argName='instanceExpr'
+        return OperationOverInstances.extractInitArgValue(argName, operands)
                                 
     def _closureTheorem(self, numberSet):
         import theorems

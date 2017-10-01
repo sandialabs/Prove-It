@@ -228,7 +228,7 @@ class Equals(TransitiveRelation):
         '''
         From (x = y), derive (x in {y}).
         '''
-        from proveit.logic.set_theory._theorems_ import foldSingleton
+        from proveit.logic.set_theory.enumeration._theorems_ import foldSingleton
         return foldSingleton.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     @staticmethod
