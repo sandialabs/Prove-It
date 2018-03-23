@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, BinaryOperation, maybeFencedLatex, safeDummyVar
 from proveit.logic import Equals
-from proveit._common_ import w, x, y, z, wEtc, xEtc, zEtc
+from proveit._common_ import w, x, y, z
 
 class Frac(BinaryOperation):
     # operator of the Fraction operation.

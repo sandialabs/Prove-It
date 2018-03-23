@@ -2,5 +2,5 @@ from fencing import maybeFencedString, maybeFencedLatex, maybeFenced
 from binary_operation import BinaryOperation
 from associative_operation import AssociativeOperation
 from operation_over_instances import OperationOverInstances, InstanceSubstitutionException
-from transitive_relation import TransitiveRelation, transitivitySearch
+from transitivity import TransitiveRelation, TransitiveSequence
 from irreducible_value import IrreducibleValue, isIrreducibleValue

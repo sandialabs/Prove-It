@@ -1,22 +1,31 @@
-from proveit import Literal
+from proveit import USE_DEFAULTS
+from proveit._common_ import a
+from proveit.number.sets.number_set import NumberSet
 
-class RealsSet(Literal):
+class RealsSet(NumberSet):
     def __init__(self):
-        Literal.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
+        NumberSet.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
     
-class RealsPosSet(Literal):
+class RealsPosSet(NumberSet):
     def __init__(self):
-        Literal.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
+        NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
     
-    def deduceMemberLowerBound(self, member):
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from real.theorems import inRealsPos_iff_positive
-        return inRealsPos_iff_positive.specialize({a:member}).deriveRightImplication()    
+        return inRealsPos_iff_positive.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)    
 
-class RealsNegSet(Literal):
+class RealsNegSet(NumberSet):
     def __init__(self):
-        Literal.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
+        NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
     
-    def deduceMemberUpperBound(self, member):
+    def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from real.theorems import inRealsNeg_iff_negative
-        return inRealsNeg_iff_negative.specialize({a:member}).deriveRightImplication()    
+        return inRealsNeg_iff_negative.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)    
 
+
+try:
+    # Import some fundamental axioms and theorems without quantifiers.
+    # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+    from ._theorems_ import realsPosInReals, realsNegInReals, intsInReals, natsInReals, natsPosInReals
+except:
+    pass

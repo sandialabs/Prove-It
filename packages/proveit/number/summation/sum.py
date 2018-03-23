@@ -1,8 +1,8 @@
-from proveit import Literal, Operation, OperationOverInstances, Etcetera, MultiVariable, maybeFenced
+from proveit import Literal, Operation, OperationOverInstances, maybeFenced, USE_DEFAULTS, ProofFailure
 from proveit.logic import InSet
 from proveit.number.sets import infinity, zero, RealInterval, Interval, Reals, Integers, Naturals, Complexes
 from proveit.number.negation import Neg
-from proveit._common_ import a, f, S, xEtc, yEtc, zEtc
+from proveit._common_ import a, f, P, S, Qmulti, xMulti
 
 class Sum(OperationOverInstances):
     # operator of the Sum operation.
@@ -35,8 +35,27 @@ class Sum(OperationOverInstances):
         elif self.domain == Naturals:
             self.domain = Interval(zero,infinity)
 
+    def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
+        from ._theorems_ import summationNatsClosure, summationIntsClosure, summationRealsClosure, summationComplexesClosure
+        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        Operation(P, self.instanceVars)
+        self.summand
+        if numberSet == Naturals:
+            thm = summationNatsClosure
+        elif numberSet == Integers:
+            thm = summationIntsClosure
+        elif numberSet == Reals:
+            thm = summationRealsClosure
+        elif numberSet == Complexes:
+            thm = summationComplexesClosure
+        else:
+            raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
+        return thm.specialize({P_op:P_op_sub, S:self.domain, Q_op:Q_op_sub}, relabelMap={xMulti:self.instanceVars}, 
+                                assumptions=assumptions).deriveConsequent(assumptions=assumptions)
+
     @staticmethod
-    def extractInitArgValue(argName, operands):
+    def extractInitArgValue(argName, operators, operands):
         '''
         Given a name of one of the arguments of the __init__ method,
         return the corresponding value contained in the 'operands'
@@ -46,24 +65,7 @@ class Sum(OperationOverInstances):
             argName='instanceVars'
         elif argName=='summand':
             argName='instanceExpr'
-        return OperationOverInstances.extractInitArgValue(argName, operands)
-                                
-    def _closureTheorem(self, numberSet):
-        import theorems
-        '''
-        if numberSet == Naturals:
-            return natural.theorems.powClosure
-        elif numberSet == RealsPos:
-            return complex.theorems.powPosClosure            
-        elif numberSet == Reals:
-            return real.theorems.powClosure
-        el'''
-        if numberSet == Reals:
-            return theorems.summationRealClosure
-        if numberSet == Complexes:
-            return theorems.summationComplexClosure
-                
-#        self.domain = domain#self.domain already set
+        return OperationOverInstances.extractInitArgValue(argName, operators, operands)
 
     def _formatted(self, formatType, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False

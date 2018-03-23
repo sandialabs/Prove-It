@@ -172,8 +172,8 @@ class Context:
     def setSubContextNames(self, subContextNames):
         return self._storage.setSubContextNames(subContextNames)
 
-    def appendSubContextNames(self, subContextName):
-        return self._storage.appendSubContextNames(subContextName)
+    def appendSubContextName(self, subContextName):
+        return self._storage.appendSubContextName(subContextName)
                 
     def _setAxioms(self, axiomNames, axiomDefinitions):
         self._setSpecialStatements(axiomNames, axiomDefinitions, 'axiom')

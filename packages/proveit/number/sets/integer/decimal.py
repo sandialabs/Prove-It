@@ -13,7 +13,10 @@ class WholeDecimal(Operation):
         self.digits = digits
         if not all(digit in ALL_DIGITS for digit in self.digits):
             raise Exception('A WholeDecimal may only be composed of 0-9 digits')
-        
+    
+    def asInt(self):
+        return int(self.formatted('string'))
+    
     def formatted(self, formatType, fence=False):
         return ''.join(digit.formatted(formatType, False) for digit in self.digits)
         
@@ -51,3 +54,13 @@ def num(x):
             return WholeDecimal([num(int(digit)) for digit in str(x)])
     else:
         assert False, 'num not implemented for anything except integers currently. plans to take in strings or floats with specified precision'
+
+def isLiteralInt(expr):
+    from proveit.number import Neg
+    if expr in ALL_DIGITS:
+        return True
+    elif isinstance(expr, WholeDecimal):
+        return True
+    elif isinstance(expr, Neg) and isLiteralInt(expr.operand):
+        return True
+    return False

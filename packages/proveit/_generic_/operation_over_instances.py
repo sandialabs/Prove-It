@@ -1,4 +1,4 @@
-from proveit import Operation, Etcetera, Lambda, compositeExpression, NamedExpressions, USE_DEFAULTS
+from proveit import Operation, Lambda, compositeExpression, NamedExprs, USE_DEFAULTS
 
 class OperationOverInstances(Operation):
     def __init__(self, operator, instanceVars, instanceExpr, domain=None, conditions=tuple()):
@@ -14,21 +14,21 @@ class OperationOverInstances(Operation):
         [('imap', instanceVars -> [('iexpr',instanceExpr), ('conditions',conditions)]), ('domain',domain)]
         '''
         Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain, conditions))
-        self.instanceVars = OperationOverInstances.extractInitArgValue('instanceVars', self.operands)
-        self.instanceExpr = OperationOverInstances.extractInitArgValue('instanceExpr', self.operands)
-        self.domain = OperationOverInstances.extractInitArgValue('domain', self.operands)
-        self.conditions = OperationOverInstances.extractInitArgValue('conditions', self.operands)
+        self.instanceVars = OperationOverInstances.extractInitArgValue('instanceVars', self.operators, self.operands)
+        self.instanceExpr = OperationOverInstances.extractInitArgValue('instanceExpr', self.operators, self.operands)
+        self.domain = OperationOverInstances.extractInitArgValue('domain', self.operators, self.operands)
+        self.conditions = OperationOverInstances.extractInitArgValue('conditions', self.operators, self.operands)
     
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, domain, conditions):
-        lambdaFn = Lambda(instanceVars, NamedExpressions([('iexpr',instanceExpr), ('conds',compositeExpression(conditions))]))
+        lambdaFn = Lambda(instanceVars, NamedExprs([('iexpr',instanceExpr), ('conds',compositeExpression(conditions))]))
         if domain is None:
-            return NamedExpressions([('imap',lambdaFn)])
+            return NamedExprs([('imap',lambdaFn)])
         else:
-            return NamedExpressions([('imap',lambdaFn), ('domain',domain)])
+            return NamedExprs([('imap',lambdaFn), ('domain',domain)])
     
     @staticmethod
-    def extractInitArgValue(argName, operands):
+    def extractInitArgValue(argName, operators, operands):
         '''
         Given a name of one of the arguments of the __init__ method,
         return the corresponding value contained in the 'operands'
@@ -38,6 +38,9 @@ class OperationOverInstances(Operation):
         default.
         '''
         from proveit import singleOrCompositeExpression
+        if argName=='operator':
+            assert len(operators)==1, "expecting one operator"
+            return operators[0] 
         if argName=='domain':
             return operands['domain'] if 'domain' in operands else None
         instanceMapping = operands['imap'] # instance mapping
@@ -90,12 +93,12 @@ class OperationOverInstances(Operation):
         hasExplicitIvars = (len(implicitIvars) < len(self.instanceVars))
         implicitConditions = self.implicitConditions(formatType)
         hasExplicitConditions = self.hasCondition() and (len(implicitConditions) < len(self.conditions))
-        outStr = ''        
+        outStr = ''
+        formattedVars = ', '.join([var.formatted(formatType, abbrev=True) for var in self.instanceVars if var not in implicitIvars])
         if formatType == 'string':
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
-            if hasExplicitIvars:
-                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
+            if hasExplicitIvars: outStr += formattedVars
             if self.hasDomain():
                 outStr += ' in ' if formatType == 'string' else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)
@@ -108,8 +111,7 @@ class OperationOverInstances(Operation):
         if formatType == 'latex':
             if fence: outStr += r'\left['
             outStr += self.operator.formatted(formatType) + '_{'
-            if hasExplicitIvars:
-                outStr += ', '.join([var.formatted(formatType) for var in self.instanceVars if var not in implicitIvars])
+            if hasExplicitIvars: outStr += formattedVars
             if self.hasDomain():
                 outStr += ' in ' if formatType == 'string' else ' \in '
                 outStr += self.domain.formatted(formatType, fence=True)

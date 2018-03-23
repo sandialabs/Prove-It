@@ -1,24 +1,44 @@
-from proveit import Literal, BinaryOperation, Operation, Etcetera, USE_DEFAULTS
+from proveit import Literal, BinaryOperation, Operation, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
 from proveit._common_ import f, S, Qmulti
-from containment_relation import ContainmentRelation
+from containment_relation import ContainmentRelation, ContainmentSequence
 
 class SubsetRelation(ContainmentRelation):
-    # map left-hand-sides to KnownTruths of SupersetRelations
-    #   (populated in TransitivityRelation.deriveSideEffects)
-    knownLeftSides = dict()    
-    # map right-hand-sides to KnownTruths of SupersetRelations
-    #   (populated in TransitivityRelation.deriveSideEffects)
-    knownRightSides = dict()    
-
     def __init__(self, operator, subset, superset):
         ContainmentRelation.__init__(self, operator, subset, superset)
         self.subset = self.operands[0]
         self.superset = self.operands[1]
-        
-class Subset(SubsetRelation):
+    
+    @staticmethod
+    def WeakRelationClass():
+        return SubsetEq 
+
+    @staticmethod
+    def StrongRelationClass():
+        return Subset
+    
+    @staticmethod
+    def SequenceClass():
+        return SubsetSequence
+
+class SubsetSequence(ContainmentSequence):
+    def __init__(self, operators, operands):
+        ContainmentSequence.__init__(self, operators, operands)
+    
+    @staticmethod
+    def RelationClass():
+        return SubsetRelation
+                
+class Subset(SubsetRelation):    
     # operator of the Subset operation
     _operator_ = Literal(stringFormat='subset', latexFormat=r'\subset', context=__file__)    
+
+    # map left-hand-sides to Subset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()    
+    # map right-hand-sides to Subset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict()        
     
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, Subset._operator_, subset, superset)
@@ -78,6 +98,13 @@ class SubsetEq(SubsetRelation):
     # operator of the SubsetEq operation
     _operator_ = Literal(stringFormat='subseteq', latexFormat=r'\subseteq', context=__file__)    
 
+    # map left-hand-sides to SubsetEq KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()    
+    # map right-hand-sides to SubsetEq KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict()      
+    
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, SubsetEq._operator_, subset, superset)
 
@@ -150,18 +177,14 @@ class SubsetEq(SubsetRelation):
             other = other.deriveReversed(assumptions)
         elif other.lhs == self.rhs:
             if isinstance(other,Subset):
-                result = transitivitySubsetEqSubset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
-                return result.checked({self})
+                return transitivitySubsetEqSubset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
             elif isinstance(other,SubsetEq):
-                result = transitivitySubsetEqSubsetEq.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
-                return result
+                return transitivitySubsetEqSubsetEq.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
         elif other.rhs == self.lhs:
             if isinstance(other,Subset):
-                result = transitivitySubsetEqSubset.specialize({A:self.lhs, B:self.rhs, C:other.lhs}, assumptions=assumptions)
-                return result
+                return transitivitySubsetEqSubset.specialize({A:self.lhs, B:self.rhs, C:other.lhs}, assumptions=assumptions)
             elif isinstance(other,SubsetEq):
-                result = transitivitySubsetEqSubsetEq.specialize({A:self.lhs, B:self.rhs, C:other.lhs}, assumptions=assumptions)
-                return result
+                return transitivitySubsetEqSubsetEq.specialize({A:self.lhs, B:self.rhs, C:other.lhs}, assumptions=assumptions)
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
 

@@ -1,4 +1,4 @@
-from proveit import Expression, Lambda, ExpressionList, Composite, NamedExpressions
+from proveit import Expression, Lambda, ExprList, Composite, NamedExprs
 from proveit import KnownTruth
 
 class SubExprRepl:
@@ -42,11 +42,11 @@ class SubExprRepl:
         path to this item.
         '''
         curSubExpr = self.exprHierarchy[-1]
-        if isinstance(curSubExpr, ExpressionList):
-            # For an ExpressionList, the item key is simply the index of the sub-Expression
+        if isinstance(curSubExpr, ExprList):
+            # For an ExprList, the item key is simply the index of the sub-Expression
             return SubExprRepl(self.exprHierarchy[0], self.subExprPath + (key,))
         elif isinstance(curSubExpr, Composite):
-            # For any other Composite (ExpressionTensor or NamedExpressions), the key is the key of the Composite dictionary.
+            # For any other Composite (ExprTensor or NamedExprs), the key is the key of the Composite dictionary.
             # The sub-Expressions are in the order that the keys are sorted.
             sortedKeys = sorted(curSubExpr.keys())
             return SubExprRepl(self.exprHierarchy[0], self.subExprPath + [sortedKeys.index(key)])
@@ -90,8 +90,8 @@ class SubExprRepl:
                         if withDummyVar.__dict__[name] == dummyVars:
                             # Checks out -- this is the right sub-sub-Expression.
                             return SubExprRepl(self.exprHierarchy[0], self.subExprPath + (i,))
-                elif isinstance(subSub, ExpressionList):
-                    # An ExpressionList sub-Expression.  See if any of the elements are a match.
+                elif isinstance(subSub, ExprList):
+                    # An ExprList sub-Expression.  See if any of the elements are a match.
                     dummyVar = masterExpr.safeDummyVar()
                     for j, subSubSub in enumerate(subSub):
                         if subSubSub == expr:
@@ -101,7 +101,7 @@ class SubExprRepl:
                             if withDummyVar.__dict__[name] == dummyVar:
                                 return SubExprRepl(self.exprHierarchy[0], self.subExprPath + (i, j))
                 elif isinstance(subSub, Composite):
-                    # if the Composite isn't a list, then it is a dictionary (ExpressionTensor or NamedExpressions).
+                    # if the Composite isn't a list, then it is a dictionary (ExprTensor or NamedExprs).
                     # See if any of the elements are a match.
                     dummyVar = masterExpr.safeDummyVar()
                     for key, subSubSub in subSub.iteritems():
@@ -136,7 +136,7 @@ class SubExprRepl:
     
     def _expr_rep(self):
         '''
-        Representation as NamedExpressions that indicates not only the lambda function
+        Representation as NamedExprs that indicates not only the lambda function
         but the sub-Expressions that may be accessed more deeply.
         '''
         lambdaMap = self.lambdaMap()
@@ -148,7 +148,7 @@ class SubExprRepl:
             subExprs = [curSubExpr]
         namedExprDict = [('lambda',lambdaMap)]
         namedExprDict += [(str(lambdaParam), subExpr) for lambdaParam, subExpr in zip(lambdaParams, subExprs)]
-        return NamedExpressions(namedExprDict)        
+        return NamedExprs(namedExprDict)        
     
     def _repr_html_(self):
         return self._expr_rep()._repr_html_()

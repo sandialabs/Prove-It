@@ -1,6 +1,5 @@
 from expr import Expression, MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, expressionDepth
 from operation import Operation
 from lambda_expr import Lambda
-from bundle import Block, Etcetera
-from composite import Composite, ExpressionList, ExpressionTensor, NamedExpressions, compositeExpression, singleOrCompositeExpression, NestedCompositeExpressionError
-from label import Label, Variable, MultiVariable, Literal, DuplicateLiteralError, safeDummyVar, safeDefaultOrDummyVar
+from composite import Composite, compositeExpression, singleOrCompositeExpression, ExprList, ExprTensor, NamedExprs, Indexed, Iter
+from label import Label, Variable, Literal, DuplicateLiteralError, safeDummyVar, safeDefaultOrDummyVar

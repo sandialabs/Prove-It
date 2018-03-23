@@ -1,4 +1,4 @@
-from proveit import Expression, BinaryOperation, USE_DEFAULTS, ProofFailure
+from proveit import asExpression, BinaryOperation, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda
 from proveit import TransitiveRelation, IrreducibleValue, isIrreducibleValue
 from proveit._common_ import A, P, Q, f, x, y, z
@@ -128,12 +128,19 @@ class Equals(TransitiveRelation):
         from not_equals import NotEquals
         return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
                         
-    def applyTransitivity(self, otherEquality, assumptions=USE_DEFAULTS):
+    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
-        From x = y (self) and y = z (otherEquality) derive and return x = z.
+        From x = y (self) and y = z (other) derive and return x = z.
         Also works more generally as long as there is a common side to the equations.
+        If "other" is not an equality, reverse roles and call 'applyTransitivity'
+        from the "other" side.
         '''
         from _axioms_ import equalsTransitivity
+        other = asExpression(other)
+        if not isinstance(other, Equals):
+            # If the other relation is not "Equals", call from the "other" side.
+            return other.applyTransitivity(self, assumptions)
+        otherEquality = other
         # We can assume that y=x will be a KnownTruth if x=y is a KnownTruth because it is derived as a side-effect.
         if self.rhs == otherEquality.lhs:
             return equalsTransitivity.specialize({x:self.lhs, y:self.rhs, z:otherEquality.rhs}, assumptions=assumptions)

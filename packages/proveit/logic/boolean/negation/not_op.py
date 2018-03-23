@@ -7,7 +7,6 @@ class Not(Operation):
     
     def __init__(self, A):
         Operation.__init__(self, Not._operator_, A)
-        self.operand = self.operands[0]
     
     def sideEffects(self, knownTruth):
         '''

@@ -275,7 +275,7 @@ class Expression:
     def qed(self):
         return self.prove().qed()
         
-    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the expressions substituted 
         according to the exprMap dictionary (mapping Expressions to Expressions --
@@ -284,6 +284,12 @@ class Expression:
         to relabeling exceptions.  You cannot substitute with an expression that
         uses a restricted variable and you can only relabel the exception to the
         restricted variable.  This is used to protect an Lambda function's "scope".
+        
+        For certain Expression classes in proveit._core_.expression.composite,
+        intermediate proofs may be required.  This is why assumptions may be
+        needed.  If a list is passed into requirements, KnownTruth's for these
+        intermediate proofs will be appended to it -- these are requirements
+        for the substitution to be valid.
         '''
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
@@ -292,12 +298,18 @@ class Expression:
     
     def relabeled(self, relabelMap, reservedVars=None):
         '''
-        A watered down version of substitution in which only variable labels are
-        changed.  This may also involve substituting a MultiVariable with a list
-        of Variables.
+        A watered down version of substituted in which only variable labels are
+        changed.
         '''
         return self.substituted(exprMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
-    
+
+    def iterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+        '''
+        # empty by default.
+        # Overridden by proveit._core_.expression.composite.indexed.Indexed.
+        '''
+        return iter(())
+        
     def _validateRelabelMap(self, relabelMap):
         if len(relabelMap) != len(set(relabelMap.values())):
             raise ImproperRelabeling("Cannot relabel different Variables to the same Variable.")
@@ -379,7 +391,7 @@ class Expression:
             self.png_path = os.path.relpath(png_path)
         if self.png_path is not None:
             exprNotebookPath = context.expressionNotebook(self, unofficialNameKindContext)
-            html = '<a href="' + os.path.relpath(exprNotebookPath) + '" target="_blank">'
+            html = '<a class="ProveItLink" href="' + os.path.relpath(exprNotebookPath) + '">'
             html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
         Expression.displayed_expressions.add(self) # record as a "displayed" expression

@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import Literal, Operation, ExprList, USE_DEFAULTS
 from proveit._common_ import x, y, yMulti
 
 class Set(Operation):
@@ -14,12 +14,10 @@ class Set(Operation):
         self.elements = self.operands
 
     def string(self, **kwargs):
-        from proveit import ExpressionList
-        return '{' + ExpressionList(*self.elements).string(fence=False) + '}'
+        return '{' + ExprList(self.elements).string(fence=False) + '}'
     
     def latex(self, **kwargs):
-        from proveit import ExpressionList
-        return r'\left\{' + ExpressionList(*self.elements).latex(fence=False) + r'\right\}'        
+        return r'\left\{' + ExprList(self.elements).latex(fence=False) + r'\right\}'        
 
     def membershipEquivalence(self, element, assumptions=USE_DEFAULTS):
         '''

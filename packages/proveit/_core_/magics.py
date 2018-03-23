@@ -72,16 +72,16 @@ class ContextInterface:
         if os.path.isfile('_mode_.txt'):
             with open('_mode_.txt', 'rt') as f:
                 prev_mode = f.read().strip()
-                # mode toggles between 'static' and 'interactive'
-                if prev_mode == 'static':
-                    self.mode = 'interactive'
-                    # in interactive mode, sub-contexts are presented in an interactive widget
-                    self.widget = widgets.VBox()
-                    self.smallButtonLayout = widgets.Layout(width='30px')
-                    self.subContextLinkLayout = widgets.Layout(width='20%')
-                    self.subContextDescriptionLayout = widgets.Layout(width='80%')
-                else:
-                    self.mode = 'static'
+        # mode toggles between 'static' and 'interactive'
+        if prev_mode == 'static':
+            self.mode = 'interactive'
+            # in interactive mode, sub-contexts are presented in an interactive widget
+            self.widget = widgets.VBox()
+            self.smallButtonLayout = widgets.Layout(width='30px')
+            self.subContextLinkLayout = widgets.Layout(width='20%')
+            self.subContextDescriptionLayout = widgets.Layout(width='80%')
+        else:
+            self.mode = 'static'
         
         # write the new mode that has been toggled
         with open('_mode_.txt', 'w') as f:
@@ -104,7 +104,7 @@ class ContextInterface:
             dn_button = widgets.Button(description='', disabled=False, button_style='', tooltip='move down', icon='chevron-down', layout=small_button_layout)
             delete_button = widgets.Button(description='', disabled=False, button_style='danger', tooltip='delete context', icon='trash', layout=small_button_layout)
             href = self.subContextNotebook(subContextName)
-            sub_context_link = widgets.HTML('<a class="ProveItLink" href="%s" target="_blank">%s</a>'%(href,subContextName) , layout=sub_context_link_layout)
+            sub_context_link = widgets.HTML('<a class="ProveItLink" href="%s">%s</a>'%(href,subContextName) , layout=sub_context_link_layout)
             sub_context_description = widgets.Text(value=subContextDescription, placeholder='Add a brief description here...', layout=sub_context_description_layout)
             def setDescription(change):
                 self.subContextDescriptions[subContextName] = change['new']
@@ -297,7 +297,7 @@ class ProveItMagic(Magics):
         if context_interface.mode == 'static':
             special_notebooks_html = '<table>\n'
             for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_texts):
-                special_notebooks_html += '<th><a class="ProveItLink" href="_%s_.ipynb" target="_blank">%s</a></th>\n'%(special_notebook_type, special_notebook_text)
+                special_notebooks_html += '<th><a class="ProveItLink" href="_%s_.ipynb">%s</a></th>\n'%(special_notebook_type, special_notebook_text)
             special_notebooks_html += '</table>\n'
             if len(context_interface.subContextNames) > 0:
                 special_notebooks_html += '<table>\n'
@@ -311,7 +311,7 @@ class ProveItMagic(Magics):
             special_notebook_links = []
             full_width_layout = widgets.Layout(width='100%', padding='5px')
             for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_texts):
-                special_notebook_links.append(widgets.HTML('<a class="ProveItLink" href="_%s_.ipynb" target="_blank">%s</a>'%(special_notebook_type, special_notebook_text), layout=full_width_layout))
+                special_notebook_links.append(widgets.HTML('<a class="ProveItLink" href="_%s_.ipynb">%s</a>'%(special_notebook_type, special_notebook_text), layout=full_width_layout))
             special_notebook_links = widgets.HBox(special_notebook_links)
                 
             sub_contexts_label = widgets.Label('List of sub-contexts:', layout = widgets.Layout(width='100%'))
@@ -360,8 +360,8 @@ class ProveItMagic(Magics):
     def begin_common(self):
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'common':
-                raise ProveItMagicFailure("Run %begin_common in a separate notebook from %begin_%s."%self.kind)
-            print "WARNING: Re-running %begin_common does not reset previously defined common expressions."
+                raise ProveItMagicFailure("Run '%begin common' in a separate notebook from %begin_%s."%self.kind)
+            print "WARNING: Re-running '%begin common' does not reset previously defined common expressions."
             print "         It is suggested that you restart and run all cells after editing the expressions."
         print "Defining common sub-expressions for context '" + self.context.name + "'"
         print "Subsequent end-of-cell assignments will define common sub-expressions"
@@ -455,7 +455,7 @@ class ProveItMagic(Magics):
         associated with the current working directory.
         '''
         if self.kind != kind:
-            raise ProveItMagicFailure("Must run %begin_%s before %end_%s"%(kind,kind))
+            raise ProveItMagicFailure(r"Must run %begin " + kind + r" before %end " + kind)
         # Add the special statements / expressions to the context
         context = self.context
         if kind=='axioms':
@@ -581,12 +581,12 @@ class Assignments:
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
             proofNotebook = proveItMagic.context.proofNotebook(name, expr)
-            lhs_html = '<a class="ProveItLink" href="%s" target="_blank">%s</a>'%(os.path.relpath(proofNotebook), lhs_html)
+            lhs_html = '<a class="ProveItLink" href="%s">%s</a>'%(os.path.relpath(proofNotebook), lhs_html)
         html = '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
             expr_notebook_path = proveItMagic.context.expressionNotebook(expr)
             dependencies_notebook_path = os.path.join(os.path.split(expr_notebook_path)[0], 'dependencies.ipynb')
-            html += '(see <a class="ProveItLink" href="%s" target="_blank">dependencies</a>)'%(os.path.relpath(dependencies_notebook_path))
+            html += '(see <a class="ProveItLink" href="%s">dependencies</a>)'%(os.path.relpath(dependencies_notebook_path))
         return html
 
     def _repr_html_(self):

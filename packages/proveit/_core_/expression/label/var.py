@@ -1,5 +1,6 @@
 from label import Label
 from proveit._core_.expression.expr import MakeNotImplemented, ScopingViolation, ImproperRelabeling
+from proveit._core_.defaults import USE_DEFAULTS
 
 class Variable(Label):
     """
@@ -13,7 +14,7 @@ class Variable(Label):
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
                                         
-    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
@@ -39,9 +40,6 @@ class Variable(Label):
         
     def freeVars(self):
         return {self}
-
-    def freeMultiVars(self):
-        return set() # overridden in MultiVariable
 
 def dummyVar(n):
     '''

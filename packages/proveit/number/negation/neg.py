@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex
 from proveit.number.sets import Integers, Reals, Complexes, zero
-from proveit._common_ import a, x, y, xEtc
+from proveit._common_ import a, x, y
 
 class Neg(Operation):
     # operator of the Neg operation.
@@ -8,8 +8,6 @@ class Neg(Operation):
     
     def __init__(self,A):
         Operation.__init__(self, Neg._operator_, A)
-        self.operand = A
-        #NumberOp.__init__(self, {Complexes:complex.theorems.negClosure})
     
     def _closureTheorem(self, numberSet):
         import theorems
@@ -31,7 +29,14 @@ class Neg(Operation):
     def _notEqZeroTheorem(self):
         import theorems
         return theorems.negNotEqZero
-
+    
+    def asInt(self):
+        '''
+        Convert a literal integer into a Python int.  This
+        only works if the operand is a literal int.
+        '''
+        return -self.operand.asInt()    
+    
     def simplification(self, assumptions=frozenset()):
         '''
         For trivial cases, double negation or negating zero,

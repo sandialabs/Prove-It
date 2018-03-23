@@ -1,9 +1,10 @@
 # Core Prove-It constructs required used to construct/verify proofs.
 
-from expression import Expression, Operation, Lambda, Label, Variable, MultiVariable, Literal, DuplicateLiteralError
-from expression import Etcetera, Block, safeDummyVar, safeDefaultOrDummyVar, expressionDepth
+from expression import Expression, Operation, Lambda, Label, Variable, Literal, DuplicateLiteralError
+from expression import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from expression import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation
-from expression import ExpressionList, ExpressionTensor, NamedExpressions, Composite, compositeExpression, singleOrCompositeExpression, NestedCompositeExpressionError
+from expression import Composite, compositeExpression, singleOrCompositeExpression
+from expression import ExprList, ExprTensor, NamedExprs, Indexed, Iter
 from known_truth import KnownTruth, asExpression, asExpressions
 from defaults import defaults, USE_DEFAULTS, InvalidAssumptions
 from context import Context, ContextException

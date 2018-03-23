@@ -16,7 +16,10 @@ class DigitLiteral(Literal):
         Yield the argument values that could be used to recreate this DigitLiteral.
         '''
         yield str(self.n)
-        
+    
+    def asInt(self):
+        return self.n
+            
     @staticmethod
     def makeLiteral(string_format, latex_format, context):
         '''

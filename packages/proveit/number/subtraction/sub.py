@@ -1,7 +1,7 @@
 from proveit import Literal, BinaryOperation
 from proveit.logic import NotEquals
 from proveit.number.sets import Naturals, NaturalsPos, Integers, Reals, Complexes, zero
-from proveit._common_ import w, x, y, z, vEtc, wEtc, xEtc, yEtc, zEtc
+from proveit._common_ import w, x, y, z
 
 class Sub(BinaryOperation):
     # operator of the Sub operation.

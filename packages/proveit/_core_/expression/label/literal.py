@@ -15,7 +15,8 @@ class Literal(Label):
         '''
         Create a Literal.  If latexFormat is not supplied, the stringFormat is used for both.
         '''
-        from proveit import Context, Expression
+        from proveit._core_.context import Context
+        from proveit._core_.expression.expr import Expression
         if context is None:
             # use the default
             context = Context.default

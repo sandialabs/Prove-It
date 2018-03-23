@@ -1,6 +1,6 @@
-from proveit._core_.expression import Expression
+from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
-from proveit._core_.expression.label import Literal, Variable
+from proveit._core_.expression.label import Variable
 from proveit._core_.defaults import USE_DEFAULTS
 
 class Indexed(Expression):
@@ -19,7 +19,7 @@ class Indexed(Expression):
         from composite import Composite, singleOrCompositeExpression, compositeExpression
         if not isinstance(var, Variable):
             raise TypeError("'var' being indexed should be a Variable")
-        index_or_indices = singleOrCompositeExpression(index_or_indices)
+        self.index_or_indices = singleOrCompositeExpression(index_or_indices)
         if isinstance(index_or_indices, Composite):
             # a composite of multiple indices
             self.indices = index_or_indices 
@@ -30,25 +30,38 @@ class Indexed(Expression):
             self.indices = compositeExpression(self.index)
         if not isinstance(base, int):
             raise TypeError("'base' should be an integer")
-        Expression.__init__(self, ['Indexed', self.base], [var, index_or_indices])
+        Expression.__init__(self, ['Indexed', str(base)], [var, index_or_indices])
         self.var = var
         self.base = base
     
-    """
+    @classmethod
+    def make(subClass, coreInfo, subExpressions):
+        if subClass != Indexed: 
+            MakeNotImplemented(subClass)
+        if len(coreInfo) != 2 or coreInfo[0] != 'Indexed':
+            raise ValueError("Expecting Indexed coreInfo to contain exactly two items: 'Indexed' and the integer 'base'")
+        try:
+            base = int(coreInfo[1])
+        except:
+            raise ValueError("Expecting 'base' to be an integer")
+        return Indexed(*subExpressions, base=base)        
+
+    def buildArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Indexed.
+        '''
+        yield self.var
+        yield self.index_or_indices
+        yield ('base', self.base)       
+    
     def string(self, **kwargs):
-        # fence by default (unless it is within an Embed
-        fence =  kwargs['fence'] if 'fence' in kwargs else True 
-        innerStr = self.first().string() + ', ..., ' + self.last().string()
-        return maybeFenced('string', innerStr, fence=fence)
+        return self.var.string() + '_' + self.index_or_indices.string(fence=True)
 
     def latex(self, **kwargs):
-        # fence by default (unless it is within an Embed
-        fence =  kwargs['fence'] if 'fence' in kwargs else True
-        innerStr = self.first().latex() + ', \ldots, ' + self.last().latex()
-        return maybeFenced('latex', innerStr, fence=fence)
-    """
-    
-    def substituted(self, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+        return self.var.latex() + '_{' + self.index_or_indices.latex(fence=False) + '}'
+
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
@@ -62,8 +75,9 @@ class Indexed(Expression):
         from expr_list import ExprList
         from expr_tensor import ExprTensor
         
-        subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars)
-        subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars)
+        new_requirements = []
+        subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars) # requirements not needed for variable substitution
+        subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=new_requirements)
         
         if isinstance(subbed_var, Composite):
             # The indexed expression is a composite.
@@ -72,14 +86,17 @@ class Indexed(Expression):
             # If there is an IndexingError (i.e., we cannot get the element
             # because the Composite has an unexpanding Iter), 
             # default to returning the subbed Indexed.
-            indexing_requirements = []
-            indices = [_simplifiedCoord(index, assumptions, indexing_requirements) for index in subbed_indices]
-            requirements += indexing_requirements
+            indices = [_simplifiedCoord(index, assumptions, new_requirements) for index in subbed_indices]
             if isinstance(subbed_var, ExprList):
-                return subbed_var.getElem(indices[0], assumptions=assumptions, requirements=requirements)
+                return subbed_var.getElem(indices[0], assumptions=assumptions, requirements=new_requirements)
             elif isinstance(subbed_var, ExprTensor):
-                return subbed_var.getElem(indices, assumptions=assumptions, requirements=requirements)
+                return subbed_var.getElem(indices, assumptions=assumptions, requirements=new_requirements)
         
+        for requirement in new_requirements:
+            requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        
+        if requirements is not None:
+            requirements += new_requirements # append new requirements
+               
         # If the subbed_var has not been replaced with a Composite,
         # just return the Indexed operation with the substitutions made.
         return Indexed(subbed_var, subbed_indices, base=self.base)

@@ -1,16 +1,9 @@
-from proveit import Literal, USE_DEFAULTS
+from proveit import Literal, USE_DEFAULTS, asExpression
 from proveit.logic import Equals
-from ordering_relation import OrderingRelation
+from ordering_relation import OrderingRelation, OrderingSequence
 from proveit._common_ import a, b, c, x, y, z
 
 class LesserRelation(OrderingRelation):
-    # map left-hand-sides to KnownTruths of LesserRelations
-    #   (populated in TransitivityRelation.deriveSideEffects)
-    knownLeftSides = dict()    
-    # map right-hand-sides to KnownTruths of LesserRelations
-    #   (populated in TransitivityRelation.deriveSideEffects)
-    knownRightSides = dict()    
-
     def __init__(self, operator, lhs, rhs):
         OrderingRelation.__init__(self, operator, lhs, rhs)
 
@@ -25,11 +18,37 @@ class LesserRelation(OrderingRelation):
         Returns the upper bound side of this inequality.
         '''
         return self.rhs
-        
+    
+    @staticmethod
+    def WeakRelationClass():
+        return LessEq # <= is weaker than <
+
+    @staticmethod
+    def StrongRelationClass():
+        return Less # < is stronger than <=                
+
+    @staticmethod
+    def SequenceClass():
+        return LesserSequence
+
+class LesserSequence(OrderingSequence):
+    def __init__(self, operators, operands):
+        OrderingSequence.__init__(self, operators, operands)
+    
+    @staticmethod
+    def RelationClass():
+        return LesserRelation                
 
 class Less(LesserRelation):
     # operator of the Less operation.
     _operator_ = Literal(stringFormat='<', context=__file__)
+    
+    # map left-hand-sides to "<" KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()    
+    # map right-hand-sides to "<" KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict()  
     
     def __init__(self, lhs, rhs):
         r'''
@@ -70,10 +89,11 @@ class Less(LesserRelation):
         obtain x<z.
         '''
         from _theorems_ import transitivityLessLess, transitivityLessLessEq
-        from less_than import LessThan, LessThanEquals
+        from greater_than import Greater, GreaterEq
+        other = asExpression(other)
         if isinstance(other, Equals):
-            return OrderingRelation.applyTransitivity(other, assumptions) # handles this special case
-        if isinstance(other,LessThan) or isinstance(other,LessThanEquals):
+            return OrderingRelation.applyTransitivity(self, other, assumptions) # handles this special case
+        if isinstance(other,Greater) or isinstance(other,GreaterEq):
             other = other.deriveReversed(assumptions)
         elif other.lhs == self.rhs:
             if isinstance(other,Less):
@@ -120,32 +140,23 @@ class Less(LesserRelation):
             return lessThanAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
-
+    
 class LessEq(LesserRelation):
     # operator of the LessEq operation.
     _operator_ = Literal(stringFormat='<=', latexFormat=r'\leq', context=__file__)
     
+    # map left-hand-sides to "<=" KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()    
+    # map right-hand-sides to "<=" KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict()  
+            
     def __init__(self, lhs, rhs):
         r'''
         See if second number is at least as big as first.
         '''
         LesserRelation.__init__(self, LessEq._operator_,lhs,rhs)
-    
-    @staticmethod
-    def knownRelationsFromLeft(expr, assumptionsSet):
-        '''
-        Return the known relations involving the left side which is the lower
-        side of the relation.
-        '''
-        return OrderingRelation.knownRelationsFromLower(expr, assumptionsSet)
-                
-    @staticmethod
-    def knownRelationsFromRight(expr, assumptionsSet):
-        '''
-        Return the known relations involving the right side which is the upper
-        side of the relation.
-        '''
-        return OrderingRelation.knownRelationsFromUpper(expr, assumptionsSet)
             
     def reversed(self):
         '''
@@ -177,10 +188,11 @@ class LessEq(LesserRelation):
         of x<=y and y<=x (or x>=y), derive x=z.
         '''
         from _theorems_ import transitivityLessEqLess, transitivityLessEqLessEq, symmetricLessEq
-        from less_than import LessThan, LessThanEquals
+        from greater_than import Greater, GreaterEq
+        other = asExpression(other)
         if isinstance(other, Equals):
-            return OrderingRelation.applyTransitivity(other, assumptions) # handles this special case
-        if isinstance(other,LessThan) or isinstance(other,LessThanEquals):
+            return OrderingRelation.applyTransitivity(self, other, assumptions) # handles this special case
+        if isinstance(other,Greater) or isinstance(other,GreaterEq):
             other = other.deriveReversed(assumptions)
         if other.lhs == self.rhs and other.rhs == self.lhs:
             # x >= y and y >= x implies that x=y

@@ -20,7 +20,7 @@ from proveit._core_.expression.expr import Expression
 
 class Composite:
     """
-    The base class for NamedExpressions, ExpressionList, and ExpressionTensor.
+    The base class for NamedExprs, ExprList, and ExprTensor.
     """
     pass
 

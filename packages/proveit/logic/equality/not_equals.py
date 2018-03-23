@@ -32,6 +32,11 @@ class NotEquals(BinaryOperation):
         if self.lhs == FALSE or self.rhs == FALSE:
             # prove something is not false by proving it to be true
             return self.concludeViaDoubleNegation(assumptions)
+        if hasattr(self.lhs, 'notEquals') and isIrreducibleValue(self.rhs):
+            try:
+                return self.lhs.notEquals(self.rhs, assumptions)
+            except:
+                pass
         try:
             return self.concludeAsFolded(assumptions)
         except:

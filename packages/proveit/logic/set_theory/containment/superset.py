@@ -1,24 +1,44 @@
 from proveit import Literal, BinaryOperation, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
-from containment_relation import ContainmentRelation
+from containment_relation import ContainmentRelation, ContainmentSequence
 
 class SupersetRelation(ContainmentRelation):
-    # map left-hand-sides to KnownTruths of SupersetRelations
-    #   (populated in TransitivityRelation.deriveSideEffects)
-    knownLeftSides = dict()    
-    # map right-hand-sides to KnownTruths of SupersetRelations
-    #   (populated in TransitivityRelation.deriveSideEffects)
-    knownRightSides = dict()    
-        
     def __init__(self, operator, superset, subset):
         ContainmentRelation.__init__(self, operator, superset, subset)
         self.superset = self.operands[0]
         self.subset = self.operands[1]
+    
+    @staticmethod
+    def WeakRelationClass():
+        return SupersetEq 
+
+    @staticmethod
+    def StrongRelationClass():
+        return Superset
+    
+    @staticmethod
+    def SequenceClass():
+        return SupersetSequence
+
+class SupersetSequence(ContainmentSequence):
+    def __init__(self, operators, operands):
+        ContainmentSequence.__init__(self, operators, operands)
+    
+    @staticmethod
+    def RelationClass():
+        return SupersetRelation
 
 class Superset(SupersetRelation):
     # operator of the Superset operation
     _operator_ = Literal(stringFormat='supset', latexFormat=r'\supset', context=__file__)    
-    
+
+    # map left-hand-sides to Superset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()    
+    # map right-hand-sides to Superset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict() 
+            
     def __init__(self, superset, subset):
         SupersetRelation.__init__(self, Superset._operator_, superset, subset)
 
@@ -76,6 +96,13 @@ class Superset(SupersetRelation):
 class SupersetEq(SupersetRelation):
     # operator of the SupersetEq operation
     _operator_ = Literal(stringFormat='supseteq', latexFormat=r'\supseteq', context=__file__)    
+    
+    # map left-hand-sides to SupersetEq KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()    
+    # map right-hand-sides to SupersetEq KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict() 
     
     def __init__(self, superset, subset):
         SupersetRelation.__init__(self, SupersetEq._operator_, superset, subset)

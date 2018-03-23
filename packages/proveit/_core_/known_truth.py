@@ -446,19 +446,29 @@ class KnownTruth:
     @staticmethod
     def forgetKnownTruths():
         KnownTruth.lookup_dict.clear()
-
+    
+    def _canSpecialize(self, var):
+        '''
+        Return True iff the given Variable can be specialized from
+        this KnownTruth directly (an instance Variable of a directly
+        nested Forall operation).
+        '''
+        from proveit.logic import Forall        
+        expr = self.expr
+        while isinstance(expr, Forall):
+            if var in expr.instanceVars:
+                return True
+            expr = expr.instanceExpr
+        return False      
+        
     def relabel(self, relabelMap):
         '''
         Performs a relabeling derivation step, deriving another KnownTruth
         from this KnownTruth, under the same assumptions, with relabeled
-        Variables/MultiVariables.  A Variable may only be relabeled to a Variable.
-        A MultiVariable may be relabeled to a Composite Expression (ExpressionList,
-        ExpressionTensor, or NamedExpressions as appropriate) of Variables/MultiVariables)
+        Variables.  A Variable may only be relabeled to a Variable.
         Returns the proven relabeled KnownTruth, or throws an exception if the proof fails.
         '''
         from proveit._core_.proof import Specialization
-        from proveit import MultiVariable, compositeExpression
-        relabelMap = {key : compositeExpression(sub) if isinstance(key, MultiVariable) else sub for key, sub in relabelMap.iteritems()}
         return Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions).provenTruth
     
     def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
@@ -478,14 +488,14 @@ class KnownTruth:
         Returns the proven specialized KnownTruth, or throws an exception if the
         proof fails.        
         '''
-        from proveit import Operation, Variable, MultiVariable, Etcetera, Composite, compositeExpression, ExpressionList, ExpressionTensor, Lambda
+        from proveit import Operation, Variable, Lambda
         from proveit.logic import Forall
         from proof import Specialization, SpecializationFailure
         
         # if no specializeMap is provided, specialize a single Forall with default mappings (mapping instance variables to themselves)
         if specializeMap is None: specializeMap = dict()
         if relabelMap is None: relabelMap = dict()
-        
+                
         # Include the KnownTruth assumptions along with any provided assumptions
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptions += self.assumptions
@@ -499,23 +509,8 @@ class KnownTruth:
             if isinstance(key, Operation):
                 operation = key
                 subVar = operation.operator
-                if isinstance(key.operator, MultiVariable):
-                    lambdaExpressions = compositeExpression(sub)
-                    if lambdaExpressions.__class__ == ExpressionList:
-                        sub = ExpressionList([Lambda(operation.operands, lambdaExpr) for lambdaExpr in lambdaExpressions])
-                    elif lambdaExpressions.__class__ == ExpressionTensor:
-                        sub = ExpressionTensor({tensorKey:Lambda(operation.operands, lambdaExpr) for tensorKey, lambdaExpr in lambdaExpressions.iteritems()}, shape=lambdaExpressions.shape, alignmentCoordinates=lambdaExpressions.alignmentCoordinates)
-                else:
-                    if not isinstance(sub, Expression) or isinstance(sub, Composite):
-                        raise SpecializationFailure(None, assumptions, 'Only MultiVariable operations may be specialized to a composite Expression')
-                    if len(operation.operands)==1 and isinstance(operation.operands[0], Etcetera):
-                        # a MultiVariable operation substitution
-                        sub = Lambda(operation.operands[0].bundledExpr, sub)
-                    else:
-                        sub = Lambda(operation.operands, sub)
+                sub = Lambda(operation.operands, sub)
                 processedSubMap[subVar] = sub
-            elif isinstance(key, MultiVariable):
-                processedSubMap[key] = compositeExpression(sub) # MultiVariables map to a Composite
             elif isinstance(key, Variable):
                 processedSubMap[key] = sub
             else:
@@ -544,8 +539,6 @@ class KnownTruth:
                     # default is to map instance variables to themselves
                     processedSubMap[iVar] = iVar
 
-        # Make sure MultiVariables are relabeled to composite expressions, as a consistent convention
-        relabelMap = {key : compositeExpression(sub) if isinstance(key, MultiVariable) else sub for key, sub in relabelMap.iteritems()}
         return Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions).provenTruth
         
     def generalize(self, forallVarLists, domains=None, domain=None, conditions=tuple()):
@@ -616,10 +609,10 @@ class KnownTruth:
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
-        from proveit import ExpressionList
+        from proveit import ExprList
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
         if len(self.assumptions) > 0:
-            assumptionsStr = ExpressionList(self.assumptions).formatted('string', fence=False)
+            assumptionsStr = ExprList(self.assumptions).formatted('string', fence=False)
             return r'{' +assumptionsStr + r'} |= ' + self.expr.string()
         return r'|= ' + self.expr.string()
 

@@ -1,4 +1,4 @@
-from proveit._generic_ import TransitiveRelation
+from proveit._generic_ import TransitiveRelation, TransitiveSequence
 
 class ContainmentRelation(TransitiveRelation):
     r'''
@@ -7,8 +7,8 @@ class ContainmentRelation(TransitiveRelation):
     Instead, use Subset, SubsetEq, Superset, or SupersetEq.
     '''
 
-    def __init__(self, operator,lhs, rhs):
-        TransitiveRelation.__init__(self,operator, lhs, rhs)
+    def __init__(self, operator, lhs, rhs):
+        TransitiveRelation.__init__(self, operator, lhs, rhs)
 
     def sideEffects(self, knownTruth):
         '''
@@ -19,3 +19,13 @@ class ContainmentRelation(TransitiveRelation):
             yield sideEffect
         if hasattr(self, 'deriveRelaxed'):
             yield self.deriveRelaxed
+
+class ContainmentSequence(TransitiveSequence):
+    r'''
+    Base class for the containment relation sequences.  
+    Do not construct an object of this class directly!  
+    Instead, use SubsetSequence or SupersetSequence
+    '''
+
+    def __init__(self, operators, operands):
+        TransitiveSequence.__init__(self, operators, operands)

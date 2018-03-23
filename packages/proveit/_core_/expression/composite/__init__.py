@@ -1,4 +1,6 @@
-from named_exprs import NamedExpressions
-from expr_list import ExpressionList
-from expr_tensor import ExpressionTensor
-from composite import Composite, compositeExpression, singleOrCompositeExpression, NestedCompositeExpressionError
+from composite import Composite, compositeExpression, singleOrCompositeExpression
+from named_exprs import NamedExprs
+from expr_list import ExprList
+from expr_tensor import ExprTensor
+from indexed import Indexed
+from iteration import Iter

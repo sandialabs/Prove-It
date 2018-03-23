@@ -1,4 +1,4 @@
-from proveit._generic_ import TransitiveRelation
+from proveit._generic_ import TransitiveRelation, TransitiveSequence
 
 class OrderingRelation(TransitiveRelation):
     r'''
@@ -39,3 +39,13 @@ class OrderingRelation(TransitiveRelation):
         shiftedSelf = self.deriveShifted(other.lhs, 'right', assumptions) # e.g., a + c < b + c
         shiftedOther = other.deriveShifted(self.rhs, 'left', assumptions) # e.g., b + c < b + d
         return shiftedSelf.applyTransitivity(shiftedOther) # e.g., a + c < b + d
+
+class OrderingSequence(TransitiveSequence):
+    r'''
+    Base class for the containment relation sequences.  
+    Do not construct an object of this class directly!  
+    Instead, use SubsetSequence or SupersetSequence
+    '''
+
+    def __init__(self, operators, operands):
+        TransitiveSequence.__init__(self, operators, operands)

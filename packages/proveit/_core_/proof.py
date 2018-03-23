@@ -195,7 +195,7 @@ class Proof:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof.mappingHTML() + '</td></tr>'
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
-                html += '<a href="%s" target="_blank">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
+                html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
         return html
 
@@ -497,7 +497,7 @@ class Specialization(Proof):
         variable is to specialize it to itself, or, in the case of a bundled variable 
         (Etcetera-wrapped MultiVariables), the default is to specialize it to an empty list.
         Substitution of variables that are not instance variables of the Forall operations
-        being eliminated or to be relabeled.  Relabeling is limited to substituting
+        being eliminated are to be relabeled.  Relabeling is limited to substituting
         a Variable to another Variable or substituting a bundled variable to
         another bundled variable or list of variables (bundled or not).
         '''
@@ -520,30 +520,30 @@ class Specialization(Proof):
                     raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
             generalExpr = generalTruth.expr
             # perform the appropriate substitution/relabeling
-            specializedExpr, subbedConditions, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
+            specializedExpr, requirements, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
             # obtain the KnownTruths for the substituted conditions
-            conditionTruths = []
-            for conditionExpr in subbedConditions:
+            requirementTruths = []
+            for requirementExpr in requirements:
                 try:
                     # each substituted condition must be proven under the assumptions
                     # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
-                    conditionTruth = conditionExpr.prove(assumptions)
-                    conditionTruths.append(conditionTruth)
-                    _appendExtraAssumptions(assumptions, conditionTruth)
+                    requirementTruth = requirementExpr.prove(assumptions)
+                    requirementTruths.append(requirementTruth)
+                    _appendExtraAssumptions(assumptions, requirementTruth)
                 except:
-                    raise Failure(specializedExpr, assumptions, 'Unmet specialization condition: ' + str(conditionExpr))
+                    raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = generalTruth.assumptionsSet
-            for conditionTruth in conditionTruths:
-                assumptionsSet |= conditionTruth.assumptionsSet
+            for requirementTruth in requirementTruths:
+                assumptionsSet |= requirementTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
             # we have what we need; set up the Specialization Proof
             self.generalTruth = generalTruth
-            self.conditionTruths = conditionTruths
+            self.requirementTruths = requirementTruths
             self.mappedVarLists = mappedVarLists
             self.mappings = mappings
             specializedTruth = KnownTruth(specializedExpr, assumptions, self)
-            Proof.__init__(self, 'Specialization', specializedTruth, [generalTruth] + conditionTruths)
+            Proof.__init__(self, 'Specialization', specializedTruth, [generalTruth] + requirementTruths)
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
@@ -596,10 +596,9 @@ class Specialization(Proof):
         Eliminates the specified number of Forall operations, substituting all
         of the corresponding instance variables according to the substitution
         map dictionary (subMap), or defaulting basic instance variables as
-        themselves or bundled instance variables (Etcetera-wrapped or Block-wrapped 
-        MultiVariables) as empty lists. 
+        themselves. 
         '''
-        from proveit import Lambda, ExpressionList, Etcetera
+        from proveit import Lambda, ExprList
         from proveit.logic import Forall, InSet
         
         # check that the mappings are appropriate
@@ -644,11 +643,8 @@ class Specialization(Proof):
                 # extract all of the elements
                 for iVar in instanceVars:
                     elementOrList = iVar.substituted(partialMap, relabelMap)
-                    for element in (elementOrList if isinstance(elementOrList, ExpressionList) else [elementOrList]):
+                    for element in (elementOrList if isinstance(elementOrList, ExprList) else [elementOrList]):
                         inSetCondition = InSet(element, domain.substituted(partialMap, relabelMap))
-                        if len(element.freeMultiVars()) > 0:
-                            # if the element contains a free MultiVariable, wrap the InSet condition in an Etcetera
-                            inSetCondition = Etcetera(inSetCondition)
                         subbedConditions.append(inSetCondition)
                         
         # sort the relabeling vars in order of their appearance in the original expression
@@ -663,38 +659,28 @@ class Specialization(Proof):
         mappings = dict(specializeMap)
         mappings.update(relabelMap) # mapping everything
         
+        requirements = []
+        subbed_expr = expr.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
+        
         # Return the expression and conditions with substitutions and the information to reconstruct the specialization
-        return expr.substituted(specializeMap, relabelMap), subbedConditions, mappedVarLists, mappings
+        return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
 
     @staticmethod
     def _checkRelabelMapping(key, sub, assumptions):
-        from proveit import Variable, MultiVariable, Composite, ExpressionList
+        from proveit import Variable
         if isinstance(key, Variable):
             if not isinstance(sub, Variable):
                 raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
-        elif isinstance(key, MultiVariable):
-            if isinstance(sub, ExpressionList):
-                elems = sub
-            elif isinstance(sub, Composite):
-                elems = sub.values()
-            else:
-                raise RelabelingFailure(None, assumptions, 'May only relabel a MultiVariable to a Composite Expression')                
-            for elem in elems:
-                if not isinstance(elem, Variable) and not isinstance(elem, MultiVariable):
-                    raise RelabelingFailure(None, assumptions, 'May only relabel a MultiVariable to a Composite of Variables/MultiVariables')
         else:
             raise RelabelingFailure(None, assumptions, "May only relabel a Variable or a MultiVariable")                       
 
     @staticmethod
     def _checkSpecializeMapping(key, sub, assumptions):
-        from proveit import Expression, Composite, Variable, MultiVariable
+        from proveit import Expression, Composite, Variable
         if isinstance(key, Variable):
             # substitute a simple Variable
             if not isinstance(sub, Expression) or isinstance(sub, Composite):
                 raise SpecializationFailure(None, assumptions, 'A normal Variable may be not be specialized to a composite Expression (only a MultiVariable may be)')
-        elif isinstance(key, MultiVariable):
-            if sub != key and not isinstance(sub, Composite):
-                raise SpecializationFailure(None, assumptions, 'A MultiVariable may only be specialized to a composite expression (or itself)')
         else:
             raise SpecializationFailure(None, assumptions, "May only specialize Forall instance Variables/MultiVariables")
 

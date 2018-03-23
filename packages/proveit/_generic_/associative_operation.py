@@ -1,12 +1,15 @@
-from proveit import Operation, ExpressionList, Etcetera
+from proveit import Operation, ExprList, Iter
 
 class AssociativeOperation(Operation):
     def __init__(self, operator, *operands):
         '''
         Represent an associative operator operating on any number of operands.
         '''
-        Operation.__init__(self, operator, operands)   
-        assert isinstance(self.operands, ExpressionList)
+        if len(operands)==1 and isinstance(operands[0], Iter):
+            operand_or_operands = operands[0]
+        else:
+            operand_or_operands = operands
+        Operation.__init__(self, operator, operand_or_operands)   
     
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
@@ -19,18 +22,18 @@ class AssociativeOperation(Operation):
         Format the associative operation in the form "A * B * C" where '*' is a stand-in for
         the operator that is obtained from self.operator.formatted(formatType).
         '''
-        # Different formatting when there is 0 or 1 element, unless it is an Etcetera
+        # Different formatting when there is 0 or 1 element, unless it is an Iter
         if len(self.operands) < 2:
-            if len(self.operands) == 0 or not isinstance(self.operands[0], Etcetera):
+            if len(self.operands) == 0 or not isinstance(self.operands[0], Iter):
                 if formatType == 'string':
-                    return '\left[' + self.operator.string(fence=True) +  '\right](' + self.operands.string(fence=False, subFence=False) + ')'
+                    return '[' + self.operator.string(fence=True) +  '](' + self.operands.string(fence=False, subFence=False) + ')'
                 else:
                     return '\left[' + self.operator.latex(fence=True) +  r'\right]\left(' + self.operands.latex(fence=False, subFence=False) + r'\right)'
                 raise ValueError("Unexpected formatType: " + str(formatType))  
         fence =  kwargs['fence'] if 'fence' in kwargs else False
         subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
         formattedOperator = ' ' + self.operator.formatted(formatType) + ' '
-        return self.operands.formatted(formatType, fence=fence, subFence=subFence, formattedOperator=formattedOperator)
+        return self.operand_or_operands.formatted(formatType, fence=fence, subFence=subFence, formattedOperator=formattedOperator)
         """
         outStr = ''
         # insert ellipses (two dots in our case) before and after Etcetera expressions

@@ -29,12 +29,12 @@ class ExpressionInfo:
         return orderedDependencyNodes(self.expr, lambda expr : expr._subExpressions)
 
     def string(self):
-        from composite.named_exprs import NamedExpressions
-        from operation import Operation
-        from lambda_expr import Lambda
-        from label import Label, Literal
+        from .composite import NamedExprs, Indexed, Iter
+        from .operation import Operation
+        from .lambda_expr import Lambda
+        from .label import Label, Literal
         enumeratedExpressions = self._getEnumeratedExpressions()
-        exprNumMap = {expr:k for k, expr in enumerate(enumeratedExpressions)}
+        expr_num_map = {expr:k for k, expr in enumerate(enumeratedExpressions)}
         outStr = ''
         for k, expr in enumerate(enumeratedExpressions):
             outStr += str(k) + '. ' + str(expr) + '\n'
@@ -46,24 +46,50 @@ class ExpressionInfo:
                 if isinstance(expr, Literal):
                     outStr += indent + 'context: ' + expr.context + '\n'
                 outStr += indent + 'class: ' + str(expr.__class__) + '\n'
-            if isinstance(expr, NamedExpressions):
+            if isinstance(expr, NamedExprs):
                 for key in sorted(expr.keys()):
-                    outStr += indent + key + ': ' + str(exprNumMap[expr[key]]) + '\n'
+                    outStr += indent + key + ': ' + str(expr_num_map[expr[key]]) + '\n'
             elif isinstance(expr, Operation):
-                outStr += indent + r'operator: ' + str(exprNumMap[expr.operator]) + '\n'
-                outStr += indent + r'operands: ' + str(exprNumMap[expr.operands]) + '\n'
+                if hasattr(expr, 'operator'): # has a single operator
+                    outStr += indent + r'operator: ' + str(expr_num_map[expr.operator]) + '\n'
+                else: # has multiple operators
+                    outStr += indent + r'operators: ' + str(expr_num_map[expr.operators]) + '\n'
+                if hasattr(expr, 'operand'): # has a single operand
+                    outStr += indent + r'operand: ' + str(expr_num_map[expr.operand]) + '\n'
+                else: # has multiple operands
+                    outStr += indent + r'operands: ' + str(expr_num_map[expr.operands]) + '\n'                    
             elif isinstance(expr, Lambda):
-                outStr += indent + r'parameters: ' + ', '.join(str(exprNumMap[parameter]) for parameter in expr.parameters) + '\n'
-                outStr += indent + r'body: ' + str(exprNumMap[expr.body]) + '\n'
+                if hasattr(expr, 'parameter'): # has a single parameter
+                    outStr += indent + 'parameter: %s\n'%(expr_num_map[expr.parameter])
+                else:        
+                    outStr += indent + r'parameters: ' + ', '.join(str(expr_num_map[parameter]) for parameter in expr.parameters) + '\n'
+                outStr += indent + r'body: ' + str(expr_num_map[expr.body]) + '\n'
+            elif isinstance(expr, Indexed):
+                outStr += indent + 'var: %d\n'%(expr_num_map[expr.var])
+                if hasattr(expr, 'index'):
+                    outStr += indent +'index: %d\n'%(expr_num_map[expr.index])
+                else:
+                    outStr += indent +'indices: %d\n'%(expr_num_map[expr.indices])
+                outStr += indent +'base: "%d"\n'%expr.base        
+            elif isinstance(expr, Iter):
+                outStr += indent + 'lambda_map: %d\n'%(expr_num_map[expr.lambda_map])
+                if hasattr(expr, 'start_index'): # single index
+                    outStr += indent + 'start_index: %d\n'%(expr_num_map[expr.start_index])
+                else: # multiple indices
+                    outStr += indent + 'start_indices: %d\n'%(expr_num_map[expr.start_indices])
+                if hasattr(expr, 'end_index'): # single index
+                    outStr += indent + 'end_index: %d\n'%(expr_num_map[expr.end_index])
+                else: # multiple indices
+                    outStr += indent + 'end_indices: %d\n'%(expr_num_map[expr.end_indices])
             else:
-                outStr += indent + r'sub-expressions: ' + ', '.join(str(exprNumMap[subExpr]) for subExpr in expr._subExpressions) + '\n'
+                outStr += indent + r'sub-expressions: ' + ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions) + '\n'
         return outStr
     
     def __str__(self):
         return self.string()
     
     def _repr_html_(self):
-        from .composite.named_exprs import NamedExpressions
+        from .composite import NamedExprs, Indexed, Iter
         from .operation import Operation
         from .lambda_expr import Lambda
         from .expr import Expression
@@ -85,15 +111,41 @@ class ExpressionInfo:
         html = '<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>\n'
         for k, expr in enumerate(enumerated_expressions):
             sub_expressions = ''
-            if isinstance(expr, NamedExpressions):
+            if isinstance(expr, NamedExprs):
                 for key in sorted(expr.keys()):
                     sub_expressions += '%s: %d<br>'%(key, expr_num_map[expr[key]])
             elif isinstance(expr, Operation):
-                sub_expressions = 'operator: %d<br>'%(expr_num_map[expr.operator])
-                sub_expressions += 'operands: %d<br>'%(expr_num_map[expr.operands])
+                if hasattr(expr, 'operator'): # has a single operator
+                    sub_expressions = 'operator: %d<br>'%(expr_num_map[expr.operator])
+                else: # has multiple operators
+                    sub_expressions = 'operators: %d<br>'%(expr_num_map[expr.operator])                    
+                if hasattr(expr, 'operand'): # has a single operand
+                    sub_expressions += 'operand: %d<br>'%(expr_num_map[expr.operand])
+                else: # has multiple operands
+                    sub_expressions += 'operands: %d<br>'%(expr_num_map[expr.operands])
             elif isinstance(expr, Lambda):
-                sub_expressions = 'parameters: %s<br>'%(', '.join(str(expr_num_map[parameter]) for parameter in expr.parameters))
+                if hasattr(expr, 'parameter'): # has a single parameter
+                    sub_expressions = 'parameter: %s<br>'%(expr_num_map[expr.parameter])
+                else:                        
+                    sub_expressions = 'parameters: %s<br>'%(', '.join(str(expr_num_map[parameter]) for parameter in expr.parameters))
                 sub_expressions += 'body: %d<br>'%(expr_num_map[expr.body])
+            elif isinstance(expr, Indexed):
+                sub_expressions += 'var: %d<br>'%(expr_num_map[expr.var])
+                if hasattr(expr, 'index'):
+                    sub_expressions += 'index: %d<br>'%(expr_num_map[expr.index])
+                else:
+                    sub_expressions += 'indices: %d<br>'%(expr_num_map[expr.indices])
+                sub_expressions += 'base: "%d"<br>'%expr.base
+            elif isinstance(expr, Iter):
+                sub_expressions += 'lambda_map: %d<br>'%(expr_num_map[expr.lambda_map])
+                if hasattr(expr, 'start_index'): # single index
+                    sub_expressions += 'start_index: %d<br>'%(expr_num_map[expr.start_index])
+                else: # multiple indices
+                    sub_expressions += 'start_indices: %d<br>'%(expr_num_map[expr.start_indices])
+                if hasattr(expr, 'end_index'): # single index
+                    sub_expressions += 'end_index: %d<br>'%(expr_num_map[expr.end_index])
+                else: # multiple indices
+                    sub_expressions += 'end_indices: %d<br>'%(expr_num_map[expr.end_indices])
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr] if expr in expr_context_map else None

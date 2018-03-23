@@ -1,5 +1,6 @@
 from composite import Composite, _simplifiedCoord
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.defaults import USE_DEFAULTS
 
 class ExprList(Composite, Expression):
     """
@@ -27,7 +28,7 @@ class ExprList(Composite, Expression):
             MakeNotImplemented(subClass)
         if len(coreInfo) != 1 or coreInfo[0] != 'ExprList':
             raise ValueError("Expecting ExprList coreInfo to contain exactly one item: 'ExprList'")
-        return ExprList(*subExpressions)        
+        return ExprList(subExpressions)        
 
     def buildArguments(self):
         '''
@@ -73,11 +74,11 @@ class ExprList(Composite, Expression):
         if len(self) == 0 and fence: return '()' # for an empty list, show the parenthesis to show something.
         if formattedOperator is None:
             formattedOperator = ',' # comma is the default formatted operator
-        formattedSubExpressions = [subExpr.formatted(formatType, fence=subFence) for subExpr in self]
+        formatted_sub_expressions = [sub_expr.formatted(formatType, fence=subFence) for sub_expr in self]
         # put the formatted operator between each of formattedSubExpressions
         if fence: 
             outStr += '(' if formatType=='string' else  r'\left('
-        outStr += formattedOperator.join(formattedSubExpressions)
+        outStr += formattedOperator.join(formatted_sub_expressions)
         if fence:            
             outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
@@ -90,9 +91,10 @@ class ExprList(Composite, Expression):
         entry range and the window.
         '''
         from proveit.number import zero, one, Add, Subtract, Less
-        from proveit.number import proven_sort
         from iteration import Iter
         from proveit import ProofFailure
+        
+        if requirements is None: requirements = [] # requirements won't be passed back in this case
 
         index = zero
         started = False
@@ -106,7 +108,7 @@ class ExprList(Composite, Expression):
                 # We have not yet encounted an entry within the desired window,
                 # see if this entry is in the desired window.
                 try:
-                    start_relation = proven_sort([start_index, index], reorder=False, assumptions=assumptions)
+                    start_relation = Less.sort([start_index, index], reorder=False, assumptions=assumptions)
                     requirements.append(start_relation)
                     if start_relation.operator==Less._operator_ and prev_end is not None:
                         # The start of the window must have occurred before this entry, 
@@ -126,7 +128,7 @@ class ExprList(Composite, Expression):
             
             # See if this entry takes us to the end of the window or beyond.
             try:
-                end_relation = proven_sort([next_index, end_index], reorder=False, assumptions=assumptions)
+                end_relation = Less.sort([next_index, end_index], reorder=False, assumptions=assumptions)
                 requirements.append(end_relation)
                 # We have made it to the end of the window.
                 if started:
@@ -135,7 +137,7 @@ class ExprList(Composite, Expression):
                     break
                 else:
                     # The full window is within this entry.
-                    start_relation = proven_sort([index, start_index], reorder=False, assumptions=assumptions)
+                    start_relation = Less.sort([index, start_index], reorder=False, assumptions=assumptions)
                     requirements.append(start_relation)
                     yield (start_index, end_index) # Yield the full window that is within a single entry.
                     break
@@ -147,18 +149,18 @@ class ExprList(Composite, Expression):
             index = next_index # Move on to the next entry.
             prev_end = entry_end
     
-    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
         Flattens nested ExprLists that arise from Embed substitutions.
         '''
-        from iter import Iter
+        from iteration import Iter
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         subbed_exprs = []
         for expr in self:
-            subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars)
+            subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
             if isinstance(expr, Iter) and isinstance(subbed_exprs, ExprList):
                 # The iterated expression is being expanded 
                 # and should be embedded into the list.

@@ -2,7 +2,7 @@ from composite import Composite
 from expr_list import ExprList
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.defaults import USE_DEFAULTS
-from embed import Embed
+from iteration import Iter
 import itertools
 from ast import literal_eval
                 
@@ -54,14 +54,13 @@ class ExprTensor(Composite, Expression):
         '''
         from composite import _simplifiedCoord
         from proveit._core_ import KnownTruth
-        from proveit.number import proven_sort, zero, one, num, Add, Subtract, Greater
+        from proveit.number import Less, Greater, zero, one, num, Add, Subtract
         from iteration import Iter
-        
+
+        requirements = []                
         if not isinstance(tensor, dict):
-            tensor = {loc:element for loc, element in ExprTensor.TensorDictFromIterables(tensor, assumptions)}
-        
-        requirements = []
-        
+            tensor = {loc:element for loc, element in ExprTensor._tensorDictFromIterables(tensor, assumptions, requirements)}
+                
         # Map direct compositions for the end-coordinate of Iter elements
         # to their simplified forms.
         self.endCoordSimplifications = dict()
@@ -111,7 +110,7 @@ class ExprTensor(Composite, Expression):
         for axis in xrange(ndims): # for each axis
             # KnownTruth sorting relation for the simplified coordinates used along this axis
             # (something with a form like a < b <= c = d <= e, that sorts the tensor location coordinates): 
-            coord_sorting_relation = proven_sort(coord_sets[axis], assumptions=assumptions)
+            coord_sorting_relation = Less.sort(coord_sets[axis], assumptions=assumptions)
             sorted_coords = list(coord_sorting_relation.operands)
             
             if shape is None:
@@ -131,13 +130,13 @@ class ExprTensor(Composite, Expression):
             for c1, c2 in zip(sorted_coords[:-1], sorted_coords[1:]):
                 diff = _simplifiedCoord(Subtract(c2, c1), assumptions, requirements)
                 # get the relationship between the difference of successive coordinate and zero.
-                diff_relation = proven_sort([zero, diff], reverse=True, assumptions=assumptions)
+                diff_relation = Greater.sort([zero, diff], assumptions=assumptions)
                 if isinstance(diff_relation, Greater):
                     if c2 == sorted_coords[-1] and shape is not None:
                         raise ExprTensorError("Coordinates extend beyond the specified shape in axis %d: %s after %s"%(axis, str(coord_sorting_relation.operands[-1]), str(shape[axis])))                        
-                    assert tuple(diff_relation.operands) == (diff, zero), 'Inconsistent proven_sort results'
+                    assert tuple(diff_relation.operands) == (diff, zero), 'Inconsistent Less.sort results'
                     # diff > 0, let's compare it with one now
-                    diff_relation = proven_sort([one, diff], reverse=True, assumptions=assumptions)
+                    diff_relation = Greater.sort([one, diff], assumptions=assumptions)
                 requirements.append(diff_relation)
                 diff_relations.append(diff_relation)
             self.coordDiffRelationLists.append(ExprList(diff_relations))
@@ -181,37 +180,38 @@ class ExprTensor(Composite, Expression):
         return loc_exprs
 
     @staticmethod
-    def TensorDictFromIterables(tensor, assumptions=USE_DEFAULTS):
+    def _tensorDictFromIterables(tensor, assumptions, requirements):
         '''
         From nested lists of Expressions, create a tensor dictionary, 
         mapping multi-dimensional indices to Expression elements.
         Yields location, element pairs that define a tensor.
         '''
         from proveit._core_ import KnownTruth        
-        from proveit.number import zero, one, Add, simplify
+        from composite import _simplifiedCoord
+        from proveit.number import zero, one, Add, Subtract
         try:
             coord = zero
-            for element in tensor:
+            for entry in tensor:
                 # simplify the coordinate before moving on
                 # (the simplified form will be equated with the original in the
                 # sorting relations of the ExprTensor).
-                coord = simplify(coord, assumptions)
-                if isinstance(element, KnownTruth):
-                    element = element.expr # extract the Expression from the KnownTruth
-                if isinstance(element, Expression):
+                coord = _simplifiedCoord(coord, assumptions, requirements)
+                if isinstance(entry, KnownTruth):
+                    entry = entry.expr # extract the Expression from the KnownTruth
+                if isinstance(entry, Expression):
                     loc = (coord,)
-                    if isinstance(element, Embed) and len(element.shape) > 1:
-                        loc += (zero,)*(len(element.shape)-1) # append zeros for the extra dimensions
-                    yield loc, element # yield the location and element
-                    if isinstance(element, Embed):
+                    if isinstance(entry, Iter) and entry.ndims > 1:
+                        loc += (zero,)*(entry.ndims-1) # append zeros for the extra dimensions
+                    yield loc, entry # yield the location and element
+                    if isinstance(entry, Iter):
                         # skip the coordinate ahead over the Embed expression
-                        coord = Add(coord, element.shape[0])
+                        coord = Add(coord, Subtract(entry.end_indices[0], entry.start_indices[0]), one)
                     else:
                         coord = Add(coord, one) # shift the coordinate ahead by one
                 else:
-                    for sub_loc, element in ExprTensor.TensorDictFromIterables(element):
+                    for sub_loc, entry in ExprTensor.TensorDictFromIterables(entry):
                         loc = (coord,)+sub_loc
-                        yield loc, element
+                        yield loc, entry
         except TypeError:
             raise TypeError('An ExprTensor must be a dictionary of indices to elements or a nested iterables of Expressions')
     
@@ -372,24 +372,26 @@ class ExprTensor(Composite, Expression):
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
         '''
-        from proveit.number import proven_insertion, proven_sort, Add, Subtract
+        from proveit.number import Less, Add, Subtract
         from iteration import Iter
         from composite import _simplifiedCoord
         if len(tensor_loc) != self.ndims:
             raise ExprTensorError("The 'tensor_loc' has the wrong number of dimensions: %d instead of %d"%(len(tensor_loc), self.ndims))
         
+        if requirements is None: requirements = [] # requirements won't be passed back in this case
+
         lower_indices = []
         upper_indices = []
         for coord, sorted_coords in zip(tensor_loc, self.sortedCoordLists):
             lower, upper = None, None
             try:
-                lower, upper = proven_insertion(sorted_coords, coord, assumptions=assumptions)
+                lower, upper = Less.insert(sorted_coords, coord, assumptions=assumptions)
             except:
                 raise ExprTensorError("Could not determine the 'tensor_loc' range within the tensor coordinates under the given assumptions")
             # The relationship to the lower and upper coordinate bounds are requirements for determining
             # the element being assessed.
-            requirements.append(proven_sort((sorted_coords[lower], coord), reorder=False, assumptions=assumptions))
-            requirements.append(proven_sort((coord, sorted_coords[upper]), reorder=False, assumptions=assumptions))
+            requirements.append(Less.sort((sorted_coords[lower], coord), reorder=False, assumptions=assumptions))
+            requirements.append(Less.sort((coord, sorted_coords[upper]), reorder=False, assumptions=assumptions))
             lower_indices.append(lower)
             upper_indices.append(upper)
         
@@ -551,8 +553,9 @@ class ExprTensor(Composite, Expression):
         entry range and the window.
         '''
         
-        from proveit.number import proven_sort
-                
+        from proveit.number import Less, Greater
+        if requirements is None: requirements = [] # requirements won't be passed back in this case
+                                
         # For each axis, obtain the sorted coordinates of the substituted tensor,
         # insert the start and end indices for the desired range, and determine
         # the starting and ending locations relative to operator positions of the 
@@ -564,9 +567,9 @@ class ExprTensor(Composite, Expression):
             start_index =start_indices[axis]
             end_index = end_indices[axis]
             
-            sorted_coords = tensor.sortedCoordLists[axis]
+            sorted_coords = self.sortedCoordLists[axis]
             # insert the start_index and the end_index into the sorted list of coordinates in their proper places
-            coord_sorting_relation = proven_sort(sorted_coords + [start_index, end_index], assumptions=assumptions)
+            coord_sorting_relation = Less.sort(sorted_coords + [start_index, end_index], assumptions=assumptions)
             # get the relative start and end integer coordinates
             rel_start_loc.append(coord_sorting_relation.operands.index(start_index))
             rel_end_loc.append(coord_sorting_relation.operands.index(end_index))
@@ -576,11 +579,11 @@ class ExprTensor(Composite, Expression):
         # For each entry of the substituted tensor, determine if it is within the start/end
         # "window".  If so, yield the intersected range in terms of parameter values
         # (inverted from the tensor coordinates).  Keep track of the requirements.
-        for rel_loc_in_tensor, entry in tensor.iteritems():
+        for rel_loc_in_tensor, entry in self.iteritems():
             # convert from the relative location within the tensor to the
             # tensor location in absolute coordinates.
-            entry_start = tensor.tensorLoc(rel_loc_in_tensor)
-            entry_end = tensor.endCorner(rel_loc_in_tensor)
+            entry_start = self.tensorLoc(rel_loc_in_tensor)
+            entry_end = self.endCorner(rel_loc_in_tensor)
             
             # convert from the absolute tensor location to the relative
             # location w.r.t. the  coord_sorting_relations that include
@@ -603,7 +606,7 @@ class ExprTensor(Composite, Expression):
                         # add the requirements showing the intersection is empty along the first such axis.
                         coord_sorting_relation =  coord_sorting_relations[axis]
                         aCoord, bCoord = coord_sorting_relation.operands[a], coord_sorting_relation.operands[b]
-                        empty_intersection_relation = proven_sort([aCoord, bCoord], reversed=True, assumptions=assumptions)
+                        empty_intersection_relation = Greater.sort([aCoord, bCoord], assumptions=assumptions)
                         requirements.append(empty_intersection_relation)
             else:
                 # There is a non-empty intersection rectangle to yield for a particular entry.
@@ -614,12 +617,12 @@ class ExprTensor(Composite, Expression):
                     for j, k in ((a, b), (c, d), (e, f)):
                         coord_sorting_relation =  coord_sorting_relations[axis]
                         jCoord, kCoord = coord_sorting_relation.operands[j], coord_sorting_relation.operands[k]
-                        empty_intersection_relation = proven_sort([jCoord, kCoord], assumptions=assumptions)
+                        empty_intersection_relation = Less.sort([jCoord, kCoord], assumptions=assumptions)
                         requirements.append(empty_intersection_relation)
                 yield (intersection_start, intersection_end)        
         
     
-    def substituted(self, exprMap, relabelMap = None, reservedVars = None, assumptions = USE_DEFAULTS, requirements = None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
@@ -631,10 +634,12 @@ class ExprTensor(Composite, Expression):
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
 
+        if requirements is None: requirements = [] # requirements won't be passed back in this case
+
         tensor = dict()
         for loc, element in self.iteritems():
             subbed_loc = loc.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
-            subbed_elem = element.substituted(exprMap, relabelMap, reservedVars)
+            subbed_elem = element.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
             if isinstance(element, Iter) and isinstance(subbed_elem, ExprTensor):
                 # An iteration element became an ExprTensor upon substitution,
                 # so insert the elements directly into this outer ExprTensor.
@@ -644,10 +649,16 @@ class ExprTensor(Composite, Expression):
             else:
                 tensor[subbed_loc] = subbed_elem
         expr_tensor = ExprTensor(tensor, assumptions)
+        for requirement in expr_tensor.requirements:
+            # check that all ExprTensor requirements satisfy restrictions
+            requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope
         
         # pass back the new requirements that are different from the ExprTensor requirements after making substitutions.
         old_requirements = {requirement.substituted(exprMap, relabelMap, reservedVars) for requirement in self.requirements}
-        requirements += [requirement for requirement in expr_tensor.requirements if requirement not in old_requirements]
+        new_requirements = [requirement for requirement in expr_tensor.requirements if requirement not in old_requirements]
+            
+        requirements += new_requirements
+        
         return expr_tensor
                            
     def usedVars(self):

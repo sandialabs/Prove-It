@@ -1,5 +1,5 @@
 from proveit import OperationOverInstances
-from proveit import Literal, Operation, MultiVariable, Etcetera, USE_DEFAULTS
+from proveit import Literal, Operation, Iter, USE_DEFAULTS
 from proveit._common_ import P, Q, S, xMulti
 
 class NotExists(OperationOverInstances):
@@ -28,7 +28,7 @@ class NotExists(OperationOverInstances):
         '''
         from _theorems_ import notExistsUnfolding
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
         return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
     
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
@@ -38,7 +38,7 @@ class NotExists(OperationOverInstances):
         '''
         from _theorems_ import notExistsFolding
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
         folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
         return folding.deriveConclusion(assumptions)
 

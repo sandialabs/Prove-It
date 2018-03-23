@@ -101,7 +101,7 @@ class Storage:
             for sub_context_name in self.subContextNames:
                 f.write(sub_context_name + '\n')
                 
-    def appendSubContextNames(self, subContextName):
+    def appendSubContextName(self, subContextName):
         '''
         Append the sub-context name to the _sub_contexts_.txt list.
         '''
@@ -623,7 +623,7 @@ class Storage:
         for a Literal operator.  When there are muliple items with the same name, full names 
         must be used instead of abbreviations.
         '''
-        from proveit import Operation, Expression, ExpressionList, NamedExpressions, ExpressionTensor
+        from proveit import Operation, Expression, ExprList, NamedExprs, ExprTensor
         
         if expr in Operation.operationClassOfOperator:
             # the expression is an '_operator_' of an Operation class
@@ -650,7 +650,7 @@ class Storage:
         if unnamedSubExprOccurences[expr] > 1:
             return # already visited this -- no need to reprocess it
         
-        if not isSubExpr or expr.__class__ not in (ExpressionList, NamedExpressions, ExpressionTensor): 
+        if not isSubExpr or expr.__class__ not in (ExprList, NamedExprs, ExprTensor): 
             # add expr's class to exprClass and named items (unless it is a basic Composite sub-Expression
             # in which case we'll use a python list or dictionary to represent the composite expression).
             exprClasses.add(expr.__class__)
@@ -663,8 +663,8 @@ class Storage:
                     argname, arg = arg # splits into a name, argument pair
             except:
                 pass
-            if not isinstance(arg, Expression) and not isinstance(arg, str):
-                raise TypeError("The arguments of %s.buildArguments() should be Expressions or strings" %str(expr.__class__))
+            if not isinstance(arg, Expression) and not isinstance(arg, str) and not isinstance(arg, int):
+                raise TypeError("The arguments of %s.buildArguments() should be Expressions or strings or integers" %str(expr.__class__))
             if isinstance(arg, Expression):
                 subExpr = arg
                 self._exprBuildingPrerequisites(subExpr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems)
@@ -699,7 +699,7 @@ class Storage:
         return str(exprClass).split('.')[-1]
     
     def _exprBuildingCode(self, expr, itemNames, isSubExpr=True):
-        from proveit import Expression, Composite, ExpressionList, NamedExpressions, ExpressionTensor
+        from proveit import Expression, Composite, ExprList, NamedExprs, ExprTensor
                 
         if expr is None: return 'None' # special 'None' case
         
@@ -710,6 +710,8 @@ class Storage:
         def argToString(arg):
             if isinstance(arg, str): 
                 return arg # just a single string
+            if isinstance(arg, int):
+                return str(arg) # ineger to convert to a string
             if isinstance(arg, Expression):
                 # convert a sub-Expression to a string, 
                 # either a variable name or code to construct the sub-expression:
@@ -727,11 +729,11 @@ class Storage:
         argStr = ', '.join(argToString(arg) for arg in expr.buildArguments())        
         
         if isinstance(expr, Composite):
-            if isinstance(expr, ExpressionList):
+            if isinstance(expr, ExprList):
                 compositeStr = '[' + argStr + ']'
-            else: # ExpressionTensor or NamedExpressions
+            else: # ExprTensor or NamedExprs
                 compositeStr = '{' + argStr.replace(' = ', ':') + '}'                    
-            if isSubExpr and expr.__class__ in (ExpressionList, NamedExpressions, ExpressionTensor): 
+            if isSubExpr and expr.__class__ in (ExprList, NamedExprs, ExprTensor): 
                 # It is a sub-Expression and a standard composite class.
                 # Just pass it in as an implicit composite expression (a list or dictionary).
                 # The constructor should be equipped to handle it appropriately.

@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit._common_ import a, b, x, xEtc
+from proveit._common_ import a, b, x
 
 class Abs(Operation):
     # operator of the Abs operation.
