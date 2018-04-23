@@ -1,6 +1,6 @@
-from proveit import Operation, Literal
+from proveit import Function, Literal
 
-class Distinct(Operation):
+class Distinct(Function):
     '''
     The Distinct operation defines a property for any collection.
     It evaluates to True iff the elements are all unique; 
@@ -9,6 +9,6 @@ class Distinct(Operation):
     _operator_ = Literal('distinct', r'{\rm distinct}', context=__file__)
     
     def __init__(self, *elements):
-        Operation.__init__(self, Distinct._operator_, elements)
+        Function.__init__(self, Distinct._operator_, elements)
 
     

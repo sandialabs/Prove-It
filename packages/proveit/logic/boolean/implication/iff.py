@@ -1,15 +1,15 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.conjunction import compose
 from implies import Implies
 from proveit._common_ import A, B, C
 
 # if and only if: A => B and B => A
-class Iff(BinaryOperation):
+class Iff(Operation):
     # The operator of the Iff operation
     _operator_ = Literal(stringFormat='<=>', latexFormat=r'\Leftrightarrow', context=__file__)
     
     def __init__(self, A, B):
-        BinaryOperation.__init__(self, Iff._operator_, A, B)
+        Operation.__init__(self, Iff._operator_, (A, B))
         self.A = A
         self.B = B
         

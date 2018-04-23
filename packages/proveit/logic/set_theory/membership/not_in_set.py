@@ -1,12 +1,12 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit._common_ import x, S
 
-class NotInSet(BinaryOperation):
+class NotInSet(Operation):
     # operator of the NotInSet operation
     _operator_ = Literal(stringFormat='not-in', latexFormat=r'\notin', context=__file__)    
     
     def __init__(self, element, domain):
-        BinaryOperation.__init__(self, NotInSet._operator_, element, domain)
+        Operation.__init__(self, NotInSet._operator_, (element, domain))
         self.element = self.operands[0]
         self.domain = self.operands[1]  
     

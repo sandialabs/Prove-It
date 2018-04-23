@@ -26,6 +26,7 @@ import importlib
 import json
 from glob import glob
 from storage import Storage
+import traceback
 
 class Context:
     '''
@@ -302,14 +303,6 @@ class Context:
         for expr_id in new_expr_ids:
             storage._addReference(expr_id) # add reference to a new common expression
     
-    def getSubContexts(self):
-        '''
-        Return the l
-        '''
-        sub_contexts_path = os.path.join(self._storage.directory, '_sub_contexts_.txt')
-        if not os.path.isfile(sub_contexts_path):
-            open(sub_contexts_path, 'wt').close()
-    
     def makeSpecialExprModule(self, kind):
         '''
         Make a _common_.py, _axioms_.py, or _theorems_.py file for importing
@@ -343,23 +336,31 @@ class Context:
                 for line in f.readlines():
                     name, expr_id = line.split()
                     self._common_expr_ids[name] = expr_id
+                    CommonExpressions.expr_id_contexts[self.name + '.' + expr_id] = self
                     yield name
     
-    def recordReferencedContexts(self):
+    def recordCommonExprDependencies(self):
         '''
-        Record the context names of any reference common expressions in storage
+        Record the context names of any referenced common expressions in storage
         while creating the common expressions for this context
-        (for the purposes of checking for illegal mutual dependencies).
+        (for the purposes of checking for illegal cyclic dependencies).
         '''
-        self._storage.recordReferencedContexts(CommonExpressions.context_names_of_referenced_commons)
+        self._storage.recordCommonExprDependencies(CommonExpressions.referenced_contexts)
 
-    def referencedContexts(self):
+    def storedCommonExprDependencies(self):
         '''
         Return the stored set of context names of common expressions
-        referenced by the common expression notebook of this context.
+        referenced by the common expressions of this context.
         '''
-        return self._storage.referencedContexts()    
-    
+        return self._storage.storedCommonExprDependencies()    
+
+    def cyclicallyReferencedCommonExprContext(self):
+        '''
+        Check for illegal cyclic dependencies of common expression notebooks.
+        If there is one, return the name; otherwise return None.
+        '''
+        return self._storage.cyclicallyReferencedCommonExprContext(CommonExpressions.referenced_contexts)
+        
     def referenceDisplayedExpressions(self, name):
         '''
         Reference displayed expressions, recorded under the given name
@@ -368,14 +369,7 @@ class Context:
         were displayed last time will be unreferenced.
         '''
         self._storage.referenceDisplayedExpressions(name)
-                        
-    def mutualReferencedContexts(self):
-        '''
-        Check for illegal mutual dependencies of common expression notebooks.
-        If there is one, return the name; otherwise return None.
-        '''
-        return self._storage.mutualReferencedContexts(CommonExpressions.context_names_of_referenced_commons)
-    
+                            
     def getAxiom(self, name):
         '''
         Return the Axiom of the given name in this context.
@@ -551,21 +545,21 @@ class Context:
         '''
         Clear (see clear method) this context and all sub-contexts.
         '''
-        for sub_context in self.subContexts():
+        for sub_context in self.getSubContexts():
             sub_context.clear()
         self.clear()
 
-    def numStoredExpressions(self):
+    def containsAnyExpression(self):
         '''
-        Return the number of expressions stored in the __pv_it directory.
+        Return True if this context and all of its sub-contexts
+        contain no expressions.
         '''
-        return self._storage.numStoredExpressions()        
-
-    def numAllStoredExpressions(self):
-        '''
-        Return the number of expressions stored in the __pv_it directory.
-        '''
-        return self.numStoredExpressions() + sum([sub_context.numStoredExpressions() for sub_context in self.subContexts()], 0)
+        if self._storage.containsAnyExpression():
+            return True
+        for sub_context in self.getSubContexts():
+            if sub_context.containsAnyExpression():
+                return True
+        return False
                 
 class Axioms:
     '''
@@ -573,18 +567,23 @@ class Axioms:
     the _certified_ database (returning the associated KnownTruth object).
     '''
     def __init__(self, filename):
-        self.context = Context(filename)
+        self._context = Context(filename)
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self.context.axiomNames())
+        return sorted(self.__dict__.keys() + self._context.axiomNames())
 
     def __getattr__(self, name):
         try:
-            axiom_truth = self.context.getAxiom(name).provenTruth
+            axiom_truth = self._context.getAxiom(name).provenTruth
         except KeyError:
-            raise AttributeError("'" + name + "' axiom not found in '" + self.context.name + "'\n(make sure to execute the appropriate '_axioms_.ipynb' notebook after any changes)")
-        axiom_truth.deriveSideEffects()
+            raise AttributeError("'" + name + "' axiom not found in '" + self._context.name + "'\n(make sure to execute the appropriate '_axioms_.ipynb' notebook after any changes)")
+        try:
+            axiom_truth.deriveSideEffects()
+        except Exception as e:
+            print "Failure to derive side effects of axiom", name
+            traceback.print_exc()
+            raise e
         return axiom_truth
     
 class Theorems:
@@ -593,7 +592,7 @@ class Theorems:
     the _certified_ database (returning the associated KnownTruth object).
     '''
     def __init__(self, filename):
-        self.context = Context(filename)
+        self._context = Context(filename)
         self.__file__ = filename
 
     def __dir__(self):
@@ -601,10 +600,15 @@ class Theorems:
                 
     def __getattr__(self, name):
         try:
-            theorem_truth = self.context.getTheorem(name).provenTruth
+            theorem_truth = self._context.getTheorem(name).provenTruth
         except KeyError:
-            raise AttributeError("'" + name + "' theorem not found in '" + self.context.name +  "'\n(make sure to execute the appropriate '_theorems_.ipynb' notebook after any changes)")
-        theorem_truth.deriveSideEffects()
+            raise AttributeError("'" + name + "' theorem not found in '" + self._context.name +  "'\n(make sure to execute the appropriate '_theorems_.ipynb' notebook after any changes)")
+        try:
+            theorem_truth.deriveSideEffects()
+        except Exception as e:
+            print "Failure to derive side effects of theorem", name
+            traceback.print_exc()
+            raise e
         return theorem_truth
 
 class CommonExpressions:
@@ -612,17 +616,18 @@ class CommonExpressions:
     Used in _common_.py modules for accessing common sub-expressions.
     '''
     
-    # Record the Context of all created CommonExpressions objects 
-    # (all refererenced _common_.py contexts).
-    context_names_of_referenced_commons = set()
+    # map storage ids of common expression to the Context of the common expression
+    expr_id_contexts = dict() # populated in Context.commonExpressionNames()
+    
+    # set of contexts that has a common expression being referenced
+    referenced_contexts = set() # populated in Storage._addReference(...)
     
     def __init__(self, filename):
-        self.context = Context(filename)
-        CommonExpressions.context_names_of_referenced_commons.add(self.context.name)
+        self._context = Context(filename)
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + list(self.context.commonExpressionNames()))
+        return sorted(self.__dict__.keys() + list(self._context.commonExpressionNames()))
 
     def __getattr__(self, name):
         # Is the current directory a "context" directory?
@@ -634,7 +639,7 @@ class CommonExpressions:
         # notebooks via 'build.py' (at the root level of Prove-It).
         
         try:
-            expr = self.context.getCommonExpr(name)
+            expr = self._context.getCommonExpr(name)
             if in_context and os.path.isfile(failed_common_import_filename):
                 # successful import -- don't need this 'failure' file anymore.
                 os.remove(failed_common_import_filename)
@@ -644,9 +649,9 @@ class CommonExpressions:
             if in_context:
                 # store the context in which a common expression failed to import.
                 with open(failed_common_import_filename, 'w') as f:
-                    f.write(self.context.name + '\n')                
+                    f.write(self._context.name + '\n')                
                 
-            raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self.context.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
+            raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self._context.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
 
 class ContextException(Exception):
     def __init__(self, message):

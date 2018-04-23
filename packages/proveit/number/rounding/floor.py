@@ -1,12 +1,12 @@
-from proveit import Literal, Operation
+from proveit import Literal, Function
 from proveit.number.sets import Integers, Naturals
 
-class Floor(Operation):
+class Floor(Function):
     # operator of the Floor operation.
     _operator_ = Literal(stringFormat='floor', context=__file__)
     
     def __init__(self, A):
-        Operation.__init__(self, Floor._operator_, A)
+        Function.__init__(self, Floor._operator_, A)
         self.operand = A
 
     def _closureTheorem(self, numberSet):

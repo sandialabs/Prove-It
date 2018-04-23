@@ -5,8 +5,8 @@ class Max(Operation):
     # operator of the Max operation.
     _operator_ = Literal(stringFormat='Max', latexFormat=r'{\rm Max}', context=__file__)
     
-    def __init__(self, A, B):
-        Operation.__init__(self, Max._operator_, [A, B])
+    def __init__(self, *operands):
+        Operation.__init__(self, Max._operator_, operands)
 
     def _closureTheorem(self, numberSet):
         import theorems

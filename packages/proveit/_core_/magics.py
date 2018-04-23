@@ -120,7 +120,7 @@ class ContextInterface:
                 self.moveUp(idx+1)
             def deleteSubContext(sender):
                 # before deleting a sub-context, we need confirmation by entering the sub-context name
-                delete_msg = widgets.Label("To remove (unlink) sub-context, enter its name as confirmation", layout={'width':'350px', 'max_width':'350px'})
+                delete_msg = widgets.Label("To remove (unlink) sub-context, enter its name as confirmation", layout={'width':'400px', 'max_width':'400px'})
                 verification_text = widgets.Text(layout=widgets.Layout(flex_grow=2, max_width='500px'))
                 cancel_button = widgets.Button(description='cancel', disabled=False, tooltip='cancel', layout={'width':'80px'})
                 cancel_button.on_click(dismissDelete)
@@ -169,7 +169,10 @@ class ContextInterface:
         '''
         if subContextName in self.subContextNames:
             return
+        if subContextName=='': return
         self.context.appendSubContextName(subContextName)
+        self.subContextNames.append(subContextName)
+        self._addSubContextRow(subContextName)
     
     def deleteSubContext(self, contextNameToDelete):
         '''
@@ -181,10 +184,11 @@ class ContextInterface:
         with the same name back in.
         '''
         context = Context(contextNameToDelete)
-        context.clearAll()
-        num_stored_expressions = context.numAllStoredExpressions()
+        # remove all internal references and see if any external references remain
+        context.clearAll() 
+        contains_expressions = context.containsAnyExpression()
         def dismiss(sender):
-            if num_stored_expressions == 0:
+            if not contains_expressions:
                 # Successful removal; we need to remove the deleted sub-context name from
                 # the self.subContextNames list, the displayed widgets, and the list in _sub_contexts_.txt.
                 new_sub_contexts = []
@@ -193,18 +197,18 @@ class ContextInterface:
                     if sub_context_name != contextNameToDelete:
                         new_sub_contexts.append(sub_context_name)
                         new_widget_children.append(self.widget.children[k])
-                self.subContextNames.append(new_sub_contexts)
+                self.subContextNames = new_sub_contexts
                 self.updateSubContextNames()
                 self.widget.children = new_widget_children
             else:
-                # dismiss the delete confirmation/message by removing all be the first row in the row_widget
+                # dismiss the delete confirmation/message by removing all but the first row in the row_widget
                 row_widget.children = (row_widget.children[0],)
-        if num_stored_expressions == 0:
+        if not contains_expressions:
             msg = 'Removing (unlinking) sub-context; add it again to resurrect it or delete the directory to make it permanent'
-            msg_width = '600px'
+            msg_width = '650px'
         else:
-            msg = 'Context removal cancelled; there are external references to its expressions',
-            msg_width = '450px'
+            msg = "Context removal cancelled; there are external references to its expressions (or corrupted '__pv_it' directories)"
+            msg_width = '650px'
         row_widget = self.widget.children[self.subContextNames.index(contextNameToDelete)]
         delete_msg = widgets.Label(msg, layout={'width':msg_width, 'max_width':msg_width})
         gotit_button = widgets.Button(description='got it', disabled=False, tooltip='got it', layout={'width':'80px'})
@@ -368,13 +372,13 @@ class ProveItMagic(Magics):
         print "%end_common will finalize the definitions"
 
     def end_common(self):
-        # Record the context namees of common expressions referenced
+        # Record the context names of common expressions referenced
         # by this context's common expressions notebook...
-        self.context.recordReferencedContexts()
+        self.context.recordCommonExprDependencies()
         # and check for illegal mutual references.
-        mutual_referenced_commons_context = self.context.mutualReferencedContexts()
-        if mutual_referenced_commons_context is not None:
-            raise ProveItMagicFailure("Not allowed to have mutually dependent 'common expression' notebooks: %s._common_"%mutual_referenced_commons_context)
+        cyclically_referenced_common_expr_context = self.context.cyclicallyReferencedCommonExprContext()
+        if cyclically_referenced_common_expr_context is not None:
+            raise ProveItMagicFailure("Not allowed to have cyclically dependent 'common expression' notebooks: %s._common_"%cyclically_referenced_common_expr_context)
         self.finish('common')
     
     @line_magic

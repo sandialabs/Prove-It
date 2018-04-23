@@ -1,12 +1,12 @@
-from proveit import Operation, Literal, USE_DEFAULTS
+from proveit import Function, Literal, USE_DEFAULTS
 from proveit._common_ import S, a, b, N, xMulti
 
-class Card(Operation):
+class Card(Function):
     # operator of the Card operation
     _operator_ = Literal(stringFormat='card', context=__file__)
 
     def __init__(self, domain):
-        Operation.__init__(self, Card._operator_, domain)
+        Function.__init__(self, Card._operator_, domain)
         self.domain = self.operands[0]
     
     def string(self, fence=False):

@@ -7,7 +7,7 @@ class NamedExprs(Composite, Expression):
     """
     An NamedExprs is a composite expr that maps strings to Expressions.
     """
-    def __init__(self, items):
+    def __init__(self, items, styles=tuple(), requirements=tuple()):
         '''
         Create a NamedExprs Expression object from a list (iterable) of
         (keyword, Expression) pairs, where each keyword is a string.
@@ -27,7 +27,7 @@ class NamedExprs(Composite, Expression):
             if not isinstance(val, Expression): 
                 raise TypeError("Values of an expression dictionary must be Expressions")
         self.keywords, self.elems = keywords, elems
-        Expression.__init__(self, ['NamedExprs'] + self.keys(), [self[key] for key in self.keys()])
+        Expression.__init__(self, ['NamedExprs'] + self.keys(), [self[key] for key in self.keys()], styles, requirements)
 
     def __getitem__(self, key):
         return self.elems[key]

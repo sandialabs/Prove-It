@@ -7,7 +7,23 @@ from proveit._core_.context import Context
 import re
 import os
 
+class ExprType(type):
+    '''
+    By overriding the Expression type, we can make Operation-type
+    expressions automatically populate the Operation.operationClassOfOperator
+    dictionary as long as the relevent '_operator_' class attribute is 
+    accessed at least once.
+    '''
+    
+    def __getattribute__(cls, name):
+        from proveit._core_.expression.operation import Operation
+        value = type.__getattribute__(cls, name)
+        if issubclass(cls, Operation) and name == '_operator_':
+            Operation.operationClassOfOperator[value] = cls
+        return value
+
 class Expression:
+    __metaclass__ = ExprType
     unique_id_map = dict() # map unique_id's to unique_rep's
     displayed_expressions = set() # set of expressions for which __repr_html__ has been called this session
     
@@ -17,10 +33,15 @@ class Expression:
     # recursion in the `prove` method.
     in_progress_to_conclude = set() 
             
-    def __init__(self, coreInfo, subExpressions=tuple()):
+    def __init__(self, coreInfo, subExpressions=tuple(), styles=tuple(), requirements=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
         level) which should be a list (or tuple) of strings, and a list (or tuple) of subExpressions.
+        The "styles" are optional key word strings to indicate how the Expression should be formatted
+        when there are different possibilities (e.g. division with '/' or as a fraction).  The meaning
+        of the expression is independent of its styles signature.
+        The "requirements" are expressions that must be proven to be true in order for the Expression
+        to make sense.
         '''
         for coreInfoElem in coreInfo:
             if not isinstance(coreInfoElem, str):
@@ -35,6 +56,13 @@ class Expression:
         self._unique_id = hash(self._unique_rep)
         while self._unique_id in Expression.unique_id_map and Expression.unique_id_map[self._unique_id] != self._unique_rep:
             self._unique_id += 1
+        # combine requirements from all sub-expressions
+        requirements = sum([tuple(subExpression.requirements) for subExpression in subExpressions], tuple()) + requirements
+        # Expression requirements are essentially assumptions that need to be proven for the expression to
+        # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
+        # (which may not be necessary, but does not hurt).   
+        self.requirements = defaults.checkedAssumptions(requirements)
+        self.styles = tuple(styles) # formatting style options that don't affect the meaning of the expression
         Expression.unique_id_map[self._unique_id] = self._unique_rep
     
     def _generate_unique_rep(self, objectRepFn):
@@ -44,7 +72,7 @@ class Expression:
         import sys
         context = Context(sys.modules[self.__class__.__module__].__file__)
         # get the full class path relative to the root context where the class is defined
-        class_path = context.name + '.' + self.__class__.__module__.split('.')[-1] + '.' + str(self.__class__).split('.')[-1]
+        class_path = context.name + '.' + self.__class__.__module__.split('.')[-1] + '.' + self.__class__.__name__
         return class_path + '[' + ','.join(self._coreInfo) + '];[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
 
     @staticmethod

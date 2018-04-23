@@ -19,12 +19,11 @@ is an equality (in which case, substitution may simply be performed).
 """
 
 
-from proveit import Expression, Operation
+from proveit import Expression, Operation, OperationSequence
 from proveit import defaults, USE_DEFAULTS, KnownTruth, ProofFailure
-from binary_operation import BinaryOperation
 import itertools
 
-class TransitiveRelation(BinaryOperation):
+class TransitiveRelation(Operation):
     r'''
     Base class for generic transitive relations.  Examples
     are <, <=, >, >= as well as subset, subseteq, superset,
@@ -32,8 +31,8 @@ class TransitiveRelation(BinaryOperation):
     TransitiveRelation which is also symmetric (x=y means that y=x).
     '''
     
-    def __init__(self, operator,lhs, rhs):
-        BinaryOperation.__init__(self,operator, lhs, rhs)
+    def __init__(self, operator, lhs, rhs):
+        Operation.__init__(self,operator, (lhs, rhs))
         self.lhs = lhs
         self.rhs = rhs
 
@@ -139,7 +138,7 @@ class TransitiveRelation(BinaryOperation):
         if RelationClass is not Equals:
             # stronger then weaker relations
             for Relation in (RelationClass._checkedStrongRelationClass(), RelationClass._checkedWeakRelationClass()):
-                for knownTruth in Relation.knownLeftSides.get(expr, []):
+                for knownTruth in list(Relation.knownLeftSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
                         yield (knownTruth, knownTruth.rhs)
                 
@@ -160,7 +159,7 @@ class TransitiveRelation(BinaryOperation):
         if RelationClass is not Equals:
             # stronger then weaker relations
             for Relation in (RelationClass._checkedStrongRelationClass(), RelationClass._checkedWeakRelationClass()):
-                for knownTruth in Relation.knownRightSides.get(expr, []):
+                for knownTruth in list(Relation.knownRightSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
                         yield (knownTruth, knownTruth.lhs)
     
@@ -174,7 +173,7 @@ class TransitiveRelation(BinaryOperation):
         '''
         from proveit.logic import Equals
         from proveit.lambda_map import SubExprRepl
-        print 'apply transitivity', self, other
+        #print 'apply transitivity', self, other
         assumptions = defaults.checkedAssumptions(assumptions)        
         if isinstance(other,Equals):
             if other.lhs in (self.lhs, self.rhs):
@@ -210,7 +209,6 @@ class TransitiveRelation(BinaryOperation):
             raise TransitivityException(None, assumptions, 'Empty transitivity relation train')
         if not all(isinstance(element, KnownTruth) for element in chain):
             raise TypeError('Expecting chain elements to be KnownTruth objects')
-        print 'chain', chain, len(chain)
         while len(chain) >= 2:
             first = chain.pop(0)
             second = chain.pop(0)
@@ -277,7 +275,7 @@ class TransitiveRelation(BinaryOperation):
                             # This should return a known truth for the desired relation in weak or strong form.
                             relation = TransitiveRelation.applyTransitivities(full_chain, assumptions=assumptions)
                             # If forceStrong is true and the proven relation is weak, continue to keep trying.
-                            if not forceStrong or relation.__class__ == RelationClass._checkedStrongRelationClass():
+                            if not forceStrong or relation.expr.__class__ == RelationClass._checkedStrongRelationClass():
                                 return relation
             
             # get the new unexplored chains and update the full set of chains with the new chains
@@ -317,14 +315,14 @@ class TransitiveRelation(BinaryOperation):
                     new_frontier_chains = dict() # new chains from extending the original chains
                     # extend from each frontier end-point
                     for endpoint, chain in chains.iteritems():
-                        print 'starting chain', endpoint, list(chain), ('left' if frontier_chains is frontier_left_chains else 'right')
+                        #print 'starting chain', endpoint, list(chain), ('left' if frontier_chains is frontier_left_chains else 'right')
                         # iterate over each known relation that extend the frontier at the end-point
                         for relation, new_endpoint in known_relations(endpoint, assumptionsSet):
                             if frontier_chains is frontier_left_chains:
                                 new_chain = [relation] + chain # extend chain to the left
                             else:
                                 new_chain = chain + [relation] # extend chain to the right
-                            print 'extended chain', list(new_chain), 'from', item, 'to', new_endpoint
+                            #print 'extended chain', list(new_chain), 'from', item, 'to', new_endpoint
                             # see if we meet an opposing chain to connect this item with another one (meeting in the middle)
                             if new_endpoint in opposite_endpoint_chains:
                                 for meeting_chain in opposite_endpoint_chains[new_endpoint]:
@@ -345,7 +343,7 @@ class TransitiveRelation(BinaryOperation):
                                 same_endpoint_chains.setdefault(new_endpoint, []).append(new_chain)
                                 # extend the chain to a new endpoint
                                 new_frontier_chains[new_endpoint] = new_chain
-                                print "new frontier", new_endpoint, new_chain
+                                #print "new frontier", new_endpoint, new_chain
                     if len(new_frontier_chains) > 0:
                         frontier_chains[item] = new_frontier_chains # update the frontier
                     else:
@@ -403,7 +401,7 @@ class TransitiveRelation(BinaryOperation):
         remaining_items = set(items) # items we have left to sort
         
         for (left_item, right_item), chain in RelationClass._generateSortingRelations(items, assumptions):
-            print left_item, right_item, list(chain)
+            #print left_item, right_item, list(chain)
             if (left_item, right_item) in item_pair_chains:
                 # Just use the first chain of relations.
                 # If the relation is an equality between the items, that should come first.
@@ -439,7 +437,7 @@ class TransitiveRelation(BinaryOperation):
                 # (with such cycles, we'll catch them eventually and raise an exception).
                 left_most = left_most_candidates.pop()
                 sorted_items.append(left_most)
-                print 'left_most', left_most
+                #print 'left_most', left_most
                 
                 # note that eq_sets[left_most] should not be extended later because all of the items must
                 # determine that they are either to the right of this "left-most" or equal to it before we got here.
@@ -455,7 +453,7 @@ class TransitiveRelation(BinaryOperation):
                 # Determine the next left-most item candidates based upon
                 # what items are rightward from the one that we taken out.
                 to_process = set(right_partners[left_most])
-                print to_process
+                #print to_process
                 already_processed = set()
                 
                 # used to make sure this is an O(n^2 log n) algorithm in the worst case
@@ -464,16 +462,16 @@ class TransitiveRelation(BinaryOperation):
                 
                 while len(to_process) > 0:
                     next_candidate = to_process.pop()
-                    print 'next_candidate', next_candidate
+                    #print 'next_candidate', next_candidate
                     if next_candidate in already_processed: 
                         continue #  we've dealt with that one already
                     left_most_candidates.add(next_candidate) # add as a candidate (may be temporary)
                     eq_next_candidates = eq_sets[next_candidate]
                     for eq_next_candidate in eq_next_candidates:
-                        print 'eq_next_candidate', eq_next_candidate
+                        #print 'eq_next_candidate', eq_next_candidate
                         # process the item(s) to the left of 'next_candidate' (or any of the equivalent items)
                         candidate_left_partners = left_partners[eq_next_candidate] if eq_next_candidate in left_partners else []        
-                        print 'candidate_left_partners', candidate_left_partners
+                        #print 'candidate_left_partners', candidate_left_partners
                         if not processing_everything: # don't bother updating to_process if we are already processing everything
                             num_to_process_insertions += len(candidate_left_partners)
                             if num_to_process_insertions > len(remaining_items):
@@ -555,7 +553,7 @@ class TransitiveRelation(BinaryOperation):
                    inserting_relations.append(RelationClass._transitivitySearch(item, items[left_item_idx+1], assumptions=assumptions))
                 return RelationClass.Sequence(sequence.relations[:left_item_idx] + inserting_relations + sequence.relations[left_item_idx+1:])        
 
-class TransitiveSequence(Operation):
+class TransitiveSequence(OperationSequence):
     '''
     Base clase for Operation Expressions that represent a sequence of transitive relationships.
     For example, w < x = y <= z.  As shown in this example, the relations may include weak, 

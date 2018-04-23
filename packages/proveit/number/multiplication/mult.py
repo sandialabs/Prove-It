@@ -1,9 +1,9 @@
-from proveit import Literal, Operation, AssociativeOperation, USE_DEFAULTS, ProofFailure
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
 from proveit.logic import Equals, InSet
 from proveit.number.sets import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes, zero, one
 from proveit._common_ import a, b, c, d, n, v, w, x, y, z, vMulti, wMulti, xMulti, yMulti, zMulti, S
 
-class Mult(AssociativeOperation):
+class Mult(Operation):
     # operator of the Mult operation.
     _operator_ = Literal(stringFormat='*', latexFormat=r'\cdot', context=__file__)
     
@@ -11,7 +11,7 @@ class Mult(AssociativeOperation):
         r'''
         Multiply together any number of operands from first operand.
         '''
-        AssociativeOperation.__init__(self, Mult._operator_, *operands)
+        Operation.__init__(self, Mult._operator_, operands)
         self.factors = operands
     
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
@@ -200,13 +200,13 @@ class Mult(AssociativeOperation):
         '''
         from ._theorems_ import distributeThroughSum, distributeThroughSubtract, distributeThroughSummation
         from proveit.number.division._theorems_ import fracInProd, prodOfFracs
-        from proveit.number import Frac, Add, Sub, Sum
+        from proveit.number import Frac, Add, Subtract, Sum
         if index is None and len(self.factors) == 2 and all(isinstance(factor, Frac) for factor in self.factors):
             return prodOfFracs.specialize({x:self.factors[0].numerator, y:self.factors[1].numerator, z:self.factors[0].denominator, w:self.factors[1].denominator}, assumptions=assumptions)
         operand = self.operands[index]
         if isinstance(operand, Add):
             return distributeThroughSum.specialize({xMulti:self.operands[:index], yMulti:self.operands[index].operands, zMulti:self.operands[index+1:]}, assumptions=assumptions)
-        elif isinstance(operand, Sub):
+        elif isinstance(operand, Subtract):
             return distributeThroughSubtract.specialize({wMulti:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zMulti:self.operands[index+1:]}, assumptions=assumptions)
         elif isinstance(operand, Frac):            
             eqn = fracInProd.specialize({wMulti:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zMulti:self.operands[index+1:]}, assumptions=assumptions)            

@@ -6,7 +6,7 @@ class Exists(OperationOverInstances):
     # operator of the Exists operation
     _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', context=__file__)
     
-    def __init__(self, instanceVars, instanceExpr, domain=None, conditions=tuple()):
+    def __init__(self, instanceVars, instanceExpr, domain=None, domains=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
         exists_{instanceVars | condition} instanceExpr
@@ -14,7 +14,7 @@ class Exists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, Exists._operator_, instanceVars, instanceExpr, domain, conditions)
+        OperationOverInstances.__init__(self, Exists._operator_, instanceVars, instanceExpr, domain, domains, conditions)
 
     def sideEffects(self, knownTruth):
         '''
@@ -33,6 +33,7 @@ class Exists(OperationOverInstances):
         Deduce notexists_{x | Q(x) P(x) assuming not(exists_{x | Q(x) P(x)),
         where self is exists_{x | Q(x) P(x).
         '''
+        raise NotImplementedError("Need to update")
         from not_exists import NotExists
         notExistsExpr = NotExists(self.instanceVars, self.instanceExpr, domain=self.domain, conditions=self.conditions)
         return notExistsExpr.concludeAsFolded(assumptions)
@@ -41,6 +42,7 @@ class Exists(OperationOverInstances):
         '''
         Conclude and return this [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] from P(..x..) and Q(..x..) and ..x.. in S, where ..x.. is the given exampleInstance.
         '''
+        raise NotImplementedError("Need to update")
         from _theorems_ import existenceByExample
         from proveit.logic import InSet
         if len(self.instanceVars) > 1 and (not isinstance(exampleInstance, ExprList) or (len(exampleInstance) != len(self.instanceVars))):
@@ -52,7 +54,7 @@ class Exists(OperationOverInstances):
         exampleExpr = self.instanceExpr.substituted(exampleMapping)
         # ..Q(..x..).. where ..x.. is the given exampleInstance
         exampleConditions = self.conditions.substituted(exampleMapping)
-        if self.domain is not None:
+        if self.hasDomain():
             for iVar in self.instanceVars:
                 exampleConditions.append(InSet(iVar, self.domain))
         # exists_{..y.. | ..Q(..x..)..} P(..y..)]
@@ -64,6 +66,7 @@ class Exists(OperationOverInstances):
         From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
         From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
         '''
+        raise NotImplementedError("Need to update")
         from _axioms_ import existsDef
         from _theorems_ import existsNotImpliesNotForall
         from proveit.logic import Not
@@ -83,6 +86,7 @@ class Exists(OperationOverInstances):
         From [exists_{x in A| Q(x)} P(x)], derive and return [exists_{x in B| Q(x)} P(x)]
         given A subseteq B.
         '''
+        raise NotImplementedError("Need to update")
         from _theorems_ import existsInSuperset
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
@@ -94,6 +98,7 @@ class Exists(OperationOverInstances):
         From [exists_{x in S | Q(x)} P(x)], derive and return [exists_{x | Q(x)} P(x)],
         eliminating the domain which is a weaker form.
         '''
+        raise NotImplementedError("Need to update")
         from _theorems_ import existsInGeneral
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
@@ -106,6 +111,7 @@ class Exists(OperationOverInstances):
         Deduce, then return, that this exists expression is in the set of BOOLEANS as
         all exists expressions are (they are taken to be false when not true).
         '''
+        raise NotImplementedError("Need to update")
         from _theorems_ import existsInBool
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
@@ -122,6 +128,7 @@ class Exists(OperationOverInstances):
         Exists_{..x.. in S | ..Q(..x..)..} R(..x..)
         Works also when there is no domain S and/or no conditions ..Q...
         '''
+        raise NotImplementedError("Need to update")
         from _theorems_ import existentialImplication, noDomainExistentialImplication
         from proveit import Etcetera
         from proveit.logic import Forall

@@ -15,7 +15,7 @@ class Indexed(Expression):
     integer (or list of integers).
     '''
     
-    def __init__(self, var, index_or_indices, base=1):
+    def __init__(self, var, index_or_indices, base=1, styles=tuple(), requirements=tuple()):
         from composite import Composite, singleOrCompositeExpression, compositeExpression
         if not isinstance(var, Variable):
             raise TypeError("'var' being indexed should be a Variable")
@@ -30,7 +30,7 @@ class Indexed(Expression):
             self.indices = compositeExpression(self.index)
         if not isinstance(base, int):
             raise TypeError("'base' should be an integer")
-        Expression.__init__(self, ['Indexed', str(base)], [var, index_or_indices])
+        Expression.__init__(self, ['Indexed', str(base)], [var, index_or_indices], styles=styles, requirements=requirements)
         self.var = var
         self.base = base
     
@@ -116,7 +116,6 @@ class Indexed(Expression):
         from composite import Composite, IndexingError
         from expr_list import ExprList
         from proveit.logic import Equals
-        from proveit.lambda_map import invert
         
         subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
@@ -146,7 +145,7 @@ class Indexed(Expression):
                     # The indexing is not direct; for example, x_{f(p)}.
                     # We need to invert f to obtain p from f(p)=coord and register the inversion as a requirement:
                     # f(p) = coord.
-                    param = invert(Lambda(iterParams[axis], subbed_indices[axis]), coord, assumptions=assumptions)
+                    param = Equals.invert(Lambda(iterParams[axis], subbed_indices[axis]), coord, assumptions=assumptions)
                     inversion = Equals(subbed_indices[axis].substituted({iterParams[axis]:param}), coord)
                     requirements.append(inversion.prove(assumptions=assumptions))
                     return param

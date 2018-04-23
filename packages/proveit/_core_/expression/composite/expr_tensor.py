@@ -1,7 +1,7 @@
 from composite import Composite
 from expr_list import ExprList
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 from iteration import Iter
 import itertools
 from ast import literal_eval
@@ -44,7 +44,7 @@ class ExprTensor(Composite, Expression):
     or other axioms).
     '''
     
-    def __init__(self, tensor, shape=None, assumptions=USE_DEFAULTS):
+    def __init__(self, tensor, shape=None, styles=tuple(), assumptions=USE_DEFAULTS, requirements=tuple()):
         '''
         Create an ExprTensor either with a simple, dense tensor (list of lists ... of lists) or
         with a dictionary mapping coordinates (as tuples of expressions that represent integers) 
@@ -56,7 +56,8 @@ class ExprTensor(Composite, Expression):
         from proveit._core_ import KnownTruth
         from proveit.number import Less, Greater, zero, one, num, Add, Subtract
         from iteration import Iter
-
+        
+        assumptions = defaults.checkedAssumptions(assumptions)
         requirements = []                
         if not isinstance(tensor, dict):
             tensor = {loc:element for loc, element in ExprTensor._tensorDictFromIterables(tensor, assumptions, requirements)}
@@ -152,7 +153,7 @@ class ExprTensor(Composite, Expression):
             rel_index_tensor[rel_index_loc] = element
                 
         sorted_keys = sorted(rel_index_tensor.keys())
-        Expression.__init__(self, ['ExprTensor', str(ndims), ';'.join(str(key) for key in sorted_keys)], self.sortedCoordLists + self.coordDiffRelationLists + [rel_index_tensor[key] for key in sorted_keys])
+        Expression.__init__(self, ['ExprTensor', str(ndims), ';'.join(str(key) for key in sorted_keys)], self.sortedCoordLists + self.coordDiffRelationLists + [rel_index_tensor[key] for key in sorted_keys], styles=styles, requirements=requirements)
         self.ndims = ndims
         self.relIndexTensor = rel_index_tensor
         

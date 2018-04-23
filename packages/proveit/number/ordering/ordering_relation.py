@@ -1,4 +1,4 @@
-from proveit._generic_ import TransitiveRelation, TransitiveSequence
+from proveit.relations import TransitiveRelation, TransitiveSequence
 
 class OrderingRelation(TransitiveRelation):
     r'''

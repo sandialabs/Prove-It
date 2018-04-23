@@ -1,13 +1,13 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS
 from equals import Equals
 from proveit._common_ import x, y, A, X
 
-class NotEquals(BinaryOperation):
+class NotEquals(Operation):
     # operator of the NotEquals operation
     _operator_ = Literal(stringFormat='!=', latexFormat=r'\neq', context=__file__)
     
     def __init__(self, a, b):
-        BinaryOperation.__init__(self, NotEquals._operator_, a, b)
+        Operation.__init__(self, NotEquals._operator_, (a, b))
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
             

@@ -1,6 +1,6 @@
-from proveit import Literal, BinaryOperation
+from proveit import Literal, Operation
 
-class Divide(BinaryOperation):
+class Divide(Operation):
     # operator of the Add operation
     _operator_ = Literal(stringFormat='/', latexFormat= r'\div', context=__file__)    
     
@@ -8,11 +8,7 @@ class Divide(BinaryOperation):
         r'''
         Divide two operands.
         '''
-        BinaryOperation.__init__(self, Divide._operator_, operandA, operandB)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return DIVIDE
+        Operation.__init__(self, Divide._operator_, [operandA, operandB])
 
     def _closureTheorem(self, numberSet):
         import theorems

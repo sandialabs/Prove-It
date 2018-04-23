@@ -1,8 +1,8 @@
-from proveit import Literal, BinaryOperation, defaults, USE_DEFAULTS, compositeExpression, ProofFailure
+from proveit import Literal, Operation, defaults, USE_DEFAULTS, compositeExpression, ProofFailure
 from proveit.logic.boolean.negation import Not
 from proveit._common_ import A, B, C
 
-class Implies(BinaryOperation):
+class Implies(Operation):
     _operator_ = Literal(stringFormat='=>', latexFormat=r'\Rightarrow', context=__file__)
     
     # map Expressions to sets of KnownTruths of implications that involve the Expression
@@ -13,7 +13,7 @@ class Implies(BinaryOperation):
     knownImplicationsOfConsequent = dict()
     
     def __init__(self, antecedent, consequent):
-        BinaryOperation.__init__(self, Implies._operator_, antecedent, consequent)
+        Operation.__init__(self, Implies._operator_, (antecedent, consequent))
         self.antecedent = self.lhs = antecedent
         self.consequent = self.rhs = consequent
 

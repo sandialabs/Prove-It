@@ -1,7 +1,11 @@
-from proveit import Operation, Lambda, compositeExpression, NamedExprs, USE_DEFAULTS
+from proveit._core_.expression import Expression
+from proveit._core_.expression.lambda_expr import Lambda
+from proveit._core_.expression.composite import singleOrCompositeExpression, compositeExpression, Composite, NamedExprs
+from proveit._core_.defaults import USE_DEFAULTS
+from .operation import Operation
 
 class OperationOverInstances(Operation):
-    def __init__(self, operator, instanceVars, instanceExpr, domain=None, conditions=tuple()):
+    def __init__(self, operator, instanceVars, instanceExpr, domain=None, domains=None, conditions=tuple()):
         '''
         Create an Operation for the given operator over instances of the given instance Variables,
         instanceVars, for the given instance Expression, instanceExpr under the given conditions
@@ -13,19 +17,39 @@ class OperationOverInstances(Operation):
         (where '->' represents a Lambda and the list of tuples are NambedExpressions:
         [('imap', instanceVars -> [('iexpr',instanceExpr), ('conditions',conditions)]), ('domain',domain)]
         '''
-        Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain, conditions))
+        if domain is not None:
+            if domains is not None:
+                raise ValueError("Provide a single domain and multiple domains, not both")
+            if not isinstance(domain, Expression):
+                raise TypeError("The domain should be an 'Expression' type")
+            domain_or_domains = domain
+        elif domains is not None: 
+            domain_or_domains=compositeExpression(domains)
+        else:
+            domain_or_domains = None
+        Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain_or_domains, conditions))
         self.instanceVars = OperationOverInstances.extractInitArgValue('instanceVars', self.operators, self.operands)
         self.instanceExpr = OperationOverInstances.extractInitArgValue('instanceExpr', self.operators, self.operands)
-        self.domain = OperationOverInstances.extractInitArgValue('domain', self.operators, self.operands)
+        self.domain_or_domains = OperationOverInstances.extractInitArgValue('domain_or_domains', self.operators, self.operands)
+        if isinstance(domain_or_domains, Composite):
+            self.domains = domain_or_domains
+            if len(self.domains) != len(self.instanceVars):
+                raise ValueError("When using multiple domains, there should be the same number as the number of instance variables")
+        elif self.domain_or_domains is not None:
+            self.domain = domain_or_domains
         self.conditions = OperationOverInstances.extractInitArgValue('conditions', self.operators, self.operands)
     
     @staticmethod
-    def _createOperand(instanceVars, instanceExpr, domain, conditions):
+    def _createOperand(instanceVars, instanceExpr, domain_or_domains, conditions):
         lambdaFn = Lambda(instanceVars, NamedExprs([('iexpr',instanceExpr), ('conds',compositeExpression(conditions))]))
-        if domain is None:
+        if domain_or_domains is None:
             return NamedExprs([('imap',lambdaFn)])
         else:
-            return NamedExprs([('imap',lambdaFn), ('domain',domain)])
+            domain_or_domains = singleOrCompositeExpression(domain_or_domains)
+            if isinstance(domain_or_domains, Composite):
+                return NamedExprs([('imap',lambdaFn), ('domains',domain_or_domains)])
+            else:
+                return NamedExprs([('imap',lambdaFn), ('domain',domain_or_domains)])
     
     @staticmethod
     def extractInitArgValue(argName, operators, operands):
@@ -41,8 +65,12 @@ class OperationOverInstances(Operation):
         if argName=='operator':
             assert len(operators)==1, "expecting one operator"
             return operators[0] 
-        if argName=='domain':
-            return operands['domain'] if 'domain' in operands else None
+        if argName=='domain_or_domains':
+            if 'domains' in operands:
+                return operands['domains'] # multiple domains; one for each instance variable
+            elif 'domain' in operands:
+                return operands['domain'] # one domain for all instance variables
+            else: return None # no domain
         instanceMapping = operands['imap'] # instance mapping
         if argName=='instanceVars':
             return singleOrCompositeExpression(instanceMapping.parameters)
@@ -71,10 +99,10 @@ class OperationOverInstances(Operation):
 
     def hasDomain(self):
         '''
-        Returns True if this OperationOverInstances has a domain restriction.
+        Returns True if this OperationOverInstances has domain restriction(s).
         '''
-        return self.domain is not None
-        
+        return hasattr(self, 'domain') or hasattr(self, 'domains')
+            
     def hasCondition(self):
         '''
         Returns True if this OperationOverInstances has conditions.
@@ -101,7 +129,7 @@ class OperationOverInstances(Operation):
             if hasExplicitIvars: outStr += formattedVars
             if self.hasDomain():
                 outStr += ' in ' if formatType == 'string' else ' \in '
-                outStr += self.domain.formatted(formatType, fence=True)
+                outStr += self.domain_or_domains.formatted(formatType, fence=True)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
                 outStr += self.conditions.formatted(formatType, fence=False)                
@@ -114,7 +142,7 @@ class OperationOverInstances(Operation):
             if hasExplicitIvars: outStr += formattedVars
             if self.hasDomain():
                 outStr += ' in ' if formatType == 'string' else ' \in '
-                outStr += self.domain.formatted(formatType, fence=True)
+                outStr += self.domain_or_domains.formatted(formatType, fence=True)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += "~|~"
                 outStr += self.conditions.formatted(formatType, fence=False)                

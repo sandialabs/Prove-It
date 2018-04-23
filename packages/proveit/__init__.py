@@ -1,5 +1,6 @@
 from _core_ import defaults, USE_DEFAULTS, InvalidAssumptions, Context, ContextException
-from _core_ import Expression, Operation, Lambda, Label, Variable, Literal, DuplicateLiteralError
+from _core_ import Expression, Operation, Function, OperationSequence, OperationOverInstances
+from _core_ import Lambda, Label, Variable, Literal, DuplicateLiteralError
 from _core_ import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from _core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
 from _core_ import Composite, compositeExpression, singleOrCompositeExpression
@@ -7,9 +8,8 @@ from _core_ import ExprList, ExprTensor, NamedExprs, Indexed, Iter
 from _core_ import KnownTruth, asExpression, asExpressions
 from _core_ import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
 from _core_ import ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure
-from _generic_ import BinaryOperation, AssociativeOperation, OperationOverInstances, InstanceSubstitutionException
-from _generic_ import maybeFencedString, maybeFencedLatex, maybeFenced
-from _generic_ import TransitiveRelation, TransitiveSequence, IrreducibleValue, isIrreducibleValue
+from _core_ import maybeFencedString, maybeFencedLatex, maybeFenced
+from relations import TransitiveRelation, TransitiveSequence
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet

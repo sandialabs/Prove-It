@@ -1,4 +1,4 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
 from containment_relation import ContainmentRelation, ContainmentSequence
 
@@ -182,12 +182,12 @@ class SupersetEq(SupersetRelation):
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
 
-class NotSupersetEq(BinaryOperation):
+class NotSupersetEq(Operation):
     # operator of the NotSupersetEq operation
     _operator_ = Literal(stringFormat='nsupseteq', latexFormat=r'\nsupseteq', context=__file__)    
 
-    def __init__(self, subset, superset):
-        BinaryOperation.__init__(self, NotSupersetEq._operator_, A, B)
+    def __init__(self, superset, subset):
+        Operation.__init__(self, NotSupersetEq._operator_, (superset, subset))
     
     def deriveSideEffects(self, knownTruth):
         self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect

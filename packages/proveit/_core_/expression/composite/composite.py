@@ -44,11 +44,11 @@ def compositeExpression(expressions):
     if isinstance(expressions, ExprList) or isinstance(expressions, NamedExprs) or isinstance(expressions, ExprTensor):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
-        return ExprList([expressions]) # a single expression that we will wrap in an ExpressionLIst
+        return ExprList(expressions) # a single expression that we will wrap in an ExpressionLIst
     else:
         if all(isinstance(subExpr, Expression) or isinstance(subExpr, KnownTruth) for subExpr in expressions):
             # An iterable over only Expressions must be an exprlist
-            return ExprList(expressions)
+            return ExprList(*expressions)
         else:
             try:
                 # try to see if we can use expressions to generate a NamedExpressions object

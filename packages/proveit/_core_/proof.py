@@ -221,7 +221,7 @@ class Axiom(Proof):
             raise ValueError("An axiom 'context' must be a Context object")
         if not isinstance(name, str):
             raise ValueError("An axiom 'name' must be a string")
-        Proof.__init__(self, 'Axiom', KnownTruth(expr, frozenset(), self), [])
+        Proof.__init__(self, 'Axiom', KnownTruth(expr, expr.requirements, self), [])
         self.context = context
         self.name = name
 
@@ -626,7 +626,6 @@ class Specialization(Proof):
             if not isinstance(expr, Forall):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             expr = expr.operands
-            domain = expr['domain'] if 'domain' in expr else None
             lambdaExpr = expr['imap'];
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
@@ -639,13 +638,19 @@ class Specialization(Proof):
             # make substitutions in the condition
             subbedConditions += conditions.substituted(partialMap, relabelMap)
             # add conditions for satisfying the domain restriction if there is one
-            if domain is not None:
-                # extract all of the elements
+            if hasattr(expr, 'domains'):
+                # add the domain conditions for each instance variable in its respective domain
+                for iVar, domain in zip(instanceVars, expr.domains):
+                    subbed_var = iVar.substituted(partialMap, relabelMap)
+                    inSetCondition = InSet(subbed_var, domain.substituted(partialMap, relabelMap))
+                    subbedConditions.append(inSetCondition)
+            elif hasattr(expr, 'domain'):
+                # add the domain conditions for each instance variable all to the same domain
+                domain = expr.domain
                 for iVar in instanceVars:
-                    elementOrList = iVar.substituted(partialMap, relabelMap)
-                    for element in (elementOrList if isinstance(elementOrList, ExprList) else [elementOrList]):
-                        inSetCondition = InSet(element, domain.substituted(partialMap, relabelMap))
-                        subbedConditions.append(inSetCondition)
+                    subbed_var = iVar.substituted(partialMap, relabelMap)
+                    inSetCondition = InSet(subbed_var, domain.substituted(partialMap, relabelMap))
+                    subbedConditions.append(inSetCondition)
                         
         # sort the relabeling vars in order of their appearance in the original expression
         relabelVars = []

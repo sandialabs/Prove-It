@@ -1,8 +1,7 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
-from proveit._core_.expression.label import Literal
 from proveit._core_.expression.composite import Composite, singleOrCompositeExpression, compositeExpression
-from proveit._core_.defaults import Defaults, USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 import itertools
 
 class Iter(Expression):
@@ -17,10 +16,7 @@ class Iter(Expression):
     is (are) a known integer(s).
     '''
     
-    # The operator of the And operation
-    _operator_ = Literal(stringFormat='iter', context=__file__)
-    
-    def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices):
+    def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices, styles=tuple(), requirements=tuple()):
         if not isinstance(lambda_map, Lambda):
             raise TypeError('When creating an Iter Expression, the lambda_map argument must be a Lambda expression')
         
@@ -51,7 +47,7 @@ class Iter(Expression):
         if len(lambda_map.parameters) != len(self.start_indices):
             raise ValueError("Inconsistent number of indices and lambda map parameters")
         
-        Expression.__init__(self, ['Iter'], [lambda_map, self.start_index_or_indices, self.end_index_or_indices])
+        Expression.__init__(self, ['Iter'], [lambda_map, self.start_index_or_indices, self.end_index_or_indices], styles=styles, requirements=requirements)
         self.lambda_map = lambda_map
     
     @classmethod
@@ -89,7 +85,7 @@ class Iter(Expression):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=True, subFence=True, formattedOperator=None):
+    def formatted(self, formatType, fence=False, subFence=True, formattedOperator=None):
         outStr = ''
         if formattedOperator is None:
             formattedOperator = ',' # comma is the default formatted operator
@@ -203,7 +199,7 @@ class Iter(Expression):
         from proveit.number import Less, Subtract, Add, one
         from composite import _simplifiedCoord
         
-        assumptions = Defaults.checkedAssumptions(assumptions)
+        assumptions = defaults.checkedAssumptions(assumptions)
         
         new_requirements = []
         

@@ -1,9 +1,9 @@
-from proveit import Literal, BinaryOperation
+from proveit import Literal, Operation
 from proveit.logic import NotEquals
 from proveit.number.sets import Naturals, NaturalsPos, Integers, Reals, Complexes, zero
 from proveit._common_ import w, x, y, z
 
-class Sub(BinaryOperation):
+class Subtract(Operation):
     # operator of the Sub operation.
     _operator_ = Literal(stringFormat='-', context=__file__)
     
@@ -11,7 +11,7 @@ class Sub(BinaryOperation):
         r'''
         Sub one number from another
         '''
-        BinaryOperation.__init__(self, Sub._operator_, operandA, operandB)
+        Operation.__init__(self, Sub._operator_, (operandA, operandB))
 
     def _closureTheorem(self, numberSet):
         import theorems
@@ -52,8 +52,8 @@ class Sub(BinaryOperation):
         factorEqLeft = self.operands[0].factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=assumptions)
         factorEqRight = self.operands[1].factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=assumptions)
         # substitute the factored terms
-        eq.update(factorEqLeft.substitution(Sub(dummyVar, self.operands[1]), dummyVar)).checked(assumptions)
-        eq.update(factorEqRight.substitution(Sub(factorEqLeft.rhs, dummyVar), dummyVar)).checked(assumptions)
+        eq.update(factorEqLeft.substitution(Subtract(dummyVar, self.operands[1]), dummyVar)).checked(assumptions)
+        eq.update(factorEqRight.substitution(Subtract(factorEqLeft.rhs, dummyVar), dummyVar)).checked(assumptions)
         # perform distribution in reverse
         num = len(theFactor.operands) if isinstance(theFactor, Mult) else 1
         if pull == 'left':
@@ -136,11 +136,11 @@ class Sub(BinaryOperation):
             # x - x = 0
             deduceInComplexes(self.operands[0], assumptions)
             return subtractCancelComplete.specialize({x:self.operands[0]}).checked(assumptions)
-        if isinstance(expr.operands[0], Sub):
-            eq.update(expr.operands[0].convertToAdd(assumptions=assumptions).substitution(Sub(dummy, expr.operands[1]), dummy))
+        if isinstance(expr.operands[0], Subtract):
+            eq.update(expr.operands[0].convertToAdd(assumptions=assumptions).substitution(Subtract(dummy, expr.operands[1]), dummy))
             expr = eq.eqExpr.rhs
-        if isinstance(expr.operands[1], Sub):
-            eq.update(expr.operands[1].convertToAdd(assumptions=assumptions).substitution(Sub(expr.operands[0], dummy), dummy))
+        if isinstance(expr.operands[1], Subtract):
+            eq.update(expr.operands[1].convertToAdd(assumptions=assumptions).substitution(Subtract(expr.operands[0], dummy), dummy))
             expr = eq.eqExpr.rhs
         if isinstance(expr.operands[0], Add):
             if isinstance(expr.operands[1], Add):
@@ -165,11 +165,11 @@ class Sub(BinaryOperation):
                     # special case where Add on both sides is eliminated
                     if idx1 > 0:
                         # commute the left
-                        eq.update(expr.operands[0].commute(assumptions=assumptions).substitution(Sub(dummy, expr.operands[1]), dummy))
+                        eq.update(expr.operands[0].commute(assumptions=assumptions).substitution(Subtract(dummy, expr.operands[1]), dummy))
                         expr = eq.eqExpr.rhs
                     if idx2 > 0:
                         # commute the right
-                        eq.update(expr.operands[1].commute(assumptions=assumptions).substitution(Sub(expr.operands[0], dummy), dummy))
+                        eq.update(expr.operands[1].commute(assumptions=assumptions).substitution(Subtract(expr.operands[0], dummy), dummy))
                         expr = eq.eqExpr.rhs
                     assert expr.operands[0].operands[0] == expr.operands[1].operands[0] # the form we were supposed to get to
                     eq.update(subtractCancelElimSums.specialize({x:expr.operands[0].operands[0], y:expr.operands[0].operands[1], z:expr.operands[1].operands[1]}))
@@ -177,7 +177,7 @@ class Sub(BinaryOperation):
                     # special case where Add on the left is eliminated
                     if idx1 > 0:
                         # commute the left
-                        eq.update(expr.operands[0].commute(assumptions=assumptions).substitution(Sub(dummy, expr.operands[1]), dummy))
+                        eq.update(expr.operands[0].commute(assumptions=assumptions).substitution(Subtract(dummy, expr.operands[1]), dummy))
                         expr = eq.eqExpr.rhs
                     assert expr.operands[0].operands[0] == expr.operands[1].operands[idx2] # the form we were supposed to get to
                     wSub = expr.operands[0].operands[0]
@@ -189,7 +189,7 @@ class Sub(BinaryOperation):
                     # special case where Add on the right is eliminated
                     if idx2 > 0:
                         # commute the right
-                        eq.update(expr.operands[1].commute(assumptions=assumptions).substitution(Sub(expr.operands[0], dummy), dummy))
+                        eq.update(expr.operands[1].commute(assumptions=assumptions).substitution(Subtract(expr.operands[0], dummy), dummy))
                         expr = eq.eqExpr.rhs
                     assert expr.operands[1].operands[0] == expr.operands[0].operands[idx1] # the form we were supposed to get to
                     wSub = expr.operands[0].operands[:idx1]

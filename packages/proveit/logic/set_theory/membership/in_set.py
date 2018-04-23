@@ -1,6 +1,6 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS
 
-class InSet(BinaryOperation):
+class InSet(Operation):
     # operator of the InSet operation
     _operator_ = Literal(stringFormat='in', latexFormat=r'\in', context=__file__)    
     
@@ -8,7 +8,7 @@ class InSet(BinaryOperation):
     knownMemberships = dict()
     
     def __init__(self, element, domain):
-        BinaryOperation.__init__(self, InSet._operator_, element, domain)
+        Operation.__init__(self, InSet._operator_, (element, domain))
         self.element = self.operands[0]
         self.domain = self.operands[1]
     

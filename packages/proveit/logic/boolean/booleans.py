@@ -1,5 +1,5 @@
 from proveit import Operation, Literal, USE_DEFAULTS, ProofFailure
-from proveit import IrreducibleValue
+from proveit.logic.irreducible_value import IrreducibleValue
 from proveit._common_ import A, P
 
 class BooleanSet(Literal):

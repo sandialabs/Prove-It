@@ -1,8 +1,8 @@
-from proveit import Literal, AssociativeOperation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
 from proveit._common_ import A, B, C, Amulti, Cmulti
 
-class Or(AssociativeOperation):
+class Or(Operation):
     # The operator of the Or operation
     _operator_ = Literal(stringFormat='or', latexFormat=r'\lor', context=__file__)
 
@@ -10,7 +10,7 @@ class Or(AssociativeOperation):
         '''
         Or together any number of operands: A or B or C
         '''
-        AssociativeOperation.__init__(self, Or._operator_, *operands)
+        Operation.__init__(self, Or._operator_, operands)
 
     def conclude(self, assumptions):
         '''

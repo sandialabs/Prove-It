@@ -1,12 +1,12 @@
-from proveit import Literal, BinaryOperation
+from proveit import Literal, Operation
 
-class RealInterval(BinaryOperation):
+class RealInterval(Operation):
     r'''
     Base class for all permutations of closed and open intervals.  
     Do not construct an object of this class directly!  Instead, use IntervalOO or IntervalOC etc.
     '''
     def __init__(self,operator,lowerBound,upperBound):
-        BinaryOperation.__init__(self,operator,lowerBound,upperBound)
+        Operation.__init__(self,operator,(lowerBound,upperBound))
         self.lowerBound = lowerBound
         self.upperBound = upperBound
                 

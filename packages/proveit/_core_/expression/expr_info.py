@@ -116,36 +116,36 @@ class ExpressionInfo:
                     sub_expressions += '%s: %d<br>'%(key, expr_num_map[expr[key]])
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
-                    sub_expressions = 'operator: %d<br>'%(expr_num_map[expr.operator])
+                    sub_expressions = 'operator:&nbsp;%d<br>'%(expr_num_map[expr.operator])
                 else: # has multiple operators
-                    sub_expressions = 'operators: %d<br>'%(expr_num_map[expr.operator])                    
+                    sub_expressions = 'operators:&nbsp;%d<br>'%(expr_num_map[expr.operators])                    
                 if hasattr(expr, 'operand'): # has a single operand
-                    sub_expressions += 'operand: %d<br>'%(expr_num_map[expr.operand])
+                    sub_expressions += 'operand:&nbsp;%d<br>'%(expr_num_map[expr.operand])
                 else: # has multiple operands
-                    sub_expressions += 'operands: %d<br>'%(expr_num_map[expr.operands])
+                    sub_expressions += 'operands:&nbsp;%d<br>'%(expr_num_map[expr.operands])
             elif isinstance(expr, Lambda):
                 if hasattr(expr, 'parameter'): # has a single parameter
-                    sub_expressions = 'parameter: %s<br>'%(expr_num_map[expr.parameter])
+                    sub_expressions = 'parameter:&nbsp;%s<br>'%(expr_num_map[expr.parameter])
                 else:                        
-                    sub_expressions = 'parameters: %s<br>'%(', '.join(str(expr_num_map[parameter]) for parameter in expr.parameters))
-                sub_expressions += 'body: %d<br>'%(expr_num_map[expr.body])
+                    sub_expressions = 'parameters:&nbsp;%s<br>'%(', '.join(str(expr_num_map[parameter]) for parameter in expr.parameters))
+                sub_expressions += 'body:&nbsp;%d<br>'%(expr_num_map[expr.body])
             elif isinstance(expr, Indexed):
-                sub_expressions += 'var: %d<br>'%(expr_num_map[expr.var])
+                sub_expressions += 'var:&nbsp;%d<br>'%(expr_num_map[expr.var])
                 if hasattr(expr, 'index'):
-                    sub_expressions += 'index: %d<br>'%(expr_num_map[expr.index])
+                    sub_expressions += 'index:&nbsp;%d<br>'%(expr_num_map[expr.index])
                 else:
-                    sub_expressions += 'indices: %d<br>'%(expr_num_map[expr.indices])
-                sub_expressions += 'base: "%d"<br>'%expr.base
+                    sub_expressions += 'indices:&nbsp;%d<br>'%(expr_num_map[expr.indices])
+                sub_expressions += 'base:&nbsp;"%d"<br>'%expr.base
             elif isinstance(expr, Iter):
-                sub_expressions += 'lambda_map: %d<br>'%(expr_num_map[expr.lambda_map])
+                sub_expressions += 'lambda_map:&nbsp;%d<br>'%(expr_num_map[expr.lambda_map])
                 if hasattr(expr, 'start_index'): # single index
-                    sub_expressions += 'start_index: %d<br>'%(expr_num_map[expr.start_index])
+                    sub_expressions += 'start_index:&nbsp;%d<br>'%(expr_num_map[expr.start_index])
                 else: # multiple indices
-                    sub_expressions += 'start_indices: %d<br>'%(expr_num_map[expr.start_indices])
+                    sub_expressions += 'start_indices:&nbsp;%d<br>'%(expr_num_map[expr.start_indices])
                 if hasattr(expr, 'end_index'): # single index
-                    sub_expressions += 'end_index: %d<br>'%(expr_num_map[expr.end_index])
+                    sub_expressions += 'end_index:&nbsp;%d<br>'%(expr_num_map[expr.end_index])
                 else: # multiple indices
-                    sub_expressions += 'end_indices: %d<br>'%(expr_num_map[expr.end_indices])
+                    sub_expressions += 'end_indices:&nbsp;%d<br>'%(expr_num_map[expr.end_indices])
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr] if expr in expr_context_map else None

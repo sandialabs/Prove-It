@@ -1,8 +1,8 @@
-from proveit import Literal, Operation, BinaryOperation, maybeFencedLatex, safeDummyVar
+from proveit import Literal, Operation, maybeFencedLatex, safeDummyVar
 from proveit.logic import Equals
 from proveit._common_ import w, x, y, z
 
-class Frac(BinaryOperation):
+class Frac(Operation):
     # operator of the Fraction operation.
     _operator_ = Literal(stringFormat='frac', context=__file__)    
     
@@ -10,7 +10,7 @@ class Frac(BinaryOperation):
         r'''
         Divide two operands in fraction form.
         '''
-        BinaryOperation.__init__(self, Frac._operator_, operandA, operandB)
+        Operation.__init__(self, Frac._operator_, [operandA, operandB])
         self.numerator = operandA
         self.denominator = operandB
     

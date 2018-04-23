@@ -8,7 +8,7 @@ class Sqrt(Operation):
         r'''
         Take the square root of the base.
         '''
-        Operation.__init__(self, Sqrt._operator_, (base))
+        Operation.__init__(self, Sqrt._operator_, base)
         self.base = base
                     
     def latex(self, **kwargs):

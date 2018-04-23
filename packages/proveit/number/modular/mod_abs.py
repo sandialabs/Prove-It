@@ -6,7 +6,7 @@ class ModAbs(Operation):
     _operator_ = Literal(stringFormat='ModAbs', context=__file__)
     
     def __init__(self, value, divisor):
-        Operation.__init__(self, ModAbs._operator_, [value, divisor])
+        Operation.__init__(self, ModAbs._operator_, (value, divisor))
         self.value = value
         self.divisor = divisor
         

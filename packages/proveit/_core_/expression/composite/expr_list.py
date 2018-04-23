@@ -7,7 +7,7 @@ class ExprList(Composite, Expression):
     An ExprList is a composite expr composed of an ordered list of member
     Expressions.
     """
-    def __init__(self, expressions):
+    def __init__(self, *expressions):
         '''
         Initialize an ExprList from an iterable over Expression objects.
         '''
@@ -28,7 +28,7 @@ class ExprList(Composite, Expression):
             MakeNotImplemented(subClass)
         if len(coreInfo) != 1 or coreInfo[0] != 'ExprList':
             raise ValueError("Expecting ExprList coreInfo to contain exactly one item: 'ExprList'")
-        return ExprList(subExpressions)        
+        return ExprList(*subExpressions)        
 
     def buildArguments(self):
         '''
@@ -69,16 +69,23 @@ class ExprList(Composite, Expression):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=True, subFence=True, formattedOperator=None):
+    def formatted(self, formatType, fence=True, subFence=False, formattedOperator=None):
+        from iteration import Iter
         outStr = ''
         if len(self) == 0 and fence: return '()' # for an empty list, show the parenthesis to show something.
         if formattedOperator is None:
             formattedOperator = ',' # comma is the default formatted operator
-        formatted_sub_expressions = [sub_expr.formatted(formatType, fence=subFence) for sub_expr in self]
+        ellipses = r'\ldots' if formatType=='latex' else ' ... '
+        formatted_sub_expressions = []
+        for sub_expr in self:
+            if isinstance(sub_expr, Iter):
+                formatted_sub_expressions += [sub_expr.first().formatted(formatType, fence=subFence), ellipses, sub_expr.last().formatted(formatType, fence=subFence)]
+            else:
+                formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=subFence))
         # put the formatted operator between each of formattedSubExpressions
         if fence: 
             outStr += '(' if formatType=='string' else  r'\left('
-        outStr += formattedOperator.join(formatted_sub_expressions)
+        outStr += (' '+formattedOperator+' ').join(formatted_sub_expressions)
         if fence:            
             outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
@@ -168,7 +175,7 @@ class ExprList(Composite, Expression):
                     subbed_exprs.append(iter_expr)
             else:
                 subbed_exprs.append(subbed_expr)
-        return ExprList(subbed_exprs)
+        return ExprList(*subbed_exprs)
         
     def usedVars(self):
         '''

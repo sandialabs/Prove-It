@@ -8,7 +8,7 @@ class Lambda(Expression):
     parameters and sin(x^2 + y) is the body.  Each parameter must be a
     Variable.
     '''
-    def __init__(self, parameter_or_parameters, body):
+    def __init__(self, parameter_or_parameters, body, styles=tuple(), requirements=tuple()):
         '''
         Initialize a Lambda function expression given parameter(s) and a body.
         Each parameter must be a Variable.
@@ -36,7 +36,10 @@ class Lambda(Expression):
         if isinstance(body, Iter):
             raise TypeError('An Iter must be within an ExprList or ExprTensor, not directly as a Lambda body')
         self.body = body
-        Expression.__init__(self, ['Lambda'], list(self.parameters) + [self.body])
+        for requirement in self.body.requirements:
+            if not self.parameterSet.isdisjoint(requirement.freeVars()):
+                raise LambdaError("Cannot generate a Lambda expression with parameters involved in Lambda body requirements: " + str(requirement))
+        Expression.__init__(self, ['Lambda'], list(self.parameters) + [self.body], styles=styles, requirements=requirements)
         
     @classmethod
     def make(subClass, coreInfo, subExpressions):
@@ -52,6 +55,18 @@ class Lambda(Expression):
         Perform and lambda mapping, replacing the parameters with the given arguments.
         '''
         return self.body.substituted({param:arg for param, arg in zip(self.parameters, args)})
+    
+    def extractParameter(self, mapped_expr):
+        '''
+        
+        '''
+        pass
+
+    def extractParameters(self, mapped_expr):
+        '''
+        
+        '''
+        pass
 
     def buildArguments(self):
         '''
@@ -61,7 +76,7 @@ class Lambda(Expression):
         if hasattr(self, 'parameter'):
             yield self.parameter
         else:
-            yield self.paramaters
+            yield self.parameters
         yield self.body
 
     def string(self, **kwargs):
@@ -156,3 +171,9 @@ class Lambda(Expression):
         '''
         innerFreeVs = set(self.body.freeVars())
         return innerFreeVs - self.parameterSet
+
+class LambdaError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message

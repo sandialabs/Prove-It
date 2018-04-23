@@ -1,6 +1,6 @@
-from proveit import Operation, Literal
+from proveit import Function, Literal
 
-class Disjoint(Operation):
+class Disjoint(Function):
     '''
     The Disjoint operation defines a property for a collection of sets.
     It evaluates to True iff the sets are mutually/pairwise disjoint;
@@ -11,6 +11,6 @@ class Disjoint(Operation):
     _operator_ = Literal('disjoint', r'{\rm disjoint}', context=__file__)
     
     def __init__(self, *sets):
-        Operation.__init__(self, Disjoint._operator_, sets)
+        Function.__init__(self, Disjoint._operator_, sets)
 
     

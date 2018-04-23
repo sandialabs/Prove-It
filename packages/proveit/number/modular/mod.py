@@ -1,13 +1,13 @@
-from proveit import Literal, BinaryOperation
+from proveit import Literal, Operation
 from proveit.number.sets import Integers, Reals
 from proveit._common_ import a, b
 
-class Mod(BinaryOperation):
+class Mod(Operation):
     # operator of the Mod operation.
     _operator_ = Literal(stringFormat='mod', latexFormat=r'~\rm{mod}~', context=__file__)
     
     def __init__(self, dividend, divisor):
-        BinaryOperation.__init__(self, Mod._operator_, dividend, divisor)
+        Operation.__init__(self, Mod._operator_, (dividend, divisor))
         self.dividend = self.operands[0]
         self.divisor = self.operands[1]
 

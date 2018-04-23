@@ -72,7 +72,7 @@ class Less(LesserRelation):
                 
     def deduceInBooleans(self, assumptions=frozenset()):
         from _theorems_ import lessThanInBools
-        return lessThanInBools.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
+        return lessThanInBools.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
 
     def deriveRelaxed(self, assumptions=frozenset()):
         '''
@@ -80,7 +80,7 @@ class Less(LesserRelation):
         Assumptions may be required to deduce that a and b are in Reals.
         '''
         from _theorems_ import relaxLessThan
-        return relaxLessThan.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
+        return relaxLessThan.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -88,7 +88,8 @@ class Less(LesserRelation):
         and something of the form y<z, y<=z, z>y, z>=y, or y=z to
         obtain x<z.
         '''
-        from _theorems_ import transitivityLessLess, transitivityLessLessEq
+        from _axioms_ import transitivityLessLess
+        from _theorems_ import transitivityLessLessEq
         from greater_than import Greater, GreaterEq
         other = asExpression(other)
         if isinstance(other, Equals):
@@ -97,19 +98,14 @@ class Less(LesserRelation):
             other = other.deriveReversed(assumptions)
         elif other.lhs == self.rhs:
             if isinstance(other,Less):
-                result = transitivityLessLess.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
-                #print self,result
-                return result.checked({self})
+                return transitivityLessLess.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
             elif isinstance(other,LessEq):
-                result = transitivityLessLessEq.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
-                return result
+                return transitivityLessLessEq.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
         elif other.rhs == self.lhs:
             if isinstance(other,Less):
-                result = transitivityLessLess.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
-                return result
+                return transitivityLessLess.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
             elif isinstance(other,LessEq):
-                result = transitivityLessLessEq.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
-                return result
+                return transitivityLessLessEq.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))        
 
@@ -132,12 +128,12 @@ class Less(LesserRelation):
             # Do this later and get it to work properly with deriveAdded
             if isinstance(addend, Neg):
                 deduceInReals(addend.operand, assumptions)
-                return lessThanSubtract.specialize({a:self.lhs, b:self.rhs, c:addend.operand}).checked(assumptions)
+                return lessThanSubtract.specialize({a:self.lhs, b:self.rhs, c:addend.operand}, assumptions=assumptions)
             else:
             '''
-            return lessThanAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+            return lessThanAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
         elif addendSide == 'left':
-            return lessThanAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+            return lessThanAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
     
@@ -174,7 +170,7 @@ class LessEq(LesserRelation):
 
     def deduceInBooleans(self, assumptions=frozenset()):
         from _theorems_ import lessThanEqualsInBools
-        return lessThanEqualsInBools.specialize({a:self.lhs, b:self.rhs}).checked(assumptions)
+        return lessThanEqualsInBools.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
     
     def unfold(self, assumptions=frozenset()):
         from _axioms_ import lessThanEqualsDef
@@ -199,18 +195,14 @@ class LessEq(LesserRelation):
             return symmetricLessEq.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
         elif other.lhs == self.rhs:
             if isinstance(other,Less):
-                result = transitivityLessEqLess.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
-                return result.checked({self})
+                return transitivityLessEqLess.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
             elif isinstance(other,LessEq):
-                result = transitivityLessEqLessEq.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
-                return result
+                return transitivityLessEqLessEq.specialize({x:self.lhs, y:self.rhs, z:other.rhs}, assumptions=assumptions)
         elif other.rhs == self.lhs:
             if isinstance(other,Less):
-                result = transitivityLessEqLess.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
-                return result
+                return transitivityLessEqLess.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
             elif isinstance(other,LessEq):
-                result = transitivityLessEqLessEq.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
-                return result
+                return transitivityLessEqLessEq.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))        
 
@@ -233,12 +225,12 @@ class LessEq(LesserRelation):
             # Do this later and get it to work properly with deriveAdded
             if isinstance(addend, Neg):
                 deduceInReals(addend.operand, assumptions)
-                return lessThanEqualsSubtract.specialize({a:self.lhs, b:self.rhs, c:addend.operand}).checked(assumptions)
+                return lessThanEqualsSubtract.specialize({a:self.lhs, b:self.rhs, c:addend.operand}, assumptions=assumptions)
             else:
             '''
-            return lessThanEqualsAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+            return lessThanEqualsAddRight.specialize({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
         elif addendSide == 'left':
-            return lessThanEqualsAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}).checked(assumptions)
+            return lessThanEqualsAddLeft.specialize({a:self.lhs, b:self.rhs, c:addend}, assumptions=assumptions)
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
         

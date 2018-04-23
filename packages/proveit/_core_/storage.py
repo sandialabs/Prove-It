@@ -107,6 +107,7 @@ class Storage:
         '''
         with open(os.path.join(self.directory, '_sub_contexts_.txt'), 'a') as f:
             f.write(subContextName + '\n')
+            self.subContextNames.append(subContextName)
         
     def _updatePath(self):
         '''
@@ -287,6 +288,11 @@ class Storage:
         storage identifier.  The ref_count.txt file is updated with the new 
         reference count.
         '''
+        from context import CommonExpressions
+        if proveItStorageId in CommonExpressions.expr_id_contexts:
+            # A common expression of some Context is being referenced.
+            # Keep track of this for the purpose of detecting illegal cyclic referencing of common expressions.
+            CommonExpressions.referenced_contexts.add(CommonExpressions.expr_id_contexts[proveItStorageId].name)
         hash_path = self._storagePath(proveItStorageId)
         file_path = os.path.join(hash_path, 'ref_count.txt')
         with open(file_path, 'r') as f:
@@ -459,7 +465,10 @@ class Storage:
             special_name = expr_address[-1].split('.')[0] # strip of ".expr"
             # Store the original version as orig_expr.ipynb.  It will be
             # resurrected if the expression is no longer "special" but still used.
-            os.rename(filename, os.path.join(self.pv_it_dir, hash_directory, 'orig_expr.ipynb'))
+            orig_notebook_filename = os.path.join(self.pv_it_dir, hash_directory, 'orig_expr.ipynb')
+            if os.path.isfile(orig_notebook_filename):
+                os.remove(orig_notebook_filename) # remove an old one first
+            os.rename(filename, orig_notebook_filename)
             print "%s expression notebook is being updated"%special_name
         expr_classes = set()
         unnamed_subexpr_occurences = dict()
@@ -483,7 +492,7 @@ class Storage:
         
         # populate fromImports, directImports, and itemNames
         for expr_class in expr_classes:
-            class_name = self.className(expr_class)
+            class_name = expr_class.__name__
             module_name = self._moduleAbbreviatedName(expr_class.__module__, class_name)
             is_unique = (len(named_items[class_name]) == 1)
             if is_unique:
@@ -563,17 +572,20 @@ class Storage:
             template_name = '_unofficial_special_expr_template_.ipynb'
             name, kind, context = unofficialNameKindContext
         elif expr_address is not None:
-            template_name = '_special_expr_template_.ipynb'
             kind, name = self.context.specialExpr(expr)
+            if kind=='common':
+                template_name = '_common_expr_template_.ipynb'
+            else:
+                template_name = '_special_expr_template_.ipynb'
         else:
             template_name = '_expr_template_.ipynb'
         with open(os.path.join(proveit_path, '..', template_name), 'r') as template:
             nb = template.read()
-            if template_name != '_special_expr_template_.ipynb':
+            if template_name != '_special_expr_template_.ipynb' and template_name != '_common_expr_template_.ipynb':
                 nb = nb.replace('#EXPR#', expr_code)
             nb = nb.replace('#IMPORTS#', import_code)
             nb = nb.replace('#CONTEXT#', context.name)
-            nb = nb.replace('#TYPE#', str(expr.__class__).split('.')[-1])
+            nb = nb.replace('#TYPE#', expr.__class__.__name__)
             #nb = nb.replace('#TYPE_LINK#', typeLink.replace('\\', '\\\\'))
             if unofficialNameKindContext is not None or expr_address is not None:
                 kind_str = kind[0].upper() + kind[1:]
@@ -629,7 +641,7 @@ class Storage:
             # the expression is an '_operator_' of an Operation class
             operationClass = Operation.operationClassOfOperator[expr]
             exprClasses.add(operationClass)
-            namedItems.setdefault(self.className(operationClass), set()).add(operationClass)
+            namedItems.setdefault(operationClass.__name__, set()).add(operationClass)
             namedSubExprAddresses[operationClass._operator_] = (operationClass, '_operator_')
             return
             
@@ -654,7 +666,7 @@ class Storage:
             # add expr's class to exprClass and named items (unless it is a basic Composite sub-Expression
             # in which case we'll use a python list or dictionary to represent the composite expression).
             exprClasses.add(expr.__class__)
-            namedItems.setdefault(self.className(expr.__class__), set()).add(expr.__class__)
+            namedItems.setdefault(expr.__class__.__name__, set()).add(expr.__class__)
                                 
         # recurse over the expression build arguments (e.g., the sub-Expressions
         for arg in expr.buildArguments():
@@ -694,9 +706,6 @@ class Storage:
             if getattr(cur_module, objName) == getattr(parent_module, objName):
                 split_module_name = split_module_name[:-1]
         return '.'.join(split_module_name)
-    
-    def className(self, exprClass):
-        return str(exprClass).split('.')[-1]
     
     def _exprBuildingCode(self, expr, itemNames, isSubExpr=True):
         from proveit import Expression, Composite, ExprList, NamedExprs, ExprTensor
@@ -946,41 +955,51 @@ class Storage:
             built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], sub_expressions, context)
         return built_expr_map[master_expr_id]        
     
-    def recordReferencedContexts(self, contextNames):
+    def recordCommonExprDependencies(self, contextNames):
         '''
         Record the context names of any reference common expressions in storage
         while creating the common expressions for this context
         (for the purposes of checking for illegal mutual dependencies).
         '''
-        if contextNames == self.referencedContexts():
+        contextNames = set(contextNames)
+        contextNames.discard(self.context.name) # exclude the source context
+        if contextNames == self.storedCommonExprDependencies():
             return # unchanged
-        referenced_commons_filename = os.path.join(self.referenced_dir, 'contexts.txt')
+        referenced_commons_filename = os.path.join(self.referenced_dir, 'commons_dependencies.txt')
         with open(referenced_commons_filename, 'w') as f:
             for context_name in contextNames:
                 f.write(context_name + '\n')
 
-    def referencedContexts(self):
+    def storedCommonExprDependencies(self):
         '''
         Return the stored set of context names of common expressions
         referenced by the common expression notebook of this context.
         '''
-        referenced_commons_filename = os.path.join(self.referenced_dir, 'contexts.txt')
+        referenced_commons_filename = os.path.join(self.referenced_dir, 'commons_dependencies.txt')
         if os.path.isfile(referenced_commons_filename):
             with open(referenced_commons_filename, 'r') as f:
                 return set([line.strip() for line in f.readlines()])
         return set() # empty set by default
         
-    def mutualReferencedContexts(self, contextNames):
+    def cyclicallyReferencedCommonExprContext(self, contextNames):
         '''
-        Check for illegal mutual dependencies of common expression notebooks.
+        Check for illegal cyclic dependencies of common expression notebooks.
         If there is one, return the name; otherwise return None.
         '''        
         from .context import Context
-        for context_name in contextNames:
-            other_context = Context.getContext(context_name)
-            other_referenced_contexts = other_context.referencedContexts()
-            if self.context.name in other_referenced_contexts:
-                return other_context.name
+        referencing_contexts = {contextName:self.context for contextName in contextNames if contextName != self.context.name}
+        while len(referencing_contexts) > 0:
+            contextName, referencing_context = referencing_contexts.popitem()
+            context = Context.getContext(contextName)
+            if context == self.context:
+                # a directly or indirectly referenced context refers back to the referencing source
+                return referencing_context # cycle found; report context with a common expression referencing the source
+            # extend with indirect references
+            new_context_names = context.storedCommonExprDependencies()
+            for new_context_name in new_context_names:
+                if new_context_name not in referencing_contexts:
+                    # add an indirect reference
+                    referencing_contexts[new_context_name] = context
         return None
     
     def referenceDisplayedExpressions(self, name):
@@ -1021,9 +1040,9 @@ class Storage:
         Remove all of the references to displayed expressions in this context.
         '''
         suffix = '_displayed.pv_it'
-        for filename in os.listdir(self.reference_dir):
+        for filename in os.listdir(self.referenced_dir):
             if filename[-len(suffix):] == suffix:
-                displayed_ref_path = os.path.join(self.reference_dir, filename)
+                displayed_ref_path = os.path.join(self.referenced_dir, filename)
                 with open(displayed_ref_path, 'r') as f:
                     for ref in f.readlines():
                         self._removeReference(ref.strip())
@@ -1043,7 +1062,21 @@ class Storage:
                 hash_directory = sub_dir 
                 if self._getRefCount(hash_directory) == 0:
                     self._removeReference(hash_directory)
-    
+
+    def containsAnyExpression(self):
+        '''
+        Returns True if the __pv_it directory contains any expressions based
+        on whether or not there are sub-directories of the __pv_it directory
+        other than "_referenced_" after calling "clean()".
+        '''
+        self.clean()
+        for sub_dir in os.listdir(self.pv_it_dir):
+            if sub_dir == '_referenced_' or sub_dir == 'failed_common_import.txt':
+                continue
+            return True # a sub-directory other than _referenced_; assume it is for an expression
+        return False
+        
+                        
     """    
     # This is not good to do if there are external references
            

@@ -1,8 +1,8 @@
-from proveit import Literal, AssociativeOperation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
 from proveit._common_ import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti
 
-class And(AssociativeOperation):
+class And(Operation):
     # The operator of the And operation
     _operator_ = Literal(stringFormat='and', latexFormat=r'\land', context=__file__)
     
@@ -10,7 +10,7 @@ class And(AssociativeOperation):
         r'''
         And together any number of operands: :math:`A \land B \land C`
         '''
-        AssociativeOperation.__init__(self, And._operator_, *operands)
+        Operation.__init__(self, And._operator_, operands)
     
     def conclude(self, assumptions):
         '''

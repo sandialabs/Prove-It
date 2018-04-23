@@ -1,7 +1,7 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit._common_ import a, b, n
 
-class Interval(BinaryOperation):
+class Interval(Operation):
     # operator of the Interval operation.
     _operator_ = Literal(stringFormat='Interval',context=__file__)   
     
@@ -9,7 +9,7 @@ class Interval(BinaryOperation):
     Contiguous set of integers, from lowerBound to upperBound (both bounds to be interpreted inclusively)
     '''
     def __init__(self, lowerBound, upperBound):
-        BinaryOperation.__init__(self, Interval._operator_, lowerBound, upperBound)
+        Operation.__init__(self, Interval._operator_, (lowerBound, upperBound))
         self.lowerBound = lowerBound
         self.upperBound = upperBound
         

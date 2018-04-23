@@ -1,11 +1,11 @@
-from proveit import Literal, OperationOverInstances, USE_DEFAULTS, ExprList, Operation, ProofFailure
+from proveit import Expression, Literal, OperationOverInstances, USE_DEFAULTS, ExprList, Operation, ProofFailure
 from proveit._common_ import P, Q, R, S, xMulti, yMulti, Qmulti, Rmulti
 
 class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall', context=__file__)
     
-    def __init__(self, instanceVars, instanceExpr, domain=None, conditions = tuple()):
+    def __init__(self, instanceVars, instanceExpr, domain=None, domains=None, conditions = tuple()):
         '''
         Create a Forall expression:
         forall_{instanceVars | conditions} instanceExpr.
@@ -13,13 +13,14 @@ class Forall(OperationOverInstances):
         given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
         may be singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, Forall._operator_, instanceVars, instanceExpr, domain, conditions)
+
+        OperationOverInstances.__init__(self, Forall._operator_, instanceVars, instanceExpr, domain, domains, conditions)
         
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically for this forall operation.
         '''
-        if hasattr(self.domain, 'unfoldForall'):
+        if self.hasDomain() and hasattr(self.domain, 'unfoldForall'):
             yield self.unfold # derive an unfolded version (dependent upon the domain)
         
     def conclude(self, assumptions):
@@ -27,7 +28,7 @@ class Forall(OperationOverInstances):
         If the domain has a 'foldForall' method, attempt to conclude this Forall statement
         via 'concludeAsFolded'.
         '''
-        if hasattr(self.domain, 'foldAsForall'):
+        if self.hasDomain() and hasattr(self.domain, 'foldAsForall'):
             return self.concludeAsFolded(assumptions)
         raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method.")
     
@@ -61,6 +62,7 @@ class Forall(OperationOverInstances):
         From a nested forall statement, derive the bundled forall statement.  For example,
         forall_{x | Q(x)} forall_{y | R(y)} P(x, y) becomes forall_{x, y | Q(x), R(y)} P(x, y).
         '''
+        raise NotImplementedError("Need to update")
         from _theorems_ import forallBundling
         assert isinstance(self.instanceExpr, Forall), "Can only bundle nested forall statements"
         innerForall = self.instanceExpr
@@ -78,6 +80,7 @@ class Forall(OperationOverInstances):
         return self.prove(assumptions).specialize(specializeMap, relabelMap, assumptions=assumptions)
 
     def _specializeUnravelingTheorem(self, theorem, *instanceVarLists):
+        raise NotImplementedError("Need to update")
         assert len(self.instanceVars) > 1, "Can only unravel a forall statement with multiple instance variables"
         if len(instanceVarLists) == 1:
             raise ValueError("instanceVarLists should be a list of 2 or more Variable lists")
@@ -137,6 +140,7 @@ class Forall(OperationOverInstances):
         Attempt to deduce, then return, that this forall expression is in the set of BOOLEANS,
         as all forall expressions are (they are taken to be false when not true).
         '''
+        raise NotImplementedError("Need to update")
         from _axioms_ import forallInBool
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions

@@ -1,1 +1,0 @@
-apply any operation over a variable range of integer inputs

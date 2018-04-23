@@ -8,4 +8,7 @@ from comprehension import SetOfAll
 from disjointness import Disjoint, Distinct
 from cardinality import Card
 
-from _common_ import EmptySet
+try:
+    from _common_ import EmptySet
+except  ImportError:
+    pass # if the common expressions have not been generated yet

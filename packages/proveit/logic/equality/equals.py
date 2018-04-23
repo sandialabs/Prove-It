@@ -1,6 +1,7 @@
-from proveit import asExpression, BinaryOperation, USE_DEFAULTS, ProofFailure
+from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda
-from proveit import TransitiveRelation, IrreducibleValue, isIrreducibleValue
+from proveit import TransitiveRelation
+from proveit.logic.irreducible_value import IrreducibleValue, isIrreducibleValue
 from proveit._common_ import A, P, Q, f, x, y, z
 
 class Equals(TransitiveRelation):
@@ -14,11 +15,15 @@ class Equals(TransitiveRelation):
     # Subset of knownEqualities that have irreducible values on the right
     # hand side.
     evaluations = dict()
+    
+    # Record found inversions.  See the invert method.
+    # Maps (lambda_map, rhs) pairs to a list of
+    # (known_equality, inversion) pairs, recording previous results
+    # of the invert method for future reference.
+    inversions = dict()
         
     def __init__(self, a, b):
-        BinaryOperation.__init__(self, Equals._operator_, a, b)
-        self.lhs = self.operands[0]
-        self.rhs = self.operands[1]
+        TransitiveRelation.__init__(self, Equals._operator_, a, b)
         
     def sideEffects(self, knownTruth):
         '''
@@ -363,6 +368,30 @@ class Equals(TransitiveRelation):
             return self.lhs.evalEquality(self.rhs)
         return BinaryOperation.evaluate(self, assumptions)
     
+    def invert(self, lambda_map, rhs, assumptions=USE_DEFAULTS):
+        '''
+        Given some x -> f(x) map and a right-hand-side, find the
+        x for which f(x) = rhs amongst known equalities under the
+        given assumptions.  Return this x if one is found; return
+        None otherwise.
+        '''
+        if (lambda_map, rhs) in Equals.inversions:
+            # Previous solution(s) exist.  Use one if the assumptions are sufficient.
+            assumptionsSet = set(defaults.checkedAssumptions(assumptions)) 
+            for known_equality, inversion in Equals.inversions[(lambda_map, rhs)]:
+                if known_equality.isSufficient(assumptionsSet):
+                    return inversion
+            # Found previous solution
+            return Equals.inversions[(lambda_map, rhs)]
+        # Search among known relations for a solution.
+        for known_equality in Equals.knownRelationsFromRight(rhs, assumptions):
+            x = lambda_map.extractParameter(known_equality.lhs)
+            if x is not None:
+                # Found an inversion.  Store it for future reference.
+                Equals.inversions.setdefault((lambda_map, rhs), []).append(known_equality, x)
+                return x # Return the found inversion.
+        return None # No inversion found.
+    
 def reduceOperands(operation, assumptions=USE_DEFAULTS):
     '''
     Attempt to return a provably equivalent expression whose operands
@@ -423,7 +452,6 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
     special case, evaluating the expression to be true if it is in the set
     of assumptions [also see KnownTruth.evaluate and evaluateTruth].
     '''
-    from proveit import defaults
     from proveit.logic import TRUE, FALSE
     if isinstance(expr, IrreducibleValue):
         IrreducibleValue.evaluate(expr)
