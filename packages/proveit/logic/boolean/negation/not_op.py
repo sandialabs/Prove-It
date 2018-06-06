@@ -12,7 +12,7 @@ class Not(Operation):
         '''
         Side-effect derivations to attempt automatically.
         '''
-        from proveit.logic import FALSE, TRUE, Equals
+        from proveit.logic import FALSE, Equals
         if self.operand != FALSE: # avoid infinite recursion
             yield self.equateNegatedToFalse # A=FALSE given Not(A)
         if not isinstance(self.operand, Equals): # avoid infinite recursion

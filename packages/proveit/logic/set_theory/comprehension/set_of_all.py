@@ -10,7 +10,7 @@ class SetOfAll(OperationOverInstances):
         Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
         {instanceElement | conditions}_{instanceVar \in S}
         '''
-        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVars, instanceElement, domain, conditions)
+        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVars, instanceElement, domain, conditions=conditions)
         self.instanceElement = self.instanceExpr
 
     @staticmethod

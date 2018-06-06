@@ -146,12 +146,12 @@ class And(Operation):
             if operand != TRUE and operand != FALSE:
                 # The operands are not all true/false, so try the default evaluate method
                 # which will attempt to evaluate each of the operands.
-                return AssociativeOperation.evaluate(self, assumptions)
+                return Operation.evaluate(self, assumptions)
             if operand == FALSE:
                 falseIndex = i
         if len(self.operands) == 2:
             # This will automatically return andTT, andTF, andFT, or andFF
-            return AssociativeOperation.evaluate(self, assumptions)
+            return Operation.evaluate(self, assumptions)
         if falseIndex >= 0:
             # one operand is FALSE so the whole conjunction evaluates to FALSE.
             return conjunctionFalseEval.specialize({Amulti:self.operands[:falseIndex], Cmulti:self.operands[falseIndex+1:]})

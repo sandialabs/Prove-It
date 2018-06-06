@@ -34,7 +34,7 @@ class Iff(Operation):
         try:
             # try to prove the bi-directional implication via evaluation reduction.
             # if that is possible, it is a relatively straightforward thing to do.
-            return BinaryOperation.conclude(assumptions)
+            return Operation.conclude(assumptions)
         except:
             pass
         # the last attempt is to compose the Iff from the implications each way
@@ -121,7 +121,7 @@ class Iff(Operation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         from _theorems_ import iffTT, iffTF, iffFT, iffFF # IMPORTANT: load in truth-table evaluations
-        return BinaryOperation.evaluate(self, assumptions)
+        return Operation.evaluate(self, assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''

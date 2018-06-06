@@ -209,7 +209,7 @@ class Implies(Operation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._theorems_ import impliesTT, impliesFT, impliesFF, impliesTF # load in truth-table evaluations
-        return BinaryOperation.evaluate(self, assumptions)
+        return Operation.evaluate(self, assumptions)
     
     def deduceInBool(self):
         '''

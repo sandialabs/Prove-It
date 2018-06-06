@@ -16,7 +16,7 @@ class NotEquals(Operation):
         Side-effect derivations to attempt automatically for
         this NotEquals operation.
         '''
-        from proveit.logic import FALSE
+        from proveit.logic.boolean._common_ import FALSE
         # automatically derive the reversed form which is equivalent
         yield self.deriveReversed # y != x from x != y
         if self.rhs==FALSE:

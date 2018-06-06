@@ -36,7 +36,7 @@ class Equals(TransitiveRelation):
         derivations are also attempted depending upon the form of
         this equality.
         '''
-        from proveit.logic import TRUE, FALSE
+        from proveit.logic.boolean._common_ import TRUE, FALSE
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
         if isIrreducibleValue(self.rhs):
@@ -57,7 +57,7 @@ class Equals(TransitiveRelation):
         '''
         Side-effect derivations to attempt automatically for a negated equation.        
         '''
-        from proveit.logic import FALSE, inBool
+        from proveit.logic.boolean._common_ import FALSE
         yield self.deduceNotEquals # A != B from not(A=B)
         if self.rhs == FALSE:
             yield self.deduceViaNegatedFalsification # A from not(A=FALSE) and A in Booleans

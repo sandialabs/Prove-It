@@ -223,12 +223,12 @@ class Or(Operation):
             if operand != TRUE and operand != FALSE:
                 # The operands are not always true/false, so try the default evaluate method
                 # which will attempt to evaluate each of the operands.
-                return AssociativeOperation.evaluate(self, assumptions)
+                return Operation.evaluate(self, assumptions)
             if operand == TRUE:
                 trueIndex = i
         if len(self.operands) == 2:
             # This will automatically return orTT, orTF, orFT, or orFF
-            return AssociativeOperation.evaluate(self, assumptions)
+            return Operation.evaluate(self, assumptions)
         if trueIndex >= 0:
             # one operand is TRUE so the whole disjunction evaluates to TRUE.
             return disjunctionTrueEval.specialize({Amulti:self.operands[:trueIndex], Cmulti:self.operands[trueIndex+1:]}, assumptions=assumptions)

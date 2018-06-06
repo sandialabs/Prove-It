@@ -1,8 +1,5 @@
 from quantification import Forall, Exists, NotExists
-try:
-    from _common_ import Booleans, TRUE, FALSE
-except:
-    pass # if the common expressions have not been generated yet
+from _common_ import Booleans, TRUE, FALSE
 from booleans import inBool
 from conjunction import And, compose
 from disjunction import Or
