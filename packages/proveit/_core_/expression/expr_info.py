@@ -43,11 +43,13 @@ class ExpressionInfo:
             if self.show_details:
                 if isinstance(expr, Label):
                     outStr += indent + 'latexFormat: ' + expr.latexFormat + '\n'
+                if len(expr._coreInfo)>4:
+                    outStr += indent + 'extraCoreInfo: ' + str(expr._coreInfo[4:]) + '\n'                    
                 if isinstance(expr, Literal):
-                    outStr += indent + 'context: ' + expr.context + '\n'
+                    outStr += indent + 'context: ' + expr.context.name + '\n'
                 outStr += indent + 'class: ' + str(expr.__class__) + '\n'
             if isinstance(expr, NamedExprs):
-                for key in sorted(expr.keys()):
+                for key in expr.keys():
                     outStr += indent + key + ': ' + str(expr_num_map[expr[key]]) + '\n'
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
@@ -92,6 +94,7 @@ class ExpressionInfo:
         from .composite import NamedExprs, Indexed, Iter
         from .operation import Operation
         from .lambda_expr import Lambda
+        from .label import Literal
         from .expr import Expression
         
         # get the enumerated sub-expressions; parents come before children.
@@ -112,7 +115,7 @@ class ExpressionInfo:
         for k, expr in enumerate(enumerated_expressions):
             sub_expressions = ''
             if isinstance(expr, NamedExprs):
-                for key in sorted(expr.keys()):
+                for key in expr.keys():
                     sub_expressions += '%s: %d<br>'%(key, expr_num_map[expr[key]])
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
@@ -146,6 +149,11 @@ class ExpressionInfo:
                     sub_expressions += 'end_index:&nbsp;%d<br>'%(expr_num_map[expr.end_index])
                 else: # multiple indices
                     sub_expressions += 'end_indices:&nbsp;%d<br>'%(expr_num_map[expr.end_indices])
+            elif isinstance(expr, Literal) and self.show_details:
+                sub_expressions += "<strong>'Literal' details</strong><br>"
+                sub_expressions += 'context:&nbsp;"%s"<br>'% expr.context.name 
+                if len(expr._coreInfo)>4:                
+                    sub_expressions += 'extraCoreInfo:&nbsp;"%s"<br>'%str(expr._coreInfo[4:])    
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr] if expr in expr_context_map else None

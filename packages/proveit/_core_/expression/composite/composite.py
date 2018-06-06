@@ -54,8 +54,11 @@ def compositeExpression(expressions):
                 # try to see if we can use expressions to generate a NamedExpressions object
                 return NamedExprs(expressions)
             except:        
-                # Assume to be a tensor as a list of lists
-                return ExprTensor(expressions)
+                try:
+                    # Assume to be a tensor as a list of lists
+                    return ExprTensor(expressions)
+                except:
+                    raise ValueError("Unable to generate a composite Expression from %s"%str(expressions))
 
 def singleOrCompositeExpression(exprOrExprs):
     '''

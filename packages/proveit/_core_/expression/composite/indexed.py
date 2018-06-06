@@ -72,6 +72,7 @@ class Indexed(Expression):
         a Composite, the indexing should be actualized.
         '''
         from composite import Composite, _simplifiedCoord
+        from proveit.number import num, Subtract, isLiteralInt
         from expr_list import ExprList
         from expr_tensor import ExprTensor
         
@@ -86,9 +87,15 @@ class Indexed(Expression):
             # If there is an IndexingError (i.e., we cannot get the element
             # because the Composite has an unexpanding Iter), 
             # default to returning the subbed Indexed.
-            indices = [_simplifiedCoord(index, assumptions, new_requirements) for index in subbed_indices]
+            indices = subbed_indices
+            if self.base != 0: # subtract off the base if it is not zero
+                indices = [Subtract(index, num(self.base)) for index in indices]
+            indices = [_simplifiedCoord(index, assumptions, new_requirements) for index in indices]
             if isinstance(subbed_var, ExprList):
-                return subbed_var.getElem(indices[0], assumptions=assumptions, requirements=new_requirements)
+                if isLiteralInt(indices[0]):
+                    return subbed_var[indices[0].asInt()]
+                else:
+                    raise IndexedError("Indices must evaluate to literal integers when substituting an Indexed expression")
             elif isinstance(subbed_var, ExprTensor):
                 return subbed_var.getElem(indices, assumptions=assumptions, requirements=new_requirements)
         
@@ -101,17 +108,19 @@ class Indexed(Expression):
         # just return the Indexed operation with the substitutions made.
         return Indexed(subbed_var, subbed_indices, base=self.base)
 
-    def iterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+    def expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Considering a substitution defined via exprMap, relabelMap, etc, and
-        index iteration defined by substituting the "iteration parameters" over
-        the range from the "starting arguments" to the "ending arguments", yield
-        disjoint sub-ranges that covers occupied portions of the full range
+        Consider a substitution over a containing iterattion (Iter) defined 
+        via exprMap, relabelMap, etc, and index iteration defined by substituting 
+        the "iteration parameters" over the range from the "starting arguments" 
+        to the "ending arguments".
+        When the Indexed variable is substituted with a Composite, any containing
+        Iteration is to be expanded over the iteration range.  This method
+        yields disjoint sub-ranges that covers occupied portions of the full range
         in a manner that keeps different inner iterations separate.  In particular,
-        when the Indexed variable is substituted with a Composite, the
-        iteration range is broken up for the different Iter entries that
+        the iteration range is broken up for the different Iter entries that
         are contained in this Composite.  If it is not substituted with
-        a composite, the full range is simply yielded.
+        a composite, no range is yielded.
         '''
         from composite import Composite, IndexingError
         from expr_list import ExprList
@@ -119,6 +128,7 @@ class Indexed(Expression):
         
         subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        
         if isinstance(subbed_var, Composite):
             # We cannot substitute in a Composite without doing an iteration over it.
             # Only certain iterations are allowed in this manner however.
@@ -126,16 +136,17 @@ class Indexed(Expression):
             start_indices = []
             end_indices = []
             for subbed_index, iterParam, startArg, endArg in zip(subbed_indices, iterParams, startArgs, endArgs):
-                if iterParam not in subbed_index:
+                print subbed_index, iterParam, startArg, endArg
+                if iterParam not in subbed_index.freeVars():
                     raise IndexingError("Iteration parameter not contained in the substituted index")
                 start_indices.append(subbed_index.substituted({iterParam:startArg}))
                 end_indices.append(subbed_index.substituted({iterParam:endArg}))
             
             if isinstance(subbed_var, ExprList):
                 assert len(start_indices) == len(end_indices) == 1, "Lists are 1-dimensional and should be singly-indexed"
-                entryRangeGenerator = subbed_var.entryRanges(start_indices[0], end_indices[0])
+                entryRangeGenerator = subbed_var.entryRanges(start_indices[0], end_indices[0], assumptions, requirements)
             else:
-                entryRangeGenerator = subbed_var.entryRanges(start_indices, end_indices)
+                entryRangeGenerator = subbed_var.entryRanges(start_indices, end_indices, assumptions, requirements)
             
             for (intersection_start, intersection_end) in entryRangeGenerator:
                 # We must put it terms of iter parameter values (arguments) via inverting the index_expr.
@@ -152,9 +163,6 @@ class Indexed(Expression):
                 param_start = tuple([coord2param(axis, i) for axis, i in enumerate(intersection_start)])
                 param_end = tuple([coord2param(axis, i) for axis, i in enumerate(intersection_end)])
                 yield (param_start, param_end)
-                        
-        else:
-            yield (startArgs, endArgs)
             
     """  
     def iterated(self, iterParams, startIndices, endIndices, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):

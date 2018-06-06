@@ -488,7 +488,7 @@ class KnownTruth:
         Returns the proven specialized KnownTruth, or throws an exception if the
         proof fails.        
         '''
-        from proveit import Operation, Variable, Lambda
+        from proveit import Operation, Variable, Lambda, singleOrCompositeExpression
         from proveit.logic import Forall
         from proof import Specialization, SpecializationFailure
         
@@ -503,9 +503,10 @@ class KnownTruth:
         # For any entrys in the subMap with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
         # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
-        # For MultiVariable operators, there will be composite substitutions.
+        # Convert to composite expressions as needed (via singleOrCompositeExpression).
         processedSubMap = dict()
         for key, sub in specializeMap.iteritems():
+            sub = singleOrCompositeExpression(sub)
             if isinstance(key, Operation):
                 operation = key
                 subVar = operation.operator
@@ -551,15 +552,15 @@ class KnownTruth:
         be provided to introduce a single Forall wrapper.
         '''
         from proveit._core_.proof import Generalization
-        from proveit import Variable, MultiVariable
-        if isinstance(forallVarLists, Variable) or isinstance(forallVarLists, MultiVariable):
+        from proveit import Variable
+        if isinstance(forallVarLists, Variable):
             forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
         else:
             if not hasattr(forallVarLists, '__len__'):
-                raise ValueError("Must supply 'generalize' with a Variable/MultiVariable, list of Variable/MultiVariable, or list of Variable/MultiVariable lists.")
+                raise ValueError("Must supply 'generalize' with a Variable, list of Variables, or list of Variable lists.")
             if len(forallVarLists) == 0:
-                raise ValueError("Must provide at least one Variable/MultiVariable to generalize over")
-            if all(isinstance(x, Variable) or isinstance(x, MultiVariable) for x in forallVarLists):
+                raise ValueError("Must provide at least one Variable to generalize over")
+            if all(isinstance(x, Variable) for x in forallVarLists):
                 # convert a list of Variable/MultiVariables to a list of lists
                 forallVarLists = [forallVarLists]
                     
@@ -612,7 +613,7 @@ class KnownTruth:
         from proveit import ExprList
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
         if len(self.assumptions) > 0:
-            assumptionsStr = ExprList(self.assumptions).formatted('string', fence=False)
+            assumptionsStr = ExprList(*self.assumptions).formatted('string', fence=False)
             return r'{' +assumptionsStr + r'} |= ' + self.expr.string()
         return r'|= ' + self.expr.string()
 

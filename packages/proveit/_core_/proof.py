@@ -598,7 +598,7 @@ class Specialization(Proof):
         map dictionary (subMap), or defaulting basic instance variables as
         themselves. 
         '''
-        from proveit import Lambda, ExprList
+        from proveit import Lambda, Expression
         from proveit.logic import Forall, InSet
         
         # check that the mappings are appropriate
@@ -609,9 +609,10 @@ class Specialization(Proof):
             if assumption == WILDCARD_ASSUMPTIONS: continue # ignore the wildcard for this purpose
             if len(assumption.freeVars() & set(relabelMap.keys())) != 0:
                 raise RelabelingFailure(None, assumptions, 'Cannot relabel using assumptions that involve any of the relabeling variables')
-
+        
         for key, sub in specializeMap.iteritems():
-            Specialization._checkSpecializeMapping(key, sub, assumptions)
+            if not isinstance(sub, Expression):
+                raise TypeError("Expecting specialization substitutions to be 'Expression' objects")
             if key in relabelMap:
                 raise SpecializationFailure(None, assumptions, 'Attempting to specialize and relabel the same variable: %s'%str(key))
         
@@ -626,6 +627,8 @@ class Specialization(Proof):
             if not isinstance(expr, Forall):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             expr = expr.operands
+            domain = expr.domain if hasattr(expr, 'domain') else None
+            domains = expr.domains if hasattr(expr, 'domains') else None
             lambdaExpr = expr['imap'];
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
@@ -638,15 +641,14 @@ class Specialization(Proof):
             # make substitutions in the condition
             subbedConditions += conditions.substituted(partialMap, relabelMap)
             # add conditions for satisfying the domain restriction if there is one
-            if hasattr(expr, 'domains'):
+            if domains is not None:
                 # add the domain conditions for each instance variable in its respective domain
-                for iVar, domain in zip(instanceVars, expr.domains):
+                for iVar, domain in zip(instanceVars, domains):
                     subbed_var = iVar.substituted(partialMap, relabelMap)
                     inSetCondition = InSet(subbed_var, domain.substituted(partialMap, relabelMap))
                     subbedConditions.append(inSetCondition)
-            elif hasattr(expr, 'domain'):
+            elif domain is not None:
                 # add the domain conditions for each instance variable all to the same domain
-                domain = expr.domain
                 for iVar in instanceVars:
                     subbed_var = iVar.substituted(partialMap, relabelMap)
                     inSetCondition = InSet(subbed_var, domain.substituted(partialMap, relabelMap))
@@ -679,17 +681,6 @@ class Specialization(Proof):
         else:
             raise RelabelingFailure(None, assumptions, "May only relabel a Variable or a MultiVariable")                       
 
-    @staticmethod
-    def _checkSpecializeMapping(key, sub, assumptions):
-        from proveit import Expression, Composite, Variable
-        if isinstance(key, Variable):
-            # substitute a simple Variable
-            if not isinstance(sub, Expression) or isinstance(sub, Composite):
-                raise SpecializationFailure(None, assumptions, 'A normal Variable may be not be specialized to a composite Expression (only a MultiVariable may be)')
-        else:
-            raise SpecializationFailure(None, assumptions, "May only specialize Forall instance Variables/MultiVariables")
-
-
 class Generalization(Proof):
     def __init__(self, instanceTruth, newForallVarLists, newDomains, newConditions=tuple()):
         '''
@@ -701,7 +692,7 @@ class Generalization(Proof):
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z in Reals | g(y, z), h(z)} ...
         '''
-        from proveit import KnownTruth, Variable, MultiVariable, Etcetera
+        from proveit import KnownTruth, Variable
         from proveit.logic import Forall, InSet
         if not isinstance(instanceTruth, KnownTruth):
             raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
@@ -719,7 +710,7 @@ class Generalization(Proof):
                 raise ValueError('The number of forall variable lists and new domains does not match: %d vs %d'%(len(newForallVarLists), len(newDomains)))
             for k, (newForallVars, newDomain) in enumerate(reversed(zip(newForallVarLists, newDomains))):
                 for forallVar in newForallVars:
-                    if not isinstance(forallVar, Variable) and not isinstance(forallVar, MultiVariable):
+                    if not isinstance(forallVar, Variable):
                         raise ValueError('Forall variables of a generalization must be Variable objects')
                 introducedForallVars |= set(newForallVars)
                 newConditions = []
@@ -737,8 +728,6 @@ class Generalization(Proof):
                 assumptions -= set(newConditions)
                 if newDomain is not None:
                     assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars if isinstance(forallVar, Variable)}
-                    # the InSet condition for MultiVariables should be wrapped in an Etcetera
-                    assumptions -= {Etcetera(InSet(forallVar, newDomain)) for forallVar in newForallVars if isinstance(forallVar, MultiVariable)}
                 # create the new generalized expression
                 generalizedExpr = Forall(instanceVars=newForallVars, instanceExpr=expr, domain=newDomain, conditions=newConditions)
                 # make sure this is a proper generalization that doesn't break the logic:

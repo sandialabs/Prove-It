@@ -55,7 +55,6 @@ class ExprTensor(Composite, Expression):
         from composite import _simplifiedCoord
         from proveit._core_ import KnownTruth
         from proveit.number import Less, Greater, zero, one, num, Add, Subtract
-        from iteration import Iter
         
         assumptions = defaults.checkedAssumptions(assumptions)
         requirements = []                
@@ -366,7 +365,7 @@ class ExprTensor(Composite, Expression):
     
     def getElem(self, tensor_loc, assumptions = USE_DEFAULTS, requirements = None):
         '''
-        Return the tensor element at the given location
+        Return the tensor element at the location, given
         as an Expression, using the given assumptions as needed
         to interpret the location expression.  Required
         truths, proven under the given assumptions, that 

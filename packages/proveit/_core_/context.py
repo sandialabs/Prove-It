@@ -182,6 +182,12 @@ class Context:
     def _setTheorems(self, theoremNames, theoremDefinitions):
         self._setSpecialStatements(theoremNames, theoremDefinitions, 'theorem')
     
+    def _clearAxioms(self):
+        self._setAxioms([], dict())
+
+    def _clearTheorems(self):
+        self._setTheorems([], dict())
+    
     def _setSpecialStatements(self, names, definitions, kind):
         from proveit import Expression
         storage = self._storage
@@ -261,7 +267,10 @@ class Context:
             for line in f:
                 yield line.strip() # name of axiom or theorem
             
-    def _setCommonExpressions(self, exprNames, exprDefinitions):
+    def _clearCommonExressions(self):
+        self._setCommonExpressions([], dict(), clear=True)
+        
+    def _setCommonExpressions(self, exprNames, exprDefinitions, clear=False):
         from proveit import Expression
         self._common_expr_ids = dict()
         storage = self._storage
@@ -302,6 +311,14 @@ class Context:
         # add references to new common expressions that were not preveiously a common expression
         for expr_id in new_expr_ids:
             storage._addReference(expr_id) # add reference to a new common expression
+        
+        if clear:
+            assert len(exprNames)==len(exprDefinitions), "Not expecting any expression names when 'clearing'"
+            # By removing the file, we indicate that the common expressions are not defined which is
+            # treated a little differently than when there are no common expressions.  In this case,
+            # importing from _common_.py will generate dummy labels in order to avoid exceptions occurring
+            # when the common expressions are in a non-generated state.
+            os.remove(commons_filename)
     
     def makeSpecialExprModule(self, kind):
         '''
@@ -329,9 +346,9 @@ class Context:
         return list(self._getSpecialStatementNames('theorem'))
     
     def commonExpressionNames(self):
-        self._common_expr_ids = dict()
         commons_filename = os.path.join(self._storage.referenced_dir, 'commons.pv_it')
         if os.path.isfile(commons_filename):
+            self._common_expr_ids = dict()
             with open(commons_filename, 'r') as f:
                 for line in f.readlines():
                     name, expr_id = line.split()
@@ -361,14 +378,16 @@ class Context:
         '''
         return self._storage.cyclicallyReferencedCommonExprContext(CommonExpressions.referenced_contexts)
         
-    def referenceDisplayedExpressions(self, name):
+    def referenceDisplayedExpressions(self, name, clear=False):
         '''
         Reference displayed expressions, recorded under the given name
         in the __pv_it directory.  If the same name is reused,
         any expressions that are not displayed this time that
         were displayed last time will be unreferenced.
+        If clear is True, remove all of the references and the
+        file that stores these references.
         '''
-        self._storage.referenceDisplayedExpressions(name)
+        self._storage.referenceDisplayedExpressions(name, clear)
                             
     def getAxiom(self, name):
         '''
@@ -485,6 +504,8 @@ class Context:
         if self._common_expr_ids is None:
             # while the names are read in, the expr id map will be generated
             list(self.commonExpressionNames())
+        if self._common_expr_ids is None:
+            raise UnsetCommonExpressions(self.name)
         # make the common expression for the given common expression name
         prev_context_default = Context.default
         Context.default = self # set the default Context in case there is a Literal
@@ -630,6 +651,7 @@ class CommonExpressions:
         return sorted(self.__dict__.keys() + list(self._context.commonExpressionNames()))
 
     def __getattr__(self, name):
+        from proveit import Label
         # Is the current directory a "context" directory?
         in_context = os.path.isfile('_context_.ipynb')
         
@@ -644,13 +666,18 @@ class CommonExpressions:
                 # successful import -- don't need this 'failure' file anymore.
                 os.remove(failed_common_import_filename)
             return expr
-        except KeyError:
+        except (UnsetCommonExpressions, KeyError) as e:
             # if this is a context directory, store the context that failed to import.
             if in_context:
                 # store the context in which a common expression failed to import.
                 with open(failed_common_import_filename, 'w') as f:
-                    f.write(self._context.name + '\n')                
-                
+                    f.write(self._context.name + '\n')
+            
+            if isinstance(e, UnsetCommonExpressions):
+                # Use a temporary placeholder if the common expressions are not set.
+                # This avoids exceptions while common exppressions are being built/rebuilt.
+                return Label("Temporary_placeholder_for_undefined_%s.%s"%(self._context.name, name), "Temporary\_placeholder\_for\_undefined\_%s.%s"%(self._context.name, name))
+            
             raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self._context.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
 
 class ContextException(Exception):
@@ -659,3 +686,11 @@ class ContextException(Exception):
         
     def __str__(self):
         return self.message
+
+
+class UnsetCommonExpressions(Exception):
+    def __init__(self, context_name):
+        self.context_name = context_name
+        
+    def __str__(self):
+        return "The common expressions in '%s' have not been set"%self.context_name

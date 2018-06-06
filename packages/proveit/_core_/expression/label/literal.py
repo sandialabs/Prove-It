@@ -11,7 +11,7 @@ class Literal(Label):
     
     instances = dict() # map core information to Literal instances
     
-    def __init__(self, stringFormat, latexFormat=None, context=None):
+    def __init__(self, stringFormat, latexFormat=None, extraCoreInfo=tuple(), context=None):
         '''
         Create a Literal.  If latexFormat is not supplied, the stringFormat is used for both.
         '''
@@ -26,11 +26,12 @@ class Literal(Label):
         elif isinstance(context, str):
             # convert a path string to a Context
             context = Context(context)
-        Label.__init__(self, stringFormat, latexFormat, 'Literal', [context.name])
+        self.context = context
+        Label.__init__(self, stringFormat, latexFormat, 'Literal', (context.name,)+tuple(extraCoreInfo))
         #if self._coreInfo in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same context and string/latex formats")
         Literal.instances[self._coreInfo] = self
-        Expression.contexts[self] = context
+        Expression.contexts[self] = self.context
     
     @classmethod
     def instance(literalClass, context, stringFormat, latexFormat):
@@ -52,8 +53,8 @@ class Literal(Label):
         import inspect
         if len(subExpressions) > 0:
             raise ValueError('Not expecting any subExpressions of Literal')
-        if len(coreInfo) != 4:
-            raise ValueError("Expecting " + literalClass.__name__ + " coreInfo to contain 4 items: '" + literalClass.__name__ + "', stringFormat, latexFormat, and the context")
+        if len(coreInfo) < 4:
+            raise ValueError("Expecting " + literalClass.__name__ + " coreInfo to contain at least 4 items: '" + literalClass.__name__ + "', stringFormat, latexFormat, and the context")
         if coreInfo[0] != 'Literal':
             raise ValueError("Expecting coreInfo[0] to be 'Literal'")
         coreInfo = tuple(coreInfo) # make it hashable
@@ -67,8 +68,11 @@ class Literal(Label):
             string_format, latex_format = coreInfo[1:3]
             context = Context.getContext(coreInfo[3])
             Context.default = context
+            extra_core_info = coreInfo[4:]
             init_args = inspect.getargspec(literalClass.__init__)[0]
-            if len(init_args)==1:
+            if literalClass==Literal:
+                made_obj = Literal(string_format, latex_format, extra_core_info, context)
+            elif len(init_args)==1:
                 made_obj = literalClass() # no arguments (except self) are taken
             elif len(init_args)==2 and init_args[1]=='stringFormat' and coreInfo[1]==coreInfo[2]:
                 made_obj = literalClass(string_format, context)
@@ -77,7 +81,10 @@ class Literal(Label):
             elif len(init_args)==4 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat' and init_args[3]=='context':
                 made_obj = literalClass(string_format, latex_format, context)
             elif hasattr(literalClass, 'makeLiteral'):
-                made_obj = literalClass.makeLiteral(string_format, latex_format, context)
+                if len(extra_core_info)==0:
+                    made_obj = literalClass.makeLiteral(string_format, latex_format, context)
+                else:
+                    made_obj = literalClass.makeLiteral(string_format, latex_format, extra_core_info, context)
             else:
                 raise NotImplementedError("Must implement the 'makeLiteral(string_format, latex_format, context)' static method for class %s"%str(literalClass)) 
                 

@@ -19,7 +19,7 @@ class OperationOverInstances(Operation):
         '''
         if domain is not None:
             if domains is not None:
-                raise ValueError("Provide a single domain and multiple domains, not both")
+                raise ValueError("Provide a single domain or multiple domains, not both")
             if not isinstance(domain, Expression):
                 raise TypeError("The domain should be an 'Expression' type")
             domain_or_domains = domain
@@ -30,13 +30,12 @@ class OperationOverInstances(Operation):
         Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain_or_domains, conditions))
         self.instanceVars = OperationOverInstances.extractInitArgValue('instanceVars', self.operators, self.operands)
         self.instanceExpr = OperationOverInstances.extractInitArgValue('instanceExpr', self.operators, self.operands)
-        self.domain_or_domains = OperationOverInstances.extractInitArgValue('domain_or_domains', self.operators, self.operands)
-        if isinstance(domain_or_domains, Composite):
-            self.domains = domain_or_domains
+        if 'domain' in self.operands:
+            self.domain_or_domains = self.domain = OperationOverInstances.extractInitArgValue('domain', self.operators, self.operands)
+        elif 'domains' in self.operands:
+            self.domain_or_domains = self.domains = OperationOverInstances.extractInitArgValue('domains', self.operators, self.operands)
             if len(self.domains) != len(self.instanceVars):
                 raise ValueError("When using multiple domains, there should be the same number as the number of instance variables")
-        elif self.domain_or_domains is not None:
-            self.domain = domain_or_domains
         self.conditions = OperationOverInstances.extractInitArgValue('conditions', self.operators, self.operands)
     
     @staticmethod
@@ -65,12 +64,12 @@ class OperationOverInstances(Operation):
         if argName=='operator':
             assert len(operators)==1, "expecting one operator"
             return operators[0] 
-        if argName=='domain_or_domains':
-            if 'domains' in operands:
-                return operands['domains'] # multiple domains; one for each instance variable
-            elif 'domain' in operands:
-                return operands['domain'] # one domain for all instance variables
-            else: return None # no domain
+        if argName=='domains':
+            # multiple domains; one for each instance variable
+            return operands['domains'] if 'domains' in operands else None
+        elif argName=='domain':
+            # one domain for all instance variables
+            return operands['domain'] if 'domain' in operands else None
         instanceMapping = operands['imap'] # instance mapping
         if argName=='instanceVars':
             return singleOrCompositeExpression(instanceMapping.parameters)
@@ -99,10 +98,22 @@ class OperationOverInstances(Operation):
 
     def hasDomain(self):
         '''
-        Returns True if this OperationOverInstances has domain restriction(s).
+        Returns True if this OperationOverInstances has a single domain restriction(s).
         '''
-        return hasattr(self, 'domain') or hasattr(self, 'domains')
-            
+        return hasattr(self, 'domain')
+
+    def hasDomains(self):
+        '''
+        Returns True if this OperationOverInstances has multiple domain restriction(s).
+        '''
+        return hasattr(self, 'domains')
+    
+    def hasDomainOrDomains(self):
+        '''
+        Returns True if this OperationOverInstances has one or more domain restriction(s).
+        '''        
+        return self.hasDomain() or self.hasDomains()
+                                
     def hasCondition(self):
         '''
         Returns True if this OperationOverInstances has conditions.
@@ -126,10 +137,12 @@ class OperationOverInstances(Operation):
         if formatType == 'string':
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
-            if hasExplicitIvars: outStr += formattedVars
-            if self.hasDomain():
-                outStr += ' in ' if formatType == 'string' else ' \in '
-                outStr += self.domain_or_domains.formatted(formatType, fence=True)
+            if hasExplicitIvars: 
+                if self.hasDomains(): outStr += '(' + formattedVars +')'
+                else: outStr += formattedVars
+            if self.hasDomainOrDomains():
+                outStr += ' in '
+                outStr += self.domain_or_domains.formatted(formatType, formattedOperator='*', fence=False)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
                 outStr += self.conditions.formatted(formatType, fence=False)                
@@ -139,10 +152,12 @@ class OperationOverInstances(Operation):
         if formatType == 'latex':
             if fence: outStr += r'\left['
             outStr += self.operator.formatted(formatType) + '_{'
-            if hasExplicitIvars: outStr += formattedVars
-            if self.hasDomain():
-                outStr += ' in ' if formatType == 'string' else ' \in '
-                outStr += self.domain_or_domains.formatted(formatType, fence=True)
+            if hasExplicitIvars: 
+                if self.hasDomains(): outStr += '(' + formattedVars +')'
+                else: outStr += formattedVars
+            if self.hasDomainOrDomains():
+                outStr += r' \in '
+                outStr += self.domain_or_domains.formatted(formatType, formattedOperator=r'\times', fence=False)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += "~|~"
                 outStr += self.conditions.formatted(formatType, fence=False)                

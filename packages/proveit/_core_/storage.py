@@ -513,7 +513,7 @@ class Storage:
             else:
                 # Expression must be an attribute of a class (e.g., '_operator_')
                 item_names[namedExpr] = item_names[namedExprAddress[0]] + '.' + namedExprAddress[1]
-        
+                
         # see if we need to add anything to the sys.path
         needs_root_path = False # needs the root of this context added
         needs_local_path = False # needs the local path added
@@ -703,8 +703,12 @@ class Storage:
             cur_module = sys.modules['.'.join(split_module_name)]
             parent_module = sys.modules['.'.join(split_module_name[:-1])]
             if not hasattr(parent_module, objName): break
-            if getattr(cur_module, objName) == getattr(parent_module, objName):
-                split_module_name = split_module_name[:-1]
+            if getattr(cur_module, objName) != getattr(parent_module, objName):
+                # reload the parent module and try again
+                reload(parent_module)
+                if getattr(cur_module, objName) != getattr(parent_module, objName):
+                    break
+            split_module_name = split_module_name[:-1]
         return '.'.join(split_module_name)
     
     def _exprBuildingCode(self, expr, itemNames, isSubExpr=True):
@@ -1002,12 +1006,14 @@ class Storage:
                     referencing_contexts[new_context_name] = context
         return None
     
-    def referenceDisplayedExpressions(self, name):
+    def referenceDisplayedExpressions(self, name, clear=False):
         '''
         Reference displayed expressions, recorded under the given name
         in the __pv_it directory.  If the same name is reused,
         any expressions that are not displayed this time that
         were displayed last time will be unreferenced.
+        If clear is True, remove all of the references and the
+        file that stores these references.
         '''
         from proveit import Expression
         
@@ -1020,8 +1026,11 @@ class Storage:
                 for line in f.readlines():
                     previous.add(line.strip())
         
-        # grab the current "displayed" expressions    
-        current = {self._proveItStorageId(expr) for expr in Expression.displayed_expressions}
+        # grab the current "displayed" expressions 
+        if clear:
+            current = set()
+        else: 
+            current = {self._proveItStorageId(expr) for expr in Expression.displayed_expressions}
         
         # dereference old ones
         for old_ref in previous - current:
@@ -1033,7 +1042,10 @@ class Storage:
         
         with open(reference_file, 'w') as f:
             for cur_ref in current:
-                f.write(cur_ref + '\n')            
+                f.write(cur_ref + '\n')  
+        
+        if clear:
+            os.remove(reference_file)
     
     def clearDisplayedExpressionReferences(self):
         '''

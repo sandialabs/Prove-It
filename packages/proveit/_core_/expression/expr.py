@@ -331,7 +331,7 @@ class Expression:
         '''
         return self.substituted(exprMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
 
-    def iterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+    def expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         # empty by default.
         # Overridden by proveit._core_.expression.composite.indexed.Indexed.

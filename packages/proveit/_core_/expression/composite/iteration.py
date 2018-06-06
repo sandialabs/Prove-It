@@ -1,6 +1,6 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
-from proveit._core_.expression.composite import Composite, singleOrCompositeExpression, compositeExpression
+from proveit._core_.expression.composite import Composite, ExprList, singleOrCompositeExpression, compositeExpression
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 import itertools
 
@@ -20,6 +20,8 @@ class Iter(Expression):
         if not isinstance(lambda_map, Lambda):
             raise TypeError('When creating an Iter Expression, the lambda_map argument must be a Lambda expression')
         
+        if isinstance(start_index_or_indices, ExprList) and len(start_index_or_indices)==1:
+            start_index_or_indices = start_index_or_indices[0]
         self.start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
         if isinstance(self.start_index_or_indices, Composite):
             # a composite of multiple indices
@@ -30,6 +32,8 @@ class Iter(Expression):
             # wrap a single index in a composite for convenience
             self.start_indices = compositeExpression(self.start_index_or_indices)
 
+        if isinstance(end_index_or_indices, ExprList) and len(end_index_or_indices)==1:
+            end_index_or_indices = end_index_or_indices[0]
         self.end_index_or_indices = singleOrCompositeExpression(end_index_or_indices)
         if isinstance(self.end_index_or_indices, Composite):
             # a composite of multiple indices
@@ -212,9 +216,9 @@ class Iter(Expression):
         iter_ranges = set()
         iter_params = self.lambda_map.parameters
         special_points = [set() for _ in xrange(len(iter_params))]
-        for iter_range in self.lambda_map.body.iterRanges(iter_params, self.start_indices, self.end_indices, exprMap, relabelMap, reservedVars, assumptions, new_requirements):
+        for iter_range in self.lambda_map.body.expandingIterRanges(iter_params, self.start_indices, self.end_indices, exprMap, relabelMap, reservedVars, assumptions, new_requirements):
             iter_ranges.add(iter_range)
-            for axis, (start, end) in enumerate(zip(iter_range)):
+            for axis, (start, end) in enumerate(zip(*iter_range)):
                 special_points[axis].add(start)
                 special_points[axis].add(end)
                 # Preemptively include start-1 and end+1 in case it is required for splitting up overlapping ranges
@@ -226,9 +230,9 @@ class Iter(Expression):
             # No Indexed sub-Expressions whose variable is 
             # replaced with a Composite, so let us not expand the
             # iteration.  Just do an ordinary substitution.
-            subbed_map = self.lambda_map.substituted(self, exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-            subbed_start = self.start_indices.substituted(self, exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-            subbed_end = self.end_indices.substituted(self, exprMap, relabelMap, reservedVars, assumptions, new_requirements)
+            subbed_map = self.lambda_map.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
+            subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
+            subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
             subbed_self = Iter(subbed_map, subbed_start, subbed_end)
         else:
             # There are Indexed sub-Expressions whose variable is

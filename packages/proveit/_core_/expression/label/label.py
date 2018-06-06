@@ -7,12 +7,13 @@ class Label(Expression):
     classes (Label is not itself an expr class).  It is a mathematical label
     with string and latex formatting.
     """
-    def __init__(self, stringFormat, latexFormat, labelType = 'Label', extraCoreInfo = tuple(), subExpressions=tuple()):
+    def __init__(self, stringFormat, latexFormat=None, labelType = 'Label', extraCoreInfo = tuple(), subExpressions=tuple()):
         '''
         Create a Label with the given string and latex formatting.
         By default, the latex formatting is the same as the string formatting.
         '''
         self.stringFormat = stringFormat
+        if latexFormat is None: latexFormat = stringFormat
         self.latexFormat = latexFormat.strip() if latexFormat is not None else stringFormat
         assert re.match('[!-~]+', self.stringFormat), 'Label stringFormat may include only printable ascii characters and no space'
         assert re.match('[ -~]+', self.latexFormat), 'Label latexFormat may include only printable ascii characters'
