@@ -114,7 +114,7 @@ class TransitiveRelation(Operation):
         if reorder:
             return RelationClass._transitivitySort(items, assumptions=assumptions)
         else:
-            return RelationClass._fixedTransitivySort(items, assumptions=assumptions)
+            return RelationClass._fixedTransitivitySort(items, assumptions=assumptions)
     
     @classmethod
     def insert(RelationClass, sequence, item, assumptions=USE_DEFAULTS):
@@ -526,7 +526,7 @@ class TransitiveRelation(Operation):
         itemsList = list(items) # in case the items are a non-indexable iterable
         relations = []
         for item1, item2 in zip(itemsList[:-1], itemsList[1:]):
-            relations.append(RelationClass._transitivitySearch(item1, item2, assumptions=assumptions))
+            relations.append(RelationClass._transitivitySearch(item1, item2, forceStrong=False, assumptions=assumptions))
         return RelationClass.appyTransitivities(relations)
     
     @classmethod
@@ -543,14 +543,14 @@ class TransitiveRelation(Operation):
                 right_item_idx = items.index(right_item)
                 inserting_relations = []
                 if right_item_idx > 0:
-                    inserting_relations.append(RelationClass._transitivitySearch(items[right_item_idx-1], item, assumptions=assumptions))
+                    inserting_relations.append(RelationClass._transitivitySearch(items[right_item_idx-1], item, forceStrong=False, assumptions=assumptions))
                 inserting_relations.append(TransitiveRelation.applyTransitivities(chain, assumptions))
                 return RelationClass.Sequence(sequence.relations[:right_item_idx-1] + inserting_relations + sequence.relations[right_item_idx:])
             elif item == right_item:
                 left_item_idx = items.index(left_item)
                 inserting_relations = [TransitiveRelation.applyTransitivities(chain, assumptions)]
                 if left_item_idx < len(sequence.operands)-1:
-                   inserting_relations.append(RelationClass._transitivitySearch(item, items[left_item_idx+1], assumptions=assumptions))
+                   inserting_relations.append(RelationClass._transitivitySearch(item, items[left_item_idx+1], forceStrong=False, assumptions=assumptions))
                 return RelationClass.Sequence(sequence.relations[:left_item_idx] + inserting_relations + sequence.relations[left_item_idx+1:])        
 
 class TransitiveSequence(OperationSequence):
