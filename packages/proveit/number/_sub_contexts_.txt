@@ -1,6 +1,5 @@
 sets
 numeral
-iteration
 addition
 subtraction
 negation
