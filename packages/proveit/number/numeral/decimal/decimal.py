@@ -1,5 +1,10 @@
 from proveit import Literal, Operation
-from _common_ import zero, one, two, three, four, five, six, seven, eight, nine
+try:
+    from proveit.number import zero, one, two, three, four, five, six, seven, eight, nine
+    ALL_DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
+except:
+    # skip the numeral imports when the common expressions have not been generated
+    pass
 
 class WholeDecimal(Operation):
     # operator of the WholeDecimal operation.
@@ -20,8 +25,6 @@ class WholeDecimal(Operation):
     def formatted(self, formatType, fence=False):
         return ''.join(digit.formatted(formatType, False) for digit in self.digits)
         
-
-ALL_DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 def num(x):
     from proveit.number import Neg
@@ -47,9 +50,9 @@ def num(x):
             elif x == 7:
                 return seven
             elif x == 8:
-                return 8
+                return eight
             elif x == 9:
-                return 9
+                return nine
         else:
             return WholeDecimal([num(int(digit)) for digit in str(x)])
     else:

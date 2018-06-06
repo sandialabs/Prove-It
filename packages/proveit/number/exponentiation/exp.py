@@ -1,5 +1,4 @@
 from proveit import Literal, Operation, maybeFencedString
-from proveit.number.sets import zero, one
 
 class Exp(Operation):
     # operator of the Exp operation.

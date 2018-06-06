@@ -1,6 +1,6 @@
 from proveit import Literal, Operation
 from proveit.logic import NotEquals
-from proveit.number.sets import Naturals, NaturalsPos, Integers, Reals, Complexes, zero
+from proveit.number.sets import Naturals, NaturalsPos, Integers, Reals, Complexes
 from proveit._common_ import w, x, y, z
 
 class Subtract(Operation):
@@ -11,7 +11,7 @@ class Subtract(Operation):
         r'''
         Sub one number from another
         '''
-        Operation.__init__(self, Sub._operator_, (operandA, operandB))
+        Operation.__init__(self, Subtract._operator_, (operandA, operandB))
 
     def _closureTheorem(self, numberSet):
         import theorems

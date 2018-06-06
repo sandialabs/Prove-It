@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, OperationOverInstances, maybeFenced, USE_DEFAULTS, ProofFailure
 from proveit.logic import InSet
-from proveit.number.sets import infinity, zero, RealInterval, Interval, Reals, Integers, Naturals, Complexes
+from proveit.number.sets import RealInterval, Interval, Reals, Integers, Naturals, Complexes
 from proveit.number.negation import Neg
 from proveit._common_ import a, f, P, S, Qmulti, xMulti
 

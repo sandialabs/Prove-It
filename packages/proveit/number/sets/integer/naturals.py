@@ -1,16 +1,16 @@
-from proveit import Literal
+from proveit.number.sets.number_set import NumberSet
 
-class NaturalsSet(Literal):
+class NaturalsSet(NumberSet):
     def __init__(self):
-        Literal.__init__(self, 'Naturals', r'\mathbb{N}', context=__file__)
+        NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', context=__file__)
     
     def deduceMemberLowerBound(self, member):
         from ._theorems_ import naturalsLowerBound
         return naturalsLowerBound.specialize({n:member})  
 
-class NaturalsPosSet(Literal):
+class NaturalsPosSet(NumberSet):
     def __init__(self):
-        Literal.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', context=__file__)
+        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', context=__file__)
     
     def deduceMemberLowerBound(self, member):
         from ._theorems_ import naturalsPosLowerBound

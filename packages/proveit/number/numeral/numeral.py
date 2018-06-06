@@ -1,33 +1,38 @@
 from proveit import Literal
 
-class DigitLiteral(Literal):
+class Numeral(Literal):
     _inNaturalsStmts = None # initializes when needed
     _inNaturalsPosStmts = None # initializes when needed
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
     
-    def __init__(self, n):
-        assert n >= 0 and n < 10, 'Digits are 0 through 9'
-        Literal.__init__(self, str(n), context=__file__)
+    def __init__(self, n, stringFormat=None, latexFormat=None):
+        if stringFormat is None: stringFormat=str(n)
+        Literal.__init__(self, stringFormat, extraCoreInfo=[str(n)], context=__file__)
         self.n = n
 
     def buildArguments(self):
         '''
         Yield the argument values that could be used to recreate this DigitLiteral.
         '''
-        yield str(self.n)
+        yield self.n
+        if self.stringFormat != str(self.n):
+            yield '"' + self.stringFormat + '"'
+        if self.latexFormat != self.stringFormat:
+            yield ('latexFormat', 'r"' + self.latexFormat + '"')
     
     def asInt(self):
         return self.n
             
     @staticmethod
-    def makeLiteral(string_format, latex_format, context):
+    def makeLiteral(string_format, latex_format, extra_core_info, context):
         '''
         Make the DigitLiteral that matches the core information.
         '''
         from proveit import Context
         assert context==Context(__file__), 'Expecting a different Context for a DigitLiteral'
-        return DigitLiteral(int(string_format))
+        n = int(extra_core_info[0])
+        return Numeral(n, string_format, latex_format)
      
     def deduceInNaturals(self):
         if DigitLiteral._inNaturalsStmts is None:
