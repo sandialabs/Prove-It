@@ -273,10 +273,3 @@ def denyViaContradiction(contradictoryExpr, conclusion, assumptions):
     assumptions = defaults.checkedAssumptions(assumptions)
     extendedAssumptions = assumptions + (conclusion,)
     return contradictoryExpr.deriveContradiction(extendedAssumptions).asImplication(conclusion).deriveViaContradiction(assumptions)
-
-try:
-    # Import some fundamental theorems without quantifiers.
-    # Fails before running the _theorems_ notebooks for the first time, but fine after that.
-    from ._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse
-except:
-    pass

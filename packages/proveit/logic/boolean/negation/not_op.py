@@ -198,10 +198,3 @@ class Not(Operation):
             Asub = self.operand.operand
             return doubleNegationEquiv.specialize({A:Asub}, assumptions=assumptions)
 
-try:
-    # Import some fundamental theorems without quantifiers.
-    # Fails before running the _theorems_ notebooks for the first time, but fine after that.
-    from ._theorems_ import notFalse, notF, notT, notTimpliesF
-except:
-    pass
-    

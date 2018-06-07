@@ -196,11 +196,3 @@ def inBool(*elements):
         return InSet(elements[0], Booleans)
     return [InSet(element, Booleans) for element in elements]
 
-try:
-    # Import some fundamental axioms and theorems without quantifiers.
-    # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-    from ._axioms_ import trueAxiom, boolsDef, falseNotTrue
-    from ._theorems_ import trueEqTrue, falseEqFalse, trueNotFalse, trueInBool, falseInBool
-except:
-    pass
-    
