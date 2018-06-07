@@ -1,17 +1,12 @@
 from proveit import Literal, Operation
-try:
-    from proveit.number import zero, one, two, three, four, five, six, seven, eight, nine
-    ALL_DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
-except:
-    # skip the numeral imports when the common expressions have not been generated
-    pass
+from proveit.number.numeral._common_ import zero, one, two, three, four, five, six, seven, eight, nine
+ALL_DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 class WholeDecimal(Operation):
     # operator of the WholeDecimal operation.
     _operator_ = Literal(stringFormat='WholeDecimal',context=__file__)   
 
     def __init__(self, digits):
-        from proveit.number.set.integer.common import ALL_DIGITS
         Operation.__init__(self, WholeDecimal._operator_, digits)
         if len(digits) <= 1:
             raise Exception('A WholeDecimal should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
@@ -22,13 +17,12 @@ class WholeDecimal(Operation):
     def asInt(self):
         return int(self.formatted('string'))
     
-    def formatted(self, formatType, fence=False):
-        return ''.join(digit.formatted(formatType, False) for digit in self.digits)
+    def _formatted(self, formatType, **kwargs):
+        return ''.join(digit.formatted(formatType) for digit in self.digits)
         
 
 def num(x):
-    from proveit.number import Neg
-    from proveit.number.sets.integer.decimal import WholeDecimal
+    from proveit.number import Neg, WholeDecimal
     if x < 0:
         return Neg(num(abs(x)))
     if isinstance(x, int):
