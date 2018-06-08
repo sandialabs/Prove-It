@@ -21,7 +21,8 @@ class Add(Operation):
             return theorems.addComplexClosure
         elif numberSet == Integers:
             return theorems.addIntClosure
-
+    
+    """
     def simplification(self, assumptions=frozenset()):
         '''
         For the trivial case of a zero term,
@@ -53,6 +54,7 @@ class Add(Operation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         return self.simplification(assumptions).rhs
+    """
     
     def subtractionFolding(self, termIdx=None, assumptions=frozenset()):
         '''
@@ -243,7 +245,8 @@ class Add(Operation):
         if len(self.terms) != 2 or not all(isinstance(term, Sum) for term in self.terms):
             raise Exception("Sum joinoing currently only implemented for two summation terms.")
         return self.terms[0].join(self.terms[1], assumptions)
-
+    
+    """
     def evaluate(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to numbers, derive and
@@ -257,8 +260,7 @@ class Add(Operation):
                 return Operation.evaluate(self, assumptions)
         # TODO
         
-        
-        """
+        '''
         From disjunction, just brought in as an example
         if len(self.operands) == 2:
             # This will automatically return orTT, orTF, orFT, or orFF
@@ -269,4 +271,5 @@ class Add(Operation):
         else:
             # no operand is TRUE so the whole disjunction evaluates to FALSE.
             return disjunctionFalseEval.specialize({Amulti:self.operands}, assumptions=assumptions)
-        """
+        '''
+    """

@@ -8,7 +8,7 @@ from .set_theory import EmptySet
 from .set_theory import InSet, NotInSet, Set, SubsetEq, SupersetEq, Subset, Superset, NotSubsetEq, NotSupersetEq
 from .set_theory import Union, Intersect, Difference, SetOfAll, Disjoint, Distinct, Card
 from .equality import Equals, NotEquals
-from .equality import reduceOperands, defaultEvaluate, evaluateTruth, EvaluationError
+from .equality import reduceOperands, defaultSimplify, evaluateTruth, EvaluationError
 from .irreducible_value import IrreducibleValue, isIrreducibleValue
 
 #from mapping.mappingOps import Domain, CoDomain

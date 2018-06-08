@@ -1,6 +1,7 @@
 from proveit import Literal
+from proveit.logic import IrreducibleValue, Equals
 
-class Numeral(Literal):
+class Numeral(Literal, IrreducibleValue):
     _inNaturalsStmts = None # initializes when needed
     _inNaturalsPosStmts = None # initializes when needed
     _notZeroStmts = None # initializes when needed
@@ -10,6 +11,11 @@ class Numeral(Literal):
         if stringFormat is None: stringFormat=str(n)
         Literal.__init__(self, stringFormat, extraCoreInfo=[str(n)], context=__file__)
         self.n = n
+    
+    def evalEquality(self, other):
+        if other==self:
+            return Equals(self, self).prove()
+        pass # need axioms/theorems to prove inequality amongst different numerals
 
     def buildArguments(self):
         '''

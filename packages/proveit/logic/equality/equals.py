@@ -46,6 +46,7 @@ class Equals(TransitiveRelation):
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
         if isIrreducibleValue(self.rhs):
+            Equals.simplifications.setdefault(self.lhs, set()).add(knownTruth)
             Equals.evaluations.setdefault(self.lhs, set()).add(knownTruth)
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
