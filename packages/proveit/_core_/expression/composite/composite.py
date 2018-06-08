@@ -79,9 +79,8 @@ def _simplifiedCoord(coord, assumptions, requirements):
     the equality of the simplified and original indices as a requirement
     if they are not the same.
     '''
-    from proveit.number import simplified
     from proveit.logic import Equals
-    simplified_coord = simplified(coord, assumptions=assumptions)
+    simplified_coord = coord.simplify(assumptions=assumptions).rhs
     if simplified_coord != coord and requirements is not None:
         requirements.append(Equals(coord, simplified_coord))
     return simplified_coord

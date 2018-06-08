@@ -17,15 +17,14 @@ from .modular import Abs, Mod, ModAbs
 from .rounding import Floor, Ceil, Round
 from .ordering import Less, LessEq, LesserSequence, Greater, GreaterEq, GreaterSequence, Min, Max
 
-
 import proveit
 
-def simplified(expr, assumptions=proveit.USE_DEFAULTS):
-    """
-    Implement something smart eventually; for now, do nothing.
-    """
-    try:
-        print "attempt to evaluate", expr
-        return expr.evaluate(assumptions=assumptions)
-    except:
-        return expr
+try:
+    # Import some fundamental theorems without quantifiers.
+    # Fails before running the corresponding _axioms_/_theorems_ notebooks for the first time, but fine after that.
+    from .boolean.negation._theorems_ import notFalse, notF, notT, notTimpliesF
+    from .boolean.implication._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse
+    from .boolean._axioms_ import trueAxiom, boolsDef, falseNotTrue
+    from .boolean._theorems_ import trueEqTrue, falseEqFalse, trueNotFalse, trueInBool, falseInBool
+except:
+    pass

@@ -3,6 +3,7 @@ from proveit import Literal, Operation, Lambda
 from proveit import TransitiveRelation
 from proveit.logic.irreducible_value import IrreducibleValue, isIrreducibleValue
 from proveit._common_ import A, P, Q, f, x, y, z
+import itertools
 
 class Equals(TransitiveRelation):
     # operator of the Equals operation
@@ -11,11 +12,16 @@ class Equals(TransitiveRelation):
     # map Expressions to sets of KnownTruths of equalities that involve the Expression
     # on the left hand or right hand side.
     knownEqualities = dict()
+    
+    # Subset of knownEqualities that are deemed to be simplifications on
+    # the right hand side according to some canonical method of simplication
+    # determined by each operation.
+    simplifications = dict()
 
-    # Subset of knownEqualities that have irreducible values on the right
+    # Subset of simplifications that have irreducible values on the right
     # hand side.
     evaluations = dict()
-    
+        
     # Record found inversions.  See the invert method.
     # Maps (lambda_map, rhs) pairs to a list of
     # (known_equality, inversion) pairs, recording previous results
@@ -392,25 +398,27 @@ class Equals(TransitiveRelation):
                 return x # Return the found inversion.
         return None # No inversion found.
     
-def reduceOperands(operation, assumptions=USE_DEFAULTS):
+def reduceOperands(operation, mustEvaluate=False, assumptions=USE_DEFAULTS):
     '''
-    Attempt to return a provably equivalent expression whose operands
-    are all irreducible values (IrreducibleValue objects).
+    Attempt to return a provably equivalent expression to the given
+    operation with simplified operands. If mustEvaluate is True, the simplified
+    operands must be irreducible values (see isIrreducibleValue).
     '''
-    # Any of the operands that are not irreducible values must be replaced with their evaluation
+    # Any of the operands that can be simplified must be replaced with their evaluation
     expr = operation
     while True:
         allReduced = True
         for operand in expr.operands:
-            if not isIrreducibleValue(operand):
+            if not mustEvaluate or not isIrreducibleValue(operand):
                 # the operand is not an irreducible value so it must be evaluated
-                operandEval = operand.evaluate(assumptions=assumptions)
-                if not isIrreducibleValue(operandEval.rhs):
+                operandEval = operand.evaluate(assumptions=assumptions) if mustEvaluate else operand.simplify(assumptions=assumptions)
+                if mustEvaluate and not isIrreducibleValue(operandEval.rhs):
                     raise EvaluationError('Evaluations expected to be irreducible values')
-                # substitute in the evaluated value
-                expr = operandEval.substitution(expr).rhs
-                allReduced = False
-                break # start over (there may have been multiple substitutions)
+                if operandEval.lhs != operandEval.rhs:
+                    # substitute in the evaluated value
+                    expr = operandEval.substitution(expr).rhs
+                    allReduced = False
+                    break # start over (there may have been multiple substitutions)
         if allReduced: return expr
 
 """
@@ -439,17 +447,19 @@ def concludeViaReduction(expr, assumptions):
     return knownTruth
 """
             
-def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
+def defaultSimplify(expr, mustEvaluate=False, assumptions=USE_DEFAULTS, automation=True):
     '''
-    Default attempt to evaluate the given expression under the given assumptions.
+    Default attempt to simplify the given expression under the given assumptions.
     If successful, returns a KnownTruth (using a subset of the given assumptions)
     that expresses an equality between the expression (on the left) and
-    and irreducible value (see isIrreducibleValue).  Specifically, this
-    method checks to see if an appropriate evaluation has already been
-    proven.  If not, but if it is an Operation, call the evaluate method on
-    all operands, make these substitions, then call evaluate on the expression
-    with operands substituted for irreducible values.  It also treats, as a
-    special case, evaluating the expression to be true if it is in the set
+    and a simplified form (in some canonical sense determined by the Operation).
+    If mustEvaluate=True, the simplified form must be an irreducible value
+    (see isIrreducibleValue).  Specifically, this method checks to see if an
+    appropriate simplification/evaluation has already been proven.  If not, but
+    if it is an Operation, call the simplify/evaluate method on
+    all operands, make these substitions, then call simplify/evaluate on the
+    expression with operands substituted for simplified forms.  It also treats, 
+    as a special case, evaluating the expression to be true if it is in the set
     of assumptions [also see KnownTruth.evaluate and evaluateTruth].
     '''
     from proveit.logic import TRUE, FALSE
@@ -468,9 +478,10 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
         return evaluateFalsehood(expr, assumptionsSet) # A=FALSE given Not(A)
     except:
         pass    # See if the expression already has a proven evaluation
-    if expr in Equals.evaluations:
+    if expr in Equals.evaluations or (not mustEvaluate and expr in Equals.simplifications):
+        simplifications = Equals.evaluations[expr] if mustEvaluate else Equals.simplifications[expr]
         candidates = []
-        for knownTruth in Equals.evaluations[expr]:
+        for knownTruth in simplifications:
             if knownTruth.isSufficient(assumptionsSet):
                 candidates.append(knownTruth) # found existing evaluation suitable for the assumptions
         if len(candidates) >= 1:
@@ -484,17 +495,22 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
         for knownTruth in Equals.knownEqualities[expr]:
             try:
                 if knownTruth.isSufficient(assumptionsSet):
-                    equivEval = defaultEvaluate(knownTruth.otherSide(expr), assumptions, automation=False)
+                    equivEval = defaultSimplify(knownTruth.otherSide(expr), mustEvaluate, assumptions, automation=False)
                     return Equals(expr, equivEval.rhs).prove(assumptions=assumptions) # via transitivity
             except EvaluationError:
                 pass     
-    # try to evaluate via reduction
+    # try to simplify via reduction
     if not isinstance(expr, Operation):
-        raise EvaluationError('Unknown evaluation: ' + str(expr))
-    reducedExpr = reduceOperands(expr, assumptions)
-    if reducedExpr == expr:
+        if mustEvaluate:
+            raise EvaluationError('Unknown evaluation: ' + str(expr))
+        else:
+            # don't know how to simplify, so keep it the same
+            return Equals(expr, expr).prove()
+    reducedExpr = reduceOperands(expr, mustEvaluate, assumptions)
+    if mustEvaluate and reducedExpr == expr:
+        # since it wasn't irreducible to begin with, it must change in order to evaluate
         raise EvaluationError('Unable to evaluate: ' + str(expr))
-    value = reducedExpr.evaluate().rhs
+    value = reducedExpr.evaluate().rhs if mustEvaluate else reducedExpr.simplify().rhs
     if value == TRUE:
         # Attempt to evaluate via proving the expression;
         # This should result in a shorter proof if allowed
@@ -511,10 +527,14 @@ def defaultEvaluate(expr, assumptions=USE_DEFAULTS, automation=True):
             evaluateFalsehood(expr, assumptions)
         except:
             pass
-    evaluation = Equals(expr, value).prove(assumptions=assumptions)
-    # store it in the evaluations dictionary for next time
-    Equals.evaluations.setdefault(expr, set()).add(evaluation)
-    return evaluation  
+    simplification = Equals(expr, value).prove(assumptions=assumptions)
+    # store it in the simplifications dictionary for next time
+    Equals.simplifications.setdefault(expr, set()).add(simplification)
+    if isinstance(value, IrreducibleValue):
+        # also store it in the evaluations dictionary for next time
+        # since it evaluated to an irreducible value.
+        Equals.evaluations.setdefault(expr, set()).add(simplification)
+    return simplification  
 
 def evaluateTruth(expr, assumptions):
     '''

@@ -377,8 +377,16 @@ class Expression:
         If possible, return a KnownTruth of this expression equal to its
         irreducible value.  Override for other appropriate functionality.
         '''
-        from proveit.logic import defaultEvaluate
-        return defaultEvaluate(self, assumptions)
+        from proveit.logic import defaultSimplify
+        return defaultSimplify(self, mustEvaluate=True, assumptions=assumptions)
+
+    def simplify(self, assumptions=USE_DEFAULTS):
+        '''
+        If possible, return a KnownTruth of this expression equal to its
+        irreducible value.  Override for other appropriate functionality.
+        '''
+        from proveit.logic import defaultSimplify
+        return defaultSimplify(self, assumptions=assumptions)        
     
     def orderOfAppearance(self, subExpressions):
         '''
