@@ -1,10 +1,20 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import x, y
+from proveit._common_ import a, b, c, x, y
 from proveit.logic.irreducible_value import isIrreducibleValue
+from proveit.number.numeral.decimal import DIGITS
+import proveit.number.numeral.decimal._theorems_
 
 class Add(Operation):
     # operator of the Add operation
-    _operator_ = Literal(stringFormat='+', context=__file__)    
+    _operator_ = Literal(stringFormat='+', context=__file__)
+    
+    # Map terms to sets of KnownTruth equalities that involve
+    # the term on the left hand side. 
+    knownEqualities = dict()
+    
+    # Adding two numerals may import a theorem for the evaluation.
+    # Track which ones we have encountered already.
+    addedNumerals = set()
     
     def __init__(self, *operands):
         r'''
@@ -12,7 +22,16 @@ class Add(Operation):
         '''
         Operation.__init__(self, Add._operator_, operands)
         self.terms = self.operands
-
+        if len(self.terms)==2 and all(term in DIGITS for term in self.terms):
+            if self not in Add.addedNumerals:
+                try:
+                    # for single digit addition, import the theorem that provides the evaluation
+                    Add.addedNumerals.add(self)
+                    proveit.number.numeral.decimal._theorems_.__getattr__('add_%d_%d'%(self.terms[0].asInt(), self.terms[1].asInt()))
+                except:
+                    # may fail before the relevent _commons_ and _theorems_ have been generated
+                    pass # and that's okay
+    
     def _closureTheorem(self, numberSet):
         import theorems
         if numberSet == Reals:
@@ -22,6 +41,30 @@ class Add(Operation):
         elif numberSet == Integers:
             return theorems.addIntClosure
     
+    def equalitySideEffects(self, knownTruth):
+        '''
+        Record the knownTruth in Add.knownEqualities, associated for
+        each term.
+        '''
+        addition = knownTruth.lhs
+        if not isinstance(addition, Add):
+            raise ValueError("Expecting lhs of knownTruth to be of an Add expression")
+        for term in addition.terms:
+            Add.knownEqualities.setdefault(term, set()).add(knownTruth)
+        if len(addition.terms)==2:
+            # deduce the subtraction form: b-c=a from a+b=c 
+            yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
+
+    def deduceSubtraction(self, rhs, assumptions=USE_DEFAULTS):
+        '''
+        From (a + b) = rhs, derive and return b - rhs = a.
+        '''
+        from proveit.number.subtraction._theorems_ import subtractFromAdd
+        if len(self.terms) != 2:
+            raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
+        deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
+        return deduction
+        
     """
     def simplification(self, assumptions=frozenset()):
         '''

@@ -1,4 +1,4 @@
-from proveit import Literal
+from proveit import Literal, Operation
 from proveit.logic import IrreducibleValue, Equals
 
 class Numeral(Literal, IrreducibleValue):
@@ -10,6 +10,8 @@ class Numeral(Literal, IrreducibleValue):
     def __init__(self, n, stringFormat=None, latexFormat=None):
         if stringFormat is None: stringFormat=str(n)
         Literal.__init__(self, stringFormat, extraCoreInfo=[str(n)], context=__file__)
+        if not isinstance(n, int):
+            raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
     
     def evalEquality(self, other):
@@ -68,4 +70,26 @@ class Numeral(Literal, IrreducibleValue):
             from natural.theorems import sixIsPositive, sevenIsPositive, eightIsPositive, nineIsPositive
             DigitLiteral._positiveStmts = {1:oneIsPositive, 2:twoIsPositive, 3:threeIsPositive, 4:fourIsPositive, 5:fiveIsPositive, 6:sixIsPositive, 7:sevenIsPositive, 8:eightIsPositive, 9:nineIsPositive}
         return DigitLiteral._positiveStmts[self.n]
-        
+
+class NumeralSequence(Operation):
+    """
+    Base class of BinarySequence, DecimalSequence, and HexSequence.
+    """
+    def __init__(self, operator, *digits):
+        Operation.__init__(self, operator, digits)
+        if len(digits) <= 1:
+            raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
+        self.digits = digits
+    
+    def _formatted(self, formatType, **kwargs):
+        return ''.join(digit.formatted(formatType) for digit in self.digits)
+
+def isLiteralInt(expr):
+    from proveit.number import Neg
+    if isinstance(expr, Numeral):
+        return True
+    elif isinstance(expr, NumeralSequence):
+        return True
+    elif isinstance(expr, Neg) and isLiteralInt(expr.operand):
+        return True
+    return False        

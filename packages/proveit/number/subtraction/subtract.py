@@ -11,8 +11,13 @@ class Subtract(Operation):
         r'''
         Sub one number from another
         '''
+        from proveit.number import Add, isLiteralInt, num
         Operation.__init__(self, Subtract._operator_, (operandA, operandB))
-
+        if all(isLiteralInt(operand) for operand in self.operands):
+            # With literal integer operands, we can import useful theorems for evaluation.
+            # From c - b, make the a+b which equals c.  This will import the theorems we need.
+            Add(num(self.operands[1].asInt() - self.operands[0].asInt()), self.operands[0])
+      
     def _closureTheorem(self, numberSet):
         import theorems
         if numberSet == Reals:
@@ -25,7 +30,6 @@ class Subtract(Operation):
             return theorems.subtractClosureNats
         elif numberSet == NaturalsPos:
             return theorems.subtractClosureNatsPos
-            
     
     def _notEqZeroTheorem(self):
         from theorems import diffNotEqZero

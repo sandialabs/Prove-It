@@ -34,6 +34,9 @@ class GreaterRelation(OrderingRelation):
 class GreaterSequence(OrderingSequence):
     def __init__(self, operators, operands):
         OrderingSequence.__init__(self, operators, operands)
+        # Containment in the {>, >=, =} set is relevant when dealing with a GreaterSequence,
+        # so let's go ahead and import these unquantified theorems.
+        from ._theorems_ import greater__in__greater_eq_relations, greater_eq__in__greater_eq_relations, eq__in__greater_eq_relations
     
     @staticmethod
     def RelationClass():

@@ -1,1 +1,1 @@
-from .decimal import WholeDecimal, num, isLiteralInt
+from .decimal import num, DecimalSequence, DIGITS

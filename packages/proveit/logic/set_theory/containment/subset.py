@@ -1,6 +1,6 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
-from proveit._common_ import f, S, Qmulti
+from proveit._common_ import f, S, QQ
 from containment_relation import ContainmentRelation, ContainmentSequence
 
 class SubsetRelation(ContainmentRelation):
@@ -42,7 +42,7 @@ class Subset(SubsetRelation):
     
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, Subset._operator_, subset, superset)
-    
+        
     def deriveSideEffects(self, knownTruth):
         '''
         Derive the relaxed subseteq form as a side-effect.
@@ -54,14 +54,14 @@ class Subset(SubsetRelation):
         '''
         From A subset B, derive B supset A.
         '''
-        from _theorems_ import reverseSubset
+        from ._theorems_ import reverseSubset
         return reverseSubset.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
        
     def deriveRelaxed(self, assumptions=USE_DEFAULTS):
         '''
         From A subset B, derive A subseteq B.
         '''
-        from _theorems_ import relaxSubset
+        from ._theorems_ import relaxSubset
         return relaxSubset.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
             
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
@@ -71,7 +71,7 @@ class Subset(SubsetRelation):
         obtain A subset B as appropriate.
         '''
         from proveit.logic import Equals
-        from _theorems_ import transitivitySubsetSubset, transitivitySubsetSubsetEq
+        from ._theorems_ import transitivitySubsetSubset, transitivitySubsetSubsetEq
         from superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
@@ -116,13 +116,13 @@ class SubsetEq(SubsetRelation):
         return reverseSubsetEq.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
         
     def conclude(self, assumptions):
-        from _theorems_ import subsetEqViaEquality
-        from proveit._generic_ import TransitiveRelation
+        from ._theorems_ import subsetEqViaEquality
         from proveit import ProofFailure
+        from proveit.logic import SetOfAll
         
         try:
             # first attempt a transitivity search
-            return TransitiveRelation.conclude(self, assumptions)
+            return ContainmentRelation.conclude(self, assumptions)
         except ProofFailure:
             pass # transitivity search failed
         
@@ -131,36 +131,38 @@ class SubsetEq(SubsetRelation):
             return subsetEqViaEquality.specialize({A:self.operands[0], B:self.operands[1]})
             
         # Check for special case of [{x | Q*(x)}_{x \in S}] \subseteq S
-        from proveit.logic.set_theory.comprehension._theorems_ import comprehensionIsSubset
-        from proveit.logic import SetOfAll
         if isinstance(self.subset, SetOfAll):
+            from proveit.logic.set_theory.comprehension._theorems_ import comprehensionIsSubset
             setOfAll = self.subset
             if len(setOfAll.instanceVars)==1 and setOfAll.instanceElement == setOfAll.instanceVars[0] and setOfAll.domain==self.superset:
                 Q_op, Q_op_sub = Operation(Qmulti, setOfAll.instanceVars), setOfAll.conditions
                 return comprehensionIsSubset.specialize({S:setOfAll.domain, Q_op:Q_op_sub}, relabelMap={x:setOfAll.instanceVars[0]}, assumptions=assumptions)
+        
+        # Finally, attempt to conclude A subseteq B via forall_{x in A} x in B.
+        return self.concludeAsFolded(elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
         
     def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
         From A subseteq B, derive and return (forall_{x in A} x in B).
         x will be relabeled if an elemInstanceVar is supplied.
         '''        
-        from _theorems_ import unfoldSubsetEq
-        return unfoldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand}, relabelMap={x:elemInstanceVar}, assumptions=assumptions)
+        from ._theorems_ import unfoldSubsetEq
+        return unfoldSubsetEq.specialize({A:self.subset, B:self.superset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions)
     
     def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From A subseteq B and x in A, derive x in B.
         '''
-        from _theorems_ import unfoldSubsetEq
-        return unfoldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:element}, assumptions=assumptions)
+        from ._theorems_ import unfoldSubsetEq
+        return unfoldSubsetEq.specialize({A:self.subset, B:self.superset, x:element}, assumptions=assumptions)
     
     def concludeAsFolded(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
         Derive this folded version, A subseteq B, from the unfolded version,
         (forall_{x in A} x in B).
         '''
-        from _theorems_ import foldSubsetEq
-        return foldSubsetEq.specialize({A:self.leftOperand, B:self.rightOperand}, relabelMap={x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
+        from ._theorems_ import foldSubsetEq
+        return foldSubsetEq.specialize({A:self.subset, B:self.superset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
     
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -169,7 +171,7 @@ class SubsetEq(SubsetRelation):
         obtain A subset B or A subseteq B as appropriate.
         '''
         from proveit.logic import Equals
-        from _theorems_ import transitivitySubsetEqSubset, transitivitySubsetEqSubsetEq
+        from ._theorems_ import transitivitySubsetEqSubset, transitivitySubsetEqSubsetEq
         from superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case

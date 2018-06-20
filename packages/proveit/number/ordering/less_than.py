@@ -34,6 +34,9 @@ class LesserRelation(OrderingRelation):
 class LesserSequence(OrderingSequence):
     def __init__(self, operators, operands):
         OrderingSequence.__init__(self, operators, operands)
+        # Containment in the {<, <=, =} set is relevant when dealing with a LesserSequence,
+        # so let's go ahead and import these unquantified theorems.
+        from ._theorems_ import less__in__less_eq_relations, less_eq__in__less_eq_relations, eq__in__less_eq_relations
     
     @staticmethod
     def RelationClass():

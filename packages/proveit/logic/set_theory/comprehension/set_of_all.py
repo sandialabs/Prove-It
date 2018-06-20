@@ -1,5 +1,5 @@
 from proveit import Literal, OperationOverInstances, Operation, USE_DEFAULTS
-from proveit._common_ import x, y, f, P, Q, Qmulti, S, yMulti
+from proveit._common_ import x, y, f, P, Q, QQ, S, yy
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation

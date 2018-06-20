@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
 from proveit.logic import Equals, InSet
 from proveit.number.sets import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
-from proveit._common_ import a, b, c, d, n, v, w, x, y, z, vMulti, wMulti, xMulti, yMulti, zMulti, S
+from proveit._common_ import a, b, c, d, n, v, w, x, y, z, vv, ww, xx, yy, zz, S
 
 class Mult(Operation):
     # operator of the Mult operation.

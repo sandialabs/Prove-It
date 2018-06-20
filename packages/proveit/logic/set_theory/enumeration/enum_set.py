@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, ExprList, USE_DEFAULTS
-from proveit._common_ import x, y, yMulti
+from proveit._common_ import x, y, yy
 
 class Set(Operation):
     '''

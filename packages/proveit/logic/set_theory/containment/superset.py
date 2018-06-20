@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
 from containment_relation import ContainmentRelation, ContainmentSequence
 
@@ -115,13 +115,12 @@ class SupersetEq(SupersetRelation):
         return reverseSupsetEq.specialize({A:self.superset, B:self.subset}, assumptions=assumptions)
         
     def conclude(self, assumptions):
-        from _theorems_ import supersetEqViaEquality        
-        from proveit._generic_ import TransitiveRelation
+        from _theorems_ import supersetEqViaEquality
         from proveit import ProofFailure
         
         try:
             # first attempt a transitivity search
-            return TransitiveRelation.conclude(self, assumptions)
+            return ContainmentRelation.conclude(self, assumptions)
         except ProofFailure:
             pass # transitivity search failed
         
@@ -129,28 +128,31 @@ class SupersetEq(SupersetRelation):
         if self.operands[0] == self.operands[1]:
             return supersetEqViaEquality.specialize({A:self.operands[0], B:self.operands[1]})
 
+        # Finally, attempt to conclude A supseteq B via forall_{x in B} x in A.
+        return self.concludeAsFolded(elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
+
     def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
         From A superseteq B, derive and return (forall_{x in B} x in A).
         x will be relabeled if an elemInstanceVar is supplied.
         '''
-        from _theorems_ import unfoldSupsetEq
-        return unfoldSupsetEq.specialize({A:self.leftOperand, B:self.rightOperand}, relabelMap={x:elemInstanceVar}, assumptions=assumptions)
+        from ._theorems_ import unfoldSupsetEq
+        return unfoldSupsetEq.specialize({A:self.superset, B:self.subset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions)
     
     def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From A superseteq B and x in B, derive x in A.
         '''
-        from _theorems_ import unfoldSupsetEq
-        return unfoldSupsetEq.specialize({A:self.leftOperand, B:self.rightOperand, x:element}, assumptions=assumptions)
+        from ._theorems_ import unfoldSupsetEq
+        return unfoldSupsetEq.specialize({A:self.superset, B:self.subset, x:element}, assumptions=assumptions)
     
     def concludeAsFolded(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
         Derive this folded version, A superset B, from the unfolded version,
         (forall_{x in B} x in A).
         '''
-        from _theorems_ import foldSupsetEq
-        return foldSupsetEq.specialize({A:self.leftOperand, B:self.rightOperand}, relabelMap={x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
+        from ._theorems_ import foldSupsetEq
+        return foldSupsetEq.specialize({A:self.superset, B:self.subset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -159,7 +161,7 @@ class SupersetEq(SupersetRelation):
         obtain A supset B or A supseteq B as appropriate.
         '''
         from proveit.logic import Equals
-        from _theorems_ import transitivitySupsetEqSupset, transitivitySupsetEqSupsetEq
+        from ._theorems_ import transitivitySupsetEqSupset, transitivitySupsetEqSupsetEq
         from superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case

@@ -2,7 +2,7 @@ from proveit import Literal, Operation, OperationOverInstances, maybeFenced, USE
 from proveit.logic import InSet
 from proveit.number.sets import RealInterval, Interval, Reals, Integers, Naturals, Complexes
 from proveit.number.negation import Neg
-from proveit._common_ import a, f, P, S, Qmulti, xMulti
+from proveit._common_ import a, f, P, S, QQ, xx
 
 class Sum(OperationOverInstances):
     # operator of the Sum operation.

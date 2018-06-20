@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
-from proveit._common_ import A, B, Amulti, Bmulti, Cmulti, Dmulti, Emulti
+from proveit._common_ import A, B, AA, BB, CC, DD, EE
 
 class And(Operation):
     # The operator of the And operation
@@ -18,7 +18,7 @@ class And(Operation):
         That is, conclude some :math:`A \land B \and ... \land Z` via
         :math:'A', :math:'B', ..., :math:'Z' individually.
         '''
-        from _theorems_ import trueAndTrue
+        from ._theorems_ import trueAndTrue
         if self == trueAndTrue.expr: return trueAndTrue # simple special case
         return self.concludeViaComposition(assumptions)
     
@@ -61,7 +61,7 @@ class And(Operation):
         From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
         '''
-        from _theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
+        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
@@ -124,7 +124,7 @@ class And(Operation):
         Deduce X in Booleans from (A and B and .. and X and .. and Z) in Booleans
         provided X by expression or index number.
         '''
-        from _theorems_ import eachInBool
+        from ._theorems_ import eachInBool
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
@@ -138,8 +138,8 @@ class And(Operation):
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from _axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations    
-        from _theorems_ import conjunctionTrueEval, conjunctionFalseEval
+        from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations    
+        from ._theorems_ import conjunctionTrueEval, conjunctionFalseEval
         from proveit.logic.boolean._common_ import TRUE, FALSE
         falseIndex = -1
         for i, operand in enumerate(self.operands):
@@ -166,7 +166,7 @@ class And(Operation):
         (convenient especially when there are just two operands).
         Derives and returns the new conjunction operation from the original.
         '''
-        from _theorems_ import binaryCommutation, andCommutation
+        from ._theorems_ import binaryCommutation, andCommutation
         if startIdx1 is None and endIdx1 is None and startIdx2 is None and endIdx2 is None:
             stattIdx1, endIdx1, startIdx2, endIdx2 = 0, 1, 1, None
         nOperands = len(self.operands)
@@ -192,7 +192,7 @@ class And(Operation):
         '''
         Attempt to deduce, then return, that this 'and' expression is in the set of BOOLEANS.
         '''
-        from _theorems_ import conjunctionClosure
+        from ._theorems_ import conjunctionClosure
         return conjunctionClosure.specialize({Amulti:self.operands}, assumptions=assumptions)
     
 def compose(expressions, assumptions=USE_DEFAULTS):
@@ -200,7 +200,9 @@ def compose(expressions, assumptions=USE_DEFAULTS):
     Returns [A and B and ...], the And operator applied to the collection of given arguments,
     derived from each separately.
     '''
-    from _theorems_ import andIfBoth, andIfAll
     if len(expressions)==2:
+        from ._theorems_ import andIfBoth
         return andIfBoth.specialize({A:expressions[0], B:expressions[1]}, assumptions=assumptions)
-    return andIfAll.specialize({Amulti:expressions}, assumptions=assumptions)
+    else:
+        from ._theorems_ import andIfAll
+        return andIfAll.specialize({Amulti:expressions}, assumptions=assumptions)

@@ -1,5 +1,5 @@
-from proveit import Expression, Literal, OperationOverInstances, USE_DEFAULTS, ExprList, Operation, ProofFailure
-from proveit._common_ import P, Q, R, S, xMulti, yMulti, Qmulti, Rmulti
+from proveit import Expression, Literal, OperationOverInstances, defaults, USE_DEFAULTS, ExprList, Operation, ProofFailure
+from proveit._common_ import P, Q, R, S, xx, yy, QQ, RR
 
 class Forall(OperationOverInstances):
     # operator of the Forall operation
@@ -26,10 +26,26 @@ class Forall(OperationOverInstances):
     def conclude(self, assumptions):
         '''
         If the domain has a 'foldForall' method, attempt to conclude this Forall statement
-        via 'concludeAsFolded'.
+        via 'concludeAsFolded' or by proving the instance expression under proper assumptions
+        and then generalizing.
         '''
+        from proveit.logic import InSet
         if self.hasDomain() and hasattr(self.domain, 'foldAsForall'):
             return self.concludeAsFolded(assumptions)
+        else:
+            extra_assumptions = list()
+            domain, domains = None, None
+            if self.hasDomains():
+                domains = self.domains
+                for var, domain in zip(self.instanceVars, domains):
+                    extra_assumptions.append(InSet(var, domain))
+            elif self.hasDomain():
+                domain = self.domain
+                for var in self.instanceVars:
+                    extra_assumptions.append(InSet(var, domain))
+            extra_assumptions = tuple(extra_assumptions) + tuple(self.conditions)
+            proven_inst_expr = self.instanceExpr.prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions))
+            return proven_inst_expr.generalize(self.instanceVars, domain=domain, domains=domains, conditions=self.conditions)
         raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method.")
     
     def unfold(self, assumptions=USE_DEFAULTS):

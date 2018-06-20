@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import A, B, x, Amulti
+from proveit._common_ import n, x, AA
         
 class Union(Operation):
     # operator of the Intersect operation
@@ -16,37 +16,42 @@ class Union(Operation):
         Deduce and return and [element in (A union B ...)] = [(element in A) or (element in B) ...]
         where self = (A union B ...).
         '''
-        from _axioms_ import unionDef
-        return unionDef.specialize({x:element, Amulti:self.operands}, assumptions=assumptions)
+        from ._axioms_ import unionDef
+        from proveit.number import num
+        return unionDef.specialize({n:num(len(self.operands)), x:element, AA:self.operands}, assumptions=assumptions)
 
     def nonmembershipEquivalence(self, element, assumptions=USE_DEFAULTS):
         '''
         Deduce and return and [element not in (A union B ...)] = [(element not in A) and (element not in B) ...]
         where self = (A union B ...).
         '''
-        from _theorems_ import nonmembershipEquiv
-        return nonmembershipEquiv.specialize({x:element, Amulti:self.operands})
+        from ._theorems_ import nonmembershipEquiv
+        from proveit.number import num
+        return nonmembershipEquiv.specialize({n:num(len(self.operands)), x:element, AA:self.operands})
                 
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From [element in (A union B ...)], derive and return [(element in A) or (element in B) ...],
         where self represents (A union B ...). 
         '''
-        from _theorems_ import membershipUnfolding
-        return membershipUnfolding.specialize({x:element, Amulti:self.operands}, assumptions=assumptions)
+        from ._theorems_ import membershipUnfolding
+        from proveit.number import num
+        return membershipUnfolding.specialize({n:num(len(self.operands)), x:element, AA:self.operands}, assumptions=assumptions)
 
     def deduceMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From either [element in A] or [element in B] ..., derive and return [element in (A union B ...)],
         where self represents (A union B ...). 
         '''
-        from _theorems_ import membershipFolding
-        return membershipFolding.specialize({x:element, Amulti:self.operands}, assumptions=assumptions)
+        from ._theorems_ import membershipFolding
+        from proveit.number import num
+        return membershipFolding.specialize({n:num(len(self.operands)), x:element, AA:self.operands}, assumptions=assumptions)
 
     def deduceNonmembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From [element not in A] and [element not in B] ..., derive and return [element not in (A union B ...)],
         where self represents (A union B ...). 
         '''
-        from _theorems_ import nonmembershipFolding
-        return nonmembershipFolding.specialize({x:element, Amulti:self.operands}, assumptions=assumptions)
+        from ._theorems_ import nonmembershipFolding
+        from proveit.number import num
+        return nonmembershipFolding.specialize({n:num(len(self.operands)), x:element, AA:self.operands}, assumptions=assumptions)

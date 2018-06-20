@@ -1,5 +1,5 @@
 from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
-from proveit import Literal, Operation, Lambda
+from proveit import Literal, Operation, Lambda, ParameterExtractionError
 from proveit import TransitiveRelation
 from proveit.logic.irreducible_value import IrreducibleValue, isIrreducibleValue
 from proveit._common_ import A, P, Q, f, x, y, z
@@ -59,6 +59,9 @@ class Equals(TransitiveRelation):
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             yield self.deriveViaBooleanEquality
+        if hasattr(self.lhs, 'equalitySideEffects'):
+            for sideEffect in self.lhs.equalitySideEffects(knownTruth):
+                yield sideEffect
         
     def negationSideEffects(self, knownTruth):
         '''
@@ -71,27 +74,27 @@ class Equals(TransitiveRelation):
                 
     def conclude(self, assumptions):
         '''
-        Use other equalities that are known to be true to try to conclude 
-        this equality via transitivity.  For example, if a=b, b=c, and c=d are 
-        known truths (under the given assumptions), we can conclude that a=d
-        (under these assumptions).  Also, reflexive equations (x=x) are
-        concluded automatically, as are x=TRUE or TRUE=x given x
-        and x=FALSE or FALSE=x given Not(x).
+        Attempt to conclude the equality various ways:
+        simple reflexivity (x=x), concluding a boolean equality (TRUE or FALSE on
+        left or right side), or via transitivity.
         '''
         from proveit.logic import TRUE, FALSE
         if self.lhs==self.rhs:
+            # Trivial x=x
             return self.concludeViaReflexivity()
         if self.lhs or self.rhs in (TRUE, FALSE):
             try:
+                # Try to conclude as TRUE or FALSE.
                 return self.concludeBooleanEquality(assumptions)
             except ProofFailure:
                 pass
-        try:
-            # try to prove the equality via evaluation reduction.
-            # if that is possible, it is a relatively straightforward thing to do.
-            return BinaryOperation.conclude(assumptions)
-        except:
-            pass
+        """
+        # Use concludeEquality if available
+        if hasattr(self.lhs, 'concludeEquality'):
+            return self.lhs.concludeEquality(assumptions)
+        if hasattr(self.rhs, 'concludeEquality'):
+            return self.rhs.concludeEquality(assumptions)
+        """
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
         return TransitiveRelation.conclude(self, assumptions)
@@ -375,29 +378,39 @@ class Equals(TransitiveRelation):
             return self.lhs.evalEquality(self.rhs)
         return BinaryOperation.evaluate(self, assumptions)
     
-    def invert(self, lambda_map, rhs, assumptions=USE_DEFAULTS):
+    @staticmethod
+    def invert(lambda_map, rhs, assumptions=USE_DEFAULTS):
         '''
         Given some x -> f(x) map and a right-hand-side, find the
         x for which f(x) = rhs amongst known equalities under the
         given assumptions.  Return this x if one is found; return
         None otherwise.
         '''
+        assumptionsSet = set(defaults.checkedAssumptions(assumptions)) 
         if (lambda_map, rhs) in Equals.inversions:
             # Previous solution(s) exist.  Use one if the assumptions are sufficient.
-            assumptionsSet = set(defaults.checkedAssumptions(assumptions)) 
             for known_equality, inversion in Equals.inversions[(lambda_map, rhs)]:
                 if known_equality.isSufficient(assumptionsSet):
                     return inversion
-            # Found previous solution
-            return Equals.inversions[(lambda_map, rhs)]
+        # The mapping may be a trivial identity: f(x) = f(x)
+        try:
+            x = lambda_map.extractParameter(rhs)
+            # Found a trivial inversion.  Store it for future reference.
+            known_equality = Equals(rhs, rhs).prove()
+            Equals.inversions.setdefault((lambda_map, rhs), []).append((known_equality, x))
+            return x # Return the found inversion.
+        except ParameterExtractionError:
+            pass # well, it was worth a try
         # Search among known relations for a solution.
-        for known_equality in Equals.knownRelationsFromRight(rhs, assumptions):
-            x = lambda_map.extractParameter(known_equality.lhs)
-            if x is not None:
+        for known_equality, lhs in Equals.knownRelationsFromRight(rhs, assumptionsSet):
+            try:
+                x = lambda_map.extractParameter(lhs)
                 # Found an inversion.  Store it for future reference.
-                Equals.inversions.setdefault((lambda_map, rhs), []).append(known_equality, x)
+                Equals.inversions.setdefault((lambda_map, rhs), []).append((known_equality, x))
                 return x # Return the found inversion.
-        return None # No inversion found.
+            except ParameterExtractionError:
+                pass # not a match.  keep looking.
+        raise InversionError("No inversion found to map %s onto %s"%(str(lambda_map), str(rhs)))
     
 def reduceOperands(operation, mustEvaluate=False, assumptions=USE_DEFAULTS):
     '''
@@ -508,9 +521,12 @@ def defaultSimplify(expr, mustEvaluate=False, assumptions=USE_DEFAULTS, automati
             # don't know how to simplify, so keep it the same
             return Equals(expr, expr).prove()
     reducedExpr = reduceOperands(expr, mustEvaluate, assumptions)
-    if mustEvaluate and reducedExpr == expr:
-        # since it wasn't irreducible to begin with, it must change in order to evaluate
-        raise EvaluationError('Unable to evaluate: ' + str(expr))
+    if reducedExpr == expr:
+        if mustEvaluate:
+            # since it wasn't irreducible to begin with, it must change in order to evaluate
+            raise EvaluationError('Unable to evaluate: ' + str(expr))
+        else:
+            return Equals(expr, expr).prove() # don't know how to simplify further
     value = reducedExpr.evaluate().rhs if mustEvaluate else reducedExpr.simplify().rhs
     if value == TRUE:
         # Attempt to evaluate via proving the expression;
@@ -556,6 +572,12 @@ def evaluateFalsehood(expr, assumptions):
     return Equals(expr, FALSE).prove(assumptions)
 
 class EvaluationError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message
+
+class InversionError(Exception):
     def __init__(self, message):
         self.message = message
     def __str__(self):

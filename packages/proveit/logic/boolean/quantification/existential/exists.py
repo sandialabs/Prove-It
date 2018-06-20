@@ -1,6 +1,6 @@
 from proveit import OperationOverInstances, KnownTruth
 from proveit import Literal, Operation, ExprList, USE_DEFAULTS
-from proveit._common_ import A, B, P, R, S, xMulti, yMulti, Qmulti
+from proveit._common_ import A, B, P, R, S, xx, yy, QQ
 
 class Exists(OperationOverInstances):
     # operator of the Exists operation

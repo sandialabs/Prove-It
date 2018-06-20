@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
-from proveit._common_ import A, B, C, Amulti, Cmulti
+from proveit._common_ import A, B, C, AA, CC
 
 class Or(Operation):
     # The operator of the Or operation
