@@ -5,13 +5,15 @@ class Len(Operation):
     # operator of the Length operation.
     _operator_ = Literal(stringFormat='length', context=__file__)   
     
-    def __init__(self, *operands):
-        Operation.__init__(self, Len._operator_, operands)
+    def __init__(self, operand):
+        Operation.__init__(self, Len._operator_, operand)
         
     def string(self, **kwargs):
+        if hasattr(self, 'operand'): return '|' + self.operand.string() + '|'
         return '|' + self.operands.string(fence=True) + '|'
     
     def latex(self, **kwargs):
+        if hasattr(self, 'operand'): return '|' + self.operand.latex() + '|'
         return '|' + self.operands.latex(fence=True) + '|'
     
     def evaluate(self, assumptions=USE_DEFAULTS):
