@@ -69,8 +69,10 @@ class TransitiveRelation(Operation):
         self.prove(assumptions=assumptions, automation=False) # this is just an extra sanity check
         
     def concludeViaTransitivity(self, assumptions=USE_DEFAULTS):
+        from proveit.logic import Equals
         assumptions = defaults.checkedAssumptions(assumptions)
-        forceStrong = (self.__class__ == self.__class__._checkedStrongRelationClass())
+        if self.__class__ == Equals: forceStrong = False # "strong" vs "weak" doesn't make sense when the relation is simply equality
+        else: forceStrong = (self.__class__ == self.__class__._checkedStrongRelationClass())
         return self.__class__._transitivitySearch(self.lhs, self.rhs, forceStrong=forceStrong, assumptions=assumptions)
 
     @staticmethod
@@ -83,6 +85,8 @@ class TransitiveRelation(Operation):
 
     @classmethod
     def _checkedWeakRelationClass(RelationClass):
+        from proveit.logic import Equals
+        if RelationClass==Equals: return Equals # ("equal to" or "equal to" is just "equal to")
         Relation = RelationClass.WeakRelationClass()
         assert issubclass(Relation, TransitiveRelation), "WeakRelationClass() should return a sub-class of TransitiveRelation"
         return Relation
@@ -283,8 +287,9 @@ class TransitiveRelation(Operation):
             unexplored_chains.update({endpoint:chain for endpoint,chain in new_chains.iteritems() \
                                     if endpoint not in chains})
             chains.update(new_chains)
-            
-        raise TransitivityException(None, assumptions, 'No proof found via applying transitivity amongst known proven relations.')
+        
+        DesiredRelationClass = RelationClass._checkedStrongRelationClass() if forceStrong else  RelationClass._checkedWeakRelationClass()
+        raise TransitivityException(DesiredRelationClass(leftItem, rightItem), assumptions, 'No proof found via applying transitivity amongst known proven relations.')
     
     @classmethod
     def _generateSortingRelations(RelationClass, items, assumptionsSet):
@@ -330,12 +335,12 @@ class TransitiveRelation(Operation):
                                         # left-going chain (new_chain) meeting with right-going chain (meeting_chain)
                                         other_item = meeting_chain[0].operands[0] if len(meeting_chain)>0 else new_endpoint
                                         if other_item != item:
-                                            yield (other_item, item), meeting_chain + list(reversed(new_chain))
+                                            yield (other_item, item), meeting_chain + new_chain
                                     else:
                                         # right-going chain (new_chain) meeting with left-going chain (meeting_chain)
                                         other_item = meeting_chain[-1].operands[-1] if len(meeting_chain)>0 else new_endpoint
                                         if other_item != item:
-                                            yield (item, other_item), new_chain + list(reversed(meeting_chain))
+                                            yield (item, other_item), new_chain + meeting_chain
                             # Note, when we make it to another item, we can stop; that other item will come between
                             # the current 'item' and anything beyond.
                             if new_endpoint not in item_set: 
@@ -430,7 +435,7 @@ class TransitiveRelation(Operation):
                     # because there is something to the left of it now.
                     left_most_candidates.difference_update(eq_right_items)
                     if len(left_most_candidates)==0:
-                        raise TransitivityException(None, assumptions, "Transitivity cycle detected implying equalities; must prove equalities before sorting transitivities")
+                        raise TransitivityException(None, assumptions, "Transitivity cycle detected implying equalities; must prove equalities before sorting items: " + str(items))
             
             while len(left_most_candidates)==1:
                 # We have one uncontested left-most candidate assuming no cycles outside of equivalence sets
@@ -490,14 +495,14 @@ class TransitiveRelation(Operation):
                     already_processed.update(eq_next_candidates)
                 
                 if len(left_most_candidates)==0:
-                    raise TransitivityException(None, assumptions, "Transitivity cycle detected implying equalities; must prove equalities before sorting transitivities")
+                    raise TransitivityException(None, assumptions, "Transitivity cycle detected implying equalities; must prove equalities before sorting items: " + str(items))
                     
                 # Note that we may end up with multiple left-most candidates in which case
                 # more links are needed.
             if len(remaining_items)==0: break
                 
         if len(left_most_candidates) > 0:
-            raise TransitivityException(None, assumptions, "Insufficient known transitive relations to sort the provided items")
+            raise TransitivityException(None, assumptions, "Insufficient known transitive relations to sort the provided items: " + str(items))
         
         orig_order = {item:k for k, item in enumerate(items)}    
         sorted_items = sum([sorted(eq_sets[item], key=lambda it:orig_order[it]) for item in sorted_items], [])
@@ -515,6 +520,8 @@ class TransitiveRelation(Operation):
                         # make the (item1, item2) chain by prepending/appending necessary equalities to the (eq_item1, eq_item2) chain
                         item_pair_chains[(item1, item2)] = prepend + item_pair_chains[(eq_item1, eq_item2)] + append
             relations.append(TransitiveRelation.applyTransitivities(item_pair_chains[(item1, item2)], assumptions))
+        if len(relations)==1:
+            return relations[0]
         return RelationClass.makeSequence(*relations)
     
     @classmethod
@@ -527,7 +534,7 @@ class TransitiveRelation(Operation):
         relations = []
         for item1, item2 in zip(itemsList[:-1], itemsList[1:]):
             relations.append(RelationClass._transitivitySearch(item1, item2, forceStrong=False, assumptions=assumptions))
-        return RelationClass.appyTransitivities(relations)
+        return RelationClass.applyTransitivities(relations)
     
     @classmethod
     def _transitivityInsert(RelationClass, sequence, item, assumptions):
