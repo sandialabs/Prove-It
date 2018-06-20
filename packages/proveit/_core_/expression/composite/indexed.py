@@ -95,7 +95,7 @@ class Indexed(Expression):
                 if isLiteralInt(indices[0]):
                     return subbed_var[indices[0].asInt()]
                 else:
-                    raise IndexedError("Indices must evaluate to literal integers when substituting an Indexed expression")
+                    raise IndexedError("Indices must evaluate to literal integers when substituting an Indexed expression, got " + str(indices[0]))
             elif isinstance(subbed_var, ExprTensor):
                 return subbed_var.getElem(indices, assumptions=assumptions, requirements=new_requirements)
         
@@ -108,9 +108,9 @@ class Indexed(Expression):
         # just return the Indexed operation with the substitutions made.
         return Indexed(subbed_var, subbed_indices, base=self.base)
 
-    def expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Consider a substitution over a containing iterattion (Iter) defined 
+        Consider a substitution over a containing iteration (Iter) defined 
         via exprMap, relabelMap, etc, and index iteration defined by substituting 
         the "iteration parameters" over the range from the "starting arguments" 
         to the "ending arguments".
@@ -122,7 +122,7 @@ class Indexed(Expression):
         are contained in this Composite.  If it is not substituted with
         a composite, no range is yielded.
         '''
-        from composite import Composite, IndexingError
+        from composite import Composite, IndexingError, compositeExpression
         from expr_list import ExprList
         from proveit.logic import Equals
         
@@ -136,7 +136,6 @@ class Indexed(Expression):
             start_indices = []
             end_indices = []
             for subbed_index, iterParam, startArg, endArg in zip(subbed_indices, iterParams, startArgs, endArgs):
-                print subbed_index, iterParam, startArg, endArg
                 if iterParam not in subbed_index.freeVars():
                     raise IndexingError("Iteration parameter not contained in the substituted index")
                 start_indices.append(subbed_index.substituted({iterParam:startArg}))
@@ -144,9 +143,9 @@ class Indexed(Expression):
             
             if isinstance(subbed_var, ExprList):
                 assert len(start_indices) == len(end_indices) == 1, "Lists are 1-dimensional and should be singly-indexed"
-                entryRangeGenerator = subbed_var.entryRanges(start_indices[0], end_indices[0], assumptions, requirements)
+                entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices[0], end_indices[0], assumptions, requirements)
             else:
-                entryRangeGenerator = subbed_var.entryRanges(start_indices, end_indices, assumptions, requirements)
+                entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices, end_indices, assumptions, requirements)
             
             for (intersection_start, intersection_end) in entryRangeGenerator:
                 # We must put it terms of iter parameter values (arguments) via inverting the index_expr.
@@ -160,8 +159,8 @@ class Indexed(Expression):
                     inversion = Equals(subbed_indices[axis].substituted({iterParams[axis]:param}), coord)
                     requirements.append(inversion.prove(assumptions=assumptions))
                     return param
-                param_start = tuple([coord2param(axis, i) for axis, i in enumerate(intersection_start)])
-                param_end = tuple([coord2param(axis, i) for axis, i in enumerate(intersection_end)])
+                param_start = tuple([coord2param(axis, i) for axis, i in enumerate(compositeExpression(intersection_start))])
+                param_end = tuple([coord2param(axis, i) for axis, i in enumerate(compositeExpression(intersection_end))])
                 yield (param_start, param_end)
             
     """  

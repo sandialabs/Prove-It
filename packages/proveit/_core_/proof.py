@@ -62,10 +62,8 @@ class Proof:
             raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
         if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             if not hadPreviousProof: # don't bother with side-effects if this was already proven (and usable); that should have been done already
-                # Axioms and Theorems will derive their side-effects after all of them are created; done in special_statements.py.
-                if not isinstance(self, Axiom) and not isinstance(self, Theorem):
-                    # may derive any side-effects that are obvious consequences arising from this truth:
-                    provenTruth.deriveSideEffects()
+                # may derive any side-effects that are obvious consequences arising from this truth:
+                provenTruth.deriveSideEffects()
         
     def _setUsability(self):
         pass # overloaded for the Theorem type Proof
@@ -523,13 +521,16 @@ class Specialization(Proof):
             specializedExpr, requirements, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
             # obtain the KnownTruths for the substituted conditions
             requirementTruths = []
+            requirementTruthSet = set() # avoid repeats of requirements
             for requirementExpr in requirements:
                 try:
                     # each substituted condition must be proven under the assumptions
                     # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
                     requirementTruth = requirementExpr.prove(assumptions)
-                    requirementTruths.append(requirementTruth)
-                    _appendExtraAssumptions(assumptions, requirementTruth)
+                    if requirementTruth not in requirementTruthSet:
+                        requirementTruths.append(requirementTruth)
+                        requirementTruthSet.add(requirementTruth)
+                        _appendExtraAssumptions(assumptions, requirementTruth)
                 except:
                     raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
@@ -626,9 +627,9 @@ class Specialization(Proof):
             remainingForallEliminations -= 1
             if not isinstance(expr, Forall):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
-            expr = expr.operands
             domain = expr.domain if hasattr(expr, 'domain') else None
             domains = expr.domains if hasattr(expr, 'domains') else None
+            expr = expr.operands
             lambdaExpr = expr['imap'];
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']

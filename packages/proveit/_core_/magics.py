@@ -28,18 +28,19 @@ class AssignmentBehaviorModifier:
         def new_run_cell(self, raw_cell, *args, **kwargs):
             lines = raw_cell.split('\n')
             # find the last non-indented python statement in the cell
-            non_indented_lines = [line for line in lines if len(line) > 0 and re.match("\s", line[0]) is None]
-            if len(non_indented_lines)==0: 
+            non_indented_line_indices = [k for k, line in enumerate(lines) if len(line) > 0 and re.match("\s", line[0]) is None]
+            if len(non_indented_line_indices)==0: 
                 # no non-indented lines.  just run the cell normally.
                 new_raw_cell = '\n'.join(lines)
                 return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
-            # get the index of the last non-indented line
-            idx = [k for k, line in enumerate(non_indented_lines)][-1]
-            last_python_stmt = '\n'.join(lines[idx:])
+            # get the last non-indented line and all indented lines that follow
+            last_python_stmt = '\n'.join(lines[non_indented_line_indices[-1]:])
             # look for one or more variables on the left side of an assignment
             if re.match("[a-zA-Z_][a-zA-Z0-9_]*\s*(,\s*[a-zA-Z_][a-zA-Z0-9_]*)*\s*=", last_python_stmt) is not None:
                 lhs, rhs = last_python_stmt.split('=', 1)
-                lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
+                lhs = lhs.strip(); rhs = rhs.strip()
+                if lhs != 'context' and rhs.find("proveit.Context('.')") != 0:
+                    lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
             new_raw_cell = '\n'.join(lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
         ipython.run_cell = new.instancemethod(new_run_cell, ipython)
@@ -335,7 +336,7 @@ class ProveItMagic(Magics):
         self.context = Context()
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'axioms':
-                raise ProveItMagicFailure("Run %begin_axioms in a separate notebook from %begin_%s."%self.kind)
+                raise ProveItMagicFailure("Run %%begin_axioms in a separate notebook from %%begin_%s."%self.kind)
             print "WARNING: Re-running %begin_axioms does not reset previously defined axioms."
             print "         It is suggested that you restart and run all cells after editing axioms."
         print "Defining axioms for context '" + self.context.name + "'"
@@ -349,7 +350,7 @@ class ProveItMagic(Magics):
         # context based upon current working directory
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'theorems':
-                raise ProveItMagicFailure("Run %begin_theorems in a separate notebook from %begin_%s."%self.kind)
+                raise ProveItMagicFailure("Run %%begin_theorems in a separate notebook from %%begin_%s."%self.kind)
             print "WARNING: Re-running %begin_theorems does not reset previously defined theorems."
             print "         It is suggested that you restart and run all cells after editing theorems."
         print "Defining theorems for context '" + self.context.name + "'"
@@ -364,7 +365,7 @@ class ProveItMagic(Magics):
     def begin_common(self):
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'common':
-                raise ProveItMagicFailure("Run '%begin common' in a separate notebook from %begin_%s."%self.kind)
+                raise ProveItMagicFailure("Run '%%begin common' in a separate notebook from %%begin_%s."%self.kind)
             print "WARNING: Re-running '%begin common' does not reset previously defined common expressions."
             print "         It is suggested that you restart and run all cells after editing the expressions."
         print "Defining common sub-expressions for context '" + self.context.name + "'"
@@ -545,7 +546,6 @@ class Assignments:
     def __init__(self, names, rightSides, beginningProof=False):
         self.beginningProof = beginningProof
         from proveit import singleOrCompositeExpression
-        self.allExpressions = True
         processedRightSides = []
         for rightSide in rightSides:
             if not isinstance(rightSide, KnownTruth):
@@ -555,11 +555,9 @@ class Assignments:
                     rightSide = singleOrCompositeExpression(rightSide)
                 except:
                     pass
-            if not isinstance(rightSide, Expression) and (rightSide is not None):
-                if proveItMagic.kind in ('axioms', 'theorems', 'common'):
+            if proveItMagic.kind in ('axioms', 'theorems', 'common'):
+                if not isinstance(rightSide, Expression) and (rightSide is not None):
                     raise ValueError("Right hand side of end-of-cell assignment(s) is expected to be Expression(s)")
-                else:
-                    self.allExpressions = False
             processedRightSides.append(rightSide)
         self.names = list(names)
         self.rightSides = processedRightSides
@@ -611,7 +609,11 @@ class Assignments:
         return html
 
     def _repr_html_(self):
-        return '\n'.join(self.html_line(name, rightSide) for name, rightSide in zip(self.names, self.rightSides))
+        if len(self.names) == 0: return
+        try:
+            return '\n'.join(self.html_line(name, rightSide) for name, rightSide in zip(self.names, self.rightSides))
+        except Exception as e:
+            print e
         
     def __repr__(self):
         return '\n'.join('%s: %s'%(name, repr(rightSide)) for name, rightSide in zip(self.names, self.rightSides))

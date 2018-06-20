@@ -545,7 +545,7 @@ class ExprTensor(Composite, Expression):
         outStr += '\n}\n'
         return outStr
     
-    def entryRanges(self, start_indices, end_indices, assumptions, requirements):
+    def entryRanges(self, base, start_indices, end_indices, assumptions, requirements):
         '''
         For each entry of the tensor that is fully or partially contained in the window defined
         via start_indices and end_indices (as Expressions that can be provably sorted

@@ -176,6 +176,12 @@ class Expression:
         '''
         return iter(self._subExpressions)
     
+    def numSubExpr(self):
+        '''
+        Return the number of sub-expressions of this expression.
+        '''
+        return len(self._subExpressions)
+    
     def prove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Attempt to prove this expression automatically under the
@@ -331,7 +337,7 @@ class Expression:
         '''
         return self.substituted(exprMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
 
-    def expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         # empty by default.
         # Overridden by proveit._core_.expression.composite.indexed.Indexed.

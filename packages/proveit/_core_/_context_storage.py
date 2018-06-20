@@ -6,7 +6,7 @@ import itertools
 import json
 import re
 
-class Storage:
+class ContextStorage:
     '''
     Manages the __pv_it directory of a Context, the distributed database
     of expressions, axioms, theorems, and proofs.  Additionally manages
@@ -15,11 +15,16 @@ class Storage:
     which can all be re-generated).
     '''
     
-    def __init__(self, context, directory):
+    def __init__(self, context, name, directory, rootDirectory):
         from .context import Context, ContextException
         if not isinstance(context, Context):
             raise ContextException("'context' should be a Context object")
         self.context = context
+        self.name = name
+        if rootDirectory is None:
+            self.rootContextStorage = self
+        else:
+            self.rootContextStorage = Context(rootDirectory)._storage
         self.directory = directory
         self.pv_it_dir = os.path.join(self.directory, '__pv_it')
         self.referenced_dir = os.path.join(self.pv_it_dir, '_referenced_')
@@ -27,14 +32,14 @@ class Storage:
             # make the directory for the storage
             os.makedirs(self.referenced_dir)
         
-        if self.context.isRoot():
+        if self.isRoot():
             # If this is a root context, let's add the directory above the root
             # to sys.path if it is needed.
             # try to import the root context; if it fails, we
             # need to add the path
             add_path = True # may set to False below
             try:
-                if os.path.relpath(os.path.split(importlib.import_module(self.context.name).__file__)[0], self.directory) == '.':
+                if os.path.relpath(os.path.split(importlib.import_module(self.name).__file__)[0], self.directory) == '.':
                     add_path = False
             except:
                 pass # keep add_path as True
@@ -47,7 +52,7 @@ class Storage:
             # set of context root names that are referenced
             self.referencedContextRoots = set()
             # associate the context name with the directory
-            Context.setRootContextPath(context.name, directory)
+            Context._setRootContextPath(name, directory)
             # map context names to paths for other known root contexts in paths.txt
             self.pathsFilename = os.path.join(self.pv_it_dir, 'paths.txt')
             if os.path.isfile(self.pathsFilename):
@@ -60,7 +65,7 @@ class Storage:
                                 # this storage object has changed.
                                 self._updatePath()
                         else:
-                            Context.setRootContextPath(contextName, path)
+                            Context._setRootContextPath(contextName, path)
                             self.referencedContextRoots.add(contextName)
             else:
                 with open(self.pathsFilename, 'w') as pathsFile:
@@ -80,12 +85,32 @@ class Storage:
         # map expression objects to special expression kind and name
         # for the associated context (the kind is 'common', 'axiom', or 'theorem').
         self.specialExpressions = dict()
-                        
+        
+        # map common expression names to storage identifiers:
+        self._common_expr_ids = None # read in when needed
+        
+        # store special expressions that have been loaded so they are
+        # readily available on the next request.
+        self._loadedCommonExprs = dict()
+        self._loadedAxioms = dict()
+        self._loadedTheorems = dict()
+        
+        # Map 'common', 'axiom', and 'theorem' to respective modules.
+        # Base it upon the context name.
+        self._specialExprModules = {kind:self.name+'.%s'%module_name for kind, module_name in Context.specialExprKindToModuleName.iteritems()}
+                                        
         # For retrieved pv_it files that represent Prove-It object (Expressions, KnownTruths, and Proofs),
         # this maps the object to the pv_it file so we
         # can recall this without searching the hard drive again.
         self._proveItObjects = dict()
-    
+
+    def isRoot(self):
+        '''
+        Return True iff this ContextStorage is a "root" ContextStorage 
+        (no parent directory with an __init__.py file).
+        '''
+        return self.rootContextStorage is self
+                
     def getSubContextNames(self):
         '''
         Return the sub-context names as indicated in the _sub_contexts_.txt files.
@@ -115,7 +140,7 @@ class Storage:
         reference from other Context's.
         '''
         from .context import Context
-        myContextName = self.context.name
+        context_name = self.name
         # update the local paths.txt
         self._changePath('.', self.directory)
         # update the paths.txt wherever there is a mutual reference
@@ -124,7 +149,7 @@ class Storage:
             for pathLine in pathsFile.readlines():
                 contextName, path = pathLine.split()
                 if contextName != '.':
-                    Context.getContext(contextName)._storage._changePath(myContextName, self.directory)
+                    Context.getContext(contextName)._storage._changePath(context_name, self.directory)
     
     def _changePath(self, movedContextName, newPath):
         '''
@@ -140,18 +165,218 @@ class Storage:
                 if contextName == movedContextName:
                     path = newPath
                 pathsFile.write(contextName + ' ' + path + '\n')
-        
-    def includeReference(self, otherStorage):
+
+    def _includeMutualReferences(self, otherContext):
+        '''
+        Include a reference between context roots if they have a different root.
+        '''
+        otherStorage = otherContext._storage
+        if self.rootContextStorage is not otherStorage.rootContextStorage:
+            self.rootContextStorage._includeReference(otherStorage.rootContextStorage)
+            otherStorage.rootContextStorage._includeReference(self.rootContextStorage)
+                
+    def _includeReference(self, otherStorage):
         '''
         Include a path reference from a root Context to another root Context,
         both in the referencedContextRoots set and in the paths.txt file. 
         '''
-        otherContextName = otherStorage.context.name
+        otherContextName = otherStorage.name
         if otherContextName not in self.referencedContextRoots:
             with open(self.pathsFilename, 'a') as pathsFile:
                 pathsFile.write(otherContextName + ' ' + otherStorage.directory + '\n')
             self.referencedContextRoots.add(otherContextName)
+
+    def setCommonExpressions(self, exprNames, exprDefinitions, clear=False):
+        from proveit import Expression
+        self._common_expr_ids = dict()
+        commons_filename = os.path.join(self.referenced_dir, 'commons.pv_it')
         
+        # get any previous common expression ids to see if their reference
+        # count needs to be decremented.
+        old_expr_ids = set() 
+        if os.path.isfile(commons_filename):
+            with open(commons_filename, 'r') as f:
+                for line in f.readlines():
+                    name, expr_id = line.split()
+                    old_expr_ids.add(expr_id)
+        
+        # write new common expression ids
+        new_expr_ids = set()
+        with open(commons_filename, 'w') as f:
+            for name in exprNames:
+                expr = exprDefinitions[name]
+                # record the special expression in this context object
+                if expr not in Expression.contexts:  
+                    Expression.contexts[expr] = self.context
+                self.specialExpressions[expr] = ('common', name) 
+                # get the expression id to be stored on 'commons.pv_it'           
+                expr_id = self._proveItStorageId(expr)
+                if expr_id in old_expr_ids:
+                    old_expr_ids.remove(expr_id) # same expression as before
+                else:
+                    # new expression not previously in the common expressions liest:
+                    new_expr_ids.add(expr_id) 
+                self._common_expr_ids[name] = expr_id
+                f.write(name + ' ' + expr_id + '\n')
+        
+        # remove references to old common expressions that are no longer a common expression
+        for expr_id in old_expr_ids:
+            self._removeReference(expr_id, removingSpecialExpr=True) # remove reference to an old common expression
+        
+        # add references to new common expressions that were not preveiously a common expression
+        for expr_id in new_expr_ids:
+            self._addReference(expr_id) # add reference to a new common expression
+        
+        if clear:
+            assert len(exprNames)==len(exprDefinitions), "Not expecting any expression names when 'clearing'"
+            # By removing the file, we indicate that the common expressions are not defined which is
+            # treated a little differently than when there are no common expressions.  In this case,
+            # importing from _common_.py will generate dummy labels in order to avoid exceptions occurring
+            # when the common expressions are in a non-generated state.
+            os.remove(commons_filename)
+
+    def commonExpressionNames(self):
+        from .context import CommonExpressions
+        commons_filename = os.path.join(self.referenced_dir, 'commons.pv_it')
+        context_name = self.name
+        if os.path.isfile(commons_filename):
+            self._common_expr_ids = dict()
+            with open(commons_filename, 'r') as f:
+                for line in f.readlines():
+                    name, expr_id = line.split()
+                    self._common_expr_ids[name] = expr_id
+                    CommonExpressions.expr_id_contexts[context_name + '.' + expr_id] = self.context
+                    yield name
+        
+    def setSpecialStatements(self, names, definitions, kind):
+        from proveit import Expression
+        from .context import Context, ContextException
+        specialStatementsPath = os.path.join(self.referenced_dir, kind + 's')
+        if not os.path.isdir(specialStatementsPath):
+            os.makedirs(specialStatementsPath)
+        # First get the previous special statement definitions to find out what has been added/changed/removed
+        previousDefIds = dict()
+        toRemove = []
+        context_name = self.name
+        for name in os.listdir(specialStatementsPath):
+            try:
+                with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
+                    if name not in definitions:
+                        # to remove special statement that no longer exists
+                        toRemove.append((name, Context.getStoredStmt(context_name + '.' + name, kind)))
+                    previousDefIds[name] = f.read()
+            except IOError:
+                raise ContextException('Corrupted __pv_it directory: %s'%self.directory)
+        
+        # Update the definitions, writing axiom/theorem names to axioms.txt or theorems.txt
+        # in proper order.
+        with open(os.path.join(self.referenced_dir, '%ss.txt'%kind), 'w') as f:            
+            for name in names:
+                f.write(name + '\n')
+                expr = definitions[name]
+                # record the special expression in this context object
+                if expr not in Expression.contexts:  
+                    Expression.contexts[expr] = self.context             
+                    self.specialExpressions[expr] = (kind, name)            
+                # add the expression to the "database" via the storage object.
+                expr_id = self._proveItStorageId(expr)
+                if name in previousDefIds and previousDefIds[name] == expr_id:
+                    continue # unchanged special statement
+                storedSpecialStmt = Context.getStoredStmt(context_name + '.' + name, kind)
+                if name not in previousDefIds:
+                    # added special statement
+                    print 'Adding %s %s to %s context'%(kind, name, context_name)
+                elif previousDefIds[name] != expr_id:
+                    # modified special statement. remove the old one first.
+                    print 'Modifying %s %s in %s context'%(kind, name, context_name)
+                    storedSpecialStmt.remove(keepPath=True)
+                # record the axiom/theorem id (creating the directory if necessary)
+                specialStatementDir = os.path.join(specialStatementsPath, name)
+                if not os.path.isdir(specialStatementDir):
+                    os.mkdir(specialStatementDir)
+                with open(os.path.join(specialStatementDir, 'expr.pv_it'), 'w') as exprFile:
+                    exprFile.write(expr_id)
+                    self._addReference(expr_id)
+                with open(os.path.join(specialStatementDir, 'usedBy.txt'), 'w') as exprFile:
+                    pass # usedBy.txt must be created but initially empty
+
+        # Remove the special statements that no longer exist
+        for name, stmt in toRemove:
+            print 'Removing %s %s from %s context'%(kind, name, context_name)
+            stmt.remove()
+                
+    def _getSpecialStatementExpr(self, kind, name):
+        from proveit import Expression
+        specialStatementsPath = os.path.join(self.referenced_dir, kind + 's')
+        try:
+            with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
+                expr_id = f.read()
+                expr = self.makeExpression(expr_id)
+                if expr not in Expression.contexts:  
+                    Expression.contexts[expr] = self.context
+                    self.specialExpressions[expr] = (kind, name)
+                return expr
+        except IOError:
+            raise KeyError("%s of name '%s' not found"%(kind, name))        
+
+    def getSpecialStatementNames(self, kind):
+        '''
+        Yield names of axioms/theorems.
+        '''
+        with open(os.path.join(self.referenced_dir, '%ss.txt'%kind), 'r') as f:            
+            for line in f:
+                yield line.strip() # name of axiom or theorem
+
+    def getCommonExpr(self, name):
+        '''
+        Return the Expression of the common expression in this context
+        with the given name.
+        '''
+        from proveit import Expression
+        from .context import Context, UnsetCommonExpressions
+        context_name = self.name
+        if name in self._loadedCommonExprs:
+            return self._loadedCommonExprs[name]
+        if self._common_expr_ids is None:
+            # while the names are read in, the expr id map will be generated
+            list(self.commonExpressionNames())
+        if self._common_expr_ids is None:
+            raise UnsetCommonExpressions(context_name)
+        # make the common expression for the given common expression name
+        prev_context_default = Context.default
+        Context.default = self.context # set the default Context in case there is a Literal
+        try:
+            expr = self.makeExpression(self._common_expr_ids[name])
+        finally:
+            Context.default = prev_context_default # reset the default Context 
+        if expr not in Expression.contexts:
+            Expression.contexts[expr] = self.context
+        self.specialExpressions[expr] = ('common', name)
+        self._loadedCommonExprs[name] = expr
+        return expr
+    
+    def getAxiom(self, name):
+        '''
+        Return the Axiom of the given name in this context.
+        '''
+        from proveit._core_.proof import Axiom
+        if name in self._loadedAxioms:
+            return self._loadedAxioms[name]
+        expr = self._getSpecialStatementExpr('axiom', name)
+        axiom = self._loadedAxioms[name] = Axiom(expr, self.context, name)
+        return axiom
+            
+    def getTheorem(self, name):
+        '''
+        Return the Theorem of the given name in this context.
+        '''
+        from proveit._core_.proof import Theorem
+        if name in self._loadedTheorems:
+            return self._loadedTheorems[name]
+        expr = self._getSpecialStatementExpr('theorem', name)
+        thm = self._loadedTheorems[name] = Theorem(expr, self.context, name)
+        return thm                      
+                                                                                                              
     def retrieve_png(self, expr, latex, configLatexToolFn):
         '''
         Find the expr.png file for the stored Expression.
@@ -209,7 +434,7 @@ class Storage:
         else:
             (context, hash_directory) = self._retrieve(proveItObjectOrId)
             if context != self.context:
-                self.context._includeMutualReferences(context)
+                self._includeMutualReferences(context)
                 return context.name + '.' + hash_directory
             else:
                 return hash_directory
@@ -236,7 +461,7 @@ class Storage:
         from .context import Context
         context_name, hash_directory = self._split(proveItStorageId)
         if context_name == '':
-            return os.path.join(self.context._storage.pv_it_dir, hash_directory)
+            return os.path.join(self.pv_it_dir, hash_directory)
         else:            
             pv_it_dir = Context.getContext(context_name)._storage.pv_it_dir
             return os.path.join(pv_it_dir, hash_directory)
@@ -288,7 +513,7 @@ class Storage:
         storage identifier.  The ref_count.txt file is updated with the new 
         reference count.
         '''
-        from context import CommonExpressions
+        from .context import CommonExpressions
         if proveItStorageId in CommonExpressions.expr_id_contexts:
             # A common expression of some Context is being referenced.
             # Keep track of this for the purpose of detecting illegal cyclic referencing of common expressions.
@@ -518,7 +743,7 @@ class Storage:
         needs_root_path = False # needs the root of this context added
         needs_local_path = False # needs the local path added
         # first, see if we even need to import a module with the same root as our context
-        root_context = self.context.rootContext
+        root_context = self.rootContextStorage.context
         context_root_name = root_context.name
         for module_name in itertools.chain(direct_imports, from_imports.keys()):
             if module_name.split('.')[0] == context_root_name:
@@ -544,7 +769,7 @@ class Storage:
                 # go up enough levels to the context root;
                 # 2 levels to get out of the '__pv_it' folder and at least
                 # 1 more to get above the root context.
-                rel_paths.add(os.path.join(*(['..']*(self.context.name.count('.')+3))))
+                rel_paths.add(os.path.join(*(['..']*(self.name.count('.')+3))))
             for rel_path in rel_paths:
                 import_stmts.append(json.dumps('sys.path.insert(1, "%s")'%rel_path).strip('"'))
         # direct import statements
@@ -695,7 +920,7 @@ class Storage:
             
         if not os.path.isabs(module.__file__):
             # convert a relative path to a path starting from the context root
-            abs_module_name = self.context.name + '.' + moduleName
+            abs_module_name = self.name + '.' + moduleName
             if abs_module_name not in sys.modules:
                 return moduleName # just use the relative path
         split_module_name = moduleName.split('.')
@@ -959,14 +1184,16 @@ class Storage:
             built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], sub_expressions, context)
         return built_expr_map[master_expr_id]        
     
-    def recordCommonExprDependencies(self, contextNames):
+    def recordCommonExprDependencies(self):
         '''
         Record the context names of any reference common expressions in storage
         while creating the common expressions for this context
         (for the purposes of checking for illegal mutual dependencies).
         '''
+        from .context import CommonExpressions
+        contextNames = CommonExpressions.referenced_contexts
         contextNames = set(contextNames)
-        contextNames.discard(self.context.name) # exclude the source context
+        contextNames.discard(self.name) # exclude the source context
         if contextNames == self.storedCommonExprDependencies():
             return # unchanged
         referenced_commons_filename = os.path.join(self.referenced_dir, 'commons_dependencies.txt')
@@ -985,13 +1212,14 @@ class Storage:
                 return set([line.strip() for line in f.readlines()])
         return set() # empty set by default
         
-    def cyclicallyReferencedCommonExprContext(self, contextNames):
+    def cyclicallyReferencedCommonExprContext(self):
         '''
         Check for illegal cyclic dependencies of common expression notebooks.
         If there is one, return the name; otherwise return None.
         '''        
-        from .context import Context
-        referencing_contexts = {contextName:self.context for contextName in contextNames if contextName != self.context.name}
+        from .context import Context, CommonExpressions
+        contextNames = CommonExpressions.referenced_contexts
+        referencing_contexts = {contextName:self.context for contextName in contextNames if contextName != self.name}
         while len(referencing_contexts) > 0:
             contextName, referencing_context = referencing_contexts.popitem()
             context = Context.getContext(contextName)
@@ -1106,7 +1334,6 @@ class Storage:
             os.rmdir(hash_path)
         os.rmdir(pv_it_dir)
     """
-    
     
 class StoredSpecialStmt:
     def __init__(self, context, name, kind):
@@ -1353,7 +1580,7 @@ class StoredTheorem(StoredSpecialStmt):
         for storedUsedStmts, usedStmtsFilename in ((storedUsedAxioms, 'usedAxioms.txt'), (storedUsedTheorems, 'usedTheorems.txt')):
             with open(os.path.join(self.path, usedStmtsFilename), 'w') as usedStmtsFile:
                 for storedUsedStmt in sorted(storedUsedStmts):
-                    self.context._includeMutualReferences(storedUsedStmt.context)
+                    self._includeMutualReferences(storedUsedStmt.context)
                     usedStmtsFile.write(str(storedUsedStmt) + '\n')
         
         # record any used theorems that are already completely proven

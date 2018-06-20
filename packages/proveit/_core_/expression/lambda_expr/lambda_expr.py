@@ -56,17 +56,64 @@ class Lambda(Expression):
         '''
         return self.body.substituted({param:arg for param, arg in zip(self.parameters, args)})
     
-    def extractParameter(self, mapped_expr):
+    def extractParameter(self, mappedExpr):
         '''
-        
+        Given a mapped expression, return the parameter that will transform
+        this Lambda expression into the mapped expression.  For example,
+        if the Lambda expression is x -> x + 1 and the mapped expression
+        is 2 + 1, this will return 2.  If there is more than one parameter
+        in this Lambda expression, use extractParameters instead.
         '''
-        pass
+        assert len(self.parameters) == 1, "Use the 'extractParameters' method when there is more than one parameter"
+        return self.extractParameters(mappedExpr)[0]
 
-    def extractParameters(self, mapped_expr):
+    def extractParameters(self, mappedExpr):
         '''
-        
+        Given a mapped expression, return the parameters that will transform
+        this Lambda expression into the mapped expression.  For example,
+        if the Lambda expression is (x, y) -> x + y and the mapped expression
+        is 1 + 2, this will return (1, 2).
         '''
-        pass
+        # Perform a simulataneous depth-first search to find the parameters
+        # of the lambda map and corresponding values from the mapped_expr.
+        parameters = self.parameters
+        param_values = [None]*len(parameters)
+        lambda_sub_expr = self.body
+        mapped_sub_expr = mappedExpr
+        if lambda_sub_expr.numSubExpr() != mapped_sub_expr.numSubExpr():
+            raise ParameterExtractionError("# of sub-expressions, %d vs %d"%(lambda_sub_expr.numSubExpr(), mapped_sub_expr.numSubExpr()))
+        if lambda_sub_expr.__class__ != mapped_sub_expr.__class__:
+            raise ParameterExtractionError("Expression class, %s vs %s"%(str(lambda_sub_expr.__class__), str(mapped_sub_expr.__class__)))
+        if lambda_sub_expr._coreInfo != mapped_sub_expr._coreInfo:
+            raise ParameterExtractionError("core information, %s vs %s"%(str(lambda_sub_expr._coreInfo), str(mapped_sub_expr._coreInfo)))
+        lambda_sub_expr_iters = [lambda_sub_expr.subExprIter()]
+        mapped_sub_expr_iters = [mapped_sub_expr.subExprIter()]
+        while len(lambda_sub_expr_iters) > 0:
+            try:
+                lambda_sub_expr = lambda_sub_expr_iters[-1].next()
+                mapped_sub_expr = mapped_sub_expr_iters[-1].next()
+                if lambda_sub_expr in parameters:
+                    # found a match
+                    param_idx = parameters.index(lambda_sub_expr)
+                    if param_values[param_idx] is not None and param_values[param_idx] != mapped_sub_expr:
+                        raise ParameterExtractionError("inconsistent parameters values, %s vs %s"%(str(param_values[param_idx]), str(mapped_sub_expr)))
+                    param_values[param_idx] = mapped_sub_expr
+                else:
+                    if lambda_sub_expr.numSubExpr() != mapped_sub_expr.numSubExpr():
+                        raise ParameterExtractionError("# of sub-expressions, %d vs %d"%(lambda_sub_expr.numSubExpr(), mapped_sub_expr.numSubExpr()))
+                    if lambda_sub_expr.__class__ != mapped_sub_expr.__class__:
+                        raise ParameterExtractionError("Expression class, %s vs %s"%(str(lambda_sub_expr.__class__), str(mapped_sub_expr.__class__)))
+                    if lambda_sub_expr._coreInfo != mapped_sub_expr._coreInfo:
+                        raise ParameterExtractionError("core information, %s vs %s"%(str(lambda_sub_expr._coreInfo), str(mapped_sub_expr._coreInfo)))
+                    if lambda_sub_expr.numSubExpr() > 0:
+                        # going deeper
+                        lambda_sub_expr_iters.append(lambda_sub_expr.subExprIter())
+                        mapped_sub_expr_iters.append(mapped_sub_expr.subExprIter())
+            except StopIteration:
+                # exhausted the "deepest" of the sub-expressions
+                lambda_sub_expr_iters.pop(-1) # pop back out to a shallower level
+                mapped_sub_expr_iters.pop(-1)
+        return param_values
 
     def buildArguments(self):
         '''
@@ -151,10 +198,29 @@ class Lambda(Expression):
             raise ImproperSubstitution(e.message)            
         return newLambda
 
-    def iterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
-        subbed_body = self.body.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-        
-        for iter_range in subbed_body.iterRanges(iterParams, startArgs, endArgs, exprMap, relabelMap, reservedVars, assumptions, requirements):
+    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+        from proveit import Variable
+        # Can't substitute the lambda parameters; they are in a new scope.
+        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterSet}
+        # Can't use assumptions involving lambda parameters
+        innerAssumptions = [assumption for assumption in assumptions if self.parameterSet.isdisjoint(assumption.freeVars())]
+        # Handle relabeling and variable reservations consistent with relabeling.
+        innerReservations = dict() if reservedVars is None else dict(reservedVars)
+        for parameter in self.parameters:
+            # Note that lambda parameters introduce a new scope and don't need to,
+            # themselves, be restriction checked.  But they generate new inner restrictions
+            # that disallow any substitution from a variable that isn't in the new scope
+            # to a variable that is in the new scope. 
+            # For example, we can relabel y to z in (x, y) -> f(x, y), but not f to x. 
+            if parameter in relabelMap:
+                relabeledParam = relabelMap[parameter]
+                if not isinstance(relabeledParam, Variable):
+                    raise ImproperSubstitution('May only relabel a Variable to another Variable')
+                innerReservations[relabeledParam] = parameter
+            else:
+                # Not relabeled
+                innerReservations[parameter] = parameter
+        for iter_range in self.body.expandingIterRanges(iterParams, startArgs, endArgs, innerExprMap, relabelMap, innerReservations, innerAssumptions, requirements):
             yield iter_range
                                                                         
     def usedVars(self):
@@ -177,3 +243,9 @@ class LambdaError(Exception):
         self.message = message
     def __str__(self):
         return self.message
+
+class ParameterExtractionError(Exception):
+    def __init__(self, specifics):
+        self.specifics = specifics
+    def __str__(self):
+        return "Cannot extract parameter; mappedExpr does not match this Lambda expression: " + self.specifics

@@ -23,7 +23,7 @@ class Variable(Label):
         if (exprMap is not None) and (self in exprMap):
             subbed = exprMap[self]
             if not isinstance(subbed, Expression):
-                raise TypeError('Must substitute a Variable with an Expression')
+                raise TypeError('Must substitute a Variable with an Expression (not %s)'%subbed.__class__)
             return subbed._restrictionChecked(reservedVars)
         elif relabelMap is not None:
             subbed = relabelMap.get(self, self)

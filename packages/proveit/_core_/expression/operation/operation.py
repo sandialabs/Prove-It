@@ -37,7 +37,7 @@ class Operation(Expression):
                     if not isinstance(operator.lambda_map.body, Indexed):
                         raise TypeError('operators must be Labels, Indexed variables, or iteration (Iter) over Indexed variables.')                
                 elif not isinstance(operator, Label) and not isinstance(operator, Indexed):
-                    raise TypeError('operator must be a Labels, Indexed variables, or iteration (Iter) over Indexed variables.')
+                    raise TypeError('operator must be a Label, Indexed variable, or iteration (Iter) over Indexed variables.')
         else:
             # a single operator
             self.operator = self.operator_or_operators
@@ -273,15 +273,13 @@ class Operation(Expression):
                 return OperationClass.make(['Operation'], [operator, subbed_operand_or_operands])
         return self.__class__.make(['Operation'], [subbed_operator_or_operators, subbed_operand_or_operands])
     
-    def iterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
-        subbed_operands = self.operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-        
-        # Collect the iteration ranges for all of the operands.
+    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+        # Collect the iteration ranges for all of the operators and operands.
         iter_ranges = set()
-        for operand in subbed_operands:
-            for iter_range in operand.iterRanges(iterParams, startArgs, endArgs, exprMap, relabelMap, reservedVars, assumptions, requirements):
-                iter_ranges.add(iter_range)
-        
+        for iter_range in self.operator_or_operators._expandingIterRanges(iterParams, startArgs, endArgs, exprMap, relabelMap, reservedVars, assumptions, requirements):
+            iter_ranges.add(iter_range)
+        for iter_range in self.operand_or_operands._expandingIterRanges(iterParams, startArgs, endArgs, exprMap, relabelMap, reservedVars, assumptions, requirements):
+            iter_ranges.add(iter_range)
         for iter_range in iter_ranges:
             yield iter_range            
 

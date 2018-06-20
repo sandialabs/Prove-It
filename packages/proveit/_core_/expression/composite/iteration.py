@@ -142,7 +142,7 @@ class Iter(Expression):
         nonoverlapping_ranges = set()
         while len(rel_iter_ranges) > 0:
             rel_iter_range = rel_iter_ranges.pop()
-            for p in itertools.product(*[xrange(start, end) for start, end in zip(rel_iter_range)]):
+            for p in itertools.product(*[xrange(start, end) for start, end in zip(*rel_iter_range)]):
                 p = tuple(p)
                 # Check for contested ownership
                 if p in owning_range and owning_range[p] in nonoverlapping_ranges:
@@ -200,7 +200,7 @@ class Iter(Expression):
         an outer iteration should be expanded.  An exception is
         raised if this fails.
         '''
-        from proveit.number import Less, Subtract, Add, one
+        from proveit.number import Less, LessEq, Subtract, Add, one
         from composite import _simplifiedCoord
         
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -216,7 +216,9 @@ class Iter(Expression):
         iter_ranges = set()
         iter_params = self.lambda_map.parameters
         special_points = [set() for _ in xrange(len(iter_params))]
-        for iter_range in self.lambda_map.body.expandingIterRanges(iter_params, self.start_indices, self.end_indices, exprMap, relabelMap, reservedVars, assumptions, new_requirements):
+        subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
+        subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
+        for iter_range in self.lambda_map.body._expandingIterRanges(iter_params, subbed_start, subbed_end, exprMap, relabelMap, reservedVars, assumptions, new_requirements):
             iter_ranges.add(iter_range)
             for axis, (start, end) in enumerate(zip(*iter_range)):
                 special_points[axis].add(start)
@@ -231,21 +233,18 @@ class Iter(Expression):
             # replaced with a Composite, so let us not expand the
             # iteration.  Just do an ordinary substitution.
             subbed_map = self.lambda_map.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-            subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-            subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
             subbed_self = Iter(subbed_map, subbed_start, subbed_end)
         else:
             # There are Indexed sub-Expressions whose variable is
             # being replaced with a Composite, so let us
             # expand the iteration for all of the relevant
             # iteration ranges.
-            
             # Sort the argument value ranges.
             arg_sorting_relations = []
             for axis in xrange(len(iter_params)):
                 arg_sorting_relation = Less.sort(special_points[axis], assumptions=assumptions)
                 arg_sorting_relations.append(arg_sorting_relation)
-            
+                        
             # Put the iteration ranges in terms of indices of the sorting relation operands
             # (relative indices w.r.t. the sorting relation order).
             rel_iter_ranges = set()
@@ -255,17 +254,20 @@ class Iter(Expression):
                 rel_range_end = tuple([arg_sorting_relation.operands.index(arg) for arg, arg_sorting_relation in zip(range_end, arg_sorting_relations)])
                 rel_iter_ranges.add((rel_range_start, rel_range_end))
             
-            rel_iter_ranges = self.__makeNonoverlappingRangeSet(rel_iter_ranges, arg_sorting_relations, assumptions, new_requirements)
+            rel_iter_ranges = sorted(self._makeNonoverlappingRangeSet(rel_iter_ranges, arg_sorting_relations, assumptions, new_requirements))
             
             # Generate the expanded list/tensor to replace the iterations.
             if self.ndims==1: lst = []
             else: tensor = dict()            
             for rel_iter_range in rel_iter_ranges:
                 # get the starting location of this iteration range
-                start_loc = tuple(arg_sorting_relation.oparands[idx] for arg_sorting_relation, idx in zip(arg_sorting_relations, rel_iter_range[0]))
+                start_loc = tuple(arg_sorting_relation.operands[idx] for arg_sorting_relation, idx in zip(arg_sorting_relations, rel_iter_range[0]))
                 if rel_iter_range[0] == rel_iter_range[1]:
                     # single element entry (starting and ending location the same)
-                    entry = self.lambda_map.mapped(start_loc)
+                    inner_expr_map = dict(exprMap)
+                    inner_expr_map.update({param:arg for param, arg in zip(self.lambda_map.parameters, start_loc)})
+                    for param in self.lambda_map.parameters: relabelMap.pop(param, None)
+                    entry = self.lambda_map.body.substituted(inner_expr_map, relabelMap, reservedVars, assumptions, new_requirements)
                 else:
                     # iterate over a sub-range
                     end_loc = tuple(arg_sorting_relation.operands[idx] for arg_sorting_relation, idx in zip(arg_sorting_relations, rel_iter_range[1]))
@@ -290,7 +292,7 @@ class Iter(Expression):
                 subbed_self = compositeExpression(lst)
             else:
                 subbed_self = compositeExpression(tensor)
-                        
+        
         for requirement in new_requirements:
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        
         if requirements is not None:

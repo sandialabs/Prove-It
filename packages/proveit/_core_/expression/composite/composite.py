@@ -80,6 +80,7 @@ def _simplifiedCoord(coord, assumptions, requirements):
     if they are not the same.
     '''
     from proveit.logic import Equals
+    from proveit.number import Add
     simplified_coord = coord.simplify(assumptions=assumptions).rhs
     if simplified_coord != coord and requirements is not None:
         requirements.append(Equals(coord, simplified_coord))

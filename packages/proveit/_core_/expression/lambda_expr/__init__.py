@@ -1,1 +1,1 @@
-from lambda_expr import Lambda
+from lambda_expr import Lambda, LambdaError, ParameterExtractionError
