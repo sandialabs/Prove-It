@@ -528,8 +528,7 @@ class KnownTruth:
             numForallEliminations += 1
             if not isinstance(expr, Forall):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
-            expr = expr.operands
-            lambdaExpr = expr['imap'];
+            lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
             for iVar in instanceVars:
@@ -542,7 +541,7 @@ class KnownTruth:
 
         return Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions).provenTruth
         
-    def generalize(self, forallVarLists, domains=None, domain=None, conditions=tuple()):
+    def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
         '''
         Performs a generalization derivation step.  Returns the
         proven generalized KnownTruth.  Can introduce any number of
@@ -552,7 +551,9 @@ class KnownTruth:
         be provided to introduce a single Forall wrapper.
         '''
         from proveit._core_.proof import Generalization
-        from proveit import Variable
+        from proveit import Variable, compositeExpression
+        from proveit.logic import InSet
+        
         if isinstance(forallVarLists, Variable):
             forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
         else:
@@ -563,12 +564,22 @@ class KnownTruth:
             if all(isinstance(x, Variable) for x in forallVarLists):
                 # convert a list of Variable/MultiVariables to a list of lists
                 forallVarLists = [forallVarLists]
-                    
-        if domain is not None and domains is not None:
-            raise ValueError("Either specify a 'domain' or a list of 'domains' but not both")
-        if domains is None:
-            domains = [domain]*len(forallVarLists)
-        return Generalization(self, forallVarLists, domains, conditions).provenTruth
+        
+        # Add domain conditions as appropriate
+        if domain is not None and domainLists is not None:
+            raise ValueError("Either specify a 'domain' or a list of 'domainLists' but not both")
+        if domain is not None:
+            domainLists = [[domain]*len(forallVarList) for forallVarList in forallVarLists]
+        if domainLists is not None:
+            domainConditions = []
+            for domainList, forallVarList in zip(domainLists, forallVarLists):
+                domainList = compositeExpression(domainList)
+                if len(domainList)==1:
+                    domainList = [domainList[0]]*len(forallVarList)
+                domainConditions += [InSet(instanceVar, domain) for instanceVar, domain in zip(forallVarList, domainList)]
+            conditions = domainConditions + list(conditions)
+        
+        return Generalization(self, forallVarLists, conditions).provenTruth
 
     def asImplication(self, hypothesis):
         '''

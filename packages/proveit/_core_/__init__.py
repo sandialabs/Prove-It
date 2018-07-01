@@ -5,7 +5,7 @@ from expression import Lambda, LambdaError, ParameterExtractionError, Label, Var
 from expression import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from expression import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation
 from expression import Composite, compositeExpression, singleOrCompositeExpression
-from expression import ExprList, ExprTensor, NamedExprs, Indexed, Iter
+from expression import ExprList, ExprTensor, NamedExprs, Indexed, Iter, varIter
 from expression import maybeFencedString, maybeFencedLatex, maybeFenced
 from known_truth import KnownTruth, asExpression, asExpressions
 from defaults import defaults, USE_DEFAULTS, InvalidAssumptions

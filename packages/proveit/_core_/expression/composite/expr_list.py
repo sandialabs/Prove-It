@@ -81,7 +81,7 @@ class ExprList(Composite, Expression):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=True, subFence=False, formattedOperator=None):
+    def formatted(self, formatType, fence=True, subFence=False, formattedOperator=None, wrapPositions=tuple()):
         from iteration import Iter
         outStr = ''
         if len(self) == 0 and fence: return '()' # for an empty list, show the parenthesis to show something.
@@ -97,6 +97,11 @@ class ExprList(Composite, Expression):
         # put the formatted operator between each of formattedSubExpressions
         if fence: 
             outStr += '(' if formatType=='string' else  r'\left('
+        for wrap_position in wrapPositions:
+            if wrap_position%2==1:
+                formatted_sub_expressions[(wrap_position-1)/2] += r' \\ '
+            else:
+                formatted_sub_expressions[wrap_position/2] = r' \\ ' + formatted_sub_expressions[wrap_position/2]
         outStr += (' '+formattedOperator+' ').join(formatted_sub_expressions)
         if fence:            
             outStr += ')' if formatType=='string' else  r'\right)'
@@ -205,15 +210,3 @@ class ExprList(Composite, Expression):
             else:
                 subbed_exprs.append(subbed_expr)
         return ExprList(*subbed_exprs)
-        
-    def usedVars(self):
-        '''
-        Returns the union of the used Variables of the sub-Expressions.
-        '''
-        return set().union(*[expr.usedVars() for expr in self])
-        
-    def freeVars(self):
-        '''
-        Returns the union of the free Variables of the sub-Expressions.
-        '''
-        return set().union(*[expr.freeVars() for expr in self])

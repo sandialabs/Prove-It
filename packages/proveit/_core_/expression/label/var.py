@@ -56,9 +56,9 @@ def dummyVar(n):
     while len(powers_of_3) > 0:
         pow_of_3 = powers_of_3.pop(-1)
         k = int(m / pow_of_3)
-        letters += chr(ord('X') + k)
+        letters += chr(ord('x') + k)
         m -= k*pow_of_3
-    return Variable('_' + letters + '_', latexFormat = r'{\_' + letters + r'\_}')
+    return Variable('_' + letters + '_', latexFormat = r'{_{-}' + letters + r'_{-}}')
 
 def safeDummyVar(*expressions):
     usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])

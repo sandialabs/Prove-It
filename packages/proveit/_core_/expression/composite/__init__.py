@@ -3,4 +3,4 @@ from named_exprs import NamedExprs
 from expr_list import ExprList
 from expr_tensor import ExprTensor
 from indexed import Indexed
-from iteration import Iter
+from iteration import Iter, varIter

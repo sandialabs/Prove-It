@@ -599,8 +599,8 @@ class Specialization(Proof):
         map dictionary (subMap), or defaulting basic instance variables as
         themselves. 
         '''
-        from proveit import Lambda, Expression
-        from proveit.logic import Forall, InSet
+        from proveit import Lambda, Expression, Iter
+        from proveit.logic import Forall
         
         # check that the mappings are appropriate
         for key, sub in relabelMap.items():
@@ -623,16 +623,27 @@ class Specialization(Proof):
         partialMap = dict()
         subbedConditions = []
         mappedVarLists = []
+        requirements = []
         while remainingForallEliminations>0:
             remainingForallEliminations -= 1
             if not isinstance(expr, Forall):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
-            domain = expr.domain if hasattr(expr, 'domain') else None
-            domains = expr.domains if hasattr(expr, 'domains') else None
-            expr = expr.operands
-            lambdaExpr = expr['imap'];
+            lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
+            instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
+            # When substituting an iterated instance variable, we need to make sure that the
+            # expansion is complete: that there are as many elements of the expansion as
+            # the number of elements of the substitution.  For example,
+            # x_1, ..., x_n and x -> [a, b, c, d], then x_1, ..., x_n -> a, b, c, d
+            # and not a subset.
+            for parameter, parameterVar in zip(lambdaExpr.parameters, lambdaExpr.parameterVars):
+                subbedParam = None
+                if parameterVar in specializeMap: subbedParam = specializeMap[parameterVar]
+                elif parameterVar in relabelMap: subbedParam = relabelMap[parameterVar]
+                if isinstance(parameter, Iter) and subbedParam is not None:
+                    expandedParameter = parameter.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
+                    if len(expandedParameter) != len(subbedParam):
+                        raise SpecializationFailure(None, assumptions, "Substitution of iterated instance variables incomplete: %d length expansion versus %d length substitution"%(len(expandedParameter), len(subbedParam)))
             mappedVarLists.append(instanceVars)
             # include the mapping for the current instance variables in the partial map
             try:
@@ -641,19 +652,6 @@ class Specialization(Proof):
                 raise SpecializationFailure(None, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
             # make substitutions in the condition
             subbedConditions += conditions.substituted(partialMap, relabelMap)
-            # add conditions for satisfying the domain restriction if there is one
-            if domains is not None:
-                # add the domain conditions for each instance variable in its respective domain
-                for iVar, domain in zip(instanceVars, domains):
-                    subbed_var = iVar.substituted(partialMap, relabelMap)
-                    inSetCondition = InSet(subbed_var, domain.substituted(partialMap, relabelMap))
-                    subbedConditions.append(inSetCondition)
-            elif domain is not None:
-                # add the domain conditions for each instance variable all to the same domain
-                for iVar in instanceVars:
-                    subbed_var = iVar.substituted(partialMap, relabelMap)
-                    inSetCondition = InSet(subbed_var, domain.substituted(partialMap, relabelMap))
-                    subbedConditions.append(inSetCondition)
                         
         # sort the relabeling vars in order of their appearance in the original expression
         relabelVars = []
@@ -667,7 +665,6 @@ class Specialization(Proof):
         mappings = dict(specializeMap)
         mappings.update(relabelMap) # mapping everything
         
-        requirements = []
         subbed_expr = expr.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
         
         # Return the expression and conditions with substitutions and the information to reconstruct the specialization
@@ -683,18 +680,17 @@ class Specialization(Proof):
             raise RelabelingFailure(None, assumptions, "May only relabel a Variable or a MultiVariable")                       
 
 class Generalization(Proof):
-    def __init__(self, instanceTruth, newForallVarLists, newDomains, newConditions=tuple()):
+    def __init__(self, instanceTruth, newForallVarLists, newConditions=tuple()):
         '''
         A Generalization step wraps a KnownTruth (instanceTruth) in one or more Forall operations.
-        The number of Forall operations introduced is the number of lists in newForallVarLists
-        and the number of elements in newDomains.  The conditions are introduced in the
-        order they are given at the outermost level that is applicable.  For example,
-        if newForallVarLists is [[x, y], z], the newDomains are Integers and Reals, and the new 
+        The number of Forall operations introduced is the number of lists in newForallVarLists.
+        The conditions are introduced in the order they are given at the outermost level that is 
+n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the new 
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
-            forall_{x, y in Integers | f(x, y)} forall_{z in Reals | g(y, z), h(z)} ...
+            forall_{x, y in Integers | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
         from proveit import KnownTruth, Variable
-        from proveit.logic import Forall, InSet
+        from proveit.logic import Forall
         if not isinstance(instanceTruth, KnownTruth):
             raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
         # the assumptions required for the generalization are the assumptions of
@@ -707,9 +703,7 @@ class Generalization(Proof):
             remainingConditions = list(newConditions)
             expr = instanceTruth.expr
             introducedForallVars = set()
-            if len(newForallVarLists) != len(newDomains):
-                raise ValueError('The number of forall variable lists and new domains does not match: %d vs %d'%(len(newForallVarLists), len(newDomains)))
-            for k, (newForallVars, newDomain) in enumerate(reversed(zip(newForallVarLists, newDomains))):
+            for k, newForallVars in enumerate(reversed(newForallVarLists)):
                 for forallVar in newForallVars:
                     if not isinstance(forallVar, Variable):
                         raise ValueError('Forall variables of a generalization must be Variable objects')
@@ -725,12 +719,10 @@ class Generalization(Proof):
                         j = min(applicableIndices)
                         newConditions = remainingConditions[j:]
                         remainingConditions = remainingConditions[:j]
-                # new conditions and domain can eliminate corresponding assumptions
+                # new conditions can eliminate corresponding assumptions
                 assumptions -= set(newConditions)
-                if newDomain is not None:
-                    assumptions -= {InSet(forallVar, newDomain) for forallVar in newForallVars if isinstance(forallVar, Variable)}
                 # create the new generalized expression
-                generalizedExpr = Forall(instanceVars=newForallVars, instanceExpr=expr, domain=newDomain, conditions=newConditions)
+                generalizedExpr = Forall(instanceVarOrVars=newForallVars, instanceExpr=expr, conditions=newConditions)
                 # make sure this is a proper generalization that doesn't break the logic:
                 Generalization._checkGeneralization(generalizedExpr, expr)
                 expr = generalizedExpr
@@ -740,7 +732,6 @@ class Generalization(Proof):
             generalizedTruth = KnownTruth(generalizedExpr, assumptions, self)
             self.instanceTruth = instanceTruth
             self.newForallVars = newForallVars
-            self.newDomain = newDomain
             self.newConditions = newConditions
             Proof.__init__(self, 'Generalization', generalizedTruth, [self.instanceTruth])
         finally:
@@ -749,7 +740,7 @@ class Generalization(Proof):
             
 
     def remake(self):
-        return Generalization(self.instanceTruth, self.newForallVars, self.newDomain, self.newConditions)
+        return Generalization(self.instanceTruth, self.newForallVars, self.newConditions)
 
     def stepType(self):
         return 'generalizaton'
@@ -762,8 +753,7 @@ class Generalization(Proof):
         from proveit import Lambda
         from proveit.logic import Forall
         assert isinstance(generalizedExpr, Forall), 'The result of a generalization must be a Forall operation'
-        operands = generalizedExpr.operands
-        lambdaExpr = operands['imap']
+        lambdaExpr = generalizedExpr.operand
         assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
         expr = lambdaExpr.body['iexpr']
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)

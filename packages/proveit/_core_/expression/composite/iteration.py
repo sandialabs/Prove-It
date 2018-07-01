@@ -16,7 +16,7 @@ class Iter(Expression):
     is (are) a known integer(s).
     '''
     
-    def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices, styles=tuple(), requirements=tuple()):
+    def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices, styles=dict(), requirements=tuple()):
         if not isinstance(lambda_map, Lambda):
             raise TypeError('When creating an Iter Expression, the lambda_map argument must be a Lambda expression')
         
@@ -89,7 +89,7 @@ class Iter(Expression):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=False, subFence=True, formattedOperator=None):
+    def formatted(self, formatType, fence=False, subFence=True, formattedOperator=None, **kwargs):
         outStr = ''
         if formattedOperator is None:
             formattedOperator = ',' # comma is the default formatted operator
@@ -299,6 +299,12 @@ class Iter(Expression):
             requirements += new_requirements # append new requirements
         
         return subbed_self
+
+def varIter(var, start, end):
+    from proveit import safeDummyVar
+    from .indexed import Indexed
+    param = safeDummyVar(var)
+    return Iter(Lambda(param, Indexed(var, param)), start, end)
 
 class IterationError(Exception):
     def __init__(self, msg):

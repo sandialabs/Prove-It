@@ -44,7 +44,7 @@ class ExprTensor(Composite, Expression):
     or other axioms).
     '''
     
-    def __init__(self, tensor, shape=None, styles=tuple(), assumptions=USE_DEFAULTS, requirements=tuple()):
+    def __init__(self, tensor, shape=None, styles=dict(), assumptions=USE_DEFAULTS, requirements=tuple()):
         '''
         Create an ExprTensor either with a simple, dense tensor (list of lists ... of lists) or
         with a dictionary mapping coordinates (as tuples of expressions that represent integers) 

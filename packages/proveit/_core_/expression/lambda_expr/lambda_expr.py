@@ -8,7 +8,7 @@ class Lambda(Expression):
     parameters and sin(x^2 + y) is the body.  Each parameter must be a
     Variable.
     '''
-    def __init__(self, parameter_or_parameters, body, styles=tuple(), requirements=tuple()):
+    def __init__(self, parameter_or_parameters, body, styles=dict(), requirements=tuple()):
         '''
         Initialize a Lambda function expression given parameter(s) and a body.
         Each parameter must be a Variable.
@@ -18,17 +18,25 @@ class Lambda(Expression):
         The 'body' attribute will be the lambda function body
         Expression (that may or may not be a Composite).
         '''
-        from proveit._core_.expression.composite import compositeExpression, singleOrCompositeExpression, Iter
+        from proveit._core_.expression.composite import compositeExpression, singleOrCompositeExpression, Iter, Indexed
         from proveit._core_.expression.label import Variable
         self.parameters = compositeExpression(parameter_or_parameters)
+        parameterVars = list()
         for parameter in self.parameters:
-            if not isinstance(parameter, Variable):
-                raise TypeError('parameter must be a Variable-type Expression')
+            if isinstance(parameter, Iter) and isinstance(parameter.lambda_map.body, Indexed):
+                parameterVars.append(parameter.lambda_map.body.var)     
+            elif isinstance(parameter, Indexed):
+                parameterVars.append(parameter.var)
+            elif isinstance(parameter, Variable):
+                parameterVars.append(parameter)
+            else:
+                raise TypeError('parameters must be a Variables, Indexed variable, or iteration (Iter) over Indexed variables.')
         if len(self.parameters) == 1:
             # has a single parameter
             self.parameter = self.parameters[0]
-        self.parameterSet = set(self.parameters)
-        if len(self.parameterSet) != len(self.parameters):
+        self.parameterVars = tuple(parameterVars)
+        self.parameterVarSet = frozenset(parameterVars)
+        if len(self.parameterVarSet) != len(self.parameters):
             raise ValueError('Lambda parameters Variables must be unique with respect to each other.')
         body = singleOrCompositeExpression(body)
         if not isinstance(body, Expression):
@@ -37,8 +45,8 @@ class Lambda(Expression):
             raise TypeError('An Iter must be within an ExprList or ExprTensor, not directly as a Lambda body')
         self.body = body
         for requirement in self.body.requirements:
-            if not self.parameterSet.isdisjoint(requirement.freeVars()):
-                raise LambdaError("Cannot generate a Lambda expression with parameters involved in Lambda body requirements: " + str(requirement))
+            if not self.parameterVarSet.isdisjoint(requirement.freeVars()):
+                raise LambdaError("Cannot generate a Lambda expression with parameter variables involved in Lambda body requirements: " + str(requirement))
         Expression.__init__(self, ['Lambda'], list(self.parameters) + [self.body], styles=styles, requirements=requirements)
         
     @classmethod
@@ -160,34 +168,40 @@ class Lambda(Expression):
         exclude the Lambda parameters themselves (these Variables 
         are reserved), consistent with any relabeling.
         '''
-        from proveit import Variable
+        from proveit import compositeExpression, Iter
         if (exprMap is not None) and (self in exprMap):
             # the full expression is to be substituted
             return exprMap[self]._restrictionChecked(reservedVars)        
         if relabelMap is None: relabelMap = dict()
-        # Can't substitute the lambda parameters; they are in a new scope.
-        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterSet}
-        # Can't use assumptions involving lambda parameters
-        innerAssumptions = [assumption for assumption in assumptions if self.parameterSet.isdisjoint(assumption.freeVars())]
+        # Can't substitute the lambda parameter variables; they are in a new scope.
+        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterVarSet}
+        # Can't use assumptions involving lambda parameter variables
+        innerAssumptions = [assumption for assumption in assumptions if self.parameterVarSet.isdisjoint(assumption.freeVars())]
         # Handle relabeling and variable reservations consistent with relabeling.
         innerReservations = dict() if reservedVars is None else dict(reservedVars)
         newParams = []
-        for parameter in self.parameters:
+        
+        for parameter, parameterVar in zip(self.parameters, self.parameterVars):
             # Note that lambda parameters introduce a new scope and don't need to,
             # themselves, be restriction checked.  But they generate new inner restrictions
             # that disallow any substitution from a variable that isn't in the new scope
             # to a variable that is in the new scope. 
             # For example, we can relabel y to z in (x, y) -> f(x, y), but not f to x. 
-            if parameter in relabelMap:
-                relabeledParam = relabelMap[parameter]
-                if not isinstance(relabeledParam, Variable):
-                    raise ImproperSubstitution('May only relabel a Variable to another Variable')
-                newParams.append(relabeledParam)
-                innerReservations[relabeledParam] = parameter
+            if parameterVar in relabelMap:
+                if isinstance(parameter, Iter):
+                    # expanding an iteration.  For example: x_1, ..., x_n -> a, b, c, d 
+                    relabeledParams = parameter.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+                    if len(relabeledParams) != len(relabelMap[parameterVar]):
+                        raise ImproperSubstitution("Relabeling of iterated parameters incomplete: %d length expansion versus %d length substitution"%(len(relabeledParams), len(relabelMap[parameterVar])))
+                else:
+                    relabeledParams = compositeExpression(relabelMap[parameterVar])
+                for relabeledParam in relabeledParams:
+                    newParams.append(relabeledParam)
+                    innerReservations[relabeledParam] = parameterVar
             else:
                 # Not relabeled
-                newParams.append(parameter)
-                innerReservations[parameter] = parameter
+                newParams.append(parameterVar)
+                innerReservations[parameterVar] = parameterVar
         # the lambda body with the substitution:
         subbedExpr = self.body.substituted(innerExprMap, relabelMap, innerReservations, innerAssumptions, requirements)
         try:
@@ -199,44 +213,45 @@ class Lambda(Expression):
         return newLambda
 
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
-        from proveit import Variable
-        # Can't substitute the lambda parameters; they are in a new scope.
-        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterSet}
-        # Can't use assumptions involving lambda parameters
-        innerAssumptions = [assumption for assumption in assumptions if self.parameterSet.isdisjoint(assumption.freeVars())]
+        from proveit import Variable, compositeExpression
+        # Can't substitute the lambda parameter variables; they are in a new scope.
+        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterVarSet}
+        # Can't use assumptions involving lambda parameter variables
+        innerAssumptions = [assumption for assumption in assumptions if self.parameterVarSet.isdisjoint(assumption.freeVars())]
         # Handle relabeling and variable reservations consistent with relabeling.
         innerReservations = dict() if reservedVars is None else dict(reservedVars)
-        for parameter in self.parameters:
+        for parameterVar in self.parameterVars:
             # Note that lambda parameters introduce a new scope and don't need to,
             # themselves, be restriction checked.  But they generate new inner restrictions
             # that disallow any substitution from a variable that isn't in the new scope
             # to a variable that is in the new scope. 
             # For example, we can relabel y to z in (x, y) -> f(x, y), but not f to x. 
-            if parameter in relabelMap:
-                relabeledParam = relabelMap[parameter]
-                if not isinstance(relabeledParam, Variable):
-                    raise ImproperSubstitution('May only relabel a Variable to another Variable')
-                innerReservations[relabeledParam] = parameter
+            if parameterVar in relabelMap:
+                relabeledParams = compositeExpression(relabelMap[parameterVar])
+                for relabeledParam in relabeledParams:
+                    if not isinstance(relabeledParam, Variable):
+                        raise ImproperSubstitution('May only relabel a Variable to another Variable or list of Variables')
+                    innerReservations[relabeledParam] = parameterVar
             else:
                 # Not relabeled
-                innerReservations[parameter] = parameter
+                innerReservations[parameterVar] = parameterVar
         for iter_range in self.body.expandingIterRanges(iterParams, startArgs, endArgs, innerExprMap, relabelMap, innerReservations, innerAssumptions, requirements):
             yield iter_range
                                                                         
     def usedVars(self):
         '''
         The used variables of the lambda function are the used variables of the 
-        body plus the lambda parameters.
+        body plus the lambda parameter variables.
         '''
-        return self.body.usedVars().union(set(self.parameterSet))
+        return self.body.usedVars().union(set(self.parameterVarSet))
         
     def freeVars(self):
         '''
         The free variables the lambda function are the free variables of the body
-        minus the lambda parameters.  The lambda function binds those variables.
+        minus the lambda parameter variables.  The lambda function binds those variables.
         '''
         innerFreeVs = set(self.body.freeVars())
-        return innerFreeVs - self.parameterSet
+        return innerFreeVs - self.parameterVarSet
 
 class LambdaError(Exception):
     def __init__(self, message):

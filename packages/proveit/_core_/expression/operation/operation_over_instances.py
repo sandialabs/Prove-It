@@ -1,100 +1,110 @@
 from proveit._core_.expression import Expression
 from proveit._core_.expression.lambda_expr import Lambda
-from proveit._core_.expression.composite import singleOrCompositeExpression, compositeExpression, Composite, NamedExprs
+from proveit._core_.expression.composite import ExprList, singleOrCompositeExpression, compositeExpression, Composite, NamedExprs
 from proveit._core_.defaults import USE_DEFAULTS
 from .operation import Operation
 
 class OperationOverInstances(Operation):
-    def __init__(self, operator, instanceVars, instanceExpr, domain=None, domains=None, conditions=tuple()):
+    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), styles=dict()):
         '''
-        Create an Operation for the given operator over instances of the given instance Variables,
-        instanceVars, for the given instance Expression, instanceExpr under the given conditions
-        and/or with instance variables restricted to the given domain.
+        Create an Operation for the given operator that is applied over instances of the 
+        given instance Variables, instanceVars, for the given instance Expression, instanceExpr
+        under the given conditions.  
         That is, the operation operates over all possibilities of given Variable(s) wherever
         the condition(s) is/are satisfied.  Examples include forall, exists, summation, etc.
-        instanceVars and conditions may be singular or plural (iterable).
-        Internally, this is represented as an Operation whose etcExpr is in the following form
-        (where '->' represents a Lambda and the list of tuples are NambedExpressions:
-        [('imap', instanceVars -> [('iexpr',instanceExpr), ('conditions',conditions)]), ('domain',domain)]
+        instanceVars and conditions may be singular or finstanceVarOrVarsplural (iterable).
+              
+        If a domain is supplied, additional conditions are generated that each instance 
+        Variable is in the domain "set": InSet(x_i, domain), where x_i is for each instance 
+        variable.  If, instead, domains are supplied, then each instance variable is supplied
+        with its own domain (one for each instance variable).  Internally, this is represented
+        as an Operation with a single Lambda expression operand that maps the instance variables 
+        to a NamedExpression in the following form:
+            instanceVars -> [('iexpr',instanceExpr), ('conditions',conditions)]
+        
+        The set of "domain" conditions come at the beginning of this conditions list and
+        can be accessed via the 'implicitConditions' attribute, and the 'domain' or 'domains'
+        can be accessed via attributes of the same name.  Whether the OperationOverInstances
+        is constructed with domain/domains explicitly, or they are provided at the beginning
+        of the conditions list (in the proper order) does not matter.  Essentially, the 
+        'domain' concept is simply a convenience for conditions of this form and may be 
+        formatted using a shorthand notation.  For example, "forall_{x in S | Q(x)} P(x)" 
+        is a shorthand notation for "forall_{x | x in S, Q(x)} P(x)".  The non-domain-conditions 
+        are accessible via the 'explicitConditions' attribute.  The 'conditions' attribute has the 
+        full proper list of conditions.
         '''
+        from proveit.logic import InSet
+        instanceVars = compositeExpression(instanceVarOrVars)
         if domain is not None:
+            # prepend domain conditions
             if domains is not None:
                 raise ValueError("Provide a single domain or multiple domains, not both")
             if not isinstance(domain, Expression):
                 raise TypeError("The domain should be an 'Expression' type")
-            domain_or_domains = domain
-        elif domains is not None: 
-            domain_or_domains=compositeExpression(domains)
-        else:
-            domain_or_domains = None
-        Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, domain_or_domains, conditions))
-        self.instanceVars = OperationOverInstances.extractInitArgValue('instanceVars', self.operators, self.operands)
-        self.instanceExpr = OperationOverInstances.extractInitArgValue('instanceExpr', self.operators, self.operands)
-        if 'domain' in self.operands:
-            self.domain_or_domains = self.domain = OperationOverInstances.extractInitArgValue('domain', self.operators, self.operands)
-        elif 'domains' in self.operands:
-            self.domain_or_domains = self.domains = OperationOverInstances.extractInitArgValue('domains', self.operators, self.operands)
-            if len(self.domains) != len(self.instanceVars):
-                raise ValueError("When using multiple domains, there should be the same number as the number of instance variables")
-        self.conditions = OperationOverInstances.extractInitArgValue('conditions', self.operators, self.operands)
+            domains = [domain]*len(instanceVars)
+        if domains is not None: 
+            # prepend domain conditions
+            if len(domains) != len(instanceVars):
+                raise ValueError("When specifying multiple domains, the number should be the same as the number of instance variables.")         
+            conditions = [InSet(instanceVar, domain) for instanceVar, domain in zip(instanceVars, domains)] + list(conditions)
+        conditions = compositeExpression(conditions)
+        Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, conditions), styles=styles)
+        self.instanceVars = instanceVars
+        if len(self.instanceVars) == 1:
+            self.instanceVar = self.instanceVars[0]
+        self.instanceExpr = instanceExpr
+        self.conditions = conditions
+
+        # extract the domain or domains from the condition (regardless of whether the domain/domains was explicitly provided
+        # or implicit through the conditions).
+        if len(conditions) >= len(instanceVars):
+            domains = []
+            for instanceVar, condition in zip(instanceVars, conditions):
+                if isinstance(condition, InSet) and condition.element == instanceVar:
+                    domains.append(condition.domain)
+            if len(domains) == len(instanceVars):
+                # There is a domain condition for each instance variable.
+                if all(domain==domains[0] for domain in domains):
+                    self.domain_or_domains = self.domain = domains[0] # all the same domain
+                else:
+                    self.domain_or_domains = self.domains = ExprList(*domains)
+                        
+    @staticmethod
+    def _createOperand(instanceVars, instanceExpr, conditions):
+        return Lambda(instanceVars, NamedExprs([('iexpr',instanceExpr), ('conds',conditions)]))
     
     @staticmethod
-    def _createOperand(instanceVars, instanceExpr, domain_or_domains, conditions):
-        lambdaFn = Lambda(instanceVars, NamedExprs([('iexpr',instanceExpr), ('conds',compositeExpression(conditions))]))
-        if domain_or_domains is None:
-            return NamedExprs([('imap',lambdaFn)])
-        else:
-            domain_or_domains = singleOrCompositeExpression(domain_or_domains)
-            if isinstance(domain_or_domains, Composite):
-                return NamedExprs([('imap',lambdaFn), ('domains',domain_or_domains)])
-            else:
-                return NamedExprs([('imap',lambdaFn), ('domain',domain_or_domains)])
-    
-    @staticmethod
-    def extractInitArgValue(argName, operators, operands):
+    def extractInitArgValue(argName, operator, operand):
         '''
         Given a name of one of the arguments of the __init__ method,
-        return the corresponding value contained in the 'operands'
-        composite expression (i.e., the operands of a constructed operation).
+        return the corresponding value as determined by the
+        given operator and operand for an OperationOverInstances
+        Expression.
         
         Override this if the __init__ argument names are different than the
         default.
         '''
-        from proveit import singleOrCompositeExpression
         if argName=='operator':
-            assert len(operators)==1, "expecting one operator"
-            return operators[0] 
-        if argName=='domains':
-            # multiple domains; one for each instance variable
-            return operands['domains'] if 'domains' in operands else None
-        elif argName=='domain':
-            # one domain for all instance variables
-            return operands['domain'] if 'domain' in operands else None
-        instanceMapping = operands['imap'] # instance mapping
-        if argName=='instanceVars':
-            return singleOrCompositeExpression(instanceMapping.parameters)
+            return operator
+        if argName=='domain' or argName=='domains': 
+            return None # specify domains implicitly through conditions
+        if argName=='instanceVarOrVars':
+            return singleOrCompositeExpression(operand.parameters)
         elif argName=='instanceExpr':
-            return instanceMapping.body['iexpr'] 
+            return operand.body['iexpr'] 
         elif argName=='conditions':
-            conditions = instanceMapping.body['conds']
+            conditions = operand.body['conds']
             #if len(conditions)==0: return tuple()
             return conditions
-        
-    def implicitInstanceVars(self, formatType, overriddenImplicitVars = None):
+    
+    def explicitInstanceVars(self):
         '''
-        Return instance variables that need not be shown explicitly in the
-        list of instance variables in the formatting.
-        Use overriddenImplicitVars to declare extra implicit instance variables
-        (all or just the overridden ones).
+        Return the instance variables that are to be shown explicitly 
+        in the formatting  (as opposed to being made implicit via conditions).  
+        By default, this is all of the instance variables.  May be overridden
+        for different behavior however.
         '''
-        return set() if overriddenImplicitVars is None else overriddenImplicitVars
-
-    def implicitConditions(self, formatType):
-        '''
-        Returns conditions that need not be shown explicitly in the formatting.
-        By default, this is empty (all conditions are shown).
-        '''
-        return set()
+        return self.instanceVars
 
     def hasDomain(self):
         '''
@@ -112,13 +122,18 @@ class OperationOverInstances(Operation):
         '''
         Returns True if this OperationOverInstances has one or more domain restriction(s).
         '''        
-        return self.hasDomain() or self.hasDomains()
-                                
-    def hasCondition(self):
+        return self.hasDomain() or self.hasDomains()    
+    
+    def explicitConditions(self):
         '''
-        Returns True if this OperationOverInstances has conditions.
+        Return the conditions that are to be show explicitly in the formatting
+        (after the "such that" symbol "|").  By default, this includes all of
+        the conditions except implicit "domain" conditions.
         '''
-        return len(self.conditions) > 0
+        if self.hasDomainOrDomains():
+            # return the conditions after the implicit domain conditions
+            return ExprList(*self.conditions.entries[len(self.instanceVars):])
+        return self.conditions # no domain conditions, so all of them are explicit
     
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
@@ -128,12 +143,12 @@ class OperationOverInstances(Operation):
 
     def _formatted(self, formatType, fence=False):
         # override this default as desired
-        implicitIvars = self.implicitInstanceVars(formatType)
-        hasExplicitIvars = (len(implicitIvars) < len(self.instanceVars))
-        implicitConditions = self.implicitConditions(formatType)
-        hasExplicitConditions = self.hasCondition() and (len(implicitConditions) < len(self.conditions))
+        explicitIvars = self.explicitInstanceVars() # the instance vars to show explicitly
+        explicitConditions = self.explicitConditions() # the conditions to show explicitly after '|'
+        hasExplicitIvars = (len(explicitIvars) > 0)
+        hasExplicitConditions = (len(explicitConditions) > 0)
         outStr = ''
-        formattedVars = ', '.join([var.formatted(formatType, abbrev=True) for var in self.instanceVars if var not in implicitIvars])
+        formattedVars = ', '.join([var.formatted(formatType, abbrev=True) for var in explicitIvars])
         if formatType == 'string':
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
@@ -145,7 +160,7 @@ class OperationOverInstances(Operation):
                 outStr += self.domain_or_domains.formatted(formatType, formattedOperator='*', fence=False)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
-                outStr += self.conditions.formatted(formatType, fence=False)                
+                outStr += explicitConditions.formatted(formatType, fence=False)                
                 #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += ']'
@@ -160,13 +175,14 @@ class OperationOverInstances(Operation):
                 outStr += self.domain_or_domains.formatted(formatType, formattedOperator=r'\times', fence=False)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += "~|~"
-                outStr += self.conditions.formatted(formatType, fence=False)                
+                outStr += explicitConditions.formatted(formatType, fence=False)                
                 #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += r'\right]'
 
-        return outStr        
-
+        return outStr
+    
+    """
     def instanceSubstitution(self, universality, assumptions=USE_DEFAULTS):
         '''
         Equate this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..),
@@ -215,6 +231,7 @@ class OperationOverInstances(Operation):
         '''
         substitution = self.instanceSubstitution(universality, assumptions=assumptions)
         return substitution.deriveRightViaEquivalence(assumptions=assumptions)
+    """
         
 class InstanceSubstitutionException(Exception):
     def __init__(self, msg, operationOverInstances, universality):

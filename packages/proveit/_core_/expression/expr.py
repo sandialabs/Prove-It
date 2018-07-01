@@ -33,11 +33,11 @@ class Expression:
     # recursion in the `prove` method.
     in_progress_to_conclude = set() 
             
-    def __init__(self, coreInfo, subExpressions=tuple(), styles=tuple(), requirements=tuple()):
+    def __init__(self, coreInfo, subExpressions=tuple(), styles=dict(), requirements=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
         level) which should be a list (or tuple) of strings, and a list (or tuple) of subExpressions.
-        The "styles" are optional key word strings to indicate how the Expression should be formatted
+        "styles" is a dictionary used to indicate how the Expression should be formatted
         when there are different possibilities (e.g. division with '/' or as a fraction).  The meaning
         of the expression is independent of its styles signature.
         The "requirements" are expressions that must be proven to be true in order for the Expression
@@ -62,7 +62,7 @@ class Expression:
         # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
         # (which may not be necessary, but does not hurt).   
         self.requirements = defaults.checkedAssumptions(requirements)
-        self.styles = tuple(styles) # formatting style options that don't affect the meaning of the expression
+        self.styles = dict(styles) # formatting style options that don't affect the meaning of the expression
         Expression.unique_id_map[self._unique_id] = self._unique_rep
     
     def _generate_unique_rep(self, objectRepFn):
@@ -349,16 +349,16 @@ class Expression:
             raise ImproperRelabeling("Cannot relabel different Variables to the same Variable.")
     
     def usedVars(self):
-        """
-        Returns any variables used in the expression.
-        """
-        return set()
-    
+        '''
+        Returns the union of the used Variables of the sub-Expressions.
+        '''
+        return set().union(*[expr.usedVars() for expr in self.subExprIter()])
+        
     def freeVars(self):
-        """
-        Returns the used variables that are not bound as an instance variable.
-        """
-        return set()    
+        '''
+        Returns the union of the free Variables of the sub-Expressions.
+        '''
+        return set().union(*[expr.freeVars() for expr in self.subExprIter()])
 
     def freeMultiVars(self):
         """

@@ -9,7 +9,7 @@ class Operation(Expression):
     # is accessed (see ExprType in proveit._core_.expression.expr).
     operationClassOfOperator = dict()
     
-    def __init__(self, operator_or_operators, operand_or_operands, styles=tuple(), requirements=tuple()):
+    def __init__(self, operator_or_operators, operand_or_operands, styles=dict(), requirements=tuple()):
         '''
         Create an operation with the given operator(s) and operand(s).
         The operator(s) must be Label(s) (a Variable or a Literal).
@@ -54,7 +54,10 @@ class Operation(Expression):
             # wrap a single operand in a composite for convenience
             self.operands = compositeExpression(self.operand)
         Expression.__init__(self, ['Operation'], [self.operator_or_operators, self.operand_or_operands], styles=styles, requirements=requirements)
-    
+
+    def setWrappingStyle(self, wrapPositions):
+        self.styles['wrapPositions'] = ','.join(str(pos) for pos in wrapPositions)
+        
     @classmethod
     def _implicitOperator(operationClass):
         if hasattr(operationClass, '_operator_'):
@@ -191,12 +194,12 @@ class Operation(Expression):
             yield arg
     
     def string(self, **kwargs):
-        if 'function' in self.styles or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
+        if self.styles.get('operation', 'normal')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
             return self.operator.string(fence=True) +  '(' + self.operand_or_operands.string(fence=False, subFence=False) + ')'            
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        if 'function' in self.styles or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
+        if self.styles.get('operation', 'normal')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
             return self.operator.latex(fence=True) +  r'\left(' + self.operand_or_operands.latex(fence=False, subFence=False) + r'\right)'
         return self._formatted('latex', **kwargs)
     
@@ -220,7 +223,18 @@ class Operation(Expression):
         fence =  kwargs['fence'] if 'fence' in kwargs else False
         subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
         formattedOperator = self.operator.formatted(formatType)
-        return self.operands.formatted(formatType, fence=fence, subFence=subFence, formattedOperator=formattedOperator)
+        do_wrapping = ('wrapPositions' in self.styles) and formatType=='latex' # only do 'wrapping' in the latex format
+        wrap_positions = []
+        formatted_str = ''
+        if fence: formatted_str = '(' if formatType=='string' else  r'\left('
+        if do_wrapping and formatType=='latex': 
+            formatted_str += r'\begin{array}{c} '
+            wrap_positions = [int(pos_str) for pos_str in self.styles['wrapPositions'].split(',')]
+        formatted_str += self.operands.formatted(formatType, fence=False, subFence=subFence, formattedOperator=formattedOperator, wrapPositions=wrap_positions)
+        if do_wrapping and formatType=='latex': 
+            formatted_str += r' \end{array}'
+        if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
+        return formatted_str
 
     def _formatMultiOperator(self, formatType, **kwargs):
         '''
@@ -282,18 +296,6 @@ class Operation(Expression):
             iter_ranges.add(iter_range)
         for iter_range in iter_ranges:
             yield iter_range            
-
-    def usedVars(self):
-        '''
-        Returns the union of the operator and operands used variables.
-        '''
-        return self.operators.usedVars().union(self.operands.usedVars())
-        
-    def freeVars(self):
-        '''
-        Returns the union of the operator and operands free variables.
-        '''
-        return self.operators.freeVars().union(self.operands.freeVars())
     
 class OperationError(Exception):
     def __init__(self, message):
