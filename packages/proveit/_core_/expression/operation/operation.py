@@ -1,5 +1,6 @@
 import inspect
 from proveit._core_.expression.expr import Expression, ImproperSubstitution
+from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.expression.fencing import maybeFenced
 from proveit._core_.defaults import USE_DEFAULTS
 
@@ -53,11 +54,36 @@ class Operation(Expression):
             self.operand = self.operand_or_operands
             # wrap a single operand in a composite for convenience
             self.operands = compositeExpression(self.operand)
+        if 'operation' not in styles:
+            styles['operation'] = 'normal' # vs 'function
+        if 'wrapPositions' not in styles:
+            styles['wrapPositions'] = '()' # no wrapping by default
+        if 'justification' not in styles:
+            styles['justification'] = 'center'
         Expression.__init__(self, ['Operation'], [self.operator_or_operators, self.operand_or_operands], styles=styles, requirements=requirements)
 
-    def setWrappingStyle(self, wrapPositions):
-        self.styles['wrapPositions'] = ','.join(str(pos) for pos in wrapPositions)
-        
+    def styleOptions(self):
+        options = StyleOptions(self)
+        options.addOption('wrapPositions', "position(s) at which wrapping is to occur; '2 n - 1' is after the nth operand, '2 n' is after the nth operation.")
+        options.addOption('justification', "if any wrap positions are set, justify to the 'left', 'center', or 'right'")
+        return options
+
+    def withWrappingAt(self, *wrapPositions):
+        return self.withStyles(wrapPositions='(' + ','.join(str(pos) for pos in wrapPositions) + ')')
+    
+    def withWrapBeforeOperator(self):
+        if len(self.operands)!=2:
+            raise NotImplementedError("'withWrapBeforeOperator' only valid when there are 2 operands")
+        return self.withWrappingAt(1)
+
+    def withWrapAfterOperator(self):
+        if len(self.operands)!=2:
+            raise NotImplementedError("'withWrapAfterOperator' only valid when there are 2 operands")
+        return self.withWrappingAt(2)
+
+    def withJustification(self, justification):
+        return self.withStyles(justification=justification)
+                                            
     @classmethod
     def _implicitOperator(operationClass):
         if hasattr(operationClass, '_operator_'):
@@ -158,7 +184,7 @@ class Operation(Expression):
                 raise NotImplementedError("Must implement 'extractInitArgValue' for the Operation of type %s if it does not fall into one of the default cases for 'extractInitArgs'"%str(operationClass))
 
     @classmethod
-    def make(operationClass, coreInfo, subExpressions):
+    def _make(operationClass, coreInfo, styles, subExpressions):
         '''
         Make the appropriate Operation.  coreInfo should equal ['Operation'].  The first 
         of the subExpressions should be the operator(s) and the second should be the
@@ -182,9 +208,9 @@ class Operation(Expression):
             else: 
                 kw, val = arg
                 kw_args[kw] = val 
-        return operationClass(*args, **kw_args)
+        return operationClass(*args, **kw_args).withStyles(**styles)
     
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Operation.
@@ -192,16 +218,39 @@ class Operation(Expression):
         operationClass = self.__class__
         for arg in operationClass._extractInitArgs(self.operator_or_operators, self.operand_or_operands):
             yield arg
+
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'withWrappingAt'
+        and 'withJustification' calls.
+        '''
+        wrap_positions = self.wrapPositions()
+        call_strs = []
+        if len(wrap_positions) > 0:
+            call_strs.append('withWrappingAt(' + ','.join(str(pos) for pos in wrap_positions) + ')')
+        justification = self.getStyle('justification')
+        if justification != 'center':
+            call_strs.append('withJustification(' + justification + ')')
+        return call_strs
     
     def string(self, **kwargs):
-        if self.styles.get('operation', 'normal')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
+        if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
             return self.operator.string(fence=True) +  '(' + self.operand_or_operands.string(fence=False, subFence=False) + ')'            
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        if self.styles.get('operation', 'normal')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
+        if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
             return self.operator.latex(fence=True) +  r'\left(' + self.operand_or_operands.latex(fence=False, subFence=False) + r'\right)'
         return self._formatted('latex', **kwargs)
+    
+    def wrapPositions(self):
+        '''
+        Return a list of wrap positions according to the current style setting.
+        '''
+        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(',') if pos_str != '']
     
     def _formatted(self, formatType, **kwargs):
         '''
@@ -223,13 +272,12 @@ class Operation(Expression):
         fence =  kwargs['fence'] if 'fence' in kwargs else False
         subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
         formattedOperator = self.operator.formatted(formatType)
-        do_wrapping = ('wrapPositions' in self.styles) and formatType=='latex' # only do 'wrapping' in the latex format
-        wrap_positions = []
+        wrap_positions = self.wrapPositions()
+        do_wrapping = len(wrap_positions)>0
         formatted_str = ''
         if fence: formatted_str = '(' if formatType=='string' else  r'\left('
         if do_wrapping and formatType=='latex': 
-            formatted_str += r'\begin{array}{c} '
-            wrap_positions = [int(pos_str) for pos_str in self.styles['wrapPositions'].split(',')]
+            formatted_str += r'\begin{array}{%s} '%self.getStyle('justification')[0]
         formatted_str += self.operands.formatted(formatType, fence=False, subFence=subFence, formattedOperator=formattedOperator, wrapPositions=wrap_positions)
         if do_wrapping and formatType=='latex': 
             formatted_str += r' \end{array}'
@@ -284,8 +332,8 @@ class Operation(Expression):
             operator = subbed_operators[0]
             if operator in Operation.operationClassOfOperator:
                 OperationClass = Operation.operationClassOfOperator[operator]
-                return OperationClass.make(['Operation'], [operator, subbed_operand_or_operands])
-        return self.__class__.make(['Operation'], [subbed_operator_or_operators, subbed_operand_or_operands])
+                return OperationClass._make(['Operation'], self.getStyles(), [operator, subbed_operand_or_operands])
+        return self.__class__._make(['Operation'], self.getStyles(), [subbed_operator_or_operators, subbed_operand_or_operands])
     
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         # Collect the iteration ranges for all of the operators and operands.

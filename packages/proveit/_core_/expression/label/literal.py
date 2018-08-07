@@ -44,7 +44,7 @@ class Literal(Label):
         return Variable(self.stringFormat, self.latexFormat)
     
     @classmethod
-    def make(literalClass, coreInfo, subExpressions):
+    def _make(literalClass, coreInfo, styles, subExpressions):
         '''
         Make the object of class `literalClass` matching the core information
         and sub expressions.
@@ -59,7 +59,7 @@ class Literal(Label):
             raise ValueError("Expecting coreInfo[0] to be 'Literal'")
         coreInfo = tuple(coreInfo) # make it hashable
         if coreInfo in Literal.instances:
-            return Literal.instances[coreInfo]
+            return Literal.instances[coreInfo].withStyles(**styles)
         else:
             # If the Literal is not in the instances dictionary, just make it independently
             # without storing it in the instances dictionary.  This allows us to create
@@ -89,7 +89,7 @@ class Literal(Label):
                 raise NotImplementedError("Must implement the 'makeLiteral(string_format, latex_format, context)' static method for class %s"%str(literalClass)) 
                 
             Literal.instances.pop(coreInfo)
-            return made_obj
+            return made_obj.withStyles(**styles)
         
 
 class DuplicateLiteralError(Exception):

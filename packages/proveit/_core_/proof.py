@@ -8,6 +8,7 @@ Proof objects form a DAG.
 """
 
 from proveit._core_.known_truth import KnownTruth
+from ._proveit_object_utils import makeUniqueId, addParent
 from defaults import defaults, USE_DEFAULTS, WILDCARD_ASSUMPTIONS
 from context import Context
 import re
@@ -45,9 +46,12 @@ class Proof:
         self._step_type = stepType
         # The following is not only a unique representation, but also information to reconstruct the
         # proof step: step type (and mapping information if it is a Specialization), provenTruth, and requiredProofs
-        self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
-        # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
-        self._unique_id = hash(self._unique_rep)
+        # meaning representations and unique ids are independent of style
+        self._meaning_rep = self._generate_unique_rep(lambda obj : hex(obj._meaning_id))
+        self._meaning_id = makeUniqueId(self._meaning_rep)
+        # style representations and unique ids are dependent of style
+        self._style_rep = self._generate_unique_rep(lambda obj : hex(obj._style_id))
+        self._style_id = makeUniqueId(self._style_id)        
         # determine the number of unique steps required for this proof
         self.numSteps = len(self.allRequiredProofs())
         # if it is a Theorem, set its "usability", avoiding circular logic
@@ -64,11 +68,15 @@ class Proof:
             if not hadPreviousProof: # don't bother with side-effects if this was already proven (and usable); that should have been done already
                 # may derive any side-effects that are obvious consequences arising from this truth:
                 provenTruth.deriveSideEffects()
+        # establish some parent relationships (important in case styles are updated)
+        addParent(self.provenTruth, self)
+        for requiredProof in self.requiredProofs:
+            addParent(requiredProof, self)
         
     def _setUsability(self):
         pass # overloaded for the Theorem type Proof
 
-    def _generate_unique_rep(self, objectRepFn):
+    def _generate_unique_rep(self, objectRepFn, includeStyle=False):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
@@ -104,12 +112,14 @@ class Proof:
 
     def __eq__(self, other):
         if isinstance(other, Proof):
-            return self._unique_id == other._unique_id
-        else: return False # other must be an KnownTruth to be equal to self
+            return self._meaning_id == other._meaning_id
+        else: return False # other must be an Expression to be equal to self
+    
     def __ne__(self, other):
         return not self.__eq__(other)
+
     def __hash__(self):
-        return self._unique_id
+        return self._meaning_id
     
     def requiredTruths(self):
         '''
@@ -219,7 +229,7 @@ class Axiom(Proof):
             raise ValueError("An axiom 'context' must be a Context object")
         if not isinstance(name, str):
             raise ValueError("An axiom 'name' must be a string")
-        Proof.__init__(self, 'Axiom', KnownTruth(expr, expr.requirements, self), [])
+        Proof.__init__(self, 'Axiom', KnownTruth(expr, list(expr.requirements), self), [])
         self.context = context
         self.name = name
 

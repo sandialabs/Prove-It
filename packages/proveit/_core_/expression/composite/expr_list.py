@@ -23,14 +23,14 @@ class ExprList(Composite, Expression):
         Expression.__init__(self, ['ExprList'], self.entries)
         
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != ExprList: 
             MakeNotImplemented(subClass)
         if len(coreInfo) != 1 or coreInfo[0] != 'ExprList':
             raise ValueError("Expecting ExprList coreInfo to contain exactly one item: 'ExprList'")
-        return ExprList(*subExpressions)        
+        return ExprList(*subExpressions).withStyles(**styles)      
 
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the ExprList.
@@ -99,8 +99,10 @@ class ExprList(Composite, Expression):
             outStr += '(' if formatType=='string' else  r'\left('
         for wrap_position in wrapPositions:
             if wrap_position%2==1:
+                # wrap after operand (before next operation)
                 formatted_sub_expressions[(wrap_position-1)/2] += r' \\ '
             else:
+                # wrap after operation (before next operand)
                 formatted_sub_expressions[wrap_position/2] = r' \\ ' + formatted_sub_expressions[wrap_position/2]
         outStr += (' '+formattedOperator+' ').join(formatted_sub_expressions)
         if fence:            

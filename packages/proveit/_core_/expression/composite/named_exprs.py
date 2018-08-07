@@ -53,7 +53,7 @@ class NamedExprs(Composite, Expression):
     def values(self):
         return [self.elems[key] for key in self.keywords]
 
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument (name, value) pairs that could be used to 
         recreate the NamedExprs.  Wrap the names in quotation marks
@@ -62,7 +62,7 @@ class NamedExprs(Composite, Expression):
             yield ('"' + str(name) + '"', expr)
             
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != NamedExprs: 
             MakeNotImplemented(subClass) 
         if coreInfo[0] != 'NamedExprs':
@@ -70,7 +70,7 @@ class NamedExprs(Composite, Expression):
         keys = coreInfo[1:]
         if len(subExpressions) != len(keys):
             raise ValueError("The number of sub-expressions, " + str(len(subExpressions)), ", expected to match the number of the NamedExprs' keys, ", str(len(keys)))
-        return NamedExprs([(key,subExpression) for key, subExpression in zip(keys, subExpressions)])        
+        return NamedExprs([(key,subExpression) for key, subExpression in zip(keys, subExpressions)]).withStyles(**styles)   
         
     def string(self, **kwargs):
         return '{' + ', '.join(key + ':' + self[key].string(fence=True) for key in self.keys()) + '}'

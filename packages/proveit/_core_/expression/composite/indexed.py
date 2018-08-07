@@ -35,7 +35,7 @@ class Indexed(Expression):
         self.base = base
     
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != Indexed: 
             MakeNotImplemented(subClass)
         if len(coreInfo) != 2 or coreInfo[0] != 'Indexed':
@@ -44,9 +44,9 @@ class Indexed(Expression):
             base = int(coreInfo[1])
         except:
             raise ValueError("Expecting 'base' to be an integer")
-        return Indexed(*subExpressions, base=base)        
+        return Indexed(*subExpressions, base=base).withStyles(**styles)       
 
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Indexed.

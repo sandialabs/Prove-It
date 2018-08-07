@@ -443,7 +443,7 @@ class ExprTensor(Composite, Expression):
             yield sorting_relations
     """
             
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument (key, value) pairs that could be used to 
         recreate the ExprTensor.
@@ -452,7 +452,7 @@ class ExprTensor(Composite, Expression):
         yield tensor
                                     
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != ExprTensor: 
             MakeNotImplemented(subClass) 
         if len(coreInfo) != 3:
@@ -465,7 +465,7 @@ class ExprTensor(Composite, Expression):
         sorting_relations = subExpressions[:ndims]
         indexed_tensor = {literal_eval(indexed_loc_str):element for indexed_loc_str, element in zip(indexed_loc_strs, subExpressions[ndims+1:])}
         tensor = {ExprTensor.tensorLocation(indexed_loc, sorting_relations):element for indexed_loc, element in indexed_tensor.iteritems()}
-        return ExprTensor(tensor)
+        return ExprTensor(tensor).withStyles(**styles)
                                                                               
     def string(self, fence=False):
         return '{' + ', '.join(loc.string(fence=True) + ':' + element.string(fence=True) for loc, element in self.iteritems()) + '}'

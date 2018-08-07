@@ -439,8 +439,11 @@ class ProveItMagic(Magics):
             if isinstance(expr, KnownTruth):
                 # actually a KnownTruth; convert to an Expression
                 expr = expr.expr
-        if expr != context.getStoredExpr(hash_id):
+        stored_expr = context.getStoredExpr(hash_id)
+        if expr != stored_expr:
             raise ProveItMagicFailure("The built '%s' does not match the stored Expression"%expr_name)
+        if expr._style_id != stored_expr._style_id:
+            raise ProveItMagicFailure("The built '%s' style does not match that of the stored Expression"%expr_name)
         print "Passed sanity check: built '%s' is the same as the stored Expression."%expr_name
                                 
     @line_magic
@@ -465,7 +468,7 @@ class ProveItMagic(Magics):
     
     @line_magic
     def qed(self, line):
-        proof = KnownTruth.theoremBeingProven.provenTruth.qed()
+        proof = KnownTruth.theoremBeingProven.provenTruth._qed()
         self.context.referenceDisplayedExpressions('_proof_' + KnownTruth.theoremBeingProven.name)
         # clean unreferenced expressions:
         self.context.clean()

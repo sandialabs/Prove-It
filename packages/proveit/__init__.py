@@ -1,15 +1,15 @@
-from _core_ import defaults, USE_DEFAULTS, InvalidAssumptions, Context, ContextException
-from _core_ import Expression, Operation, Function, OperationSequence, OperationOverInstances
-from _core_ import Lambda, LambdaError, ParameterExtractionError, Label, Variable, Literal, DuplicateLiteralError
-from _core_ import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
-from _core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
-from _core_ import Composite, compositeExpression, singleOrCompositeExpression
-from _core_ import ExprList, ExprTensor, NamedExprs, Indexed, Iter
-from _core_ import KnownTruth, asExpression, asExpressions
-from _core_ import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
-from _core_ import ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure
-from _core_ import maybeFencedString, maybeFencedLatex, maybeFenced
-from relation import TransitiveRelation, TransitiveSequence
+from ._core_ import defaults, USE_DEFAULTS, InvalidAssumptions, Context, ContextException
+from ._core_ import Expression, InnerExpr, Operation, Function, OperationSequence, OperationOverInstances
+from ._core_ import Lambda, LambdaError, ParameterExtractionError, Label, Variable, Literal, DuplicateLiteralError
+from ._core_ import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
+from ._core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
+from ._core_ import Composite, compositeExpression, singleOrCompositeExpression
+from ._core_ import ExprList, ExprTensor, NamedExprs, Indexed, Iter, varIter
+from ._core_ import KnownTruth, asExpression, asExpressions
+from ._core_ import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
+from ._core_ import ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure
+from ._core_ import StyleOptions, maybeFencedString, maybeFencedLatex, maybeFenced
+from .relation import TransitiveRelation, TransitiveSequence
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet

@@ -429,10 +429,14 @@ class ContextStorage:
         '''
         Retrieve a unique id for the Prove-It object based upon its pv_it filename from calling _retrieve.
         '''
-        if isinstance(proveItObjectOrId, str):
+        if type(proveItObjectOrId)==str:
             return proveItObjectOrId
         else:
-            (context, hash_directory) = self._retrieve(proveItObjectOrId)
+            if type(proveItObjectOrId)==int:
+                style_id = proveItObjectOrId # assumed to be a style id if it's an int
+                (context, hash_directory) = self._proveItObjects[style_id]
+            else:
+                (context, hash_directory) = self._retrieve(proveItObjectOrId)
             if context != self.context:
                 self._includeMutualReferences(context)
                 return context.name + '.' + hash_directory
@@ -468,7 +472,8 @@ class ContextStorage:
     
     def _proveItObjUniqueRep(self, proveItObject):
         '''
-        Generate a unique representation string for the given Prove-It object.
+        Generate a unique representation string for the given Prove-It object
+        that is dependent upon the style.
         '''
         from proveit import Expression, KnownTruth, Proof
         prefix = None
@@ -482,7 +487,7 @@ class ContextStorage:
             raise NotImplementedError('Strorage only implemented for Expressions, Statements (effectively), and Proofs')
         # generate a unique representation using Prove-It object ids for this storage to
         # represent other referenced Prove-It objects 
-        return prefix + proveItObject._generate_unique_rep(self._proveItStorageId)
+        return prefix + proveItObject._generate_unique_rep(self._proveItStorageId, includeStyle=True)
     
     def _extractReferencedStorageIds(self, unique_rep, context_name=''):
         '''
@@ -596,11 +601,11 @@ class ContextStorage:
         __pv_it directory) based upon a hash of the unique representation.
         '''
         from proveit import Expression
-        if proveItObject in self._proveItObjects:
-            return self._proveItObjects[proveItObject]
+        if proveItObject._style_id in self._proveItObjects:
+            return self._proveItObjects[proveItObject._style_id]
         if isinstance(proveItObject, Expression):
             expr = proveItObject
-            if expr in Expression.contexts and Expression.contexts[expr] != self.context:                
+            if expr in Expression.contexts and Expression.contexts[expr] != self.context:
                 # stored in a different context
                 return Expression.contexts[expr]._storage._retrieve(proveItObject)
         elif hasattr(proveItObject, 'context') and proveItObject.context != self.context:
@@ -627,12 +632,15 @@ class ContextStorage:
                 break
             with open(unique_rep_filename, 'r') as f:
                 rep = f.read()
-                if rep == unique_rep: # found a match; it is already in storage
-                    # remember this for next time
-                    result = (self.context, rep_hash+str(index))
-                    self._proveItObjects[proveItObject] = result
-                    return result
-            index += 1
+                if rep != unique_rep:
+                    # there is a hashing collision (this should be astronically rare, but we'll make sure just in case)
+                    index += 1 # increment the index and try again
+                    continue
+            # found a match; it is already in storage
+            # remember this for next time
+            result = (self.context, indexed_hash_path)
+            self._proveItObjects[proveItObject._style_id] = result
+            return result
         indexed_hash_path = hash_path + str(index)
         # store the unique representation in the appropriate file
         os.mkdir(indexed_hash_path)
@@ -645,8 +653,8 @@ class ContextStorage:
         for objId in self._extractReferencedStorageIds(unique_rep):
             self._addReference(objId)
         # remember this for next time
-        result = (self.context, rep_hash+str(index))
-        self._proveItObjects[proveItObject] = result
+        result = (self.context, indexed_hash_path)
+        self._proveItObjects[proveItObject._style_id] = result
         return result
     
     def expressionNotebook(self, expr, unofficialNameKindContext=None):
@@ -695,6 +703,7 @@ class ContextStorage:
                 os.remove(orig_notebook_filename) # remove an old one first
             os.rename(filename, orig_notebook_filename)
             print "%s expression notebook is being updated"%special_name
+        
         expr_classes = set()
         unnamed_subexpr_occurences = dict()
         named_subexpr_addresses = dict()
@@ -715,7 +724,7 @@ class ContextStorage:
         # ambiguity, otherwise using the full address).
         item_names = dict() 
         
-        # populate fromImports, directImports, and itemNames
+        # populate from_imports, direct_imports, and item_names
         for expr_class in expr_classes:
             class_name = expr_class.__name__
             module_name = self._moduleAbbreviatedName(expr_class.__module__, class_name)
@@ -740,7 +749,7 @@ class ContextStorage:
                 item_names[namedExpr] = item_names[namedExprAddress[0]] + '.' + namedExprAddress[1]
                 
         # see if we need to add anything to the sys.path
-        needs_root_path = False # needs the root of this context added
+        needs_root_path = False # needs the root of this context addedS
         needs_local_path = False # needs the local path added
         # first, see if we even need to import a module with the same root as our context
         root_context = self.rootContextStorage.context
@@ -894,14 +903,14 @@ class ContextStorage:
             namedItems.setdefault(expr.__class__.__name__, set()).add(expr.__class__)
                                 
         # recurse over the expression build arguments (e.g., the sub-Expressions
-        for arg in expr.buildArguments():
+        for arg in expr.remakeArguments():
             try:
                 if isinstance(arg[0], str):
                     argname, arg = arg # splits into a name, argument pair
             except:
                 pass
             if not isinstance(arg, Expression) and not isinstance(arg, str) and not isinstance(arg, int):
-                raise TypeError("The arguments of %s.buildArguments() should be Expressions or strings or integers" %str(expr.__class__))
+                raise TypeError("The arguments of %s.remakeArguments() should be Expressions or strings or integers" %str(expr.__class__))
             if isinstance(arg, Expression):
                 subExpr = arg
                 self._exprBuildingPrerequisites(subExpr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems)
@@ -964,8 +973,17 @@ class ContextStorage:
             # the final possibility is that we need a list of expressions (i.e., parameters of a Lambda expression)
             return '[' + ', '.join(argToString(argItem) for argItem in arg) + ']' 
         
-        argStr = ', '.join(argToString(arg) for arg in expr.buildArguments())        
-        
+        def get_constructor():
+            constructor = expr.remakeConstructor() # usually the class name to call the __init__, but not always
+            full_class_name = itemNames[expr.__class__] # may include the module at the front
+            if '.' in full_class_name:
+                # prepend the constructor with the module -- assume it is in the same module as the class
+                constructor = '.'.join(full_class_name.split('.')[:-1]) + constructor
+            return constructor
+        argStr = ', '.join(argToString(arg) for arg in expr.remakeArguments())                
+        withStyleCalls = '.'.join(expr.remakeWithStyleCalls())
+        if len(withStyleCalls)>0: withStyleCalls = '.' + withStyleCalls
+
         if isinstance(expr, Composite):
             if isinstance(expr, ExprList):
                 compositeStr = '[' + argStr + ']'
@@ -977,9 +995,9 @@ class ContextStorage:
                 # The constructor should be equipped to handle it appropriately.
                 return compositeStr
             else:
-                return itemNames[expr.__class__] + '(' + compositeStr + ')'
+                return get_constructor() + '(' + compositeStr + ')' + withStyleCalls
         else:
-            return itemNames[expr.__class__] + '(' + argStr + ')'
+            return get_constructor() + '(' + argStr + ')' + withStyleCalls
     
     def proofNotebook(self, theorem_name, expr):
         '''
@@ -1107,8 +1125,8 @@ class ContextStorage:
             split_expr_class = exprClassStr.split('.')
             module = importlib.import_module('.'.join(split_expr_class[:-1]))
             expr_class_map[exprClassStr] = getattr(module, split_expr_class[-1])
-        def exprBuilderFn(exprClassStr, exprInfo, subExpressions, context):
-            expr = expr_class_map[exprClassStr].make(exprInfo, subExpressions)
+        def exprBuilderFn(exprClassStr, exprInfo, styles, subExpressions, context):
+            expr = expr_class_map[exprClassStr]._make(exprInfo, styles, subExpressions)
             if context is not None and expr not in Expression.contexts:
                 Expression.contexts[expr] = context
             return expr
@@ -1124,6 +1142,7 @@ class ContextStorage:
         expr_class_strs = dict() # map expr-ids to lists of Expression class string representations
         expr_class_rel_strs = dict() # relative paths of Expression classes that are local
         core_info_map = dict() # map expr-ids to core information
+        styles_map = dict() # map expr-ids to style information
         sub_expr_ids_map = dict() # map expr-ids to list of sub-expression ids
         context_map = dict() # map expr-ids to a Context 
         master_expr_id = exprId
@@ -1147,6 +1166,7 @@ class ContextStorage:
                 expr_class_strs[exprId] = expr_class_str
                 # extract the Expression "core information" from the unique representation
                 core_info_map[exprId] = Expression._extractCoreInfo(unique_rep)
+                styles_map[exprId] = Expression._extractStyle(unique_rep)
                 # get the sub-expressions all sub-expressions
                 sub_expr_ids_map[exprId] = self._extractReferencedStorageIds(unique_rep, context_name)
                 return sub_expr_ids_map[exprId]
@@ -1181,7 +1201,7 @@ class ContextStorage:
         for expr_id in reversed(expr_ids):
             sub_expressions =  [built_expr_map[sub_expr_id] for sub_expr_id in sub_expr_ids_map[expr_id]]
             context = context_map[expr_id] if expr_id in context_map else None
-            built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], sub_expressions, context)
+            built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], styles_map[expr_id], sub_expressions, context)
         return built_expr_map[master_expr_id]        
     
     def recordCommonExprDependencies(self):
@@ -1258,7 +1278,7 @@ class ContextStorage:
         if clear:
             current = set()
         else: 
-            current = {self._proveItStorageId(expr) for expr in Expression.displayed_expressions}
+            current = {self._proveItStorageId(style_id) for style_id in Expression.displayed_expression_styles}
         
         # dereference old ones
         for old_ref in previous - current:

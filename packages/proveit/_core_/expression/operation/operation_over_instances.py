@@ -84,6 +84,7 @@ class OperationOverInstances(Operation):
         Override this if the __init__ argument names are different than the
         default.
         '''
+        assert isinstance(operand, Lambda), "Expecting OperationOverInstances operand to be a Lambda expression"
         if argName=='operator':
             return operator
         if argName=='domain' or argName=='domains': 

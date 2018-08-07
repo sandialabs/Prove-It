@@ -45,16 +45,16 @@ class Label(Expression):
         return [self.stringFormat, self.latexFormat]    
     
     @classmethod
-    def make(labelClass, coreInfo, subExpressions):
+    def _make(labelClass, coreInfo, styles, subExpressions):
         if len(subExpressions) > 0:
             raise ValueError('Not expecting any subExpressions of Label')
         if len(coreInfo) != 3:
             raise ValueError("Expecting " + labelClass.__name__ + " coreInfo to contain 3 items: '" + labelClass.__name + "', stringFormat, and latexFormat")
         if coreInfo[0] != labelClass.__name__:
             raise ValueError("Expecting coreInfo[0] to be '" + labelClass.__name__ + "'")
-        return labelClass(coreInfo[1], coreInfo[2])
+        return labelClass(coreInfo[1], coreInfo[2]).withStyles(**styles)
 
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument values that could be used to recreate the 
         Label.  This is a default for simple Labels, Variables, or Literals.

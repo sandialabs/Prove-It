@@ -7,12 +7,11 @@ with possibly fewer assumptions, suffices).
 """
 
 from proveit._core_.expression import Expression
+from ._proveit_object_utils import makeUniqueId, addParent
 from defaults import defaults, USE_DEFAULTS
 import re
-import os
             
 class KnownTruth:
-    
     # lookup_dict maps Expressions to lists of KnownTruths for proving the 
     # Expression under various assumptions.  Excludes redundancies in which one set
     # of assumptions subsumes another.
@@ -61,13 +60,21 @@ class KnownTruth:
         else:
             # initialize _proof to None, to be changed later via _recordBestProof
             self._proof = None
-             
-        # a unique representation for the KnownTruth comprises its expr and assumptions:
-        self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
-        # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
-        self._unique_id = hash(self._unique_rep)
+        
+        # establish some parent relationships (important in case styles are updated)
+        addParent(self.expr, self)
+        for assumption in self.assumptions:
+            addParent(assumption, self)
+        
+        # meaning representations and unique ids are independent of style
+        self._meaning_rep = self._generate_unique_rep(lambda expr : hex(expr._meaning_id))
+        self._meaning_id = makeUniqueId(self._meaning_rep)
+        # style representations and unique ids are dependent of style
+        self._style_rep = self._generate_unique_rep(lambda expr : hex(expr._style_id))
+        self._style_id = makeUniqueId(self._style_id)
+        
 
-    def _generate_unique_rep(self, objectRepFn):
+    def _generate_unique_rep(self, objectRepFn, includeStyle=False):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
@@ -106,12 +113,14 @@ class KnownTruth:
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
-            return self._unique_id == other._unique_id
-        else: return False # other must be an KnownTruth to be equal to self
+            return self._meaining_id == other._meaining_id
+        else: return False # other must be an Expression to be equal to self
+    
     def __ne__(self, other):
         return not self.__eq__(other)
+
     def __hash__(self):
-        return self._unique_id
+        return self._meaining_id
         
     def beginProof(self, presuming=tuple()):
         '''
@@ -197,7 +206,7 @@ class KnownTruth:
         self._proof._unusableTheorem = self._proof # can't use itself to prove itself
         return self.expr
     
-    def qed(self):
+    def _qed(self):
         '''
         Complete a proof that began via `beginProof`, entering it into
         the certification database.

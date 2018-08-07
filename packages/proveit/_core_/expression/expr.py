@@ -4,6 +4,8 @@ This is the expression module.
 
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.context import Context
+from proveit._core_.expression.style_options import StyleOptions
+from proveit._core_._proveit_object_utils import makeUniqueId, addParent, updateStyles
 import re
 import os
 
@@ -24,8 +26,8 @@ class ExprType(type):
 
 class Expression:
     __metaclass__ = ExprType
-    unique_id_map = dict() # map unique_id's to unique_rep's
-    displayed_expressions = set() # set of expressions for which __repr_html__ has been called this session
+    
+    displayed_expression_styles = set() # set of expression style_id's for which __repr_html__ has been called this session
     
     contexts = dict() # map expression to contexts (for expressions that "belong" to a Context)
     
@@ -51,21 +53,23 @@ class Expression:
                 raise TypeError('Expecting subExpression elements to be of Expression type')
         # unique_rep is a unique representation based upon the coreInfo and unique_id's of sub-Expressions
         self._coreInfo, self._subExpressions = tuple(coreInfo), subExpressions
-        self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
-        # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
-        self._unique_id = hash(self._unique_rep)
-        while self._unique_id in Expression.unique_id_map and Expression.unique_id_map[self._unique_id] != self._unique_rep:
-            self._unique_id += 1
+        self._styles = dict(styles) # formatting style options that don't affect the meaning of the expression
+        # meaning representations and unique ids are independent of style
+        self._meaning_rep = self._generate_unique_rep(lambda expr : hex(expr._meaning_id))
+        self._meaning_id = makeUniqueId(self._meaning_rep)
+        # style representations and unique ids are dependent of style
+        self._style_rep = self._generate_unique_rep(lambda expr : hex(expr._style_id), includeStyle=True)
+        self._style_id = makeUniqueId(self._style_rep)
+        for subExpression in subExpressions: # update Expression.parent_expr_map
+            addParent(subExpression, self)
         # combine requirements from all sub-expressions
         requirements = sum([tuple(subExpression.requirements) for subExpression in subExpressions], tuple()) + requirements
         # Expression requirements are essentially assumptions that need to be proven for the expression to
         # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
         # (which may not be necessary, but does not hurt).   
         self.requirements = defaults.checkedAssumptions(requirements)
-        self.styles = dict(styles) # formatting style options that don't affect the meaning of the expression
-        Expression.unique_id_map[self._unique_id] = self._unique_rep
     
-    def _generate_unique_rep(self, objectRepFn):
+    def _generate_unique_rep(self, objectRepFn, includeStyle=False):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
@@ -73,7 +77,10 @@ class Expression:
         context = Context(sys.modules[self.__class__.__module__].__file__)
         # get the full class path relative to the root context where the class is defined
         class_path = context.name + '.' + self.__class__.__module__.split('.')[-1] + '.' + self.__class__.__name__
-        return class_path + '[' + ','.join(self._coreInfo) + '];[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+        style_str = ''
+        if includeStyle:
+            style_str = ';[' + ','.join(style_name + ':' + self.getStyle(style_name) for style_name in sorted(self.styleNames())) + ']'
+        return class_path + '[' + ','.join(self._coreInfo) + ']' + style_str + ';[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
 
     @staticmethod
     def _extractExprClass(unique_rep):
@@ -88,6 +95,15 @@ class Expression:
         Return the core information of the given unique representation.
         '''
         return re.split(',', unique_rep[unique_rep.find('[')+1:unique_rep.find(']')])
+    
+    @staticmethod
+    def _extractStyle(unique_rep):
+        '''
+        Return the style information of the given unique representation assuming the style was included.
+        '''
+        style_str = unique_rep.split(';')[1]
+        style_pairs = re.split("\[|,|\]",style_str) 
+        return dict(style_pair.split(':') for style_pair in style_pairs if len(style_pair)>0)
         
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
@@ -99,7 +115,7 @@ class Expression:
         subExprs = unique_rep.split(';')[-1]
         objIds = re.split("\[|,|\]",subExprs) 
         return [objId for objId in objIds if len(objId) > 0]  
-            
+        
     def __setattr__(self, attr, value):
         '''
         Expressions should be read-only objects.  Attributes may be added, however; for example,
@@ -114,19 +130,21 @@ class Expression:
     
     def __eq__(self, other):
         if isinstance(other, Expression):
-            return self._unique_id == other._unique_id
+            return self._meaning_id == other._meaning_id 
         else: return False # other must be an Expression to be equal to self
+    
     def __ne__(self, other):
         return not self.__eq__(other)
+
     def __hash__(self):
-        return self._unique_id
+        return self._meaning_id 
     
     def __str__(self):
         '''
         Return a string representation of the Expression.
         '''
         return self.string()
-
+    
     def string(self, **kwargs):
         '''
         Return a string representation of the Expression.  The kwargs can contain formatting
@@ -154,13 +172,13 @@ class Expression:
         if formatType == 'latex': return self.latex(**kwargs)
     
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions):
         '''
         Should make the Expression object for the specific Expression sub-class based upon the coreInfo
-        and subExpressions.  Must be implemented for each Expression sub-class that can be instantiated.
+        and subExpressions.  Must be implemented for each core Expression sub-class that can be instantiated.
         '''
         raise MakeNotImplemented(subClass)
-    
+                    
     def coreInfo(self):
         '''
         Copy out the core information.
@@ -181,6 +199,80 @@ class Expression:
         Return the number of sub-expressions of this expression.
         '''
         return len(self._subExpressions)
+    
+    def innerExpr(self):
+        '''
+        Return an InnerExpr object to wrap the expression and
+        access any inner sub-expression for the purpose of creating
+        a lambda expression to replace the inner expression within
+        this one or change its styles.
+        '''
+        from .inner_expr import InnerExpr
+        return InnerExpr(self)
+    
+    def styleOptions(self):
+        '''
+        Return a StyleOptions object that indicates the possible
+        styles and values that is available to determine how
+        this Expression may be presented.
+        '''
+        return StyleOptions(self) # the default is empty
+    
+    def withStyles(self, **kwargs):
+        '''
+        Alter the styles of this expression according to kwargs.
+        '''
+        orig_styles = dict(self._styles)
+        # update the _styles, _style_rep, and _style_id
+        self._styles.update(kwargs)
+        if self._styles == orig_styles:
+            return self # no change in styles, so just use the original
+        updateStyles(self)
+        return self
+    
+    def styleNames(self):
+        '''
+        Return the name of the styles that may be set.
+        '''
+        return self._styles.keys()
+    
+    def getStyle(self, styleName):
+        '''
+        Return the current style setting for the given style name.
+        '''
+        return self._styles[styleName]
+    
+    def getStyles(self):
+        '''
+        Return a copy of the internally maintained styles dictionary.
+        '''
+        return dict(self._styles)
+    
+    def remakeConstructor(self):
+        '''
+        Method to call to reconstruct this Expression.  The default is the class name
+        itself to use the __init__ method, but sometimes a different method is more
+        appropriate for setting the proper style (e.g. the Frac method in 
+        proveit.number.division.divide which constructs a Div object with a different
+        style).  This constructor method must be in the same module as the class.
+        '''
+        return self.__class__.__name__
+    
+    def remakeArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Expression.
+        '''
+        raise NotImplementedError("remakeArguments method should be implemented for all ProveIt core Expression sub-classes.")
+            
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  For example,
+        ["withWrappingAt(3)", "withJustification('right')"].
+        '''
+        return tuple()
     
     def prove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
@@ -304,11 +396,8 @@ class Expression:
         the corresponding KnownTruth is created.
         It also may be desirable to store the knownTruth for future automation.
         '''
-        return iter(())     
-        
-    def qed(self):
-        return self.prove().qed()
-        
+        return iter(())
+    
     def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the expressions substituted 
@@ -336,6 +425,13 @@ class Expression:
         changed.
         '''
         return self.substituted(exprMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
+    
+    def copy(self):
+        '''
+        Make a copy of the Expression with the same styles.
+        '''
+        expr_copy = self.substituted(exprMap=dict()) # vacuous substitution makes a copy
+        return expr_copy
 
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         '''
@@ -436,7 +532,7 @@ class Expression:
             html = '<a class="ProveItLink" href="' + os.path.relpath(exprNotebookPath) + '">'
             html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
-        Expression.displayed_expressions.add(self) # record as a "displayed" expression
+        Expression.displayed_expression_styles.add(self._style_id) # record as a "displayed" (style-specific) expression
         return html
         
     def _config_latex_tool(self, lt):

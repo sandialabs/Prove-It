@@ -55,14 +55,14 @@ class Iter(Expression):
         self.lambda_map = lambda_map
     
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != Iter: 
             MakeNotImplemented(subClass)
         if len(coreInfo) != 1 or coreInfo[0] != 'Iter':
             raise ValueError("Expecting Iter coreInfo to contain exactly one item: 'Iter'")
-        return Iter(*subExpressions)     
+        return Iter(*subExpressions).withStyles(**styles)
             
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Indexed.

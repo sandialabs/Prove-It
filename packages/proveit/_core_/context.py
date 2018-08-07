@@ -187,10 +187,10 @@ class Context:
         self._storage.setSpecialStatements(theoremNames, theoremDefinitions, 'theorem')
     
     def _clearAxioms(self):
-        self._storage.setAxioms([], dict())
+        self._setAxioms([], dict())
 
     def _clearTheorems(self):
-        self._storage.setTheorems([], dict())
+        self._setTheorems([], dict())
     
             
     def _clearCommonExressions(self):

@@ -1,5 +1,5 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented, ImproperSubstitution
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 class Lambda(Expression):
     '''
@@ -50,13 +50,13 @@ class Lambda(Expression):
         Expression.__init__(self, ['Lambda'], list(self.parameters) + [self.body], styles=styles, requirements=requirements)
         
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions):
         if len(coreInfo) != 1 or coreInfo[0] != 'Lambda':
             raise ValueError("Expecting Lambda coreInfo to contain exactly one item: 'Lambda'")
         if subClass != Lambda: 
             raise MakeNotImplemented(subClass)
         parameters, body = subExpressions[:-1], subExpressions[-1]
-        return Lambda(parameters, body)
+        return Lambda(parameters, body).withStyles(**styles)
     
     def mapped(self, *args):
         '''
@@ -123,7 +123,7 @@ class Lambda(Expression):
                 mapped_sub_expr_iters.pop(-1)
         return param_values
 
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Lambda expression.
@@ -173,6 +173,7 @@ class Lambda(Expression):
             # the full expression is to be substituted
             return exprMap[self]._restrictionChecked(reservedVars)        
         if relabelMap is None: relabelMap = dict()
+        assumptions = defaults.checkedAssumptions(assumptions)
         # Can't substitute the lambda parameter variables; they are in a new scope.
         innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterVarSet}
         # Can't use assumptions involving lambda parameter variables
