@@ -6,7 +6,7 @@ class Exists(OperationOverInstances):
     # operator of the Exists operation
     _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', context=__file__)
     
-    def __init__(self, instanceVars, instanceExpr, domain=None, domains=None, conditions=tuple()):
+    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
         exists_{instanceVars | condition} instanceExpr
@@ -14,7 +14,7 @@ class Exists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, Exists._operator_, instanceVars, instanceExpr, domain, domains, conditions)
+        OperationOverInstances.__init__(self, Exists._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions)
 
     def sideEffects(self, knownTruth):
         '''

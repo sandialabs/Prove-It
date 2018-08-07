@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
-from proveit._common_ import A, B, AA, BB, CC, DD, EE
+from proveit._common_ import A, B
 
 class And(Operation):
     # The operator of the And operation

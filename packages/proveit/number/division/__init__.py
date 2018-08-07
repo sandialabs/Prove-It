@@ -1,2 +1,1 @@
-from divide import Divide
-from frac import Frac
+from divide import Div, Frac

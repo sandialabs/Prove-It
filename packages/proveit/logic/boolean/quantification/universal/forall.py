@@ -5,7 +5,7 @@ class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall', context=__file__)
     
-    def __init__(self, instanceVars, instanceExpr, domain=None, domains=None, conditions = tuple()):
+    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions = tuple()):
         '''
         Create a Forall expression:
         forall_{instanceVars | conditions} instanceExpr.
@@ -14,7 +14,7 @@ class Forall(OperationOverInstances):
         may be singular or plural (iterable).
         '''
 
-        OperationOverInstances.__init__(self, Forall._operator_, instanceVars, instanceExpr, domain, domains, conditions)
+        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions)
         
     def sideEffects(self, knownTruth):
         '''
@@ -33,19 +33,9 @@ class Forall(OperationOverInstances):
         if self.hasDomain() and hasattr(self.domain, 'foldAsForall'):
             return self.concludeAsFolded(assumptions)
         else:
-            extra_assumptions = list()
-            domain, domains = None, None
-            if self.hasDomains():
-                domains = self.domains
-                for var, domain in zip(self.instanceVars, domains):
-                    extra_assumptions.append(InSet(var, domain))
-            elif self.hasDomain():
-                domain = self.domain
-                for var in self.instanceVars:
-                    extra_assumptions.append(InSet(var, domain))
-            extra_assumptions = tuple(extra_assumptions) + tuple(self.conditions)
+            extra_assumptions = tuple(self.conditions)
             proven_inst_expr = self.instanceExpr.prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions))
-            return proven_inst_expr.generalize(self.instanceVars, domain=domain, domains=domains, conditions=self.conditions)
+            return proven_inst_expr.generalize(self.instanceVars, conditions=self.conditions)
         raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method.")
     
     def unfold(self, assumptions=USE_DEFAULTS):
