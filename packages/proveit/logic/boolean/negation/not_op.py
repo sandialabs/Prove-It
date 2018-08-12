@@ -58,7 +58,7 @@ class Not(Operation):
         except:
             return Not(self).conclude(assumptions)
     
-    def latex(self, fence=False):
+    def latex(self, fence=False, **kwargs):
         outStr = ''
         if fence: outStr += "("
         outStr += self.operator.latex() + ' ' + self.operand.latex(fence=True)

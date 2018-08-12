@@ -6,7 +6,7 @@ class NotExists(OperationOverInstances):
     # operator of the NotExists operation
     _operator_ = Literal(stringFormat='notexists', latexFormat=r'\nexists', context=__file__)
     
-    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, conditions=tuple()):
+    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
         exists_{instanceVars | conditions} instanceExpr
@@ -14,7 +14,7 @@ class NotExists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, NotExists._operator_, instanceVarOrVars, instanceExpr, domain, conditions)
+        OperationOverInstances.__init__(self, NotExists._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions)
 
     def sideEffects(self, knownTruth):
         '''

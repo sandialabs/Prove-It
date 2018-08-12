@@ -67,27 +67,31 @@ class Literal(Label):
             # a DuplicateLiteralError.
             string_format, latex_format = coreInfo[1:3]
             context = Context.getContext(coreInfo[3])
+            prev_context_default = Context.default
             Context.default = context
-            extra_core_info = coreInfo[4:]
-            init_args = inspect.getargspec(literalClass.__init__)[0]
-            if literalClass==Literal:
-                made_obj = Literal(string_format, latex_format, extra_core_info, context)
-            elif len(init_args)==1:
-                made_obj = literalClass() # no arguments (except self) are taken
-            elif len(init_args)==2 and init_args[1]=='stringFormat' and coreInfo[1]==coreInfo[2]:
-                made_obj = literalClass(string_format, context)
-            elif len(init_args)==3 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat':
-                made_obj = literalClass(string_format, latex_format)
-            elif len(init_args)==4 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat' and init_args[3]=='context':
-                made_obj = literalClass(string_format, latex_format, context)
-            elif hasattr(literalClass, 'makeLiteral'):
-                if len(extra_core_info)==0:
-                    made_obj = literalClass.makeLiteral(string_format, latex_format, context)
+            try:
+                extra_core_info = coreInfo[4:]
+                init_args = inspect.getargspec(literalClass.__init__)[0]
+                if literalClass==Literal:
+                    made_obj = Literal(string_format, latex_format, extra_core_info, context)
+                elif len(init_args)==1:
+                    made_obj = literalClass() # no arguments (except self) are taken
+                elif len(init_args)==2 and init_args[1]=='stringFormat' and coreInfo[1]==coreInfo[2]:
+                    made_obj = literalClass(string_format, context)
+                elif len(init_args)==3 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat':
+                    made_obj = literalClass(string_format, latex_format)
+                elif len(init_args)==4 and init_args[1]=='stringFormat' and init_args[2]=='latexFormat' and init_args[3]=='context':
+                    made_obj = literalClass(string_format, latex_format, context)
+                elif hasattr(literalClass, 'makeLiteral'):
+                    if len(extra_core_info)==0:
+                        made_obj = literalClass.makeLiteral(string_format, latex_format, context)
+                    else:
+                        made_obj = literalClass.makeLiteral(string_format, latex_format, extra_core_info, context)
                 else:
-                    made_obj = literalClass.makeLiteral(string_format, latex_format, extra_core_info, context)
-            else:
-                raise NotImplementedError("Must implement the 'makeLiteral(string_format, latex_format, context)' static method for class %s"%str(literalClass)) 
-                
+                    raise NotImplementedError("Must implement the 'makeLiteral(string_format, latex_format, context)' static method for class %s"%str(literalClass)) 
+            finally:
+                Context.default = prev_context_default # restore the default
+            
             Literal.instances.pop(coreInfo)
             return made_obj.withStyles(**styles)
         
