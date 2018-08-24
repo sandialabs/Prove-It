@@ -466,7 +466,7 @@ class ContextStorage:
         context_name, hash_directory = self._split(proveItStorageId)
         if context_name == '':
             return os.path.join(self.pv_it_dir, hash_directory)
-        else:            
+        else:
             pv_it_dir = Context.getContext(context_name)._storage.pv_it_dir
             return os.path.join(pv_it_dir, hash_directory)
     
@@ -638,7 +638,7 @@ class ContextStorage:
                     continue
             # found a match; it is already in storage
             # remember this for next time
-            result = (self.context, indexed_hash_path)
+            result = (self.context, rep_hash + str(index))
             self._proveItObjects[proveItObject._style_id] = result
             return result
         indexed_hash_path = hash_path + str(index)
@@ -653,7 +653,7 @@ class ContextStorage:
         for objId in self._extractReferencedStorageIds(unique_rep):
             self._addReference(objId)
         # remember this for next time
-        result = (self.context, indexed_hash_path)
+        result = (self.context, rep_hash + str(index))
         self._proveItObjects[proveItObject._style_id] = result
         return result
     
@@ -910,7 +910,7 @@ class ContextStorage:
             except:
                 pass
             if not isinstance(arg, Expression) and not isinstance(arg, str) and not isinstance(arg, int):
-                raise TypeError("The arguments of %s.remakeArguments() should be Expressions or strings or integers" %str(expr.__class__))
+                raise TypeError("The arguments of %s.remakeArguments() should be Expressions or strings or integers: %s instead." %(str(expr.__class__), str(arg.__class__)))
             if isinstance(arg, Expression):
                 subExpr = arg
                 self._exprBuildingPrerequisites(subExpr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems)
@@ -1275,10 +1275,12 @@ class ContextStorage:
                     previous.add(line.strip())
         
         # grab the current "displayed" expressions 
-        if clear:
-            current = set()
-        else: 
-            current = {self._proveItStorageId(style_id) for style_id in Expression.displayed_expression_styles}
+        current = set()
+        if not clear:
+            for style_id, expr in Expression.displayed_expression_styles:
+                # only reference "non-special" displayed expressions (not tied to a context as a special expression):
+                if expr not in Expression.contexts: 
+                    current.add(self._proveItStorageId(style_id))
         
         # dereference old ones
         for old_ref in previous - current:
@@ -1600,7 +1602,7 @@ class StoredTheorem(StoredSpecialStmt):
         for storedUsedStmts, usedStmtsFilename in ((storedUsedAxioms, 'usedAxioms.txt'), (storedUsedTheorems, 'usedTheorems.txt')):
             with open(os.path.join(self.path, usedStmtsFilename), 'w') as usedStmtsFile:
                 for storedUsedStmt in sorted(storedUsedStmts):
-                    self._includeMutualReferences(storedUsedStmt.context)
+                    self.context._storage._includeMutualReferences(storedUsedStmt.context)
                     usedStmtsFile.write(str(storedUsedStmt) + '\n')
         
         # record any used theorems that are already completely proven

@@ -71,7 +71,7 @@ class KnownTruth:
         self._meaning_id = makeUniqueId(self._meaning_rep)
         # style representations and unique ids are dependent of style
         self._style_rep = self._generate_unique_rep(lambda expr : hex(expr._style_id))
-        self._style_id = makeUniqueId(self._style_id)
+        self._style_id = makeUniqueId(self._style_rep)
         
 
     def _generate_unique_rep(self, objectRepFn, includeStyle=False):
@@ -120,7 +120,7 @@ class KnownTruth:
         return not self.__eq__(other)
 
     def __hash__(self):
-        return self._meaining_id
+        return self._meaning_id
         
     def beginProof(self, presuming=tuple()):
         '''
@@ -200,7 +200,7 @@ class KnownTruth:
         if len(presumed_contexts) > 0:
             print "Presuming theorems in %s (except any that depend upon this theorem)."%', '.join(presumed_contexts)
         if len(explicit_presumed_theorems) > 0:
-            print "Presuming %s theorem(s) (and any of their dependencies)"%', '.join(explicit_presumed_theorems)
+            print "Presuming %s theorem(s) (and dependencies)."%', '.join(explicit_presumed_theorems)
         if num_prev_thms > 0:
             print "Presuming previous theorems in this context (and any of their dependencies)."
         self._proof._unusableTheorem = self._proof # can't use itself to prove itself
@@ -539,7 +539,7 @@ class KnownTruth:
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
+            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body, lambdaExpr.conditions
             for iVar in instanceVars:
                 if iVar in remainingSubVars:
                     # remove this instance variable from the remaining substitution variables

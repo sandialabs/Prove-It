@@ -72,6 +72,14 @@ class ExprList(Composite, Expression):
         '''
         return self.entries[i]
     
+    def singular(self):
+        '''
+        Return True if this has a single element that is not an
+        iteration.
+        '''
+        from iteration import Iter
+        return len(self)==1 and not isinstance(self[0], Iter)
+    
     def index(self, entry):
         return self.entries.index(entry)
 

@@ -69,7 +69,7 @@ class Label(Expression):
             if latexFormat != stringFormat:
                 yield ('latexFormat', 'r"' + latexFormat + '"')
         else:
-            raise LabelError("Must properly implement the 'buildArguments' method for class %s"%str(self.__class__))
+            raise LabelError("Must properly implement the 'remakeArguments' method for class %s"%str(self.__class__))
 
 class LabelError:
     def __init__(self, msg):

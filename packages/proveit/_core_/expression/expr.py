@@ -27,9 +27,11 @@ class ExprType(type):
 class Expression:
     __metaclass__ = ExprType
     
-    displayed_expression_styles = set() # set of expression style_id's for which __repr_html__ has been called this session
+    # set of expression (style_id, Expression) pairs for which __repr_html__ has been called this session:
+    displayed_expression_styles = set() 
     
-    contexts = dict() # map expression to contexts (for expressions that "belong" to a Context)
+    # map expression to contexts (for expressions that "belong" to a Context)
+    contexts = dict() 
     
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
@@ -532,7 +534,8 @@ class Expression:
             html = '<a class="ProveItLink" href="' + os.path.relpath(exprNotebookPath) + '">'
             html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
-        Expression.displayed_expression_styles.add(self._style_id) # record as a "displayed" (style-specific) expression
+        # record as a "displayed" (style-specific) expression
+        Expression.displayed_expression_styles.add((self._style_id, self)) 
         return html
         
     def _config_latex_tool(self, lt):

@@ -350,7 +350,7 @@ class Context:
                 
     @staticmethod
     def getStoredStmt(fullname, kind):
-        from storage import StoredAxiom, StoredTheorem
+        from _context_storage import StoredAxiom, StoredTheorem
         split_name = fullname.split('.')
         context_name = '.'.join(split_name[:-1])
         stmt_name = split_name[-1]

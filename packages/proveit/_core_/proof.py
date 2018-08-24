@@ -51,7 +51,7 @@ class Proof:
         self._meaning_id = makeUniqueId(self._meaning_rep)
         # style representations and unique ids are dependent of style
         self._style_rep = self._generate_unique_rep(lambda obj : hex(obj._style_id))
-        self._style_id = makeUniqueId(self._style_id)        
+        self._style_id = makeUniqueId(self._style_rep)        
         # determine the number of unique steps required for this proof
         self.numSteps = len(self.allRequiredProofs())
         # if it is a Theorem, set its "usability", avoiding circular logic
@@ -98,7 +98,7 @@ class Proof:
         '''
         # Skip the step type which is in the beginning and followed by a ':'
         remaining = unique_rep.split(':', 1)[-1]
-        # Everything else that between the punctuation, ';', ':', ',', '{', '}', '[', ']' is a represented object.
+        # Everything else coming between the punctuation, ';', ':', ',', '{', '}', '[', ']', is a represented object.
         objIds = re.split("\{|\[|,|:|;|\]|\}",remaining) 
         return [objId for objId in objIds if len(objId) > 0]  
                         
@@ -237,7 +237,7 @@ class Axiom(Proof):
         return 'axiom'
     
     def _storedAxiom(self):
-        from storage import StoredAxiom
+        from _context_storage import StoredAxiom
         return StoredAxiom(self.context, self.name)
     
     def getLink(self):
@@ -303,7 +303,7 @@ class Theorem(Proof):
             theorem._setUsability()            
         
     def _storedTheorem(self):
-        from storage import StoredTheorem
+        from _context_storage import StoredTheorem
         return StoredTheorem(self.context, self.name)
 
     def getLink(self):
@@ -640,7 +640,7 @@ class Specialization(Proof):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
+            instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
             # When substituting an iterated instance variable, we need to make sure that the
             # expansion is complete: that there are as many elements of the expansion as
             # the number of elements of the substitution.  For example,
@@ -765,7 +765,7 @@ n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the 
         assert isinstance(generalizedExpr, Forall), 'The result of a generalization must be a Forall operation'
         lambdaExpr = generalizedExpr.operand
         assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
-        expr = lambdaExpr.body['iexpr']
+        expr = lambdaExpr.body
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
 
 class ProofFailure(Exception):

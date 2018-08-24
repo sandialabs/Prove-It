@@ -64,8 +64,10 @@ class ExpressionInfo:
                 if hasattr(expr, 'parameter'): # has a single parameter
                     outStr += indent + 'parameter: %s\n'%(expr_num_map[expr.parameter])
                 else:        
-                    outStr += indent + r'parameters: ' + ', '.join(str(expr_num_map[parameter]) for parameter in expr.parameters) + '\n'
+                    outStr += indent + r'parameters: %s\n'%(expr_num_map[expr.parameters])
                 outStr += indent + r'body: ' + str(expr_num_map[expr.body]) + '\n'
+                if len(expr.conditions) > 0:
+                    outStr += indent + r'conditions: %s\n'%(expr_num_map[expr.conditions])
             elif isinstance(expr, Indexed):
                 outStr += indent + 'var: %d\n'%(expr_num_map[expr.var])
                 if hasattr(expr, 'index'):
@@ -130,8 +132,10 @@ class ExpressionInfo:
                 if hasattr(expr, 'parameter'): # has a single parameter
                     sub_expressions = 'parameter:&nbsp;%s<br>'%(expr_num_map[expr.parameter])
                 else:                        
-                    sub_expressions = 'parameters:&nbsp;%s<br>'%(', '.join(str(expr_num_map[parameter]) for parameter in expr.parameters))
+                    sub_expressions = 'parameters:&nbsp;%s<br>'%(expr_num_map[expr.parameters])
                 sub_expressions += 'body:&nbsp;%d<br>'%(expr_num_map[expr.body])
+                if len(expr.conditions)>0:
+                    sub_expressions += 'conditions:&nbsp;%d<br>'%(expr_num_map[expr.conditions])
             elif isinstance(expr, Indexed):
                 sub_expressions += 'var:&nbsp;%d<br>'%(expr_num_map[expr.var])
                 if hasattr(expr, 'index'):

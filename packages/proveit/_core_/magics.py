@@ -36,7 +36,7 @@ class AssignmentBehaviorModifier:
             # get the last non-indented line and all indented lines that follow
             last_python_stmt = '\n'.join(lines[non_indented_line_indices[-1]:])
             # look for one or more variables on the left side of an assignment
-            if re.match("[a-zA-Z_][a-zA-Z0-9_]*\s*(,\s*[a-zA-Z_][a-zA-Z0-9_]*)*\s*=", last_python_stmt) is not None:
+            if re.match("[a-zA-Z_][a-zA-Z0-9_\.]*\s*(,\s*[a-zA-Z_][a-zA-Z0-9_\.]*)*\s*=", last_python_stmt) is not None:
                 lhs, rhs = last_python_stmt.split('=', 1)
                 lhs = lhs.strip(); rhs = rhs.strip()
                 if lhs != 'context' and rhs.find("proveit.Context('.')") != 0:
@@ -447,7 +447,8 @@ class ProveItMagic(Magics):
         print "Passed sanity check: built '%s' is the same as the stored Expression."%expr_name
                                 
     @line_magic
-    def begin_proof(self, line):
+    def proving(self, line):
+        from proveit._core_.proof import Theorem
         self.context = Context('..') # the context should be up a directory from the _proofs_ directory
         sys.path.append('..')
         theorem_name, presuming_str = str(line.strip()).split(' ', 1)
@@ -456,9 +457,19 @@ class ProveItMagic(Magics):
             return
         args = presuming_str.split(' ', 1)[-1].strip('[]').split(',')
         theorem_truth = Context('..').getTheorem(theorem_name).provenTruth
+        print "Beginning proof of", theorem_name
         presuming = [arg.strip() for arg in args if arg.strip() != '']
+        # The list of theorems/context-names may be composed of full-path strings containing '.'s
+        # or may be actual theorem variables defined in the IPython sesson.  The latter
+        # instances will be converted to strings.
+        for k, arg in enumerate(list(presuming)):
+            if '.' not in arg:
+                knownTruth = self.shell.user_ns[arg]
+                if not isinstance(knownTruth, KnownTruth) or not isinstance(knownTruth.proof(), Theorem):
+                    raise ValueError("Presuming list must be composed of full-path theorem/context-name containing '.'s or be KnownTruth variable representing a Theorem")
+                theorem = knownTruth.proof()
+                presuming[k] = str(theorem) # full path of theorem 
         begin_proof_result = theorem_truth.beginProof(presuming)
-        print "Beginning proof of"
         if isinstance(begin_proof_result, Expression):
             # assign the theorem name to the theorem expression
             # and display this assignment
@@ -469,6 +480,7 @@ class ProveItMagic(Magics):
     @line_magic
     def qed(self, line):
         proof = KnownTruth.theoremBeingProven.provenTruth._qed()
+        proof._repr_html_() # generate expressions that should be referenced
         self.context.referenceDisplayedExpressions('_proof_' + KnownTruth.theoremBeingProven.name)
         # clean unreferenced expressions:
         self.context.clean()
