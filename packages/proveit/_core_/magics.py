@@ -421,6 +421,8 @@ class ProveItMagic(Magics):
             self.context._clearTheorems()
         elif kind == 'common':
             self.context._clearCommonExressions()
+        elif KnownTruth.theoremBeingProven is not None:
+            kind = '_proof_' + KnownTruth.theoremBeingProven.name
         # clean unreferenced expressions:
         self.context.referenceDisplayedExpressions(kind, clear=True)
         self.context.clean()
