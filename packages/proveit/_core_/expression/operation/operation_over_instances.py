@@ -1,7 +1,6 @@
 from proveit._core_.expression import Expression
 from proveit._core_.expression.lambda_expr import Lambda
-from proveit._core_.expression.composite import ExprList, singleOrCompositeExpression, compositeExpression, Composite, NamedExprs
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.expression.composite import ExprList, singleOrCompositeExpression, compositeExpression
 from .operation import Operation
 
 class OperationOverInstances(Operation):
@@ -12,15 +11,14 @@ class OperationOverInstances(Operation):
         under the given conditions.  
         That is, the operation operates over all possibilities of given Variable(s) wherever
         the condition(s) is/are satisfied.  Examples include forall, exists, summation, etc.
-        instanceVars and conditions may be singular or finstanceVarOrVarsplural (iterable).
+        instanceVars may be singular or plural (iterable).
               
         If a domain is supplied, additional conditions are generated that each instance 
         Variable is in the domain "set": InSet(x_i, domain), where x_i is for each instance 
         variable.  If, instead, domains are supplied, then each instance variable is supplied
         with its own domain (one for each instance variable).  Internally, this is represented
-        as an Operation with a single Lambda expression operand that maps the instance variables 
-        to a NamedExpression in the following form:
-            instanceVars -> [('iexpr',instanceExpr), ('conditions',conditions)]
+        as an Operation with a single Lambda expression operand with conditions matching
+        the OperationOverInstances conditions (a conditional mapping).
         
         The set of "domain" conditions come at the beginning of this conditions list and
         can be accessed via the 'implicitConditions' attribute, and the 'domain' or 'domains'
@@ -71,7 +69,7 @@ class OperationOverInstances(Operation):
                         
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, conditions):
-        return Lambda(instanceVars, NamedExprs([('iexpr',instanceExpr), ('conds',conditions)]))
+        return Lambda(instanceVars, instanceExpr, conditions)
     
     @staticmethod
     def extractInitArgValue(argName, operator, operand):
@@ -92,9 +90,9 @@ class OperationOverInstances(Operation):
         if argName=='instanceVarOrVars':
             return singleOrCompositeExpression(operand.parameters)
         elif argName=='instanceExpr':
-            return operand.body['iexpr'] 
+            return operand.body
         elif argName=='conditions':
-            conditions = operand.body['conds']
+            conditions = operand.conditions
             #if len(conditions)==0: return tuple()
             return conditions
     
@@ -158,7 +156,10 @@ class OperationOverInstances(Operation):
                 else: outStr += formattedVars
             if self.hasDomainOrDomains():
                 outStr += ' in '
-                outStr += self.domain_or_domains.formatted(formatType, formattedOperator='*', fence=False)
+                if self.hasDomains():
+                    outStr += self.domains.formatted(formatType, formattedOperator='*', fence=False)
+                else:
+                    outStr += self.domain.formatted(formatType, fence=False)                    
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
                 outStr += explicitConditions.formatted(formatType, fence=False)                
@@ -173,7 +174,10 @@ class OperationOverInstances(Operation):
                 else: outStr += formattedVars
             if self.hasDomainOrDomains():
                 outStr += r' \in '
-                outStr += self.domain_or_domains.formatted(formatType, formattedOperator=r'\times', fence=False)
+                if self.hasDomains():
+                    outStr += self.domains.formatted(formatType, formattedOperator=r'\times', fence=False)
+                else:
+                    outStr += self.domain.formatted(formatType, fence=False)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += "~|~"
                 outStr += explicitConditions.formatted(formatType, fence=False)                
