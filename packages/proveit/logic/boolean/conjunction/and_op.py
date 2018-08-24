@@ -139,7 +139,6 @@ class And(Operation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations    
-        from ._theorems_ import conjunctionTrueEval, conjunctionFalseEval
         from proveit.logic.boolean._common_ import TRUE, FALSE
         falseIndex = -1
         for i, operand in enumerate(self.operands):
@@ -152,6 +151,7 @@ class And(Operation):
         if len(self.operands) == 2:
             # This will automatically return andTT, andTF, andFT, or andFF
             return Operation.evaluate(self, assumptions)
+        from ._theorems_ import conjunctionTrueEval, conjunctionFalseEval
         if falseIndex >= 0:
             # one operand is FALSE so the whole conjunction evaluates to FALSE.
             return conjunctionFalseEval.specialize({Amulti:self.operands[:falseIndex], Cmulti:self.operands[falseIndex+1:]})

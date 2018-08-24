@@ -19,7 +19,7 @@ class Numeral(Literal, IrreducibleValue):
             return Equals(self, self).prove()
         pass # need axioms/theorems to prove inequality amongst different numerals
 
-    def buildArguments(self):
+    def remakeArguments(self):
         '''
         Yield the argument values that could be used to recreate this DigitLiteral.
         '''

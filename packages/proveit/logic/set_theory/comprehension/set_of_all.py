@@ -5,12 +5,12 @@ class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
     _operator_ = Literal(stringFormat='Set', context=__file__)    
     
-    def __init__(self, instanceVars, instanceElement, domain, conditions=tuple()):
+    def __init__(self, instanceVarOrVars, instanceElement, domain, conditions=tuple()):
         '''
         Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
-        {instanceElement | conditions}_{instanceVar \in S}
+        {instanceElement | conditions}_{instanceVar(s) \in S}
         '''
-        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVars, instanceElement, domain, conditions=conditions)
+        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVarOrVars, instanceElement, domain=domain, conditions=conditions)
         self.instanceElement = self.instanceExpr
 
     @staticmethod
@@ -21,32 +21,32 @@ class SetOfAll(OperationOverInstances):
         composite expression (i.e., the operands of a constructed operation).
         '''
         if argName=='instanceElement':
-            instance_mapping = operands['imap'] # instance mapping
-            return instance_mapping.body['iexpr'] 
+            return operands.body # instance mapping
         else:
             return OperationOverInstances.extractInitArgValue(argName, operators, operands)
         
-    def _formatted(self, formatType, fence=False):
+    def _formatted(self, formatType, fence=False, **kwargs):
         outStr = ''
-        innerFence = (len(self.conditions) > 0)
-        formattedInstanceVars = ', '.join([var.formatted(formatType) for var in self.instanceVars])
-        formattedInstanceElement = self.instanceElement.formatted(formatType, fence=innerFence)
-        formattedDomain = self.domain.formatted(formatType, fence=True)
+        explicit_conditions = self.explicitConditions()
+        inner_fence = (len(explicit_conditions) > 0)
+        formatted_instance_vars = ', '.join([var.formatted(formatType) for var in self.instanceVars])
+        formatted_instance_element = self.instanceElement.formatted(formatType, fence=inner_fence)
+        formatted_domain = self.domain.formatted(formatType, fence=True)
         if formatType == 'latex': outStr += r"\left\{"
         else: outStr += "{"
-        outStr += formattedInstanceElement
-        if len(self.conditions) > 0:
-            formattedConditions = self.conditions.formatted(formatType, fence=False) 
+        outStr += formatted_instance_element
+        if len(explicit_conditions) > 0:
+            formatted_conditions = explicit_conditions.formatted(formatType, fence=False) 
             if formatType == 'latex': outStr += r'~|~'
             else: outStr += ' s.t. ' # such that
-            outStr += formattedConditions
+            outStr += formatted_conditions
         if formatType == 'latex': outStr += r"\right\}"
         else: outStr += "}"
-        outStr += '_{' + formattedInstanceVars
+        outStr += '_{' + formatted_instance_vars
         if self.domain is not None:
             if formatType == 'latex': outStr += r' \in '
             else: outStr += ' in '
-            outStr += formattedDomain
+            outStr += formatted_domain
         outStr += '}'
         return outStr
     
