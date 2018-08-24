@@ -113,7 +113,7 @@ class KnownTruth:
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
-            return self._meaining_id == other._meaining_id
+            return self._meaning_id == other._meaning_id
         else: return False # other must be an Expression to be equal to self
     
     def __ne__(self, other):

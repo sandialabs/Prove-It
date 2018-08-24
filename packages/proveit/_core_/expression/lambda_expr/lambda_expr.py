@@ -162,7 +162,7 @@ class Lambda(Expression):
         outStr = r'\left[' if fence else ''
         parameterListStr = ', '.join([parameter.latex(abbrev=True) for parameter in self.parameters])
         if self.parameters.singular():
-            outStr +=  parameterListStr + r'\mapsto '
+            outStr +=  parameterListStr + r' \mapsto '
         else:
             outStr += r'\left(' + parameterListStr + r'\right) \mapsto '
         outStr += self.body.latex(fence=True)
