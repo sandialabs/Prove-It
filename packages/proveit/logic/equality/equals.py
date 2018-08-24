@@ -255,13 +255,13 @@ class Equals(TransitiveRelation):
     
     @staticmethod
     def _lambdaExpr(lambdaMap, defaultGlobalReplSubExpr):
-        from proveit.lambda_map import globalRepl
-        if hasattr(lambdaMap, 'lambdaMap'):
-            expr = lambdaMap.lambdaMap()
+        from proveit._core_.expression.inner_expr import InnerExpr
+        if isinstance(lambdaMap, InnerExpr):
+            expr = lambdaMap.replMap()
         else: expr = lambdaMap
         if not isinstance(expr, Lambda):
             # as a default, do a global replacement
-            return globalRepl(expr, defaultGlobalReplSubExpr)
+            return Lambda.globalRepl(expr, defaultGlobalReplSubExpr)
         return expr
     
     def substitution(self, lambdaMap, assumptions=USE_DEFAULTS):
