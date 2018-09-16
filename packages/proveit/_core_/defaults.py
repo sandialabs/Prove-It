@@ -40,7 +40,8 @@ class Defaults:
                 # Prove each assumption, by assumption, to deduce any side-effects.
                 if assumption not in Defaults.provingAssumptions: # avoid infinite recursion
                     Defaults.provingAssumptions.add(assumption)
-                    assumption.prove([assumption])
+                    # Note that while we only need THE assumption to prove itself, 
+                    assumption.prove(assumptions) # havinig the other assumptions around can be useful for deriving side-effects.
                     Defaults.provingAssumptions.remove(assumption)   
                 yield assumption
                 assumptionsSet.add(assumption)

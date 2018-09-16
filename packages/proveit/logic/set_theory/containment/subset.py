@@ -34,21 +34,14 @@ class Subset(SubsetRelation):
     _operator_ = Literal(stringFormat='subset', latexFormat=r'\subset', context=__file__)    
 
     # map left-hand-sides to Subset KnownTruths
-    #   (populated in TransitivityRelation.deriveSideEffects)
+    #   (populated in TransitivityRelation.sideEffects)
     knownLeftSides = dict()    
     # map right-hand-sides to Subset KnownTruths
-    #   (populated in TransitivityRelation.deriveSideEffects)
+    #   (populated in TransitivityRelation.sideEffects)
     knownRightSides = dict()        
     
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, Subset._operator_, subset, superset)
-        
-    def deriveSideEffects(self, knownTruth):
-        '''
-        Derive the relaxed subseteq form as a side-effect.
-        '''
-        SubsetRelation.deriveSideEffects(self, knownTruth)
-        self.derivedRelaxed(assumptions=knownTruth.assumptions)
  
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''

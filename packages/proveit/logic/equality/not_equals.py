@@ -1,5 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from equals import Equals
+from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit._common_ import x, y, A, X
 
 class NotEquals(Operation):
@@ -25,7 +26,6 @@ class NotEquals(Operation):
     
     def conclude(self, assumptions):
         from proveit.logic import FALSE
-        from proveit import isIrreducibleValue
         if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
             # prove that two irreducible values are not equal
             return self.lhs.notEquals(self.rhs)
@@ -95,7 +95,7 @@ class NotEquals(Operation):
         from _theorems_ import foldNotEquals
         return foldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
         
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that may be evaluated to irreducible values that
         may be compared, or if there is a known evaluation of this
@@ -103,7 +103,7 @@ class NotEquals(Operation):
         TRUE or FALSE.
         '''
         definitionEquality = self.definition()
-        unfoldedEvaluation = definitionEquality.rhs.evaluate(assumptions)        
+        unfoldedEvaluation = definitionEquality.rhs.evaluation(assumptions)        
         return Equals(self, unfoldedEvaluation.rhs).prove(assumptions)
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):

@@ -16,7 +16,7 @@ class Len(Operation):
         if hasattr(self, 'operand'): return '|' + self.operand.latex() + '|'
         return '|' + self.operands.latex(fence=True) + '|'
     
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         from proveit.logic import Equals
         from _axioms_ import listLenDef
         from _theorems_ import listLenZero, listLenOne, listLenTwo, listLenThree, listLenFour, listLenFive
@@ -43,5 +43,5 @@ class Len(Operation):
             return listLenNine            
         else:
             equiv = listLenDef.specialize({x:self.operands[:-1], y:self.operands[-1]})
-            value = equiv.rhs.evaluate(assumptions).rhs
+            value = equiv.rhs.evaluation(assumptions).rhs
             return Equals(self, value).prove(assumptions)

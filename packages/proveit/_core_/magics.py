@@ -538,26 +538,40 @@ class ProveItMagic(Magics):
             to the definition.
             '''
             expr = stmt.provenTruth.expr
-            display(HTML('<strong><a class="ProveItLink" href="%s">%s</a>:</strong> %s<br>'%(stmt.getLink(), stmt.name, expr._repr_html_())))
+            display(HTML('<dt><a class="ProveItLink" href="%s">%s</a></dt><dd>%s</dd>'%(stmt.getLink(), str(stmt), expr._repr_html_())))
+        
+        def stmt_sort(stmt):
+            return str(stmt)
         
         if isinstance(proof, Theorem):
-            required_axioms, required_unproven_theorems = proof.allRequirements()
+            try:
+                required_axioms, required_unproven_theorems = proof.allRequirements()
+            except:
+                display(HTML('<h3>This theorem has not been proven yet.</h3>'))
+                return 
+                
             if len(required_unproven_theorems) > 0:
                 display(HTML('<h3>Unproven theorems required (directly or indirectly) to prove %s</h3>'%name))
-                for required_unproven_theorem in required_unproven_theorems:
+                display(HTML('<dl>'))
+                for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
                     displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
+                display(HTML('</dl>'))
             if len(required_axioms) > 0:
                 display(HTML('<h3>Axioms required (directly or indirectly) to prove %s</h3>'%name))
-                for required_axiom in required_axioms:       
+                display(HTML('<dl>'))
+                for required_axiom in sorted(required_axioms, key=stmt_sort):       
                     displaySpecialStmt(Context.findAxiom(required_axiom))
+                display(HTML('</dl>'))
         
         dependents = proof.directDependents()
         if len(dependents) == 0:
             display(HTML('<h3>No theorems depend upon %s</h3>'%name))
         else:
             display(HTML('<h3>Theorems that depend directly on %s</h3>'%name))
-            for dependent in proof.directDependents():
+            display(HTML('<dl>'))
+            for dependent in sorted(proof.directDependents(), key=stmt_sort):
                 displaySpecialStmt(Context.findTheorem(dependent))
+            display(HTML('</dl>'))
 
 class Assignments:    
     def __init__(self, names, rightSides, beginningProof=False):

@@ -133,7 +133,7 @@ class And(Operation):
             elif idx==1: self.deduceRightInBool(assumptions)
         return eachInBool.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
     
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -143,14 +143,14 @@ class And(Operation):
         falseIndex = -1
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:
-                # The operands are not all true/false, so try the default evaluate method
+                # The operands are not all true/false, so try the default evaluation method
                 # which will attempt to evaluate each of the operands.
-                return Operation.evaluate(self, assumptions)
+                return Operation.evaluation(self, assumptions)
             if operand == FALSE:
                 falseIndex = i
         if len(self.operands) == 2:
             # This will automatically return andTT, andTF, andFT, or andFF
-            return Operation.evaluate(self, assumptions)
+            return Operation.evaluation(self, assumptions)
         from ._theorems_ import conjunctionTrueEval, conjunctionFalseEval
         if falseIndex >= 0:
             # one operand is FALSE so the whole conjunction evaluates to FALSE.

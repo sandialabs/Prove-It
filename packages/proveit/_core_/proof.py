@@ -319,7 +319,15 @@ class Theorem(Proof):
         is expected to depend upon.
         '''
         self._storedTheorem().recordPresumingInfo(presuming)
-        
+
+    def getRecursivePresumingInfo(self, presumed_theorems, presumed_contexts):
+        '''
+        Append presumed theorem and context strings to 'presumed_theorems'
+        and 'presumed_contexts' respectively.  For each theorem, do this
+        recursively.
+        '''
+        self._storedTheorem().getRecursivePresumingInfo(presumed_theorems, presumed_contexts)        
+                
     def recordProof(self, proof):
         '''
         Record the given proof as the proof of this theorem.  Updates

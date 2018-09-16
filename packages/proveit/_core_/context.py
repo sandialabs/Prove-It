@@ -438,6 +438,8 @@ class Axioms:
         return sorted(self.__dict__.keys() + self._context.axiomNames())
 
     def __getattr__(self, name):
+        if name=='__path__':
+            return self.__file__
         try:
             axiom_truth = self._context.getAxiom(name).provenTruth
         except KeyError:
@@ -465,6 +467,8 @@ class Theorems:
         return sorted(self.__dict__.keys() + self._context.theoremNames())
                 
     def __getattr__(self, name):
+        if name=='__path__':
+            return self.__file__
         try:
             theorem_truth = self._context.getTheorem(name).provenTruth
         except KeyError:

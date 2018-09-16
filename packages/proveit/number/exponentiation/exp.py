@@ -39,7 +39,7 @@ class Exp(Operation):
         elem_in_set = InSet(element, self)
         if not isinstance(element, ExprList):
             raise ProofFailure(elem_in_set, assumptions, "Can only automatically deduce membership in exponentiated sets for an element that is a list")
-        exponent_eval = self.exponent.evaluate(assumptions=assumptions)
+        exponent_eval = self.exponent.evaluation(assumptions=assumptions)
         exponent = exponent_eval.rhs
         if isLiteralInt(exponent):
             if len(element) != exponent.asInt():

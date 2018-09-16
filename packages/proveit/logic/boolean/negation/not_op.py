@@ -43,7 +43,7 @@ class Not(Operation):
         '''
         # as a last resort (concludeNegation on the operand should have been
         # tried first), conclude negation via evaluating the operand as false.
-        self.operand.evaluate(assumptions=assumptions)
+        self.operand.evaluation(assumptions=assumptions)
         return self.concludeViaFalsifiedNegation(assumptions=assumptions)
     
     def concludeNegation(self, assumptions):
@@ -65,7 +65,7 @@ class Not(Operation):
         if fence: outStr += ')'
         return outStr            
     
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -75,11 +75,11 @@ class Not(Operation):
         from proveit.logic.boolean.negation._axioms_ import falsifiedNegationIntro
         if self.operand == TRUE: return notT
         if self.operand == FALSE: return notF
-        opValue = self.operand.evaluate(assumptions=assumptions).rhs
+        opValue = self.operand.evaluation(assumptions=assumptions).rhs
         if opValue == TRUE:
             # evaluate to FALSE via falsifiedNegationIntro
             return falsifiedNegationIntro.specialize({A:self.operand}, assumptions=assumptions)
-        return Operation.evaluate(self, assumptions)
+        return Operation.evaluation(self, assumptions)
     
     def substituteInFalse(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
@@ -87,7 +87,7 @@ class Not(Operation):
         '''
         from proveit.logic.equality._theorems_ import substituteInFalse
         from proveit.logic import Equals
-        from proveit.common import P
+        from proveit._common_ import P
         Plambda = Equals._lambdaExpr(lambdaMap, self.operand)
         return substituteInFalse.specialize({x:self.operand, P:Plambda}, assumptions=assumptions)            
 
@@ -105,7 +105,9 @@ class Not(Operation):
         '''
         Attempt to deduce, then return, that this 'not' expression is in the set of BOOLEANS.
         '''
-        from ._theorems_ import closure
+        from ._theorems_ import closure, doubleNegClosure
+        if isinstance(self.operand, Not):
+            return doubleNegClosure.specialize({A:self.operand.operand}, assumptions=assumptions)
         return closure.specialize({A:self.operand}, assumptions=assumptions)
 
     def deduceOperandInBool(self, assumptions=USE_DEFAULTS):

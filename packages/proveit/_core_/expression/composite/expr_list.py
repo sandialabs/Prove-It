@@ -72,6 +72,14 @@ class ExprList(Composite, Expression):
         '''
         return self.entries[i]
     
+    def __add__(self, other):
+        '''
+        Concatenate ExprList's together via '+' just like
+        Python lists.  Actually works with any iterable
+        of Expressions as the second argument.
+        '''
+        return ExprList(*(self.entries + list(other)))
+    
     def singular(self):
         '''
         Return True if this has a single element that is not an

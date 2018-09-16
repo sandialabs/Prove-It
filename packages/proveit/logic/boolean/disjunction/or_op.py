@@ -65,14 +65,10 @@ class Or(Operation):
         Side-effect derivations to attempt automatically.
         '''
         from proveit.logic import Not
-        '''
-        # This shouldn't be necessary, right; thinking this is obsolete
-        # given the infinite recursion protection.
         if len(self.operands)==2:
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
                 return # stop to avoid infinite recursion.
-        '''
         yield self.deriveInBool
 
     def negationSideEffects(self, knownTruth):
@@ -210,7 +206,7 @@ class Or(Operation):
         compose([leftImplConclusion, rightImplConclusion], assumptions)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -221,14 +217,14 @@ class Or(Operation):
         trueIndex = -1
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:
-                # The operands are not always true/false, so try the default evaluate method
+                # The operands are not always true/false, so try the default evaluation method
                 # which will attempt to evaluate each of the operands.
-                return Operation.evaluate(self, assumptions)
+                return Operation.evaluation(self, assumptions)
             if operand == TRUE:
                 trueIndex = i
         if len(self.operands) == 2:
             # This will automatically return orTT, orTF, orFT, or orFF
-            return Operation.evaluate(self, assumptions)
+            return Operation.evaluation(self, assumptions)
         if trueIndex >= 0:
             # one operand is TRUE so the whole disjunction evaluates to TRUE.
             return disjunctionTrueEval.specialize({Amulti:self.operands[:trueIndex], Cmulti:self.operands[trueIndex+1:]}, assumptions=assumptions)

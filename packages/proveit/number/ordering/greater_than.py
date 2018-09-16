@@ -50,10 +50,10 @@ class Greater(GreaterRelation):
     _operator_ = Literal(stringFormat='>', context=__file__)
     
     # map left-hand-sides to ">" KnownTruths
-    #   (populated in TransitivityRelation.deriveSideEffects)
+    #   (populated in TransitivityRelation.sideEffects)
     knownLeftSides = dict()    
     # map right-hand-sides to ">" KnownTruths 
-    #   (populated in TransitivityRelation.deriveSideEffects)
+    #   (populated in TransitivityRelation.sideEffects)
     knownRightSides = dict()   
             
     def __init__(self, lhs, rhs):

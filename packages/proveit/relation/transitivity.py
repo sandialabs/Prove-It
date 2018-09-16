@@ -48,9 +48,8 @@ class TransitiveRelation(Operation):
             raise NotImplementedError("Expressions derived from TransitiveRelation should define 'knownLeftSides' and 'knownRightSides' as class variables")
         self.__class__.knownLeftSides.setdefault(self.lhs, set()).add(knownTruth)
         self.__class__.knownRightSides.setdefault(self.rhs, set()).add(knownTruth)
-        if (self.lhs != self.rhs):
-            # automatically derive the reversed equivalent form
-            yield self.deriveReversed
+        return
+        yield # makes this a generator as it should be
 
     def conclude(self, assumptions):
         '''
@@ -253,7 +252,7 @@ class TransitiveRelation(Operation):
                 chains, unexplored_chains = right_chains, unexplored_right
                 extensions = lambda endpoint : RelationClass.knownRelationsFromRight(endpoint, assumptions_set)
                 endpoints, other_endpoints = right_chains.keys(), left_chains.keys()
-                            
+            
             # search for extensions to the unexplored chains and see if any make
             # it to the other side
             new_chains = dict()

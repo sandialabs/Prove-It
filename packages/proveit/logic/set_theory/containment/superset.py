@@ -42,13 +42,6 @@ class Superset(SupersetRelation):
     def __init__(self, superset, subset):
         SupersetRelation.__init__(self, Superset._operator_, superset, subset)
 
-    def deriveSideEffects(self, knownTruth):
-        '''
-        Derive the relaxed supseteq form as a side-effect.
-        '''
-        SupersetRelation.deriveSideEffects(self, knownTruth)
-        self.derivedRelaxed(assumptions=knownTruth.assumptions)
-
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From A subset B, derive B supset A.

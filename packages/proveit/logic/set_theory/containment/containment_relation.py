@@ -13,12 +13,13 @@ class ContainmentRelation(TransitiveRelation):
     def sideEffects(self, knownTruth):
         '''
         In addition to the TransitiveRelation side-effects, also
-        attempt deriveRelaxed (if applicable).
+        attempt deriveRelaxed (if applicable) and deriveReversed.
         '''
         for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
             yield sideEffect
         if hasattr(self, 'deriveRelaxed'):
             yield self.deriveRelaxed
+        yield self.deriveReversed
 
 class ContainmentSequence(TransitiveSequence):
     r'''

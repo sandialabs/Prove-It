@@ -290,7 +290,7 @@ class Add(Operation):
         return self.terms[0].join(self.terms[1], assumptions)
     
     """
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to numbers, derive and
         return the equality of this expression with the sum of these numbers. 
@@ -298,21 +298,21 @@ class Add(Operation):
         from proveit.number.sets.integer._axioms_ import twoDef, threeDef, fourDef, fiveDef, sixDef, sevenDef, eightDef, nineDef # load in integer successor evaluations  
         for i, operand in enumerate(self.operands):
             if not isIrreducibleValue(operand):
-                # The operands are not always true/false, so try the default evaluate method
+                # The operands are not always true/false, so try the default evaluation method
                 # which will attempt to evaluate each of the operands.
-                return Operation.evaluate(self, assumptions)
+                return Operation.evaluation(self, assumptions)
         # TODO
         
         '''
         From disjunction, just brought in as an example
         if len(self.operands) == 2:
             # This will automatically return orTT, orTF, orFT, or orFF
-            return Operation.evaluate(self, assumptions)
+            return Operation.evaluation(self, assumptions)
         if trueIndex >= 0:
-            # one operand is TRUE so the whole disjunction evaluates to TRUE.
+            # one operand is TRUE so the whole disjunction evaluate to TRUE.
             return disjunctionTrueEval.specialize({Amulti:self.operands[:trueIndex], Cmulti:self.operands[trueIndex+1:]}, assumptions=assumptions)
         else:
-            # no operand is TRUE so the whole disjunction evaluates to FALSE.
+            # no operand is TRUE so the whole disjunction evaluate to FALSE.
             return disjunctionFalseEval.specialize({Amulti:self.operands}, assumptions=assumptions)
         '''
     """

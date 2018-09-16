@@ -1,5 +1,6 @@
 from proveit import Expression, Literal, OperationOverInstances, defaults, USE_DEFAULTS, ExprList, Operation, ProofFailure
 from proveit._common_ import P, Q, R, S, xx, yy, QQ, RR
+from proveit._core_.proof import Generalization
 
 class Forall(OperationOverInstances):
     # operator of the Forall operation
@@ -29,14 +30,39 @@ class Forall(OperationOverInstances):
         via 'concludeAsFolded' or by proving the instance expression under proper assumptions
         and then generalizing.
         '''
-        from proveit.logic import InSet
+        # first try to prove via generalization without automation
+        extra_assumptions = tuple(self.conditions)
+        try:
+            proven_inst_expr = self.instanceExpr.prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions), automation=False)
+            return proven_inst_expr.generalize(self.instanceVars, conditions=self.conditions)
+        except:
+            pass
+        # next try 'foldAsForall' on the domain (if applicable)
+        hasFoldAsForall=False
         if self.hasDomain() and hasattr(self.domain, 'foldAsForall'):
-            return self.concludeAsFolded(assumptions)
-        else:
+            # try foldAsForall first
+            hasFoldAsForall=True
+            try:
+                return self.concludeAsFolded(assumptions)
+            except:
+                pass
+        # lastly, try to prove via generalization with automation
+        try:
             extra_assumptions = tuple(self.conditions)
             proven_inst_expr = self.instanceExpr.prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions))
-            return proven_inst_expr.generalize(self.instanceVars, conditions=self.conditions)
-        raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method.")
+            instanceVarLists = [self.instanceVars]
+            conditions = self.conditions
+            # see if we can generalize multiple levels simultaneously for a shorter proof
+            while isinstance(proven_inst_expr.proof(), Generalization):
+                instanceVarLists.append(proven_inst_expr.instanceVars)
+                conditions += proven_inst_expr.conditions
+                proven_inst_expr = proven_inst_expr.proof().requiredTruths()[0]
+            return proven_inst_expr.generalize(forallVarLists=instanceVarLists, conditions=conditions)
+        except:
+            if hasFoldAsForall:
+                raise ProofFailure(self, assumptions, "Unable to conclude automatically; both the 'foldAsForall' method on the domain and automated generalization failed.")
+            else:
+                raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method and automated generalization failed.")
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -69,14 +95,14 @@ class Forall(OperationOverInstances):
         forall_{x | Q(x)} forall_{y | R(y)} P(x, y) becomes forall_{x, y | Q(x), R(y)} P(x, y).
         '''
         raise NotImplementedError("Need to update")
-        from _theorems_ import forallBundling
+        from ._theorems_ import bundling
         assert isinstance(self.instanceExpr, Forall), "Can only bundle nested forall statements"
         innerForall = self.instanceExpr
         composedInstanceVars = ExprList([self.instanceVars, innerForall.instanceVars])
         P_op, P_op_sub = Operation(P, composedInstanceVars), innerForall.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         R_op, R_op_sub = Operation(Rmulti, innerForall.instanceVars), innerForall.conditions
-        return forallBundling.specialize({xMulti:self.instanceVars, yMulti:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion(assumptions)
+        return bundling.specialize({xMulti:self.instanceVars, yMulti:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion(assumptions)
 
     def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
         '''
@@ -114,8 +140,8 @@ class Forall(OperationOverInstances):
         The instanceVarLists should be a list of lists of instanceVars, in the same order as the original
         instanceVars, to indicate how to break up the nested forall statements.
         '''
-        from _theorems_ import forallUnraveling
-        return self._specializeUnravelingTheorem(forallUnraveling, instanceVarLists).deriveConclusion(assumptions)
+        from ._theorems_ import unraveling
+        return self._specializeUnravelingTheorem(unraveling, instanceVarLists).deriveConclusion(assumptions)
         
     def deriveUnraveledEquiv(self, instanceVarLists):
         '''
@@ -124,22 +150,22 @@ class Forall(OperationOverInstances):
         The instanceVarLists should be a list of lists of instanceVars, in the same order as the original
         instanceVars, to indicate how to break up the nested forall statements.
         '''
-        from _theorems_ import forallBundledEquiv
-        return self._specializeUnravelingTheorem(forallBundledEquiv, instanceVarLists)
+        from ._theorems_ import bundledEquiv
+        return self._specializeUnravelingTheorem(bundledEquiv, instanceVarLists)
         
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if possible
-        by calling the condition's evaluateForall method
+        by calling the condition's forallEvaluation method
         '''
         assert self.hasDomain(), "Cannot automatically evaluate a forall statement with no domain"
         if len(self.instanceVars) == 1:
-            # Use the domain's evaluateForall method
-            return self.domain.evaluateForall(self, assumptions)
+            # Use the domain's forallEvaluation method
+            return self.domain.forallEvaluation(self, assumptions)
         else:
             # Evaluate an unravelled version
             unravelledEquiv = self.deriveUnraveledEquiv(*[[var] for var in self.instanceVars])
-            return unravelledEquiv.rhs.evaluate(assumptions)
+            return unravelledEquiv.rhs.evaluation(assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''

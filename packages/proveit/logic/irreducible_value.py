@@ -11,7 +11,7 @@ class IrreducibleValue:
     def __init__(self):
         pass
     
-    def evaluate(self):
+    def evaluation(self):
         '''
         IrreducibleValues evaluate to themselves.
         '''

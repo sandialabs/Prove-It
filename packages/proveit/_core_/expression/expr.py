@@ -124,7 +124,7 @@ class Expression:
         the 'png' attribute which will be added whenever it is generated).
         '''
         if hasattr(self, attr):
-            raise Exception("Attempting to alter read-only value")
+            raise Exception("Attempting to alter read-only value '%s'"%attr)
         self.__dict__[attr] = value      
     
     def __repr__(self):
@@ -300,7 +300,7 @@ class Expression:
         foundTruth = KnownTruth.findKnownTruth(self, (assumptionsSet - {'*'}))
         if foundTruth is not None: 
             return foundTruth # found an existing KnownTruth that does the job!
-        
+                
         if self in assumptionsSet or '*' in assumptionsSet:
             # prove by assumption if self is in the list of assumptions or
             # WILDCARD_ASSUMPTIONS is in the list of assumptions.
@@ -476,21 +476,21 @@ class Expression:
             dummyVars.append(safeDummyVar(*([self] + dummyVars)))
         return dummyVars
             
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         If possible, return a KnownTruth of this expression equal to its
         irreducible value.  Override for other appropriate functionality.
         '''
-        from proveit.logic import defaultSimplify
-        return defaultSimplify(self, mustEvaluate=True, assumptions=assumptions)
+        from proveit.logic import defaultSimplification
+        return defaultSimplification(self.innerExpr(), inPlace=False, mustEvaluate=True, assumptions=assumptions)
 
-    def simplify(self, assumptions=USE_DEFAULTS):
+    def simplification(self, assumptions=USE_DEFAULTS):
         '''
         If possible, return a KnownTruth of this expression equal to its
         irreducible value.  Override for other appropriate functionality.
         '''
-        from proveit.logic import defaultSimplify
-        return defaultSimplify(self, assumptions=assumptions)        
+        from proveit.logic import defaultSimplification
+        return defaultSimplification(self.innerExpr(), inPlace=False, assumptions=assumptions)        
     
     def orderOfAppearance(self, subExpressions):
         '''

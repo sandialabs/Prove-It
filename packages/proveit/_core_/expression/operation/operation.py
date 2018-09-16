@@ -149,10 +149,13 @@ class Operation(Expression):
                 arg_vals += operationClass.extractInitArgValue(varargs, operator_or_operators, operand_or_operands)
             if defaults is None: defaults = []
             for k, (arg, val) in enumerate(zip(args, arg_vals)):
-                if len(defaults)-len(args)+k >= 0:
+                if len(defaults)-len(args)+k < 0:
+                    yield val # no default specified; just supply the value, not the argument name
+                else:
                     if val == defaults[len(defaults)-len(args)+k]:
                         continue # using the default value
-                yield (arg, val)
+                    else:
+                        yield (arg, val) # override the default
             if varkw is not None:
                 kw_arg_vals = operationClass.extractInitArgValue(varkw, operator_or_operators, operand_or_operands)
                 for arg, val in kw_arg_vals.iteritems():
@@ -322,7 +325,7 @@ class Operation(Expression):
                 if not reservedVars is None:
                     # the reserved variables of the lambda body excludes the lambda parameters
                     # (i.e., the parameters mask externally reserved variables).
-                    lambdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if k not in subbedOperator.parameterSet}
+                    lambdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if k not in subbedOperator.parameterVarSet}
                 else: lambdaExprReservedVars = None
                 return subbedOperator.body._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, assumptions=assumptions, requirements=requirements)
         # remake the Expression with substituted operator and/or operands

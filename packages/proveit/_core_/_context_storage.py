@@ -420,7 +420,7 @@ class ContextStorage:
         LaTeXTool.clear_instance()
         lt = LaTeXTool.instance()
         lt.use_breqn = False
-        png = latex_to_png(latex, backend='dvipng', wrap=True)
+        png = latex_to_png(latex, backend='dvipng', wrap=True) # the 'matplotlib' backend can do some BAD rendering in my experience (like \lnot rendering as lnot in some contexts)
         if png is None:
             raise Exception("Unable to use 'dvipng' backend to compile LaTeX.  Be sure a LaTeX distribution is installed.")
         return png
@@ -693,7 +693,7 @@ class ContextStorage:
                     nameFile.write(expr_address[-1])
         filename = os.path.join(self.pv_it_dir, hash_directory, 'expr.ipynb')
         if not needs_rewriting and os.path.isfile(filename):
-            return filename # return the existing proof file
+            return filename # return the existing expression notebook file
         elif os.path.isfile(filename):
             special_name = expr_address[-1].split('.')[0] # strip of ".expr"
             # Store the original version as orig_expr.ipynb.  It will be
@@ -832,7 +832,7 @@ class ContextStorage:
         with open(filename, 'w') as expr_file:
             expr_file.write(nb)
         
-        # it this is a special expression also generate the dependencies notebook if it does not yet exist
+        # if this is a special expression also generate the dependencies notebook if it does not yet exist
         if template_name == '_special_expr_template_.ipynb':
             dependencies_filename = os.path.join(self.pv_it_dir, hash_directory, 'dependencies.ipynb')
             # Even if the dependencies file exists, write over it since the expression notebook
@@ -986,14 +986,14 @@ class ContextStorage:
 
         if isinstance(expr, Composite):
             if isinstance(expr, ExprList):
-                compositeStr = '[' + argStr + ']'
+                compositeStr = argStr
             else: # ExprTensor or NamedExprs
                 compositeStr = '{' + argStr.replace(' = ', ':') + '}'                    
             if isSubExpr and expr.__class__ in (ExprList, NamedExprs, ExprTensor): 
                 # It is a sub-Expression and a standard composite class.
                 # Just pass it in as an implicit composite expression (a list or dictionary).
                 # The constructor should be equipped to handle it appropriately.
-                return compositeStr
+                return '[' + compositeStr + ']' if expr.__class__==ExprList else compositeStr
             else:
                 return get_constructor() + '(' + compositeStr + ')' + withStyleCalls
         else:
@@ -1539,6 +1539,55 @@ class StoredTheorem(StoredSpecialStmt):
         with open(presuming_file, 'w') as f:
             f.write(presuming_str)
     
+    def getRecursivePresumingInfo(self, presumed_theorems, presumed_contexts):
+        '''
+        Append presumed theorem objects and context name strings to 
+        'presumed_theorems' and 'presumed_contexts' respectively.  
+        For each theorem, do this recursively.
+        '''
+        from .context import Context, ContextException
+        # first read in the presuming info
+        presuming = []
+        presuming_file = os.path.join(self.path, 'presuming.txt')
+        if os.path.isfile(presuming_file):
+            with open(presuming_file, 'r') as f:
+                for presume in f.readlines():
+                    presume = presume.strip()
+                    if presume == '': continue
+                    presuming.append(presume)
+        
+        # Iterate through each presuming string and add it as
+        # a context name or a theorem.  For theorem's, recursively
+        # add the presuming information.
+        for presume in presuming:
+            if not isinstance(presume, str):
+                raise ValueError("'presumes' should be a collection of strings for context names and/or full theorem names")
+            thm = None
+            context_name = presume
+            try:
+                if '.' in presume:
+                    context_name, theorem_name = presume.rsplit('.', 1)
+                    thm = Context.getContext(context_name).getTheorem(theorem_name)
+            except (ContextException, KeyError):
+                context_name = presume # not a theorem; must be a context
+            
+            if thm is not None:
+                if thm.context == self.context:
+                    raise ValueError("Do not presume any theorem in this context; prior theorems are implicit and later theorems are off limits")                    
+                # add the theorem and any theorems used by that theorem to the set of presuming theorems
+                if thm not in presumed_theorems:
+                    presumed_theorems.add(thm)
+                    thm.getRecursivePresumingInfo(presumed_theorems, presumed_contexts)
+            else:
+                try:
+                    context = Context.getContext(context_name)
+                except ContextException:
+                    raise ValueError("'%s' not found as a known context or theorem"%presume)
+                if context == self.context:
+                    raise ValueError("Do not presume the current context; prior theorems are implicit and later theorems are off limits")
+                # the entire context is presumed (except where the presumption is mutual)
+                presumed_contexts.add(context.name)
+        
     def presumes(self, other_theorem_str):
         '''
         Return True iff the things that this "stored" theorem 

@@ -278,9 +278,9 @@ class Lambda(Expression):
             if len(lambda2.parameters) != 1:
                 raise TypeError("lambda2 may only take 1 parameter if lambda1 takes only 1 parameter")
             # g(x)
-            relabeledExpr2 = lambda2.expression.relabeled({lambda2.parameters[0]:lambda1.parameters[0]})
+            relabeledExpr2 = lambda2.body.relabeled({lambda2.parameters[0]:lambda1.parameters[0]})
             # x -> f(g(x))
-            return Lambda(lambda1.parameters[0], lambda1.expression.substituted({lambda1.parameters[0]:relabeledExpr2}))
+            return Lambda(lambda1.parameters[0], lambda1.body.substituted({lambda1.parameters[0]:relabeledExpr2}))
         else:
             if len(lambda2) != len(lambda1.parameters):
                 raise TypeError("Must supply a list of lambda2s with the same length as the number of lambda1 parameters")
@@ -290,10 +290,10 @@ class Lambda(Expression):
                     raise TypeError("Each lambda2 must have the same number of parameters as lambda1")
                 # gi(x1, x2, ..., xn)
                 paramReplMap = {param2:param1 for param1, param2 in zip(lambda1.parameters, lambda2elem.parameters)}
-                relabeledExpr2s.append(lambda2elem.expression.substituted(paramReplMap))
+                relabeledExpr2s.append(lambda2elem.body.substituted(paramReplMap))
             # x1, x2, ..., xn -> f(g1(x1, x2, ..., xn), g2(x1, x2, ..., xn), ..., gn(x1, x2, ..., xn)).
             lambda1ExprSubMap = {param1:relabeledExpr2 for param1, relabeledExpr2 in zip(lambda1.parameters, relabeledExpr2s)}
-            return Lambda(lambda1.parameters, lambda1.expression.substituted(lambda1ExprSubMap))
+            return Lambda(lambda1.parameters, lambda1.body.substituted(lambda1ExprSubMap))
     
     @staticmethod
     def globalRepl(masterExpr, subExpr):

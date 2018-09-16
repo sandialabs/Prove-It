@@ -12,13 +12,15 @@ class OrderingRelation(TransitiveRelation):
     def sideEffects(self, knownTruth):
         '''
         In addition to the TransitiveRelation side-effects, also
-        attempt deriveNegated and deriveRelaxed (if applicable).
+        attempt deriveNegated, deriveRelaxed (if applicable),
+        and deriveReversed.
         '''
         for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
             yield sideEffect
         yield self.deriveNegated
         if hasattr(self, 'deriveRelaxed'):
             yield self.deriveRelaxed
+        yield self.deriveReversed
     
     def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
         raise NotImplementedError('deriveShifted is implemented for each specific OrderingRelation')
