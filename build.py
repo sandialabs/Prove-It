@@ -250,7 +250,7 @@ def recordPresumingInfo(theorem, proof_notebook_path):
                         theorem.recordPresumingInfo(presuming)
                         return # got what we needed
     
-def build(context_paths, all_paths):
+def build(context_paths, all_paths, just_execute_proofs=False):
     '''
     Build all Context-related notebooks (_common_, _axioms_,
     _theorems_, and proof notebooks for the theorems)
@@ -261,85 +261,87 @@ def build(context_paths, all_paths):
     within the __pv_it directory (storing Prove-It "database"
     information).
     '''
-    # Make sure there is a _common_.py in each context directory.
-    # These will be useful in figuring out dependencies between _common_
-    # notebooks (see CommonExpressions in proveit._core_.context
-    for context_path in context_paths:
-        Context(context_path).makeSpecialExprModule('common')
-    
-    # Execute the _context_ notebooks in each context directory as
-    # needed and generate _context_.html.
-    for context_path in context_paths:
-        fix_context(context_path)
-        context_notebook_path = os.path.join(context_path, '_context_.ipynb')
-        with open(os.path.join(context_path, '_mode_.txt')) as f:
-            prev_mode = f.read().strip()
-            
-        if prev_mode=='interactive':
-            # re-execute to get switch it to static mode
-            executeAndExportNotebook(context_notebook_path)
-        else:
-            # don't re-execute the notebook because it is already in
-            # static mode; just export it to HTML.
-            exportToHTML(context_notebook_path)
-    
-    # Next, run the _common_.ipynb (common expression) notebooks for the contexts.
-    # For any that depend up _common_.py of other contexts, run the
-    # requirements first.
-    common_nb_queue = list(context_paths)
-    exececuted_common_nb = set()
-    while len(common_nb_queue) > 0:
-        context_path = common_nb_queue.pop(0)
-        if context_path in exececuted_common_nb:
-            continue
+    if not just_execute_proofs:
+        # Make sure there is a _common_.py in each context directory.
+        # These will be useful in figuring out dependencies between _common_
+        # notebooks (see CommonExpressions in proveit._core_.context
+        for context_path in context_paths:
+            Context(context_path).makeSpecialExprModule('common')
         
-        # The failed_common_import.txt file is used to communicate a failed
-        # common expression import from another context.  First erase this
-        # file, then see if it is created after executing the common notebook.
-        failed_common_import_filename = os.path.join(context_path, '__pv_it', 'failed_common_import.txt')
-        if os.path.isfile(failed_common_import_filename):
-            os.remove(failed_common_import_filename)
+        # Execute the _context_ notebooks in each context directory as
+        # needed and generate _context_.html.
+        for context_path in context_paths:
+            fix_context(context_path)
+            context_notebook_path = os.path.join(context_path, '_context_.ipynb')
+            with open(os.path.join(context_path, '_mode_.txt')) as f:
+                prev_mode = f.read().strip()
+                
+            if prev_mode=='interactive':
+                # re-execute to get switch it to static mode
+                executeAndExportNotebook(context_notebook_path)
+            else:
+                # don't re-execute the notebook because it is already in
+                # static mode; just export it to HTML.
+                exportToHTML(context_notebook_path)
+        
+        # Next, run the _common_.ipynb (common expression) notebooks for the contexts.
+        # For any that depend up _common_.py of other contexts, run the
+        # requirements first.
+        common_nb_queue = list(context_paths)
+        exececuted_common_nb = set()
+        while len(common_nb_queue) > 0:
+            context_path = common_nb_queue.pop(0)
+            if context_path in exececuted_common_nb:
+                continue
             
-        try:
-            revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-            executeAndExportNotebook(os.path.join(context_path, '_common_.ipynb'))
-            exececuted_common_nb.add(context_path) # finished successfully
-        except execute.CellExecutionError as e:            
-            retry = False
+            # The failed_common_import.txt file is used to communicate a failed
+            # common expression import from another context.  First erase this
+            # file, then see if it is created after executing the common notebook.
+            failed_common_import_filename = os.path.join(context_path, '__pv_it', 'failed_common_import.txt')
             if os.path.isfile(failed_common_import_filename):
-                # A failed_common_import.txt file was created.  It will indicate the
-                # context from which a common expression was attempted to be imported.
-                # If its _common_ notebook has not already executed, execute it first
-                # and then try to execute this one again.
-                with open(failed_common_import_filename, 'r') as f:
-                    required_context_name = f.read().strip()
-                    if required_context_name not in exececuted_common_nb:
-                        print '  Failed to execute; try a prerequisite first:', required_context_name
-                        common_nb_queue.insert(0, context_path) # re-insert to try again
-                        # but first execute the _common_ notebook from the required_context.
-                        common_nb_queue.insert(0, context_map[required_context_name])
-                        retry = True
-            if not retry:
-                raise e
-        
-    # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the contexts.
-    # The order does not matter assuming these expression constructions
-    # do not depend upon other axioms or theorems (but possibly common expressions).
-    for context_path in context_paths:
-        revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
-        revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
-        executeAndExportNotebook(os.path.join(context_path, '_axioms_.ipynb'))
-        executeAndExportNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
-
+                os.remove(failed_common_import_filename)
+                
+            try:
+                revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
+                executeAndExportNotebook(os.path.join(context_path, '_common_.ipynb'))
+                exececuted_common_nb.add(context_path) # finished successfully
+            except execute.CellExecutionError as e:            
+                retry = False
+                if os.path.isfile(failed_common_import_filename):
+                    # A failed_common_import.txt file was created.  It will indicate the
+                    # context from which a common expression was attempted to be imported.
+                    # If its _common_ notebook has not already executed, execute it first
+                    # and then try to execute this one again.
+                    with open(failed_common_import_filename, 'r') as f:
+                        required_context_name = f.read().strip()
+                        if required_context_name not in exececuted_common_nb:
+                            print '  Failed to execute; try a prerequisite first:', required_context_name
+                            common_nb_queue.insert(0, context_path) # re-insert to try again
+                            # but first execute the _common_ notebook from the required_context.
+                            common_nb_queue.insert(0, context_map[required_context_name])
+                            retry = True
+                if not retry:
+                    raise e
+            
+        # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the contexts.
+        # The order does not matter assuming these expression constructions
+        # do not depend upon other axioms or theorems (but possibly common expressions).
+        for context_path in context_paths:
+            revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
+            revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
+            executeAndExportNotebook(os.path.join(context_path, '_axioms_.ipynb'))
+            executeAndExportNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
+    
     # Get the proof notebook filenames for the theorems in all of the contexts.
     proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
+    proof_notebooks = []
     for context_path in context_paths:
         context = Context(context_path)
         for theorem_name in context.theoremNames():
             theorem = context.getTheorem(theorem_name)
             proof_notebook_name = context.proofNotebook(theorem_name, theorem.provenTruth.expr)
             proof_notebook_theorems[proof_notebook_name] = theorem
-    proof_notebooks = sorted(proof_notebook_theorems.keys())
+            proof_notebooks.append(proof_notebook_name)
         
     # Next, for each of the theorems, record the "presuming" information
     # of the proof notebooks in the _proofs_ folder.  Do this before executing
@@ -401,6 +403,9 @@ if __name__ == '__main__':
     parser.add_argument('--clean', dest='clean', action='store_const',
                         const=True, default=False,
                         help='remove all of the autogenerated __pv_it directories')    
+    parser.add_argument('--justproofs', dest='just_execute_proofs', action='store_const',
+                        const=True, default=False,
+                        help='only execute proofs (not _common_, _axioms_, or _theorems_)')   
     parser.add_argument('path', type=str, nargs='*', default=default_paths,
                         help='paths to be processed; sub-contexts will be included recursively (default: %s)'%' '.join(default_paths))
     args = parser.parse_args()    
@@ -437,5 +442,5 @@ if __name__ == '__main__':
                 commons_filename = os.path.join(pv_it_dir, 'commons.pv_it')
                 if os.path.isfile(commons_filename):
                     os.remove(commons_filename) 
-        build(context_paths, all_paths)
+        build(context_paths, all_paths, args.just_execute_proofs)
         
