@@ -1,53 +1,52 @@
-from proveit import Literal, OperationOverInstances, Operation, Etcetera, safeDefaultOrDummyVar, USE_DEFAULTS
-from proveit.common import x, y, f, P, Q, Qmulti, S, yMulti, yEtc
-
-SET = Literal(__package__, 'SET')
+from proveit import Literal, OperationOverInstances, Operation, USE_DEFAULTS
+from proveit._common_ import x, y, f, P, Q, QQ, S, yy
 
 class SetOfAll(OperationOverInstances):
-    def __init__(self, instanceVars, instanceElement, domain, conditions=tuple()):
+    # operator of the SetOfAll operation
+    _operator_ = Literal(stringFormat='Set', context=__file__)    
+    
+    def __init__(self, instanceVarOrVars, instanceElement, domain, conditions=tuple()):
         '''
         Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
-        {instanceElement | conditions}_{instanceVar \in S}
+        {instanceElement | conditions}_{instanceVar(s) \in S}
         '''
-        OperationOverInstances.__init__(self, SET, instanceVars, instanceElement, domain, conditions)
+        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVarOrVars, instanceElement, domain=domain, conditions=conditions)
         self.instanceElement = self.instanceExpr
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SET
-    
     @staticmethod
-    def extractParameters(operands):
+    def extractInitArgValue(argName, operators, operands):
         '''
-        Extract the parameters from the OperationOverInstances operands:
-        instanceVars, instanceElement, conditions, domain
+        Given a name of one of the arguments of the __init__ method,
+        return the corresponding value contained in the 'operands'
+        composite expression (i.e., the operands of a constructed operation).
         '''
-        params = OperationOverInstances.extractParameters(operands)
-        params['instanceElement'] = params['instanceExpr']
-        params.pop('instanceExpr')
-        return params
+        if argName=='instanceElement':
+            return operands.body # instance mapping
+        else:
+            return OperationOverInstances.extractInitArgValue(argName, operators, operands)
         
-    def _formatted(self, formatType, fence=False):
+    def _formatted(self, formatType, fence=False, **kwargs):
         outStr = ''
-        innerFence = (len(self.conditions) > 0)
-        formattedInstanceVars = ', '.join([var.formatted(formatType) for var in self.instanceVars])
-        formattedInstanceElement = self.instanceElement.formatted(formatType, fence=innerFence)
-        formattedDomain = self.domain.formatted(formatType, fence=True)
-        formattedConditions = self.conditions.formatted(formatType, fence=False) 
+        explicit_conditions = self.explicitConditions()
+        inner_fence = (len(explicit_conditions) > 0)
+        formatted_instance_vars = ', '.join([var.formatted(formatType) for var in self.instanceVars])
+        formatted_instance_element = self.instanceElement.formatted(formatType, fence=inner_fence)
+        formatted_domain = self.domain.formatted(formatType, fence=True)
         if formatType == 'latex': outStr += r"\left\{"
         else: outStr += "{"
-        outStr += formattedInstanceElement
-        if len(self.conditions) > 0:
+        outStr += formatted_instance_element
+        if len(explicit_conditions) > 0:
+            formatted_conditions = explicit_conditions.formatted(formatType, fence=False) 
             if formatType == 'latex': outStr += r'~|~'
             else: outStr += ' s.t. ' # such that
-            outStr += formattedConditions
+            outStr += formatted_conditions
         if formatType == 'latex': outStr += r"\right\}"
         else: outStr += "}"
-        outStr += '_{' + formattedInstanceVars
+        outStr += '_{' + formatted_instance_vars
         if self.domain is not None:
             if formatType == 'latex': outStr += r' \in '
             else: outStr += ' in '
-            outStr += formattedDomain
+            outStr += formatted_domain
         outStr += '}'
         return outStr
     

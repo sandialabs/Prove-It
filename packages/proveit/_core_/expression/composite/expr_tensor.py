@@ -1,237 +1,474 @@
-'''
-compositeExpression.py
-
-The internal logic of Prove-It knows about a few special types of expr classes
-that contain multiple Expressions: NamedExpressions, exprlist, and ExpressionTensor.
-An NamedExpressions maps string identifiers to Expressions.  An exprlist is a linear
-list of Expressions with special substitution rules regarding Bundle elements.
-When an exprlist is substituted for a Bundle expr, its elements will be 
-absorbed into the parent exprlist.  An ExpressionTensor maps lists of integers
-to expr elements or Block Bundles and has special substitution rules regarding Blocks.
-When an ExpressionTensor is substituted for a Block expr, its elements (or blocks)
-will be absorbed into the parent ExpressionTensor.
-'''
-
-from composite import Composite, NestedCompositeExpressionError
-from expr_list import ExpressionList
+from composite import Composite
+from expr_list import ExprList
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.defaults import defaults, USE_DEFAULTS
+from iteration import Iter
 import itertools
 from ast import literal_eval
                 
 
-"""
-class ExpandableExpression(MultiExpression):
+class ExprTensor(Composite, Expression): 
     '''
-    The base class for exprlist and ExpressionTensor.
-    These may be expanded when a MultiVariable is being substituted.
-    '''
-    def __init__(self, coreInfo, subExpressions):
-        expr.__init__(self, coreInfo, subExpressions)
-        freeMultiVars = set().union([subExpression.freeMultiVars() for subExpression in subExpressions])
-        if len(freeMultiVars) > 1:
-            raise ValueError("Multiple free MultiVariables is unsupported due to ambiguity")
-        elif len(freeMultiVars) == 1:
-            self.freeMultiVar = freeMultiVars[0]
-        self.freeMultiVar = None            
+    An ExprTensor is a composite Expression representing
+    an n-dimensional tensor.  It serves to map n-coordinate 
+    "locations" to Expression elements.  The coordinates may 
+    be general Expressions that are intended to represent 
+    Integer numbers.
     
-    def substitutedElement(self, element, exprMap, operationMap = None, relabelMap = None, reservedVars = None):
-        '''
-        Returns this expression with the substitutions made 
-        according to exprMap/operationMap and/or relabeled according to relabelMap.
-        If the substituted bundledExpr is of the multiExprType, it will be extracted 
-        from the Bundle wrapping and incorporated into the multi-expr which contains it.
-        '''
-        if (exprMap is not None) and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)
-        if self.freeMultiVar is not None and (self.freeMultiVar in exprMap or self.freeMultiVar in operationMap or self.freeMultiVar in relabelMap):
-            # performing a multi-variable expansion substitution
-            multiVar = self.freeMultiVar
-            subExprMap, subOperationMap, subRelabelMap = exprMap, operationMap, relabelMap
-            inOperationMap = multiVar in operationMap
-            if multiVar in exprMap:
-                subExprMap = subMultiVarMap = dict(exprMap)
-            elif inOperationMap:
-                subOperationMap = subMultiVarMap = dict(operationMap)
-            elif multiVar in relabelMap:
-                subRelabelMap = subMultiVarMap = dict(relabelMap)
-            else:
-                assert False, "shouldn't happen"
-            multiVarSub = subMultiVarMap[multiVar]
-            if inOperationMap:
-                bundleOpArgs = subMultiVarMap.arguments
-                multiVarSub = subMultiVarMap.expression
-            def substituteForElem(subElem):
-                if inOperationMap:
-                    subMultiVarMap[multiVar] = Lambda(bundleOpArgs, subElem)
-                else:
-                    subMultiVarMap[multiVar] = subElem
-                return self.bundledExpr.substituted(subExprMap, subOperationMap, subRelabelMap, reservedVars)
-            if isinstance(multiVarSub, list):
-                # exprlist bundle expansion
-                return [substituteForElem(subElem) for subElem in multiVarSub]
-            elif isinstance(multiVarSub, dict):
-                # ExpressionTensor bundle expansion
-                return {key:substituteForElem(subElem) for key, subElem in multiVarSub}
-        # default when not performing a multi-variable expansion substitution
-        return self.element.substituted(exprMap, operationMap, relabelMap, reservedVars)
-"""
+    The ExprTensor stores entries in terms of "relative
+    element locations".  For each axis, all relevent coordinate 
+    expressions are sorted into a sorting-relation expression 
+    (for example, "a < b <= c = d < e", or some such form).  
+    The index of these  operands serve as coordinates for 
+    the "relative element locations".  We can translate from 
+    one "location" representation to the other using the
+    coordinate sorting relations.
     
-class _ExpresisonTensorBlockGhost:
-    '''
-    An ExpressionTensorGhost is just a placeholder in an ExpressionTensor that covers
-    the region of a Block beyond its origin corner, referencing the Block in question.
-    '''
-    def __init__(self, ghosted_block, block_coord):
-        self.ghosted_block = ghosted_block
-        self.block_coord = block_coord
+    There may be Embed Expression elements for embedding
+    a tensor within the tensor that may be substituted into
+    the outer tensor.  When this happens, new coordinates may
+    be added, generating new coordinate sorting relations.
+    A specialization step that results in such a substitution
+    will be conditioned upon the proof of any new coordinate
+    sorting relations (these are extra conditions in addition
+    to any explicit conditions of the universal quantifier(s)
+    being specialized).
     
-class ExpressionTensor(Composite, Expression): 
+    Axioms involving an ExprTensor should properly be stated
+    by way of an implication -- the statement involving
+    the ExprTensor is the consequent that is only valid
+    provided the coordinate sorting relations, in the
+    antecedent, is true.  Corresponding theorems can then be
+    proven by showing that the coordinate sorting relations
+    are true (under the conditions of any universal quantifiers
+    or other axioms).
     '''
-    An expr tensor is a composite expr represented as a dictionary mapping coordinates
-    (as tuples of integers) to expr elements or Blocks.  Blocks have an extent greater
-    than or equal to one in each tensor dimension.  It may be a sparse tensor but must not
-    have overlapping blocks.  In addition to this dictionary, each axis of the tensor 
-    has a set of alignment coordinates that define how the tensor would be incorporated into 
-    another ExpressionTensor when is its substituting a Block element (alignment coordinates 
-    of the ExressionTensor must line up in correspondence to those of the Block).
-    '''
-    def __init__(self, tensor, shape=None, alignmentCoordinates=None):
+    
+    def __init__(self, tensor, shape=None, styles=dict(), assumptions=USE_DEFAULTS, requirements=tuple()):
         '''
-        Create an ExpressionTensor either with a simple, dense tensor (list of lists ... of lists) or
-        with a dictionary mapping coordinates (as tuples of integers) to expr elements or Blocks.
-        Providing a shape can extend the bounds of the tensor beyond the elements that are supplied.
-        Providing alignmentCoordinates establishes how this Tensor may be incorporated into another
-        tensor when substituting a Block element.
+        Create an ExprTensor either with a simple, dense tensor (list of lists ... of lists) or
+        with a dictionary mapping coordinates (as tuples of expressions that represent integers) 
+        to expr elements or Blocks.
+        Providing starting and/or ending location(s) can extend the bounds of the tensor beyond
+        the elements that are supplied.
         '''
-        from proveit._core_.expression.bundle.etcetera import Etcetera
-        from proveit._core_.expression.bundle.block import Block
+        from composite import _simplifiedCoord
         from proveit._core_ import KnownTruth
+        from proveit.number import Less, Greater, zero, one, num, Add, Subtract
+        
+        assumptions = defaults.checkedAssumptions(assumptions)
+        requirements = []                
         if not isinstance(tensor, dict):
-            tensor, _ = ExpressionTensor.TensorDictFromIterables(tensor)
-
-        # Establish the shape and check for restriction violations:
-        elems = dict()
-        fixed_shape = (shape is not None)
-        # Build the ExpressionTensor dictionary, checking for coordinate, shape, or type errors
-        for coord, element in tensor.iteritems():
-            for i in coord:
-                if not isinstance(i, int) or i < 0:
-                    raise ExpressionTensorIndexError('ExpressionTensor indices must be an iterable set of non-negative integers')
-            if shape is None:
-                shape = [0]*len(coord)
-            elif len(coord) != len(shape):
-                if fixed_shape:
-                    raise ExpressionTensorShapeError('ExpressionTensor indices must have the same dimensionality as the specified shape')
-                else:
-                    raise ExpressionTensorShapeError('ExpressionTensor indices must have consistent dimensionality')
-            if fixed_shape:
-                if any(coord[axis] >= shape[axis] for axis in xrange(len(coord))):
-                    raise ExpressionTensorShapeError('ExpressionTensor coordinate out the specified shape bounds')
-            else:
-                for k, i in enumerate(coord):
-                    shape[k] = max(shape[k], i+1)
+            tensor = {loc:element for loc, element in ExprTensor._tensorDictFromIterables(tensor, assumptions, requirements)}
+                
+        # Map direct compositions for the end-coordinate of Iter elements
+        # to their simplified forms.
+        self.endCoordSimplifications = dict()
+                
+        # generate the set of distinct coordinates for each dimension
+        coord_sets = None # simplified versions
+        full_tensor = dict()
+        ndims = None
+        if shape is not None:
+            shape = ExprTensor.locAsExprs(shape)
+            ndims = len(shape)
+        for loc, element in tensor.iteritems():
             if isinstance(element, KnownTruth):
                 element = element.expr # extract the Expression from the KnownTruth
-            if not isinstance(element, Expression):
-                raise TypeError('Each ExpressionTensor element must be an expr')
-            if isinstance(element, ExpressionTensor):
-                raise NestedCompositeExpressionError('May not nest ExpressionTensors (do you need to use Block? or wrap with an Operation?)')
-            if isinstance(element, ExpressionList):
-                raise TypeError('May not nest an exprlist in an ExpressionTensors (do you need to wrap with an Operation?)')
-            if isinstance(element, Etcetera):
-                raise TypeError('An Etcetera may be contained in an exprlist but not an ExpressionTensor')
-            elems[coord] = element
-        if alignmentCoordinates is None:
-            # by default, eachvcoordinate within the tensor's shape is an alignment coordinate
-            alignmentCoordinates = [list(range(k)) for k in shape]
-        self.alignmentCoordinates = alignmentCoordinates
-        # Check for overlap errors and add appropriate _ExpressionTensorGhost elements
-        # that cover the regions of any Blocks.
-        for start_coord, element in elems.iteritems():
-            if isinstance(element, Block):
-                block = element
-                if len(block.shape) != len(shape):
-                    raise ExpressionTensorShapeError("Block, with shape " + str(block.shape) + ", does not have the same dimensionality as the Tensor, with shape " + str(self.shape))
-                for block_coord in itertools.product([xrange(block_axis_extent) for block_axis_extent in block.shape]):
-                    if sum(block_coord) == 0: continue # skip the origin where the Block is placed
-                    coord = [start+shift for start, shift in zip(start_coord, block_coord)]
-                    if coord in elems.keys():
-                        raise ExpressionTensorOverlapError("ExpressionTensor Block overlaps another element")
-                    elems[coord] = _ExpresisonTensorBlockGhost(block, block_coord)
-        self.shape = tuple(shape)
-        self.elems = elems
-        sortedNonGhostKeys = [key for key in self.keys() if not isinstance(self.elems[key], _ExpresisonTensorBlockGhost)]
-        Expression.__init__(self, ['ExpressionTensor', str(self.shape), ';'.join(str(key) for key in sortedNonGhostKeys)], [self.elems[key] for key in sortedNonGhostKeys])
+            ndims = len(loc)
+            if coord_sets is None:
+                coord_sets = [set() for _ in range(ndims)]
+            elif len(coord_sets) != ndims:
+                if shape is not None:
+                    raise ValueError("length of 'shape' is inconsistent with number of dimensions for ExprTensor locations")
+                else:
+                    raise ValueError("inconsistent number of dimensions for locations of the ExprTensor")
+            for axis, coord in enumerate(list(loc)):
+                if isinstance(coord, int):
+                    coord = num(coord) # convert from Python int to an Expression
+                    loc[axis] = coord
+                coord_sets[axis].add(coord)
+                if isinstance(element, Iter):
+                    # Add (end-start)+1 of the Iter to get to the end
+                    # location of the entry along this axis. 
+                    orig_end_coord = Add(coord, Subtract(element.end_indices[axis], element.start_indices[axis]), one)
+                    end_coord = _simplifiedCoord(orig_end_coord, assumptions, requirements)
+                    self.endCoordSimplifications[orig_end_coord] = end_coord
+                    coord_sets[axis].add(end_coord)
+            full_tensor[tuple(loc)] = element
+
+        if ndims is None:
+            raise ExprTensorError("Empty ExprTensor is not allowed")
+        if ndims <= 1:
+            raise ExprTensorError("ExprTensor must be 2 or more dimensions (use an ExprList for something 1-dimensional")
+
+        # in each dimension, coord_indices will be a dictionary
+        # that maps each tensor location coordinate to its relative entry index.
+        coord_rel_indices = []
+        self.sortedCoordLists = []
+        self.coordDiffRelationLists = []
+        for axis in xrange(ndims): # for each axis
+            # KnownTruth sorting relation for the simplified coordinates used along this axis
+            # (something with a form like a < b <= c = d <= e, that sorts the tensor location coordinates): 
+            coord_sorting_relation = Less.sort(coord_sets[axis], assumptions=assumptions)
+            sorted_coords = list(coord_sorting_relation.operands)
+            
+            if shape is None:
+                # Since nothing was explicitly specified, the shape is dictacted by extending
+                # one beyond the last coordinate entry. 
+                sorted_coords.append(Add(sorted_coords[-1], one))
+            else:
+                sorted_coords.append(shape[axis]) # append the coordinate for the explicitly specified shape
+            if sorted_coords[0] != zero:
+                sorted_coords.insert(0, zero) # make sure the first of the sorted coordinates is zero.
+            
+            self.sortedCoordLists.append(ExprList(sorted_coords))
+            
+            # Add in coordinate expressions that explicitly indicate the difference between coordinates.
+            # These may be used in generating the latex form of the ExprTensor.
+            diff_relations = []
+            for c1, c2 in zip(sorted_coords[:-1], sorted_coords[1:]):
+                diff = _simplifiedCoord(Subtract(c2, c1), assumptions, requirements)
+                # get the relationship between the difference of successive coordinate and zero.
+                diff_relation = Greater.sort([zero, diff], assumptions=assumptions)
+                if isinstance(diff_relation, Greater):
+                    if c2 == sorted_coords[-1] and shape is not None:
+                        raise ExprTensorError("Coordinates extend beyond the specified shape in axis %d: %s after %s"%(axis, str(coord_sorting_relation.operands[-1]), str(shape[axis])))                        
+                    assert tuple(diff_relation.operands) == (diff, zero), 'Inconsistent Less.sort results'
+                    # diff > 0, let's compare it with one now
+                    diff_relation = Greater.sort([one, diff], assumptions=assumptions)
+                requirements.append(diff_relation)
+                diff_relations.append(diff_relation)
+            self.coordDiffRelationLists.append(ExprList(diff_relations))
+                
+            # map each coordinate expression to its index into the sorting_relation operands
+            coord_rel_indices.append({coord:k for k, coord in enumerate(sorted_coords)})
+            
+        # convert from the full tensor with arbitrary expression coordinates to coordinates that are
+        # mapped according to sorted relation enumerations.
+        rel_index_tensor = dict()
+        for loc, element in full_tensor.iteritems():
+            rel_index_loc = (rel_index_map[coord] for coord, rel_index_map in zip(loc, coord_rel_indices))
+            rel_index_tensor[rel_index_loc] = element
+                
+        sorted_keys = sorted(rel_index_tensor.keys())
+        Expression.__init__(self, ['ExprTensor', str(ndims), ';'.join(str(key) for key in sorted_keys)], self.sortedCoordLists + self.coordDiffRelationLists + [rel_index_tensor[key] for key in sorted_keys], styles=styles, requirements=requirements)
+        self.ndims = ndims
+        self.relIndexTensor = rel_index_tensor
+        
+        # entryOrigins maps relative indices that contain tensor elements to
+        # the relative indices of the origin for the corresponding entry.
+        # Specifically, single-element entries map indices to themselves, but
+        # multi-element Iter entries map each of the encompassed 
+        # relative index location to the origin relative index location where
+        # that Iter entry is stored.
+        self.relEntryOrigins = self._makeEntryOrigins()
+        
+        # the last coordinates of the sorted coordinates along each eaxis define the shape:        
+        self.shape = ExprList([sorted_coords[-1] for sorted_coords in self.sortedCoordLists])
+    
+    @staticmethod
+    def locAsExprs(loc):
+        from proveit.number import num
+        loc_exprs = []
+        for coord in loc:
+            if isinstance(coord, int):
+                coord = num(coord) # convert int to an Expression
+            if not isinstance(coord, Expression):
+                raise TypeError("location coordinates must be Expression objects (or 'int's to convert to Expressions)")
+            loc_exprs.append(coord)
+        return loc_exprs
 
     @staticmethod
-    def TensorDictFromIterables(tensor, pre_coord=tuple()):
+    def _tensorDictFromIterables(tensor, assumptions, requirements):
         '''
         From nested lists of Expressions, create a tensor dictionary, 
-        mapping multi-dimensional indices to expr elements.
-        Returns a (tensor-dictionary, shape) tuple.
+        mapping multi-dimensional indices to Expression elements.
+        Yields location, element pairs that define a tensor.
         '''
         from proveit._core_ import KnownTruth        
+        from composite import _simplifiedCoord
+        from proveit.number import zero, one, Add, Subtract
         try:
-            sub_tensors = []
-            sub_shapes = []
-            for i, element in enumerate(tensor):
-                if isinstance(element, KnownTruth):
-                    element = element.expr # extract the Expression from the KnownTruth
-                if isinstance(element, Expression):
-                    sub_shapes.append(tuple())
+            coord = zero
+            for entry in tensor:
+                # simplify the coordinate before moving on
+                # (the simplified form will be equated with the original in the
+                # sorting relations of the ExprTensor).
+                coord = _simplifiedCoord(coord, assumptions, requirements)
+                if isinstance(entry, KnownTruth):
+                    entry = entry.expr # extract the Expression from the KnownTruth
+                if isinstance(entry, Expression):
+                    loc = (coord,)
+                    if isinstance(entry, Iter) and entry.ndims > 1:
+                        loc += (zero,)*(entry.ndims-1) # append zeros for the extra dimensions
+                    yield loc, entry # yield the location and element
+                    if isinstance(entry, Iter):
+                        # skip the coordinate ahead over the Embed expression
+                        coord = Add(coord, Subtract(entry.end_indices[0], entry.start_indices[0]), one)
+                    else:
+                        coord = Add(coord, one) # shift the coordinate ahead by one
                 else:
-                    sub_tensor, sub_shape = ExpressionTensor.TensorDictFromIterables(element, pre_coord+(i,))
-                    sub_tensors.append(sub_tensor)
-                    sub_shapes.append(sub_shape)
-            if len(sub_shapes) == 0:
-                raise ExpressionTensorShapeError('An ExpressionTensor may not have zero extent in any dimension')
-            if all(sub_shape == sub_shapes[0] for sub_shape in sub_shapes) and len(sub_shapes[0]) > 0:
-                # consistent sub-tensor shapes -- take as higher dimensional tensor
-                shape = tuple((len(tensor),) + sub_shapes[0])
-                tensor_dict = {tuple(pre_coord+(i,)+sub_coord):element for i, sub_tensor in enumerate(sub_tensors) for sub_coord, element in sub_tensor.iteritems()}
-                return tensor_dict, shape
-            else:
-                # 1-D tensor 
-                return {(i,):element for i, element in enumerate(tensor)}, (len(tensor),)
+                    for sub_loc, entry in ExprTensor.TensorDictFromIterables(entry):
+                        loc = (coord,)+sub_loc
+                        yield loc, entry
         except TypeError:
-            raise TypeError('An ExpressionTensor must be a dictionary of indices to elements or a nested iterables of Expressions')
+            raise TypeError('An ExprTensor must be a dictionary of indices to elements or a nested iterables of Expressions')
     
-    def __getitem__(self, key):
-        return self.elems[key]
+    def _makeEntryOrigins(self):
+        '''
+        entryOrigins maps relative indices that contain tensor elements to
+        the relative indices of the origin for the corresponding entry.
+        Specifically, single-element entries map indices to themselves, but
+        multi-element Iter entries map each of the encompassed 
+        relative index location to the origin relative index location where
+        that Iter entry is stored.
+        
+        Raise an ExprTensorError if there are overlapping entries.
+        '''
+        from iteration import Iter
+        from proveit.number import Add, Subtract, one
+        
+        # Create the entry_origins dictionary and check for invalid
+        # overlapping entries while we are at it.
+        rel_entry_origins = dict()
+        rel_index_tensor = self.relIndexTensor
+        for rel_entry_loc, entry in rel_index_tensor.iteritems():
+            if isinstance(entry, Iter):
+                loc = self.tensorLoc(rel_entry_loc)
+                
+                # corner location at the end of the Embed block:
+                end_corner = []
+                for axis, coord in enumerate(loc):
+                    end_coord = Add(coord, Subtract(entry.end_indices[axis], entry.start_indices[axis]), one)
+                    end_corner.append(self.endCoordSimplifications[end_coord])
+                
+                # translate the end corner location to the corresponding relative indices
+                rel_entry_end_corner = self.relEntryLoc(end_corner)
+                
+                # iterate over all of the relative indexed locations from the starting corner to 
+                # the ending corner of the Iter block, populating the entry_origins dictionary and 
+                # making sure none of the locations overlap with something else.
+                for p in itertools.product(*[xrange(start, end) for start, end in zip(rel_entry_loc, rel_entry_end_corner)]):
+                    p = tuple(p)
+                    if p in rel_entry_origins:
+                        raise ExprTensorError("Overlapping blocks in the ExprTensor")
+                    rel_entry_origins[p] = rel_entry_loc
+            else:
+                # single-element entry.  check for overlap and add to the entry_origins dictionary
+                if rel_entry_loc in rel_entry_origins:
+                    raise ExprTensorError("Overlapping blocks in the ExprTensor")
+                rel_entry_origins[rel_entry_loc] = rel_entry_loc
+                
+        # Return the entry_origins dictionary that we generated.
+        return rel_entry_origins 
+    
+    def relEntryLoc(self, loc):
+        '''
+        Return the relative entry location given the absolute tensor location.
+        '''
+        return ExprTensor.relEntryLocation(loc, self.coordSortingRelations)
 
-    def __contains__(self, key):
-        return key in self.elems
+    def tensorLoc(self, rel_entry_loc):
+        '''
+        Return the absolute tensor location given the relative entry location.
+        '''
+        return ExprTensor.tensorLocation(rel_entry_loc, self.coordSortingRelations)
+    
+    @staticmethod
+    def relEntryLocation(self, loc, coord_sorting_relations):
+        '''
+        Return the relative entry location given the absolute tensor location using 
+        the given relations for sorting the absolute tensor coordinates.
+        '''
+        rel_entry_loc = (sorting_relation.operands.index(coord) for coord, sorting_relation in zip(loc, coord_sorting_relations))
+        return rel_entry_loc
+            
+    @staticmethod
+    def tensorLocation(self, rel_entry_loc, coord_sorting_relations):
+        '''
+        Return the absolute tensor location given the relative entry location using 
+        the given relations for sorting the absolute tensor coordinates.
+        '''
+        loc = (sorting_relation.operands[index] for index, sorting_relation in zip(rel_entry_loc, coord_sorting_relations))
+        return loc
                         
-    def __len__(self):
-        return len(self.elems)
+    def numEntries(self):
+        '''
+        Return the number of tensor entries.
+        '''
+        return len(self.relIndexTensor)
         
     def iteritems(self):
-        return self.elems.iteritems()
+        '''
+        Yield each relative entry location and corresponding element.
+        '''
+        return self.relIndexTensor.iteritems()
 
     def itervalues(self):
-        return self.elems.itervalues()
+        '''
+        Yield each tensor element.
+        '''
+        return self.relIndexTensor.itervalues()
     
     def keys(self):
         '''
-        Return the tensor index keys in sorted order.
+        Returns the relative entry location keys
         '''
-        return sorted(self.elems.keys())
+        return self.relIndexTensor.keys()
+    
+    def relEndCorner(self, rel_entry_loc):
+        '''
+        Given a relative location of one of the tensor entries,
+        return the relative location for the "end-corner" of
+        the entry.  If the entry is an Iter, then this
+        relative end corner gives the relative range of the
+        iteration inclusively.  Otherwise, the end-corner is
+        simply rel_loc; that is, the start and the end are
+        the same for single-element entries.
+        '''
+        # Translate from relative to absolute location, use
+        # the endCorner method, then translate this result from
+        # absolute to relative.
+        return self.relEntryLoc(self.endCorner(self.tensorLoc(rel_entry_loc)))
+    
+    def endCorner(self, tensor_entry_loc):
+        '''
+        Given an absolute tensor entry location,
+        return the absolute location for the "end-corner" of
+        the entry.  If the entry is an Iter, then this
+        absolute end corner gives the range of the
+        iteration inclusively.  Otherwise, the end-corner is
+        simply tensor_entry_loc; that is, the start and the 
+        end are the same for single-element entries.
+        '''
+        from proveit.number import one, Add, Subtract
+        from iteration import Iter
+        entry = self[self.relEntryLoc(tensor_entry_loc)]
+        if isinstance(entry, Iter):
+            end_corner = []
+            for axis, coord in enumerate(tensor_entry_loc):
+                # Add (end-start)+1 of the Iter to get to the end
+                # location of the entry along this axis. 
+                orig_end_coord = Add(coord, Subtract(entry.end_indices[axis], entry.start_indices[axis]), one)
+                end_corner.append(self.endCoordSimplifications[orig_end_coord]) # use the simplified version
+            return end_corner # absolute end-corner for the tensor entry
+        return tensor_entry_loc # single-element entry
 
+    def __getitem__(self, rel_entry_loc):
+        '''
+        Return the tensor entry at the given relative
+        entry location key.  See getElem(..) for
+        getting the element at an absolute location.
+        '''
+        return self.relIndexTensor[rel_entry_loc]
+    
+    def getElem(self, tensor_loc, assumptions = USE_DEFAULTS, requirements = None):
+        '''
+        Return the tensor element at the location, given
+        as an Expression, using the given assumptions as needed
+        to interpret the location expression.  Required
+        truths, proven under the given assumptions, that 
+        were used to make this interpretation will be
+        appended to the given 'requirements' (if provided).
+        '''
+        from proveit.number import Less, Add, Subtract
+        from iteration import Iter
+        from composite import _simplifiedCoord
+        if len(tensor_loc) != self.ndims:
+            raise ExprTensorError("The 'tensor_loc' has the wrong number of dimensions: %d instead of %d"%(len(tensor_loc), self.ndims))
+        
+        if requirements is None: requirements = [] # requirements won't be passed back in this case
+
+        lower_indices = []
+        upper_indices = []
+        for coord, sorted_coords in zip(tensor_loc, self.sortedCoordLists):
+            lower, upper = None, None
+            try:
+                lower, upper = Less.insert(sorted_coords, coord, assumptions=assumptions)
+            except:
+                raise ExprTensorError("Could not determine the 'tensor_loc' range within the tensor coordinates under the given assumptions")
+            # The relationship to the lower and upper coordinate bounds are requirements for determining
+            # the element being assessed.
+            requirements.append(Less.sort((sorted_coords[lower], coord), reorder=False, assumptions=assumptions))
+            requirements.append(Less.sort((coord, sorted_coords[upper]), reorder=False, assumptions=assumptions))
+            lower_indices.append(lower)
+            upper_indices.append(upper)
+        
+        if tuple(lower_indices) not in self.entryOrigins or tuple(upper_indices) not in self.entryOrigins:
+            raise ExprTensorError("Tensor element could not be found at %s"%str(tensor_loc))
+        rel_entry_origin = self.relEntryOrigins[lower_indices]
+        if self.relEntryOrigins[upper_indices] != rel_entry_origin:
+            raise ExprTensorError("Tensor element is ambiguous for %s under the given assumptions"%str(tensor_loc))
+        
+        entry = self[rel_entry_origin]
+        if isinstance(entry, Iter):
+            # indexing into an iteration
+            entry_origin = self.tensorLoc(rel_entry_origin)
+            iter_start_indices = entry.start_indices
+            iter_loc = [Add(iter_start, Subtract(coord, origin)) for iter_start, coord, origin in zip(iter_start_indices, tensor_loc, entry_origin)] 
+            simplified_iter_loc = [_simplifiedCoord(coord, assumptions, requirements) for coord in iter_loc]
+            return entry.getInstance(simplified_iter_loc, assumptions=assumptions, requirements=requirements)
+        else:
+            # just a single-element entry
+            assert lower_indices==upper_indices, "A single-element entry should not have been determined if there was an ambiguous range for 'tensor_loc'"
+            return entry
+        
+    def yieldLocationDeltas(self, axis):
+        '''
+        For the given axis, yield the difference between each
+        successive coordinate at which an element is explicitly
+        located for this tensor (or where an Embed block ends).
+        '''
+        from proveit.number import zero, Add
+        from proveit.logic import Equals
+        prev_coord = zero
+        for coord in self.sorting_relations[axis]:
+            if not Equals(prev_coord, coord).prove(assumptions=[self.sorting_relations[axis]], automation=False):
+                assert isinstance(coord, Add) and len(coord.operands)==2 and coord.operands[0]==prev_coord, "The first of a set of equal coordinates in the sorting relations are supposed to indicate the difference from the previous one."
+                yield coord.operands[1] # this term is the difference between this coordinate and the simplified form of the previous one
+            prev_coord = coord
+    
+
+
+    """
+    def yieldRequirements(self):
+        '''
+        Yield KnownTruth's that are prerequisites for this
+        Expression.
+        '''
+        for sub_req in Expression.yieldRequirements(self):
+            yield sub_req
+        for sorting_relations in self.sorting_relations:
+            yield sorting_relations
+    """
+            
+    def remakeArguments(self):
+        '''
+        Yield the argument (key, value) pairs that could be used to 
+        recreate the ExprTensor.
+        '''
+        tensor = {loc:element for loc, element in self.iteritems()}
+        yield tensor
+                                    
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
-        if subClass != ExpressionTensor: 
+    def _make(subClass, coreInfo, styles, subExpressions):
+        if subClass != ExprTensor: 
             MakeNotImplemented(subClass) 
         if len(coreInfo) != 3:
-            raise ValueError("Expecting ExpressionTensor coreInfo to contain excactly 3 items: 'ExpressionTensor', the shape, and the keys")
-        if coreInfo[0] != 'ExpressionTensor':
-            raise ValueError("Expecting ExpressionTensor coreInfo[0] to be 'ExpressionTensor'")
-        shape = literal_eval(coreInfo[1])
-        keyStrs = coreInfo[2].split(';')
-        tensorDict = {literal_eval(keyStr):subExpression for keyStr, subExpression in zip(keyStrs, subExpressions)}
-        return ExpressionTensor(tensorDict, shape)
-                   
+            raise ValueError("Expecting ExprTensor coreInfo to contain exactly 3 items: 'ExprTensor', the number of dimensions, and the indexed locations")
+        if coreInfo[0] != 'ExprTensor':
+            raise ValueError("Expecting ExprTensor coreInfo[0] to be 'ExprTensor'")
+        ndims = literal_eval(coreInfo[1])
+        indexed_loc_strs = coreInfo[2].split(';')
+        # coordinate-sorting relations in each dimension
+        sorting_relations = subExpressions[:ndims]
+        indexed_tensor = {literal_eval(indexed_loc_str):element for indexed_loc_str, element in zip(indexed_loc_strs, subExpressions[ndims+1:])}
+        tensor = {ExprTensor.tensorLocation(indexed_loc, sorting_relations):element for indexed_loc, element in indexed_tensor.iteritems()}
+        return ExprTensor(tensor).withStyles(**styles)
+                                                                              
     def string(self, fence=False):
-        return '{' + ', '.join(str(key) + ':' + self[key].string(fence=True) for key in self.keys()) + '}'
+        return '{' + ', '.join(loc.string(fence=True) + ':' + element.string(fence=True) for loc, element in self.iteritems()) + '}'
     
     def _config_latex_tool(self, lt):
         Expression._config_latex_tool(self, lt)
@@ -247,7 +484,7 @@ class ExpressionTensor(Composite, Expression):
     def latex(self, fence=False):
         from proveit._core_.expression.bundle import Block
         if len(self.shape) != 2:
-            raise NotImplementedError('Only 2-dimensional ExpressionTensor formatting has been implemented.')
+            raise NotImplementedError('Only 2-dimensional ExprTensor formatting has been implemented.')
         _, ncolumns = self.shape
         outStr = r'\xymatrix @*=<0em> @C=1em @R=.7em{' + '\n'
         current_row = -1
@@ -306,167 +543,137 @@ class ExpressionTensor(Composite, Expression):
         outStr += r'\\'
 
         outStr += '\n}\n'
-        return outStr 
+        return outStr
     
-    def _makeAlignmentMappings(self, outerShape, outerAlignmentCoordinates, innerShape, innerAlignmentCoordinates):
+    def entryRanges(self, base, start_indices, end_indices, assumptions, requirements):
         '''
-        Return a space requirement function and coordinate mapping when substituting
-        a tensor with the given innerAlignmentCoordinates into a block with the given
-        outerAlignmentCoordinates.
+        For each entry of the tensor that is fully or partially contained in the window defined
+        via start_indices and end_indices (as Expressions that can be provably sorted
+        against tensor coordinates), yield the start and end of the intersection of the
+        entry range and the window.
         '''
-        ndimensions = len(self.shape)
-        if len(outerAlignmentCoordinates) != ndimensions:
-            raise ValueError('There must be outer alignment indices for each dimension')
-        if len(innerAlignmentCoordinates) != ndimensions:
-            raise ValueError('There must be inner alignment indices for each dimension')
-        if len(outerShape) != ndimensions:
-            raise ValueError('Block shape dimensions must match the dimensions of the containing tensor')
-
-        # for each axis, map each inner coordinate to the outer coordinate of the block
-        coordinateMaps = [dict() for _ in xrange(ndimensions)]
-        # determine the space required for each outer coordinate along each axis
-        spaceRequirements = [[[1] for _ in xrange(outerShape[axis])] for axis in xrange(ndimensions)]
-        # for each axis
-        for axis in ndimensions:
-            if len(outerAlignmentCoordinates[axis]) != len(innerAlignmentCoordinates[axis]):
-                raise ValueError('inner and outer alignment coordinate count must match')
-            i = 0 # the inner coordinate that we are mapping to an outer coordinate
-            innerBegin = 0
-            outerBegin = outerAlignmentCoordinates[axis][0] - innerAlignmentCoordinates[axis][0]
-            extraSpace = 0
-            # for each alignment coordinate
-            for k in xrange(len(innerAlignmentCoordinates[axis])):
-                outerEnd = extraSpace + outerAlignmentCoordinates[axis][k] - 1
-                innerEnd = innerAlignmentCoordinates[axis][k] - 1
-                innerDelta = (innerEnd - innerBegin)
-                outerDelta = (outerEnd - outerBegin)
-                if innerDelta > outerDelta :
-                    # more space is need to fit the inner substitution into the outer block
-                    extraSpace = innerDelta - outerDelta
-                    # distribute this extra space evenly but padding earler coordinates with an extra
-                    # one as needed if the extra space does not divide evenly
-                    minExtraSpacePerCoord = extraSpace / outerDelta
-                    for j in xrange(outerBegin, outerEnd+1):
-                        spaceRequirements[axis][j - extraSpace] += minExtraSpacePerCoord
-                    for j in xrange(outerBegin, innerBegin + extraSpace - minExtraSpacePerCoord*outerDelta):
-                        spaceRequirements[axis][j - extraSpace] += 1
-                    outerEnd += extraSpace
-                    outerDelta += extraSpace
-                while i <= innerEnd:
-                    # interpolate between alignment indices
-                    coordinateMaps[axis][i] = outerBegin + (i - innerBegin) * outerDelta / innerDelta 
-                    ++i
-                outerBegin = outerEnd + 1
-                innerBegin = innerAlignmentCoordinates[axis][k]
-            # finish off the coordinate mapping beyond the last alignment coordinates.
-            j = outerBegin
-            while i < innerShape[axis]:
-                coordinateMaps[axis][i] = j
-                ++i, ++j
         
-        def coordinateMap(innerIndex):
-            return [coordinateMaps[axis][innerIndex[axis]] for axis in xrange(ndimensions)]
-
-        return spaceRequirements, coordinateMap
-                        
-    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
+        from proveit.number import Less, Greater
+        if requirements is None: requirements = [] # requirements won't be passed back in this case
+                                
+        # For each axis, obtain the sorted coordinates of the substituted tensor,
+        # insert the start and end indices for the desired range, and determine
+        # the starting and ending locations relative to operator positions of the 
+        # expanded sorting relations.
+        coord_sorting_relations = [] # expanded sorting relations (including start and end indices) along each axis
+        rel_start_loc = [] # start location relative to the new sorting locations along each axis
+        rel_end_loc = [] # end location relative to the new sorting locations along each axis
+        for axis in xrange(self.ndims): # for each axis
+            start_index =start_indices[axis]
+            end_index = end_indices[axis]
+            
+            sorted_coords = self.sortedCoordLists[axis]
+            # insert the start_index and the end_index into the sorted list of coordinates in their proper places
+            coord_sorting_relation = Less.sort(sorted_coords + [start_index, end_index], assumptions=assumptions)
+            # get the relative start and end integer coordinates
+            rel_start_loc.append(coord_sorting_relation.operands.index(start_index))
+            rel_end_loc.append(coord_sorting_relation.operands.index(end_index))
+            # remember these sorting relations
+            coord_sorting_relations.append(coord_sorting_relation)
+        
+        # For each entry of the substituted tensor, determine if it is within the start/end
+        # "window".  If so, yield the intersected range in terms of parameter values
+        # (inverted from the tensor coordinates).  Keep track of the requirements.
+        for rel_loc_in_tensor, entry in self.iteritems():
+            # convert from the relative location within the tensor to the
+            # tensor location in absolute coordinates.
+            entry_start = self.tensorLoc(rel_loc_in_tensor)
+            entry_end = self.endCorner(rel_loc_in_tensor)
+            
+            # convert from the absolute tensor location to the relative
+            # location w.r.t. the  coord_sorting_relations that include
+            # the startArgs and endArgs of the window.
+            rel_entry_start = [coord_sorting_relation.index(coord) for coord, coord_sorting_relation in zip(entry_start, coord_sorting_relations)]
+            rel_entry_end = [coord_sorting_relation.index(coord) for coord, coord_sorting_relation in zip(entry_end, coord_sorting_relations)]
+            
+            # get the intersection of the entry range and the considered window,
+            rel_intersection_start = [max(a, b) for a, b in zip(rel_start_loc, rel_entry_start)]
+            rel_intersection_end = [min(a, b) for a, b in zip(rel_end_loc, rel_entry_end)]
+            
+            # translate the intersection region to absolute coordinates
+            intersection_start = [coord_sorting_relation.operands[i] for i, coord_sorting_relation in zip(rel_intersection_start, coord_sorting_relations)]
+            intersection_end = [coord_sorting_relation.operands[i] for i, coord_sorting_relation in zip(rel_intersection_end, coord_sorting_relations)]
+                                
+            if any(a > b for a, b in zip(rel_intersection_start, rel_intersection_end)):
+                # empty intersection, but we need to include requirements that prove this.
+                for axis, (a, b) in enumerate(zip(rel_intersection_start, rel_intersection_end)):
+                    if a > b:
+                        # add the requirements showing the intersection is empty along the first such axis.
+                        coord_sorting_relation =  coord_sorting_relations[axis]
+                        aCoord, bCoord = coord_sorting_relation.operands[a], coord_sorting_relation.operands[b]
+                        empty_intersection_relation = Greater.sort([aCoord, bCoord], assumptions=assumptions)
+                        requirements.append(empty_intersection_relation)
+            else:
+                # There is a non-empty intersection rectangle to yield for a particular entry.
+                
+                # Let's get the requirements that prove the intersection:
+                for axis, (a, b, c, d, e, f) in enumerate(zip(rel_intersection_start, rel_intersection_end, rel_start_loc, rel_entry_start, rel_end_loc, rel_entry_end)):
+                    # add the requirements that determine the intersection along this axis.
+                    for j, k in ((a, b), (c, d), (e, f)):
+                        coord_sorting_relation =  coord_sorting_relations[axis]
+                        jCoord, kCoord = coord_sorting_relation.operands[j], coord_sorting_relation.operands[k]
+                        empty_intersection_relation = Less.sort([jCoord, kCoord], assumptions=assumptions)
+                        requirements.append(empty_intersection_relation)
+                yield (intersection_start, intersection_end)        
+        
+    
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
+        Flattens nested tensors (or lists of lists) that arise from Embed substitutions.
         '''
-        from proveit._core_.expression.bundle.block import Block
-        
-        # Check to see if the entire ExpressionTensor is to be substituted
+        from composite import _simplifiedCoord
+        from iteration import Iter
+        from proveit.number import Add
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
 
-        ndimensions = len(self.shape)
-        
-        # Perform the element-by-element substitutions and establish
-        # the space requirements for each coordinate along each axis
-        # due to the expansion of any Block elements, consistent with
-        # alignment indices.
-        virtualTensor = dict() # maps original indices and block offsets to substituted elements
-        spaceRequirements = [{i:1 for i in xrange(self.shape[axis])} for axis in xrange(ndimensions)]
-        for coord, element in self.iteritems():
-            subbedElement = element.substituted(exprMap, relabelMap, reservedVars)
-            if isinstance(element, Block) and isinstance(subbedElement, ExpressionTensor):
-                subbedTensor = subbedElement
-                if len(self.shape) != len(subbedTensor.shape):
-                    raise ExpressionTensorSubstitutionError("Block substitution must have the same dimensionality as the parent ExpressionTensor")
-                specificSpaceReqs, coordinateMap = self._makeAlignmentMappings(element.shape, element.alignmentCoordinates, subbedTensor.shape, subbedTensor.alignmentCoordinates)
-                for axis in range(len(element.shape)):
-                    for i in xrange(element.shape[axis]):
-                        spaceRequirements[axis][i] = max(spaceRequirements[axis][i], specificSpaceReqs[axis][i])
-                for subbedTensorIdx, subbedTensorElement in subbedTensor.iteritems():
-                    virtualTensor[(coord, coordinateMap(subbedTensorIdx))] = subbedTensorElement
-            else:
-                virtualTensor[(coord,[0]*len(self.shape))] = subbedElement                
-        # Map from original indices, in each dimension, to the new indices
-        # in order to make room for expanded blocks.
-        coordinateMappings = [[0] for axis in xrange(ndimensions)]
-        for axis in xrange(ndimensions):
-            coordinateMapping = coordinateMappings[axis]
-            spaceReq = spaceRequirements[axis]
-            for spaceReqIndex in sorted(spaceReq.keys()):
-                while len(coordinateMapping) < spaceReqIndex:
-                    # space of 1 by default
-                    coordinateMapping.append(coordinateMapping[-1]+1) 
-                coordinateMapping.append(coordinateMapping[spaceReqIndex] + spaceReq[spaceReqIndex])
+        if requirements is None: requirements = [] # requirements won't be passed back in this case
 
-        # Create the new tensor based upon the initSubbedTensor,
-        # the initial tensor with substitutions, and the coordinate mappings.
-        subbedTensor = dict()
-        for (virtualIdx, offset), element in virtualTensor.iteritems():
-            coord = tuple([coordinateMapping[coordinate] for coordinate, coordinateMapping in zip(virtualIdx, coordinateMappings)])
-            subbedTensor[[coord[axis] + offset[axis] for axis in xrange(len(self.shape))]] = element
-            
-        # Now we are ready to create the new ExpressionTensor
-        return ExpressionTensor(subbedTensor)
+        tensor = dict()
+        for loc, element in self.iteritems():
+            subbed_loc = loc.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
+            subbed_elem = element.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
+            if isinstance(element, Iter) and isinstance(subbed_elem, ExprTensor):
+                # An iteration element became an ExprTensor upon substitution,
+                # so insert the elements directly into this outer ExprTensor.
+                for sub_loc, sub_elem in subbed_elem.iteritems():
+                    net_loc = [_simplifiedCoord(Add(main_coord, sub_coord), assumptions, requirements) for main_coord, sub_coord in zip(subbed_loc, sub_loc)]
+                    tensor[net_loc] = subbed_elem
+            else:
+                tensor[subbed_loc] = subbed_elem
+        expr_tensor = ExprTensor(tensor, assumptions)
+        for requirement in expr_tensor.requirements:
+            # check that all ExprTensor requirements satisfy restrictions
+            requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope
         
+        # pass back the new requirements that are different from the ExprTensor requirements after making substitutions.
+        old_requirements = {requirement.substituted(exprMap, relabelMap, reservedVars) for requirement in self.requirements}
+        new_requirements = [requirement for requirement in expr_tensor.requirements if requirement not in old_requirements]
+            
+        requirements += new_requirements
+        
+        return expr_tensor
+                           
     def usedVars(self):
         '''
         Returns the union of the used Variables of the sub-Expressions.
         '''
-        return set().union(*[expr.usedVars() for expr in self.values()])
+        return set().union(*([expr.usedVars for expr in self.sorting_relations] + [expr.usedVars() for expr in self.values()]))
         
     def freeVars(self):
         '''
         Returns the union of the free Variables of the sub-Expressions.
         '''
-        return set().union(*[expr.freeVars() for expr in self.values()])
+        return set().union(*([expr.freeVars for expr in self.sorting_relations] + [expr.freeVars() for expr in self.values()]))
 
-    def freeMultiVars(self):
-        '''
-        Returns the union of the free MultiVariables of the sub-Expressions.
-        '''
-        return set().union(*[expr.freeMultiVars() for expr in self.values()])
-
-class ExpressionTensorIndexError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
-    
-class ExpressionTensorShapeError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
-    
-class ExpressionTensorReshapingError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
-
-class ExpressionTensorOverlapError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
-    
-class ExpressionTensorSubstitutionError(Exception):
+class ExprTensorError(Exception):
     def __init__(self, msg):
         self.msg = msg
     def __str__(self):

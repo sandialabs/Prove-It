@@ -1,55 +1,61 @@
-from proveit import Literal, Operation, AssociativeOperation, Etcetera, MultiVariable
-from proveit.logic import Equals
-from proveit.number.sets import Reals, RealsPos, Complexes, zero, one
-from proveit.common import a, b, c, n, x, vEtc, wEtc, xEtc, yEtc, zEtc, S
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
+from proveit.logic import Equals, InSet
+from proveit.number.sets import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
+from proveit._common_ import a, b, c, d, n, v, w, x, y, z, vv, ww, xx, yy, zz, S
 
-MULTIPLY = Literal(__package__, r'*', r'\cdot')
-
-class Mult(AssociativeOperation):
+class Mult(Operation):
+    # operator of the Mult operation.
+    _operator_ = Literal(stringFormat='*', latexFormat=r'\cdot', context=__file__)
+    
     def __init__(self, *operands):
         r'''
         Multiply together any number of operands from first operand.
         '''
-        AssociativeOperation.__init__(self, MULTIPLY, *operands)
+        Operation.__init__(self, Mult._operator_, operands)
         self.factors = operands
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return MULTIPLY
     
-    def _closureTheorem(self, numberSet):
-        import theorems
-        if numberSet == Reals:
-            return theorems.multRealClosure
+    def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
+        from ._theorems_ import multIntClosure, multNatsClosure, multNatsPosClosure, multRealClosure, multRealPosClosure, multComplexClosure
+        if numberSet == Integers:
+            thm = multIntClosure
+        elif numberSet == Naturals:
+            thm = multNatsClosure
+        elif numberSet == NaturalsPos:
+            thm = multNatsPosClosure
+        elif numberSet == Reals:
+            thm = multRealClosure
         elif numberSet == RealsPos:
-            return theorems.multRealPosClosure            
+            thm = multRealPosClosure
         elif numberSet == Complexes:
-            return complex.theorems.multComplexClosure
-
-    def _notEqZeroTheorem(self):
-        import theorems
-        return theorems.multNotEqZero
+            thm = multComplexClosure
+        else:
+            raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
+        return thm.specialize({xMulti:self.operands}, assumptions=assumptions)
     
-    def simplification(self, assumptions=frozenset()):
+    def notEquals(self, rhs, assumptions=USE_DEFAULTS):
+        from ._theorems_ import multNotEqZero
+        if rhs == zero:
+            return multNotEqZero.specialize({xMulti:self.operands}, assumptions=assumptions)
+        raise ProofFailure(Equals(self, zero), assumptions, "'notEquals' only implemented for a right side of zero")
+    
+    def simplification(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one factor,
         derive and return this multiplication expression equated with a simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        from theorems import multOne, multZero
-        eq = Equation()
+        from ._theorems_ import multOne, multZero
         expr = self
         try:
             zeroIdx = self.operands.index(zero)
             # there is a zero in the product.  We can simplify that.
             if zeroIdx > 0:
                 # commute it so that the zero comes first
-                expr = eq.update(expr.commute(0, zeroIdx, zeroIdx, zeroIdx+1, assumptions)).rhs
+                expr = expr.commute(0, zeroIdx, zeroIdx, zeroIdx+1, assumptions).rhs
             if len(expr.operands) > 2:
                 # group the other operands so there are only two at the top level
-                expr = eq.update(expr.group(1, len(expr.operands), assumptions)).rhs
-            deduceInComplexes(expr.operands[1], assumptions)
-            return eq.update(multZero.specialize({x:expr.operands[1]}))
+                expr = expr.group(1, len(expr.operands), assumptions)
+            return Equals(self, multZero.specialize({x:expr.operands[1]}, assumptions=assumptions)).prove(assumptions)
         except ValueError:
             pass # no zero factor
         try:
@@ -57,17 +63,16 @@ class Mult(AssociativeOperation):
             # there is a one in the product.  We can simplify that.
             if oneIdx > 0:
                 # commute it so that the one comes first
-                expr = eq.update(expr.commute(0, oneIdx, oneIdx, oneIdx+1, assumptions)).rhs                
+                expr = expr.commute(0, oneIdx, oneIdx, oneIdx+1, assumptions).rhs                
             if len(expr.operands) > 2:
                 # group the other operands so there are only two at the top level
-                expr = eq.update(expr.group(1, len(expr.operands), assumptions)).rhs
-            deduceInComplexes(expr.operands[1], assumptions)
-            return eq.update(multOne.specialize({x:expr.operands[1]}))
+                expr = expr.group(1, len(expr.operands), assumptions).rhs
+            return Equals(self, multOne.specialize({x:expr.operands[1]}, assumptions=assumptions)).prove(assumptions)
         except ValueError:
             pass # no one factor
         raise ValueError('Only trivial simplification is implemented (zero or one factors)')
 
-    def simplified(self, assumptions=frozenset()):
+    def simplified(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one factor,
         derive this multiplication expression equated with a simplified form
@@ -76,7 +81,7 @@ class Mult(AssociativeOperation):
         '''
         return self.simplification(assumptions).rhs
         
-    def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
+    def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=USE_DEFAULTS):
         '''
         Commute self.operands[startIdx1:endIdx1] with self.operands[startIdx2:endIdx2].  
         The default, if no indices are provided, is to commute the first operand with the rest
@@ -85,7 +90,7 @@ class Mult(AssociativeOperation):
         Give any assumptions necessary to prove that the operands are in 
         Complexes so that the commutation theorem is applicable.
         '''
-        from theorems import multComm
+        from ._theorems_ import multComm
         if startIdx1 is None and endIdx1 is None and startIdx2 is None and endIdx2 is None:
             stattIdx1, endIdx1, startIdx2, endIdx2 = 0, 1, 1, None
         nOperands = len(self.operands)
@@ -102,10 +107,9 @@ class Mult(AssociativeOperation):
         xSub = self.operands[endIdx1:startIdx2]
         ySub = self.operands[startIdx2:endIdx2]
         zSub = self.operands[endIdx2:] if endIdx2 is not None else []
-        deduceInComplexes(self.operands, assumptions)
-        return multComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}, assumptions=assumptions)
+        return multComm.specialize({vMulti:vSub, wMulti:wSub, xMulti:xSub, yMulti:ySub, zMulti:zSub}, assumptions=assumptions)
 
-    def group(self, startIdx=None, endIdx=None, assumptions=frozenset()):
+    def group(self, startIdx=None, endIdx=None, assumptions=USE_DEFAULTS):
         '''
         Group together (associate as a sub-product wrapped in parenthesis)
         consecutive operands, self.operands[startIdx:endIdx].
@@ -113,14 +117,13 @@ class Mult(AssociativeOperation):
         Give any assumptions necessary to prove that the operands are in 
         Complexes so that the commutation theorem is applicable.
         '''
-        from axioms import multAssoc
-        deduceInComplexes(self.operands, assumptions)
+        from ._axioms_ import multAssoc
         xSub = self.operands[:startIdx] if startIdx is not None else []
         ySub = self.operands[startIdx:endIdx]
         zSub = self.operands[endIdx:] if endIdx is not None else []
-        return multAssoc.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+        return multAssoc.specialize({xMulti:xSub, yMulti:ySub, zMulti:zSub}, assumptions=assumptions)
 
-    def ungroup(self, idx, assumptions=frozenset()):
+    def ungroup(self, idx, assumptions=USE_DEFAULTS):
         '''
         Ungroup (un-associate a sub-product wrapped in parenthesis)
         an operand, self.operands[idx].
@@ -131,13 +134,11 @@ class Mult(AssociativeOperation):
         if not isinstance(self.operands[idx], Mult):  
             raise ValueError("Selected term is not a Mult expression")
 
-        from theorems import multAssocRev
-        deduceInComplexes(self.operands, assumptions)
-        deduceInComplexes(self.operands[idx].operands, assumptions)
+        from ._theorems_ import multAssoc
         xSub = self.operands[:idx] if idx is not None else []
         ySub = self.operands[idx].operands
         zSub = self.operands[idx+1:] if idx is not None else []
-        return multAssocRev.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
+        return multAssoc.specialize({xMulti:xSub, yMulti:ySub, zMulti:zSub}, assumptions=assumptions).deriveReversed(assumptions=assumptions)
     
     def index(self, theFactor, alsoReturnNum=False):
         '''
@@ -168,26 +169,25 @@ class Mult(AssociativeOperation):
                 raise ValueError("Factor is absent!")        
         return (idx, num) if alsoReturnNum else idx
     
-    def pull(self, startIdx=None, endIdx=None, direction='left', assumptions=frozenset()):
+    def pull(self, startIdx=None, endIdx=None, direction='left', assumptions=USE_DEFAULTS):
         '''
         Pull a subset of consecutive operands, self.operands[startIdx:endIdx],
         to one side or another. Returns the equality that equates self to 
         this new version.  Give any assumptions necessary to prove that the 
         operands are in Complexes so that the commutation theorem is applicable.
         '''
-        from proveit.logic.equality.axioms import equalsReflexivity
         if direction == "left": # pull the factor(s) to the left
             if startIdx == 0 or startIdx is None:
-                return equalsReflexivity.specialize({x:self}).checked() # no move necessary
+                return Equals(self, self).prove(assumptions) # no move necessary
             return self.commute(None, startIdx, startIdx, endIdx, assumptions=assumptions)
         elif direction == "right": # pull the factor(s) to the right
             if endIdx == len(self.operands) or endIdx is None:
-                return equalsReflexivity.specialize({x:self}).checked() # no move necessary
+                return Equals(self, self).prove(assumptions) # no move necessary
             return self.commute(startIdx, endIdx, endIdx, None, assumptions=assumptions)
         else:
             raise ValueError("Invalid pull direction!  (Acceptable values are \"left\" and \"right\".)")
 
-    def distribute(self, index=None, assumptions=frozenset()):
+    def distribute(self, index=None, assumptions=USE_DEFAULTS):
         r'''
         Distribute through the operand at the given index.  
         Returns the equality that equates self to this new version.
@@ -198,50 +198,38 @@ class Mult(AssociativeOperation):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.            
         '''
-        from theorems import distributeThroughSum, distributeThroughSubtract, distributeThroughSummation
-        from proveit.number.division.theorems import fracInProd, prodOfFracs
-        from proveit.number import Fraction, Add, Sub, Sum
-        if index is None and len(self.factors) == 2 and all(isinstance(factor, Fraction) for factor in self.factors):
-            deduceInComplexes(self.factors[0].operands, assumptions)
-            deduceInComplexes(self.factors[1].operands, assumptions)
-            return prodOfFracs.specialize({x:self.factors[0].numerator, y:self.factors[1].numerator, z:self.factors[0].denominator, w:self.factors[1].denominator})
+        from ._theorems_ import distributeThroughSum, distributeThroughSubtract, distributeThroughSummation
+        from proveit.number.division._theorems_ import fracInProd, prodOfFracs
+        from proveit.number import Frac, Add, Subtract, Sum
+        if index is None and len(self.factors) == 2 and all(isinstance(factor, Frac) for factor in self.factors):
+            return prodOfFracs.specialize({x:self.factors[0].numerator, y:self.factors[1].numerator, z:self.factors[0].denominator, w:self.factors[1].denominator}, assumptions=assumptions)
         operand = self.operands[index]
         if isinstance(operand, Add):
-            deduceInComplexes(self.operands[:index], assumptions)
-            deduceInComplexes(self.operands[index].operands, assumptions)
-            deduceInComplexes(self.operands[index+1:], assumptions)
-            return distributeThroughSum.specialize({xEtc:self.operands[:index], yEtc:self.operands[index].operands, zEtc:self.operands[index+1:]})
-        elif isinstance(operand, Sub):
-            deduceInComplexes(self.operands[:index], assumptions)
-            deduceInComplexes(self.operands[index].operands, assumptions)
-            deduceInComplexes(self.operands[index+1:], assumptions)
-            return distributeThroughSubtract.specialize({wEtc:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zEtc:self.operands[index+1:]})
-        elif isinstance(operand, Fraction):            
-            deduceInComplexes(self.operands[:index], assumptions)
-            deduceInComplexes(self.operands[index].operands, assumptions)
-            deduceInComplexes(self.operands[index+1:], assumptions)
-            eqn = fracInProd.specialize({wEtc:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zEtc:self.operands[index+1:]})            
+            return distributeThroughSum.specialize({xMulti:self.operands[:index], yMulti:self.operands[index].operands, zMulti:self.operands[index+1:]}, assumptions=assumptions)
+        elif isinstance(operand, Subtract):
+            return distributeThroughSubtract.specialize({wMulti:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zMulti:self.operands[index+1:]}, assumptions=assumptions)
+        elif isinstance(operand, Frac):            
+            eqn = fracInProd.specialize({wMulti:self.operands[:index], x:self.operands[index].operands[0], y:self.operands[index].operands[1], zMulti:self.operands[index+1:]}, assumptions=assumptions)            
             try:
                 # see if the numerator can simplify (e.g., with a one factor)
                 numerSimplification = eqn.rhs.numerator.simplification(assumptions=assumptions)
                 dummyVar = eqn.safeDummyVar()
-                return numerSimplification.rhsSubstitute(Equals(eqn.lhs, Fraction(dummyVar, eqn.rhs.denominator)), dummyVar)
+                return numerSimplification.rhsSubstitute(Equals(eqn.lhs, Frac(dummyVar, eqn.rhs.denominator)), dummyVar)
             except:
                 return eqn
         elif isinstance(operand, Sum):
-            deduceInComplexes(self.operands, assumptions)
-            yEtcSub = operand.indices
+            yMultiSub = operand.indices
             Pop, Pop_sub = Operation(P, operand.indices), operand.summand
             S_sub = operand.domain
             xDummy, zDummy = self.safeDummyVars(2)
-            spec1 = distributeThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, 
-                                                           xEtc:Etcetera(MultiVariable(xDummy)), zEtc:Etcetera(MultiVariable(zDummy))}).checked()
+            spec1 = distributeThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yMulti:yMultiSub, 
+                                                           xMulti:Etcetera(MultiVariable(xDummy)), zMulti:Etcetera(MultiVariable(zDummy))}, assumptions=assumptions)
             return spec1.deriveConclusion().specialize({Etcetera(MultiVariable(xDummy)):self.operands[:index], \
-                                                        Etcetera(MultiVariable(zDummy)):self.operands[index+1:]})
+                                                        Etcetera(MultiVariable(zDummy)):self.operands[index+1:]}, assumptions=assumptions)
         else:
             raise Exception("Unsupported operand type to distribute over: " + str(operand.__class__))
         
-    def factor(self,theFactor,pull="left", groupFactor=True, groupRemainder=False, assumptions=frozenset()):
+    def factor(self,theFactor,pull="left", groupFactor=True, groupRemainder=False, assumptions=USE_DEFAULTS):
         '''
         Factor out "theFactor" from this product, pulling it either to the "left" or "right".
         If "theFactor" is a product, this may factor out a subset of the operands as
@@ -255,31 +243,31 @@ class Mult(AssociativeOperation):
         the associative and commutation theorems are applicable.
         '''
         idx, num = self.index(theFactor, alsoReturnNum = True)
-        eq = Equation(self.pull(idx, idx+num, pull, assumptions))
+        expr = self.pull(idx, idx+num, pull, assumptions)
         if groupFactor and num > 1:
             if pull == 'left':  # use 0:num type of convention like standard pythong
-                eq.update(eq.eqExpr.rhs.group(endIdx=num, assumptions=assumptions))
+                expr = expr.rhs.group(endIdx=num, assumptions=assumptions)
             elif pull == 'right':
-                eq.update(eq.eqExpr.rhs.group(startIdx=-num, assumptions=assumptions))
+                expr = expr.rhs.group(startIdx=-num, assumptions=assumptions)
         if groupRemainder and len(self.operands)-num > 1:
             # if the factor has been group, effectively there is just 1 factor operand now
             numFactorOperands = 1 if groupFactor else num
             if pull == 'left':           
-                eq.update(eq.eqExpr.rhs.group(startIdx=numFactorOperands, assumptions=assumptions))
+                expr = expr.rhs.group(startIdx=numFactorOperands, assumptions=assumptions)
             elif pull == 'right':
-                eq.update(eq.eqExpr.rhs.group(endIdx=-numFactorOperands, assumptions=assumptions))
-        return eq.eqExpr.checked(assumptions)
+                expr = expr.rhs.group(endIdx=-numFactorOperands, assumptions=assumptions)
+        return Equals(self, expr.rhs)
         
-    def combineExponents(self, startIdx=None, endIdx=None, assumptions=frozenset()):
+    def combineExponents(self, startIdx=None, endIdx=None, assumptions=USE_DEFAULTS):
         '''
         Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$,  $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b},
         or equates $a^c b^c$ to $(a b)^c$.
         '''
-        from proveit.number.exponentiation.theorems import expOfPositivesProdRev, intExpOfProdRev, natsPosExpOfProdRev
-        from proveit.number.exponentiation.theorems import sumInExpRev, diffInExpRev, diffFracInExpRev
-        from proveit.number.exponentiation.theorems import addOneRightInExpRev, addOneLeftInExpRev
-        from proveit.number.exponentiation.theorems import prodOfSqrts
-        from proveit.number import Sqrt, Exp, Neg, Fraction
+        from proveit.number.exponentiation._theorems_ import expOfPositivesProd, intExpOfProd, natsPosExpOfProd
+        from proveit.number.exponentiation._theorems_ import sumInExp, diffInExp, diffFracInExp
+        from proveit.number.exponentiation._theorems_ import addOneRightInExp, addOneLeftInExp
+        from proveit.number.exponentiation._theorems_ import prodOfSqrts
+        from proveit.number import Sqrt, Exp, Neg, Frac
         if startIdx is not None or endIdx is not None:
             dummyVar = self.safeDummyVar()
             grouped = self.group(startIdx, endIdx, assumptions=assumptions)
@@ -289,41 +277,32 @@ class Mult(AssociativeOperation):
         if all(isinstance(factor, Sqrt) for factor in self.factors):
             # combine the square roots into one square root
             factorBases = [factor.base for factor in self.factors]
-            deduceInRealsPos(factorBases, assumptions)
-            return prodOfSqrts.specialize({xEtc:factorBases})
+            return prodOfSqrts.specialize({xMulti:factorBases}, assumptions=assumptions)
         if len(self.operands) != 2 or not isinstance(self.operands[0], Exp) or not isinstance(self.operands[1], Exp):
             if len(self.operands) == 2 and isinstance(self.operands[0], Exp) and self.operands[0].base == self.operands[1]:
                 # Of the form a^b a
-                deduceInComplexes(self.operands[1], assumptions)
-                deduceNotZero(self.operands[1], assumptions)
-                deduceInComplexes(self.operands[0].exponent, assumptions)
-                return addOneRightInExpRev.specialize({a:self.operands[1], b:self.operands[0].exponent})
+                return addOneRightInExp.specialize({a:self.operands[1], b:self.operands[0].exponent}, assumptions=assumptions).deriveReversed(assumptions)
             elif len(self.operands) == 2 and isinstance(self.operands[1], Exp) and self.operands[1].base == self.operands[0]:
                 # Of the form a a^b
-                deduceInComplexes(self.operands[0], assumptions)
-                deduceNotZero(self.operands[0], assumptions)
-                deduceInComplexes(self.operands[1].exponent, assumptions)
-                return addOneLeftInExpRev.specialize({a:self.operands[0], b:self.operands[1].exponent})
+                return addOneLeftInExp.specialize({a:self.operands[0], b:self.operands[1].exponent}, assumptions=assumptions).deriveReversed(assumptions)
             raise Exception('Combine exponents only implemented for a product of two exponentiated operands (or a simple variant)')
         if self.operands[0].base == self.operands[1].base:
             # Same base: a^b a^c = a^{b+c}$, or something similar
             aSub = self.operands[0].base
-            deduceNotZero(aSub, assumptions)
             bSub = self.operands[0].exponent
             if isinstance(self.operands[1].exponent, Neg):
                 # equate $a^b a^{-c} = a^{b-c}$
-                thm = diffInExpRev
+                thm = diffInExp
                 cSub = self.operands[1].exponent.operand
-            elif isinstance(self.operands[1].exponent, Fraction) and isinstance(self.operands[1].exponent.numerator, Neg):
+            elif isinstance(self.operands[1].exponent, Frac) and isinstance(self.operands[1].exponent.numerator, Neg):
                 # equate $a^b a^{-c/d} = a^{b-c/d}$
-                thm = diffFracInExpRev
+                thm = diffFracInExp
                 cSub = self.operands[1].exponent.numerator.operand
                 dSub = self.operands[1].exponent.denominator
-                deduceInComplexes([aSub, bSub, cSub, dSub], assumptions=assumptions)
-                return thm.specialize({a:aSub, b:bSub, c:cSub, d:dSub})
+                return thm.specialize({a:aSub, b:bSub, c:cSub, d:dSub}, assumptions=assumptions)
             else:
                 # standard $a^b a^c = a^{b+c}$
-                thm = sumInExpRev
+                thm = sumInExp
                 cSub = self.operands[1].exponent
         elif self.operands[0].exponent == self.operands[1].exponent:
             # Same exponent: equate $a^c b^c = (a b)^c$
@@ -331,21 +310,13 @@ class Mult(AssociativeOperation):
             bSub = self.operands[1].base
             expSub = self.operands[0].exponent
             try:
-                deduceInNaturalsPos(expSub, assumptions)
-                deduceInComplexes([aSub, bSub], assumptions)
-                return natsPosExpOfProdRev.specialize({n:expSub}).specialize({a:aSub, b:bSub})
+                return natsPosExpOfProd.specialize({n:expSub}, assumptions=assumptions).deriveReversed(assumptions).specialize({a:aSub, b:bSub}, assumptions=assumptions)
             except:
                 pass
             try:
-                deduceInIntegers(expSub, assumptions)
-                deduceInComplexes([aSub, bSub], assumptions)
-                deduceNotZero([aSub, bSub], assumptions)
-                return intExpOfProdRev.specialize({n:expSub}).specialize({a:aSub, b:bSub})
+                return intExpOfProd.specialize({n:expSub}, assumptions=assumptions).deriveReversed(assumptions).specialize({a:aSub, b:bSub}, assumptions=assumptions)
             except:
-                deduceInRealsPos([aSub, bSub], assumptions)
-                deduceInComplexes([expSub], assumptions)
-                return expOfPositivesProdRev.specialize({c:expSub}).specialize({a:aSub, b:bSub})
+                return expOfPositivesProd.specialize({c:expSub}, assumptions=assumptions).deriveReversed(assumptions).specialize({a:aSub, b:bSub}, assumptions=assumptions)
         else:
             raise Exception('Product is not in the correct form to combine exponents: ' + str(self))
-        deduceInComplexes([aSub, bSub, cSub], assumptions=assumptions)
-        return thm.specialize({a:aSub, b:bSub, c:cSub})
+        return thm.specialize({a:aSub, b:bSub, c:cSub}, assumptions=assumptions).deriveReversed(assumptions)

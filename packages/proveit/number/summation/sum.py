@@ -1,12 +1,13 @@
-from proveit import Literal, Operation, OperationOverInstances, Etcetera, MultiVariable, maybeFenced
+from proveit import Literal, Operation, OperationOverInstances, maybeFenced, USE_DEFAULTS, ProofFailure
 from proveit.logic import InSet
-from proveit.number.sets import infinity, zero, RealInterval, Interval, Reals, Integers, Naturals, Complexes
+from proveit.number.sets import RealInterval, Interval, Reals, Integers, Naturals, Complexes
 from proveit.number.negation import Neg
-from proveit.common import a, f, S, xEtc, yEtc, zEtc
-
-SUMMATION = Literal(__package__,  r'Sum', r'\sum')
+from proveit._common_ import a, f, P, S, QQ, xx
 
 class Sum(OperationOverInstances):
+    # operator of the Sum operation.
+    _operator_ = Literal(stringFormat='Sum', latexFormat=r'\sum', context=__file__)   
+    
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
@@ -18,7 +19,7 @@ class Sum(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        OperationOverInstances.__init__(self, SUMMATION, indices, summand, domain=domain, conditions=conditions)
+        OperationOverInstances.__init__(self, Sum._operator_, indices, summand, domain=domain, conditions=conditions)
         if len(self.instanceVars) != 1:
             raise ValueError('Only one index allowed per integral!')
         
@@ -34,39 +35,37 @@ class Sum(OperationOverInstances):
         elif self.domain == Naturals:
             self.domain = Interval(zero,infinity)
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SUMMATION
+    def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
+        from ._theorems_ import summationNatsClosure, summationIntsClosure, summationRealsClosure, summationComplexesClosure
+        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        Operation(P, self.instanceVars)
+        self.summand
+        if numberSet == Naturals:
+            thm = summationNatsClosure
+        elif numberSet == Integers:
+            thm = summationIntsClosure
+        elif numberSet == Reals:
+            thm = summationRealsClosure
+        elif numberSet == Complexes:
+            thm = summationComplexesClosure
+        else:
+            raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
+        return thm.specialize({P_op:P_op_sub, S:self.domain, Q_op:Q_op_sub}, relabelMap={xMulti:self.instanceVars}, 
+                                assumptions=assumptions).deriveConsequent(assumptions=assumptions)
 
     @staticmethod
-    def extractParameters(operands):
+    def extractInitArgValue(argName, operators, operands):
         '''
-        Extract the parameters from the OperationOverInstances operands:
-        instanceVars, instanceElement, conditions, domain
+        Given a name of one of the arguments of the __init__ method,
+        return the corresponding value contained in the 'operands'
+        composite expression (i.e., the operands of a constructed operation).
         '''
-        params = OperationOverInstances.extractParameters(operands)
-        params['indices'] = params['instanceVars']
-        params['summand'] = params['instanceExpr']
-        params.pop('instanceVars')
-        params.pop('instanceExpr')
-        return params
-                                
-    def _closureTheorem(self, numberSet):
-        import theorems
-        '''
-        if numberSet == Naturals:
-            return natural.theorems.powClosure
-        elif numberSet == RealsPos:
-            return complex.theorems.powPosClosure            
-        elif numberSet == Reals:
-            return real.theorems.powClosure
-        el'''
-        if numberSet == Reals:
-            return theorems.summationRealClosure
-        if numberSet == Complexes:
-            return theorems.summationComplexClosure
-                
-#        self.domain = domain#self.domain already set
+        if argName=='indices':
+            argName='instanceVars'
+        elif argName=='summand':
+            argName='instanceExpr'
+        return OperationOverInstances.extractInitArgValue(argName, operators, operands)
 
     def _formatted(self, formatType, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False

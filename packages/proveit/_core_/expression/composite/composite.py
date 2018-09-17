@@ -1,10 +1,29 @@
+'''
+compositeExpression.py
+
+The core of Prove-It knows about a few special types of expr classes
+that contain multiple Expressions: NamedExprs, ExprList, and ExprTensor.
+NamedExprs map identifier strings to Expressions.  An ExprList is a linear
+list of Expressions,  An ExprTensor is a multi-dimensional extension of
+an ExprList, which introduces extra complications.  It works by
+mapping indices (one for each dimension) to elements.  Indices
+of an ExprTensor may be general expressions.  The order of distinct indices
+in each dimension must be known via axioms, theorems, or assumptions.
+
+The ExprList and ExprTensor composites may contain Embed 
+expressions that represent blocks of elements to be embedded 
+into their containers.  
+'''
+
+
 from proveit._core_.expression.expr import Expression
 
 class Composite:
     """
-    The base class for NamedExpressions, exprlist, and ExpressionTensor.
+    The base class for NamedExprs, ExprList, and ExprTensor.
     """
     pass
+
 
 def compositeExpression(expressions):
     '''
@@ -14,29 +33,32 @@ def compositeExpression(expressions):
     A single expr or iterable over only Expressions will be wrapped 
     in an exprlist.
     '''
-    from expr_list import ExpressionList
-    from named_exprs import NamedExpressions
-    from expr_tensor import ExpressionTensor
+    from expr_list import ExprList
+    from named_exprs import NamedExprs
+    from expr_tensor import ExprTensor
     from proveit._core_.known_truth import KnownTruth
     
     if isinstance(expressions, KnownTruth):
         expressions = expressions.expr
     
-    if isinstance(expressions, ExpressionList) or isinstance(expressions, NamedExpressions) or isinstance(expressions, ExpressionTensor):
+    if isinstance(expressions, ExprList) or isinstance(expressions, NamedExprs) or isinstance(expressions, ExprTensor):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
-        return ExpressionList(expressions) # a single expression that we will wrap in an ExpressionLIst
+        return ExprList(expressions) # a single expression that we will wrap in an ExpressionLIst
     else:
         if all(isinstance(subExpr, Expression) or isinstance(subExpr, KnownTruth) for subExpr in expressions):
             # An iterable over only Expressions must be an exprlist
-            return ExpressionList(*expressions)
+            return ExprList(*expressions)
         else:
             try:
                 # try to see if we can use expressions to generate a NamedExpressions object
-                return NamedExpressions(expressions)
+                return NamedExprs(expressions)
             except:        
-                # Assume to be a tensor as a list of lists
-                return ExpressionTensor(expressions)
+                try:
+                    # Assume to be a tensor as a list of lists
+                    return ExprTensor(expressions)
+                except:
+                    raise ValueError("Unable to generate a composite Expression from %s"%str(expressions))
 
 def singleOrCompositeExpression(exprOrExprs):
     '''
@@ -50,9 +72,22 @@ def singleOrCompositeExpression(exprOrExprs):
         return exprOrExprs
     else: return compositeExpression(exprOrExprs)
 
-class NestedCompositeExpressionError(Exception):
+
+def _simplifiedCoord(coord, assumptions, requirements):
+    '''
+    Simplify the given coordinate under the given assumptions and append
+    the equality of the simplified and original indices as a requirement
+    if they are not the same.
+    '''
+    from proveit.logic import Equals
+    #from proveit.number import Add
+    simplified_coord = coord.simplification(assumptions=assumptions).rhs
+    if simplified_coord != coord and requirements is not None:
+        requirements.append(Equals(coord, simplified_coord))
+    return simplified_coord
+
+class IndexingError(Exception):
     def __init__(self, msg):
         self.msg = msg
     def __str__(self):
         return self.msg
-    

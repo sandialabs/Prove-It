@@ -1,97 +1,73 @@
-from proveit import Literal, BinaryOperation, defaults, USE_DEFAULTS, compositeExpression, tryDerivation, ProofFailure
-from proveit.logic.boolean.booleans import TRUE, FALSE
+from proveit import Literal, Operation, defaults, USE_DEFAULTS, compositeExpression, ProofFailure
 from proveit.logic.boolean.negation import Not
-from proveit.common import A, B, C
+from proveit._common_ import A, B, C
+from proveit import TransitiveRelation
 
-IMPLIES = Literal(__package__, stringFormat = '=>', latexFormat = r'\Rightarrow')
-
-class Implies(BinaryOperation):
-    # map Expressions to sets of KnownTruths of implications that involve the Expression
-    # as the antecedent or the consequent
-    knownImplications = dict()    
+class Implies(TransitiveRelation):
+    _operator_ = Literal(stringFormat='=>', latexFormat=r'\Rightarrow', context=__file__)
     
-    # map consequent expressions to sets of KnownTruths of implications with that consequent.
-    knownImplicationsOfConsequent = dict()
-    
+    # map left-hand-sides to Subset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()    
+    # map right-hand-sides to Subset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict()        
+        
     def __init__(self, antecedent, consequent):
-        BinaryOperation.__init__(self, IMPLIES, antecedent, consequent)
-        self.antecedent = self.lhs = antecedent
-        self.consequent = self.rhs = consequent
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return IMPLIES    
-
-    def deriveSideEffects(self, knownTruth):
+        TransitiveRelation.__init__(self, Implies._operator_, antecedent, consequent)
+        self.antecedent = antecedent
+        self.consequent = consequent
+        
+    def sideEffects(self, knownTruth):
         '''
-        Record the KnownTruth implication in the knownImplications and knownImplicationsOfConsequent
-        dictionaries so we can perform a search to later prove other implications via transitivity
-        or conclude via implications (see concludeViaImplications).
-        Also automatically derive the consequent given the antecedent as an added assumption.
-        From A => FALSE, automatically derive Not(A) if [A in Booleans].
-        From Not(A) => FALSE, automatically derive A if [A in Booleans].
+        Yield the TransitiveRelation side-effects (which also records knownLeftSides
+        and knownRightSides).  Also derive the consequent as a side-effect.
+        As a special case, if the consequent is FALSE, do deriveViaContradiction.
         '''
-        Implies.knownImplications.setdefault(self.antecedent, set()).add(knownTruth)
-        Implies.knownImplications.setdefault(self.consequent, set()).add(knownTruth)
-        Implies.knownImplicationsOfConsequent.setdefault(self.consequent, set()).add(knownTruth)
-        try:
-            self.deriveConsequent(knownTruth.assumptions + (self.antecedent,))
-        except:
-            pass
+        from proveit.logic.boolean._common_ import FALSE
+        for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
+            yield sideEffect
+        yield self.deriveConsequent # B given A=>B and A
         if self.consequent == FALSE:
-            tryDerivation(self.deriveViaContradiction, knownTruth.assumptions)
-    
+            yield self.deriveViaContradiction # Not(A) given A=>FALSE or A given Not(A)=>FALSE
+            
     def conclude(self, assumptions):
         '''
         Try to automatically conclude this implication by reducing its operands
         to true/false, or by doing a "transitivity" search amongst known true implications
         whose assumptions are covered by the given assumptions.
         '''
-        from _theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse
-        from proveit.logic import transitivitySearch, concludeViaReduction    
+        from ._axioms_ import untrueAntecedentImplication
+        from ._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, falseAntecedentImplication
+        from proveit.logic import TRUE, FALSE
         if self.antecedent == self.consequent:
             return self.concludeSelfImplication()    
         if self in {trueImpliesTrue, falseImpliesTrue, falseImpliesFalse}:
             # should be proven via one of the imported theorems as a simple special case
             return self.prove()
         try:
-            # try to prove the implication via evaluation reduction.
-            # if that is possible, it is a relatively straightforward thing to do.
-            return concludeViaReduction(assumptions)
+            # Try evaluating the consequent.
+            evaluation = self.consequent.evaluation(assumptions)
+            if evaluation.rhs == TRUE:
+                # If the consequent evaluates to true, we can prove trivially via hypothetical reasoning
+                return self.consequent.prove(assumptions).asImplication(self.antecedent)
+            elif evaluation.rhs == FALSE:
+                if self.antecedent.evaluation(assumptions).rhs == FALSE:
+                    # Derive A => B given Not(A); it doesn't matter what B is if A is FALSE
+                    return falseAntecedentImplication.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
+                else:
+                    # Derive A => B given (A != TRUE); it doesn't matter what B is if A is not TRUE
+                    return untrueAntecedentImplication.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
         except:
             pass
         try:
-            # try using breadth-first search approach to find the shortest
-            # path to get from one end-point to the other amongst implications.
-            return transitivitySearch(self, assumptions)            
+            # Use a breadth-first search approach to find the shortest
+            # path to get from one end-point to the other.
+            return TransitiveRelation.conclude(self, assumptions)            
         except:
             pass
         # try to prove the implication via hypothetical reasoning.
         return self.consequent.prove(assumptions + (self.antecedent,)).asImplication(self.antecedent)
-
-    @staticmethod
-    def knownRelationsFromLeft(expr, assumptionsSet):
-        '''
-        For each KnownTruth that is an Implies involving the given expression on
-        the left hand side (the antecedent), yield the KnownTruth and the right hand side
-        (the consequents).
-        '''
-        for knownTruth in Implies.knownImplications.get(expr, frozenset()):
-            if knownTruth.antecedent == expr:
-                if knownTruth.isSufficient(assumptionsSet):
-                    yield (knownTruth, knownTruth.consequent)
-    
-    @staticmethod
-    def knownRelationsFromRight(expr, assumptionsSet):
-        '''
-        For each KnownTruth that is an Equals involving the given expression on
-        the right hand side (the consequent), yield the KnownTruth and the left hand side
-        (the antecedent).
-        '''
-        for knownTruth in Implies.knownImplications.get(expr, frozenset()):
-            if knownTruth.consequent == expr:
-                if knownTruth.isSufficient(assumptionsSet):
-                    yield (knownTruth, knownTruth.antecedent)
     
     def deriveConsequent(self, assumptions=USE_DEFAULTS):
         r'''
@@ -99,12 +75,19 @@ class Implies(BinaryOperation):
         '''
         from proveit._core_.proof import ModusPonens
         return ModusPonens(self, assumptions).provenTruth
-    
-    def denyingConsequent(self, assumptions=USE_DEFAULTS):
+
+    def deriveIff(self, assumptions=USE_DEFAULTS):
+        r'''
+        From A => B derive and return A <=> B assuming B => A.
+        '''
+        from proveit.logic import Iff
+        return Iff(self.A, self.B).concludeViaDefinition()
+        
+    def denyAntecedent(self, assumptions=USE_DEFAULTS):
         '''
         From A => B, derive and return Not(A) assuming Not(B).
         '''
-        from _theorems_ import modusTollensAffirmation, modusTollensDenial
+        from ._theorems_ import modusTollensAffirmation, modusTollensDenial
         if isinstance(self.antecedent,  Not):
             return modusTollensAffirmation.specialize({A:self.antecedent.operand, B:self.consequent}, assumptions=assumptions)
         else:
@@ -114,7 +97,7 @@ class Implies(BinaryOperation):
         '''
         From :math:`A \Rightarrow B` (self) and a given :math:`B \Rightarrow C` (otherImpl), derive and return :math:`A \Rightarrow C`.
         '''
-        from _theorems_ import implicationTransitivity
+        from ._theorems_ import implicationTransitivity
         if self.consequent == otherImpl.antecedent:
             return implicationTransitivity.specialize({A:self.antecedent, B:self.consequent, C:otherImpl.consequent}, assumptions=assumptions)
         elif self.antecedent == otherImpl.consequent:
@@ -125,7 +108,8 @@ class Implies(BinaryOperation):
         From (Not(A) => FALSE), derive and return A assuming A in Booleans.
         Or from (A => FALSE), derive and return Not(A) assuming A in Booleans`.
         '''
-        from _theorems_ import affirmViaContradiction, denyViaContradiction
+        from proveit.logic import FALSE
+        from ._theorems_ import affirmViaContradiction, denyViaContradiction
         if self.consequent != FALSE:
             raise ValueError('deriveViaContridiction method is only applicable if FALSE is implicated, not for ' + str(self))
         if isinstance(self.antecedent, Not):
@@ -135,7 +119,7 @@ class Implies(BinaryOperation):
             return denyViaContradiction.specialize({A:self.antecedent}, assumptions=assumptions)
     
     def concludeSelfImplication(self):
-        from _theorems_ import selfImplication
+        from ._theorems_ import selfImplication
         if self.antecedent != self.consequent:
             raise ValueError('May only conclude a self implementation when the antecedent and consequent are the same')
         return selfImplication.specialize({A:self.antecedent})
@@ -166,29 +150,8 @@ class Implies(BinaryOperation):
             return expr.generalize(self, forallVars, domain, conditions)
         return expr.generalize(expr, forallVars, domain, conditions)
         #return Forall(newForallVars, expr, newConditions)
-
-    def transposition(self):
-        r'''
-        Depending upon the form of self with respect to negation of the antecedent and/or consequent,
-        will prove and return as follows:
         
-        * For :math:`[\lnot A  \Rightarrow \lnot B]`, prove :math:`[\lnot A \Rightarrow \lnot B] \Rightarrow [B \Rightarrow A]` assuming :math:`A \in \mathcal{B}`.
-        * For :math:`[\lnot A \Rightarrow B]`, prove :math:`[\lnot A \Rightarrow B] \Rightarrow [\lnot B \Rightarrow A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
-        * For :math:`[A  \Rightarrow \lnot B]`, prove :math:`[A \Rightarrow \lnot B] \Rightarrow [B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`.
-        * For :math:`[A  \Rightarrow B]`, prove :math:`[A \Rightarrow B] \Rightarrow [\lnot B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
-        '''
-        from _theorems_ import transpositionFromNegated, transpositionFromNegatedConsequent, transpositionFromNegatedantecedent, transpositionToNegated
-        from proveit.logic import Not
-        if isinstance(self.antecedent, Not) and isinstance(self.consequent, Not):
-            return transpositionFromNegated.specialize({B:self.antecedent.operand, A:self.consequent.operand})
-        elif isinstance(self.antecedent, Not):
-            return transpositionFromNegatedantecedent.specialize({B:self.antecedent.operand, A:self.consequent})
-        elif isinstance(self.consequent, Not):
-            return transpositionFromNegatedConsequent.specialize({B:self.antecedent, A:self.consequent.operand})
-        else:
-            return transpositionToNegated.specialize({B:self.antecedent, A:self.consequent})
-        
-    def transpose(self, assumptions=USE_DEFAULTS):
+    def contrapose(self, assumptions=USE_DEFAULTS):
         '''
         Depending upon the form of self with respect to negation of the antecedent and/or consequent,
         will derive from self and return as follows:
@@ -198,37 +161,62 @@ class Implies(BinaryOperation):
         * From :math:`[A  \Rightarrow \lnot B]`, derive :math:`[B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`.
         * From :math:`[A  \Rightarrow B]`, derive :math:`[\lnot B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
         '''
-        return self.transposition().deriveConsequent(assumptions)
+        from ._theorems_ import fromContraposition, toContraposition, contraposeNegConsequent, contraposeNegAntecedent
+        from proveit.logic import Not
+        if isinstance(self.antecedent, Not) and isinstance(self.consequent, Not):
+            return fromContraposition.specialize({B:self.antecedent.operand, A:self.consequent.operand}, assumptions=assumptions)
+        elif isinstance(self.antecedent, Not):
+            return contraposeNegAntecedent.specialize({A:self.antecedent.operand, B:self.consequent}, assumptions=assumptions)
+        elif isinstance(self.consequent, Not):
+            return contraposeNegConsequent.specialize({A:self.antecedent, B:self.consequent.operand}, assumptions=assumptions)
+        else:
+            return toContraposition.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
         
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from _theorems_ import impliesTT, impliesFT, impliesFF, impliesTF # load in truth-table evaluations
-        return BinaryOperation.evaluate(self, assumptions)
+        from ._theorems_ import impliesTT, impliesFT, impliesFF, impliesTF # load in truth-table evaluations
+        return Operation.evaluation(self, assumptions)
     
     def deduceInBool(self):
         '''
         Attempt to deduce, then return, that this implication expression is in the set of BOOLEANS.
         '''
-        from _theorems_ import implicationClosure
-        antecedentInBool = deduceInBool(self.antecedent)
-        consequentInBool = deduceInBool(self.consequent)
+        from ._theorems_ import implicationClosure
         return implicationClosure.specialize({A:self.antecedent, B:self.consequent})
 
 def concludeViaImplication(consequent, assumptions):
-    derivedConsequents = set()
-    if consequent in Implies.knownImplicationsOfConsequent:
-        for knownImplication in set(Implies.knownImplicationsOfConsequent[consequent]):
-            try:
-                derivedConsequents.add(knownImplication.expr.deriveConsequent(assumptions=assumptions))
-            except:
-                pass
-    if len(derivedConsequents) > 0:
-        # if there are multiple ways to derive the consequent, choose the one with the
-        # fewest number of proof steps
-        return min(derivedConsequents, key = lambda knownTruth : knownTruth.proof().numSteps)
+    '''
+    Perform a breadth-first search of implications going in reverse from the consequent
+    until reaching an antecedent that has been proven.
+    '''
+    visited = set()
+    consequent_map = dict() # map antecedents to consequents that arise durent the breadth-first search
+    queue = [consequent]
+    while len(queue) > 0:
+        expr = queue.pop()
+        if expr not in visited:
+            visited.add(expr)
+            if expr not in Implies.knownRightSides: 
+                continue # no known implications with the expr as the consequent; skip it
+            for knownImplication in Implies.knownRightSides[expr]:
+                # see if the knownImplication is applicable under the given set of assumptions
+                if knownImplication.isSufficient(assumptions):
+                    local_antecedent, local_consequent = knownImplication.antecedent, knownImplication.consequent
+                    consequent_map[local_antecedent] = local_consequent
+                    try:
+                        knownImplication.antecedent.prove(assumptions, automation=False)
+                        # found a solution; use it by deriving "local" consequents until getting to the desired consequent
+                        while True:
+                            known_truth = Implies(local_antecedent, local_consequent).deriveConsequent(assumptions=assumptions)
+                            if known_truth.expr == consequent:
+                                return known_truth
+                            local_antecedent = known_truth.expr
+                            local_consequent = consequent_map[local_antecedent]             
+                    except ProofFailure:
+                        queue.append(local_antecedent)
     raise ProofFailure(consequent, assumptions, 'Unable to conclude via implications')
         
 def affirmViaContradiction(contradictoryExpr, conclusion, assumptions):
@@ -254,4 +242,3 @@ def denyViaContradiction(contradictoryExpr, conclusion, assumptions):
     assumptions = defaults.checkedAssumptions(assumptions)
     extendedAssumptions = assumptions + (conclusion,)
     return contradictoryExpr.deriveContradiction(extendedAssumptions).asImplication(conclusion).deriveViaContradiction(assumptions)
-    

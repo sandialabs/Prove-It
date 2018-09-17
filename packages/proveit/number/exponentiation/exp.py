@@ -1,20 +1,18 @@
-from proveit import Literal, Operation, maybeFencedString
-from proveit.number.sets import zero, one
-
-EXPONENTIATE = Literal(__package__, 'EXPONENTIATE')
+from proveit import Literal, Operation, ExprList, ProofFailure, maybeFencedString, USE_DEFAULTS
+import proveit._common_
+from proveit._common_ import S, x
 
 class Exp(Operation):
+    # operator of the Exp operation.
+    _operator_ = Literal(stringFormat='Exp', context=__file__)    
+    
     def __init__(self, base, exponent):
         r'''
         Raise base to exponent power.
         '''
-        Operation.__init__(self,EXPONENTIATE, (base, exponent))
+        Operation.__init__(self, Exp._operator_, (base, exponent))
         self.base = base
         self.exponent = exponent
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return EXPONENTIATE
 
     def _closureTheorem(self, numberSet):
         import natural.theorems
@@ -30,6 +28,40 @@ class Exp(Operation):
                 return real.theorems.powPosClosure            
         elif numberSet == Complexes:
             return complex.theorems.powClosure
+    
+    def deduceMembership(self, element, assumptions=USE_DEFAULTS):
+        '''
+        Deduce membership of an element in an exponentiated set.
+        '''
+        from proveit.logic import InSet
+        from proveit.logic.set_theory.membership._theorems_ import exp_set_0, exp_set_1, exp_set_2, exp_set_3, exp_set_4, exp_set_5, exp_set_6, exp_set_7, exp_set_8, exp_set_9
+        from proveit.number import zero, isLiteralInt, DIGITS
+        elem_in_set = InSet(element, self)
+        if not isinstance(element, ExprList):
+            raise ProofFailure(elem_in_set, assumptions, "Can only automatically deduce membership in exponentiated sets for an element that is a list")
+        exponent_eval = self.exponent.evaluation(assumptions=assumptions)
+        exponent = exponent_eval.rhs
+        if isLiteralInt(exponent):
+            if len(element) != exponent.asInt():
+                raise ProofFailure(elem_in_set, assumptions, "Element not a member of the exponentiated set; incorrect list length")
+            if exponent == zero:
+                elem_in_set = exp_set_0.specialize({x:element, S:self.base}, assumptions=assumptions)
+            elif exponent in DIGITS:
+                # thm = forall_S forall_{a, b... in S} (a, b, ...) in S^n
+                thm = locals()['exp_set_%d'%exponent.asInt()]
+                expr_map = {S:self.base} # S is the base
+                # map a, b, ... to the elements of element.
+                expr_map.update({proveit._common_.__getattr__(chr(ord('a')+k)):elem_k for k, elem_k in enumerate(element)})
+                elem_in_set = thm.specialize(expr_map, assumptions=assumptions)
+            else:
+                raise ProofFailure(elem_in_set, assumptions, "Automatic deduction of membership in exponentiated sets is not supported beyond an exponent of 9")
+        else:
+            raise ProofFailure(elem_in_set, assumptions, "Automatic deduction of membership in exponentiated sets is only supported for an exponent that is a literal integer")
+        if exponent_eval.lhs != exponent_eval.rhs:
+            # after proving that the element is in the set taken to the evaluation of the exponent,
+            # substitute back in the original exponent.
+            return exponent_eval.lhsSubstitute(elem_in_set, assumptions=assumptions)
+        return elem_in_set
     
     def simplification(self, assumptions=frozenset()):
         '''

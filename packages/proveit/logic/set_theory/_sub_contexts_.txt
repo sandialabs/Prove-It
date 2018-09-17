@@ -1,0 +1,9 @@
+membership
+enumeration
+containment
+unification
+intersection
+subtraction
+comprehension
+disjointness
+cardinality

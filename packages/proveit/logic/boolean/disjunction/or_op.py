@@ -1,19 +1,16 @@
-from proveit import Literal, AssociativeOperation, USE_DEFAULTS, tryDerivation
-from proveit.logic.boolean.booleans import TRUE, FALSE, inBool
-from proveit.common import A, B, C, Amulti, Cmulti
+from proveit import Literal, Operation, USE_DEFAULTS
+from proveit.logic.boolean.booleans import inBool
+from proveit._common_ import A, B, C, AA, CC
 
-OR = Literal(__package__, stringFormat = 'or', latexFormat = r'\lor')
+class Or(Operation):
+    # The operator of the Or operation
+    _operator_ = Literal(stringFormat='or', latexFormat=r'\lor', context=__file__)
 
-class Or(AssociativeOperation):
     def __init__(self, *operands):
         '''
         Or together any number of operands: A or B or C
         '''
-        AssociativeOperation.__init__(self, OR, *operands)
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return OR
+        Operation.__init__(self, Or._operator_, operands)
 
     def conclude(self, assumptions):
         '''
@@ -63,45 +60,32 @@ class Or(AssociativeOperation):
         # or there are no pre-existing proofs for any of the operands.
         return AssociativeOperation.conclude(self, assumptions)
     
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        From a disjunction, automatically derive that the disjunction
-        is in the set of Booleans (which then propogates to its constituents
-        being in the set of Booleans) except if this is the of form
-        [A or not(A)], the unfolding of [A in Boolean], to avoid and
-        infinite recursion.
+        Side-effect derivations to attempt automatically.
         '''
         from proveit.logic import Not
         if len(self.operands)==2:
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
                 return # stop to avoid infinite recursion.
-        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
-    
-    def deduceNegationSideEffects(self, knownTruth):
-        '''
-        From not(A or B) derive not(A), not(B), and (A or B) in Booleans.
-        '''
-        tryDerivation(inBool(self).conclude, assumptions=knownTruth.assumptions)
-        if len(self.operands) == 2:
-            tryDerivation(self.deduceNotLeftIfNeither, knownTruth.assumptions)
-            tryDerivation(self.deduceNotRightIfNeither, knownTruth.assumptions)
-        else:
-            pass # should generalize to many operands
+        yield self.deriveInBool
 
-    def deduceInBoolSideEffects(self, knownTruth):
+    def negationSideEffects(self, knownTruth):
         '''
-        From [(A or B) in Booleans] deduce A in Booleans and B in Booleans, where self is (A or B).
+        Side-effect derivations to attempt automatically for Not(A or B or .. or .. Z).
         '''
-        from _axioms_ import leftInBool, rightInBool
-        from _theorems_ import eachInBool
-        from proveit.logic import Equals
-        if len(self.operands) == 2:
-            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=knownTruth.assumptions)
-            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=knownTruth.assumptions)
-        else:
-            for k, operand in enumerate(self.operands):
-                eachInBool.specialize({Amulti:self.operands[:k], B:operand, Cmulti:self.operands[k+1:]})
+        yield self.deriveInBool # A or B or .. or .. Z in Booleans
+        if len(self.operands) == 2: # Not(A or B)
+            yield self.deduceNotLeftIfNeither # Not(A)
+            yield self.deduceNotRightIfNeither # Not(B)
+
+    def inBoolSideEffects(self, knownTruth):
+        '''
+        From (A or B or .. or Z) in Booleans deduce (A in Booleans), (B in Booleans), ...
+        (Z in Booleans).
+        '''
+        yield self.deducePartsInBool
         
     def concludeNegation(self, assumptions):
         from _theorems_ import falseOrFalseNegated, neitherIntro, notOrIfNotAny
@@ -111,7 +95,13 @@ class Or(AssociativeOperation):
             return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             return notOrIfNotAny.specialize({Amulti:self.operands}, assumptions=assumptions)
-        
+    
+    def deriveInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].
+        '''
+        inBool(self).conclude(assumptions=assumptions)
+    
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
@@ -138,7 +128,45 @@ class Or(AssociativeOperation):
         from _theorems_ import singularConstructiveDilemma
         if len(self.operands) == 2:
             return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
+
+    def deduceLeftInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce A in Booleans from (A or B) in Booleans.
+        '''
+        from _axioms_ import leftInBool
+        if len(self.operands) == 2:
+            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         
+    def deduceRightInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce B in Booleans from (A or B) in Booleans.
+        '''
+        from _axioms_ import rightInBool
+        if len(self.operands) == 2:
+            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+    def deducePartsInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
+        '''
+        Deduce A in Booleans, B in Booleans, ..., Z in Booleans
+        from (A or B or ... or Z) in Booleans.
+        '''
+        for i in xrange(len(self.operands)):
+            self.deducePartInBool(i, assumptions)        
+
+    def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
+        '''
+        Deduce X in Booleans from (A or B or .. or X or .. or Z) in Booleans
+        provided X by expression or index number.
+        '''
+        from _theorems_ import eachInBool
+        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
+        if idx < 0 or idx >= len(self.operands):
+            raise IndexError("Operand out of range: " + str(idx))
+        if len(self.operands)==2:
+            if idx==0: self.deduceLeftInBool(assumptions)
+            elif idx==1: self.deduceRightInBool(assumptions)
+        return eachInBool.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
+                
     def concludeViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         
@@ -178,24 +206,25 @@ class Or(AssociativeOperation):
         compose([leftImplConclusion, rightImplConclusion], assumptions)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
         from _axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations  
         from _theorems_ import disjunctionTrueEval, disjunctionFalseEval
+        from proveit.logic.boolean._common_ import TRUE, FALSE
         trueIndex = -1
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:
-                # The operands are not always true/false, so try the default evaluate method
+                # The operands are not always true/false, so try the default evaluation method
                 # which will attempt to evaluate each of the operands.
-                return AssociativeOperation.evaluate(self, assumptions)
+                return Operation.evaluation(self, assumptions)
             if operand == TRUE:
                 trueIndex = i
         if len(self.operands) == 2:
             # This will automatically return orTT, orTF, orFT, or orFF
-            return AssociativeOperation.evaluate(self, assumptions)
+            return Operation.evaluation(self, assumptions)
         if trueIndex >= 0:
             # one operand is TRUE so the whole disjunction evaluates to TRUE.
             return disjunctionTrueEval.specialize({Amulti:self.operands[:trueIndex], Cmulti:self.operands[trueIndex+1:]}, assumptions=assumptions)

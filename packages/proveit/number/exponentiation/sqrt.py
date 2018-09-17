@@ -1,20 +1,16 @@
 from proveit import Literal, Operation
-from proveit.common import xEtc
-
-SQRT = Literal(__package__, 'SQRT')
 
 class Sqrt(Operation):
+    # operator of the Exp operation.
+    _operator_ = Literal(stringFormat='sqrt', context=__file__)    
+    
     def __init__(self, base):
         r'''
         Take the square root of the base.
         '''
-        Operation.__init__(self, SQRT, (base))
+        Operation.__init__(self, Sqrt._operator_, base)
         self.base = base
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return SQRT
-            
+                    
     def latex(self, **kwargs):
         return r'\sqrt{' + self.base.latex()+'}'
     

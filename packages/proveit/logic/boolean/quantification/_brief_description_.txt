@@ -1,0 +1,1 @@
+Forall (universal quantification) and Exists (existential quantification) operations

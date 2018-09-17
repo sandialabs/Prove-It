@@ -1,15 +1,13 @@
 from proveit import Literal, Operation
-from proveit.common import a, b, x, xEtc
-ABS = Literal(__package__, 'ABS')
+from proveit._common_ import a, b, x
 
 class Abs(Operation):
+    # operator of the Abs operation.
+    _operator_ = Literal(stringFormat='Abs', context=__file__)    
+    
     def __init__(self, A):
-        Operation.__init__(self, ABS, A)
+        Operation.__init__(self, Abs._operator_, A)
         self.operand = A
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return ABS
 
     def _closureTheorem(self, numberSet):
         import theorems

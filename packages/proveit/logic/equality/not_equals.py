@@ -1,37 +1,42 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
+from proveit import Literal, Operation, USE_DEFAULTS
 from equals import Equals
-from proveit.common import x, y, A, X
+from proveit.logic.irreducible_value import isIrreducibleValue
+from proveit._common_ import x, y, A, X
 
-NOTEQUALS = Literal(__package__, stringFormat = '!=', latexFormat = r'\neq')
-
-class NotEquals(BinaryOperation):
+class NotEquals(Operation):
+    # operator of the NotEquals operation
+    _operator_ = Literal(stringFormat='!=', latexFormat=r'\neq', context=__file__)
+    
     def __init__(self, a, b):
-        BinaryOperation.__init__(self, NOTEQUALS, a, b)
+        Operation.__init__(self, NotEquals._operator_, (a, b))
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
-        
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NOTEQUALS    
-    
-    def deriveSideEffects(self, knownTruth):
+            
+    def sideEffects(self, knownTruth):
         '''
-        Derive the reversed and unfolded forms, as a side effect.
+        Side-effect derivations to attempt automatically for
+        this NotEquals operation.
         '''
+        from proveit.logic.boolean._common_ import FALSE
         # automatically derive the reversed form which is equivalent
-        tryDerivation(self.deriveReversed, knownTruth.assumptions)
-        tryDerivation(self.deriveViaDoubleNegation, knownTruth.assumptions)
-        tryDerivation(self.unfold, knownTruth.assumptions)
+        yield self.deriveReversed # y != x from x != y
+        if self.rhs==FALSE:
+            yield self.deriveViaDoubleNegation # A from A != False and A in Booleans
+        yield self.unfold # Not(x=y) from x != y
     
     def conclude(self, assumptions):
         from proveit.logic import FALSE
-        from equals import isIrreducibleValue
         if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
             # prove that two irreducible values are not equal
             return self.lhs.notEquals(self.rhs)
         if self.lhs == FALSE or self.rhs == FALSE:
             # prove something is not false by proving it to be true
             return self.concludeViaDoubleNegation(assumptions)
+        if hasattr(self.lhs, 'notEquals') and isIrreducibleValue(self.rhs):
+            try:
+                return self.lhs.notEquals(self.rhs, assumptions)
+            except:
+                pass
         try:
             return self.concludeAsFolded(assumptions)
         except:
@@ -90,7 +95,7 @@ class NotEquals(BinaryOperation):
         from _theorems_ import foldNotEquals
         return foldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
         
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that may be evaluated to irreducible values that
         may be compared, or if there is a known evaluation of this
@@ -98,7 +103,7 @@ class NotEquals(BinaryOperation):
         TRUE or FALSE.
         '''
         definitionEquality = self.definition()
-        unfoldedEvaluation = definitionEquality.rhs.evaluate(assumptions)        
+        unfoldedEvaluation = definitionEquality.rhs.evaluation(assumptions)        
         return Equals(self, unfoldedEvaluation.rhs).prove(assumptions)
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):

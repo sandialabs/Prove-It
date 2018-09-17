@@ -1,11 +1,12 @@
-from proveit import OperationOverInstances, tryDerivation
-from proveit import Literal, Operation, MultiVariable, Etcetera, USE_DEFAULTS
-from proveit.common import P, Q, S, xMulti
-
-NOTEXISTS = Literal(__package__, stringFormat='notexists', latexFormat=r'\nexists')
+from proveit import OperationOverInstances
+from proveit import Literal, Operation, Iter, USE_DEFAULTS
+from proveit._common_ import P, Q, S, xx
 
 class NotExists(OperationOverInstances):
-    def __init__(self, instanceVars, instanceExpr, domain=None, conditions=tuple()):
+    # operator of the NotExists operation
+    _operator_ = Literal(stringFormat='notexists', latexFormat=r'\nexists', context=__file__)
+    
+    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
         exists_{instanceVars | conditions} instanceExpr
@@ -13,17 +14,13 @@ class NotExists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, NOTEXISTS, instanceVars, instanceExpr, domain, conditions)
+        OperationOverInstances.__init__(self, NotExists._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions)
 
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NOTEXISTS    
-        
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        Automatically derive the unfolded version, Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x).
+        Side-effect derivations to attempt automatically for a NotExists operation.
         '''
-        tryDerivation(self.unfold, knownTruth.assumptions)
+        yield self.unfold # unfolded form: Not(Exists(..))
         
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -31,7 +28,7 @@ class NotExists(OperationOverInstances):
         '''
         from _theorems_ import notExistsUnfolding
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
         return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
     
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
@@ -41,7 +38,7 @@ class NotExists(OperationOverInstances):
         '''
         from _theorems_ import notExistsFolding
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(MultiVariable(Q), self.instanceVars)), self.conditions
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
         folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
         return folding.deriveConclusion(assumptions)
 

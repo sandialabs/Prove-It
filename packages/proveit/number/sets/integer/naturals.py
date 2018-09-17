@@ -1,20 +1,24 @@
-from proveit import Literal
+from proveit.number.sets.number_set import NumberSet
 
-class NaturalsSet(Literal):
-    def __init__(self, pkg):
-        Literal.__init__(self, pkg, 'Naturals', r'\mathbb{N}')
+class NaturalsSet(NumberSet):
+    def __init__(self):
+        NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', context=__file__)
     
     def deduceMemberLowerBound(self, member):
-        from natural.theorems import naturalsLowerBound
+        from ._theorems_ import naturalsLowerBound
         return naturalsLowerBound.specialize({n:member})  
 
-class NaturalsPosSet(Literal):
-    def __init__(self, pkg):
-        Literal.__init__(self, pkg, 'NaturalsPos', r'\mathbb{N}^+')
+class NaturalsPosSet(NumberSet):
+    def __init__(self):
+        NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', context=__file__)
     
     def deduceMemberLowerBound(self, member):
-        from natural.theorems import naturalsPosLowerBound
+        from ._theorems_ import naturalsPosLowerBound
         return naturalsPosLowerBound.specialize({n:member})  
 
-Naturals = NaturalsSet(__package__)
-NaturalsPos = NaturalsPosSet(__package__)
+try:
+    # Import some fundamental axioms and theorems without quantifiers.
+    # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+    from ._theorems_ import natsPosInNats, natsInInts, natsPosInInts
+except:
+    pass

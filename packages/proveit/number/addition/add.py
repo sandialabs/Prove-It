@@ -1,21 +1,37 @@
-from proveit import Literal, AssociativeOperation
-from proveit.number.sets import zero
-from proveit.common import x, y
+from proveit import Literal, Operation, USE_DEFAULTS
+from proveit._common_ import a, b, c, x, y
+from proveit.logic.irreducible_value import isIrreducibleValue
+from proveit.number.numeral.decimal import DIGITS
+import proveit.number.numeral.decimal._theorems_
 
-ADD = Literal(__package__, r'+', r'+')
-
-class Add(AssociativeOperation):
+class Add(Operation):
+    # operator of the Add operation
+    _operator_ = Literal(stringFormat='+', context=__file__)
+    
+    # Map terms to sets of KnownTruth equalities that involve
+    # the term on the left hand side. 
+    knownEqualities = dict()
+    
+    # Adding two numerals may import a theorem for the evaluation.
+    # Track which ones we have encountered already.
+    addedNumerals = set()
+    
     def __init__(self, *operands):
         r'''
         Add together any number of operands.
         '''
-        AssociativeOperation.__init__(self, ADD, *operands)
+        Operation.__init__(self, Add._operator_, operands)
         self.terms = self.operands
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return ADD
-
+        if len(self.terms)==2 and all(term in DIGITS for term in self.terms):
+            if self not in Add.addedNumerals:
+                try:
+                    # for single digit addition, import the theorem that provides the evaluation
+                    Add.addedNumerals.add(self)
+                    proveit.number.numeral.decimal._theorems_.__getattr__('add_%d_%d'%(self.terms[0].asInt(), self.terms[1].asInt()))
+                except:
+                    # may fail before the relevent _commons_ and _theorems_ have been generated
+                    pass # and that's okay
+    
     def _closureTheorem(self, numberSet):
         import theorems
         if numberSet == Reals:
@@ -24,7 +40,32 @@ class Add(AssociativeOperation):
             return theorems.addComplexClosure
         elif numberSet == Integers:
             return theorems.addIntClosure
+    
+    def equalitySideEffects(self, knownTruth):
+        '''
+        Record the knownTruth in Add.knownEqualities, associated for
+        each term.
+        '''
+        addition = knownTruth.lhs
+        if not isinstance(addition, Add):
+            raise ValueError("Expecting lhs of knownTruth to be of an Add expression")
+        for term in addition.terms:
+            Add.knownEqualities.setdefault(term, set()).add(knownTruth)
+        if len(addition.terms)==2:
+            # deduce the subtraction form: b-c=a from a+b=c 
+            yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
 
+    def deduceSubtraction(self, rhs, assumptions=USE_DEFAULTS):
+        '''
+        From (a + b) = rhs, derive and return b - rhs = a.
+        '''
+        from proveit.number.subtraction._theorems_ import subtractFromAdd
+        if len(self.terms) != 2:
+            raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
+        deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
+        return deduction
+        
+    """
     def simplification(self, assumptions=frozenset()):
         '''
         For the trivial case of a zero term,
@@ -56,6 +97,7 @@ class Add(AssociativeOperation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         return self.simplification(assumptions).rhs
+    """
     
     def subtractionFolding(self, termIdx=None, assumptions=frozenset()):
         '''
@@ -246,4 +288,31 @@ class Add(AssociativeOperation):
         if len(self.terms) != 2 or not all(isinstance(term, Sum) for term in self.terms):
             raise Exception("Sum joinoing currently only implemented for two summation terms.")
         return self.terms[0].join(self.terms[1], assumptions)
-
+    
+    """
+    def evaluation(self, assumptions=USE_DEFAULTS):
+        '''
+        Given operands that evaluate to numbers, derive and
+        return the equality of this expression with the sum of these numbers. 
+        '''
+        from proveit.number.sets.integer._axioms_ import twoDef, threeDef, fourDef, fiveDef, sixDef, sevenDef, eightDef, nineDef # load in integer successor evaluations  
+        for i, operand in enumerate(self.operands):
+            if not isIrreducibleValue(operand):
+                # The operands are not always true/false, so try the default evaluation method
+                # which will attempt to evaluate each of the operands.
+                return Operation.evaluation(self, assumptions)
+        # TODO
+        
+        '''
+        From disjunction, just brought in as an example
+        if len(self.operands) == 2:
+            # This will automatically return orTT, orTF, orFT, or orFF
+            return Operation.evaluation(self, assumptions)
+        if trueIndex >= 0:
+            # one operand is TRUE so the whole disjunction evaluate to TRUE.
+            return disjunctionTrueEval.specialize({Amulti:self.operands[:trueIndex], Cmulti:self.operands[trueIndex+1:]}, assumptions=assumptions)
+        else:
+            # no operand is TRUE so the whole disjunction evaluate to FALSE.
+            return disjunctionFalseEval.specialize({Amulti:self.operands}, assumptions=assumptions)
+        '''
+    """

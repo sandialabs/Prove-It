@@ -1,2 +1,1 @@
-from complexes import Complexes
-from imaginary import i
+from ._common_ import Complexes, i

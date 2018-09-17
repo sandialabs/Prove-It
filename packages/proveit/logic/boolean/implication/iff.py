@@ -1,33 +1,38 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
-from proveit.logic.boolean.booleans import TRUE, FALSE
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.conjunction import compose
 from implies import Implies
-from proveit.common import A, B, C
-
-IFF = Literal(__package__, stringFormat = '<=>', latexFormat = r'\Leftrightarrow')
+from proveit._common_ import A, B, C
+from proveit import TransitiveRelation
 
 # if and only if: A => B and B => A
-class Iff(BinaryOperation):
+class Iff(TransitiveRelation):
+    # The operator of the Iff operation
+    _operator_ = Literal(stringFormat='<=>', latexFormat=r'\Leftrightarrow', context=__file__)
+
+    # map left-hand-sides to Subset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()    
+    # map right-hand-sides to Subset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict()        
+        
     def __init__(self, A, B):
-        BinaryOperation.__init__(self, IFF, A, B)
+        TransitiveRelation.__init__(self, Iff._operator_, A, B)
         self.A = A
         self.B = B
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return IFF
-        
-    def deriveSideEffects(self, knownTruth):
+    
+    def sideEffects(self, knownTruth):
         '''
-        From :math:`A \Leftrightarrow B`, automatically derive
-        :math:`A \Rightarrow B`, :math:`B \Rightarrow A`, :math:`B \Leftrightarrow A`,
-        and, if :math:`A \in \mathbb{B}` and :math:`B \in \mathbb{B}`, derive
-        :math:`A = B` as well.
+        Yield the TransitiveRelation side-effects (which also records knownLeftSides
+        and knownRightSides).  Also derive the left and right implications,
+        derive the reversed version and attempt to derive equality.
         '''
-        tryDerivation(self.deriveLeftImplication, knownTruth.assumptions)
-        tryDerivation(self.deriveRightImplication, knownTruth.assumptions)
-        tryDerivation(self.deriveReversed, knownTruth.assumptions)
-        tryDerivation(self.deriveEquality, knownTruth.assumptions)
+        for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
+            yield sideEffect
+        yield self.deriveLeftImplication # B=>A given A<=>B
+        yield self.deriveRightImplication # A=>B given A<=>B
+        yield self.deriveReversed # B<=>A given A<=>B
+        yield self.deriveEquality # A=B given A<=>B (assuming A and B are in booleans)
             
     def conclude(self, assumptions):
         '''
@@ -41,12 +46,20 @@ class Iff(BinaryOperation):
         try:
             # try to prove the bi-directional implication via evaluation reduction.
             # if that is possible, it is a relatively straightforward thing to do.
-            return BinaryOperation.conclude(assumptions)
+            return Operation.conclude(assumptions)
         except:
             pass
-        # the last attempt is to compose the Iff from the implications each way
-        return self.concludeViaComposition(assumptions)
-
+        try:
+            # Use a breadth-first search approach to find the shortest
+            # path to get from one end-point to the other.
+            return TransitiveRelation.conclude(self, assumptions)            
+        except:
+            pass            
+            
+        # the last attempt is to introduce the Iff via implications each way, an
+        # essentially direct consequence of the definition.
+        return self.concludeByDefinition(assumptions)
+    
     def deriveLeftImplication(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return B=>A.
@@ -113,22 +126,20 @@ class Iff(BinaryOperation):
         from _axioms_ import iffDef
         return iffDef.specialize({A:self.A, B:self.B})
     
-    def concludeViaComposition(self, assumptions=USE_DEFAULTS):
+    def concludeByDefinition(self, assumptions=USE_DEFAULTS):
         '''
         Conclude (A <=> B) assuming both (A => B), (B => A).
         '''
-        AimplB = Implies(self.A, self.B) 
-        BimplA = Implies(self.B, self.A) 
-        compose([AimplB, BimplA], assumptions)
-        return self.definition().deriveLeftViaEquivalence(assumptions)
+        from ._theorems_ import iffIntro
+        return iffIntro.specialize({A:self.A, B:self.B}, assumptions=assumptions)
     
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from _theorems_ import iffTT, iffTF, iffFT, iffFF # load in truth-table evaluations
-        return BinaryOperation.evaluate(self, assumptions)
+        from _theorems_ import iffTT, iffTF, iffFT, iffFF # IMPORTANT: load in truth-table evaluations
+        return Operation.evaluation(self, assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -141,5 +152,13 @@ class Iff(BinaryOperation):
         '''
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
-        from _theorems_ import iffOverBoolImplEq
-        return iffOverBoolImplEq.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        from _theorems_ import eqFromIff, eqFromMutualImpl
+        # We must be able to prove this Iff to do this derivation --
+        # then either eqFromIff or eqFromMutualImpl can be used.
+        self.prove(assumptions=assumptions) 
+        # eqFromMutualImpl may make for a shorter proof; do it both ways (if both are usable)
+        if not eqFromIff.isUsable():
+            return eqFromMutualImpl.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        eqFromMutualImpl.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        return eqFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
+        

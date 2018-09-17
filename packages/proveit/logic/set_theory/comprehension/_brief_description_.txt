@@ -1,0 +1,1 @@
+Define a set according to the properties of its members.

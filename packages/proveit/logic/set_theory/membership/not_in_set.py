@@ -1,34 +1,61 @@
-from proveit import Literal, BinaryOperation, USE_DEFAULTS, tryDerivation
-from proveit.common import x, S
+from proveit import Literal, Operation, USE_DEFAULTS
+from proveit._common_ import x, S
 
-NOTIN = Literal(__package__, stringFormat = 'not in', latexFormat = r'\notin')
-
-class NotInSet(BinaryOperation):
+class NotInSet(Operation):
+    # operator of the NotInSet operation
+    _operator_ = Literal(stringFormat='not-in', latexFormat=r'\notin', context=__file__)    
+    
     def __init__(self, element, domain):
-        BinaryOperation.__init__(self, NOTIN, element, domain)
+        Operation.__init__(self, NotInSet._operator_, (element, domain))
         self.element = self.operands[0]
         self.domain = self.operands[1]  
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NOTIN    
+        """
+        if hasattr(self.domain, 'nonmembershipObject'):
+            self.nonmembershipObject = self.domain.nonmembershipObject(element)
+            if not isinstance(self.nonmembershipObject, Nonmembership):
+                raise TypeError("The 'nonmembershipObject' of %s should be from a class derived from 'embership'"%str(self.domain))
+        """
     
+    def __dir__(self):
+        '''
+        If the domain has a 'membershipObject' method, include methods from the
+        object it generates.
+        '''
+        if not hasattr(self, 'membershipObject'):
+            return sorted(set(self.__dict__.keys() + dir(self.membershipObject)))
+        else:
+            return sorted(self.__dict__.keys() + 'unfold')
+    
+    def __getattr__(self, attr):
+        '''
+        If the domain has a 'membershipObject' method, include methods from the
+        object it generates.
+        '''
+        if hasattr(self, 'membershipObject'):
+            return self.membershipObject.__getattr__(self, attr)
+        elif attr=='unfold':
+            return self.unfoldNotIn # the default 'unfold' method
+    
+    def sideEffects(self, knownTruth):
+        '''
+        Unfold x not-in S as Not(x in S) as an automatic side-effect.
+        If the domain has a 'nonmembershipObject' method, side effects
+        will also be generated from the 'sideEffects' object that it generates.
+        '''
+        yield self.unfoldNotIn
+        if hasattr(self, 'nonmembershipObject'):
+            for sideEffect in self.nonmembershipObject.sideEffects(knownTruth):
+                yield sideEffect
+        
     def deduceInBool(self):
         '''
         Deduce and return that this 'not in' statement is in the set of BOOLEANS.
+        PERHAPS MEMBERSHIP/NON-MEMBERSHIP SHOULD ALWAYS BE IN BOOLEAN, THOUGH
+        ILL-DEFINED DOMAINS CAN NEVER HAVE MEMBERSHIP TO BE TRUE -- REVISIT.
         '''
         self.domain.deduceNotInSetIsBool(self.element)
-    
-    def equivalence(self, assumptions=USE_DEFAULTS):
-        '''
-        Deduces and returns an equivalence for (x not in S), by definition.
-        For example, (x not in {y}) = (x != y)
-        '''
-        if hasattr(self.domain, 'nonMembershipEquivalence'):
-            return self.domain.nonMembershipEquivalence(self.element, assumptions=assumptions)
-        raise AttributeError("'nonMembershipEquivalence' is not implemented for a domain of type " + str(self.domain.__class__))            
         
-    def unfold(self, assumptions=USE_DEFAULTS):
+    def unfoldNotIn(self, assumptions=USE_DEFAULTS):
         '''
         From (x \notin y), derive and return Not(x \in y).
         '''
@@ -37,11 +64,13 @@ class NotInSet(BinaryOperation):
 
     def conclude(self, assumptions):
         '''
-        Attempt to conclude that the element is not in the domain by calling
-        'deduceNonmembership' on the domain with the element and assumptions.
+        Attempt to conclude that the element is not in the domain
+        via the 'nonmembership object'
+        (if the domain has a 'nonmembershipObject' method).
+        Otherwise, try 'concludeAsFolded'.
         '''
-        if hasattr(self.domain, 'deduceNonmembership'):
-            return self.domain.deduceNonmembership(self.element, assumptions)
+        if hasattr(self, 'nonmembershipObject'):
+            return self.nonmembershipObject.conclude(assumptions)
         return self.concludeAsFolded(assumptions=assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
@@ -49,39 +78,51 @@ class NotInSet(BinaryOperation):
         Attempt to conclude x not in S via Not(x in S).
         '''
         from _theorems_ import foldNotInSet
-        return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
-    
-    def deriveSideEffects(self, knownTruth):
-        '''
-        If the domain has a 'deduceNonmembershipSideEffects' method, it will be called
-        and given the element and assumptions.  Also, the 'unfold' method is called.
-        '''
-        if hasattr(self.domain, 'deduceNonmembershipSideEffects'):
-            tryDerivation(self.domain.deduceNonmembershipSideEffects, self.element, assumptions=knownTruth.assumptions)
-        tryDerivation(self.unfold, assumptions=knownTruth.assumptions)            
+        return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)        
 
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
-        Attempt to evaluate whether element is or is not in the given domain.
+        Attempt to form evaluation of whether (element not in domain) is
+        TRUE or FALSE.  If the domain has a 'membershipObject' method,
+        attempt to use the 'equivalence' method from the object it generates.
         '''
-        from proveit.logic import Equals, TRUE
+        from proveit.logic import Equals, TRUE, In
         evaluation = None
-        try:
-            equiv = self.equivalence(assumptions)
-            val = equiv.evaluate(assumptions).rhs
+        try: # try an 'equivalence' method (via the nonmembership object)
+            equiv = self.nonmembershipObject.equivalence(assumptions)
+            val = equiv.evaluation(assumptions).rhs
             evaluation = Equals(equiv, val).prove(assumptions=assumptions)
         except:
-            pass
+            # try the default evaluation method if necessary
+            evaluation = Operation.evaluation(self, assumptions)
         # try also to evaluate this by deducing membership or non-membership in case it 
         # generates a shorter proof.
         try:
             if evaluation.rhs == TRUE:
-                self.domain.deduceNonMembership(self.element, assumptions)
+                if hasattr(self, 'nonmembershipObject'):
+                    self.nonmembershipObject.conclude(assumptions=assumptions)
             else:
-                self.domain.deduceMembership(self.element, assumptions)
+                inDomain = In(self.element, self.domain)
+                if hasattr(inDomain, 'membershipObject'):
+                    inDomain.membershipObject.conclude(assumptions=assumptions)
         except:
             pass
-        if evaluation is None:
-            # as a last resort, try default evaluation methods
-            return BinaryOperation.evaluate(self, assumptions)
         return evaluation
+
+class Nonmembership:
+    '''
+    Base class for any 'nonmembership object' return by a domain's
+    'nonmembershipObject' method.
+    '''
+    def __init__(self, element):    
+        self.element = element
+
+    def sideEffects(self, knownTruth):
+        raise NotImplementedError("Nonmembership object has no 'sideEffects' method implemented")
+
+    def conclude(self, assumptions):
+        raise NotImplementedError("Nonmembership object has no 'conclude' method implemented")
+    
+    def equivalence(self):
+        raise NotImplementedError("Nonmembership object has no 'equivalence' method implemented")
+

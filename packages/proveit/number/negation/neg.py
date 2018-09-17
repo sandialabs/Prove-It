@@ -1,18 +1,13 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex
-from proveit.number.sets import Integers, Reals, Complexes, zero
-from proveit.common import a, x, y, xEtc
-
-NEG = Literal(__package__, 'NEG')
+from proveit.number.sets import Integers, Reals, Complexes
+from proveit._common_ import a, x, y
 
 class Neg(Operation):
+    # operator of the Neg operation.
+    _operator_ = Literal(stringFormat='Neg', context=__file__)
+    
     def __init__(self,A):
-        Operation.__init__(self, NEG, A)
-        self.operand = A
-        #NumberOp.__init__(self, {Complexes:complex.theorems.negClosure})
-
-    @classmethod
-    def operatorOfOperation(subClass):
-        return NEG
+        Operation.__init__(self, Neg._operator_, A)
     
     def _closureTheorem(self, numberSet):
         import theorems
@@ -34,7 +29,14 @@ class Neg(Operation):
     def _notEqZeroTheorem(self):
         import theorems
         return theorems.negNotEqZero
-
+    
+    def asInt(self):
+        '''
+        Convert a literal integer into a Python int.  This
+        only works if the operand is a literal int.
+        '''
+        return -self.operand.asInt()    
+    
     def simplification(self, assumptions=frozenset()):
         '''
         For trivial cases, double negation or negating zero,

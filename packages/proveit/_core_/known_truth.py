@@ -7,12 +7,11 @@ with possibly fewer assumptions, suffices).
 """
 
 from proveit._core_.expression import Expression
-from storage import storage
+from ._proveit_object_utils import makeUniqueId, addParent
 from defaults import defaults, USE_DEFAULTS
 import re
             
 class KnownTruth:
-    
     # lookup_dict maps Expressions to lists of KnownTruths for proving the 
     # Expression under various assumptions.  Excludes redundancies in which one set
     # of assumptions subsumes another.
@@ -20,10 +19,11 @@ class KnownTruth:
     
     # Call the beginProof method to begin a proof of a Theorem.
     theoremBeingProven = None # Theorem being proven.
-    dependentTheoremsOfTheoremBeingProven = None # set theorems that depend upon (directly or indirectly) the theorem be proven
+    hasBeenProven = False # Has the theoremBeingProven been proven yet in this session?
     # Set of theorems/packages that are presumed to be True for the purposes of the proof being proven:
     presumingTheorems = None # set of Theorem objects when in use
-    presumingPackages = None # set of package names or full theorem names when in use.
+    presumingPrefixes = None # set of context names or full theorem names when in use.
+    qedInProgress = False # set to true when "%qed" is in progress
 
     # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
     # recursion when deducing side effects after something is proven.
@@ -51,20 +51,38 @@ class KnownTruth:
         # and an unordered set (for convenience when checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
-        self._proof = None # set this after the Proof does some initialization via _recordBestProof         
-        # a unique representation for the KnownTruth comprises its expr and assumptions:
-        self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
-        # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
-        self._unique_id = hash(self._unique_rep)
+        
+        # See if there is an existing KnownTruth that covers this one
+        # (has no more assumptions than this one) with a usable proof.
+        existingKnownTruth = KnownTruth.findKnownTruth(expression, assumptions)
+        if existingKnownTruth is not None:
+            # Use an existing proof
+            self._proof = existingKnownTruth.proof()
+        else:
+            # initialize _proof to None, to be changed later via _recordBestProof
+            self._proof = None
+        
+        # establish some parent relationships (important in case styles are updated)
+        addParent(self.expr, self)
+        for assumption in self.assumptions:
+            addParent(assumption, self)
+        
+        # meaning representations and unique ids are independent of style
+        self._meaning_rep = self._generate_unique_rep(lambda expr : hex(expr._meaning_id))
+        self._meaning_id = makeUniqueId(self._meaning_rep)
+        # style representations and unique ids are dependent of style
+        self._style_rep = self._generate_unique_rep(lambda expr : hex(expr._style_id))
+        self._style_id = makeUniqueId(self._style_rep)
+        
 
-    def _generate_unique_rep(self, objectRepFn):
+    def _generate_unique_rep(self, objectRepFn, includeStyle=False):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
         return objectRepFn(self.expr) + ';[' + ','.join(objectRepFn(assumption) for assumption in self.assumptions) + ']'
 
     @staticmethod
-    def _referencedObjIds(unique_rep):
+    def _extractReferencedObjIds(unique_rep):
         '''
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
@@ -82,78 +100,99 @@ class KnownTruth:
             return # automation disabled
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
-            KnownTruth.in_progress_to_derive_sideeffects.add(self)        
-            self.expr.deriveSideEffects(self)
+            KnownTruth.in_progress_to_derive_sideeffects.add(self)
+            for sideEffect in self.expr.sideEffects(self):
+                # Attempt each side-effect derivation, specific to the
+                # type of Expression.
+                try:
+                    # use the default assumptions which are temporarily set to the
+                    # assumptions utilized in the last derivation step.
+                    sideEffect(assumptions=defaults.assumptions)     
+                except:
+                    pass
             KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
-            return self._unique_id == other._unique_id
-        else: return False # other must be an KnownTruth to be equal to self
+            return self._meaning_id == other._meaning_id
+        else: return False # other must be an Expression to be equal to self
+    
     def __ne__(self, other):
         return not self.__eq__(other)
+
     def __hash__(self):
-        return self._unique_id
+        return self._meaning_id
         
-    def beginProof(self, presumes=tuple()):
+    def beginProof(self, presuming=tuple()):
         '''
         Begin a proof for a theorem.  Only use other theorems that are in 
-        the presumes list of theorems/packages or theorems that are required,
+        the presuming list of theorems/packages or theorems that are required,
         directly or indirectly, in proofs of theorems that are explicitly 
         listed (these are implicitly presumed).  If there exists any 
         presumed theorem that has a direct or indirect dependence upon this 
         theorem then a CircularLogic exception is raised. 
         '''
+        from proveit import Context, ContextException
         if KnownTruth.theoremBeingProven is not None:
-            raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  It is best to avoid having extraneous KnownTruth objects so each proof should be independent.")
+            raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.")
         from proof import Theorem
-        from proveit.certify import allDependents, hasProof, allUsedTheorems
-        theorem = self.proof()
+        theorem = self.proof() # the trivial prove-by-theorem; not yet the actual, desired proof of the theorem
         if not isinstance(theorem, Theorem):
             raise TypeError('Only begin a proof for a Theorem')
+        theorem.recordPresumingInfo(presuming)
+        print "Recorded 'presuming' information"
+                
+        presumed_theorems, presumed_contexts = set(), set()
+        theorem.getRecursivePresumingInfo(presumed_theorems, presumed_contexts)
         KnownTruth.theoremBeingProven = theorem
-        KnownTruth.dependentTheoremsOfTheoremBeingProven = allDependents(theorem)
-        KnownTruth.presumingTheorems = set()
-        KnownTruth.presumingPackages = set()
-        for presuming in presumes:
-            if isinstance(presuming, KnownTruth):
-                presuming = presuming.asTheoremOrAxiom()
-            if isinstance(presuming, Theorem):
-                KnownTruth.presumingTheorems.add(presuming)
-            elif isinstance(presuming, str):
-                # may be a package or a full theorem name, to be precise
-                KnownTruth.presumingPackages.add(presuming)
-            else:
-                raise ValueError("'presumes' should be a collection of Theorems and strings, not " + str(presuming.__class__))
-            if hasProof(presuming): # note, if presuming is a package name, hasProof will simply return False
-                # presume theorems (implicitly) that are used to prove 
-                # other presumed theorems (explicitly).
-                KnownTruth.presumingPackages.update(allUsedTheorems(presuming)) # actually theorems by full name
+        KnownTruth.presumingTheorems = set(presumed_theorems)
+        KnownTruth.presumingPrefixes = set(presumed_contexts)
+        
+        # presume all previous theorems and their dependencies
+        context = theorem.context
+        num_prev_thms = 0 # number of previous theorems within the context
+        for prev_thm_name in context.theoremNames():
+            if prev_thm_name == theorem.name:
+                break # concludes all "previous" theorems of the context
+            thm = context.getTheorem(prev_thm_name)
+            KnownTruth.presumingTheorems.add(thm)
+            if thm.hasProof():
+                # presume dependencies of presumed theorems
+                KnownTruth.presumingPrefixes.update(thm.allUsedTheorems())
+            num_prev_thms += 1
+        
         Theorem.updateUsability()
         # check to see if the theorem was already proven before we started
         for proof in theorem._possibleProofs:
             if all(usedTheorem._unusableTheorem is None for usedTheorem in proof.usedTheorems()):
-                print "Theorem already proven.  Calling qed() method."
-                self._proof = proof
-                return self.qed()
-        print "Beginning proof of"
+                proof.provenTruth._recordBestProof(proof)
+                return self.expr
+        if len(presumed_contexts) > 0:
+            print "Presuming theorems in %s (except any that depend upon this theorem)."%', '.join(sorted(presumed_contexts))
+        if len(presumed_theorems) > 0:
+            print "Presuming %s theorem(s)."%', '.join(sorted(str(thm) for thm in presumed_theorems))
+        if num_prev_thms > 0:
+            print "Presuming previous theorems in this context (and any of their dependencies)."
         self._proof._unusableTheorem = self._proof # can't use itself to prove itself
         return self.expr
     
-    def qed(self):
+    def _qed(self):
         '''
         Complete a proof that began via `beginProof`, entering it into
         the certification database.
         '''
-        from proveit.certify import recordProof
         if KnownTruth.theoremBeingProven is None:
             raise Exception('No theorem being proven; cannot call qed method')
         if self.expr != KnownTruth.theoremBeingProven.provenTruth.expr:
             raise Exception('qed does not match the theorem being proven')
         if len(self.assumptions) > 0:
             raise Exception('qed proof should not have any remaining assumptions')
+        KnownTruth.qedInProgress = True
         proof = self.expr.prove().proof()
-        recordProof(KnownTruth.theoremBeingProven, proof)
+        if not proof.isUsable():
+            proof.provenTruth.raiseUnusableTheorem()
+        KnownTruth.theoremBeingProven.recordProof(proof)
+        KnownTruth.qedInProgress = False
         return proof
 
     def proof(self):
@@ -168,12 +207,12 @@ class KnownTruth:
         may be unusable when proving a theorem that is restricted with
         respect to which theorems may be used (to avoid circular logic).
         '''
-        return self._proof._unusableTheorem is None
+        return self._proof is not None and self._proof._unusableTheorem is None
     
     def isSufficient(self, assumptions):
         '''
-        Return True iff this KnownTruth is sufficient under the given assumptions;
-        usable and uses a subset of the given assumptions.
+        Return True iff the given assumptions satisfy the KnownTruth; 
+        the KnownTruth is usable and requires a subset of the given assumptions.
         '''
         return self.isUsable() and self.assumptionsSet.issubset(assumptions)
     
@@ -243,15 +282,20 @@ class KnownTruth:
             KnownTruth.lookup_dict[self.expr] = [self]
             return
         if not newProof.isUsable():
-            return # if it is not usable, forget it.
+            # if it is not usable, we're done.
+            if self._proof is None:
+                # but first set _proof to the newProof if there 
+                # is not another one.
+                self._proof = newProof
+            return
         keptTruths = []
         bornObsolete = False
         for other in KnownTruth.lookup_dict[self.expr]:
-            if not other._proof.isUsable():
-                # use the new proof since the old one is unusable.
-                other._updateProof(newProof)
-            elif self.assumptionsSet == other.assumptionsSet:
-                if newProof.numSteps <= other._proof.numSteps:
+            if self.assumptionsSet == other.assumptionsSet:
+                if not other._proof.isUsable():
+                    # use the new proof since the old one is unusable.
+                    other._updateProof(newProof)
+                elif newProof.numSteps <= other._proof.numSteps:
                     if newProof.requiredProofs != other._proof.requiredProofs:
                         # use the new (different) proof that does the job as well or better
                         if isinstance(newProof, Theorem):
@@ -269,15 +313,21 @@ class KnownTruth:
             elif self.assumptionsSet.issubset(other.assumptionsSet):
                 # use the new proof that does the job better
                 other._updateProof(newProof) 
-            elif self.assumptionsSet.issuperset(other.assumptionsSet):
+            elif self.assumptionsSet.issuperset(other.assumptionsSet) and other._proof.isUsable():
                 # the new proof was born obsolete, requiring more assumptions than an existing one
                 self._proof = other._proof # use an old proof that does the job better
                 keptTruths.append(other)
                 bornObsolete = True
             else:
-                # 'other' uses a different, non-redundant set of assumptions
+                # 'other' uses a different, non-redundant set of assumptions or 
+                # uses a subset of the assumptions but is unusable
                 keptTruths.append(other)
         if not bornObsolete:
+            if KnownTruth.theoremBeingProven is not None:
+                if not KnownTruth.qedInProgress and len(self.assumptions)==0 and self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
+                    if not KnownTruth.hasBeenProven:
+                        KnownTruth.hasBeenProven = True
+                        print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".'
             self._proof = newProof
             keptTruths.append(self)
         # Remove the obsolete KnownTruths from the lookup_dict
@@ -295,7 +345,8 @@ class KnownTruth:
         if not wasUsable: return  # not usable, don't update dependents
         for oldDependentProof in oldDependents:
             # remake the dependent proof to refer to this updated proof
-            oldDependentProof.remake()
+            if oldDependentProof.isUsable(): # (if it's usable)
+                oldDependentProof.remake()
 
     def __setattr__(self, attr, value):
         '''
@@ -376,19 +427,29 @@ class KnownTruth:
     @staticmethod
     def forgetKnownTruths():
         KnownTruth.lookup_dict.clear()
-
+    
+    def _canSpecialize(self, var):
+        '''
+        Return True iff the given Variable can be specialized from
+        this KnownTruth directly (an instance Variable of a directly
+        nested Forall operation).
+        '''
+        from proveit.logic import Forall        
+        expr = self.expr
+        while isinstance(expr, Forall):
+            if var in expr.instanceVars:
+                return True
+            expr = expr.instanceExpr
+        return False      
+        
     def relabel(self, relabelMap):
         '''
         Performs a relabeling derivation step, deriving another KnownTruth
         from this KnownTruth, under the same assumptions, with relabeled
-        Variables/MultiVariables.  A Variable may only be relabeled to a Variable.
-        A MultiVariable may be relabeled to a Composite Expression (ExpressionList,
-        ExpressionTensor, or NamedExpressions as appropriate) of Variables/MultiVariables)
+        Variables.  A Variable may only be relabeled to a Variable.
         Returns the proven relabeled KnownTruth, or throws an exception if the proof fails.
         '''
         from proveit._core_.proof import Specialization
-        from proveit import MultiVariable, compositeExpression
-        relabelMap = {key : compositeExpression(sub) if isinstance(key, MultiVariable) else sub for key, sub in relabelMap.iteritems()}
         return Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions).provenTruth
     
     def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
@@ -408,14 +469,14 @@ class KnownTruth:
         Returns the proven specialized KnownTruth, or throws an exception if the
         proof fails.        
         '''
-        from proveit import Operation, Variable, MultiVariable, Etcetera, Composite, compositeExpression, ExpressionList, ExpressionTensor, Lambda
-        from proveit import Forall
+        from proveit import Operation, Variable, Lambda, singleOrCompositeExpression
+        from proveit.logic import Forall
         from proof import Specialization, SpecializationFailure
         
         # if no specializeMap is provided, specialize a single Forall with default mappings (mapping instance variables to themselves)
         if specializeMap is None: specializeMap = dict()
         if relabelMap is None: relabelMap = dict()
-        
+                
         # Include the KnownTruth assumptions along with any provided assumptions
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptions += self.assumptions
@@ -423,29 +484,15 @@ class KnownTruth:
         # For any entrys in the subMap with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
         # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
-        # For MultiVariable operators, there will be composite substitutions.
+        # Convert to composite expressions as needed (via singleOrCompositeExpression).
         processedSubMap = dict()
         for key, sub in specializeMap.iteritems():
+            sub = singleOrCompositeExpression(sub)
             if isinstance(key, Operation):
                 operation = key
                 subVar = operation.operator
-                if isinstance(key.operator, MultiVariable):
-                    lambdaExpressions = compositeExpression(sub)
-                    if lambdaExpressions.__class__ == ExpressionList:
-                        sub = ExpressionList([Lambda(operation.operands, lambdaExpr) for lambdaExpr in lambdaExpressions])
-                    elif lambdaExpressions.__class__ == ExpressionTensor:
-                        sub = ExpressionTensor({tensorKey:Lambda(operation.operands, lambdaExpr) for tensorKey, lambdaExpr in lambdaExpressions.iteritems()}, shape=lambdaExpressions.shape, alignmentCoordinates=lambdaExpressions.alignmentCoordinates)
-                else:
-                    if not isinstance(sub, Expression) or isinstance(sub, Composite):
-                        raise SpecializationFailure(None, assumptions, 'Only MultiVariable operations may be specialized to a composite Expression')
-                    if len(operation.operands)==1 and isinstance(operation.operands[0], Etcetera):
-                        # a MultiVariable operation substitution
-                        sub = Lambda(operation.operands[0].bundledExpr, sub)
-                    else:
-                        sub = Lambda(operation.operands, sub)
+                sub = Lambda(operation.operands, sub)
                 processedSubMap[subVar] = sub
-            elif isinstance(key, MultiVariable):
-                processedSubMap[key] = compositeExpression(sub) # MultiVariables map to a Composite
             elif isinstance(key, Variable):
                 processedSubMap[key] = sub
             else:
@@ -462,10 +509,9 @@ class KnownTruth:
             numForallEliminations += 1
             if not isinstance(expr, Forall):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
-            expr = expr.operands
-            lambdaExpr = expr['imap'];
+            lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body['iexpr'], lambdaExpr.body['conds']
+            instanceVars, expr, conditions  = lambdaExpr.parameters, lambdaExpr.body, lambdaExpr.conditions
             for iVar in instanceVars:
                 if iVar in remainingSubVars:
                     # remove this instance variable from the remaining substitution variables
@@ -474,11 +520,9 @@ class KnownTruth:
                     # default is to map instance variables to themselves
                     processedSubMap[iVar] = iVar
 
-        # Make sure MultiVariables are relabeled to composite expressions, as a consistent convention
-        relabelMap = {key : compositeExpression(sub) if isinstance(key, MultiVariable) else sub for key, sub in relabelMap.iteritems()}
         return Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions).provenTruth
         
-    def generalize(self, forallVarLists, domains=None, domain=None, conditions=tuple()):
+    def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
         '''
         Performs a generalization derivation step.  Returns the
         proven generalized KnownTruth.  Can introduce any number of
@@ -488,23 +532,35 @@ class KnownTruth:
         be provided to introduce a single Forall wrapper.
         '''
         from proveit._core_.proof import Generalization
-        from proveit import Variable, MultiVariable
-        if isinstance(forallVarLists, Variable) or isinstance(forallVarLists, MultiVariable):
+        from proveit import Variable, compositeExpression
+        from proveit.logic import InSet
+        
+        if isinstance(forallVarLists, Variable):
             forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
         else:
             if not hasattr(forallVarLists, '__len__'):
-                raise ValueError("Must supply generalize with a Variable or list of Variables")
+                raise ValueError("Must supply 'generalize' with a Variable, list of Variables, or list of Variable lists.")
             if len(forallVarLists) == 0:
                 raise ValueError("Must provide at least one Variable to generalize over")
-            if isinstance(forallVarLists[0], Variable):
-                # must be a single list, so let's convert it to a list of lists
+            if all(isinstance(x, Variable) for x in forallVarLists):
+                # convert a list of Variable/MultiVariables to a list of lists
                 forallVarLists = [forallVarLists]
-                    
-        if domain is not None and domains is not None:
-            raise ValueError("Either specify a 'domain' or a list of 'domains' but not both")
-        if domains is None:
-            domains = [domain]*len(forallVarLists)
-        return Generalization(self, forallVarLists, domains, conditions).provenTruth
+        
+        # Add domain conditions as appropriate
+        if domain is not None and domainLists is not None:
+            raise ValueError("Either specify a 'domain' or a list of 'domainLists' but not both")
+        if domain is not None:
+            domainLists = [[domain]*len(forallVarList) for forallVarList in forallVarLists]
+        if domainLists is not None:
+            domainConditions = []
+            for domainList, forallVarList in zip(domainLists, forallVarLists):
+                domainList = compositeExpression(domainList)
+                if len(domainList)==1:
+                    domainList = [domainList[0]]*len(forallVarList)
+                domainConditions += [InSet(instanceVar, domain) for instanceVar, domain in zip(forallVarList, domainList)]
+            conditions = domainConditions + list(conditions)
+        
+        return Generalization(self, forallVarLists, conditions).provenTruth
 
     def asImplication(self, hypothesis):
         '''
@@ -519,12 +575,12 @@ class KnownTruth:
             hypothesis = hypothesis.expr # we want the expression for this purpose
         return HypotheticalReasoning(self, hypothesis).provenTruth
     
-    def evaluate(self):
+    def evaluation(self):
         '''
-        Calling evaluate on a KnownTruth results in deriving that its
+        Calling evaluation on a KnownTruth results in deriving that its
         expression is equal to TRUE, under the assumptions of the KnownTruth.
         '''
-        from proveit import evaluateTruth
+        from proveit.logic import evaluateTruth
         return evaluateTruth(self.expr, self.assumptions)
 
     def asImpl(self, hypothesis):
@@ -540,29 +596,16 @@ class KnownTruth:
         else:
             raise UnusableTheorem(KnownTruth.theoremBeingProven, self._proof._unusableTheorem, 'required to prove' + self.string(performUsabilityCheck=False)) 
 
-    def latex(self, performUsabilityCheck=False):
-        '''
-        If the KnownTruth was proven under any assumptions, display the 
-        double-turnstyle notation to show that the set of assumptions proves
-        the statement/expression.  Otherwise, simply display the expression.
-        '''
-        from proveit import ExpressionList
-        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
-        if len(self.assumptions) > 0:
-            assumptionsStr = ExpressionList(self.assumptions).formatted('latex', fence=False)
-            return r'\{' + assumptionsStr + r'\} \boldsymbol{\vdash} ' + self.expr.latex()
-        return r'\boldsymbol{\vdash} ' + self.expr.latex()
-
     def string(self, performUsabilityCheck=True):
         '''
         If the KnownTruth was proven under any assumptions, display the 
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
-        from proveit import ExpressionList
+        from proveit import ExprList
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
         if len(self.assumptions) > 0:
-            assumptionsStr = ExpressionList(self.assumptions).formatted('string', fence=False)
+            assumptionsStr = ExprList(*self.assumptions).formatted('string', fence=False)
             return r'{' +assumptionsStr + r'} |= ' + self.expr.string()
         return r'|= ' + self.expr.string()
 
@@ -579,43 +622,24 @@ class KnownTruth:
         if not self.isUsable(): self.raiseUnusableTheorem()
         return self.string()
     
-    def _storage(self):
+    def _repr_html_(self):
         '''
-        If the KnownTruth is for an Axiom or Theorem, use the _certified_
-        storage for the package.  Otherwise use the default storage.
+        Generate html to show the KnownTruth as a set of assumptions,
+        turnstile, then the statement expression.  Expressions are png's
+        compiled from the latex (that may be recalled from memory or storage 
+        if previously generated) with a links to
+        expr.ipynb notebooks for displaying the expression information.
         '''
-        from proveit.certify import _makeStorage
-        from proof import Axiom, Theorem
-        if self._proof is not None and (isinstance(self._proof, Axiom) or isinstance(self._proof, Theorem)):
-            return _makeStorage(self._proof.package)
-        return storage
-
-    def _repr_png_(self):
-        '''
-        Generate a png image from the latex.  May be recalled from memory or
-        storage if it was generated previously.
-        '''
+        from proveit.logic import Set
         if not self.isUsable(): self.raiseUnusableTheorem()
-        if not hasattr(self,'png'):
-            self.png = self._storage()._retrieve_png(self, self.latex(), self._config_latex_tool)
-        return self.png # previous stored or generated
-
-    def generate_html(self):
-        '''
-        Generate the img html tag with encoded png data.
-        '''
-        self._repr_png_() # sets self.png
-        import base64
-        return '<img src="data:image/png;base64,' + base64.b64encode(self.png) + '">'        
-        
-    def _config_latex_tool(self, lt):
-        '''
-        Configure the LaTeXTool from IPython.lib.latextools as required by all
-        sub-expressions.
-        '''
-        self.expr._config_latex_tool(lt)
-        for assumption in self.assumptions:
-            assumption._config_latex_tool(lt)
+        html = ''
+        html += '<span style="font-size:20px;">'
+        if len(self.assumptions) > 0:
+            html += Set(*self.assumptions)._repr_html_()
+        html += ' &#x22A2;&nbsp;' # turnstile symbol
+        html += self.expr._repr_html_()
+        html += '</span>'
+        return html
 
 def asExpression(truthOrExpression):
     '''

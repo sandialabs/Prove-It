@@ -1,2 +1,2 @@
-from subset import SubsetEq
-from superset import SupersetEq
+from subset import SubsetEq, Subset, NotSubsetEq
+from superset import SupersetEq, Superset, NotSupersetEq

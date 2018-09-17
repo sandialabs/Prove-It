@@ -3,21 +3,49 @@ This is the expression module.
 """
 
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit._core_.storage import storage
+from proveit._core_.context import Context
+from proveit._core_.expression.style_options import StyleOptions
+from proveit._core_._proveit_object_utils import makeUniqueId, addParent, updateStyles
 import re
+import os
+
+class ExprType(type):
+    '''
+    By overriding the Expression type, we can make Operation-type
+    expressions automatically populate the Operation.operationClassOfOperator
+    dictionary as long as the relevent '_operator_' class attribute is 
+    accessed at least once.
+    '''
+    
+    def __getattribute__(cls, name):
+        from proveit._core_.expression.operation import Operation
+        value = type.__getattribute__(cls, name)
+        if issubclass(cls, Operation) and name == '_operator_':
+            Operation.operationClassOfOperator[value] = cls
+        return value
 
 class Expression:
-    unique_id_map = dict() # map unique_id's to unique_rep's
-    expr_to_prove = None # the theorem currently being proven (if there is one)
+    __metaclass__ = ExprType
+    
+    # set of expression (style_id, Expression) pairs for which __repr_html__ has been called this session:
+    displayed_expression_styles = set() 
+    
+    # map expression to contexts (for expressions that "belong" to a Context)
+    contexts = dict() 
     
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
     in_progress_to_conclude = set() 
             
-    def __init__(self, coreInfo, subExpressions=tuple()):
+    def __init__(self, coreInfo, subExpressions=tuple(), styles=dict(), requirements=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
         level) which should be a list (or tuple) of strings, and a list (or tuple) of subExpressions.
+        "styles" is a dictionary used to indicate how the Expression should be formatted
+        when there are different possibilities (e.g. division with '/' or as a fraction).  The meaning
+        of the expression is independent of its styles signature.
+        The "requirements" are expressions that must be proven to be true in order for the Expression
+        to make sense.
         '''
         for coreInfoElem in coreInfo:
             if not isinstance(coreInfoElem, str):
@@ -26,22 +54,61 @@ class Expression:
             if not isinstance(subExpression, Expression):
                 raise TypeError('Expecting subExpression elements to be of Expression type')
         # unique_rep is a unique representation based upon the coreInfo and unique_id's of sub-Expressions
-        self._coreInfo, self._subExpressions = coreInfo, subExpressions
-        self._unique_rep = self._generate_unique_rep(lambda expr : hex(expr._unique_id))
-        # generate the unique_id based upon hash(unique_rep) but safely dealing with improbable collision events
-        self._unique_id = hash(self._unique_rep)
-        while self._unique_id in Expression.unique_id_map and Expression.unique_id_map[self._unique_id] != self._unique_rep:
-            self._unique_id += 1
-        Expression.unique_id_map[self._unique_id] = self._unique_rep
+        self._coreInfo, self._subExpressions = tuple(coreInfo), subExpressions
+        self._styles = dict(styles) # formatting style options that don't affect the meaning of the expression
+        # meaning representations and unique ids are independent of style
+        self._meaning_rep = self._generate_unique_rep(lambda expr : hex(expr._meaning_id))
+        self._meaning_id = makeUniqueId(self._meaning_rep)
+        # style representations and unique ids are dependent of style
+        self._style_rep = self._generate_unique_rep(lambda expr : hex(expr._style_id), includeStyle=True)
+        self._style_id = makeUniqueId(self._style_rep)
+        for subExpression in subExpressions: # update Expression.parent_expr_map
+            addParent(subExpression, self)
+        # combine requirements from all sub-expressions
+        requirements = sum([tuple(subExpression.requirements) for subExpression in subExpressions], tuple()) + requirements
+        # Expression requirements are essentially assumptions that need to be proven for the expression to
+        # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
+        # (which may not be necessary, but does not hurt).   
+        self.requirements = defaults.checkedAssumptions(requirements)
     
-    def _generate_unique_rep(self, objectRepFn):
+    def _generate_unique_rep(self, objectRepFn, includeStyle=False):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
-        return str(self.__class__) + '[' + ','.join(self._coreInfo) + '];[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+        import sys
+        context = Context(sys.modules[self.__class__.__module__].__file__)
+        # get the full class path relative to the root context where the class is defined
+        class_path = context.name + '.' + self.__class__.__module__.split('.')[-1] + '.' + self.__class__.__name__
+        style_str = ''
+        if includeStyle:
+            style_str = ';[' + ','.join(style_name + ':' + self.getStyle(style_name) for style_name in sorted(self.styleNames())) + ']'
+        return class_path + '[' + ','.join(self._coreInfo) + ']' + style_str + ';[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+
+    @staticmethod
+    def _extractExprClass(unique_rep):
+        '''
+        Return the class of the Expression with the given unique representation.
+        '''
+        return unique_rep[:unique_rep.find('[')]
+
+    @staticmethod
+    def _extractCoreInfo(unique_rep):
+        '''
+        Return the core information of the given unique representation.
+        '''
+        return re.split(',', unique_rep[unique_rep.find('[')+1:unique_rep.find(']')])
     
     @staticmethod
-    def _referencedObjIds(unique_rep):
+    def _extractStyle(unique_rep):
+        '''
+        Return the style information of the given unique representation assuming the style was included.
+        '''
+        style_str = unique_rep.split(';')[1]
+        style_pairs = re.split("\[|,|\]",style_str) 
+        return dict(style_pair.split(':') for style_pair in style_pairs if len(style_pair)>0)
+        
+    @staticmethod
+    def _extractReferencedObjIds(unique_rep):
         '''
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
@@ -50,14 +117,14 @@ class Expression:
         subExprs = unique_rep.split(';')[-1]
         objIds = re.split("\[|,|\]",subExprs) 
         return [objId for objId in objIds if len(objId) > 0]  
-            
+        
     def __setattr__(self, attr, value):
         '''
         Expressions should be read-only objects.  Attributes may be added, however; for example,
         the 'png' attribute which will be added whenever it is generated).
         '''
         if hasattr(self, attr):
-            raise Exception("Attempting to alter read-only value")
+            raise Exception("Attempting to alter read-only value '%s'"%attr)
         self.__dict__[attr] = value      
     
     def __repr__(self):
@@ -65,19 +132,21 @@ class Expression:
     
     def __eq__(self, other):
         if isinstance(other, Expression):
-            return self._unique_id == other._unique_id
+            return self._meaning_id == other._meaning_id 
         else: return False # other must be an Expression to be equal to self
+    
     def __ne__(self, other):
         return not self.__eq__(other)
+
     def __hash__(self):
-        return self._unique_id
+        return self._meaning_id 
     
     def __str__(self):
         '''
         Return a string representation of the Expression.
         '''
         return self.string()
-
+    
     def string(self, **kwargs):
         '''
         Return a string representation of the Expression.  The kwargs can contain formatting
@@ -105,13 +174,13 @@ class Expression:
         if formatType == 'latex': return self.latex(**kwargs)
     
     @classmethod
-    def make(subClass, coreInfo, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions):
         '''
         Should make the Expression object for the specific Expression sub-class based upon the coreInfo
-        and subExpressions.  Must be implemented for each Expression sub-class that can be instantiated.
+        and subExpressions.  Must be implemented for each core Expression sub-class that can be instantiated.
         '''
         raise MakeNotImplemented(subClass)
-    
+                    
     def coreInfo(self):
         '''
         Copy out the core information.
@@ -127,6 +196,86 @@ class Expression:
         '''
         return iter(self._subExpressions)
     
+    def numSubExpr(self):
+        '''
+        Return the number of sub-expressions of this expression.
+        '''
+        return len(self._subExpressions)
+    
+    def innerExpr(self):
+        '''
+        Return an InnerExpr object to wrap the expression and
+        access any inner sub-expression for the purpose of creating
+        a lambda expression to replace the inner expression within
+        this one or change its styles.
+        '''
+        from .inner_expr import InnerExpr
+        return InnerExpr(self)
+    
+    def styleOptions(self):
+        '''
+        Return a StyleOptions object that indicates the possible
+        styles and values that is available to determine how
+        this Expression may be presented.
+        '''
+        return StyleOptions(self) # the default is empty
+    
+    def withStyles(self, **kwargs):
+        '''
+        Alter the styles of this expression according to kwargs.
+        '''
+        orig_styles = dict(self._styles)
+        # update the _styles, _style_rep, and _style_id
+        self._styles.update(kwargs)
+        if self._styles == orig_styles:
+            return self # no change in styles, so just use the original
+        updateStyles(self)
+        return self
+    
+    def styleNames(self):
+        '''
+        Return the name of the styles that may be set.
+        '''
+        return self._styles.keys()
+    
+    def getStyle(self, styleName):
+        '''
+        Return the current style setting for the given style name.
+        '''
+        return self._styles[styleName]
+    
+    def getStyles(self):
+        '''
+        Return a copy of the internally maintained styles dictionary.
+        '''
+        return dict(self._styles)
+    
+    def remakeConstructor(self):
+        '''
+        Method to call to reconstruct this Expression.  The default is the class name
+        itself to use the __init__ method, but sometimes a different method is more
+        appropriate for setting the proper style (e.g. the Frac method in 
+        proveit.number.division.divide which constructs a Div object with a different
+        style).  This constructor method must be in the same module as the class.
+        '''
+        return self.__class__.__name__
+    
+    def remakeArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Expression.
+        '''
+        raise NotImplementedError("remakeArguments method should be implemented for all ProveIt core Expression sub-classes.")
+            
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  For example,
+        ["withWrappingAt(3)", "withJustification('right')"].
+        '''
+        return tuple()
+    
     def prove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Attempt to prove this expression automatically under the
@@ -140,20 +289,23 @@ class Expression:
         free make attempts that may be cyclic.
         '''
         from proveit import KnownTruth, ProofFailure
-        from proveit import Not
+        from proveit.logic import Not
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptionsSet = set(assumptions)
         if automation is USE_DEFAULTS:
             automation = defaults.automation
                 
-        foundTruth = KnownTruth.findKnownTruth(self, assumptionsSet)
+        # Note: exclude WILDCARD_ASSUMPTIONS when looking for an existing proof.
+        #   (may not matter, but just in case).
+        foundTruth = KnownTruth.findKnownTruth(self, (assumptionsSet - {'*'}))
         if foundTruth is not None: 
             return foundTruth # found an existing KnownTruth that does the job!
-        
-        if self in assumptionsSet:
-            # prove by assumption
+                
+        if self in assumptionsSet or '*' in assumptionsSet:
+            # prove by assumption if self is in the list of assumptions or
+            # WILDCARD_ASSUMPTIONS is in the list of assumptions.
             from proveit._core_.proof import Assumption
-            return Assumption(self).provenTruth
+            return Assumption(self, assumptions).provenTruth
         
         if not automation:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
@@ -174,10 +326,13 @@ class Expression:
                     pass # that didn't work, try conclude on the Not expression itself
             if concludedTruth is None:
                 try:
-                    # trye the generic version for concluding the expression
-                    concludedTruth = self.genericConclude(assumptions)
+                    # first attempt to prove via implication
+                    concludedTruth = self.concludeViaImplication(assumptions)
                 except:
+                    # try the 'conclude' method of the specific Expression class
                     concludedTruth = self.conclude(assumptions)
+            if concludedTruth is None:
+                raise ProofFailure(self, assumptions, "Failure to automatically 'conclude'")
             if not isinstance(concludedTruth, KnownTruth):
                 raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
             if concludedTruth.expr != self:
@@ -198,27 +353,9 @@ class Expression:
         expression. Override `concludeNegation` for automation specific to
         the type of expression being negated.      
         '''
-        from proveit import Not
+        from proveit.logic import Not
         return Not(self).prove(assumptions=assumptions, automation=automation)
                         
-    def genericConclude(self, assumptions=USE_DEFAULTS):
-        '''
-        Attempt to conclude, via automation, that this statement is true
-        under the given assumptions.  Return the KnownTruth if successful,
-        or raise an exception.  This generic version attempts concludeViaReduction
-        and concludeViaImplication in that order.  Implement the conclude
-        method for an implementation that is specific to this type of expression.
-        This is called by the `prove` method when no existing proof was found 
-        and it cannot be proven trivially via assumption.
-        The `prove` method has a mechanism to prevent infinite recursion, 
-        so there are no worries regarding cyclic attempts to conclude an expression.
-        '''
-        from proveit import concludeViaReduction, concludeViaImplication
-        try:
-            return concludeViaReduction(self, assumptions)
-        except:
-            return concludeViaImplication(self, assumptions)
-
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude this expression under the given assumptions, 
@@ -230,7 +367,15 @@ class Expression:
         so there are no worries regarding cyclic attempts to conclude an expression.
         '''
         raise NotImplementedError("'conclude' not implemented for " + str(self.__class__))
-    
+
+    def concludeViaImplication(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to conclude this expression via applying
+        modus ponens of known implications.
+        '''
+        from proveit.logic import concludeViaImplication
+        return concludeViaImplication(self, assumptions)
+        
     def concludeNegation(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude the negation of this expression under the given
@@ -243,22 +388,19 @@ class Expression:
         '''
         raise NotImplementedError("'concludeNegation' not implemented for " + str(self.__class__))
         
-    def deriveSideEffects(self, knownTruth):
+    def sideEffects(self, knownTruth):
         '''
-        Derive side effects, obvious and useful consequences that may be arise from
-        proving that this expression is a known truth (under some set of assumptions).
-        The default is to do nothing, but should be overridden as appropriate.
-        It is best that the side effect derivations are trivial and limited.
+        Yield methods to attempt as side-effects when this expression
+        is proven as a known truth.  These should each accept an
+        'assumptions' parameter.
+        These should be obvious and useful consequences, trivial and limited.
         There is no need to call this manually; it is called automatically when
-        the corresponding KnownTruth is created.  See tryDerivation which is
-        a convenient method for specific implementations of deriveSideEffects.
+        the corresponding KnownTruth is created.
+        It also may be desirable to store the knownTruth for future automation.
         '''
-        pass        
-        
-    def qed(self):
-        return self.prove().qed()
-        
-    def substituted(self, exprMap, relabelMap = None, reservedVars = None):
+        return iter(())
+    
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the expressions substituted 
         according to the exprMap dictionary (mapping Expressions to Expressions --
@@ -267,6 +409,12 @@ class Expression:
         to relabeling exceptions.  You cannot substitute with an expression that
         uses a restricted variable and you can only relabel the exception to the
         restricted variable.  This is used to protect an Lambda function's "scope".
+        
+        For certain Expression classes in proveit._core_.expression.composite,
+        intermediate proofs may be required.  This is why assumptions may be
+        needed.  If a list is passed into requirements, KnownTruth's for these
+        intermediate proofs will be appended to it -- these are requirements
+        for the substitution to be valid.
         '''
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
@@ -275,27 +423,40 @@ class Expression:
     
     def relabeled(self, relabelMap, reservedVars=None):
         '''
-        A watered down version of substitution in which only variable labels are
-        changed.  This may also involve substituting a MultiVariable with a list
-        of Variables.
+        A watered down version of substituted in which only variable labels are
+        changed.
         '''
         return self.substituted(exprMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
     
+    def copy(self):
+        '''
+        Make a copy of the Expression with the same styles.
+        '''
+        expr_copy = self.substituted(exprMap=dict()) # vacuous substitution makes a copy
+        return expr_copy
+
+    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+        '''
+        # empty by default.
+        # Overridden by proveit._core_.expression.composite.indexed.Indexed.
+        '''
+        return iter(())
+        
     def _validateRelabelMap(self, relabelMap):
         if len(relabelMap) != len(set(relabelMap.values())):
             raise ImproperRelabeling("Cannot relabel different Variables to the same Variable.")
     
     def usedVars(self):
-        """
-        Returns any variables used in the expression.
-        """
-        return set()
-    
+        '''
+        Returns the union of the used Variables of the sub-Expressions.
+        '''
+        return set().union(*[expr.usedVars() for expr in self.subExprIter()])
+        
     def freeVars(self):
-        """
-        Returns the used variables that are not bound as an instance variable.
-        """
-        return set()    
+        '''
+        Returns the union of the free Variables of the sub-Expressions.
+        '''
+        return set().union(*[expr.freeVars() for expr in self.subExprIter()])
 
     def freeMultiVars(self):
         """
@@ -315,15 +476,21 @@ class Expression:
             dummyVars.append(safeDummyVar(*([self] + dummyVars)))
         return dummyVars
             
-    def evaluate(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         If possible, return a KnownTruth of this expression equal to its
-        irreducible value.  At the Expression level, this attempts to
-        prove the expression and, if successful, return this expression
-        equal to TRUE.  Override for other appropriate functionality.
+        irreducible value.  Override for other appropriate functionality.
         '''
-        from proveit import defaultEvaluate
-        return defaultEvaluate(self, assumptions)
+        from proveit.logic import defaultSimplification
+        return defaultSimplification(self.innerExpr(), inPlace=False, mustEvaluate=True, assumptions=assumptions)
+
+    def simplification(self, assumptions=USE_DEFAULTS):
+        '''
+        If possible, return a KnownTruth of this expression equal to its
+        irreducible value.  Override for other appropriate functionality.
+        '''
+        from proveit.logic import defaultSimplification
+        return defaultSimplification(self.innerExpr(), inPlace=False, assumptions=assumptions)        
     
     def orderOfAppearance(self, subExpressions):
         '''
@@ -344,16 +511,33 @@ class Expression:
         if not reservedVars is None and not self.freeVars().isdisjoint(reservedVars.keys()):
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., parameters of a Lambda function)")
         return self
-    
-    def _repr_png_(self):
+
+    def _repr_html_(self, context=None, unofficialNameKindContext=None):
         '''
-        Generate a png image from the latex.  May be recalled from memory or
-        storage if it was generated previously.
+        Generate html to show a png compiled from the latex (that may be recalled
+        from memory or storage if it was generated previously) with a link to
+        an expr.ipynb notebook for displaying the expression information.
+        If 'context' is provided, find the stored expression information in
+        that context; otherwise, use the default, current directory Context.
+        If 'unofficialNameKindContext' is provided, it should be the 
+        (name, kind, context) for a special expression that is not-yet-official
+        (%end_[common/axioms/theorems] has not been called yet in the special 
+        expressions notebook).
         '''
+        if context is None:
+            context = Context()
         if not hasattr(self,'png'):
-            self.png = storage._retrieve_png(self, self.latex(), self._config_latex_tool)
-        return self.png # previous stored or generated
-    
+            self.png, png_path = context._stored_png(self, self.latex(), self._config_latex_tool)
+            self.png_path = os.path.relpath(png_path)
+        if self.png_path is not None:
+            exprNotebookPath = context.expressionNotebook(self, unofficialNameKindContext)
+            html = '<a class="ProveItLink" href="' + os.path.relpath(exprNotebookPath) + '">'
+            html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
+            html += '</a>'
+        # record as a "displayed" (style-specific) expression
+        Expression.displayed_expression_styles.add((self._style_id, self)) 
+        return html
+        
     def _config_latex_tool(self, lt):
         '''
         Configure the LaTeXTool from IPython.lib.latextools as required by all
@@ -366,18 +550,14 @@ class Expression:
         from proveit._core_.expression.expr_info import ExpressionInfo
         return ExpressionInfo(self, details)
 
-def tryDerivation(method, *args, **kwargs):
+def expressionDepth(expr):
     '''
-    An implementation of deriveSideEffects may call tryDerivation to
-    simply attempt to derive a side-effect but skip it if it fails
-    (for example, not all conditions are met or if a theorem is
-    unavailable during a particular proof to avoid circular logic).
+    Returns the depth of the expression tree for the given expression.
     '''
-    try:
-        method(*args, **kwargs)
-    except:
-        pass
-
+    subDepths = [expressionDepth(subExpr) for subExpr in expr.subExprIter()]
+    if len(subDepths)==0: 
+        return 1 # no sub-expressions
+    return max(subDepths)+1 # add 1 to the maximum of the sub-expression depths
 
 class MakeNotImplemented(NotImplementedError):
     def __init__(self, exprSubClass):

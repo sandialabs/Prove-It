@@ -5,7 +5,7 @@ class Relation:
     '''
     Relation wraps an OrderingRelation (LessThan,LessThanEquals,GreaterThan, or GreaterThanEquals)
     or Equals expression, A[rel]B, that can be updated via
-    new realtions that involve A or B, deriving each new relation from
+    new relations that involve A or B, deriving each new relation from
     the previous relation.
     '''
     def __init__(self, relExpr):

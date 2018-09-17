@@ -1,0 +1,1 @@
+Are their common elements between sets?  Also defines "distinct".

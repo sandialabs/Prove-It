@@ -1,0 +1,1 @@
+Define a set as the intersection of sets.
