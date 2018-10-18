@@ -363,7 +363,7 @@ class ExprTensor(Composite, Expression):
         '''
         return self.relIndexTensor[rel_entry_loc]
     
-    def getElem(self, tensor_loc, assumptions = USE_DEFAULTS, requirements = None):
+    def getElem(self, tensor_loc, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Return the tensor element at the location, given
         as an Expression, using the given assumptions as needed

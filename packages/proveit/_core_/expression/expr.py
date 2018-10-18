@@ -305,7 +305,7 @@ class Expression:
             # prove by assumption if self is in the list of assumptions or
             # WILDCARD_ASSUMPTIONS is in the list of assumptions.
             from proveit._core_.proof import Assumption
-            return Assumption(self, assumptions).provenTruth
+            return Assumption.makeAssumption(self, assumptions).provenTruth
         
         if not automation:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
@@ -437,10 +437,10 @@ class Expression:
 
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         '''
-        # empty by default.
-        # Overridden by proveit._core_.expression.composite.indexed.Indexed.
+        # raise _NoExpandedIteration by default.
+        # Overridden by Indexed, Operation, and ExprList.
         '''
-        return iter(())
+        raise _NoExpandedIteration()
         
     def _validateRelabelMap(self, relabelMap):
         if len(relabelMap) != len(set(relabelMap.values())):
@@ -583,5 +583,10 @@ class ScopingViolation(Exception):
     def __str__(self):
         return self.message
 
-
+class _NoExpandedIteration(Exception):
+    '''
+    Used internally for _expandingIterRanges.
+    '''
+    def __init__(self):
+        pass
     

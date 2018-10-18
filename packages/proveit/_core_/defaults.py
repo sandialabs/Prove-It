@@ -13,9 +13,18 @@ class Defaults:
         otherwise return the given assumptions after checking
         that it is an iterable collection of Expressions.
         '''
+        from .proof import Assumption
         if assumptions is None:
             return tuple(self.assumptions)
-        return tuple(self._checkAssumptions(assumptions))
+        assumptions = tuple(self._checkAssumptions(assumptions))
+        for assumption in assumptions:
+            # Prove each assumption, by assumption, to deduce any side-effects.
+            if assumption not in Defaults.provingAssumptions: # avoid infinite recursion
+                Defaults.provingAssumptions.add(assumption)
+                # Note that while we only need THE assumption to prove itself, 
+                Assumption.makeAssumption(assumption, assumptions) # having the other assumptions around can be useful for deriving side-effects.
+                Defaults.provingAssumptions.remove(assumption) 
+        return assumptions  
     
     def _checkAssumptions(self, assumptions):
         '''
@@ -37,12 +46,6 @@ class Defaults:
                     continue
                 if not isinstance(assumption, Expression):
                     raise TypeError("The assumptions must be an iterable collection of Expression objects (or '*' as a wildcard to include anything else that is needed)")
-                # Prove each assumption, by assumption, to deduce any side-effects.
-                if assumption not in Defaults.provingAssumptions: # avoid infinite recursion
-                    Defaults.provingAssumptions.add(assumption)
-                    # Note that while we only need THE assumption to prove itself, 
-                    assumption.prove(assumptions) # havinig the other assumptions around can be useful for deriving side-effects.
-                    Defaults.provingAssumptions.remove(assumption)   
                 yield assumption
                 assumptionsSet.add(assumption)
         

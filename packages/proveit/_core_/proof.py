@@ -207,11 +207,14 @@ class Proof:
                 html += '</td></tr>'
         return html
 
-class Assumption(Proof): 
+class Assumption(Proof):
+    allAssumptions = dict() # map expression and the to assumption object
+     
     def __init__(self, expr, assumptions=None):
-        assumptions = list(defaults.checkedAssumptions(assumptions))
+        assumptions = defaults.checkedAssumptions(assumptions)
         if expr not in assumptions:
-            assumptions.append(expr) # an Assumption proof must assume itself; that's what it does.
+            # an Assumption proof must assume itself; that's what it does.
+            assumptions = assumptions + (expr,)
         prev_default_assumptions = defaults.assumptions
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
@@ -219,6 +222,19 @@ class Assumption(Proof):
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions            
+        Assumption.allAssumptions[(expr, assumptions)] = self
+    
+    @staticmethod
+    def makeAssumption(expr, assumptions):
+        '''
+        Return an Assumption object, only creating it if it doesn't
+        already exist.  assumptions must already be 'checked' and in
+        tuple form.
+        '''
+        key = (expr, assumptions)
+        if key in Assumption.allAssumptions:
+            return Assumption.allAssumptions[key]
+        return Assumption(expr, assumptions)
         
     def stepType(self):
         return 'assumption'
@@ -619,7 +635,6 @@ class Specialization(Proof):
         '''
         from proveit import Lambda, Expression, Iter
         from proveit.logic import Forall
-        
         # check that the mappings are appropriate
         for key, sub in relabelMap.items():
             Specialization._checkRelabelMapping(key, sub, assumptions)

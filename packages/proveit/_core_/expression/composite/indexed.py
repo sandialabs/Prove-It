@@ -80,6 +80,7 @@ class Indexed(Expression):
         subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars) # requirements not needed for variable substitution
         subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=new_requirements)
         
+        result = None
         if isinstance(subbed_var, Composite):
             # The indexed expression is a composite.
             # Now see if the indices can be simplified to integers; if so,
@@ -88,16 +89,17 @@ class Indexed(Expression):
             # because the Composite has an unexpanding Iter), 
             # default to returning the subbed Indexed.
             indices = subbed_indices
-            if self.base != 0: # subtract off the base if it is not zero
+            if isinstance(subbed_var, ExprTensor) and self.base != 0: 
+                # subtract off the base if it is not zero
                 indices = [Subtract(index, num(self.base)) for index in indices]
             indices = [_simplifiedCoord(index, assumptions, new_requirements) for index in indices]
             if isinstance(subbed_var, ExprList):
                 if isLiteralInt(indices[0]):
-                    return subbed_var[indices[0].asInt()]
+                    result = subbed_var[indices[0].asInt()-self.base]
                 else:
                     raise IndexedError("Indices must evaluate to literal integers when substituting an Indexed expression, got " + str(indices[0]))
             elif isinstance(subbed_var, ExprTensor):
-                return subbed_var.getElem(indices, assumptions=assumptions, requirements=new_requirements)
+                result = subbed_var.getElem(indices, assumptions=assumptions, requirements=new_requirements)
         
         for requirement in new_requirements:
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        
@@ -106,7 +108,10 @@ class Indexed(Expression):
                
         # If the subbed_var has not been replaced with a Composite,
         # just return the Indexed operation with the substitutions made.
-        return Indexed(subbed_var, subbed_indices, base=self.base)
+        if result is not None:
+            return result
+        else:
+            return Indexed(subbed_var, subbed_indices, base=self.base)
 
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         '''
@@ -125,6 +130,7 @@ class Indexed(Expression):
         from composite import Composite, IndexingError, compositeExpression
         from expr_list import ExprList
         from proveit.logic import Equals
+        from proveit._core_.expression.expr import _NoExpandedIteration
         
         subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
@@ -148,6 +154,9 @@ class Indexed(Expression):
                 entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices, end_indices, assumptions, requirements)
             
             for (intersection_start, intersection_end) in entryRangeGenerator:
+                if intersection_start is None:
+                    yield (None, None) # indicate a vacuous range
+                    continue
                 # We must put it terms of iter parameter values (arguments) via inverting the index_expr.
                 def coord2param(axis, coord):
                     if subbed_indices[axis] == iterParams[axis]:
@@ -162,7 +171,10 @@ class Indexed(Expression):
                 param_start = tuple([coord2param(axis, i) for axis, i in enumerate(compositeExpression(intersection_start))])
                 param_end = tuple([coord2param(axis, i) for axis, i in enumerate(compositeExpression(intersection_end))])
                 yield (param_start, param_end)
-            
+            return
+        
+        raise _NoExpandedIteration() # no expansionn
+        
     """  
     def iterated(self, iterParams, startIndices, endIndices, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         from proveit.number import proven_sort, zero, one, num, Add, Subtract, Greater

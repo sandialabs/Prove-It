@@ -704,13 +704,13 @@ class ContextStorage:
             os.rename(filename, orig_notebook_filename)
             print "%s expression notebook is being updated"%special_name
         
-        expr_classes = set()
+        expr_classes_and_constructors = set()
         unnamed_subexpr_occurences = dict()
         named_subexpr_addresses = dict()
         # maps each class name or special expression name to a list of objects being represented; that
         # way we will know whether we can use the abbreviated name or full address.
         named_items = dict() 
-        self._exprBuildingPrerequisites(expr, expr_classes, unnamed_subexpr_occurences, named_subexpr_addresses, named_items, isSubExpr=False)
+        self._exprBuildingPrerequisites(expr, expr_classes_and_constructors, unnamed_subexpr_occurences, named_subexpr_addresses, named_items, isSubExpr=False)
         # find sub-expressions that are used multiple times, these ones will be assigned to a variable
         multiuse_subexprs = [sub_expr for sub_expr, count in unnamed_subexpr_occurences.iteritems() if count > 1]
         # sort the multi-use sub-expressions so that the shallower ones come first
@@ -725,16 +725,16 @@ class ContextStorage:
         item_names = dict() 
         
         # populate from_imports, direct_imports, and item_names
-        for expr_class in expr_classes:
+        for expr_class, constructor in expr_classes_and_constructors:
             class_name = expr_class.__name__
             module_name = self._moduleAbbreviatedName(expr_class.__module__, class_name)
             is_unique = (len(named_items[class_name]) == 1)
             if is_unique:
-                from_imports.setdefault(module_name, []).append(class_name)
+                from_imports.setdefault(module_name, []).append(constructor)
                 item_names[expr_class] = class_name
             else:
                 direct_imports.add(module_name)
-                item_names[expr_class] = module_name+'.'+class_name
+                item_names[expr_class] = module_name+'.'+constructor
         for namedExpr, namedExprAddress in named_subexpr_addresses.iteritems():
             if isinstance(namedExprAddress[0], str):
                 # Must be a special expression (axiom, theorem, or common expression)
@@ -857,7 +857,7 @@ class ContextStorage:
             
         return filename # return the new proof file
         
-    def _exprBuildingPrerequisites(self, expr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems, isSubExpr=True):
+    def _exprBuildingPrerequisites(self, expr, exprClassesAndConstructors, unnamedSubExprOccurences, namedSubExprAddresses, namedItems, isSubExpr=True):
         '''
         Given an Expression object (expr), visit all sub-expressions and obtain the set of 
         represented Expression classes (exprClasses), the count for 'unnamed' sub-Expression
@@ -874,7 +874,7 @@ class ContextStorage:
         if expr in Operation.operationClassOfOperator:
             # the expression is an '_operator_' of an Operation class
             operationClass = Operation.operationClassOfOperator[expr]
-            exprClasses.add(operationClass)
+            exprClassesAndConstructors.add((operationClass, expr.remakeConstructor()))
             namedItems.setdefault(operationClass.__name__, set()).add(operationClass)
             namedSubExprAddresses[operationClass._operator_] = (operationClass, '_operator_')
             return
@@ -899,7 +899,7 @@ class ContextStorage:
         if not isSubExpr or expr.__class__ not in (ExprList, NamedExprs, ExprTensor): 
             # add expr's class to exprClass and named items (unless it is a basic Composite sub-Expression
             # in which case we'll use a python list or dictionary to represent the composite expression).
-            exprClasses.add(expr.__class__)
+            exprClassesAndConstructors.add((expr.__class__, expr.remakeConstructor()))
             namedItems.setdefault(expr.__class__.__name__, set()).add(expr.__class__)
                                 
         # recurse over the expression build arguments (e.g., the sub-Expressions
@@ -913,7 +913,7 @@ class ContextStorage:
                 raise TypeError("The arguments of %s.remakeArguments() should be Expressions or strings or integers: %s instead." %(str(expr.__class__), str(arg.__class__)))
             if isinstance(arg, Expression):
                 subExpr = arg
-                self._exprBuildingPrerequisites(subExpr, exprClasses, unnamedSubExprOccurences, namedSubExprAddresses, namedItems)
+                self._exprBuildingPrerequisites(subExpr, exprClassesAndConstructors, unnamedSubExprOccurences, namedSubExprAddresses, namedItems)
         
     def _moduleAbbreviatedName(self, moduleName, objName):
         '''
@@ -988,7 +988,7 @@ class ContextStorage:
             if isinstance(expr, ExprList):
                 compositeStr = argStr
             else: # ExprTensor or NamedExprs
-                compositeStr = '{' + argStr.replace(' = ', ':') + '}'                    
+                compositeStr = '[' + argStr.replace(' = ', ',') + ']'                    
             if isSubExpr and expr.__class__ in (ExprList, NamedExprs, ExprTensor): 
                 # It is a sub-Expression and a standard composite class.
                 # Just pass it in as an implicit composite expression (a list or dictionary).

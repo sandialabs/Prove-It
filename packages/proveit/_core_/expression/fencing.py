@@ -23,4 +23,3 @@ def maybeFenced(formatType, innerFormatted, **kwargs):
         return maybeFencedString(innerFormatted, **kwargs)
     elif formatType == 'latex':
         return maybeFencedLatex(innerFormatted, **kwargs)
-    

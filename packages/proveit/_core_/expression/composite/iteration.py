@@ -200,10 +200,13 @@ class Iter(Expression):
         an outer iteration should be expanded.  An exception is
         raised if this fails.
         '''
+        from proveit.logic import Equals
         from proveit.number import Less, LessEq, Subtract, Add, one
         from composite import _simplifiedCoord
+        from proveit._core_.expression.expr import _NoExpandedIteration
         
         assumptions = defaults.checkedAssumptions(assumptions)
+        arg_sorting_assumptions = list(assumptions)
         
         new_requirements = []
         
@@ -218,31 +221,43 @@ class Iter(Expression):
         special_points = [set() for _ in xrange(len(iter_params))]
         subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
         subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-        for iter_range in self.lambda_map.body._expandingIterRanges(iter_params, subbed_start, subbed_end, exprMap, relabelMap, reservedVars, assumptions, new_requirements):
-            iter_ranges.add(iter_range)
-            for axis, (start, end) in enumerate(zip(*iter_range)):
-                special_points[axis].add(start)
-                special_points[axis].add(end)
-                # Preemptively include start-1 and end+1 in case it is required for splitting up overlapping ranges
-                # (we won't add simplification requirements until we find we actually need them.)
-                special_points[axis].add(_simplifiedCoord(Subtract(start, one), assumptions=assumptions, requirements=None))
-                special_points[axis].add(_simplifiedCoord(Add(end, one), assumptions=assumptions, requirements=None))
-        
-        if len(iter_ranges) == 0:
-            # No Indexed sub-Expressions whose variable is 
-            # replaced with a Composite, so let us not expand the
-            # iteration.  Just do an ordinary substitution.
-            subbed_map = self.lambda_map.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-            subbed_self = Iter(subbed_map, subbed_start, subbed_end)
-        else:
+        try:
+            for iter_range in self.lambda_map.body._expandingIterRanges(iter_params, subbed_start, subbed_end, exprMap, relabelMap, reservedVars, assumptions, new_requirements):
+                iter_ranges.add(iter_range)
+                for axis, (start, end) in enumerate(zip(*iter_range)):
+                    special_points[axis].add(start)
+                    special_points[axis].add(end)
+                    # Preemptively include start-1 and end+1 in case it is required for splitting up overlapping ranges
+                    # (we won't add simplification requirements until we find we actually need them.)
+                    # Not necesary in the 1D case.
+                    # Add the coordinate simplification to argument sorting assumtions -
+                    # after all, this sorting does not go directly into the requirements.
+                    start_minus_one = _simplifiedCoord(Subtract(start, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
+                    end_plus_one = _simplifiedCoord(Add(end, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
+                    special_points[axis].update({start_minus_one, end_plus_one})
+                    # Add start-1<start and end<end+1 assumptions to ease argument sorting -
+                    # after all, this sorting does not go directly into the requirements.
+                    arg_sorting_assumptions.append(Less(start_minus_one, start))
+                    arg_sorting_assumptions.append(Less(end, end_plus_one))
+                    arg_sorting_assumptions.append(Equals(end, Subtract(end_plus_one, one)))
+                    # Also add start<=end to ease the argument sorting requirement even though it
+                    # may not strictly be true if an empty range is possible.  In such a case, we
+                    # still want things sorted this way while we don't know if the range is empty or not
+                    # and it does not go directly into the requirements.
+                    arg_sorting_assumptions.append(LessEq(start, end))
+            
             # There are Indexed sub-Expressions whose variable is
             # being replaced with a Composite, so let us
             # expand the iteration for all of the relevant
             # iteration ranges.
             # Sort the argument value ranges.
+
             arg_sorting_relations = []
-            for axis in xrange(len(iter_params)):
-                arg_sorting_relation = Less.sort(special_points[axis], assumptions=assumptions)
+            for axis in xrange(self.ndims):
+                if len(special_points[axis])==0:
+                    arg_sorting_relation = None
+                else:
+                    arg_sorting_relation = Less.sort(special_points[axis], assumptions=arg_sorting_assumptions)
                 arg_sorting_relations.append(arg_sorting_relation)
                         
             # Put the iteration ranges in terms of indices of the sorting relation operands
@@ -292,6 +307,13 @@ class Iter(Expression):
                 subbed_self = compositeExpression(lst)
             else:
                 subbed_self = compositeExpression(tensor)
+
+        except _NoExpandedIteration:
+            # No Indexed sub-Expressions whose variable is 
+            # replaced with a Composite, so let us not expand the
+            # iteration.  Just do an ordinary substitution.
+            subbed_map = self.lambda_map.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
+            subbed_self = Iter(subbed_map, subbed_start, subbed_end)
         
         for requirement in new_requirements:
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        

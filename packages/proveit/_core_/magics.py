@@ -548,7 +548,7 @@ class ProveItMagic(Magics):
                 required_axioms, required_unproven_theorems = proof.allRequirements()
             except:
                 display(HTML('<h3>This theorem has not been proven yet.</h3>'))
-                return 
+                required_axioms, required_unproven_theorems = tuple(), tuple()
                 
             if len(required_unproven_theorems) > 0:
                 display(HTML('<h3>Unproven theorems required (directly or indirectly) to prove %s</h3>'%name))

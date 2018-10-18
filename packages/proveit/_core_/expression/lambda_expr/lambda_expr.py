@@ -39,6 +39,9 @@ class Lambda(Expression):
         if len(self.parameters) == 1:
             # has a single parameter
             self.parameter = self.parameters[0]
+            self.parameter_or_parameters = self.parameter
+        else:
+            self.parameter_or_parameters = self.parameters
         self.parameterVars = tuple(parameterVars)
         self.parameterVarSet = frozenset(parameterVars)
         if len(self.parameterVarSet) != len(self.parameters):
@@ -53,7 +56,7 @@ class Lambda(Expression):
         for requirement in self.body.requirements:
             if not self.parameterVarSet.isdisjoint(requirement.freeVars()):
                 raise LambdaError("Cannot generate a Lambda expression with parameter variables involved in Lambda body requirements: " + str(requirement))
-        Expression.__init__(self, ['Lambda'], [self.parameters, self.body, self.conditions], styles=styles, requirements=requirements)
+        Expression.__init__(self, ['Lambda'], [self.parameter_or_parameters, self.body, self.conditions], styles=styles, requirements=requirements)
         
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
@@ -214,8 +217,8 @@ class Lambda(Expression):
                     newParams.append(relabeledParam)
                     innerReservations[relabeledParam] = parameterVar
             else:
-                # Not relabeled
-                newParams.append(parameterVar)
+                # can perform a substition in indices of a parameter iteration: x_1, ..., x_n
+                newParams.append(parameter.substituted(innerExprMap, relabelMap, reservedVars, assumptions, requirements))
                 innerReservations[parameterVar] = parameterVar
         # the lambda body with the substitution:
         subbedBody = self.body.substituted(innerExprMap, relabelMap, innerReservations, innerAssumptions, requirements)
