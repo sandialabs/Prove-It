@@ -75,8 +75,8 @@ class Equals(TransitiveRelation):
     def conclude(self, assumptions):
         '''
         Attempt to conclude the equality various ways:
-        simple reflexivity (x=x), concluding a boolean equality (TRUE or FALSE on
-        left or right side), or via transitivity.
+        simple reflexivity (x=x), via an evaluation (if one side is an irreducible),
+        or via transitivity.
         '''
         from proveit.logic import TRUE, FALSE, Implies, Iff
         if self.lhs==self.rhs:
@@ -88,6 +88,10 @@ class Equals(TransitiveRelation):
                 return self.concludeBooleanEquality(assumptions)
             except ProofFailure:
                 pass
+        if isIrreducibleValue(self.rhs):
+            return self.lhs.evaluation()
+        elif isIrreducibleValue(self.lhs):
+            return self.rhs.evaluation().deriveReversed()
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
             Implies(self.rhs, self.lhs).prove(assumptions, automation=False)
@@ -134,14 +138,14 @@ class Equals(TransitiveRelation):
                 if knownTruth.isSufficient(assumptionsSet):
                     yield (knownTruth, knownTruth.lhs)
             
-    def concludeViaReflexivity(self):
+    def concludeViaReflexivity(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form x = x.
         '''
         from _axioms_ import equalsReflexivity
         assert self.lhs == self.rhs
         return equalsReflexivity.specialize({x:self.lhs})
-            
+                
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From x = y derive y = x.  This derivation is an automatic side-effect.
@@ -289,7 +293,7 @@ class Equals(TransitiveRelation):
         fxLambda = Equals._lambdaExpr(lambdaMap, self.lhs)
         return substitution.specialize({x:self.lhs, y:self.rhs, f:fxLambda}, assumptions=assumptions)
         
-    def lhsSubstitute(self, lambdaMap, assumptions=USE_DEFAULTS):
+    def subLeftSideInto(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
         From x = y, and given P(y), derive P(x) assuming P(y).  
         P(x) is provided via lambdaMap as a Lambda expression or an 
@@ -298,7 +302,7 @@ class Equals(TransitiveRelation):
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.rhs.
         '''
-        from _theorems_ import lhsSubstitute
+        from _theorems_ import subLeftSideInto
         from _theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
         from proveit.logic import TRUE, FALSE
         Plambda = Equals._lambdaExpr(lambdaMap, self.rhs)
@@ -314,9 +318,9 @@ class Equals(TransitiveRelation):
                 substituteInFalse.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)           
         except:
             pass 
-        return lhsSubstitute.specialize({x:self.lhs, y:self.rhs, P:Plambda}, assumptions=assumptions)
+        return subLeftSideInto.specialize({x:self.lhs, y:self.rhs, P:Plambda}, assumptions=assumptions)
         
-    def rhsSubstitute(self, lambdaMap, assumptions=USE_DEFAULTS):
+    def subRightSideInto(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
         From x = y, and given P(x), derive P(y) assuming P(x).  
         P(x) is provided via lambdaMap as a Lambda expression or an 
@@ -325,7 +329,7 @@ class Equals(TransitiveRelation):
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
         '''
-        from _theorems_ import rhsSubstitute
+        from _theorems_ import subRightSideInto
         from _theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
         from proveit.logic import TRUE, FALSE
         Plambda = Equals._lambdaExpr(lambdaMap, self.lhs)
@@ -341,7 +345,7 @@ class Equals(TransitiveRelation):
                 substituteInFalse.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)            
         except:
             pass
-        return rhsSubstitute.specialize({x:self.lhs, y:self.rhs, P:Plambda}, assumptions=assumptions)
+        return subRightSideInto.specialize({x:self.lhs, y:self.rhs, P:Plambda}, assumptions=assumptions)
         
     def deriveRightViaEquivalence(self, assumptions=USE_DEFAULTS):
         '''
@@ -452,7 +456,7 @@ def reduceOperands(innerExpr, inPlace=True, mustEvaluate=False, assumptions=USE_
                     lambdaMap = innerExpr.replMap().compose(Lambda.globalRepl(inner, operand))
                     # substitute in the evaluated value
                     if inPlace:
-                        innerExpr = InnerExpr(operandEval.rhsSubstitute(lambdaMap), innerExpr.innerExprPath)
+                        innerExpr = InnerExpr(operandEval.subRightSideInto(lambdaMap), innerExpr.innerExprPath)
                     else:
                         innerExpr = InnerExpr(operandEval.substitution(lambdaMap).rhs, innerExpr.innerExprPath)
                     allReduced = False
@@ -477,11 +481,11 @@ def concludeViaReduction(expr, assumptions):
     reducedExpr = reduceOperands(expr, assumptions)
     # prove the reduced version
     knownTruth = reducedExpr.prove(assumptions)
-    # now rebuild the original via lhsSubstitute (for a shorter proof than substitutions)
+    # now rebuild the original via subLeftSideInto (for a shorter proof than substitutions)
     for k, operand in enumerate(expr.operands):
         # for each operand, replace it with the original
         subExprRepl = SubExprRepl(knownTruth).operands[k]
-        knownTruth = operand.evaluation(assumptions=assumptions).lhsSubstitute(subExprRepl, assumptions)
+        knownTruth = operand.evaluation(assumptions=assumptions).subLeftSideInto(subExprRepl, assumptions)
     assert knownTruth.expr == expr, 'Equivalence substitutions did not work out as they should have'
     return knownTruth
 """
@@ -518,7 +522,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
         return Equals(topLevel, reducedInnerExpr.exprHierarchy[0]).prove(assumptions) # should have already been proven within 'reduceOperands' called above.
     def innerSimplification(innerEquivalence):
         if inPlace:
-            return innerEquivalence.rhsSubstitute(innerExpr, assumptions=assumptions)
+            return innerEquivalence.subRightSideInto(innerExpr, assumptions=assumptions)
         return innerEquivalence.substitution(innerExpr, assumptions=assumptions)
     if isinstance(inner, IrreducibleValue):
         IrreducibleValue.evaluation(inner)
@@ -562,12 +566,12 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
                 if knownTruth.isSufficient(assumptionsSet):
                     if inPlace: # should first substitute in the known equivalence then simplify that
                         if inner == knownTruth.lhs:
-                            knownTruth.rhsSubstitute(innerExpr, assumptions)
+                            knownTruth.subRightSideInto(innerExpr, assumptions)
                         elif inner == knownTruth.rhs:
-                            knownTruth.lhsSubstitute(innerExpr, assumptions)
-                    equivSimp = defaultSimplification(knownTruth.otherSide(inner).innerExpr(), inPlace, mustEvaluate, assumptions, automation=False)
+                            knownTruth.subLeftSideInto(innerExpr, assumptions)
+                    equivSimp = defaultSimplification(knownTruth.otherSide(inner).innerExpr(), inPlace=inPlace, mustEvaluate=mustEvaluate, assumptions=assumptions, automation=False)
                     if inPlace: return equivSimp # returns KnownTruth with simplification
-                    innerEquiv = Equals(inner, equivSimp.rhs).prove(assumptions=assumptions) # via transitivity
+                    innerEquiv = Equals(inner, equivSimp.rhs).concludeViaTransitivity(assumptions=assumptions) 
                     if inner == topLevel: return innerEquiv
                     return innerEquiv.substitution(innerExpr, assumptions=assumptions)
             except EvaluationError:
@@ -615,7 +619,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
         # via transitivity, go from the original expression to the reduced expression 
         # (simplified inner operands) and then the final simplification (simplified inner
         # expression).
-        simplification = Equals(topLevel, reducedSimplification.rhs).prove(assumptions)
+        simplification = Equals(topLevel, reducedSimplification.rhs).concludeViaTransitivity(assumptions)
     if not inPlace and topLevel==inner:
         # store direct simplifications in the simplifications dictionary for next time
         Equals.simplifications.setdefault(topLevel).add(simplification)

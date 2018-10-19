@@ -16,7 +16,7 @@ class Subtract(Operation):
         if all(isLiteralInt(operand) for operand in self.operands):
             # With literal integer operands, we can import useful theorems for evaluation.
             # From c - b, make the a+b which equals c.  This will import the theorems we need.
-            Add(num(self.operands[1].asInt() - self.operands[0].asInt()), self.operands[0])
+            Add(num(self.operands[0].asInt() - self.operands[1].asInt()), self.operands[1])
       
     def _closureTheorem(self, numberSet):
         import theorems

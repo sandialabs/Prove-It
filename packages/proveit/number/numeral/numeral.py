@@ -1,4 +1,4 @@
-from proveit import Literal, Operation
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic import IrreducibleValue, Equals
 
 class Numeral(Literal, IrreducibleValue):
@@ -42,34 +42,40 @@ class Numeral(Literal, IrreducibleValue):
         n = int(extra_core_info[0])
         return Numeral(n, string_format, latex_format)
      
+    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+        from proveit.number import Naturals, NaturalsPos
+        if number_set==Naturals:
+            return self.deduceInNaturals()
+        elif number_set==NaturalsPos:
+            return self.deduceInNaturalsPos()
+        
     def deduceInNaturals(self):
-        if DigitLiteral._inNaturalsStmts is None:
-            from natural.axioms import zeroInNaturals
-            from natural.theorems import oneInNaturals, twoInNaturals, threeInNaturals, fourInNaturals, fiveInNaturals
-            from natural.theorems import sixInNaturals, sevenInNaturals, eightInNaturals, nineInNaturals
-            DigitLiteral._inNaturalsStmts = {0:zeroInNaturals, 1:oneInNaturals, 2:twoInNaturals, 3:threeInNaturals, 4:fourInNaturals, 5:fiveInNaturals, 6:sixInNaturals, 7:sevenInNaturals, 8:eightInNaturals, 9:nineInNaturals}
-        return DigitLiteral._inNaturalsStmts[self.n]
+        if Numeral._inNaturalsStmts is None:
+            from proveit.number.sets.integer._theorems_ import zeroInNats
+            from .decimal._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
+            Numeral._inNaturalsStmts = {0:zeroInNats, 1:nat1, 2:nat2, 3:nat3, 4:nat4, 5:nat5, 6:nat6, 7:nat7, 8:nat8, 9:nat9}
+        return Numeral._inNaturalsStmts[self.n]
     
     def deduceNotZero(self):
-        if DigitLiteral._notZeroStmts is None:
-            from natural.theorems import oneNotZero, twoNotZero, threeNotZero, fourNotZero, fiveNotZero
-            from natural.theorems import sixNotZero, sevenNotZero, eightNotZero, nineNotZero
-            DigitLiteral._notZeroStmts = {1:oneNotZero, 2:twoNotZero, 3:threeNotZero, 4:fourNotZero, 5:fiveNotZero, 6:sixNotZero, 7:sevenNotZero, 8:eightNotZero, 9:nineNotZero}
-        return DigitLiteral._notZeroStmts[self.n]
+        if Numeral._notZeroStmts is None:
+            from .decimal._theorems_ import oneNotZero, twoNotZero, threeNotZero, fourNotZero, fiveNotZero
+            from .decimal._theorems_ import sixNotZero, sevenNotZero, eightNotZero, nineNotZero
+            Numeral._notZeroStmts = {1:oneNotZero, 2:twoNotZero, 3:threeNotZero, 4:fourNotZero, 5:fiveNotZero, 6:sixNotZero, 7:sevenNotZero, 8:eightNotZero, 9:nineNotZero}
+        return Numeral._notZeroStmts[self.n]
 
     def deduceInNaturalsPos(self):
-        if DigitLiteral._inNaturalsPosStmts is None:
-            from natural.theorems import oneInNaturalsPos, twoInNaturalsPos, threeInNaturalsPos, fourInNaturalsPos, fiveInNaturalsPos
-            from natural.theorems import sixInNaturalsPos, sevenInNaturalsPos, eightInNaturalsPos, nineInNaturalsPos
-            DigitLiteral._inNaturalsPosStmts = {1:oneInNaturalsPos, 2:twoInNaturalsPos, 3:threeInNaturalsPos, 4:fourInNaturalsPos, 5:fiveInNaturalsPos, 6:sixInNaturalsPos, 7:sevenInNaturalsPos, 8:eightInNaturalsPos, 9:nineInNaturalsPos}
-        return DigitLiteral._inNaturalsPosStmts[self.n]    
+        if Numeral._inNaturalsPosStmts is None:
+            from .decimal._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
+            from .decimal._theorems_ import posnat6, posnat7, posnat8, posnat9
+            Numeral._inNaturalsPosStmts = {1:posnat1, 2:posnat2, 3:posnat3, 4:posnat4, 5:posnat5, 6:posnat6, 7:posnat7, 8:posnat8, 9:posnat9}
+        return Numeral._inNaturalsPosStmts[self.n]    
 
     def deducePositive(self):
-        if DigitLiteral._positiveStmts is None:
-            from natural.theorems import oneIsPositive, twoIsPositive, threeIsPositive, fourIsPositive, fiveIsPositive
-            from natural.theorems import sixIsPositive, sevenIsPositive, eightIsPositive, nineIsPositive
-            DigitLiteral._positiveStmts = {1:oneIsPositive, 2:twoIsPositive, 3:threeIsPositive, 4:fourIsPositive, 5:fiveIsPositive, 6:sixIsPositive, 7:sevenIsPositive, 8:eightIsPositive, 9:nineIsPositive}
-        return DigitLiteral._positiveStmts[self.n]
+        if Numeral._positiveStmts is None:
+            from .decimal._theorems_ import oneIsPositive, twoIsPositive, threeIsPositive, fourIsPositive, fiveIsPositive
+            from .decimal._theorems_ import sixIsPositive, sevenIsPositive, eightIsPositive, nineIsPositive
+            Numeral._positiveStmts = {1:oneIsPositive, 2:twoIsPositive, 3:threeIsPositive, 4:fourIsPositive, 5:fiveIsPositive, 6:sixIsPositive, 7:sevenIsPositive, 8:eightIsPositive, 9:nineIsPositive}
+        return Numeral._positiveStmts[self.n]
 
 class NumeralSequence(Operation):
     """

@@ -234,4 +234,8 @@ class GreaterEq(GreaterRelation):
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
+def GreaterSeq(*operands):
+    return GreaterSequence([Greater._operator_]*(len(operands)-1), operands)
 
+def GreaterEqSeq(*operands):
+    return GreaterSequence([GreaterEq._operator_]*(len(operands)-1), operands)

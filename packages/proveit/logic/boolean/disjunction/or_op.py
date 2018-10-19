@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
-from proveit._common_ import A, B, C, AA, CC
+from proveit._common_ import A, B, C, AA, CC, m, n
 
 class Or(Operation):
     # The operator of the Or operation
@@ -19,8 +19,8 @@ class Or(Operation):
         theorem.  Otherwise, a reduction proof will be attempted 
         (evaluating the operands).
         '''
-        from _theorems_ import trueOrTrue, trueOrFalse, falseOrTrue
-        from _theorems_ import orIfBoth, orIfOnlyLeft, orIfOnlyRight
+        from ._theorems_ import trueOrTrue, trueOrFalse, falseOrTrue
+        from ._theorems_ import orIfBoth, orIfOnlyLeft, orIfOnlyRight
         if self in {trueOrTrue.expr, trueOrFalse.expr, falseOrTrue.expr}:
             # should be proven via one of the imported theorems as a simple special case
             return self.prove() 
@@ -88,7 +88,7 @@ class Or(Operation):
         yield self.deducePartsInBool
         
     def concludeNegation(self, assumptions):
-        from _theorems_ import falseOrFalseNegated, neitherIntro, notOrIfNotAny
+        from ._theorems_ import falseOrFalseNegated, neitherIntro, notOrIfNotAny
         if self == falseOrFalseNegated.operand:
             return falseOrFalseNegated # the negation of (FALSE or FALSE)
         elif len(self.operands)==2:
@@ -106,7 +106,7 @@ class Or(Operation):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
         '''
-        from _theorems_ import orImpliesRightIfNotLeft
+        from ._theorems_ import orImpliesRightIfNotLeft
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
@@ -115,7 +115,7 @@ class Or(Operation):
         '''
         From (A or B) derive and return A assuming inBool(A), Not(B).
         '''
-        from _theorems_ import orImpliesLeftIfNotRight
+        from ._theorems_ import orImpliesLeftIfNotRight
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
@@ -125,7 +125,7 @@ class Or(Operation):
         From (A or B), and assuming A => C, B => C, and A, B, and C are Booleans,
         derive and return the conclusion, C.  Self is (A or B).
         '''
-        from _theorems_ import singularConstructiveDilemma
+        from ._theorems_ import singularConstructiveDilemma
         if len(self.operands) == 2:
             return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
 
@@ -133,7 +133,7 @@ class Or(Operation):
         '''
         Deduce A in Booleans from (A or B) in Booleans.
         '''
-        from _axioms_ import leftInBool
+        from ._axioms_ import leftInBool
         if len(self.operands) == 2:
             leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         
@@ -141,7 +141,7 @@ class Or(Operation):
         '''
         Deduce B in Booleans from (A or B) in Booleans.
         '''
-        from _axioms_ import rightInBool
+        from ._axioms_ import rightInBool
         if len(self.operands) == 2:
             rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
@@ -158,7 +158,7 @@ class Or(Operation):
         Deduce X in Booleans from (A or B or .. or X or .. or Z) in Booleans
         provided X by expression or index number.
         '''
-        from _theorems_ import eachInBool
+        from ._theorems_ import eachInBool
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
@@ -177,7 +177,7 @@ class Or(Operation):
         '''
         Deduce not(A) assuming not(A or B) where self is (A or B). 
         '''
-        from _theorems_ import notLeftIfNeither
+        from ._theorems_ import notLeftIfNeither
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return notLeftIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
@@ -186,7 +186,7 @@ class Or(Operation):
         '''
         Deduce not(B) assuming not(A or B) where self is (A or B). 
         '''
-        from _theorems_ import notRightIfNeither
+        from ._theorems_ import notRightIfNeither
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return notRightIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
@@ -195,7 +195,7 @@ class Or(Operation):
         '''
         From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.
         '''
-        from _theorems_ import hypotheticalDisjunction
+        from ._theorems_ import hypotheticalDisjunction
         from proveit.logic import Implies, compose
         # forall_{A in Bool, B in Bool, C in Bool} (A=>C and B=>C) => ((A or B) => C)
         assert len(self.operands) == 2
@@ -211,8 +211,8 @@ class Or(Operation):
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from _axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations  
-        from _theorems_ import disjunctionTrueEval, disjunctionFalseEval
+        from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations  
+        from ._theorems_ import trueEval, falseEval
         from proveit.logic.boolean._common_ import TRUE, FALSE
         trueIndex = -1
         for i, operand in enumerate(self.operands):
@@ -227,20 +227,24 @@ class Or(Operation):
             return Operation.evaluation(self, assumptions)
         if trueIndex >= 0:
             # one operand is TRUE so the whole disjunction evaluates to TRUE.
-            return disjunctionTrueEval.specialize({Amulti:self.operands[:trueIndex], Cmulti:self.operands[trueIndex+1:]}, assumptions=assumptions)
+            from proveit.number import num
+            mVal, nVal = num(trueIndex), num(len(self.operands)-trueIndex-1)
+            return trueEval.specialize({m:mVal, n:nVal, AA:self.operands[:trueIndex], CC:self.operands[trueIndex+1:]}, assumptions=assumptions)
         else:
             # no operand is TRUE so the whole disjunction evaluates to FALSE.
-            return disjunctionFalseEval.specialize({Amulti:self.operands}, assumptions=assumptions)
+            from proveit.number import num
+            return falseEval.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
         From (A or B), and assuming not(A) and not(B), derive and return FALSE.
         '''
-        from _theorems_ import binaryOrContradiction, orContradiction
+        from ._theorems_ import binaryOrContradiction, orContradiction
         if len(self.operands) == 2:
             return binaryOrContradiction.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return orContradiction.specialize({Amulti:self.operands}, assumptions=assumptions)
+            from proveit.number import num
+            return orContradiction.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
             
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -262,7 +266,7 @@ class Or(Operation):
         '''
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
         '''
-        from _theorems_ import binaryClosure, closure
+        from ._theorems_ import binaryClosure, closure
         if len(self.operands) == 2:
             return binaryClosure.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
@@ -273,7 +277,7 @@ class Or(Operation):
         From one true operand, conclude that this 'or' expression is true.
         Requires all of the operands to be in the set of BOOLEANS.
         '''
-        from _theorems_ import orIfAny, orIfLeft, orIfRight
+        from ._theorems_ import orIfAny, orIfLeft, orIfRight
         index = self.operands.index(trueOperand)
         if len(self.operands) == 2:
             if index == 0:

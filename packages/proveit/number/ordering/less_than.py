@@ -41,6 +41,7 @@ class LesserSequence(OrderingSequence):
         except:
             # may fail before the relevent _theorems_ have been generated
             pass # and that's okay    
+
     @staticmethod
     def RelationClass():
         return LesserRelation                
@@ -240,3 +241,8 @@ class LessEq(LesserRelation):
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
         
+def LessSeq(*operands):
+    return LesserSequence([Less._operator_]*(len(operands)-1), operands)
+
+def LessEqSeq(*operands):
+    return LesserSequence([LessEq._operator_]*(len(operands)-1), operands)

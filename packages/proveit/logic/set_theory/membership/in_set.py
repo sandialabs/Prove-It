@@ -79,10 +79,10 @@ class InSet(Operation):
                         return subsetRelation.deriveSupsersetMembership(self.element, assumptions=assumptions)
                     except ProofFailure:
                         pass # no luck, keep trying
-        # could not prove it through a subset relationship, now try deduceMembership
+        # could not prove it through a subset relationship, now try to use a MembershipObject
         if hasattr(self, 'membershipObject'):
             return self.membershipObject.conclude(assumptions)
-                        
+              
     def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to form evaluation of whether (element in domain) is

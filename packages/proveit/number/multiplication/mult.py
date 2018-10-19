@@ -214,7 +214,7 @@ class Mult(Operation):
                 # see if the numerator can simplify (e.g., with a one factor)
                 numerSimplification = eqn.rhs.numerator.simplification(assumptions=assumptions)
                 dummyVar = eqn.safeDummyVar()
-                return numerSimplification.rhsSubstitute(Equals(eqn.lhs, Frac(dummyVar, eqn.rhs.denominator)), dummyVar)
+                return numerSimplification.subRightSideInto(Equals(eqn.lhs, Frac(dummyVar, eqn.rhs.denominator)), dummyVar)
             except:
                 return eqn
         elif isinstance(operand, Sum):

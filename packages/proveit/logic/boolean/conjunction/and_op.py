@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
-from proveit._common_ import A, B
+from proveit._common_ import m, n, A, B, AA, CC
 
 class And(Operation):
     # The operator of the And operation
@@ -70,7 +70,10 @@ class And(Operation):
                 return leftFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
             elif idx==1:
                 return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-        return anyFromAnd.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
+        else:
+            from proveit.number import num
+            mVal, nVal = num(idx), num(len(self.operands)-idx-1)
+            return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
     
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         r'''
@@ -129,9 +132,12 @@ class And(Operation):
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
         if len(self.operands)==2:
-            if idx==0: self.deduceLeftInBool(assumptions)
-            elif idx==1: self.deduceRightInBool(assumptions)
-        return eachInBool.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
+            if idx==0: return self.deduceLeftInBool(assumptions)
+            elif idx==1: return self.deduceRightInBool(assumptions)
+        else:
+            from proveit.number import num
+            mVal, nVal = num(idx), num(len(self.operands)-idx-1)
+            return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
     
     def evaluation(self, assumptions=USE_DEFAULTS):
         '''
@@ -151,13 +157,16 @@ class And(Operation):
         if len(self.operands) == 2:
             # This will automatically return andTT, andTF, andFT, or andFF
             return Operation.evaluation(self, assumptions)
-        from ._theorems_ import conjunctionTrueEval, conjunctionFalseEval
+        from ._theorems_ import trueEval, falseEval
         if falseIndex >= 0:
             # one operand is FALSE so the whole conjunction evaluates to FALSE.
-            return conjunctionFalseEval.specialize({Amulti:self.operands[:falseIndex], Cmulti:self.operands[falseIndex+1:]})
+            from proveit.number import num
+            mVal, nVal = num(falseIndex), num(len(self.operands)-falseIndex-1)
+            return falseEval.specialize({m:mVal, n:nVal, AA:self.operands[:falseIndex], CC:self.operands[falseIndex+1:]})
         else:
             # no operand is FALSE so the whole disjunction evaluates to TRUE.
-            return conjunctionTrueEval.specialize({Amulti:self.operands})
+            from proveit.number import num
+            return trueEval.specialize({m:num(len(self.operands)), AA:self.operands})
     
     def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
         '''

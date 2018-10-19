@@ -175,24 +175,23 @@ class TransitiveRelation(Operation):
         'other' is an equality (as in the above example.
         '''
         from proveit.logic import Equals
-        from proveit.lambda_map import SubExprRepl
         #print 'apply transitivity', self, other
         assumptions = defaults.checkedAssumptions(assumptions)        
         if isinstance(other,Equals):
             if other.lhs in (self.lhs, self.rhs):
-                subrule = other.rhsSubstitute
+                subrule = other.subRightSideInto
                 commonExpr = other.lhs
             elif other.rhs in (self.lhs, self.rhs):
-                subrule = other.lhsSubstitute
+                subrule = other.subLeftSideInto
                 commonExpr = other.rhs
             else:
                 raise ValueError("Equality does not involve either side of inequality!")
             if commonExpr == self.lhs:
                 # replace the lhs of self with its counterpart from the "other" equality.
-                return subrule(SubExprRepl(self).lhs, assumptions=assumptions)
+                return subrule(self.innerExpr().lhs, assumptions=assumptions)
             elif commonExpr == self.rhs:
                 # replace the rhs of self with its counterpart from the "other" equality.
-                return subrule(SubExprRepl(self).rhs, assumptions=assumptions)
+                return subrule(self.innerExpr().rhs, assumptions=assumptions)
         raise NotImplementedError('Must implement applyTransitivity appropriately for each kind of TransitiveRelation')
 
     @staticmethod
@@ -301,6 +300,9 @@ class TransitiveRelation(Operation):
         redundant for the purpose of sorting the items.
         '''
         item_set = set(items)
+        
+        if len(items)==1:
+            return # no relationships when there is just one item
     
         # Map each item to a list of dictionaries mapping end-points to chains
         # of relations going from the item to the end-point.
@@ -390,7 +392,10 @@ class TransitiveRelation(Operation):
         left_partners = dict()
         right_partners = dict()
         
-        left_most_candidates = set(items)
+        unique_items = set(items)
+        left_most_candidates = set(unique_items)
+        repetitions = {item:0 for item in unique_items}
+        for item in items: repetitions[item] += 1
         
         def yield_left_most(item):
             items_to_process = {item}
@@ -404,13 +409,12 @@ class TransitiveRelation(Operation):
         sorted_items = []
         remaining_items = set(items) # items we have left to sort
         
-        for (left_item, right_item), chain in RelationClass._generateSortingRelations(items, assumptions):
-            #print left_item, right_item, list(chain)
+        for (left_item, right_item), chain in RelationClass._generateSortingRelations(unique_items, assumptions):
             if (left_item, right_item) in item_pair_chains:
                 # Just use the first chain of relations.
                 # If the relation is an equality between the items, that should come first.
                 continue 
-                
+                                
             # add new item partnership to item_pair_chains
             item_pair_chains[(left_item, right_item)] = chain
     
@@ -418,30 +422,33 @@ class TransitiveRelation(Operation):
             if all(relation.operator==Equals._operator_ for relation in chain):
                 eq_set = eq_sets[left_item] | eq_sets[right_item] # join equivalent sets
                 for item in eq_set: eq_sets[item] = eq_set # make all the equivalent items point to the same equivalence set
-                eq_candidates = left_most_candidates.intersection(eq_set)
-                # only keep one of the left-most candidates (an arbitrarily chosen representative)
-                if len(eq_candidates) > 1: left_most_candidates.difference_update(list(eq_candidates)[1:])
+                # if any of the eq_set items were eliminated from the left_most_candidates, eliminate all of them
+                if not eq_set.issubset(left_most_candidates):
+                    left_most_candidates.difference_update(eq_set)
+                else:
+                    # only keep one of the left-most candidates (an arbitrarily chosen representative)
+                    left_most_candidates.difference_update(list(eq_set)[1:])
             else:
                 # add new item partnership to left_partners, and right_partners
                 left_partners.setdefault(right_item, set()).add(left_item)
-                right_partners.setdefault(left_item, set()).add(right_item)                
+                for left_item_equiv in eq_sets[left_item]:
+                    right_partners.setdefault(left_item_equiv, set()).add(right_item)                
                 # see if we can eliminate any left-most candidates
                 eq_right_items = eq_sets[right_item]
                 if not left_most_candidates.isdisjoint(eq_right_items):
                     # Assume all cycles are accounted for via equivalences;
-                    # otherwise we'll catch it at some point an throw an exception.
+                    # otherwise we'll catch it at some point an exception is thrown.
                     # Remove all items equivalent to the right item from the left-most candidates
                     # because there is something to the left of it now.
                     left_most_candidates.difference_update(eq_right_items)
                     if len(left_most_candidates)==0:
                         raise TransitivityException(None, assumptions, "Transitivity cycle detected implying equalities; must prove equalities before sorting items: " + str(items))
-            
+                        
             while len(left_most_candidates)==1:
                 # We have one uncontested left-most candidate assuming no cycles outside of equivalence sets
                 # (with such cycles, we'll catch them eventually and raise an exception).
                 left_most = left_most_candidates.pop()
                 sorted_items.append(left_most)
-                #print 'left_most', left_most
                 
                 # note that eq_sets[left_most] should not be extended later because all of the items must
                 # determine that they are either to the right of this "left-most" or equal to it before we got here.
@@ -457,7 +464,6 @@ class TransitiveRelation(Operation):
                 # Determine the next left-most item candidates based upon
                 # what items are rightward from the one that we taken out.
                 to_process = set(right_partners[left_most])
-                #print to_process
                 already_processed = set()
                 
                 # used to make sure this is an O(n^2 log n) algorithm in the worst case
@@ -499,7 +505,11 @@ class TransitiveRelation(Operation):
                 # Note that we may end up with multiple left-most candidates in which case
                 # more links are needed.
             if len(remaining_items)==0: break
-                
+        
+        if len(sorted_items)==0 and len(left_most_candidates)==1:
+            # special case of only one unique element
+            sorted_items.append(left_most_candidates.pop())
+        
         if len(left_most_candidates) > 0:
             raise TransitivityException(None, assumptions, "Insufficient known transitive relations to sort the provided items: " + str(items))
         
@@ -518,7 +528,12 @@ class TransitiveRelation(Operation):
                         append = [Equals(eq_item2, item2).prove(assumptions)] if item2 != eq_item2 else []
                         # make the (item1, item2) chain by prepending/appending necessary equalities to the (eq_item1, eq_item2) chain
                         item_pair_chains[(item1, item2)] = prepend + item_pair_chains[(eq_item1, eq_item2)] + append
+            if repetitions[item1]>1:
+                relations += [Equals(item1, item1).prove()]*(repetitions[item1]-1)
             relations.append(TransitiveRelation.applyTransitivities(item_pair_chains[(item1, item2)], assumptions))
+        last_item = sorted_items[-1]
+        if repetitions[last_item]>1:
+            relations += [Equals(last_item, last_item).prove()]*(repetitions[last_item]-1)
         if len(relations)==1:
             return relations[0]
         return RelationClass.makeSequence(*relations)

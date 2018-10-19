@@ -1,16 +1,16 @@
-from proveit import Literal, OperationOverInstances, Operation, USE_DEFAULTS
+from proveit import Literal, OperationOverInstances, Operation, ExprList, USE_DEFAULTS
 from proveit._common_ import x, y, f, P, Q, QQ, S, yy
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
     _operator_ = Literal(stringFormat='Set', context=__file__)    
     
-    def __init__(self, instanceVarOrVars, instanceElement, domain, conditions=tuple()):
+    def __init__(self, instanceVar, instanceElement, domain, conditions=tuple()):
         '''
         Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
-        {instanceElement | conditions}_{instanceVar(s) \in S}
+        {instanceElement | conditions}_{instanceVar \in S}
         '''
-        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVarOrVars, instanceElement, domain=domain, conditions=conditions)
+        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVar, instanceElement, domain=domain, conditions=conditions)
         self.instanceElement = self.instanceExpr
 
     @staticmethod
@@ -20,8 +20,19 @@ class SetOfAll(OperationOverInstances):
         return the corresponding value contained in the 'operands'
         composite expression (i.e., the operands of a constructed operation).
         '''
+        from proveit.logic import InSet
         if argName=='instanceElement':
             return operands.body # instance mapping
+        elif argName=='instanceVar':
+            return operands.parameter
+        elif argName=='domain':
+            # the first condition must be the domain condition
+            domainCondition = operands.conditions[0]
+            assert isinstance(domainCondition, InSet), "Expecting the first condition of a SetOfAll object to be the domain condition of type InSet"
+            assert domainCondition.element==operands.parameter, "Expecting the first condition of a SetOfAll object to be the domain condition with the proper element"
+            return domainCondition.domain
+        elif argName=='conditions':
+            return ExprList(*operands.conditions[1:]) # all except the domain condition
         else:
             return OperationOverInstances.extractInitArgValue(argName, operators, operands)
         

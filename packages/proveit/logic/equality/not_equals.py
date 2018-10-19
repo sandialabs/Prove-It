@@ -30,8 +30,11 @@ class NotEquals(Operation):
             # prove that two irreducible values are not equal
             return self.lhs.notEquals(self.rhs)
         if self.lhs == FALSE or self.rhs == FALSE:
-            # prove something is not false by proving it to be true
-            return self.concludeViaDoubleNegation(assumptions)
+            try:
+                # prove something is not false by proving it to be true
+                return self.concludeViaDoubleNegation(assumptions)
+            except:
+                pass
         if hasattr(self.lhs, 'notEquals') and isIrreducibleValue(self.rhs):
             try:
                 return self.lhs.notEquals(self.rhs, assumptions)

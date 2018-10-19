@@ -9,6 +9,9 @@ class BooleanSet(Literal):
     
     def membershipObject(self, element):
         return BooleanMembership(element)
+
+    def nonmembershipObject(self, element):
+        return BooleanNonmembership(element)
     
     def forallEvaluation(self, forallStmt, assumptions):
         '''

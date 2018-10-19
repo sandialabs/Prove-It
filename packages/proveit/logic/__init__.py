@@ -5,7 +5,8 @@ from .boolean import And, Or, Not, Implies, Iff, compose, concludeViaImplication
 from .boolean import inBool
 from .boolean import Forall, Exists, NotExists
 from .set_theory import EmptySet
-from .set_theory import InSet, NotInSet, Set, SubsetEq, SupersetEq, Subset, Superset, NotSubsetEq, NotSupersetEq
+from .set_theory import InSet, NotInSet, Membership, Nonmembership
+from .set_theory import Set, SubsetEq, SupersetEq, Subset, Superset, NotSubsetEq, NotSupersetEq
 from .set_theory import Union, Intersect, Difference, SetOfAll, Disjoint, Distinct, Card
 from .equality import Equals, NotEquals
 from .equality import reduceOperands, defaultSimplification, evaluateTruth, EvaluationError

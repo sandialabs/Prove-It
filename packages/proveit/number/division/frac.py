@@ -95,8 +95,8 @@ class Frac(Operation):
             newEq1 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             newEq2 = fracCancelLeft.specialize({x:operand,y:newEq1.rhs.numerator.operands[1],z:newEq1.rhs.denominator.operands[1]})
             return newEq0.applyTransitivity(newEq1).applyTransitivity(newEq2)
-#            newFracIntermediate = self.numerator.factor(operand).proven().rhsSubstitute(self)
-#            newFrac = self.denominator.factor(operand).proven().rhsSubstitute(newFracIntermediate)
+#            newFracIntermediate = self.numerator.factor(operand).proven().subRightSideInto(self)
+#            newFrac = self.denominator.factor(operand).proven().subRightSideInto(newFracIntermediate)
 #            numRemainingOps = newFrac.numerator.operands[1:]
 #            denomRemainingOps = newFrac.denominator.operands[1:]
 #            return fracCancel1.specialize({x:operand,Etcetera(y):numRemainingOps,Etcetera(z):denomRemainingOps})
@@ -105,7 +105,7 @@ class Frac(Operation):
             newEq0 = self.numerator.factor(operand,pull=pull,groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
             newEq1 = fracCancelDenomLeft.specialize({x:operand,y:newEq0.rhs.numerator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
-#            newFrac = self.numerator.factor(operand).proven().rhsSubstitute(self)
+#            newFrac = self.numerator.factor(operand).proven().subRightSideInto(self)
 #            numRemainingOps = newFrac.numerator.operands[1:]
 #            return fracCancel2.specialize({x:operand,Etcetera(y):numRemainingOps})
 

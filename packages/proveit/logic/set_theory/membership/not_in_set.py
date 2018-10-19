@@ -18,23 +18,26 @@ class NotInSet(Operation):
     
     def __dir__(self):
         '''
-        If the domain has a 'membershipObject' method, include methods from the
-        object it generates.
+        If the domain has a 'nonmembershipObject' method, include methods from the
+        object it generates (also 'unfold' which defaults as 'unfoldNotIn' if it
+        isn't defined in 'nonmembershipObject').
         '''
-        if not hasattr(self, 'membershipObject'):
+        if 'membershipObject' in self.__dict__:
             return sorted(set(self.__dict__.keys() + dir(self.membershipObject)))
         else:
             return sorted(self.__dict__.keys() + 'unfold')
     
     def __getattr__(self, attr):
         '''
-        If the domain has a 'membershipObject' method, include methods from the
-        object it generates.
+        If the domain has a 'nonmembershipObject' method, include methods from the
+        object it generates (also 'unfold' defaults as 'unfoldNotIn' if it isn't
+        defined in 'nonmembershipObject').
         '''
-        if hasattr(self, 'membershipObject'):
-            return self.membershipObject.__getattr__(self, attr)
+        if 'nonmembershipObject' in self.__dict__:
+            return getattr(self.membershipObject, attr)
         elif attr=='unfold':
             return self.unfoldNotIn # the default 'unfold' method
+        raise AttributeError 
     
     def sideEffects(self, knownTruth):
         '''

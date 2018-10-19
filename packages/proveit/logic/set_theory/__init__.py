@@ -1,4 +1,4 @@
-from membership import InSet, NotInSet
+from membership import InSet, NotInSet, Membership, Nonmembership
 from enumeration import Set
 from containment import SupersetEq, SubsetEq, Superset, Subset, NotSubsetEq, NotSupersetEq
 from unification import Union

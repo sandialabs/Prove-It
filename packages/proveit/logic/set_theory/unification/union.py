@@ -10,48 +10,11 @@ class Union(Operation):
         Union any number of sets: A union B union C
         '''
         Operation.__init__(self, Union._operator_, operands)
-    
-    def membershipEquivalence(self, element, assumptions=USE_DEFAULTS):
-        '''
-        Deduce and return and [element in (A union B ...)] = [(element in A) or (element in B) ...]
-        where self = (A union B ...).
-        '''
-        from ._axioms_ import unionDef
-        from proveit.number import num
-        return unionDef.specialize({n:num(len(self.operands)), x:element, AA:self.operands}, assumptions=assumptions)
 
-    def nonmembershipEquivalence(self, element, assumptions=USE_DEFAULTS):
-        '''
-        Deduce and return and [element not in (A union B ...)] = [(element not in A) and (element not in B) ...]
-        where self = (A union B ...).
-        '''
-        from ._theorems_ import nonmembershipEquiv
-        from proveit.number import num
-        return nonmembershipEquiv.specialize({n:num(len(self.operands)), x:element, AA:self.operands})
-                
-    def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
-        '''
-        From [element in (A union B ...)], derive and return [(element in A) or (element in B) ...],
-        where self represents (A union B ...). 
-        '''
-        from ._theorems_ import membershipUnfolding
-        from proveit.number import num
-        return membershipUnfolding.specialize({n:num(len(self.operands)), x:element, AA:self.operands}, assumptions=assumptions)
+    def membershipObject(self, element):
+        from union_membership import UnionMembership
+        return UnionMembership(element, self)
 
-    def deduceMembership(self, element, assumptions=USE_DEFAULTS):
-        '''
-        From either [element in A] or [element in B] ..., derive and return [element in (A union B ...)],
-        where self represents (A union B ...). 
-        '''
-        from ._theorems_ import membershipFolding
-        from proveit.number import num
-        return membershipFolding.specialize({n:num(len(self.operands)), x:element, AA:self.operands}, assumptions=assumptions)
-
-    def deduceNonmembership(self, element, assumptions=USE_DEFAULTS):
-        '''
-        From [element not in A] and [element not in B] ..., derive and return [element not in (A union B ...)],
-        where self represents (A union B ...). 
-        '''
-        from ._theorems_ import nonmembershipFolding
-        from proveit.number import num
-        return nonmembershipFolding.specialize({n:num(len(self.operands)), x:element, AA:self.operands}, assumptions=assumptions)
+    def nonmembershipObject(self, element):
+        from union_membership import UnionNonmembership
+        return UnionNonmembership(element, self)

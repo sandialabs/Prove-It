@@ -13,9 +13,9 @@ for eqExpr in (AeqT, AeqF, PofAeqT):
 # P(TRUE), P(FALSE) assuming hypothesis
 for case in hypothesis.decompose(): case.proven({hypothesis})
 # A=TRUE => P(A)=TRUE assuming hypothesis
-Implies(AeqT, deriveStmtEqTrue(AeqT.lhsSubstitute(PofA, A))).proven({hypothesis})
+Implies(AeqT, deriveStmtEqTrue(AeqT.subLeftSideInto(PofA, A))).proven({hypothesis})
 # A=FALSE => P(A)=TRUE assuming hypothesis
-Implies(AeqF, deriveStmtEqTrue(AeqF.lhsSubstitute(PofA, A))).proven({hypothesis})
+Implies(AeqF, deriveStmtEqTrue(AeqF.subLeftSideInto(PofA, A))).proven({hypothesis})
 # P(A) assuming hypothesis, (A in BOOLEANS)
 inBool(A).unfold().deriveCommonConclusion(PofAeqT).deriveViaBooleanEquality().proven({hypothesis, inBool(A)})
 # forall_{P} P(TRUE) and P(FALSE) => forall_{A in BOOLEANS} P(A)

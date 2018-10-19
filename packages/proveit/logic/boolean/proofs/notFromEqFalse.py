@@ -7,5 +7,5 @@ AeqF = Equals(A, FALSE)
 # Not(FALSE)
 notFalse
 # Not(A) assuming A=FALSE because Not(FALSE)
-notA = AeqF.lhsSubstitute(Not(X), X).proven({AeqF})
+notA = AeqF.subLeftSideInto(Not(X), X).proven({AeqF})
 Implies(AeqF, notA).generalize(A).qed(__file__)
