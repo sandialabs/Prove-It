@@ -874,7 +874,7 @@ class ContextStorage:
         if expr in Operation.operationClassOfOperator:
             # the expression is an '_operator_' of an Operation class
             operationClass = Operation.operationClassOfOperator[expr]
-            exprClassesAndConstructors.add((operationClass, expr.remakeConstructor()))
+            exprClassesAndConstructors.add((operationClass, operationClass.__name__))
             namedItems.setdefault(operationClass.__name__, set()).add(operationClass)
             namedSubExprAddresses[operationClass._operator_] = (operationClass, '_operator_')
             return
@@ -980,15 +980,22 @@ class ContextStorage:
                 # prepend the constructor with the module -- assume it is in the same module as the class
                 constructor = '.'.join(full_class_name.split('.')[:-1]) + constructor
             return constructor
-        argStr = ', '.join(argToString(arg) for arg in expr.remakeArguments())                
+        if isinstance(expr, NamedExprs):
+            # convert to (name, value) tuple form
+            argStr = ', '.join('(' + argToString(arg).replace(' = ', ',') + ')' for arg in expr.remakeArguments())                
+        else:
+            argStr = ', '.join(argToString(arg) for arg in expr.remakeArguments())                
         withStyleCalls = '.'.join(expr.remakeWithStyleCalls())
         if len(withStyleCalls)>0: withStyleCalls = '.' + withStyleCalls
 
         if isinstance(expr, Composite):
             if isinstance(expr, ExprList):
                 compositeStr = argStr
-            else: # ExprTensor or NamedExprs
-                compositeStr = '[' + argStr.replace(' = ', ',') + ']'                    
+            elif isinstance(expr, ExprTensor):
+                compositeStr = '{' + argStr.replace(' = ', ':') + '}'                
+            else:
+                assert isinstance(expr, NamedExprs)
+                compositeStr = '[' + argStr.replace(' = ', ':') + ']' # list of (name, value) tuples                
             if isSubExpr and expr.__class__ in (ExprList, NamedExprs, ExprTensor): 
                 # It is a sub-Expression and a standard composite class.
                 # Just pass it in as an implicit composite expression (a list or dictionary).

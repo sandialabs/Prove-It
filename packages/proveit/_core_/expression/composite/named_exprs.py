@@ -42,10 +42,12 @@ class NamedExprs(Composite, Expression):
         return iter(self.elems)
         
     def iteritems(self):
-        return self.elems.iteritems()
+        for key in self.keywords:
+            yield key, self.elems[key]
 
     def itervalues(self):
-        return self.elems.itervalues()
+        for key in self.keywords:
+            yield self.elems[key]
     
     def keys(self):
         return self.keywords

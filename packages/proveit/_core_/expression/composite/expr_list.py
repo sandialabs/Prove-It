@@ -12,11 +12,15 @@ class ExprList(Composite, Expression):
         Initialize an ExprList from an iterable over Expression objects.
         '''
         from proveit._core_ import KnownTruth
+        from .composite import singleOrCompositeExpression
         entries = []
         for entry in expressions:
             if isinstance(entry, KnownTruth):
                 entry = entry.expr # extract the Expression from the KnownTruth
-            if not isinstance(entry, Expression):
+            try:
+                entry = singleOrCompositeExpression(entry)
+                assert isinstance(entry, Expression)
+            except:
                 raise TypeError('ExprList must be created out of Expressions)')
             entries.append(entry)
         self.entries = entries
@@ -157,11 +161,17 @@ class ExprList(Composite, Expression):
         prev_end = None
 
         try:
-            Less.sort([start_index, end_index], reorder=False, assumptions=assumptions)
+            start_end_relation = Less.sort([start_index, end_index]).prove(assumptions=assumptions)
+            if start_end_relation.operands[0]!=start_index:
+                # end comes before start: the range is empty.  This is the vacuous case.
+                requirements.append(start_end_relation)
+                return
+                yield
         except:
-            # The range is empty.  This is the vacuous case.
-            return
-            yield
+            # Unable to prove that the end comes before the start, so assume
+            # this will be a finite iteration (if not, the user can decide
+            # how long to wait before they realize they are missing something).
+            pass
                 
         # Iterate over the entries and track the true element index,
         # including ranges of iterations (Iter objects).

@@ -46,19 +46,14 @@ def compositeExpression(expressions):
     elif isinstance(expressions, Expression):
         return ExprList(expressions) # a single expression that we will wrap in an ExpressionLIst
     else:
-        if all(isinstance(subExpr, Expression) or isinstance(subExpr, KnownTruth) for subExpr in expressions):
-            # An iterable over only Expressions must be an exprlist
-            return ExprList(*expressions)
-        else:
-            try:
-                # try to see if we can use expressions to generate a NamedExpressions object
-                return NamedExprs(expressions)
-            except:        
-                try:
-                    # Assume to be a tensor as a list of lists
-                    return ExprTensor(expressions)
-                except:
-                    raise ValueError("Unable to generate a composite Expression from %s"%str(expressions))
+        if isinstance(expressions, dict):
+            return ExprTensor(expressions)
+        try:
+            # see if we can build an expression list
+            return ExprList(*[singleOrCompositeExpression(subExpr) for subExpr in expressions])
+        except:
+            # try to see if we can use expressions to generate a NamedExpressions object
+            return NamedExprs(expressions)
 
 def singleOrCompositeExpression(exprOrExprs):
     '''
