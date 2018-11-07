@@ -14,7 +14,7 @@ from nbconvert.preprocessors import ExecutePreprocessor, execute, Preprocessor
 from nbconvert import HTMLExporter
 from proveit import Context
 
-default_paths = ['packages/proveit', 'tutorial/socks_demo', 'tutorial']
+default_paths = ['packages/proveit']#, 'tutorial/socks_demo', 'tutorial']
 
 def findContextPaths(path):
     if os.path.isfile(os.path.join(path, '_context_.ipynb')):
@@ -205,7 +205,7 @@ def exportToHTML(notebook_path, nb=None):
         # create a notebook.css that links to a css file of the 
         # same name in the directory above it.
         with open(css_filename, 'wt') as f:
-            f.write('<link rel="stylesheet" href="../notebook.css">\n')
+            f.write('@import url("../notebook.css")\n')
 
 def executeAndExportNotebook(notebook_path):
     '''
