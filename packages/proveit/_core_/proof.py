@@ -205,6 +205,7 @@ class Proof:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
+        html += '</table>'
         return html
 
 class Assumption(Proof):
