@@ -102,7 +102,8 @@ def revised_special_nb(nb, notebook_path):
 class ProveItHTMLPreprocessor(Preprocessor):
     '''
     The Prove-It HTML processor will change links from ipynb
-    to html and remove "target=blank".
+    to html and remove "target=blank".  Further, it is used to
+    consolidate style information.
     '''
     
     def _process_atags(self, text):
@@ -137,8 +138,11 @@ class ProveItHTMLPreprocessor(Preprocessor):
         return new_text
     
     def preprocess(self, nb, resources):
+        encountered_qed = False
         new_cells = []
         for cell in nb.cells:
+            if encountered_qed:
+                break # don't include any more cells after we encounter '%qed' -- clean look
             cell = cell.copy() # copy the cell and possibly edit the copy
             if cell.cell_type == 'markdown':
                 # process a-tags in markdown cell source
@@ -149,11 +153,15 @@ class ProveItHTMLPreprocessor(Preprocessor):
                         if 'data' in output and 'text/html' in output.data:
                             # process a-tags in html output
                             output.data['text/html'] = self._process_atags(output.data['text/html'])
+                if cell['source'][:4]=='%qed':
+                    # don't include any more cells after we encounter '%qed' -- cleaner look
+                    encountered_qed = True
             new_cells.append(cell)
         nb.cells = new_cells            
         return nb, resources
 
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
+html_exporter.template_file = 'proveit_html'
 
 def executeNotebook(notebook_path):
     '''
@@ -190,6 +198,14 @@ def exportToHTML(notebook_path, nb=None):
     (body, resources) = html_exporter.from_notebook_node(nb)
     with open(os.path.splitext(notebook_path)[0] + '.html', 'wt') as f:
         f.write(body)
+    # check if there is a notebook.css file in the directory
+    dirname, filename = os.path.split(notebook_path)
+    css_filename = os.path.join(dirname, 'notebook.css')
+    if not os.path.isfile(css_filename):
+        # create a notebook.css that links to a css file of the 
+        # same name in the directory above it.
+        with open(css_filename, 'wt') as f:
+            f.write('<link rel="stylesheet" href="../notebook.css">\n')
 
 def executeAndExportNotebook(notebook_path):
     '''
