@@ -7,3 +7,5 @@ _theorems_.py
 .ipynb_checkpoints
 *~stashed~*.ipynb
 *.html
+*.tar.gz
+notebook.css
