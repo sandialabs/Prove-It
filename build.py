@@ -250,7 +250,7 @@ def recordPresumingInfo(theorem, proof_notebook_path):
                         theorem.recordPresumingInfo(presuming)
                         return # got what we needed
     
-def build(context_paths, all_paths, just_execute_proofs=False):
+def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expression_nbs=False):
     '''
     Build all Context-related notebooks (_common_, _axioms_,
     _theorems_, and proof notebooks for the theorems)
@@ -261,7 +261,7 @@ def build(context_paths, all_paths, just_execute_proofs=False):
     within the __pv_it directory (storing Prove-It "database"
     information).
     '''
-    if not just_execute_proofs:
+    if not just_execute_proofs and not just_execute_expression_nbs:
         # Make sure there is a _common_.py in each context directory.
         # These will be useful in figuring out dependencies between _common_
         # notebooks (see CommonExpressions in proveit._core_.context
@@ -332,39 +332,41 @@ def build(context_paths, all_paths, just_execute_proofs=False):
             executeAndExportNotebook(os.path.join(context_path, '_axioms_.ipynb'))
             executeAndExportNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
     
-    # Get the proof notebook filenames for the theorems in all of the contexts.
-    proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
-    proof_notebooks = []
-    for context_path in context_paths:
-        context = Context(context_path)
-        for theorem_name in context.theoremNames():
-            theorem = context.getTheorem(theorem_name)
-            proof_notebook_name = context.proofNotebook(theorem_name, theorem.provenTruth.expr)
-            proof_notebook_theorems[proof_notebook_name] = theorem
-            proof_notebooks.append(proof_notebook_name)
-        
-    # Next, for each of the theorems, record the "presuming" information
-    # of the proof notebooks in the _proofs_ folder.  Do this before executing
-    # any of the proof notebooks to account for dependencies properly
-    # (avoiding circular dependencies as intended).
-    for proof_notebook in proof_notebooks:
-        print 'record presuming info:', proof_notebook
-        recordPresumingInfo(proof_notebook_theorems[proof_notebook], proof_notebook)
-        
-    # Next, execute all of the proof notebooks for each context.
-    # the order is not important since we know the dependencies via
-    # the "presuming" information from the previous step.
-    for proof_notebook in proof_notebooks:
-        executeAndExportNotebook(proof_notebook)
-        
-    # Next, run any other notebooks within path/context directories
-    # (e.g., with tests and demonstrations).
-    for path in all_paths:
-        for sub in os.listdir(path):
-            full_path = os.path.join(path, sub)
-            if os.path.isfile(full_path) and os.path.splitext(full_path)[1] == '.ipynb':
-                if sub[0] != '_':
-                    executeAndExportNotebook(full_path)
+    if not just_execute_expression_nbs:
+        # Get the proof notebook filenames for the theorems in all of the contexts.
+        proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
+        proof_notebooks = []
+        for context_path in context_paths:
+            context = Context(context_path)
+            for theorem_name in context.theoremNames():
+                theorem = context.getTheorem(theorem_name)
+                proof_notebook_name = context.proofNotebook(theorem_name, theorem.provenTruth.expr)
+                proof_notebook_theorems[proof_notebook_name] = theorem
+                proof_notebooks.append(proof_notebook_name)
+            
+        # Next, for each of the theorems, record the "presuming" information
+        # of the proof notebooks in the _proofs_ folder.  Do this before executing
+        # any of the proof notebooks to account for dependencies properly
+        # (avoiding circular dependencies as intended).
+        for proof_notebook in proof_notebooks:
+            print 'record presuming info:', proof_notebook
+            recordPresumingInfo(proof_notebook_theorems[proof_notebook], proof_notebook)
+            
+        # Next, execute all of the proof notebooks for each context.
+        # the order is not important since we know the dependencies via
+        # the "presuming" information from the previous step.
+        for proof_notebook in proof_notebooks:
+            #if not os.path.isfile(proof_notebook[-5:] + '.html'): # temporary
+            executeAndExportNotebook(proof_notebook)
+            
+        # Next, run any other notebooks within path/context directories
+        # (e.g., with tests and demonstrations).
+        for path in all_paths:
+            for sub in os.listdir(path):
+                full_path = os.path.join(path, sub)
+                if os.path.isfile(full_path) and os.path.splitext(full_path)[1] == '.ipynb':
+                    if sub == '_demonstrations_.ipynb' or sub[0] != '_':
+                        executeAndExportNotebook(full_path)
         
     # Lastly, run expr.ipynb and dependencies.ipynb within the hash directories
     # of the __pv_it folders for each context.
@@ -381,15 +383,19 @@ def build(context_paths, all_paths, just_execute_proofs=False):
                     if os.path.isdir(hash_path):
                         if hash_path in executed_hash_paths:
                             continue # already executed this case
-                        expr_notebook = os.path.join(hash_path, 'expr.ipynb')
-                        if os.path.isfile(expr_notebook):
-                            # execute the expr.ipynb notebook
-                            executeAndExportNotebook(expr_notebook)
-                            executed_hash_paths.add(hash_path) # done
-                        dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
-                        if os.path.isfile(dependencies_notebook):
-                            # execute the dependencies.ipynb notebook
-                            executeAndExportNotebook(dependencies_notebook)
+                        expr_html = os.path.join(hash_path, 'expr.html')
+                        if not os.path.isfile(expr_html):
+                            expr_notebook = os.path.join(hash_path, 'expr.ipynb')
+                            if os.path.isfile(expr_notebook):
+                                # execute the expr.ipynb notebook
+                                executeAndExportNotebook(expr_notebook)
+                                executed_hash_paths.add(hash_path) # done
+                        dependencies_html = os.path.join(hash_path, 'dependencies.html')
+                        if not os.path.isfile(dependencies_html):
+                            dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
+                            if os.path.isfile(dependencies_notebook):
+                                # execute the dependencies.ipynb notebook
+                                executeAndExportNotebook(dependencies_notebook)
         if len(executed_hash_paths) == prev_num_executed:
             break # no more new ones to process
     
@@ -406,6 +412,9 @@ if __name__ == '__main__':
     parser.add_argument('--justproofs', dest='just_execute_proofs', action='store_const',
                         const=True, default=False,
                         help='only execute proofs (not _common_, _axioms_, or _theorems_)')   
+    parser.add_argument('--justexpressions', dest='just_execute_expression_nbs', action='store_const',
+                        const=True, default=False,
+                        help='only execute expression notebooks')   
     parser.add_argument('path', type=str, nargs='*', default=default_paths,
                         help='paths to be processed; sub-contexts will be included recursively (default: %s)'%' '.join(default_paths))
     args = parser.parse_args()    
@@ -442,5 +451,5 @@ if __name__ == '__main__':
                 commons_filename = os.path.join(pv_it_dir, 'commons.pv_it')
                 if os.path.isfile(commons_filename):
                     os.remove(commons_filename) 
-        build(context_paths, all_paths, args.just_execute_proofs)
+        build(context_paths, all_paths, args.just_execute_proofs, args.just_execute_expression_nbs)
         
