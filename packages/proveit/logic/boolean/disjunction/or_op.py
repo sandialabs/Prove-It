@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.booleans import inBool
-from proveit._common_ import A, B, C, AA, CC, m, n
+from proveit._common_ import A, B, C, D, AA, CC, m, n
 
 class Or(Operation):
     # The operator of the Or operation
@@ -20,7 +20,6 @@ class Or(Operation):
         (evaluating the operands).
         '''
         from ._theorems_ import trueOrTrue, trueOrFalse, falseOrTrue
-        from ._theorems_ import orIfBoth, orIfOnlyLeft, orIfOnlyRight
         if self in {trueOrTrue.expr, trueOrFalse.expr, falseOrTrue.expr}:
             # should be proven via one of the imported theorems as a simple special case
             return self.prove() 
@@ -41,11 +40,11 @@ class Or(Operation):
                 # Try a possibly simpler proof than concludeViaExample. 
                 try:
                     if len(provenOperandIndices)==2:
-                        return orIfBoth.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+                        return self.concludeViaBoth(assumptions)
                     elif provenOperandIndices[0] == 0:
-                        return orIfOnlyLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+                        return self.concludeViaOnlyLeft(assumptions)
                     else:
-                        return orIfOnlyRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+                        return self.concludeViaOnlyRight(assumptions)
                 except:
                     pass
             if len(provenOperandIndices) > 0:
@@ -56,9 +55,6 @@ class Or(Operation):
                 except:
                     # orIf[Any,Left,Right] must not have been a usable theorem; use the default below.
                     break
-        # Use the default when orIfAny/orIfLeft/orIfRight is not a usable theorem 
-        # or there are no pre-existing proofs for any of the operands.
-        return AssociativeOperation.conclude(self, assumptions)
     
     def sideEffects(self, knownTruth):
         '''
@@ -96,6 +92,22 @@ class Or(Operation):
         else:
             return notOrIfNotAny.specialize({Amulti:self.operands}, assumptions=assumptions)
     
+    def concludeViaBoth(self, assumptions):
+        from ._theorems_ import orIfBoth
+        assert len(self.operands) == 2        
+        return orIfBoth.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+    
+    def concludeViaOnlyLeft(self, assumptions):
+        from ._theorems_ import orIfOnlyLeft
+        assert len(self.operands) == 2        
+        return orIfOnlyLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+    
+    def concludeViaOnlyRight(self, assumptions):
+        from ._theorems_ import orIfOnlyRight
+        assert len(self.operands) == 2        
+        return orIfOnlyRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        
+        
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].
@@ -120,13 +132,23 @@ class Or(Operation):
         leftOperand, rightOperand = self.operands
         return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
 
-    def deriveViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
+    def deriveViaDilemma(self, conclusion, singularDilemmaOnly=False, assumptions=USE_DEFAULTS):
         '''
         From (A or B), and assuming A => C, B => C, and A, B, and C are Booleans,
         derive and return the conclusion, C.  Self is (A or B).
         '''
-        from ._theorems_ import singularConstructiveDilemma
+        from ._theorems_ import singularConstructiveDilemma, constructiveDilemma
         if len(self.operands) == 2:
+            if not singularDilemmaOnly:
+                if isinstance(conclusion, Or) and len(conclusion.operands)==2:
+                    # From (A or B), A => C, B => D, conclude C or D.
+                    # Try this first for a shorter proof, if it works.
+                    # try both ways to assign C and D.
+                    for (C_, D_) in [(conclusion.operands[0], conclusion.operands[1]), (conclusion.operands[1], conclusion.operands[0])]:
+                        #try:
+                        return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:C_, D:D_}, assumptions=assumptions)
+                        #except:
+                        #    pass # that didn't work.  let's try the singular version which is more powerful.
             return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
 
     def deduceLeftInBool(self, assumptions=USE_DEFAULTS):
