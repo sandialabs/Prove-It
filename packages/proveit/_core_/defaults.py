@@ -4,18 +4,20 @@ class Defaults:
     provingAssumptions = set() # used to avoid infinite recursion
     
     def __init__(self):
-        self.assumptions = frozenset()
+        self.assumptions = tuple()
         self.automation = True
     
     def checkedAssumptions(self, assumptions):
         '''
         If the given assumptions is None, return the default;
-        otherwise return the given assumptions after checking
-        that it is an iterable collection of Expressions.
+        otherwise return the given assumptions after
+        checking that the new assumptions are valid and
+        performing appropriate automation (deriving side-effects).
         '''
         from .proof import Assumption
         if assumptions is None:
             return tuple(self.assumptions)
+            
         assumptions = tuple(self._checkAssumptions(assumptions))
         for assumption in assumptions:
             # Prove each assumption, by assumption, to deduce any side-effects.
@@ -24,7 +26,7 @@ class Defaults:
                 # Note that while we only need THE assumption to prove itself, 
                 Assumption.makeAssumption(assumption, assumptions) # having the other assumptions around can be useful for deriving side-effects.
                 Defaults.provingAssumptions.remove(assumption) 
-        return assumptions  
+        return assumptions
     
     def _checkAssumptions(self, assumptions):
         '''
@@ -51,10 +53,11 @@ class Defaults:
         
     def __setattr__(self, attr, value):
         '''
-        When setting the assumptions, check that they are valid.
+        When setting the assumptions, check that they are valid
+        and derive their side-effects.
         '''
         if attr == 'assumptions' and hasattr(self, attr):
-            value = tuple(self._checkAssumptions(value))
+            value = tuple(self.checkedAssumptions(value))
         self.__dict__[attr] = value             
 
 class InvalidAssumptions:
