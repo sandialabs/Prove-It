@@ -9,7 +9,53 @@ with possibly fewer assumptions, suffices).
 from proveit._core_.expression import Expression
 from ._proveit_object_utils import makeUniqueId, addParent
 from defaults import defaults, USE_DEFAULTS
+from bisect import bisect_left
 import re
+
+class _ExprProofs:
+    '''
+    Stores a list of proofs for a particular expression under any set
+    of assumptions.  We maintain such lists so that we can update
+    KnownTruth proofs appropriately when a particular proof has been
+    disabled.  We maintain the list sorted in order of the size of
+    the proof so that we can always pick the shortest available proof.
+    '''
+    all_expr_proofs = dict() # map expressions to expression proofs
+        
+    def __init__(self, expr):
+        self._expr = expr
+        self._proofs = []
+        self._num_proof_steps = []
+        _ExprProofs.all_expr_proofs[expr] = self
+    
+    def insert(self, newproof):
+        '''
+        Insert a new proof for the expression, maintaining sorted order
+        in the proof size (number of steps).
+        '''
+        from proof import Proof
+        assert isinstance(newproof, Proof)
+        assert newproof.provenTruth.expr == self._expr
+        numsteps = newproof.numSteps
+        i = bisect_left(self._num_proof_steps, numsteps)
+        self._num_proof_steps.insert(i, numsteps)
+        self._proofs.insert(i, newproof)   
+    
+    def bestProof(self, knowntruth):
+        '''
+        Return the best proof for the knowntruth that is usable.
+        If none are usable, return the best one of the unusable ones.
+        '''
+        assert isinstance(knowntruth, KnownTruth)
+        best_unusable_proof = None
+        for proof in self._proofs:
+            if proof.provenTruth.assumptionsSet.issubset(knowntruth.assumptionsSet):
+                if proof.isUsable():
+                    return proof # best valid proof for the given KnownTruth
+                elif best_unusable_proof is None:
+                    best_unusable_proof = proof
+        return best_unusable_proof # no usable proof that is valid for the KnownTruth
+
             
 class KnownTruth:
     # lookup_dict maps Expressions to lists of KnownTruths for proving the 
@@ -32,7 +78,7 @@ class KnownTruth:
 
     def __init__(self, expression, assumptions, proof):
         '''
-        Create a KnownTruth with the given Expression, set of assumptions, and proof.  These
+        Create a KnownTruth with the given Expression, set of as_sumptions, and proof.  These
         should not be created manually but rather through the creation of Proofs which should
         be done indirectly via Expression/KnownTruth derivation-step methods.
         '''
@@ -52,16 +98,17 @@ class KnownTruth:
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
         
-        # See if there is an existing KnownTruth that covers this one
-        # (has no more assumptions than this one) with a usable proof.
-        existingKnownTruth = KnownTruth.findKnownTruth(expression, assumptions)
-        if existingKnownTruth is not None:
-            # Use an existing proof
-            self._proof = existingKnownTruth.proof()
+        # create or assign the _ExprProofs object for storing all proofs
+        # for this KnownTruth's expr (under any set of assumptions).
+        if self.expr in _ExprProofs.all_expr_proofs:
+            self._exprProofs = _ExprProofs.all_expr_proofs[self.expr]
         else:
-            # initialize _proof to None, to be changed later via _recordBestProof
-            self._proof = None
-        
+            self._exprProofs = _ExprProofs(self.expr)
+                
+        # this will be assigned (if a usable proof exists) when _recordProof is called by
+        # the Proof.__init__ method.
+        self._proof = None
+                
         # establish some parent relationships (important in case styles are updated)
         addParent(self.expr, self)
         for assumption in self.assumptions:
@@ -136,7 +183,7 @@ class KnownTruth:
         if KnownTruth.theoremBeingProven is not None:
             raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.")
         from proof import Theorem
-        theorem = self.proof() # the trivial prove-by-theorem; not yet the actual, desired proof of the theorem
+        theorem = self.proof() # the trivial proof-by-theorem; not yet the actual, desired proof of the theorem
         if not isinstance(theorem, Theorem):
             raise TypeError('Only begin a proof for a Theorem')
         theorem.recordPresumingInfo(presuming)
@@ -164,7 +211,7 @@ class KnownTruth:
         Theorem.updateUsability()
         # check to see if the theorem was already proven before we started
         for proof in theorem._possibleProofs:
-            if all(usedTheorem._unusableTheorem is None for usedTheorem in proof.usedTheorems()):
+            if proof.isUsable():
                 proof.provenTruth._recordBestProof(proof)
                 return self.expr
         if len(presumed_contexts) > 0:
@@ -173,7 +220,7 @@ class KnownTruth:
             print "Presuming %s theorem(s)."%', '.join(sorted(str(thm) for thm in presumed_theorems))
         if num_prev_thms > 0:
             print "Presuming previous theorems in this context (and any of their dependencies)."
-        self._proof._unusableTheorem = self._proof # can't use itself to prove itself
+        theorem._unusableProof = theorem # can't use itself to prove itself
         return self.expr
     
     def _qed(self):
@@ -190,7 +237,7 @@ class KnownTruth:
         KnownTruth.qedInProgress = True
         proof = self.expr.prove().proof()
         if not proof.isUsable():
-            proof.provenTruth.raiseUnusableTheorem()
+            proof.provenTruth.raiseUnusableProof()
         KnownTruth.theoremBeingProven.recordProof(proof)
         KnownTruth.qedInProgress = False
         return proof
@@ -207,7 +254,7 @@ class KnownTruth:
         may be unusable when proving a theorem that is restricted with
         respect to which theorems may be used (to avoid circular logic).
         '''
-        return self._proof is not None and self._proof._unusableTheorem is None
+        return self._proof is not None and self._proof._unusableProof is None
     
     def isSufficient(self, assumptions):
         '''
@@ -261,7 +308,57 @@ class KnownTruth:
         dependents = allDependents(self)
         for theorem in sorted(dependents):
             print theorem
+    
+    def _recordBestProof(self, proof):
+        '''
+        After a Proof is finished being constructed, record the best
+        proof for the KnownTruth which may be the new proof, 'proof',
+        or a pre-existing one.  Or, when a proof is disabled, this
+        is called with 'proof' as the disabled one and it should be
+        replaced with another one if it exists.  Update all KnownTruths
+        with the same 'truth' expression that should be updated.
+        '''
+        from proof import Theorem
+        #print 'record best', self.expr, 'under', self.assumptions
+        # update KnownTruth.lookup_dict and use find all of the KnownTruths
+        # with this expr to see if the proof should be updated with the new proof.
+        self._exprProofs.insert(proof)
+        expr_known_truths = KnownTruth.lookup_dict.setdefault(self.expr, [])
+        expr_known_truths.append(self)
+        for expr_known_truth in expr_known_truths:
+            # Is 'proof' applicable to 'expr_known_truth'?
+            if proof.provenTruth.assumptionsSet.issubset(expr_known_truth.assumptionsSet):      
+                if isinstance(expr_known_truth._proof, Theorem):
+                    # the older proof is a theorem, record the new proof as a possible proof for that theorem
+                    expr_known_truth._proof._possibleProofs.append(proof)
+                # the new proof is applicable to expr_known_truth; if it is better than
+                # an existing one, then replace it.
+                proof_is_usable = proof.isUsable()
+                preexisting_is_usable = expr_known_truth._proof is not None and expr_known_truth._proof.isUsable()
+                if proof_is_usable or not preexisting_is_usable:
+                    # replace if there was no pre-existing proof, the new proof 
+                    # is usable and the pre-existing one wasn't
+                    # or if they are both usable/unusable and the new proof has fewer steps.
+                    if expr_known_truth._proof is None or (proof_is_usable and not preexisting_is_usable) or (proof_is_usable==preexisting_is_usable and proof.numSteps<=expr_known_truth._proof.numSteps):
+                        if isinstance(proof, Theorem) and expr_known_truth._proof is not None:
+                            # newer proof is a theorem; record the existing proof as a possible proof for that theorem
+                            proof._possibleProofs.append(expr_known_truth._proof)
+                        expr_known_truth._updateProof(proof)
+                        if KnownTruth.theoremBeingProven is not None:
+                            # check if we have a proof for the theorem being proven
+                            if not KnownTruth.qedInProgress and len(self.assumptions)==0 and self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
+                                if not KnownTruth.hasBeenProven:
+                                    KnownTruth.hasBeenProven = True
+                                    print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".'
+                elif expr_known_truth._proof is proof:
+                    # the existing proof was disabled -- use an alternate one if it exists
+                    expr_known_truth._updateProof(expr_known_truth._exprProofs.bestProof(expr_known_truth))
         
+        #print self._exprProofs.bestProof(expr_known_truth) is proof
+        #assert self._proof == self._exprProofs.bestProof(expr_known_truth)
+        self._proof = self._exprProofs.bestProof(expr_known_truth)                
+        
+    """
     def _recordBestProof(self, newProof):
         '''
         After a Proof is finished being constructed, check to see if
@@ -275,6 +372,9 @@ class KnownTruth:
         same KnownTruth as a dependent will necessarily include the
         number of steps of the original proof plus more).
         '''
+        self._updateProof(self._exprProofs.bestProof(self))
+        
+        
         from proof import Theorem
         if not self.expr in KnownTruth.lookup_dict:
             # the first KnownTruth for this Expression
@@ -305,7 +405,7 @@ class KnownTruth:
                 else:
                     # the new proof was born obsolete, taking more steps than an existing one
                     if isinstance(other._proof, Theorem):
-                        # the older proof is a theorem, recode the new proof as a possible proof for that theorem
+                        # the older proof is a theorem, record the new proof as a possible proof for that theorem
                         other._proof._possibleProofs.append(newProof)
                     self._proof = other._proof # use an old proof that does the job better
                     keptTruths.append(other)
@@ -330,8 +430,9 @@ class KnownTruth:
                         print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".'
             self._proof = newProof
             keptTruths.append(self)
-        # Remove the obsolete KnownTruths from the lookup_dict
+        # Remove the obsolete KnownTruths from the lookup_dict -- SHOULD ACTUALLY KEEP OLD PROOFS IN CASE ONE IS DISABLED -- TODO
         KnownTruth.lookup_dict[self.expr] = keptTruths
+    """
 
     def _updateProof(self, newProof):
         '''
@@ -339,8 +440,14 @@ class KnownTruth:
         Dependents of the old proof must also be updated.  If newProof
         is None, the proof and its dependents are eliminated from memory.
         '''
-        oldDependents = [] if self._proof is None else self._proof.updatedDependents()
+        if self._proof is None:
+            self._proof = newProof
+            return # no previous dependents to update
+        elif self._proof == newProof:
+            return # no change
+        oldDependents = self._proof.updatedDependents()
         wasUsable = self.isUsable()
+        oldProof = self._proof
         self._proof = newProof # set to the new proof
         if not wasUsable: return  # not usable, don't update dependents
         for oldDependentProof in oldDependents:
@@ -421,7 +528,7 @@ class KnownTruth:
             if truth._proof is not None and truth._proof.isUsable() and truth.assumptionsSet.issubset(assumptionsSet):
                 suitableTruths.append(truth)
         if len(suitableTruths)==0: return None # no suitable truth
-        # return one wih the fewest assumptions
+        # return one wih the fewest assumptions, AND AMONG THOSE, WITH THE SHORTEST PROOF: TODO
         return min(suitableTruths, key=lambda truth : len(truth.assumptions))
     
     @staticmethod
@@ -589,12 +696,12 @@ class KnownTruth:
         '''
         return self.asImplication(hypothesis)
 
-    def raiseUnusableTheorem(self):
-        from proof import UnusableTheorem
-        if self._proof == self._proof._unusableTheorem:
-            raise UnusableTheorem(KnownTruth.theoremBeingProven, self._proof._unusableTheorem)        
+    def raiseUnusableProof(self):
+        from proof import UnusableProof
+        if self._proof == self._proof._unusableProof:
+            raise UnusableProof(KnownTruth.theoremBeingProven, str(self._proof._unusableProof))        
         else:
-            raise UnusableTheorem(KnownTruth.theoremBeingProven, self._proof._unusableTheorem, 'required to prove' + self.string(performUsabilityCheck=False)) 
+            raise UnusableProof(KnownTruth.theoremBeingProven, str(self._proof._unusableProof), 'required to prove' + self.string(performUsabilityCheck=False)) 
 
     def string(self, performUsabilityCheck=True):
         '''
@@ -603,7 +710,7 @@ class KnownTruth:
         the statement/expression.  Otherwise, simply display the expression.
         '''
         from proveit import ExprList
-        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableTheorem()
+        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
         if len(self.assumptions) > 0:
             assumptionsStr = ExprList(*self.assumptions).formatted('string', fence=False)
             return r'{' +assumptionsStr + r'} |= ' + self.expr.string()
@@ -619,7 +726,7 @@ class KnownTruth:
         '''
         Return a string representation of the KnownTruth.
         '''
-        if not self.isUsable(): self.raiseUnusableTheorem()
+        if not self.isUsable(): self.raiseUnusableProof()
         return self.string()
     
     def _repr_html_(self):
@@ -631,7 +738,7 @@ class KnownTruth:
         expr.ipynb notebooks for displaying the expression information.
         '''
         from proveit.logic import Set
-        if not self.isUsable(): self.raiseUnusableTheorem()
+        if not self.isUsable(): self.raiseUnusableProof()
         html = ''
         html += '<span style="font-size:20px;">'
         if len(self.assumptions) > 0:

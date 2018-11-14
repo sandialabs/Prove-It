@@ -24,19 +24,19 @@ class Proof:
         # Is this a usable Proof?  An unusable proof occurs when trying to prove a Theorem
         # that must explicitly presume Theorems that are not fully known in order to
         # avoid circular logic.
-        self._unusableTheorem = None # If unusable, this will point to the unusable theorem
+        self._unusableProof = None # If unusable, this will point to the unusable theorem
                                      # being applied directly or indirectly.
-        requiringUnusableTheorem = False
+        requiringUnusableProof = False
         for requiredProof in self.requiredProofs:
-            if requiredProof._unusableTheorem is not None:
+            if requiredProof._unusableProof is not None:
                 # Mark proofs as unusable when using an "unusable" theorem 
                 # directly or indirectly.  Theorems are marked as unusable 
                 # when a proof for some Theorem is being generated as a
                 # means to avoid circular logic.
-                self._unusableTheorem = requiredProof._unusableTheorem
-                # Raise an UnusableTheorem expection below (after calling _recordBestProof
-                # to indicate the proof even if it isn't usable).
-                requiringUnusableTheorem = True
+                self._unusableProof = requiredProof._unusableProof
+                # Raise an UnusableProof expection below (after calling _recordBestProof
+                # to indicate the proof is unusable).
+                requiringUnusableProof = True
         if not hasattr(self, '_dependents'):
             self._dependents = [] # proofs that directly require this one
         for requiredProof in self.requiredProofs:
@@ -60,10 +60,10 @@ class Proof:
         # this new proof may be the first proof, make an old one obselete, or be born obsolete itself.
         hadPreviousProof = (provenTruth.proof() is not None and provenTruth.isUsable())
         provenTruth._recordBestProof(self)
-        if requiringUnusableTheorem:
-            # Raise an UnusableTheorem exception when an attempt is made 
+        if requiringUnusableProof:
+            # Raise an UnusableProof exception when an attempt is made 
             # to use an "unusable" theorem directly or indirectly.
-            raise UnusableTheorem(KnownTruth.theoremBeingProven, self._unusableTheorem)
+            raise UnusableProof(KnownTruth.theoremBeingProven, str(self._unusableProof))
         if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             if not hadPreviousProof: # don't bother with side-effects if this was already proven (and usable); that should have been done already
                 # may derive any side-effects that are obvious consequences arising from this truth:
@@ -104,11 +104,18 @@ class Proof:
                         
     def isUsable(self):
         '''
-        Returns True iff this Proof is usable.  A Proof may be unable 
-        when trying to prove a Theorem.  Other Theorems must be explicitly 
-        presumed, or fully known, in order to avoid circular logic.
+        Returns True iff this Proof is usable.  A Proof may be unusable
+        because it was manually disabled or because it is not being presumed
+        while trying to prove a Theorem (other Theorems must be explicitly 
+        presumed in order to avoid circular logic).
         '''
-        return self._unusableTheorem is None
+        return self._unusableProof is None
+
+    def disable(self):
+        '''
+        Manually disable the use of this Proof.
+        '''
+        self._propagateUnusableProof(self)
 
     def __eq__(self, other):
         if isinstance(other, Proof):
@@ -146,14 +153,16 @@ class Proof:
     def assumptions(self):
         return self.provenTruth.assumptions
         
-    def _propagateUnusableTheorem(self, unusableTheorem):
+    def _propagateUnusableProof(self, unusableProof):
         '''
-        Propagate to proofs that are dependent upon an unusable theorem that
-        they are unusable due to this unusable theorem.
+        Propagate to proofs that are dependent upon an unusable proof that
+        is unusable (disabled or not presumed in a proof of a Theorem).
         '''
-        self._unusableTheorem = unusableTheorem
+        assert isinstance(unusableProof, Proof)
+        self._unusableProof = unusableProof
+        self.provenTruth._recordBestProof(self) # there may be an alternate proof
         for dependent in self._dependents:
-            dependent._propagateUnusableTheorem(unusableTheorem)        
+            dependent._propagateUnusableProof(unusableProof)        
 
     def __setattr__(self, attr, value):
         '''
@@ -161,7 +170,7 @@ class Proof:
         the 'png' attribute which will be added whenever it is generated).  Also,
         _dependents is an exception which can be updated internally.
         '''
-        if attr != '_dependents' and attr != '_unusableTheorem' and hasattr(self, attr):
+        if attr != '_dependents' and attr != '_unusableProof' and hasattr(self, attr):
             raise Exception("Attempting to alter read-only value")
         self.__dict__[attr] = value 
     
@@ -313,7 +322,7 @@ class Theorem(Proof):
         for k in xrange(1, len(hierarchy)):
             yield '.'.join(hierarchy[:k])
         yield s
-     
+        
     @staticmethod
     def updateUsability():
         for theorem in Theorem.allTheorems:
@@ -406,10 +415,10 @@ class Theorem(Proof):
                 
     def _setUsability(self):
         '''
-        Sets the 'usable' attribute to False if a theorem
-        is being proven and this theorem is neither presumed
-        nor fully proven and independent of the theorem being
-        proven.  Sets it to True otherwise.  That is, 
+        Sets the '_unusableProof' attribute to disable the
+        theorem if some theorem is being proven and this 
+        theorem is neither presumed nor fully proven and 
+        independent of the theorem being proven.  That is, 
         ensure no circular logic is being employed when 
         proving a theorem.  This applies when a proof has 
         begun (see KnownTruth.beginProof in known_truth.py).  
@@ -422,16 +431,16 @@ class Theorem(Proof):
         '''
         #from proveit.certify import isFullyProven
         if KnownTruth.theoremBeingProven is None:
-            self._unusableTheorem = None # Nothing being proven, so all Theorems are usable
+            self._unusableProof = None # Nothing being proven, so all Theorems are usable
             return
         if self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
             if self._storedTheorem().presumes(str(KnownTruth.theoremBeingProven)):
                 raise CircularLogic(KnownTruth.theoremBeingProven, self)
-            self._unusableTheorem = None # This Theorem is usable because it is being presumed.
+            self._unusableProof = None # This Theorem is usable because it is being presumed.
         else:
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all dependents.
-            self._propagateUnusableTheorem(self)
+            self._propagateUnusableProof(self)
 
 def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
     '''
@@ -544,7 +553,7 @@ class Specialization(Proof):
             if not isinstance(generalTruth, KnownTruth):
                 raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
             if generalTruth.proof() is None:
-                raise  UnusableTheorem(KnownTruth.theoremBeingProven, generalTruth)
+                raise UnusableProof(KnownTruth.theoremBeingProven, str(generalTruth))
             if not generalTruth.assumptionsSet.issubset(assumptions):
                 if '*' in assumptions:
                     # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
@@ -824,13 +833,16 @@ class GeneralizationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
 
-class UnusableTheorem(Exception):
-    def __init__(self, provingTheorem, unusableTheorem, extraMsg=''):
+class UnusableProof(Exception):
+    def __init__(self, provingTheorem, unusableItemStr, extraMsg=''):
         self.provingTheorem = provingTheorem
-        self.unusableTheorem = unusableTheorem
+        self.unusableItemStr = unusableItemStr
         self.extraMsg = '; ' + extraMsg
     def __str__(self):
-        return str(self.unusableTheorem) + ' is not usable while proving ' + str(self.provingTheorem) + ' (it has not been presumed)' + self.extraMsg
+        if self.provingTheorem is not None:
+            return self.unusableItemStr + ' is not usable while proving ' + str(self.provingTheorem) + ' (it has not been presumed)' + self.extraMsg
+        else:
+            return 'Cannot use disabled proof for ' + self.unusableItemStr
 
 class CircularLogic(Exception):
     def __init__(self, provingTheorem, presumedTheorem):
