@@ -277,7 +277,6 @@ class ProveItMagic(Magics):
         for sub-contexts which may be edited.
         '''
         import proveit
-        import ipywidgets as widgets
         # create an '_init_.py' in the directory if there is not an existing one.
         if not os.path.isfile('__init__.py'):
             open('__init__.py', 'w').close() # create an empty __init__.py
@@ -300,10 +299,10 @@ class ProveItMagic(Magics):
         context_interface = ContextInterface()
         
         if context_interface.mode == 'static':
-            special_notebooks_html = '<table>\n'
+            special_notebooks_html = '<table><tr>\n'
             for special_notebook_type, special_notebook_text in zip(special_notebook_types, special_notebook_texts):
                 special_notebooks_html += '<th><a class="ProveItLink" href="_%s_.ipynb">%s</a></th>\n'%(special_notebook_type, special_notebook_text)
-            special_notebooks_html += '</table>\n'
+            special_notebooks_html += '</tr></table>\n'
             if len(context_interface.subContextNames) > 0:
                 special_notebooks_html += '<table>\n'
                 for name in context_interface.subContextNames:

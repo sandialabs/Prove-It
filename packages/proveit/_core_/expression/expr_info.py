@@ -161,7 +161,7 @@ class ExpressionInfo:
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr] if expr in expr_context_map else None
-            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
+            html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
         html += '</table>\n'
         return html
     
