@@ -12,7 +12,14 @@ import argparse
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor, execute, Preprocessor
 from nbconvert import HTMLExporter
+from IPython.lib.latextools import latex_to_png, LaTeXTool
+import base64
 from proveit import Context
+
+# for compiling LaTeX
+LaTeXTool.clear_instance()
+lt = LaTeXTool.instance()
+lt.use_breqn = False
 
 default_paths = ['packages/proveit']#, 'tutorial/socks_demo', 'tutorial']
 
@@ -88,7 +95,9 @@ def revised_proof_nb(nb, notebook_path):
     nb.cells = new_cells            
     return nb
 """
+"""
 def revised_special_nb(nb, notebook_path):
+    # this is temporarily needed for some backwards compatibility
     new_cells = []
     for cell in nb.cells:
         cell = cell.copy() # copy the cell and possibly edit the copy
@@ -98,6 +107,7 @@ def revised_special_nb(nb, notebook_path):
         new_cells.append(cell)
     nb.cells = new_cells            
     return nb
+"""
 
 class ProveItHTMLPreprocessor(Preprocessor):
     '''
@@ -137,6 +147,24 @@ class ProveItHTMLPreprocessor(Preprocessor):
         new_text += text[last_pos:]
         return new_text
     
+    def _process_latex(self, text):
+        '''
+        Search the markdown for '$...$' indicating LaTeX.  Generate a png in place of the LaTeX.
+        '''
+        revised_text = ''
+        cur_pos = 0
+        latex_start = text.find('$')
+        while latex_start >= 0:
+            latex_end = text.find('$', latex_start+1)
+            latex = text[latex_start+1:latex_end]
+            png = latex_to_png(latex, backend='dvipng', wrap=True) # the 'matplotlib' backend can do some BAD rendering in my experience (like \lnot rendering as lnot in some contexts)
+            revised_text += text[cur_pos:latex_start]
+            revised_text += '<img style="vertical-align:text-bottom; display:inline;" src="data:image/png;base64,%s"/>'%base64.b64encode(png)
+            cur_pos = latex_end+1
+            latex_start = text.find('$', cur_pos)
+        revised_text += text[cur_pos:]
+        return revised_text
+    
     def preprocess(self, nb, resources):
         encountered_qed = False
         new_cells = []
@@ -145,8 +173,8 @@ class ProveItHTMLPreprocessor(Preprocessor):
                 break # don't include any more cells after we encounter '%qed' -- clean look
             cell = cell.copy() # copy the cell and possibly edit the copy
             if cell.cell_type == 'markdown':
-                # process a-tags in markdown cell source
-                cell.source = self._process_atags(cell.source)
+                # process a-tags in markdown cell source, as well as LaTeX.
+                cell.source = self._process_latex(self._process_atags(cell.source))
             if cell.cell_type == 'code':
                 if 'outputs' in cell:
                     for output in cell['outputs']:
@@ -184,6 +212,15 @@ def executeNotebook(notebook_path):
         nbformat.write(nb, f)
     return nb
 
+def generate_css_if_missing(path):
+    # check if there is a notebook.css file in the directory
+    css_filename = os.path.join(path, 'notebook.css')
+    if not os.path.isfile(css_filename):
+        # create a notebook.css that links to a css file of the 
+        # same name in the directory above it.
+        with open(css_filename, 'wt') as f:
+            f.write('@import url("../notebook.css")\n')
+
 def exportToHTML(notebook_path, nb=None):
     '''
     Export the notebook to html provided the notebook path.
@@ -198,14 +235,7 @@ def exportToHTML(notebook_path, nb=None):
     (body, resources) = html_exporter.from_notebook_node(nb)
     with open(os.path.splitext(notebook_path)[0] + '.html', 'wt') as f:
         f.write(body)
-    # check if there is a notebook.css file in the directory
-    dirname, filename = os.path.split(notebook_path)
-    css_filename = os.path.join(dirname, 'notebook.css')
-    if not os.path.isfile(css_filename):
-        # create a notebook.css that links to a css file of the 
-        # same name in the directory above it.
-        with open(css_filename, 'wt') as f:
-            f.write('@import url("../notebook.css")\n')
+    generate_css_if_missing(os.path.split(notebook_path)[0]) # add notebook.css if needed
 
 def executeAndExportNotebook(notebook_path):
     '''
@@ -225,6 +255,7 @@ def revise_proof_notebook(notebook_path):
         nbformat.write(nb, f)        
 """
 
+"""
 def revise_special_notebook(notebook_path):
     print notebook_path
     with open(notebook_path) as f:
@@ -232,6 +263,7 @@ def revise_special_notebook(notebook_path):
     nb = revised_special_nb(nb, notebook_path)
     with open(notebook_path, 'wt') as f:
         nbformat.write(nb, f)   
+"""
 
 def fix_context(context_path):
     mode = None
@@ -284,25 +316,21 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expr
         for context_path in context_paths:
             Context(context_path).makeSpecialExprModule('common')
         
-        # Execute the _context_ notebooks in each context directory as
-        # needed and generate _context_.html.
+        # Execute the _context_ notebooks in each context directory 
+        # and generate _context_.html.
         for context_path in context_paths:
             fix_context(context_path)
             context_notebook_path = os.path.join(context_path, '_context_.ipynb')
-            with open(os.path.join(context_path, '_mode_.txt')) as f:
-                prev_mode = f.read().strip()
-                
-            if prev_mode=='interactive':
-                # re-execute to get switch it to static mode
-                executeAndExportNotebook(context_notebook_path)
-            else:
-                # don't re-execute the notebook because it is already in
-                # static mode; just export it to HTML.
-                exportToHTML(context_notebook_path)
+            with open(os.path.join(context_path, '_mode_.txt'), 'wt') as f:
+                f.write('interactive\n') # when executed again, it will toggle to 'static' mode                
+            # execute into static mode
+            executeAndExportNotebook(context_notebook_path)
         
         # Next, run the _common_.ipynb (common expression) notebooks for the contexts.
         # For any that depend up _common_.py of other contexts, run the
         # requirements first.
+        
+        """
         common_nb_queue = list(context_paths)
         exececuted_common_nb = set()
         while len(common_nb_queue) > 0:
@@ -338,15 +366,23 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expr
                             retry = True
                 if not retry:
                     raise e
+        """
+        
+        # execute the commons notebooks first, and do this twice to work out inter-dependencies
+        for _ in xrange(2): 
+            for context_path in context_paths:
+                #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
+                executeAndExportNotebook(os.path.join(context_path, '_common_.ipynb'))
             
         # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the contexts.
         # The order does not matter assuming these expression constructions
         # do not depend upon other axioms or theorems (but possibly common expressions).
-        for context_path in context_paths:
-            revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
-            revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
-            executeAndExportNotebook(os.path.join(context_path, '_axioms_.ipynb'))
-            executeAndExportNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
+        for _ in xrange(2): # do this twice to get rid of extraneous information about adding/removing from database
+            for context_path in context_paths:
+                #revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
+                #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
+                executeAndExportNotebook(os.path.join(context_path, '_axioms_.ipynb'))
+                executeAndExportNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
     
     if not just_execute_expression_nbs:
         # Get the proof notebook filenames for the theorems in all of the contexts.
@@ -381,7 +417,7 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expr
             for sub in os.listdir(path):
                 full_path = os.path.join(path, sub)
                 if os.path.isfile(full_path) and os.path.splitext(full_path)[1] == '.ipynb':
-                    if sub == '_demonstrations_.ipynb' or sub[0] != '_':
+                    if sub == '_demonstrations_.ipynb': #or sub[0] != '_': # temporarily exclude other notebooks
                         executeAndExportNotebook(full_path)
         
     # Lastly, run expr.ipynb and dependencies.ipynb within the hash directories
@@ -400,21 +436,21 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expr
                         if hash_path in executed_hash_paths:
                             continue # already executed this case
                         expr_html = os.path.join(hash_path, 'expr.html')
-                        if not os.path.isfile(expr_html):
-                            expr_notebook = os.path.join(hash_path, 'expr.ipynb')
-                            if os.path.isfile(expr_notebook):
+                        expr_notebook = os.path.join(hash_path, 'expr.ipynb')
+                        if os.path.isfile(expr_notebook):
+                            # if expr_html doesn't exist or is older than expr_notebook, generate it
+                            if not os.path.isfile(expr_html) or os.path.getmtime(expr_html) < os.path.getmtime(expr_notebook):
                                 # execute the expr.ipynb notebook
                                 executeAndExportNotebook(expr_notebook)
                                 executed_hash_paths.add(hash_path) # done
-                        dependencies_html = os.path.join(hash_path, 'dependencies.html')
-                        if not os.path.isfile(dependencies_html):
-                            dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
-                            if os.path.isfile(dependencies_notebook):
-                                # execute the dependencies.ipynb notebook
-                                executeAndExportNotebook(dependencies_notebook)
+                        # let's always execute the dependencies notebook for now to be safes
+                        dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
+                        if os.path.isfile(dependencies_notebook):
+                            # execute the dependencies.ipynb notebook
+                            executeAndExportNotebook(dependencies_notebook)
         if len(executed_hash_paths) == prev_num_executed:
             break # no more new ones to process
-    
+
 if __name__ == '__main__':
     if os.path.sep != '/':
         # use the appropriate path separator for the OS
@@ -462,7 +498,9 @@ if __name__ == '__main__':
         # to make sure everything gets updated where there are dependencies
         # between common expressions of different contexts.
         for path in context_paths:
+            generate_css_if_missing(path)
             pv_it_dir = os.path.join(path, '__pv_it')
+            generate_css_if_missing(pv_it_dir)
             if os.path.isdir(pv_it_dir):
                 commons_filename = os.path.join(pv_it_dir, 'commons.pv_it')
                 if os.path.isfile(commons_filename):
