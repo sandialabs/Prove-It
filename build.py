@@ -14,6 +14,7 @@ from nbconvert.preprocessors import ExecutePreprocessor, execute, Preprocessor
 from nbconvert import HTMLExporter
 from IPython.lib.latextools import latex_to_png, LaTeXTool
 import base64
+import datetime
 from proveit import Context
 
 # for compiling LaTeX
@@ -40,48 +41,6 @@ execute_processor = ExecutePreprocessor(timeout=1000)
 # http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
 atag_re = r"""<a((\s+\w+(\s*=\s*(?:".*?"|'.*?'|[\^'">\s]+))?)+\s*|\s*)/?>"""
 
-def _fix_atags(text):
-    '''
-    Temporary use: fix a-tags missing class="ProveIt"
-    '''
-    new_text = ''
-    last_pos = 0
-    text = str(text)
-    for atag_match in re.finditer(atag_re, text):
-        atag = text[atag_match.start():atag_match.end()]
-        new_text += text[last_pos:atag_match.start()]
-        # parse the a tag with a xml parser
-        atag_root = lxml.etree.fromstring(atag + '</a>')
-        if atag_root.attrib['href'] == '_context_.html':
-            atag_root.attrib['href'] == '_context_.ipynb' # fix a mistake in earlier templates
-        href_split_ext = os.path.splitext(atag_root.attrib['href'])
-        if '.ipynb' in href_split_ext[1]:
-            atag_root.attrib['class']='ProveItLink'
-        atag = lxml.etree.tostring(atag_root)[:-2] + '>'
-        new_text += atag
-        last_pos = atag_match.end()
-    new_text += text[last_pos:]
-    return new_text
-
-def revised(nb):
-    '''
-    Temporary use to fix a-tags
-    '''
-    new_cells = []
-    for cell in nb.cells:
-        cell = cell.copy() # copy the cell and possibly edit the copy
-        if cell.cell_type == 'markdown':
-            # process a-tags in markdown cell source
-            cell.source = _fix_atags(cell.source)
-        if cell.cell_type == 'code':
-            if 'outputs' in cell:
-                for output in cell['outputs']:
-                    if 'data' in output and 'text/html' in output.data:
-                        # process a-tags in html output
-                        output.data['text/html'] = _fix_atags(output.data['text/html'])
-        new_cells.append(cell)
-    nb.cells = new_cells            
-    return nb
 
 """
 def revised_proof_nb(nb, notebook_path):
@@ -166,26 +125,30 @@ class ProveItHTMLPreprocessor(Preprocessor):
         return revised_text
     
     def preprocess(self, nb, resources):
-        encountered_qed = False
         new_cells = []
+        empty_cells = [] # skip empty cells at the end for a cleaner look
         for cell in nb.cells:
-            if encountered_qed:
-                break # don't include any more cells after we encounter '%qed' -- clean look
             cell = cell.copy() # copy the cell and possibly edit the copy
             if cell.cell_type == 'markdown':
                 # process a-tags in markdown cell source, as well as LaTeX.
                 cell.source = self._process_latex(self._process_atags(cell.source))
             if cell.cell_type == 'code':
+                if len(cell.source)==0:
+                    # an empty cell.  if it is at the end, these will be skipped altogether for a cleaner look
+                    empty_cells.append(cell)
+                    continue 
                 if 'outputs' in cell:
                     for output in cell['outputs']:
                         if 'data' in output and 'text/html' in output.data:
                             # process a-tags in html output
                             output.data['text/html'] = self._process_atags(output.data['text/html'])
-                if cell['source'][:4]=='%qed':
-                    # don't include any more cells after we encounter '%qed' -- cleaner look
-                    encountered_qed = True
+            if len(empty_cells) > 0:
+                # fill in empty cells which are not at the end
+                new_cells.extend(empty_cells)
+                empty_cells = []
             new_cells.append(cell)
-        nb.cells = new_cells            
+        nb.cells = new_cells  
+        resources['today'] = str(datetime.datetime.today()).split()[0]
         return nb, resources
 
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
@@ -202,9 +165,6 @@ def executeNotebook(notebook_path):
     with open(notebook_path) as f:
         nb = nbformat.read(f, as_version=4)
         
-    # do some temporary fixes
-    nb = revised(nb)
-    
     # execute
     execute_processor.preprocess(nb, {'metadata':{'path':os.path.split(notebook_path)[0]}})
     # write notebook
@@ -298,7 +258,7 @@ def recordPresumingInfo(theorem, proof_notebook_path):
                         theorem.recordPresumingInfo(presuming)
                         return # got what we needed
     
-def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expression_nbs=False):
+def build(context_paths, all_paths, just_execute_proofs=False, just_execute_demos=False, just_execute_expression_nbs=False):
     '''
     Build all Context-related notebooks (_common_, _axioms_,
     _theorems_, and proof notebooks for the theorems)
@@ -309,7 +269,11 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expr
     within the __pv_it directory (storing Prove-It "database"
     information).
     '''
-    if not just_execute_proofs and not just_execute_expression_nbs:
+    if not just_execute_proofs and not just_execute_demos and not just_execute_expression_nbs:
+        # Generate html pages from index.ipynb and brief_guide.ipynb in the packages folder:
+        executeAndExportNotebook('packages/index.ipynb')
+        executeAndExportNotebook('packages/brief_guide.ipynb')
+        
         # Make sure there is a _common_.py in each context directory.
         # These will be useful in figuring out dependencies between _common_
         # notebooks (see CommonExpressions in proveit._core_.context
@@ -384,7 +348,7 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expr
                 executeAndExportNotebook(os.path.join(context_path, '_axioms_.ipynb'))
                 executeAndExportNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
     
-    if not just_execute_expression_nbs:
+    if not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the contexts.
         proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
         proof_notebooks = []
@@ -411,6 +375,7 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_expr
             #if not os.path.isfile(proof_notebook[-5:] + '.html'): # temporary
             executeAndExportNotebook(proof_notebook)
             
+    if not just_execute_expression_nbs:
         # Next, run any other notebooks within path/context directories
         # (e.g., with tests and demonstrations).
         for path in all_paths:
@@ -464,6 +429,9 @@ if __name__ == '__main__':
     parser.add_argument('--justproofs', dest='just_execute_proofs', action='store_const',
                         const=True, default=False,
                         help='only execute proofs (not _common_, _axioms_, or _theorems_)')   
+    parser.add_argument('--justdemos', dest='just_execute_demos', action='store_const',
+                        const=True, default=False,
+                        help='only execute demonstration (not _common_, _axioms_, _theorems_, or proofs)')   
     parser.add_argument('--justexpressions', dest='just_execute_expression_nbs', action='store_const',
                         const=True, default=False,
                         help='only execute expression notebooks')   
@@ -505,5 +473,5 @@ if __name__ == '__main__':
                 commons_filename = os.path.join(pv_it_dir, 'commons.pv_it')
                 if os.path.isfile(commons_filename):
                     os.remove(commons_filename) 
-        build(context_paths, all_paths, args.just_execute_proofs, args.just_execute_expression_nbs)
+        build(context_paths, all_paths, args.just_execute_proofs, args.just_execute_demos, args.just_execute_expression_nbs)
         
