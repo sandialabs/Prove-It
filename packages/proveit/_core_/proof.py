@@ -8,79 +8,148 @@ Proof objects form a DAG.
 """
 
 from proveit._core_.known_truth import KnownTruth
-from ._proveit_object_utils import makeUniqueId, addParent
+from proveit._core_._unique_data import meaningData, styleData
 from defaults import defaults, USE_DEFAULTS, WILDCARD_ASSUMPTIONS
 from context import Context
 import re
 
 class Proof:
-    def __init__(self, stepType, provenTruth, requiredTruths):
-        # USEFUL FOR TRACKING DERIVED SIDE-EFFECTS
-        #if not isinstance(self, Theorem) and not isinstance(self, Axiom):
-        #    print "prove", provenTruth.expr
+    
+    # Map each Proof to the first instantiation of it that was created (noting that
+    # multiple Proof objects can represent the same Proof and will have the same hash value).
+    # Using this, internal references (between KnownTruths and Proofs) unique .
+    uniqueProofs = dict()
+    
+    def __init__(self, provenTruth, requiredTruths):
+        
+        '''
+        # Uncomment to print useful debugging information when tracking side-effects.
+        if not isinstance(self, Theorem) and not isinstance(self, Axiom):
+            print "prove", provenTruth.expr
+        '''
+        
         assert isinstance(provenTruth, KnownTruth)
-        self.provenTruth = provenTruth
-        self.requiredProofs = [requiredTruth.proof() for requiredTruth in requiredTruths]
-        # Is this a usable Proof?  An unusable proof occurs when trying to prove a Theorem
-        # that must explicitly presume Theorems that are not fully known in order to
-        # avoid circular logic.
-        self._unusableProof = None # If unusable, this will point to the unusable theorem
-                                     # being applied directly or indirectly.
+        for requiredTruth in requiredTruths:
+            assert isinstance(requiredTruth, KnownTruth)
+        # note: the contained KnownTruth and Proofs are subject to style changes on a Proof instance basis.       
+        self.provenTruth = provenTruth 
+        self.requiredTruths = tuple(requiredTruths)
+                   
+        # The meaning data is shared among Proofs with the same structure disregarding style
+        self._meaningData = meaningData(self._generate_unique_rep(lambda obj : hex(obj._meaning_id)))
+        if not hasattr(self._meaningData, 'requiredProofs'):
+            self._meaningData.requiredProofs = [requiredTruth.proof() for requiredTruth in requiredTruths]
+            self._meaningData._dependents = set() # meanng data of proofs that directly require this one
+
+            # Is this a usable Proof?  An unusable proof occurs when trying to prove a Theorem
+            # that must explicitly presume Theorems that are not fully known in order to
+            # avoid circular logic.  They can also be manually introduced via Proof.disable().
+            self._meaningData._unusableProof = None # When unusable, this will point to the unusable theorem
+                                           # being applied directly or indirectly.
+                            
+        # The style data is shared among Proofs with the same structure and style.
+        self._styleData = styleData(self._generate_unique_rep(lambda obj : hex(obj._style_id)))
+        
+        # reference this unchanging data of the unique 'meaning' data
+        self._meaning_id = self._meaningData._unique_id
+                
+        # reference this data of the unique 'meaning' data, but note that these
+        # are subject to change (as proofs are disabled and as new dependencies are added).
+        self.requiredProofs = self._meaningData.requiredProofs
+        self._dependents = self._meaningData._dependents
+        
+        all_required_proofs = self.allRequiredProofs()
+        all_required_truths = {required_proof.provenTruth for required_proof in all_required_proofs if required_proof is not self}
+        original_proof = self.provenTruth not in all_required_truths
+        
+        if original_proof:        
+            # As long as this is not a useless self-dependent proof (a proof that depends upon
+            # a different proof of the same truth which should never actually get used),
+            # track the dependencies of required proofs so they can be updated appropriated if there are
+            # changes due to proof disabling.
+            for requiredProof in self.requiredProofs:
+                requiredProof._dependents.add(self)
+        
+        if not hasattr(self._meaningData, 'numSteps'):
+            # determine the number of unique steps required for this proof
+            self._meaningData.numSteps = len(all_required_proofs)
+
+        # establish some parent-child relationships (important in case styles are updated)
+        self._styleData.addChild(self, self.provenTruth)
+        for requiredTruth in self.requiredTruths:
+            self._styleData.addChild(self, requiredTruth)
+                                
+        self._style_id = self._styleData._unique_id
+        
+        if not original_proof:
+            self._meaningData._unusableProof = self # not usable because it is not useful
+            assert provenTruth.proof() is not None, "There should have been an 'original' proof"
+            return
+                                     
         requiringUnusableProof = False
         for requiredProof in self.requiredProofs:
-            if requiredProof._unusableProof is not None:
+            if not requiredProof.isUsable():
                 # Mark proofs as unusable when using an "unusable" theorem 
                 # directly or indirectly.  Theorems are marked as unusable 
                 # when a proof for some Theorem is being generated as a
                 # means to avoid circular logic.
-                self._unusableProof = requiredProof._unusableProof
+                self._meaningData._unusableProof = requiredProof._meaningData._unusableProof
                 # Raise an UnusableProof expection below (after calling _recordBestProof
                 # to indicate the proof is unusable).
                 requiringUnusableProof = True
-        if not hasattr(self, '_dependents'):
-            self._dependents = [] # proofs that directly require this one
-        for requiredProof in self.requiredProofs:
-            if not hasattr(requiredProof, '_dependents'):
-                requiredProof._dependents = []
-            requiredProof._dependents.append(self)
-        self._step_type = stepType
-        # The following is not only a unique representation, but also information to reconstruct the
-        # proof step: step type (and mapping information if it is a Specialization), provenTruth, and requiredProofs
-        # meaning representations and unique ids are independent of style
-        self._meaning_rep = self._generate_unique_rep(lambda obj : hex(obj._meaning_id))
-        self._meaning_id = makeUniqueId(self._meaning_rep)
-        # style representations and unique ids are dependent of style
-        self._style_rep = self._generate_unique_rep(lambda obj : hex(obj._style_id))
-        self._style_id = makeUniqueId(self._style_rep)        
-        # determine the number of unique steps required for this proof
-        self.numSteps = len(self.allRequiredProofs())
+                break # it only take one
+             
         # if it is a Theorem, set its "usability", avoiding circular logic
         if self.isUsable():
             self._setUsability()
         # this new proof may be the first proof, make an old one obselete, or be born obsolete itself.
         hadPreviousProof = (provenTruth.proof() is not None and provenTruth.isUsable())
-        provenTruth._recordBestProof(self)
+        provenTruth._addProof(self)
         if requiringUnusableProof:
             # Raise an UnusableProof exception when an attempt is made 
             # to use an "unusable" theorem directly or indirectly.
-            raise UnusableProof(KnownTruth.theoremBeingProven, str(self._unusableProof))
+            raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
         if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             if not hadPreviousProof: # don't bother with side-effects if this was already proven (and usable); that should have been done already
                 # may derive any side-effects that are obvious consequences arising from this truth:
                 provenTruth.deriveSideEffects()
-        # establish some parent relationships (important in case styles are updated)
-        addParent(self.provenTruth, self)
-        for requiredProof in self.requiredProofs:
-            addParent(requiredProof, self)
-        
+
+    def _updateDependencies(self, newproof):
+        '''
+        Swap out this oldproof for the newproof in all dependents and update their numSteps
+        and usability status.
+        '''
+        oldproof = self
+        for dependent in oldproof._dependents:
+            revised_dependent = False
+            i = 0
+            try:
+                while True:
+                    i = dependent.requiredProofs.index(oldproof, i)
+                    dependent.requiredProofs[i] = newproof
+                    revised_dependent = True
+            except ValueError:
+                pass
+            assert revised_dependent, "Incorrect dependency relationship"
+            newproof._dependents.add(dependent)
+            if all(required_proof.isUsable() for required_proof in dependent.requiredProofs):
+                dependent._meaningData._unusableProof = None # it is usable again
+                dependent._meaningData.numSteps = len(dependent.allRequiredProofs())
+                dependent.provenTruth._addProof(dependent) # add it back as an option
+    
     def _setUsability(self):
         pass # overloaded for the Theorem type Proof
 
-    def _generate_unique_rep(self, objectRepFn, includeStyle=False):
+    def _generate_unique_rep(self, objectRepFn):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
-        return self._generate_step_info(objectRepFn) + '[' + objectRepFn(self.provenTruth) + '];[' + ','.join(objectRepFn(requiredProof) for requiredProof in self.requiredProofs) + ']'
+        # Internally, for self._meaning_rep and self._style_rep, we will use self.requiredTruths in the unique representation
+        # and the proofs are subject to change (if anything is disabled).
+        # For external storage (see _context_storage.py), we will use self.requiredProofs, locking the mapping from KnonwTruths of self.requiredTruths to Proofs.
+        requiredObjs = self.requiredProofs if hasattr(self, 'requiredProofs') else self.requiredTruths
+        return self._generate_step_info(objectRepFn) + '[' + objectRepFn(self.provenTruth) + '];[' + ','.join(objectRepFn(requiredObj) for requiredObj in requiredObjs) + ']'
+            
 
     def _generate_step_info(self, objectRepFn):
         '''
@@ -88,7 +157,7 @@ class Proof:
         Overridden by Specialization which also needs to including the mapping information
         and uses the given function to obtain representations of sub-Object.      
         '''
-        return self._step_type + ':'
+        return self.stepType() + ':'
 
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
@@ -109,14 +178,41 @@ class Proof:
         while trying to prove a Theorem (other Theorems must be explicitly 
         presumed in order to avoid circular logic).
         '''
-        return self._unusableProof is None
+        return self._meaningData._unusableProof is None
 
     def disable(self):
         '''
-        Manually disable the use of this Proof.
+        Disable the use of this Proof and any of its dependents
+        that don't have an alternate proof that doesn't rely
+        on this one.
         '''
-        self._propagateUnusableProof(self)
-
+        # Get the set of all dependents via breadth-first search
+        all_dependents = set()
+        to_process = [self]
+        while len(to_process) > 0:
+            dependent_proof = to_process.pop()
+            if dependent_proof not in all_dependents:
+                all_dependents.add(dependent_proof)
+                if dependent_proof.provenTruth.proof() == dependent_proof:
+                    # include the sub-dependents iff this dependent is actually in use
+                    to_process.extend(dependent_proof._dependents)
+        
+        # Disable all dependents
+        for dependent_proof in all_dependents:
+            dependent_proof._meaningData._unusableProof = self
+            dependent_proof.provenTruth._discardProof(dependent_proof)
+        
+        # Check if alternate usable proofs are available for the proofs that we disabled.
+        # Make multiple passes to ensure new possibilities and best options fully propagate.
+        continue_revisions = True
+        while continue_revisions:
+            continue_revisions = False
+            for dependent_proof in all_dependents:
+                if dependent_proof.provenTruth.proof() == dependent_proof:
+                    # Check for an alternate to this disabled dependent proof.
+                    if dependent_proof.provenTruth._reviseProof():
+                        continue_revisions = True
+    
     def __eq__(self, other):
         if isinstance(other, Proof):
             return self._meaning_id == other._meaning_id
@@ -128,11 +224,11 @@ class Proof:
     def __hash__(self):
         return self._meaning_id
     
-    def requiredTruths(self):
+    def numSteps(self):
         '''
-        Returns the up-to-date provenTruth objects from the requiredProofs.
+        Return the number of unique steps in the proof.
         '''
-        return [requiredProof.provenTruth for requiredProof in self.requiredProofs]
+        return self._meaningData.numSteps
     
     def usedAxioms(self):
         '''
@@ -145,24 +241,9 @@ class Proof:
         Returns the set of axioms that are used directly (not via other theorems) in this proof. 
         '''
         return set().union(*[requiredProof.usedTheorems() for requiredProof in self.requiredProofs])
-        
-    def updatedDependents(self):
-        self._dependents = [dependent for dependent in self._dependents if dependent.provenTruth._proof is dependent]
-        return self._dependents
-
+    
     def assumptions(self):
         return self.provenTruth.assumptions
-        
-    def _propagateUnusableProof(self, unusableProof):
-        '''
-        Propagate to proofs that are dependent upon an unusable proof that
-        is unusable (disabled or not presumed in a proof of a Theorem).
-        '''
-        assert isinstance(unusableProof, Proof)
-        self._unusableProof = unusableProof
-        self.provenTruth._recordBestProof(self) # there may be an alternate proof
-        for dependent in self._dependents:
-            dependent._propagateUnusableProof(unusableProof)        
 
     def __setattr__(self, attr, value):
         '''
@@ -170,15 +251,9 @@ class Proof:
         the 'png' attribute which will be added whenever it is generated).  Also,
         _dependents is an exception which can be updated internally.
         '''
-        if attr != '_dependents' and attr != '_unusableProof' and hasattr(self, attr):
+        if hasattr(self, attr):
             raise Exception("Attempting to alter read-only value")
         self.__dict__[attr] = value 
-    
-    def remake(self):
-        '''
-        Remake the Proof, using the most up-to-date Proofs for the required truths.
-        '''
-        raise NotImplementedError('Remake not implemented for ' + str(self.__class__))
 
     def enumeratedProofSteps(self):
         '''
@@ -228,7 +303,7 @@ class Assumption(Proof):
         prev_default_assumptions = defaults.assumptions
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
-            Proof.__init__(self, 'Assumption', KnownTruth(expr, {expr}, self), [])
+            Proof.__init__(self, KnownTruth(expr, {expr}, self), [])
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions            
@@ -255,7 +330,7 @@ class Axiom(Proof):
             raise ValueError("An axiom 'context' must be a Context object")
         if not isinstance(name, str):
             raise ValueError("An axiom 'name' must be a string")
-        Proof.__init__(self, 'Axiom', KnownTruth(expr, list(expr.requirements), self), [])
+        Proof.__init__(self, KnownTruth(expr, expr.getRequirements(), self), [])
         self.context = context
         self.name = name
 
@@ -301,7 +376,7 @@ class Theorem(Proof):
         # before 'beginProof' is called so we will have the proof handy.
         self._possibleProofs = []
         # Note that _setUsability will be called within Proof.__init__
-        Proof.__init__(self, 'Theorem', KnownTruth(expr, frozenset(), self), [])
+        Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
         Theorem.allTheorems.append(self)
 
     def stepType(self):
@@ -431,16 +506,16 @@ class Theorem(Proof):
         '''
         #from proveit.certify import isFullyProven
         if KnownTruth.theoremBeingProven is None:
-            self._unusableProof = None # Nothing being proven, so all Theorems are usable
+            self._meaningData._unusableProof = None # Nothing being proven, so all Theorems are usable
             return
         if self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
             if self._storedTheorem().presumes(str(KnownTruth.theoremBeingProven)):
                 raise CircularLogic(KnownTruth.theoremBeingProven, self)
-            self._unusableProof = None # This Theorem is usable because it is being presumed.
+            self._meaningData._unusableProof = None # This Theorem is usable because it is being presumed.
         else:
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all dependents.
-            self._propagateUnusableProof(self)
+            self.disable()
 
 def _checkImplication(implicationExpr, antecedentExpr, consequentExpr):
     '''
@@ -497,13 +572,10 @@ class ModusPonens(Proof):
             _checkImplication(implicationTruth.expr, antecedentTruth.expr, consequentTruth.expr)
             self.implicationTruth = implicationTruth
             self.antecedentTruth = antecedentTruth
-            Proof.__init__(self, 'ModusPonens', consequentTruth, [self.implicationTruth, self.antecedentTruth])
+            Proof.__init__(self, consequentTruth, [self.implicationTruth, self.antecedentTruth])
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
-
-    def remake(self):
-        return ModusPonens(self.implicationTruth.expr, assumptions=self.provenTruth.assumptions)
 
     def stepType(self):
         return 'modus ponens'
@@ -518,13 +590,10 @@ class HypotheticalReasoning(Proof):
             implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
             implicationTruth = KnownTruth(implicationExpr, assumptions, self)
             self.consequentTruth = consequentTruth
-            Proof.__init__(self, 'HypotheticalReasoning', implicationTruth, [self.consequentTruth])
+            Proof.__init__(self, implicationTruth, [self.consequentTruth])
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
-
-    def remake(self):
-        return HypotheticalReasoning(self.consequentTruth, self.provenTruth.expr.antecedent)
 
     def stepType(self):
         return 'hypothetical reasoning'
@@ -553,7 +622,7 @@ class Specialization(Proof):
             if not isinstance(generalTruth, KnownTruth):
                 raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
             if generalTruth.proof() is None:
-                raise UnusableProof(KnownTruth.theoremBeingProven, str(generalTruth))
+                raise UnusableProof(KnownTruth.theoremBeingProven, generalTruth)
             if not generalTruth.assumptionsSet.issubset(assumptions):
                 if '*' in assumptions:
                     # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
@@ -588,7 +657,7 @@ class Specialization(Proof):
             self.mappedVarLists = mappedVarLists
             self.mappings = mappings
             specializedTruth = KnownTruth(specializedExpr, assumptions, self)
-            Proof.__init__(self, 'Specialization', specializedTruth, [generalTruth] + requirementTruths)
+            Proof.__init__(self, specializedTruth, [generalTruth] + requirementTruths)
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
@@ -599,16 +668,8 @@ class Specialization(Proof):
         '''
         mappingInfo = ';'.join(','.join(objectRepFn(var) + ':' + objectRepFn(self.mappings[var]) for var in mappedVars) \
                                 for mappedVars in self.mappedVarLists)
-        return self._step_type + ':{' + mappingInfo + '}'
+        return self.stepType() + ':{' + mappingInfo + '}'
                                 
-    def remake(self):
-        # relabeling variables are the last of the mappedVarLists, preceeding mappedVarLists
-        # are for the specializeMap
-        numForallEliminations = len(self.mappedVarLists)-1
-        specializeMap = {key:self.mappings[key] for varList in self.mappedVarLists[:-1] for key in varList}
-        relabelMap = {key:self.mappings[key] for key in self.mappedVarLists[-1]}
-        return Specialization(self.generalTruth, numForallEliminations, specializeMap, relabelMap, assumptions = self.provenTruth.assumptions)
-
     def stepType(self):
         if len(self.mappedVarLists) > 1:
             return 'specialization'
@@ -776,15 +837,11 @@ n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the 
             self.instanceTruth = instanceTruth
             self.newForallVars = newForallVars
             self.newConditions = newConditions
-            Proof.__init__(self, 'Generalization', generalizedTruth, [self.instanceTruth])
+            Proof.__init__(self, generalizedTruth, [self.instanceTruth])
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
-            
-
-    def remake(self):
-        return Generalization(self.instanceTruth, self.newForallVars, self.newConditions)
-
+    
     def stepType(self):
         return 'generalizaton'
     
@@ -834,13 +891,20 @@ class GeneralizationFailure(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 class UnusableProof(Exception):
-    def __init__(self, provingTheorem, unusableItemStr, extraMsg=''):
+    def __init__(self, provingTheorem, unusableProof, extraMsg=''):
         self.provingTheorem = provingTheorem
-        self.unusableItemStr = unusableItemStr
+        self.unusableProof = unusableProof
         self.extraMsg = '; ' + extraMsg
+    
     def __str__(self):
+        if self.provingTheorem == self.unusableProof:
+            return "Cannot use %s to prove itself"%str(self.provingTheorem)
+        if isinstance(self.unusableProof, Theorem) or isinstance(self.unusableProof, Axiom):
+            unusuable_proof_str = str(self.unusableProof)
+        else:
+            unusuable_proof_str = str(self.unusableProof.provenTruth)
         if self.provingTheorem is not None:
-            return self.unusableItemStr + ' is not usable while proving ' + str(self.provingTheorem) + ' (it has not been presumed)' + self.extraMsg
+            return unusuable_proof_str + ' is not usable while proving ' + str(self.provingTheorem) + ' (it has not been presumed)' + self.extraMsg
         else:
             return 'Cannot use disabled proof for ' + self.unusableItemStr
 

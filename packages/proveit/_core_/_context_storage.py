@@ -487,7 +487,7 @@ class ContextStorage:
             raise NotImplementedError('Strorage only implemented for Expressions, Statements (effectively), and Proofs')
         # generate a unique representation using Prove-It object ids for this storage to
         # represent other referenced Prove-It objects 
-        return prefix + proveItObject._generate_unique_rep(self._proveItStorageId, includeStyle=True)
+        return prefix + proveItObject._generate_unique_rep(self._proveItStorageId)
     
     def _extractReferencedStorageIds(self, unique_rep, context_name=''):
         '''

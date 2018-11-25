@@ -53,7 +53,7 @@ class Lambda(Expression):
             raise TypeError('An Iter must be within an ExprList or ExprTensor, not directly as a Lambda body')
         self.body = body
         self.conditions = compositeExpression(conditions)
-        for requirement in self.body.requirements:
+        for requirement in self.body.getRequirements():
             if not self.parameterVarSet.isdisjoint(requirement.freeVars()):
                 raise LambdaError("Cannot generate a Lambda expression with parameter variables involved in Lambda body requirements: " + str(requirement))
         Expression.__init__(self, ['Lambda'], [self.parameter_or_parameters, self.body, self.conditions], styles=styles, requirements=requirements)

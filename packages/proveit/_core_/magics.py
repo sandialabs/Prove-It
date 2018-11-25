@@ -270,6 +270,22 @@ class ProveItMagic(Magics):
             self.assignmentBehaviorModifier.displayAssignments(self.shell)
     
     @line_magic
+    def contents(self, line):
+        '''
+        Generates a "table of contents" hierarchy of contexts for the contexts
+        listed in the line.
+        '''
+        def generateContents(contexts):
+            if len(contexts)==0: return ''
+            html = '<ul>\n'        
+            for context in contexts:
+                href = os.path.relpath(os.path.join(context.getPath(), '_context_.ipynb'))
+                html += '<li><a class="ProveItLink" href="%s">%s</a></li>\n'%(href, context.name)
+                html += generateContents(list(context.getSubContexts()))
+            return html + '</ul>\n'
+        display(HTML(generateContents([Context(context_name) for context_name in line.split()])))
+            
+    @line_magic
     def context(self, line):
         '''
         Create the _common_, _axioms_ and _theorems_ notebooks for the current

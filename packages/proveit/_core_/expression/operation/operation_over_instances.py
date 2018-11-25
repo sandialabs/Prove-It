@@ -182,7 +182,7 @@ class OperationOverInstances(Operation):
                 if hasExplicitIvars: outStr += "~|~"
                 outStr += explicitConditions.formatted(formatType, fence=False)                
                 #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
-            outStr += '} ' + self.instanceExpr.formatted(formatType,fence=True)
+            outStr += '}~' + self.instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += r'\right]'
 
         return outStr

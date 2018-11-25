@@ -5,7 +5,7 @@ This is the expression module.
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.context import Context
 from proveit._core_.expression.style_options import StyleOptions
-from proveit._core_._proveit_object_utils import makeUniqueId, addParent, updateStyles
+from proveit._core_._unique_data import meaningData, styleData
 import re
 import os
 
@@ -53,36 +53,63 @@ class Expression:
         for subExpression in subExpressions:
             if not isinstance(subExpression, Expression):
                 raise TypeError('Expecting subExpression elements to be of Expression type')
-        # unique_rep is a unique representation based upon the coreInfo and unique_id's of sub-Expressions
-        self._coreInfo, self._subExpressions = tuple(coreInfo), subExpressions
+                
+        # note: these contained expressions are subject to style changes on an Expression instance basis
+        self._subExpressions = subExpressions 
+        
+        # The meaning data is shared among Expressions with the same structure disregarding style
+        self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id), coreInfo))
+        if not hasattr(self._meaningData, '_coreInfo'):
+            # initialize the data of self._meaningData
+            self._meaningData._coreInfo = tuple(coreInfo)
+            # combine requirements from all sub-expressions
+            requirements = sum([subExpression.getRequirements() for subExpression in subExpressions], tuple()) + requirements
+            # Expression requirements are essentially assumptions that need to be proven for the expression to
+            # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
+            # (which may not be necessary, but does not hurt).   
+            self._meaningData._requirements = defaults.checkedAssumptions(requirements)
+        
+        # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
+        self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
+        if not hasattr(self._meaningData, 'styles'):
+            # initialize the data of self._styleData
+            self._styleData.styles = dict(styles) # formatting style options that don't affect the meaning of the expression
+
+        # reference this unchanging data of the unique 'meaning' data
+        self._meaning_id = self._meaningData._unique_id
+        self._coreInfo = self._meaningData._coreInfo
+        self._requirements = self._meaningData._requirements
+        
+        self._style_id = self._styleData._unique_id
+        
+        """
         self._styles = dict(styles) # formatting style options that don't affect the meaning of the expression
         # meaning representations and unique ids are independent of style
-        self._meaning_rep = self._generate_unique_rep(lambda expr : hex(expr._meaning_id))
+        self._meaning_rep = 
         self._meaning_id = makeUniqueId(self._meaning_rep)
-        # style representations and unique ids are dependent of style
+        # style representations and style ids are dependent of style
         self._style_rep = self._generate_unique_rep(lambda expr : hex(expr._style_id), includeStyle=True)
         self._style_id = makeUniqueId(self._style_rep)
+        """
         for subExpression in subExpressions: # update Expression.parent_expr_map
-            addParent(subExpression, self)
-        # combine requirements from all sub-expressions
-        requirements = sum([tuple(subExpression.requirements) for subExpression in subExpressions], tuple()) + requirements
-        # Expression requirements are essentially assumptions that need to be proven for the expression to
-        # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
-        # (which may not be necessary, but does not hurt).   
-        self.requirements = defaults.checkedAssumptions(requirements)
+            self._styleData.addChild(self, subExpression)
     
-    def _generate_unique_rep(self, objectRepFn, includeStyle=False):
+    def _generate_unique_rep(self, objectRepFn, coreInfo=None, styles=None):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
         import sys
-        context = Context(sys.modules[self.__class__.__module__].__file__)
+        if coreInfo is None: coreInfo = self._coreInfo
+        if styles is None and hasattr(self, '_styleData'):
+            styles = self._styleData.styles
+        ExprClass = self.__class__
+        context = Context(sys.modules[ExprClass.__module__].__file__)
         # get the full class path relative to the root context where the class is defined
-        class_path = context.name + '.' + self.__class__.__module__.split('.')[-1] + '.' + self.__class__.__name__
+        class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
         style_str = ''
-        if includeStyle:
-            style_str = ';[' + ','.join(style_name + ':' + self.getStyle(style_name) for style_name in sorted(self.styleNames())) + ']'
-        return class_path + '[' + ','.join(self._coreInfo) + ']' + style_str + ';[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+        if styles is not None:
+            style_str = ';[' + ','.join(style_name + ':' + styles[style_name] for style_name in sorted(styles.keys())) + ']'
+        return class_path + '[' + ','.join(coreInfo) + ']' + style_str + ';[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
 
     @staticmethod
     def _extractExprClass(unique_rep):
@@ -117,7 +144,7 @@ class Expression:
         subExprs = unique_rep.split(';')[-1]
         objIds = re.split("\[|,|\]",subExprs) 
         return [objId for objId in objIds if len(objId) > 0]  
-        
+    
     def __setattr__(self, attr, value):
         '''
         Expressions should be read-only objects.  Attributes may be added, however; for example,
@@ -125,7 +152,7 @@ class Expression:
         '''
         if hasattr(self, attr):
             raise Exception("Attempting to alter read-only value '%s'"%attr)
-        self.__dict__[attr] = value      
+        self.__dict__[attr] = value
     
     def __repr__(self):
         return str(self) # just use the string representation
@@ -222,34 +249,41 @@ class Expression:
     
     def withStyles(self, **kwargs):
         '''
-        Alter the styles of this expression according to kwargs.
+        Alter the styles of this expression, and anything containing this
+        particular expression object, according to kwargs.
         '''
-        orig_styles = dict(self._styles)
+        styles = dict(self._styleData.styles)
         # update the _styles, _style_rep, and _style_id
-        self._styles.update(kwargs)
-        if self._styles == orig_styles:
+        styles.update(kwargs)
+        if styles == self._styleData.styles:
             return self # no change in styles, so just use the original
-        updateStyles(self)
+        self._styleData.updateStyles(self, styles)
         return self
     
     def styleNames(self):
         '''
         Return the name of the styles that may be set.
         '''
-        return self._styles.keys()
+        return self._styleData.styles.keys()
     
     def getStyle(self, styleName):
         '''
         Return the current style setting for the given style name.
         '''
-        return self._styles[styleName]
+        return self._styleData.styles[styleName]
     
     def getStyles(self):
         '''
         Return a copy of the internally maintained styles dictionary.
         '''
-        return dict(self._styles)
+        return dict(self._styleData.styles)
     
+    def getRequirements(self):
+        '''
+        Return a copy of the requirements.
+        '''
+        return tuple(self._requirements)
+     
     def remakeConstructor(self):
         '''
         Method to call to reconstruct this Expression.  The default is the class name
@@ -526,13 +560,13 @@ class Expression:
         '''
         if context is None:
             context = Context()
-        if not hasattr(self,'png'):
-            self.png, png_path = context._stored_png(self, self.latex(), self._config_latex_tool)
-            self.png_path = os.path.relpath(png_path)
-        if self.png_path is not None:
+        if not hasattr(self._styleData,'png'):
+            self._styleData.png, png_path = context._stored_png(self, self.latex(), self._config_latex_tool)
+            self._styleData.png_path = os.path.relpath(png_path)
+        if self._styleData.png_path is not None:
             exprNotebookPath = context.expressionNotebook(self, unofficialNameKindContext)
             html = '<a class="ProveItLink" href="' + os.path.relpath(exprNotebookPath) + '">'
-            html += '<img src="' + self.png_path + r'" style="display:inline;vertical-align:middle;" />'
+            html += '<img src="' + self._styleData.png_path + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
         # record as a "displayed" (style-specific) expression
         Expression.displayed_expression_styles.add((self._style_id, self)) 

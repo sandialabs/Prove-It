@@ -649,13 +649,14 @@ class ExprTensor(Composite, Expression):
             else:
                 tensor[subbed_loc] = subbed_elem
         expr_tensor = ExprTensor(tensor, assumptions)
-        for requirement in expr_tensor.requirements:
+        expr_tensor_requirements = expr_tensor.getRequirements()
+        for requirement in expr_tensor_requirements:
             # check that all ExprTensor requirements satisfy restrictions
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope
         
         # pass back the new requirements that are different from the ExprTensor requirements after making substitutions.
-        old_requirements = {requirement.substituted(exprMap, relabelMap, reservedVars) for requirement in self.requirements}
-        new_requirements = [requirement for requirement in expr_tensor.requirements if requirement not in old_requirements]
+        old_requirements = {requirement.substituted(exprMap, relabelMap, reservedVars) for requirement in self.getRequirements()}
+        new_requirements = [requirement for requirement in expr_tensor_requirements if requirement not in old_requirements]
             
         requirements += new_requirements
         
