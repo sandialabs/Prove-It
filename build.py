@@ -105,7 +105,15 @@ class ProveItHTMLPreprocessor(Preprocessor):
             last_pos = atag_match.end()
         new_text += text[last_pos:]
         return new_text
+
+    def _remove_tags(self, text):
+        '''
+        Remove html tags from the text.
+        '''
+        p = re.compile(r'<.*?>')
+        return p.sub('', text)
     
+    """
     def _process_latex(self, text):
         '''
         Search the markdown for '$...$' indicating LaTeX.  Generate a png in place of the LaTeX.
@@ -123,15 +131,19 @@ class ProveItHTMLPreprocessor(Preprocessor):
             latex_start = text.find('$', cur_pos)
         revised_text += text[cur_pos:]
         return revised_text
+    """
     
     def preprocess(self, nb, resources):
         new_cells = []
         empty_cells = [] # skip empty cells at the end for a cleaner look
+        title = None # take the first line of the first cell to be the title
         for cell in nb.cells:
             cell = cell.copy() # copy the cell and possibly edit the copy
             if cell.cell_type == 'markdown':
+                if title is None:
+                    title = self._remove_tags(cell.source.split('\n')[0])
                 # process a-tags in markdown cell source, as well as LaTeX.
-                cell.source = self._process_latex(self._process_atags(cell.source))
+                cell.source = self._process_atags(cell.source) #self._process_latex(self._process_atags(cell.source))
             if cell.cell_type == 'code':
                 if len(cell.source)==0:
                     # an empty cell.  if it is at the end, these will be skipped altogether for a cleaner look
@@ -149,6 +161,7 @@ class ProveItHTMLPreprocessor(Preprocessor):
             new_cells.append(cell)
         nb.cells = new_cells  
         resources['today'] = str(datetime.datetime.today()).split()[0]
+        resources['title'] = title
         return nb, resources
 
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
