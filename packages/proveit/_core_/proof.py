@@ -291,6 +291,22 @@ class Proof:
                 html += '</td></tr>'
         html += '</table>'
         return html
+    
+    def __repr__(self):
+        proofSteps = self.enumeratedProofSteps()
+        proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
+        out_str = '\tstep type\trequirements\tstatement\n'
+        for k, proof in enumerate(proofSteps):
+            out_str += str(k) + '\t'
+            requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
+            out_str += proof.stepType() + '\t' + requiredProofNums + '\t'
+            out_str += proof.provenTruth.string(performUsabilityCheck=False)
+            out_str += '\n'
+            if isinstance(proof, Specialization):
+                out_str += '\t' + proof.mappingStr() + '\n'
+            if isinstance(proof, Axiom) or isinstance(proof, Theorem):
+                out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
+        return out_str
 
 class Assumption(Proof):
     allAssumptions = dict() # map expression and the to assumption object
@@ -692,6 +708,23 @@ class Specialization(Proof):
                 html += ', relabeling ' + Set(*[Lambda(var, self.mappings[var]) for var in mappedVars])._repr_html_()
         html += '</span>'
         return html
+
+    def mappingStr(self):
+        from proveit import Lambda
+        from proveit.logic import Set
+        mappedVarLists = self.mappedVarLists
+        out_str = ''
+        if len(mappedVarLists) == 1 or (len(mappedVarLists) == 2 and len(mappedVarLists[-1]) == 0):
+            # a single relabeling map, or a single specialization map with no relabeling map
+            mappedVars = mappedVarLists[0]
+            out_str += ', '.join(str(Lambda(var, self.mappings[var])) for var in mappedVars)
+        else:
+            out_str += ', '.join(str(Set(*[Lambda(var, self.mappings[var]) for var in mappedVars])) for mappedVars in mappedVarLists[:-1])
+            if len(mappedVarLists[-1]) > 0:
+                # the last group is the relabeling map, if there is one
+                mappedVars = mappedVarLists[-1]
+                out_str += ', relabeling ' + str(Set(*[Lambda(var, self.mappings[var]) for var in mappedVars]))
+        return out_str
 
     @staticmethod
     def _specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions):
