@@ -100,11 +100,11 @@ class Div(Operation):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.            
         '''
-        from proveit.number import Add, Sub, Sum
+        from proveit.number import Add, Subtract, Sum
         from _theorems_ import distributeFractionThroughSum, distributeFractionThroughSubtract, distributeFractionThroughSummation
         if isinstance(self.numerator, Add):
             return distributeFractionThroughSum.specialize({xEtc:self.numerator.operands, y:self.denominator})
-        elif isinstance(self.numerator, Sub):
+        elif isinstance(self.numerator, Subtract):
             return distributeFractionThroughSubtract.specialize({x:self.numerator.operands[0], y:self.numerator.operands[1], z:self.denominator})
         elif isinstance(self.numerator, Sum):
             # Should deduce in Complexes, but distributeThroughSummation doesn't have a domain restriction right now

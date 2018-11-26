@@ -106,13 +106,12 @@ class Or(Operation):
         from ._theorems_ import orIfOnlyRight
         assert len(self.operands) == 2        
         return orIfOnlyRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-        
-        
+                
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].
         '''
-        inBool(self).conclude(assumptions=assumptions)
+        return inBool(self).prove(assumptions=assumptions)
     
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
@@ -132,24 +131,44 @@ class Or(Operation):
         leftOperand, rightOperand = self.operands
         return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
 
-    def deriveViaDilemma(self, conclusion, singularDilemmaOnly=False, assumptions=USE_DEFAULTS):
+    def deriveViaSingularDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
-        From (A or B), and assuming A => C, B => C, and A, B, and C are Booleans,
+        From (A or B) as self, and assuming A => C, B => C, and A and B are Booleans,
         derive and return the conclusion, C.  Self is (A or B).
         '''
-        from ._theorems_ import singularConstructiveDilemma, constructiveDilemma
+        from ._theorems_ import singularConstructiveDilemma
         if len(self.operands) == 2:
-            if not singularDilemmaOnly:
-                if isinstance(conclusion, Or) and len(conclusion.operands)==2:
-                    # From (A or B), A => C, B => D, conclude C or D.
-                    # Try this first for a shorter proof, if it works.
-                    # try both ways to assign C and D.
-                    for (C_, D_) in [(conclusion.operands[0], conclusion.operands[1]), (conclusion.operands[1], conclusion.operands[0])]:
-                        #try:
-                        return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:C_, D:D_}, assumptions=assumptions)
-                        #except:
-                        #    pass # that didn't work.  let's try the singular version which is more powerful.
             return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
+
+    def deriveViaMultiDilemma(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B) as self, and assuming A => C, B => D, and A, B, C, and D are Booleans,
+        derive and return the conclusion, C or D.
+        '''
+        from ._theorems_ import constructiveDilemma
+        if len(self.operands) == 2:
+            if isinstance(conclusion, Or) and len(conclusion.operands)==2:
+                # From (A or B), A => C, B => D, conclude C or D.
+                # Try this first for a shorter proof, if it works.
+                # try both ways to assign C and D.
+                for (C_, D_) in [(conclusion.operands[0], conclusion.operands[1]), (conclusion.operands[1], conclusion.operands[0])]:
+                    #try:
+                    return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:C_, D:D_}, assumptions=assumptions)
+                    #except:
+                    #    pass # that didn't work.  let's try the singular version which is more powerful.
+                    
+    def deriveViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
+        '''
+        If the conclusion is also an Or operation with the same number of operands as
+        self, try deriveViaMultiDilemma.  Otherwise, or if that fails, try
+        deriveViaSingularDilemma.
+        '''
+        if isinstance(conclusion, Or) and len(conclusion.operands)==len(self.operands):
+            try:
+                return self.deriveViaMultiDilemma(conclusion, assumptions)
+            except:
+                pass
+        return self.deriveViaSingularDilemma(conclusion, assumptions)
 
     def deduceLeftInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -157,7 +176,7 @@ class Or(Operation):
         '''
         from ._axioms_ import leftInBool
         if len(self.operands) == 2:
-            leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         
     def deduceRightInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -165,9 +184,9 @@ class Or(Operation):
         '''
         from ._axioms_ import rightInBool
         if len(self.operands) == 2:
-            rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
-    def deducePartsInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
+    def deducePartsInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce A in Booleans, B in Booleans, ..., Z in Booleans
         from (A or B or ... or Z) in Booleans.
@@ -185,16 +204,10 @@ class Or(Operation):
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
         if len(self.operands)==2:
-            if idx==0: self.deduceLeftInBool(assumptions)
-            elif idx==1: self.deduceRightInBool(assumptions)
+            if idx==0: return self.deduceLeftInBool(assumptions)
+            elif idx==1: return self.deduceRightInBool(assumptions)
         return eachInBool.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
                 
-    def concludeViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
-        '''
-        
-        '''
-        pass
-
     def deduceNotLeftIfNeither(self, assumptions=USE_DEFAULTS):
         '''
         Deduce not(A) assuming not(A or B) where self is (A or B). 
@@ -271,7 +284,7 @@ class Or(Operation):
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B), derive the conclusion provided that the negated
-        conclusion implies both (A or B), not(A) and not(B), and the conclusion is a Boolean.
+        conclusion implies not(A) and not(B), and the conclusion is a Boolean.
         '''
         from proveit.logic.boolean.implication import affirmViaContradiction
         return affirmViaContradiction(self, conclusion, assumptions)
@@ -279,7 +292,7 @@ class Or(Operation):
     def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B), derive the negated conclusion provided that the
-        conclusion implies both (A or B), not(A) and not(B), and the conclusion is a Boolean.
+        conclusion implies both not(A) and not(B), and the conclusion is a Boolean.
         '''
         from proveit.logic.boolean.implication import denyViaContradiction
         return denyViaContradiction(self, conclusion, assumptions)

@@ -121,11 +121,11 @@ class Membership:
         self.element = element
 
     def sideEffects(self, knownTruth):
-        raise NotImplementedError("Membership object has no 'sideEffects' method implemented")
+        raise NotImplementedError("Membership object, %s, has no 'sideEffects' method implemented"%str(self.__class__))
 
     def conclude(self, assumptions):
-        raise NotImplementedError("Membership object has no 'conclude' method implemented")
+        raise NotImplementedError("Membership object, %s, has no 'conclude' method implemented"%str(self.__class__))
     
     def equivalence(self):
-        raise NotImplementedError("Membership object has no 'equivalence' method implemented")
+        raise NotImplementedError("Membership object, %s, has no 'equivalence' method implemented"%str(self.__class__))
 

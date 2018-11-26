@@ -46,7 +46,7 @@ class And(Operation):
         '''
         From (A and B and ... and Z) derive [(A and B and ... and Z) in Booleans].
         '''
-        inBool(self).conclude(assumptions=assumptions)
+        return inBool(self).prove(assumptions=assumptions)
     
     def deriveParts(self, assumptions=USE_DEFAULTS):
         r'''

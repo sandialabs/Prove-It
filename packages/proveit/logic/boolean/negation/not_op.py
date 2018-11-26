@@ -1,4 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS
+from proveit.logic.boolean.booleans import inBool
 from proveit._common_ import A, x, y, S
 
 class Not(Operation):
@@ -24,6 +25,7 @@ class Not(Operation):
             yield self.deriveContradiction # FALSE given Not(A) and A
         except:
             pass # no contradiction
+        yield self.deriveInBool # [Not(A) in Boolean] given Not(A)
         if hasattr(self.operand, 'negationSideEffects'):
             # derive negation side-effects for the specific type of
             # expression being negated.
@@ -36,6 +38,12 @@ class Not(Operation):
         '''
         yield self.deduceOperandInBool
         
+    def deriveInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        From Not(A) derive [Not(A) in Booleans].
+        '''
+        return inBool(self).prove(assumptions=assumptions)
+    
     def conclude(self, assumptions):
         '''
         Try to automatically conclude this negation via evaluation reductions
@@ -115,7 +123,7 @@ class Not(Operation):
         Attempt to deduce, then return, that the negated operand is in the set of BOOLEANS.
         '''
         from ._theorems_ import operandInBool
-        operandInBool.specialize({A:self.operand}, assumptions=assumptions)
+        return operandInBool.specialize({A:self.operand}, assumptions=assumptions)
           
     def equateNegatedToFalse(self, assumptions=USE_DEFAULTS):
         r'''

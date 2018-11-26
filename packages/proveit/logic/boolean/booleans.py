@@ -103,10 +103,13 @@ class BooleanMembership(Membership):
         Yield side-effect methods to try when the element is proven to be in the set of Booleans
         by calling 'inBoolSideEffects' on the element if it has such a method.
         '''
+        from proveit.logic.boolean._theorems_ import unfoldInBool
         if hasattr(self.element, 'inBoolSideEffects'):
             for sideEffect in self.element.inBoolSideEffects(knownTruth):
                 yield sideEffect
-        yield self.unfold
+        # don't automatically do unfoldInBoolExplicit if unfoldInBool is unusable -- avoids infinite recursion
+        if unfoldInBool.isUsable():
+            yield self.unfold
     
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
@@ -114,8 +117,7 @@ class BooleanMembership(Membership):
         '''   
         from ._theorems_ import inBoolIfTrue, inBoolIfFalse
         element = self.element
-        if hasattr(element, 'deduceInBool'):
-            return element.deduceInBool(assumptions=assumptions)
+        # if the element is already proven or disproven, use inBoolIfTrue or inBoolIfFalse
         try:
             element.prove(assumptions=assumptions, automation=False)
             return inBoolIfTrue.specialize({A:element}, assumptions=assumptions)
@@ -126,6 +128,9 @@ class BooleanMembership(Membership):
             return inBoolIfFalse.specialize({A:element}, assumptions=assumptions)
         except:
             pass
+        # Use 'deduceInBool' if the element has that method.
+        if hasattr(element, 'deduceInBool'):
+            return element.deduceInBool(assumptions=assumptions)
         raise ProofFailure(inBool(element), assumptions, str(element) + ' not proven to be equal to TRUE or FALSE.')
 
     def equivalence(self, assumptions=USE_DEFAULTS):
@@ -137,11 +142,17 @@ class BooleanMembership(Membership):
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
-        From inBool(Element), derive and return [element or not(element)].
+        From inBool(Element), derive and return [element or not(element)] if
+        unfoldInBool is usable.  It it is not, instead try to derive and return
+        [(element=TRUE) or (element=FALSE)].
         '''
-        from ._theorems_ import unfoldInBool
-        #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
-        return unfoldInBool.specialize({A:self.element}, assumptions=assumptions)
+        from ._theorems_ import unfoldInBool, unfoldInBoolExplicit
+        if unfoldInBool.isUsable():
+            #  [element or not(element)] assuming inBool(element)
+            return unfoldInBool.specialize({A:self.element}, assumptions=assumptions)
+        else:
+            #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
+            return unfoldInBoolExplicit.specialize({A:self.element}, assumptions=assumptions)
     
     def deriveViaExcludedMiddle(self, consequent, assumptions=USE_DEFAULTS):
         '''

@@ -28,7 +28,7 @@ class NotEquals(Operation):
         from proveit.logic import FALSE
         if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
             # prove that two irreducible values are not equal
-            return self.lhs.notEquals(self.rhs)
+            return self.lhs.notEqual(self.rhs)
         if self.lhs == FALSE or self.rhs == FALSE:
             try:
                 # prove something is not false by proving it to be true
@@ -37,13 +37,13 @@ class NotEquals(Operation):
                 pass
         if hasattr(self.lhs, 'notEquals') and isIrreducibleValue(self.rhs):
             try:
-                return self.lhs.notEquals(self.rhs, assumptions)
+                return self.lhs.notEqual(self.rhs, assumptions)
             except:
                 pass
         try:
             return self.concludeAsFolded(assumptions)
         except:
-            return BinaryOperation.conclude(assumptions) # try the default (reduction)
+            return Operation.conclude(assumptions) # try the default (reduction)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
