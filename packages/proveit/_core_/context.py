@@ -305,15 +305,15 @@ class Context:
     
     def specialExprAddress(self, expr):
         '''
-        A special expression "address" consists of a module and the name 
-        of the expression.
+        A special expression "address" consists of a kind ('common', 'axiom', or
+        'theorem'), module and the name of the expression.
         Provided that the given expression is one of the special expressions
         of this context, return the address as a tuple.
         '''
         kind, name = self._storage.specialExpressions[expr]
         if kind == 'axiom' or kind=='theorem':
             name = name + '.expr'
-        return self._storage._specialExprModules[kind], name
+        return kind, self._storage._specialExprModules[kind], name
     
     def proofNotebook(self, theoremName, expr):
         '''

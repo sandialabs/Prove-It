@@ -577,6 +577,9 @@ class ContextStorage:
                 name_path = os.path.join(hash_path, 'name.txt')
                 if os.path.isfile(name_path):
                     os.remove(name_path)
+                kind_path = os.path.join(hash_path, 'kind.txt')
+                if os.path.isfile(kind_path):
+                    os.remove(kind_path)    
     
     def _erase_hash_directory(self, hash_path):
         '''
@@ -691,6 +694,9 @@ class ContextStorage:
                 needs_rewriting = True
                 with open(special_expr_name_filename, 'w') as nameFile:
                     nameFile.write(expr_address[-1])
+                special_expr_kind_filename = os.path.join(self.pv_it_dir, hash_directory, 'kind.txt')
+                with open(special_expr_kind_filename, 'w') as kindFile:
+                    kindFile.write(expr_address[0])                
         filename = os.path.join(self.pv_it_dir, hash_directory, 'expr.ipynb')
         if not needs_rewriting and os.path.isfile(filename):
             return filename # return the existing expression notebook file
@@ -885,7 +891,7 @@ class ContextStorage:
                 # if it is a special expression in a context, 
                 # we want to be able to address it as such.
                 exprAddress = Expression.contexts[expr].specialExprAddress(expr)
-                namedSubExprAddresses[expr] = exprAddress
+                namedSubExprAddresses[expr] = exprAddress[1:]
                 namedItems.setdefault(exprAddress[-1], set()).add(expr)
                 return
             except KeyError:
@@ -1136,6 +1142,20 @@ class ContextStorage:
             expr = expr_class_map[exprClassStr]._make(exprInfo, styles, subExpressions)
             if context is not None and expr not in Expression.contexts:
                 Expression.contexts[expr] = context
+                # see if it is a special expression with an addressable name.
+                # if so, note the address for future reference (in self.specialExpressions)
+                (context, hash_directory) = self._retrieve(expr)
+                pv_it_dir = context._storage.pv_it_dir
+                special_expr_name_filename = os.path.join(pv_it_dir, hash_directory, 'name.txt')
+                special_expr_kind_filename = os.path.join(pv_it_dir, hash_directory, 'kind.txt')
+                if os.path.isfile(special_expr_name_filename):
+                    with open(special_expr_name_filename, 'r') as nameFile:
+                        name = nameFile.read()
+                    print special_expr_kind_filename
+                    if os.path.isfile(special_expr_kind_filename):
+                        with open(special_expr_kind_filename, 'r') as kindFile:
+                            kind = kindFile.read()
+                        context._storage.specialExpressions[expr] = (kind, name)                    
             return expr
         return self._makeExpression(exprId, importFn, exprBuilderFn)
         
@@ -1396,10 +1416,13 @@ class StoredSpecialStmt:
             storage._removeReference(expr_id)
             hash_path = storage._storagePath(expr_id)
             if not os.path.isdir(hash_path):
-                # remove name.txt that marks the stored expression as a special statement
+                # remove name.txt and kind.txt that mark the stored expression as a special statement
                 special_name_file = os.path.join(hash_path, 'name.txt')
                 if os.path.isfile(special_name_file):
                     os.remove(special_name_file)                    
+                special_kind_file = os.path.join(hash_path, 'kind.txt')
+                if os.path.isfile(special_kind_file):
+                    os.remove(special_kind_file)      
                 # remove the "special" expression notebook 
                 expr_notebook = os.path.join(hash_path, 'expr.ipynb')
                 if os.path.isfile(expr_notebook):
