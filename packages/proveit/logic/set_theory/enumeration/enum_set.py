@@ -21,8 +21,8 @@ class Set(Operation):
         return EnumNonmembership(element, self)
 
     def string(self, **kwargs):
-        return '{' + ExprList(self.elements).string(fence=False) + '}'
+        return '{' + self.elements.string(fence=False) + '}'
     
     def latex(self, **kwargs):
-        return r'\left\{' + ExprList(self.elements).latex(fence=False) + r'\right\}'        
+        return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'        
 
