@@ -56,7 +56,9 @@ class Lambda(Expression):
         for requirement in self.body.getRequirements():
             if not self.parameterVarSet.isdisjoint(requirement.freeVars()):
                 raise LambdaError("Cannot generate a Lambda expression with parameter variables involved in Lambda body requirements: " + str(requirement))
-        Expression.__init__(self, ['Lambda'], [self.parameter_or_parameters, self.body, self.conditions], styles=styles, requirements=requirements)
+        sub_exprs = [self.parameter_or_parameters, self.body]
+        if len(self.conditions)>0: sub_exprs.append(self.conditions)
+        Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles, requirements=requirements)
         
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
@@ -64,7 +66,11 @@ class Lambda(Expression):
             raise ValueError("Expecting Lambda coreInfo to contain exactly one item: 'Lambda'")
         if subClass != Lambda: 
             raise MakeNotImplemented(subClass)
-        parameters, body, conditions = subExpressions
+        if len(subExpressions)==3:
+            parameters, body, conditions = subExpressions
+        else:
+            parameters, body = subExpressions
+            conditions = tuple()
         return Lambda(parameters, body, conditions).withStyles(**styles)
     
     def mapped(self, *args):
