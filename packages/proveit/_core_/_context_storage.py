@@ -1151,11 +1151,9 @@ class ContextStorage:
                 if os.path.isfile(special_expr_name_filename):
                     with open(special_expr_name_filename, 'r') as nameFile:
                         name = nameFile.read()
-                    print special_expr_kind_filename
-                    if os.path.isfile(special_expr_kind_filename):
-                        with open(special_expr_kind_filename, 'r') as kindFile:
-                            kind = kindFile.read()
-                        context._storage.specialExpressions[expr] = (kind, name)                    
+                    with open(special_expr_kind_filename, 'r') as kindFile:
+                        kind = kindFile.read()
+                    context._storage.specialExpressions[expr] = (kind, name)                    
             return expr
         return self._makeExpression(exprId, importFn, exprBuilderFn)
         

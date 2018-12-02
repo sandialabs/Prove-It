@@ -27,7 +27,7 @@ class ExprType(type):
 class Expression:
     __metaclass__ = ExprType
     
-    # set of expression (style_id, Expression) pairs for which __repr_html__ has been called this session:
+    # set of expression (style_id, Expression) pairs for which _repr_html_ has been called this session:
     displayed_expression_styles = set() 
     
     # map expression to contexts (for expressions that "belong" to a Context)
