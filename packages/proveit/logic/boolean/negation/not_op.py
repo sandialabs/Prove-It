@@ -80,9 +80,9 @@ class Not(Operation):
         '''
         from ._theorems_ import notT, notF # load in truth-table evaluations
         from proveit.logic.boolean._common_ import TRUE, FALSE
-        from proveit.logic.boolean.negation._axioms_ import falsifiedNegationIntro
-        if self.operand == TRUE: return notT
-        if self.operand == FALSE: return notF
+        from proveit.logic.boolean.negation._theorems_ import falsifiedNegationIntro
+        if self.operand == TRUE and notT.isUsable(): return notT
+        if self.operand == FALSE and notF.isUsable(): return notF
         opValue = self.operand.evaluation(assumptions=assumptions).rhs
         if opValue == TRUE:
             # evaluate to FALSE via falsifiedNegationIntro
@@ -154,9 +154,9 @@ class Not(Operation):
         From not(not(A)), derive and return A.
         Note, see Equals.deriveViaBooleanEquality for the reverse process.
         '''
-        from ._theorems_ import fromDoubleNegation
+        from ._axioms_ import doubleNegationElim
         if isinstance(self.operand, Not):
-            return fromDoubleNegation.specialize({A:self.operand.operand}, assumptions=assumptions)
+            return doubleNegationElim.specialize({A:self.operand.operand}, assumptions=assumptions)
         raise ValueError("deriveViaDoubleNegation does not apply to " + str(self) + " which is not of the form not(not(A))")
 
     def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
@@ -164,10 +164,10 @@ class Not(Operation):
         Prove and return self of the form not(not(A)) assuming A.
         Also see version in NotEquals for A != FALSE.
         '''
-        from ._theorems_ import toDoubleNegation
+        from ._axioms_ import doubleNegationIntro
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
-            return toDoubleNegation.specialize({A:stmt}, assumptions=assumptions)
+            return doubleNegationIntro.specialize({A:stmt}, assumptions=assumptions)
 
     def concludeViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
         r'''
