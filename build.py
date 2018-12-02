@@ -40,6 +40,7 @@ execute_processor = ExecutePreprocessor(timeout=1000)
 # regular expression for finding 'a' html tags; trivially adapted from
 # http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
 atag_re = r"""<a((\s+\w+(\s*=\s*(?:".*?"|'.*?'|[\^'">\s]+))?)+\s*|\s*)/?>"""
+imgtag_re = r"""<img((\s+\w+(\s*=\s*(?:".*?"|'.*?'|[\^'">\s]+))?)+\s*|\s*)/?>"""
 
 
 """
@@ -75,6 +76,11 @@ class ProveItHTMLPreprocessor(Preprocessor):
     consolidate style information.
     '''
     
+    def __init__(self, strip_links=False, make_images_inline=False):
+        self.strip_links = strip_links
+        self.make_images_inline = make_images_inline
+        self.path = '.'
+    
     def _process_atags(self, text):
         '''
         Search the text for html a-tags of the ProveItLink class.
@@ -101,10 +107,14 @@ class ProveItHTMLPreprocessor(Preprocessor):
                     if atag[-2:] != '/>':
                         raise Exception("Expecting '/>' at end of remade xml a-tag")
                     atag = atag[:-2] + '>' # remove the / before >
-            new_text += atag
+            if not self.strip_links:
+                new_text += atag
             last_pos = atag_match.end()
         new_text += text[last_pos:]
-        return new_text
+        if self.strip_links:
+            return re.sub('</a>', '', new_text) # strip the </a>'s as well as the <a ...>'s
+        else:
+            return new_text
 
     def _remove_tags(self, text):
         '''
@@ -133,6 +143,29 @@ class ProveItHTMLPreprocessor(Preprocessor):
         return revised_text
     """
     
+    def _inline_images(self, text):
+        '''
+        Convert imported images to inline pngs.
+        '''
+        new_text = ''
+        last_pos = 0
+        text = str(text)
+        for imgtag_match in re.finditer(imgtag_re, text):
+            imgtag = text[imgtag_match.start():imgtag_match.end()]
+            #print imgtag
+            new_text += text[last_pos:imgtag_match.start()]
+            # parse the img tag with a xml parser
+            imgtag_root = lxml.etree.fromstring(imgtag)
+            if 'src' in imgtag_root.attrib:
+                png = open(os.path.join(self.path, imgtag_root.attrib['src']), 'rb').read() 
+                imgtag_root.attrib['src'] = "data:image/png;base64,%s"%base64.b64encode(png)
+                imgtag = lxml.etree.tostring(imgtag_root)
+            #print imgtag
+            new_text += imgtag
+            last_pos = imgtag_match.end()
+        new_text += text[last_pos:]
+        return new_text
+        
     def preprocess(self, nb, resources):
         new_cells = []
         empty_cells = [] # skip empty cells at the end for a cleaner look
@@ -154,6 +187,9 @@ class ProveItHTMLPreprocessor(Preprocessor):
                         if 'data' in output and 'text/html' in output.data:
                             # process a-tags in html output
                             output.data['text/html'] = self._process_atags(output.data['text/html'])
+                            if self.make_images_inline:
+                                # make all images inline
+                                output.data['text/html'] = self._inline_images(output.data['text/html'])                                
             if len(empty_cells) > 0:
                 # fill in empty cells which are not at the end
                 new_cells.extend(empty_cells)
@@ -194,21 +230,30 @@ def generate_css_if_missing(path):
         with open(css_filename, 'wt') as f:
             f.write('@import url("../notebook.css")\n')
 
-def exportToHTML(notebook_path, nb=None):
+def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=False):
     '''
     Export the notebook to html provided the notebook path.
     The notebook object (nb) may be provided, or it will be
     read in from the file.
     '''
-    if nb is None:
-        # read in if it wasn't provided
-        with open(notebook_path) as f:
-            nb = nbformat.read(f, as_version=4)
-    # export to HTML
-    (body, resources) = html_exporter.from_notebook_node(nb)
-    with open(os.path.splitext(notebook_path)[0] + '.html', 'wt') as f:
-        f.write(body)
-    generate_css_if_missing(os.path.split(notebook_path)[0]) # add notebook.css if needed
+    orig_strip_links = html_exporter.preprocessors[0].strip_links
+    orig_make_images_inline = html_exporter.preprocessors[0].make_images_inline
+    try:
+        html_exporter.preprocessors[0].strip_links = strip_links
+        html_exporter.preprocessors[0].make_images_inline = make_images_inline
+        html_exporter.preprocessors[0].path = os.path.split(notebook_path)[0]
+        if nb is None:
+            # read in if it wasn't provided
+            with open(notebook_path) as f:
+                nb = nbformat.read(f, as_version=4)
+        # export to HTML
+        (body, resources) = html_exporter.from_notebook_node(nb)
+        with open(os.path.splitext(notebook_path)[0] + '.html', 'wt') as f:
+            f.write(body)
+        generate_css_if_missing(os.path.split(notebook_path)[0]) # add notebook.css if needed
+    finally:
+        html_exporter.preprocessors[0].strip_links = orig_strip_links
+        html_exporter.preprocessors[0].make_images_inline = orig_make_images_inline # revert back to what it was
 
 def executeAndExportNotebook(notebook_path):
     '''
@@ -346,21 +391,30 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_demo
         """
         
         # execute the commons notebooks first, and do this twice to work out inter-dependencies
-        for _ in xrange(2): 
-            for context_path in context_paths:
-                #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-                executeAndExportNotebook(os.path.join(context_path, '_common_.ipynb'))
-            
+        for context_path in context_paths:
+            #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
+            executeNotebook(os.path.join(context_path, '_common_.ipynb'))
+        # the second time we'll export to html
+        for context_path in context_paths:
+            #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
+            executeAndExportNotebook(os.path.join(context_path, '_common_.ipynb'))
+                    
         # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the contexts.
         # The order does not matter assuming these expression constructions
         # do not depend upon other axioms or theorems (but possibly common expressions).
-        for _ in xrange(2): # do this twice to get rid of extraneous information about adding/removing from database
-            for context_path in context_paths:
-                #revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
-                #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
-                executeAndExportNotebook(os.path.join(context_path, '_axioms_.ipynb'))
-                executeAndExportNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
-    
+        # do this twice to get rid of extraneous information about adding/removing from database
+        for context_path in context_paths:
+            #revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
+            #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
+            executeNotebook(os.path.join(context_path, '_axioms_.ipynb'))
+            executeNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
+        # the second time we'll export to html
+        for context_path in context_paths:
+            #revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
+            #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
+            executeAndExportNotebook(os.path.join(context_path, '_axioms_.ipynb'))
+            executeAndExportNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
+        
     if not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the contexts.
         proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
@@ -421,7 +475,7 @@ def build(context_paths, all_paths, just_execute_proofs=False, just_execute_demo
                                 # execute the expr.ipynb notebook
                                 executeAndExportNotebook(expr_notebook)
                                 executed_hash_paths.add(hash_path) # done
-                        # let's always execute the dependencies notebook for now to be safes
+                        # always execute the dependencies notebook for now to be safes
                         dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
                         if os.path.isfile(dependencies_notebook):
                             # execute the dependencies.ipynb notebook
