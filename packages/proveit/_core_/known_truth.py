@@ -61,9 +61,8 @@ class _ExprProofs:
 
             
 class KnownTruth:
-    # lookup_dict maps Expressions to lists of KnownTruths for proving the 
-    # Expression under various assumptions.  Excludes redundancies in which one set
-    # of assumptions subsumes another.
+    # lookup_dict maps each Expression to a set of KnownTruths for proving the 
+    # Expression under various assumptions.
     lookup_dict = dict()
     
     # Call the beginProof method to begin a proof of a Theorem.
@@ -365,8 +364,8 @@ class KnownTruth:
     
         # Check to see if the new proof is applicable to any other KnownTruth.
         # It can replace an old proof if it became unusable or if the newer one uses fewer steps.
-        expr_known_truths = KnownTruth.lookup_dict.setdefault(self.expr, [])
-        expr_known_truths.append(self)
+        expr_known_truths = KnownTruth.lookup_dict.setdefault(self.expr, set())
+        expr_known_truths.add(self)
         for expr_known_truth in expr_known_truths:
             # Is 'proof' applicable to 'expr_known_truth'?
             if newproof.provenTruth.assumptionsSet.issubset(expr_known_truth.assumptionsSet):
