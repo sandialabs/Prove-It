@@ -32,11 +32,11 @@ class Mult(Operation):
             raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
         return thm.specialize({xMulti:self.operands}, assumptions=assumptions)
     
-    def notEquals(self, rhs, assumptions=USE_DEFAULTS):
+    def notEqual(self, rhs, assumptions=USE_DEFAULTS):
         from ._theorems_ import multNotEqZero
         if rhs == zero:
             return multNotEqZero.specialize({xMulti:self.operands}, assumptions=assumptions)
-        raise ProofFailure(Equals(self, zero), assumptions, "'notEquals' only implemented for a right side of zero")
+        raise ProofFailure(Equals(self, zero), assumptions, "'notEqual' only implemented for a right side of zero")
     
     def simplification(self, assumptions=USE_DEFAULTS):
         '''
