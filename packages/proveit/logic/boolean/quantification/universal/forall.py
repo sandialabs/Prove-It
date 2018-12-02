@@ -56,9 +56,9 @@ class Forall(OperationOverInstances):
             while isinstance(proven_inst_expr.proof(), Generalization):
                 instanceVarLists.append(proven_inst_expr.instanceVars)
                 conditions += proven_inst_expr.conditions
-                proven_inst_expr = proven_inst_expr.proof().requiredTruths()[0]
+                proven_inst_expr = proven_inst_expr.proof().requiredTruths[0]
             return proven_inst_expr.generalize(forallVarLists=instanceVarLists, conditions=conditions)
-        except:
+        except ProofFailure:
             if hasFoldAsForall:
                 raise ProofFailure(self, assumptions, "Unable to conclude automatically; both the 'foldAsForall' method on the domain and automated generalization failed.")
             else:
