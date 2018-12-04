@@ -350,6 +350,9 @@ class Axiom(Proof):
         self.context = context
         self.name = name
 
+    def _generate_step_info(self, objectRepFn):
+        return self.stepType() + ':{' + str(self) + '}'
+    
     def stepType(self):
         return 'axiom'
     
@@ -395,6 +398,9 @@ class Theorem(Proof):
         Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
         Theorem.allTheorems.append(self)
 
+    def _generate_step_info(self, objectRepFn):
+        return self.stepType() + ':{' + str(self) + '}'
+    
     def stepType(self):
         return 'theorem'
 
@@ -404,6 +410,9 @@ class Theorem(Proof):
     def __str__(self):
         return self.context.name + '.' + self.name
     
+    def __repr__(self):
+        return self.context.name + '.' + self.name
+        
     def containingPrefixes(self):
         '''
         Yields all containing context names and the full theorem name.
@@ -524,7 +533,12 @@ class Theorem(Proof):
         if KnownTruth.theoremBeingProven is None:
             self._meaningData._unusableProof = None # Nothing being proven, so all Theorems are usable
             return
-        if self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
+        if self.provenTruth==KnownTruth.theoremBeingProven.provenTruth:
+            # Note that two differently-named theorems for the same thing may exists in
+            # order to show an alternate proof.  In that case, we want to disable
+            # the other alternates as well so we will be sure to generate the new proof.
+            self.disable()
+        elif self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
             if self._storedTheorem().presumes(str(KnownTruth.theoremBeingProven)):
                 raise CircularLogic(KnownTruth.theoremBeingProven, self)
             self._meaningData._unusableProof = None # This Theorem is usable because it is being presumed.

@@ -181,7 +181,7 @@ class KnownTruth:
     def __hash__(self):
         return self._meaning_id
         
-    def beginProof(self, presuming=tuple()):
+    def beginProof(self, theorem, presuming=tuple()):
         '''
         Begin a proof for a theorem.  Only use other theorems that are in 
         the presuming list of theorems/packages or theorems that are required,
@@ -193,9 +193,10 @@ class KnownTruth:
         if KnownTruth.theoremBeingProven is not None:
             raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.")
         from proof import Theorem
-        theorem = self.proof() # the trivial proof-by-theorem; not yet the actual, desired proof of the theorem
         if not isinstance(theorem, Theorem):
             raise TypeError('Only begin a proof for a Theorem')
+        if theorem.provenTruth != self:
+            raise ValueError('Inconsistent theorem for the KnownTruth in beginProof call')
         theorem.recordPresumingInfo(presuming)
         print "Recorded 'presuming' information"
                 

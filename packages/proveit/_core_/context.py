@@ -22,7 +22,7 @@ the theorem proofs, and it stores theorem proof dependencies.
 
 import os
 import json
-from ._context_storage import ContextStorage
+from ._context_storage import ContextStorage, relurl
 
 class Context:
     '''
@@ -126,8 +126,8 @@ class Context:
         context_html_segments = []
         for k, context_name_segment in enumerate(context_name_segments):      
             path = os.path.join(*([self._storage.directory] + ['..']*(len(context_name_segments) - k - 1) + ['_context_.ipynb']))
-            relpath = os.path.relpath(path, start=from_directory)
-            context_html_segments.append(r'<a class=\"ProveItLink\" href=\"%s\">%s</a>'%(json.dumps(relpath).strip('"'), context_name_segment))
+            url_link = relurl(path, start=from_directory)
+            context_html_segments.append(r'<a class=\"ProveItLink\" href=\"%s\">%s</a>'%(json.dumps(url_link).strip('"'), context_name_segment))
         return '.'.join(context_html_segments)
     
     def isRoot(self):
@@ -371,7 +371,8 @@ class Context:
     
     def getStoredExpr(self, expr_id):
         '''
-        Return the stored Expression with the given id (hash string).
+        Return the stored Expression with the given id (hash string) along
+        with the relative url to its png.
         '''
         return self._storage.makeExpression(expr_id)
     

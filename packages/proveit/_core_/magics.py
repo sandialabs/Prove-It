@@ -14,6 +14,7 @@ import new
 import re
 import os
 import sys
+from ._context_storage import relurl
 
 class AssignmentBehaviorModifier:
     def __init__(self):
@@ -254,7 +255,8 @@ class ProveItMagic(Magics):
         # You must call the parent constructor
         super(ProveItMagic, self).__init__(shell)
         self.kind = None
-        self.definitions = dict()
+        self.definitions = dict() # map name to expression
+        self.expr_names = dict() # map expression to names
         self.keys = [] # the keys of the definitions in the order they appear
         self.lowerCaseNames = set()
         self.context = None 
@@ -279,7 +281,7 @@ class ProveItMagic(Magics):
             if len(contexts)==0: return ''
             html = '<ul>\n'        
             for context in contexts:
-                href = os.path.relpath(os.path.join(context.getPath(), '_context_.ipynb'))
+                href = relurl(os.path.join(context.getPath(), '_context_.ipynb'))
                 html += '<li><a class="ProveItLink" href="%s">%s</a></li>\n'%(href, context.name)
                 html += generateContents(list(context.getSubContexts()))
             return html + '</ul>\n'
@@ -473,10 +475,11 @@ class ProveItMagic(Magics):
             print "Format: %begin_proof <theorem_name> presuming [<list of theorems / context-names>]"
             return
         args = presuming_str.split(' ', 1)[-1].strip('[]').split(',')
-        theorem_truth = Context('..').getTheorem(theorem_name).provenTruth
+        proving_theorem = Context('..').getTheorem(theorem_name)
+        proving_theorem_truth = proving_theorem.provenTruth
         print "Beginning proof of", theorem_name
         presuming = [arg.strip() for arg in args if arg.strip() != '']
-        # The list of theorems/context-names may be composed of full-path strings containing '.'s
+        # The list of 'presuming' theorems/context-names may be composed of full-path strings containing '.'s
         # or may be actual theorem variables defined in the IPython sesson.  The latter
         # instances will be converted to strings.
         for k, arg in enumerate(list(presuming)):
@@ -484,13 +487,13 @@ class ProveItMagic(Magics):
                 knownTruth = self.shell.user_ns[arg]
                 if not isinstance(knownTruth, KnownTruth) or not isinstance(knownTruth.proof(), Theorem):
                     raise ValueError("Presuming list must be composed of full-path theorem/context-name containing '.'s or be KnownTruth variable representing a Theorem")
-                theorem = knownTruth.proof()
-                presuming[k] = str(theorem) # full path of theorem 
-        begin_proof_result = theorem_truth.beginProof(presuming)
+                thm = knownTruth.proof()
+                presuming[k] = str(thm) # full path of theorem 
+        begin_proof_result = proving_theorem_truth.beginProof(proving_theorem, presuming)
         if isinstance(begin_proof_result, Expression):
             # assign the theorem name to the theorem expression
             # and display this assignment
-            theorem_expr = theorem_truth.expr
+            theorem_expr = proving_theorem_truth.expr
             self.shell.user_ns[theorem_name] = theorem_expr
             return Assignments([theorem_name], [theorem_expr], beginningProof=True)
     
@@ -608,10 +611,17 @@ class Assignments:
         self.names = list(names)
         self.rightSides = processedRightSides
         for name, rightSide in zip(names, rightSides):
+            if name in proveItMagic.definitions:
+                prev_def = proveItMagic.definitions[name]
+                if rightSide != prev_def:
+                    proveItMagic.expr_names[prev_def].remove(name)
+                    if len(proveItMagic.expr_names[prev_def]) == 0:
+                        proveItMagic.expr_names.pop(prev_def)
             if rightSide is None:
                 # unsetting a defintion
                 proveItMagic.lowerCaseNames.remove(name.lower())
-                proveItMagic.definitions.remove(name)
+                prev_def = proveItMagic.definitions[name]
+                proveItMagic.definitions.pop(name)
                 proveItMagic.keys.remove(name)
                 continue
             if proveItMagic.kind == 'axioms' or proveItMagic.kind == 'theorems':
@@ -626,6 +636,7 @@ class Assignments:
                         raise ProveItMagicFailure("%s names must be unique regardless of capitalization"%proveItMagic.kind[:-1])
             proveItMagic.lowerCaseNames.add(name.lower())
             proveItMagic.definitions[name] = rightSide
+            proveItMagic.expr_names.setdefault(rightSide, []).append(name)
             proveItMagic.keys.append(name)
     
     def html_line(self, name, rightSide):
@@ -645,13 +656,19 @@ class Assignments:
             rightSideStr = str(rightSide)
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
-            proofNotebook = proveItMagic.context.proofNotebook(name, expr)
-            lhs_html = '<a class="ProveItLink" href="%s">%s</a>'%(os.path.relpath(proofNotebook), lhs_html)
+            proof_notebook_relurl = proveItMagic.context.proofNotebook(name, expr)
+            lhs_html = '<a class="ProveItLink" href="%s">%s</a>'%(proof_notebook_relurl, lhs_html)
         html = '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:
             expr_notebook_path = proveItMagic.context.expressionNotebook(expr)
             dependencies_notebook_path = os.path.join(os.path.split(expr_notebook_path)[0], 'dependencies.ipynb')
-            html += '(see <a class="ProveItLink" href="%s">dependencies</a>)'%(os.path.relpath(dependencies_notebook_path))
+            html += '(see <a class="ProveItLink" href="%s">dependencies</a>)'%(relurl(dependencies_notebook_path))
+        if len(proveItMagic.expr_names[rightSide])>1 and (kind in ('axiom', 'theorem', 'common')):
+            prev = proveItMagic.expr_names[rightSide][-2]
+            if kind == 'theorem':
+                html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)'%(prev, prev)
+            else:
+                print 'WARNING: Duplicate of', prev
         return html
 
     def _repr_html_(self):

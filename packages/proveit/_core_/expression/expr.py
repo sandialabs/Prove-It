@@ -8,6 +8,7 @@ from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaningData, styleData
 import re
 import os
+import urllib
 
 class ExprType(type):
     '''
@@ -561,12 +562,12 @@ class Expression:
         if context is None:
             context = Context()
         if not hasattr(self._styleData,'png'):
-            self._styleData.png, png_path = context._stored_png(self, self.latex(), self._config_latex_tool)
-            self._styleData.png_path = os.path.relpath(png_path)
-        if self._styleData.png_path is not None:
-            exprNotebookPath = context.expressionNotebook(self, unofficialNameKindContext)
-            html = '<a class="ProveItLink" href="' + os.path.relpath(exprNotebookPath) + '">'
-            html += '<img src="' + self._styleData.png_path + r'" style="display:inline;vertical-align:middle;" />'
+            self._styleData.png, png_url = context._stored_png(self, self.latex(), self._config_latex_tool)
+            self._styleData.png_url = png_url
+        if self._styleData.png_url is not None:
+            expr_notebook_rel_url = context.expressionNotebook(self, unofficialNameKindContext)
+            html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
+            html += '<img src="' + self._styleData.png_url + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
         # record as a "displayed" (style-specific) expression
         Expression.displayed_expression_styles.add((self._style_id, self)) 

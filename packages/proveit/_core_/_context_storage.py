@@ -5,6 +5,13 @@ import importlib
 import itertools
 import json
 import re
+import urllib
+
+def relurl(path, start='.'):
+    '''
+    Return the relative path as a url
+    '''
+    return urllib.pathname2url(os.path.relpath(path, start))
 
 class ContextStorage:
     '''
@@ -39,7 +46,7 @@ class ContextStorage:
             # need to add the path
             add_path = True # may set to False below
             try:
-                if os.path.relpath(os.path.split(importlib.import_module(self.name).__file__)[0], self.directory) == '.':
+                if relurl(os.path.split(importlib.import_module(self.name).__file__)[0], self.directory) == '.':
                     add_path = False
             except:
                 pass # keep add_path as True
@@ -381,7 +388,7 @@ class ContextStorage:
         '''
         Find the expr.png file for the stored Expression.
         Create it if it did not previously exist using _generate_png.
-        Return the png data and path where the png is stored as a tuple.
+        Return the png data and relative url where the png is stored as a tuple.
         '''
         from proveit import Expression
         if expr in Expression.contexts and Expression.contexts[expr] != self.context:
@@ -401,7 +408,7 @@ class ContextStorage:
                     if os.path.isfile(png_path):                        
                         # png file exists.  read and return the data.
                         with open(png_path, 'rb') as png_file:
-                            return png_file.read(), png_path
+                            return png_file.read(), relurl(png_path)
         # store the latex string in the latex file
         with open(latex_path, 'wb') as latex_file:
             latex_file.write(latex)
@@ -409,7 +416,7 @@ class ContextStorage:
         png = self._generate_png(latex, configLatexToolFn)
         with open(png_path, 'wb') as png_file:
             png_file.write(png)
-        return png, png_path
+        return png, relurl(png_path)
     
     def _generate_png(self, latex, configLatexToolFn):
         '''
@@ -699,7 +706,7 @@ class ContextStorage:
                     kindFile.write(expr_address[0])                
         filename = os.path.join(self.pv_it_dir, hash_directory, 'expr.ipynb')
         if not needs_rewriting and os.path.isfile(filename):
-            return filename # return the existing expression notebook file
+            return relurl(filename) # return the existing expression notebook file
         elif os.path.isfile(filename):
             special_name = expr_address[-1].split('.')[0] # strip of ".expr"
             # Store the original version as orig_expr.ipynb.  It will be
@@ -779,7 +786,7 @@ class ContextStorage:
             rel_paths = set()
             if needs_local_path:
                 # go up 2 levels, where the local directory is
-                rel_paths.add(os.path.relpath('.', start=os.path.join(self.pv_it_dir, hash_directory)))
+                rel_paths.add(relurl('.', start=os.path.join(self.pv_it_dir, hash_directory)))
             if needs_root_path:
                 # go up enough levels to the context root;
                 # 2 levels to get out of the '__pv_it' folder and at least
@@ -861,7 +868,7 @@ class ContextStorage:
             with open(dependencies_filename, 'w') as dependencies_file:
                 dependencies_file.write(nb)
             
-        return filename # return the new proof file
+        return relurl(filename) # return the relative url to the new proof file
         
     def _exprBuildingPrerequisites(self, expr, exprClassesAndConstructors, unnamedSubExprOccurences, namedSubExprAddresses, namedItems, isSubExpr=True):
         '''
@@ -1014,7 +1021,7 @@ class ContextStorage:
     
     def proofNotebook(self, theorem_name, expr):
         '''
-        Return the path of the proof notebook, creating it if it does not
+        Return the relative url to the proof notebook, creating it if it does not
         already exist.
         '''
         context, hash_directory = self._retrieve(expr)
@@ -1039,7 +1046,7 @@ class ContextStorage:
                     os.remove(filename) 
                     with open(filename, 'w') as proof_notebook:
                         proof_notebook.write(nb)
-                return filename
+                return relurl(filename)
         if not os.path.isdir(proofs_path):
             # make the directory for the _proofs_
             os.makedirs(proofs_path)            
@@ -1047,7 +1054,7 @@ class ContextStorage:
         # write the proof file
         with open(filename, 'w') as proof_notebook:
             proof_notebook.write(nb)
-        return filename # return the new proof file
+        return relurl(filename) # return the new proof file
     
     def _generateGenericProofNotebook(self, theorem_name):
         '''
@@ -1123,7 +1130,7 @@ class ContextStorage:
         while os.path.isfile(filename_base + "~stashed~%d.ipynb"%num):
             num += 1
         new_filename = filename_base + "~stashed~%d.ipynb"%num
-        print "Stashing %s to %s in case it is needed."%(os.path.relpath(filename), os.path.relpath(new_filename))
+        print "Stashing %s to %s in case it is needed."%(relurl(filename), relurl(new_filename))
         os.rename(filename, new_filename)
         
     def makeExpression(self, exprId):
@@ -1512,7 +1519,7 @@ class StoredAxiom(StoredSpecialStmt):
         '''
         Return the link to the axiom definition in the _axioms_ notebook.
         '''
-        axioms_notebook_link = os.path.relpath(os.path.join(self.context.getPath(), '_axioms_.ipynb'))
+        axioms_notebook_link = relurl(os.path.join(self.context.getPath(), '_axioms_.ipynb'))
         return axioms_notebook_link + '#' + self.name
 
 class StoredTheorem(StoredSpecialStmt):
@@ -1527,7 +1534,7 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         Return the link to the theorem's proof notebook.
         '''
-        return os.path.relpath(os.path.join(self.context.getPath(), '_proofs_', self.name + '.ipynb'))
+        return relurl(os.path.join(self.context.getPath(), '_proofs_', self.name + '.ipynb'))
 
     def remove(self, keepPath=False):
         if self.hasProof():
