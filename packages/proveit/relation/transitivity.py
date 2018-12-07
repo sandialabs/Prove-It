@@ -420,14 +420,20 @@ class TransitiveRelation(Operation):
     
             # If the left and right items are equal, record the equivalence.
             if all(relation.operator==Equals._operator_ for relation in chain):
-                eq_set = eq_sets[left_item] | eq_sets[right_item] # join equivalent sets
-                for item in eq_set: eq_sets[item] = eq_set # make all the equivalent items point to the same equivalence set
-                # if any of the eq_set items were eliminated from the left_most_candidates, eliminate all of them
-                if not eq_set.issubset(left_most_candidates):
-                    left_most_candidates.difference_update(eq_set)
-                else:
-                    # only keep one of the left-most candidates (an arbitrarily chosen representative)
-                    left_most_candidates.difference_update(list(eq_set)[1:])
+                if eq_sets[left_item] != eq_sets[right_item]: 
+                    # joining two equivalent sets that were not previously known to be equivalent.
+                    eq_set = eq_sets[left_item] | eq_sets[right_item] # join equivalent sets
+                    for item in eq_set: eq_sets[item] = eq_set # make all the equivalent items point to the same equivalence set
+                    # if any of the eq_set items were eliminated from the left_most_candidates, eliminate all of them
+                    left_most_candidates_in_eq_set = eq_set.intersection(left_most_candidates)
+                    if len(left_most_candidates_in_eq_set)==2:
+                        # only keep one of the left-most candidates (an arbitrarily chosen representative)
+                        left_most_candidates.difference_update(list(eq_set)[1:])
+                    else:
+                        # one (or both) of the two equivalent sets being joined was eliminated from the left_most_candidates,
+                        # so remove all of them in this new equivalence set.
+                        assert len(left_most_candidates_in_eq_set)<=1
+                        left_most_candidates.difference_update(eq_set)
             else:
                 # add new item partnership to left_partners, and right_partners
                 left_partners.setdefault(right_item, set()).add(left_item)
@@ -443,7 +449,6 @@ class TransitiveRelation(Operation):
                     left_most_candidates.difference_update(eq_right_items)
                     if len(left_most_candidates)==0:
                         raise TransitivityException(None, assumptions, "Transitivity cycle detected implying equalities; must prove equalities before sorting items: " + str(items))
-                        
             while len(left_most_candidates)==1:
                 # We have one uncontested left-most candidate assuming no cycles outside of equivalence sets
                 # (with such cycles, we'll catch them eventually and raise an exception).
@@ -472,16 +477,13 @@ class TransitiveRelation(Operation):
                 
                 while len(to_process) > 0:
                     next_candidate = to_process.pop()
-                    #print 'next_candidate', next_candidate
                     if next_candidate in already_processed: 
                         continue #  we've dealt with that one already
                     left_most_candidates.add(next_candidate) # add as a candidate (may be temporary)
                     eq_next_candidates = eq_sets[next_candidate]
                     for eq_next_candidate in eq_next_candidates:
-                        #print 'eq_next_candidate', eq_next_candidate
                         # process the item(s) to the left of 'next_candidate' (or any of the equivalent items)
                         candidate_left_partners = left_partners[eq_next_candidate] if eq_next_candidate in left_partners else []        
-                        #print 'candidate_left_partners', candidate_left_partners
                         if not processing_everything: # don't bother updating to_process if we are already processing everything
                             num_to_process_insertions += len(candidate_left_partners)
                             if num_to_process_insertions > len(remaining_items):
@@ -510,7 +512,7 @@ class TransitiveRelation(Operation):
             # special case of only one unique element
             sorted_items.append(left_most_candidates.pop())
         
-        if len(left_most_candidates) > 0:
+        if len(remaining_items) > 0:
             raise TransitivityException(None, assumptions, "Insufficient known transitive relations to sort the provided items: " + str(items))
         
         orig_order = {item:k for k, item in enumerate(items)}    
