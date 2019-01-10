@@ -10,25 +10,25 @@ class Neg(Operation):
         Operation.__init__(self, Neg._operator_, A)
     
     def _closureTheorem(self, numberSet):
-        import theorems
+        import _theorems_
         if numberSet == Complexes:
-            return theorems.negComplexClosure
+            return _theorems_.negComplexClosure
         elif numberSet == Reals:
-            return theorems.negRealClosure
+            return _theorems_.negRealClosure
         elif numberSet == Integers:
-            return theorems.negIntClosure
+            return _theorems_.negIntClosure
 
     def _negativeTheorem(self):
-        import theorems
-        return theorems.negatedPositiveIsNegative
+        import _theorems_
+        return _theorems_.negatedPositiveIsNegative
 
     def _positiveTheorem(self):
-        import theorems
-        return theorems.negatedNegativeIsPositive
+        import _theorems_
+        return _theorems_.negatedNegativeIsPositive
 
     def _notEqZeroTheorem(self):
-        import theorems
-        return theorems.negNotEqZero
+        import _theorems_
+        return _theorems_.negNotEqZero
     
     def asInt(self):
         '''
@@ -43,7 +43,7 @@ class Neg(Operation):
         derive and return this Neg expression equated with the simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        from theorems import negNeg, negZero
+        from _theorems_ import negNeg, negZero
         
         if isinstance(self.operand, Neg):
             deduceInComplexes(self.operand.operand, assumptions)
