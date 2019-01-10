@@ -165,7 +165,8 @@ class Proof:
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
         '''
-        # Skip the step type which is in the beginning and followed by a ':'
+        # Skip the step type (and axiom/theorem name if it is either of those types)
+        # which is in the beginning and followed by a ':'
         remaining = unique_rep.split(':', 1)[-1]
         # Everything else coming between the punctuation, ';', ':', ',', '{', '}', '[', ']', is a represented object.
         objIds = re.split("\{|\[|,|:|;|\]|\}",remaining) 
@@ -346,12 +347,12 @@ class Axiom(Proof):
             raise ValueError("An axiom 'context' must be a Context object")
         if not isinstance(name, str):
             raise ValueError("An axiom 'name' must be a string")
-        Proof.__init__(self, KnownTruth(expr, expr.getRequirements(), self), [])
         self.context = context
         self.name = name
+        Proof.__init__(self, KnownTruth(expr, expr.getRequirements(), self), [])
 
     def _generate_step_info(self, objectRepFn):
-        return self.stepType() + ':{' + str(self) + '}'
+        return self.stepType() + '_' + str(self) + ':'
     
     def stepType(self):
         return 'axiom'
@@ -399,7 +400,7 @@ class Theorem(Proof):
         Theorem.allTheorems.append(self)
 
     def _generate_step_info(self, objectRepFn):
-        return self.stepType() + ':{' + str(self) + '}'
+        return self.stepType() + '_' + str(self) + ':'
     
     def stepType(self):
         return 'theorem'
