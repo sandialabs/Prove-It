@@ -512,7 +512,7 @@ class TransitiveRelation(Operation):
             # special case of only one unique element
             sorted_items.append(left_most_candidates.pop())
         
-        if len(remaining_items) > 0:
+        if len(unique_items)>1 and len(remaining_items)>0:
             raise TransitivityException(None, assumptions, "Insufficient known transitive relations to sort the provided items: " + str(items))
         
         orig_order = {item:k for k, item in enumerate(items)}    
