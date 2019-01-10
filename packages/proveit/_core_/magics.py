@@ -39,9 +39,10 @@ class AssignmentBehaviorModifier:
             # look for one or more variables on the left side of an assignment
             if re.match("[a-zA-Z_][a-zA-Z0-9_\.]*\s*(,\s*[a-zA-Z_][a-zA-Z0-9_\.]*)*\s*=", last_python_stmt) is not None:
                 lhs, rhs = last_python_stmt.split('=', 1)
-                lhs = lhs.strip(); rhs = rhs.strip()
-                if lhs != 'context' and rhs.find("proveit.Context('.')") != 0:
-                    lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
+                if len(rhs)>0 and rhs[0] != '=': # "==" doesn't count
+                    lhs = lhs.strip(); rhs = rhs.strip()
+                    if lhs != 'context' and rhs.find("proveit.Context('.')") != 0:
+                        lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
             new_raw_cell = '\n'.join(lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
         ipython.run_cell = new.instancemethod(new_run_cell, ipython)
@@ -610,10 +611,10 @@ class Assignments:
             processedRightSides.append(rightSide)
         self.names = list(names)
         self.rightSides = processedRightSides
-        for name, rightSide in zip(names, rightSides):
+        for name, rightSide in zip(names, self.rightSides):
             if name in proveItMagic.definitions:
                 prev_def = proveItMagic.definitions[name]
-                if rightSide != prev_def:
+                if rightSide != prev_def and isinstance(prev_def, Expression):
                     proveItMagic.expr_names[prev_def].remove(name)
                     if len(proveItMagic.expr_names[prev_def]) == 0:
                         proveItMagic.expr_names.pop(prev_def)
@@ -636,14 +637,15 @@ class Assignments:
                         raise ProveItMagicFailure("%s names must be unique regardless of capitalization"%proveItMagic.kind[:-1])
             proveItMagic.lowerCaseNames.add(name.lower())
             proveItMagic.definitions[name] = rightSide
-            proveItMagic.expr_names.setdefault(rightSide, []).append(name)
+            if isinstance(rightSide, Expression):
+                proveItMagic.expr_names.setdefault(rightSide, []).append(name)
             proveItMagic.keys.append(name)
     
     def html_line(self, name, rightSide):
         lhs_html = name
         unofficialNameKindContext = None
-        if proveItMagic.kind in ('axioms', 'theorems', 'common'):
-            kind = proveItMagic.kind
+        kind = proveItMagic.kind
+        if kind in ('axioms', 'theorems', 'common'):
             if kind=='axioms' or kind=='theorems': kind = kind[:-1]
             unofficialNameKindContext = (name, kind, proveItMagic.context)
         rightSideStr, expr = None, None
@@ -662,11 +664,11 @@ class Assignments:
         if self.beginningProof:
             expr_notebook_path = proveItMagic.context.expressionNotebook(expr)
             dependencies_notebook_path = os.path.join(os.path.split(expr_notebook_path)[0], 'dependencies.ipynb')
-            html += '(see <a class="ProveItLink" href="%s">dependencies</a>)'%(relurl(dependencies_notebook_path))
-        if len(proveItMagic.expr_names[rightSide])>1 and (kind in ('axiom', 'theorem', 'common')):
+            html += '(see <a class="ProveItLink" href="%s">dependencies</a>)<br>'%(relurl(dependencies_notebook_path))
+        if (kind in ('axiom', 'theorem', 'common')) and len(proveItMagic.expr_names[rightSide])>1:
             prev = proveItMagic.expr_names[rightSide][-2]
             if kind == 'theorem':
-                html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)'%(prev, prev)
+                html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)<br>'%(prev, prev)
             else:
                 print 'WARNING: Duplicate of', prev
         return html
