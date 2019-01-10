@@ -624,7 +624,16 @@ class KnownTruth:
         '''
         from proveit import Operation, Variable, Lambda, singleOrCompositeExpression
         from proveit.logic import Forall
-        from proof import Specialization, SpecializationFailure
+        from proof import Specialization, SpecializationFailure, ProofFailure
+        
+        if not self.isUsable():
+            # If this KnownTruth is not usable, see if there is an alternate under the
+            # set of assumptions that is usable.
+            try:
+                alternate = self.expr.prove(assumptions, automation=False)
+            except ProofFailure:
+                self.raiseUnusableProof()
+            return alternate.specialize(specializeMap, relabelMap, assumptions)
         
         # if no specializeMap is provided, specialize a single Forall with default mappings (mapping instance variables to themselves)
         if specializeMap is None: specializeMap = dict()
