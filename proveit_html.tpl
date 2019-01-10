@@ -60,6 +60,7 @@ MathJax.Hub.Config({
 <body>
   <div tabindex="-1" id="notebook" class="border-box-sizing">
     <div class="container" id="notebook-container">
+    <a href="{{ resources['up_to_index'] }}../index.html"><img src="{{ resources['up_to_index'] }}../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
 {{ super() }}
     </div>
   </div>
