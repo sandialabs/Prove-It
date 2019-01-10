@@ -6,6 +6,7 @@ from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.context import Context
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaningData, styleData
+import sys
 import re
 import os
 import urllib
@@ -99,18 +100,24 @@ class Expression:
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
-        import sys
         if coreInfo is None: coreInfo = self._coreInfo
         if styles is None and hasattr(self, '_styleData'):
             styles = self._styleData.styles
-        ExprClass = self.__class__
-        context = Context(sys.modules[ExprClass.__module__].__file__)
-        # get the full class path relative to the root context where the class is defined
-        class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
         style_str = ''
         if styles is not None:
             style_str = ';[' + ','.join(style_name + ':' + styles[style_name] for style_name in sorted(styles.keys())) + ']'
-        return class_path + '[' + ','.join(coreInfo) + ']' + style_str + ';[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+        return self._class_path() + '[' + ','.join(coreInfo) + ']' + style_str + ';[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+    
+    def _class_path(self):
+        ExprClass = self.__class__
+        class_module = sys.modules[ExprClass.__module__]
+        if hasattr(class_module, '__file__'):
+            context = Context(class_module.__file__)
+        else:
+            context = Context() # use the current directory if using the main module
+        # get the full class path relative to the root context where the class is defined
+        class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
+        return class_path
 
     @staticmethod
     def _extractExprClass(unique_rep):
@@ -505,11 +512,8 @@ class Expression:
         return safeDummyVar(self)
 
     def safeDummyVars(self, n):
-        from proveit._core_.expression.label.var import safeDummyVar
-        dummyVars = []
-        for _ in range (n):
-            dummyVars.append(safeDummyVar(*([self] + dummyVars)))
-        return dummyVars
+        from proveit._core_.expression.label.var import safeDummyVars
+        return safeDummyVars(n, self)
             
     def evaluation(self, assumptions=USE_DEFAULTS):
         '''

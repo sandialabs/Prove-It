@@ -93,10 +93,10 @@ class ExpressionInfo:
         return self.string()
     
     def _repr_html_(self):
-        from .composite import NamedExprs, Indexed, Iter
+        from .composite import ExprList, ExprTensor, NamedExprs, Indexed, Iter
         from .operation import Operation
         from .lambda_expr import Lambda
-        from .label import Literal
+        from .label import Variable, Literal
         from .expr import Expression
         
         # get the enumerated sub-expressions; parents come before children.
@@ -145,6 +145,7 @@ class ExpressionInfo:
                 sub_expressions += 'base:&nbsp;"%d"<br>'%expr.base
             elif isinstance(expr, Iter):
                 sub_expressions += 'lambda_map:&nbsp;%d<br>'%(expr_num_map[expr.lambda_map])
+                '''
                 if hasattr(expr, 'start_index'): # single index
                     sub_expressions += 'start_index:&nbsp;%d<br>'%(expr_num_map[expr.start_index])
                 else: # multiple indices
@@ -153,15 +154,18 @@ class ExpressionInfo:
                     sub_expressions += 'end_index:&nbsp;%d<br>'%(expr_num_map[expr.end_index])
                 else: # multiple indices
                     sub_expressions += 'end_indices:&nbsp;%d<br>'%(expr_num_map[expr.end_indices])
-            elif isinstance(expr, Literal) and self.show_details:
-                sub_expressions += "<strong>'Literal' details</strong><br>"
-                sub_expressions += 'context:&nbsp;"%s"<br>'% expr.context.name 
-                if len(expr._coreInfo)>4:                
-                    sub_expressions += 'extraCoreInfo:&nbsp;"%s"<br>'%str(expr._coreInfo[4:])    
+                '''
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr] if expr in expr_context_map else None
             html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
+            if self.show_details and expr.__class__ not in (Variable, Literal, Operation, Lambda, Indexed, NamedExprs, ExprList, ExprTensor, Indexed, Iter):
+                # not a core expression so show the actual class when showing the details
+                html += '<tr><td colspan=4 style="text-align:left"><strong>class:</strong> %s</td></tr>\n'%expr._class_path()
+            if self.show_details and isinstance(expr, Literal):
+                html += '<tr><td colspan=4 style="text-align:left"><strong>context:</strong> %s</td></tr>\n'%expr.context.name
+                if len(expr._coreInfo)>4:
+                    html += '<tr><td colspan=4 style="text-align:left"><strong>extraCoreInfo:</strong> %s</td></tr>\n'%str(expr._coreInfo[4:])
         html += '</table>\n'
         return html
     
