@@ -46,7 +46,7 @@ class OrderingSequence(TransitiveSequence):
     r'''
     Base class for the containment relation sequences.  
     Do not construct an object of this class directly!  
-    Instead, use SubsetSequence or SupersetSequence
+    Instead, use LesserSequence or GreaterSequence
     '''
 
     def __init__(self, operators, operands):
