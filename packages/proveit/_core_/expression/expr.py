@@ -96,6 +96,17 @@ class Expression:
         for subExpression in subExpressions: # update Expression.parent_expr_map
             self._styleData.addChild(self, subExpression)
     
+    def _setContext(self, context):
+        '''
+        Assign a Context to this expression and any of its sub-expressions
+        that do not yet have an assigned Context.
+        '''
+        self.context = context
+        Expression.contexts[self] = context
+        for sub_expr in self._subExpressions:
+            if sub_expr not in Expression.contexts:
+                sub_expr._setContext(context)
+    
     def _generate_unique_rep(self, objectRepFn, coreInfo=None, styles=None):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
@@ -458,6 +469,7 @@ class Expression:
         intermediate proofs will be appended to it -- these are requirements
         for the substitution to be valid.
         '''
+        self._checkRelabelMap(relabelMap)
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         else:
@@ -469,6 +481,16 @@ class Expression:
         changed.
         '''
         return self.substituted(exprMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
+    
+    def _checkRelabelMap(self, relabelMap):
+        '''
+        Make sure that all of the relabelMap keys are Variable objects
+        '''
+        from proveit import Variable
+        if relabelMap is None: return
+        for key in relabelMap:
+            if not isinstance(key, Variable):
+                raise TypeError("relabelMap keys must be Variables")
     
     def copy(self):
         '''

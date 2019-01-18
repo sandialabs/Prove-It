@@ -89,6 +89,7 @@ class NamedExprs(Composite, Expression):
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.`
         '''
+        self._checkRelabelMap(relabelMap)
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         else:

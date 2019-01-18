@@ -24,6 +24,7 @@ class ExprList(Composite, Expression):
                 raise TypeError('ExprList must be created out of Expressions)')
             entries.append(entry)
         self.entries = entries
+        self._sortedCoords = []
         Expression.__init__(self, ['ExprList'], self.entries)
         
     @classmethod
@@ -83,7 +84,72 @@ class ExprList(Composite, Expression):
         via iterations (Iter).
         '''
         return self.entries[i]
-    
+
+    def getElem(self, index, base=1, assumptions=USE_DEFAULTS, requirements=None):
+        '''
+        Return the list element at the index, given
+        as an Expression, using the given assumptions as needed
+        to interpret the location expression.  Required
+        truths, proven under the given assumptions, that 
+        were used to make this interpretation will be
+        appended to the given 'requirements' (if provided).
+        '''
+        from proveit.number import num, one, LesserSequence, Less, LessEq, Add, Subtract
+        from proveit.logic import Equals
+        from iteration import Iter
+        from composite import _simplifiedCoord
+        
+        if requirements is None:
+            requirements = [] # create the requirements list, but it won't be used
+        
+        sorted_coords = []
+        less_operators = [] 
+        coord = num(base)
+        sorted_coords.append(coord)
+        coord_sort_requirements = []
+        for entry in self.entries:
+            if isinstance(entry, Iter):
+                coord = _simplifiedCoord(Add(coord, Subtract(entry.end_index, entry.start_index)), assumptions, coord_sort_requirements)
+                less_operators.append(LessEq._operator_) # we don't necessarily know if coord < coord+(entry.end_index-entry.start_index)
+            else:
+                coord = _simplifiedCoord(Add(coord, one), assumptions, coord_sort_requirements)
+                less_operators.append(Less._operator_) # we know coord < coord+1
+            sorted_coords.append(coord)
+        sorted_coords = LesserSequence(less_operators, sorted_coords)
+        try:
+            sorted_coords_with_index = sorted_coords.insert(index, assumptions=assumptions)
+            upper = sorted_coords_with_index.operands.index(index) # coord above 'index' in the sorted order
+            if sorted_coords.operands[upper]==index:
+                lower = upper # 'index' is one of the coordinates
+            elif upper>0 and sorted_coords_with_index.operators[upper-1]==Equals._operator_:
+                lower = upper = upper-1 # 'index' is '=' to the coordinate below it
+            elif upper<len(sorted_coords_with_index.operators) and sorted_coords_with_index.operators[upper]==Equals._operator_:
+                lower = upper # 'index' is '=' to the coordinate after it
+            else:
+                lower = upper-1 # 'index' is not known to be the same as any of the existing coordinates
+        except:
+            raise ExprListError("Could not determine the 'index' range within the ExprList coordinates under the given assumptions")
+        requirements += coord_sort_requirements[:lower]
+        # The relationship to the lower and upper coordinate bounds are requirements for determining
+        # the element being assessed.
+        if upper > 0 and sorted_coords.operands[lower] != index:
+            requirements.append(LessEq.sort((sorted_coords.operands[lower], index), reorder=False, assumptions=assumptions))
+        if lower<upper and upper<len(sorted_coords.operands) and sorted_coords.operands[upper] != index:
+            requirements.append(LessEq.sort((index, sorted_coords.operands[upper]), reorder=False, assumptions=assumptions))
+        
+        entry = self[lower]
+        if isinstance(entry, Iter):
+            # indexing into an iteration
+            entry_origin = sorted_coords[lower]
+            iter_start_index = entry.start_index
+            iter_loc = Add(iter_start_index, Subtract(index, entry_origin))
+            simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, requirements)
+            return entry.getInstance(simplified_iter_loc, assumptions=assumptions, requirements=requirements)
+        else:
+            # just a single-element entry
+            assert lower==upper, "A single-element entry should not have been determined if there was an ambiguous range for the 'index'"
+            return entry        
+        
     def __add__(self, other):
         '''
         Concatenate ExprList's together via '+' just like
@@ -155,7 +221,7 @@ class ExprList(Composite, Expression):
         from proveit import ProofFailure
         
         if requirements is None: requirements = [] # requirements won't be passed back in this case
-
+        
         index = num(base)
         started = False
         prev_end = None
@@ -244,7 +310,10 @@ class ExprList(Composite, Expression):
             
             index = next_index # Move on to the next entry.
             prev_end = entry_end
-    
+        
+        if not arrived_at_end:
+            raise IndexError("ExprList index out of range")
+        
     def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
@@ -252,6 +321,7 @@ class ExprList(Composite, Expression):
         Flattens nested ExprLists that arise from Embed substitutions.
         '''
         from iteration import Iter
+        self._checkRelabelMap(relabelMap)
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         subbed_exprs = []
@@ -265,3 +335,9 @@ class ExprList(Composite, Expression):
             else:
                 subbed_exprs.append(subbed_expr)
         return ExprList(*subbed_exprs)
+
+class ExprListError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg

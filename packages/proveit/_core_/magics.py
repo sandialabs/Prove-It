@@ -400,9 +400,17 @@ class ProveItMagic(Magics):
             raise ProveItMagicFailure("Not allowed to have cyclically dependent 'common expression' notebooks: %s._common_"%cyclically_referenced_common_expr_context)
         self._finish('common')
     
+    def _extract_kind(self, line):
+        kind = line.strip()
+        split_kind = kind.split()
+        if len(split_kind) > 1:
+            assert split_kind[1][0] == '#' # only comments aloud if there are multiple words on the line
+            kind = split_kind[0]
+        return kind
+    
     @line_magic
     def begin(self, line):
-        kind = line.strip()
+        kind = self._extract_kind(line)
         # context based upon current working directory
         self.context = Context()        
         if kind == 'axioms':
@@ -415,7 +423,9 @@ class ProveItMagic(Magics):
 
     @line_magic
     def end(self, line):
-        kind = line.strip()
+        kind = self._extract_kind(line)
+        if self.kind != kind:
+            raise ProveItMagicFailure(r"Must run %begin " + kind + r" before %end " + kind)
         if kind == 'axioms':
             self.end_axioms()
         elif kind == 'theorems':
@@ -512,8 +522,7 @@ class ProveItMagic(Magics):
         Finish 'axioms', 'theorems', or 'common' for the Context
         associated with the current working directory.
         '''
-        if self.kind != kind:
-            raise ProveItMagicFailure(r"Must run %begin " + kind + r" before %end " + kind)
+        assert self.kind == kind, "Should have been checked already in %end line magic execution"
         # Add the special statements / expressions to the context
         context = self.context
         if kind=='axioms':

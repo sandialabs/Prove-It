@@ -363,22 +363,27 @@ class ExprTensor(Composite, Expression):
         '''
         return self.relIndexTensor[rel_entry_loc]
     
-    def getElem(self, tensor_loc, assumptions=USE_DEFAULTS, requirements=None):
+    def getElem(self, indices, base=0, assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Return the tensor element at the location, given
+        Return the tensor element at the indices location, given
         as an Expression, using the given assumptions as needed
         to interpret the location expression.  Required
         truths, proven under the given assumptions, that 
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
         '''
-        from proveit.number import Less, Add, Subtract
+        from proveit.number import num, Less, Add, Subtract
         from iteration import Iter
         from composite import _simplifiedCoord
-        if len(tensor_loc) != self.ndims:
-            raise ExprTensorError("The 'tensor_loc' has the wrong number of dimensions: %d instead of %d"%(len(tensor_loc), self.ndims))
+        if len(indices) != self.ndims:
+            raise ExprTensorError("The 'indices' has the wrong number of dimensions: %d instead of %d"%(len(indices), self.ndims))
         
         if requirements is None: requirements = [] # requirements won't be passed back in this case
+
+        if base != 0: 
+            # subtract off the base if it is not zero
+            indices = [Subtract(index, num(self.base)) for index in indices]
+        tensor_loc = [_simplifiedCoord(index, assumptions, requirements) for index in indices]
 
         lower_indices = []
         upper_indices = []
@@ -387,7 +392,7 @@ class ExprTensor(Composite, Expression):
             try:
                 lower, upper = Less.insert(sorted_coords, coord, assumptions=assumptions)
             except:
-                raise ExprTensorError("Could not determine the 'tensor_loc' range within the tensor coordinates under the given assumptions")
+                raise ExprTensorError("Could not determine the 'indices' range within the tensor coordinates under the given assumptions")
             # The relationship to the lower and upper coordinate bounds are requirements for determining
             # the element being assessed.
             requirements.append(Less.sort((sorted_coords[lower], coord), reorder=False, assumptions=assumptions))
@@ -631,6 +636,7 @@ class ExprTensor(Composite, Expression):
         from composite import _simplifiedCoord
         from iteration import Iter
         from proveit.number import Add
+        self._checkRelabelMap(relabelMap)
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
 

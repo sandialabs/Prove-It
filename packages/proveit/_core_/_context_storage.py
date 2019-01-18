@@ -214,7 +214,7 @@ class ContextStorage:
                 expr = exprDefinitions[name]
                 # record the special expression in this context object
                 if expr not in Expression.contexts:  
-                    Expression.contexts[expr] = self.context
+                    expr._setContext(self.context)
                 self.specialExpressions[expr] = ('common', name) 
                 # get the expression id to be stored on 'commons.pv_it'           
                 expr_id = self._proveItStorageId(expr)
@@ -283,7 +283,7 @@ class ContextStorage:
                 expr = definitions[name]
                 # record the special expression in this context object
                 if expr not in Expression.contexts:  
-                    Expression.contexts[expr] = self.context             
+                    expr._setContext(self.context)
                     self.specialExpressions[expr] = (kind, name)            
                 # add the expression to the "database" via the storage object.
                 expr_id = self._proveItStorageId(expr)
@@ -320,7 +320,7 @@ class ContextStorage:
                 expr_id = f.read()
                 expr = self.makeExpression(expr_id)
                 if expr not in Expression.contexts:  
-                    Expression.contexts[expr] = self.context
+                    expr._setContext(self.context)
                     self.specialExpressions[expr] = (kind, name)
                 return expr
         except IOError:
@@ -357,7 +357,7 @@ class ContextStorage:
         finally:
             Context.default = prev_context_default # reset the default Context 
         if expr not in Expression.contexts:
-            Expression.contexts[expr] = self.context
+            expr._setContext(self.context)
         self.specialExpressions[expr] = ('common', name)
         self._loadedCommonExprs[name] = expr
         return expr
@@ -1148,7 +1148,7 @@ class ContextStorage:
         def exprBuilderFn(exprClassStr, exprInfo, styles, subExpressions, context):
             expr = expr_class_map[exprClassStr]._make(exprInfo, styles, subExpressions)
             if context is not None and expr not in Expression.contexts:
-                Expression.contexts[expr] = context
+                expr._setContext(context)
                 # see if it is a special expression with an addressable name.
                 # if so, note the address for future reference (in self.specialExpressions)
                 (context, hash_directory) = self._retrieve(expr)

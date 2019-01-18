@@ -76,6 +76,8 @@ class Indexed(Expression):
         from expr_list import ExprList
         from expr_tensor import ExprTensor
         
+        self._checkRelabelMap(relabelMap)
+        
         new_requirements = []
         subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars) # requirements not needed for variable substitution
         subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=new_requirements)
@@ -89,17 +91,10 @@ class Indexed(Expression):
             # because the Composite has an unexpanding Iter), 
             # default to returning the subbed Indexed.
             indices = subbed_indices
-            if isinstance(subbed_var, ExprTensor) and self.base != 0: 
-                # subtract off the base if it is not zero
-                indices = [Subtract(index, num(self.base)) for index in indices]
-            indices = [_simplifiedCoord(index, assumptions, new_requirements) for index in indices]
             if isinstance(subbed_var, ExprList):
-                if isLiteralInt(indices[0]):
-                    result = subbed_var[indices[0].asInt()-self.base]
-                else:
-                    raise IndexedError("Indices must evaluate to literal integers when substituting an Indexed expression, got " + str(indices[0]))
+                result = subbed_var.getElem(indices[0], base=self.base, assumptions=assumptions, requirements=new_requirements)
             elif isinstance(subbed_var, ExprTensor):
-                result = subbed_var.getElem(indices, assumptions=assumptions, requirements=new_requirements)
+                result = subbed_var.getElem(indices, base=self.base, assumptions=assumptions, requirements=new_requirements)
         
         for requirement in new_requirements:
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        
@@ -134,7 +129,7 @@ class Indexed(Expression):
         
         subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-        
+                
         if isinstance(subbed_var, Composite):
             # We cannot substitute in a Composite without doing an iteration over it.
             # Only certain iterations are allowed in this manner however.
@@ -154,6 +149,8 @@ class Indexed(Expression):
                 entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices, end_indices, assumptions, requirements)
             
             for (intersection_start, intersection_end) in entryRangeGenerator:
+                print 'intersection start/end', intersection_start, intersection_end
+
                 # We must put it terms of iter parameter values (arguments) via inverting the index_expr.
                 def coord2param(axis, coord):
                     if subbed_indices[axis] == iterParams[axis]:

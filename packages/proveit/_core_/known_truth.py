@@ -65,6 +65,10 @@ class KnownTruth:
     # Expression under various assumptions.
     lookup_dict = dict()
     
+    # KnownTruths for which deriveSideEffects has been called.  We track this to
+    # make sure we didn't miss anything while automation was disabled and then re-enabled.
+    sideeffect_processed = set()
+    
     # Call the beginProof method to begin a proof of a Theorem.
     theoremBeingProven = None # Theorem being proven.
     hasBeenProven = None # Has the theoremBeingProven been proven yet in this session?  
@@ -169,6 +173,7 @@ class KnownTruth:
                 except:
                     pass
             KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
+            KnownTruth.sideeffect_processed.add(self)
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
@@ -579,7 +584,13 @@ class KnownTruth:
     
     @staticmethod
     def forgetKnownTruths():
+        '''
+        Forget all KnownTruth's and all Assumption proof objects.  This is used
+        for demonstration purposes in the tutorial, but should not generally be needed.
+        '''
+        from proof import Assumption
         KnownTruth.lookup_dict.clear()
+        Assumption.allAssumptions.clear()
     
     def _canSpecialize(self, var):
         '''
@@ -593,7 +604,13 @@ class KnownTruth:
             if var in expr.instanceVars:
                 return True
             expr = expr.instanceExpr
-        return False      
+        return False
+    
+    def _checkedTruth(self, proof):
+        proven_truth = proof.provenTruth
+        if not proven_truth.isUsable():
+            proven_truth.raiseUnusableProof()
+        return proven_truth        
         
     def relabel(self, relabelMap):
         '''
@@ -603,8 +620,8 @@ class KnownTruth:
         Returns the proven relabeled KnownTruth, or throws an exception if the proof fails.
         '''
         from proveit._core_.proof import Specialization
-        return Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions).provenTruth
-    
+        return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
+        
     def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
         '''
         Performs a specialize derivation step to be proven under the given
@@ -682,7 +699,7 @@ class KnownTruth:
                     # default is to map instance variables to themselves
                     processedSubMap[iVar] = iVar
 
-        return Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions).provenTruth
+        return self._checkedTruth(Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions))
         
     def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
         '''
@@ -722,7 +739,7 @@ class KnownTruth:
                 domainConditions += [InSet(instanceVar, domain) for instanceVar, domain in zip(forallVarList, domainList)]
             conditions = domainConditions + list(conditions)
         
-        return Generalization(self, forallVarLists, conditions).provenTruth
+        return self._checkedTruth(Generalization(self, forallVarLists, conditions))
 
     def asImplication(self, hypothesis):
         '''
@@ -735,8 +752,8 @@ class KnownTruth:
         from proveit._core_.proof import HypotheticalReasoning
         if isinstance(hypothesis, KnownTruth):
             hypothesis = hypothesis.expr # we want the expression for this purpose
-        return HypotheticalReasoning(self, hypothesis).provenTruth
-    
+        return self._checkedTruth(HypotheticalReasoning(self, hypothesis))
+        
     def evaluation(self):
         '''
         Calling evaluation on a KnownTruth results in deriving that its

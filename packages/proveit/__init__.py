@@ -4,7 +4,7 @@ from ._core_ import Lambda, LambdaError, ParameterExtractionError, Label, Variab
 from ._core_ import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from ._core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
 from ._core_ import Composite, compositeExpression, singleOrCompositeExpression
-from ._core_ import ExprList, ExprTensor, NamedExprs, Indexed, IndexedError, Iter, varIter
+from ._core_ import ExprList, ExprListError, ExprTensor, NamedExprs, Indexed, IndexedError, Iter, varIter
 from ._core_ import KnownTruth, asExpression, asExpressions
 from ._core_ import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
 from ._core_ import ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure

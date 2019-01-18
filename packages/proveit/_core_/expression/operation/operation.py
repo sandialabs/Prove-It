@@ -22,11 +22,9 @@ class Operation(Expression):
         '''
         from proveit._core_.expression.composite import Composite, compositeExpression, singleOrCompositeExpression, Iter, Indexed
         from proveit._core_.expression.label.label import Label
-        from proveit import Context
         if hasattr(self.__class__, '_operator_') and operator_or_operators==self.__class__._operator_:
             operator = operator_or_operators
-            context = Context(inspect.getfile(self.__class__))
-            if Expression.contexts[operator] != context:
+            if Expression.contexts[operator] != operator.context:
                 raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
         self.operator_or_operators = singleOrCompositeExpression(operator_or_operators)
         self.operand_or_operands = singleOrCompositeExpression(operand_or_operands)
@@ -43,7 +41,7 @@ class Operation(Expression):
             # a single operator
             self.operator = self.operator_or_operators
             if not isinstance(self.operator, Label) and not isinstance(self.operator, Indexed):
-                raise TypeError('operator must be a Label, Indexed variable, or iteration (Iter) over Indexed variables.')
+                raise TypeError('operator must be a Label, Indexed variable, or iteration (Iter) over Indexed variables, not %s.'%str(self.operator.__class__))
             # wrap a single operator in a composite for convenience
             self.operators = compositeExpression(self.operator)
         if isinstance(self.operand_or_operands, Composite):
@@ -134,14 +132,19 @@ class Operation(Expression):
         each operand individually.
         '''
         from proveit._core_.expression.composite.composite import compositeExpression
-        implicit_operator = (operator_or_operators == operationClass._implicitOperator())
+        implicit_operator = operationClass._implicitOperator()
+        matches_implicit_operator = (operator_or_operators == implicit_operator)
+        if implicit_operator is not None and not matches_implicit_operator:
+            raise OperationError("An implicit operator may not be changed")
         operands = compositeExpression(operand_or_operands)
         args, varargs, varkw, defaults = inspect.getargspec(operationClass.__init__)
         args = args[1:] # skip over the 'self' arg
         if len(args)>0 and args[-1]=='requirements':
             args = args[:-1] # NOT TREATING 'requirements' FULLY AT THIS TIME; THIS NEEDS WORK.
+            defaults = defaults[:-1]
         if len(args)>0 and args[-1]=='styles':
             args = args[:-1] # NOT TREATING 'styles' FULLY AT THIS TIME; THIS NEEDS WORK.
+            defaults = defaults[:-1]
         
         try:
             arg_vals = [operationClass.extractInitArgValue(arg, operator_or_operators, operand_or_operands) for arg in args]
@@ -150,6 +153,8 @@ class Operation(Expression):
             if defaults is None: defaults = []
             for k, (arg, val) in enumerate(zip(args, arg_vals)):
                 if len(defaults)-len(args)+k < 0:
+                    if not isinstance(val, Expression):
+                        raise TypeError("extractInitArgVal for %s should return an Expression but is returning a %s"%(arg, type(val)))
                     yield val # no default specified; just supply the value, not the argument name
                 else:
                     if val == defaults[len(defaults)-len(args)+k]:
@@ -308,6 +313,7 @@ class Operation(Expression):
         '''
         from proveit._core_.expression.composite.composite import compositeExpression
         from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
+        self._checkRelabelMap(relabelMap)
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
         subbed_operand_or_operands = self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
@@ -321,6 +327,8 @@ class Operation(Expression):
                 # For example, f(x, y) -> x + y.
                 if len(subbed_operands) != len(subbedOperator.parameters):
                     raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of parameters')
+                if len(subbedOperator.conditions) != 0:
+                    raise ImproperSubstitution('Operation substitution must be defined via an Unconditioned Lambda expression')
                 operandSubMap = {param:operand for param, operand in zip(subbedOperator.parameters, subbed_operands)}
                 if not reservedVars is None:
                     # the reserved variables of the lambda body excludes the lambda parameters

@@ -1,4 +1,4 @@
-from proveit._core_.expression.expr import Expression, MakeNotImplemented, ImproperSubstitution
+from proveit._core_.expression.expr import Expression, MakeNotImplemented, ImproperSubstitution, ScopingViolation
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 class Lambda(Expression):
@@ -180,30 +180,20 @@ class Lambda(Expression):
             outStr += self.conditions.formatted('latex', fence=False)
         if fence: outStr += r'\right]'
         return outStr
+    
+    def _innerScopeSub(self, exprMap, relabelMap, reservedVars, assumptions, requirements):
+        '''
+        Helper method for substituted (and used by Iter.substituted) which handles the change in
+        scope properly as well as parameter relabeling (or iterated parameter expansion).
+        '''
         
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
-        '''
-        Return this expression with its variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
-        The Lambda parameters have their own scope within the Lambda 
-        body and do not get substituted.  They may be relabeled, however. 
-        Substitutions within the Lambda body are restricted to 
-        exclude the Lambda parameters themselves (these Variables 
-        are reserved), consistent with any relabeling.
-        '''
         from proveit import compositeExpression, Iter
-        if (exprMap is not None) and (self in exprMap):
-            # the full expression is to be substituted
-            return exprMap[self]._restrictionChecked(reservedVars)        
-        if relabelMap is None: relabelMap = dict()
-        assumptions = defaults.checkedAssumptions(assumptions)
+        
         # Can't substitute the lambda parameter variables; they are in a new scope.
-        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterVarSet}
-        # Can't use assumptions involving lambda parameter variables
-        innerAssumptions = [assumption for assumption in assumptions if self.parameterVarSet.isdisjoint(assumption.freeVars())]
+        inner_expr_map = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterVarSet}
         # Handle relabeling and variable reservations consistent with relabeling.
-        innerReservations = dict() if reservedVars is None else dict(reservedVars)
-        newParams = []
+        inner_reservations = dict() if reservedVars is None else dict(reservedVars)
+        new_params = []
         
         for parameter, parameterVar in zip(self.parameters, self.parameterVars):
             # Note that lambda parameters introduce a new scope and don't need to,
@@ -220,18 +210,66 @@ class Lambda(Expression):
                 else:
                     relabeledParams = compositeExpression(relabelMap[parameterVar])
                 for relabeledParam in relabeledParams:
-                    newParams.append(relabeledParam)
-                    innerReservations[relabeledParam] = parameterVar
+                    new_params.append(relabeledParam)
+                    inner_reservations[relabeledParam] = parameterVar
             else:
                 # can perform a substition in indices of a parameter iteration: x_1, ..., x_n
-                newParams.append(parameter.substituted(innerExprMap, relabelMap, reservedVars, assumptions, requirements))
-                innerReservations[parameterVar] = parameterVar
-        # the lambda body with the substitution:
-        subbedBody = self.body.substituted(innerExprMap, relabelMap, innerReservations, innerAssumptions, requirements)
+                new_params.append(parameter.substituted(inner_expr_map, relabelMap, reservedVars, assumptions, requirements))
+                inner_reservations[parameterVar] = parameterVar
+
+        # Can't use assumptions involving lambda parameter variables
+        inner_assumptions = [assumption for assumption in assumptions if assumption.freeVars().isdisjoint(new_params)]
+                                      
+        return new_params, inner_expr_map, inner_assumptions, inner_reservations
+        
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+        '''
+        Return this expression with its variables substituted 
+        according to subMap and/or relabeled according to relabelMap.
+        The Lambda parameters have their own scope within the Lambda 
+        body and do not get substituted.  They may be relabeled, however. 
+        Substitutions within the Lambda body are restricted to 
+        exclude the Lambda parameters themselves (these Variables 
+        are reserved), consistent with any relabeling.
+        '''
+        from proveit.logic import Forall
+        
+        self._checkRelabelMap(relabelMap)
+        if (exprMap is not None) and (self in exprMap):
+            # the full expression is to be substituted
+            return exprMap[self]._restrictionChecked(reservedVars)        
+        if relabelMap is None: relabelMap = dict()
+        assumptions = defaults.checkedAssumptions(assumptions)
+        
+        new_params, inner_expr_map, inner_assumptions, inner_reservations = self._innerScopeSub(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        
         # conditions with substitutions:
-        subbedConditions = self.conditions.substituted(innerExprMap, relabelMap, innerReservations, innerAssumptions, requirements)
+        condition_requirements = []
+        condition_assumptions = inner_assumptions
+        subbedConditions = self.conditions.substituted(inner_expr_map, relabelMap, inner_reservations, condition_assumptions, condition_requirements)
+        # The lambda body with the substitutions.  Add the conditions, with substitutions, as assumptions
+        # since they must be satisfied for the mapping to be well-defined.
+        body_requirements = []
+        body_assumptions = list(inner_assumptions)+list(subbedConditions)
+        subbedBody = self.body.substituted(inner_expr_map, relabelMap, inner_reservations, body_assumptions, body_requirements)
+        
+        for requirements, requirements_assumptions in zip((condition_requirements, body_requirements), ([], subbedConditions)):
+            for requirement in requirements:
+                if requirement.freeVars().isdisjoint(new_params):
+                    requirements.append(requirement)
+                else:
+                    # When the requirement involves any of the lambda parameters, we must universally quantify
+                    # over those parameters, with appropriate conditions.  Appropriate conditions are the
+                    # applicable assumptions that involve the lambda parameters.  This excludes the 'inner_assumptions'
+                    # because they cannot involve lambda parameters (those were excluded).
+                    requirement_params = requirement.freeVars().intersection(new_params)
+                    requirement_conditions = [condition for condition in requirements_assumptions if not new_params.isdisjoint(condition.freeVars())]
+                    requirement = Forall(requirement_params, requirement, conditions=requirement_conditions)
+                    requirements.append(requirement)
+                    raise ScopingViolation("Substitution requirements must not involve Lambda parameters")
+        
         try:
-            newLambda = Lambda(newParams, subbedBody, subbedConditions)
+            newLambda = Lambda(new_params, subbedBody, subbedConditions)
         except TypeError as e:
             raise ImproperSubstitution(e.message)
         except ValueError as e:
