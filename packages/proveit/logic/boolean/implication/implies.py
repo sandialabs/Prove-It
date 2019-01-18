@@ -18,6 +18,21 @@ class Implies(TransitiveRelation):
         self.antecedent = antecedent
         self.consequent = consequent
         
+    @staticmethod
+    def WeakRelationClass():
+        '''
+        The Strong and Weak form of transitive relations are the same for implication.
+        It counts as a weak form because (A => A) is always true.
+        '''
+        return Implies
+
+    @staticmethod
+    def StrongRelationClass():
+        '''
+        The Strong and Weak form of transitive relations are the same for implication.
+        '''
+        return Implies
+    
     def sideEffects(self, knownTruth):
         '''
         Yield the TransitiveRelation side-effects (which also records knownLeftSides
