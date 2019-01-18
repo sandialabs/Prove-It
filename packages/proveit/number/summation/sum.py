@@ -11,7 +11,7 @@ class Sum(OperationOverInstances):
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
-    def __init__(self, indices, summand, domain, conditions = tuple()):
+    def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple(), styles=dict()):
         r'''
         Sum summand over indices over domains.
         Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
@@ -19,13 +19,14 @@ class Sum(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        OperationOverInstances.__init__(self, Sum._operator_, indices, summand, domain=domain, conditions=conditions)
-        if len(self.instanceVars) != 1:
-            raise ValueError('Only one index allowed per integral!')
-        
-        self.indices = self.instanceVars
+        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, styles=styles)
+        if hasattr(self, 'instanceVar'):
+            self.index = self.instanceVar
+        if hasattr(self, 'instanceVars'):
+            self.indices = self.instanceVars
         self.summand = self.instanceExpr
-        self.index = self.instanceVars[0]
+        """
+        # think about this later
         if isinstance(self.domain,RealInterval):
             raise ValueError('Sum cannot sum over non-discrete set (e.g. Interval)')
         elif self.domain == Reals:
@@ -34,6 +35,7 @@ class Sum(OperationOverInstances):
             self.domain = Interval(Neg(infinity),infinity)
         elif self.domain == Naturals:
             self.domain = Interval(zero,infinity)
+        """
 
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
         from ._theorems_ import summationNatsClosure, summationIntsClosure, summationRealsClosure, summationComplexesClosure
@@ -61,26 +63,26 @@ class Sum(OperationOverInstances):
         return the corresponding value contained in the 'operands'
         composite expression (i.e., the operands of a constructed operation).
         '''
-        if argName=='indices':
-            argName='instanceVars'
+        if argName=='indexOrIndices':
+            argName='instanceVarOrVars'
         elif argName=='summand':
             argName='instanceExpr'
         return OperationOverInstances.extractInitArgValue(argName, operators, operands)
-
+    
     def _formatted(self, formatType, **kwargs):
         fence = kwargs['fence'] if 'fence' in kwargs else False
         if isinstance(self.domain,Interval):
             lower = self.domain.lowerBound.formatted(formatType)
             upper = self.domain.upperBound.formatted(formatType)
             formattedInner = self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+'='+lower+r'}'+r'^{'+upper+r'} '
-            implicitIvars = self.implicitInstanceVars(formatType)
-            hasExplicitIvars = (len(implicitIvars) < len(self.instanceVars))
-            implicitConditions = self.implicitConditions(formatType)
-            hasExplicitConditions = self.hasCondition() and (len(implicitConditions) < len(self.conditions))
-            if hasExplicitConditions:
+            explicitIvars = self.explicitInstanceVars()
+            hasExplicitIvars = (len(explicitIvars) > 0)
+            explicitConds = self.explicitConditions()
+            hasExplicitConds = (len(explicitConds) > 0)
+            if hasExplicitConds:
                 if hasExplicitIvars: 
                     formattedInner += " | "
-                formattedInner += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
+                formattedInner += ', '.join(condition.formatted(formatType) for condition in explicitConds) 
             formattedInner += self.summand.formatted(formatType, fence=fence) 
             return maybeFenced(formatType, formattedInner, fence=fence)
         else:
