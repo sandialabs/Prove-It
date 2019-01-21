@@ -1296,6 +1296,7 @@ class ContextStorage:
         file that stores these references.
         '''
         from proveit import Expression
+        from context import Context
         
         reference_file = os.path.join(self.referenced_dir, name + '_displayed.pv_it')
         
@@ -1307,12 +1308,7 @@ class ContextStorage:
                     previous.add(line.strip())
         
         # grab the current "displayed" expressions 
-        current = set()
-        if not clear:
-            for style_id, expr in Expression.displayed_expression_styles:
-                # only reference "non-special" displayed expressions (not tied to a context as a special expression):
-                if expr not in Expression.contexts: 
-                    current.add(self._proveItStorageId(style_id))
+        current = {self._proveItStorageId(expr) for style_id, expr in Expression.displayed_expression_styles}
         
         # dereference old ones
         for old_ref in previous - current:
