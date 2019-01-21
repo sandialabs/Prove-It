@@ -28,7 +28,7 @@ class ExpressionInfo:
         from proveit._core_._dependency_graph import orderedDependencyNodes
         return orderedDependencyNodes(self.expr, lambda expr : expr._subExpressions)
 
-    def string(self):
+    def __repr__(self):
         from .composite import NamedExprs, Indexed, Iter
         from .operation import Operation
         from .lambda_expr import Lambda
@@ -90,7 +90,7 @@ class ExpressionInfo:
         return outStr
     
     def __str__(self):
-        return self.string()
+        return repr(self)
     
     def _repr_html_(self):
         from .composite import ExprList, ExprTensor, NamedExprs, Indexed, Iter
@@ -162,7 +162,7 @@ class ExpressionInfo:
                     html += '<tr><td colspan=4 style="text-align:left"><strong>extraCoreInfo:</strong> %s</td></tr>\n'%str(expr._coreInfo[4:])
         html += '</table>\n'
         return html
-    
+                
     def _config_latex_tool(self, lt):
         '''
         Configure the LaTeXTool from IPython.lib.latextools as required by all
