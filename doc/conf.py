@@ -12,21 +12,21 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../packages'))
+# import os
+# import sys
+# sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'Prove-It'
-copyright = '2019, Wayne Witzel, Kenneth Rudinger'
-author = 'Wayne Witzel, Kenneth Rudinger'
+project = u'Prove-It'
+copyright = u'2019, Wayne Witzel'
+author = u'Wayne Witzel'
 
 # The short X.Y version
-version = ''
+version = u''
 # The full version, including alpha/beta/rc tags
-release = '0.3'
+release = u'0.3'
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,13 +40,14 @@ release = '0.3'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
     'numpydoc',
 #    'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx_automodapi.automodapi',
-    'sphinx_automodapi.smart_resolver',
+    'sphinx_automodapi.smart_resolver'
 ]
 numpydoc_show_class_members = False
 
@@ -72,7 +73,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -137,8 +138,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Prove-It.tex', 'Prove-It Documentation',
-     'Wayne Witzel, Kenneth Rudinger', 'manual'),
+    (master_doc, 'Prove-It.tex', u'Prove-It Documentation',
+     u'Wayne Witzel', 'manual'),
 ]
 
 
@@ -147,7 +148,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'prove-it', 'Prove-It Documentation',
+    (master_doc, 'prove-it', u'Prove-It Documentation',
      [author], 1)
 ]
 
@@ -158,8 +159,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Prove-It', 'Prove-It Documentation',
-     author, 'Prove-It', 'One line description of project.',
+    (master_doc, 'Prove-It', u'Prove-It Documentation',
+     author, 'Prove-It', 'A tool for proving and organizing general theorems using Python.',
      'Miscellaneous'),
 ]
 
