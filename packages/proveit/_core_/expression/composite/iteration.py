@@ -402,7 +402,7 @@ def varIter(var, start, end):
     from proveit import safeDummyVar
     from .indexed import Indexed
     param = safeDummyVar(var)
-    return Iter(Lambda(param, Indexed(var, param)), start, end)
+    return Iter(param, Indexed(var, param), start, end)
 
 class IterationError(Exception):
     def __init__(self, msg):
