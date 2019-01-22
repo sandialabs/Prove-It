@@ -246,16 +246,16 @@ class TransitiveRelation(Operation):
             if len(unexplored_left) <= len(unexplored_right):
                 chains, unexplored_chains = left_chains, unexplored_left
                 extensions = lambda endpoint : RelationClass.knownRelationsFromLeft(endpoint, assumptions_set)
-                endpoints, other_endpoints = left_chains.keys(), right_chains.keys()
+                endpoints, other_endpoints = list(left_chains.keys()), list(right_chains.keys())
             else:
                 chains, unexplored_chains = right_chains, unexplored_right
                 extensions = lambda endpoint : RelationClass.knownRelationsFromRight(endpoint, assumptions_set)
-                endpoints, other_endpoints = right_chains.keys(), left_chains.keys()
+                endpoints, other_endpoints = list(right_chains.keys()), list(left_chains.keys())
             
             # search for extensions to the unexplored chains and see if any make
             # it to the other side
             new_chains = dict()
-            for endpoint, chain in unexplored_chains.iteritems():
+            for endpoint, chain in unexplored_chains.items():
                 for relation, new_endpoint in extensions(endpoint):
                     if not isinstance(relation, KnownTruth) or not isinstance(new_endpoint, Expression):
                         raise TypeError(str(relation.__class__) + '.knownRelationsFromLeft and ' + str(relation.__class__) \
@@ -282,7 +282,7 @@ class TransitiveRelation(Operation):
             
             # get the new unexplored chains and update the full set of chains with the new chains
             unexplored_chains.clear()
-            unexplored_chains.update({endpoint:chain for endpoint,chain in new_chains.iteritems() \
+            unexplored_chains.update({endpoint:chain for endpoint,chain in new_chains.items() \
                                     if endpoint not in chains})
             chains.update(new_chains)
         
@@ -317,10 +317,10 @@ class TransitiveRelation(Operation):
             # extend to the left or to the right
             for frontier_chains, known_relations, same_endpoint_chains, opposite_endpoint_chains in zip((frontier_left_chains, frontier_right_chains), (RelationClass.knownRelationsFromRight, RelationClass.knownRelationsFromLeft), (left_endpoint_chains, right_endpoint_chains), (right_endpoint_chains, left_endpoint_chains)):
                 # extend chains originating from each item
-                for item, chains in dict(frontier_chains).iteritems():
+                for item, chains in dict(frontier_chains).items():
                     new_frontier_chains = dict() # new chains from extending the original chains
                     # extend from each frontier end-point
-                    for endpoint, chain in chains.iteritems():
+                    for endpoint, chain in chains.items():
                         #print 'starting chain', endpoint, list(chain), ('left' if frontier_chains is frontier_left_chains else 'right')
                         # iterate over each known relation that extend the frontier at the end-point
                         for relation, new_endpoint in known_relations(endpoint, assumptionsSet):

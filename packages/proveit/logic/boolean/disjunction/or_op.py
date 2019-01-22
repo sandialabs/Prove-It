@@ -191,7 +191,7 @@ class Or(Operation):
         Deduce A in Booleans, B in Booleans, ..., Z in Booleans
         from (A or B or ... or Z) in Booleans.
         '''
-        for i in xrange(len(self.operands)):
+        for i in range(len(self.operands)):
             self.deducePartInBool(i, assumptions)        
 
     def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):

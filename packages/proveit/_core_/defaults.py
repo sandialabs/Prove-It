@@ -33,7 +33,7 @@ class Defaults:
         Check that the given assumptions are valid -- an iterable
         collection of Expressions, and skip any repeats.
         '''
-        from expression.expr import Expression
+        from .expression.expr import Expression
         assumptionsSet = set()
         try:
             assumptions = list(assumptions)

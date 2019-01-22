@@ -23,4 +23,5 @@ from .relation import TransitiveRelation, TransitiveSequence
 
 # register Prove-It specific IPython magic:
 # %begin_axioms, %end_axioms, %begin_theorems, %end_theorems, %begin_proof, and %display_assignment
-import _core_.magics
+#from . import _core_.magics
+from . import magics

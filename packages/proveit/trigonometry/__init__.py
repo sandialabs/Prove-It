@@ -1,1 +1,1 @@
-from trigOps import AngDiff
+from .trigOps import AngDiff

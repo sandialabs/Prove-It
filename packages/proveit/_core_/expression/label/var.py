@@ -1,4 +1,4 @@
-from label import Label
+from .label import Label
 from proveit._core_.expression.expr import MakeNotImplemented, ScopingViolation, ImproperRelabeling
 from proveit._core_.defaults import USE_DEFAULTS
 
@@ -29,7 +29,7 @@ class Variable(Label):
             subbed = relabelMap.get(self, self)
             if not isinstance(subbed, Variable):
                 raise ImproperRelabeling('May only relabel Variable to Variable')
-            if reservedVars is not None and subbed in reservedVars.keys():
+            if reservedVars is not None and subbed in list(reservedVars.keys()):
                 if self != reservedVars[subbed]:
                     raise ScopingViolation("Relabeling in violation of Variable scoping restrictions.")
             return subbed

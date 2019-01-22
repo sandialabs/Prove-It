@@ -137,12 +137,12 @@ class Iter(Expression):
         set of ranges with no overlaps.
         '''
         from proveit.number import Add, Subtract, one
-        from composite import _simplifiedCoord
+        from .composite import _simplifiedCoord
         owning_range = dict() # map relative indices to the owning range; overlap occurs when ownership is contested.
         nonoverlapping_ranges = set()
         while len(rel_iter_ranges) > 0:
             rel_iter_range = rel_iter_ranges.pop()
-            for p in itertools.product(*[xrange(start, end) for start, end in zip(*rel_iter_range)]):
+            for p in itertools.product(*[range(start, end) for start, end in zip(*rel_iter_range)]):
                 p = tuple(p)
                 # Check for contested ownership
                 if p in owning_range and owning_range[p] in nonoverlapping_ranges:
@@ -202,7 +202,7 @@ class Iter(Expression):
         '''
         from proveit.logic import Equals
         from proveit.number import Less, LessEq, Subtract, Add, one
-        from composite import _simplifiedCoord
+        from .composite import _simplifiedCoord
         from proveit._core_.expression.expr import _NoExpandedIteration
         
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -218,7 +218,7 @@ class Iter(Expression):
         # needed if there are overlaps): 'special_points'.
         iter_ranges = set()
         iter_params = self.lambda_map.parameters
-        special_points = [set() for _ in xrange(len(iter_params))]
+        special_points = [set() for _ in range(len(iter_params))]
         subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
         subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
         try:
@@ -253,7 +253,7 @@ class Iter(Expression):
             # Sort the argument value ranges.
 
             arg_sorting_relations = []
-            for axis in xrange(self.ndims):
+            for axis in range(self.ndims):
                 if len(special_points[axis])==0:
                     arg_sorting_relation = None
                 else:

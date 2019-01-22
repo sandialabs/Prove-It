@@ -1,1 +1,1 @@
-from mult import Mult
+from .mult import Mult

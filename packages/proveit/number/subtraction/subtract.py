@@ -19,7 +19,7 @@ class Subtract(Operation):
             Add(num(self.operands[0].asInt() - self.operands[1].asInt()), self.operands[1])
       
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == Reals:
             return theorems.subtractRealClosure
         elif numberSet == Complexes:
@@ -32,7 +32,7 @@ class Subtract(Operation):
             return theorems.subtractClosureNatsPos
     
     def _notEqZeroTheorem(self):
-        from theorems import diffNotEqZero
+        from .theorems import diffNotEqZero
         # Can derive (a - b) != 0 given a != b.
         # Derive a != b from b != a in case we have proven b != a instead of a != b.
         NotEquals(self.operands[1], self.operands[0]).deriveReversed()
@@ -86,7 +86,7 @@ class Subtract(Operation):
         Given (x - y) deduce and return (x - y) = (x + (-y)).
         Assumptions may be needed to deduce that the operands are in Complexes.
         '''
-        from theorems import subtractAsAddNeg
+        from .theorems import subtractAsAddNeg
         deduceInComplexes(self.operands, assumptions)
         return subtractAsAddNeg.specialize({x:self.operands[0], y:self.operands[1]}).checked(assumptions)
 
@@ -100,7 +100,7 @@ class Subtract(Operation):
         from proveit.number import Add
         eqn = Equation()
         if isinstance(self.operands[1], Add):
-            from theorems import distributeSubtraction
+            from .theorems import distributeSubtraction
             deduceInComplexes(self.operands[0], assumptions)
             deduceInComplexes(self.operands[1].operands, assumptions)
             eqn.update(distributeSubtraction.specialize({x:self.operands[0], yEtc:self.operands[1].operands}).checked(assumptions))
@@ -128,10 +128,10 @@ class Subtract(Operation):
         The first term on the left that is the same as on the right will be canceled.
         Assumptions may be needed to deduce that the operands are in Complexes.        
         '''
-        from theorems import subtractCancelElimSums, subtractCancelElimLeftSum, subtractCancelElimRightSum
-        from theorems import subtractCancelTwoSums, subtractCancelLeftSum, subtractCancelRightSum
-        from theorems import subtractCancelLeftSumSingleRight, subtractCancelLeftSumSingleLeft, subtractCancelRightSumSingleRight, subtractCancelRightSumSingleLeft 
-        from theorems import subtractCancelComplete
+        from .theorems import subtractCancelElimSums, subtractCancelElimLeftSum, subtractCancelElimRightSum
+        from .theorems import subtractCancelTwoSums, subtractCancelLeftSum, subtractCancelRightSum
+        from .theorems import subtractCancelLeftSumSingleRight, subtractCancelLeftSumSingleLeft, subtractCancelRightSumSingleRight, subtractCancelRightSumSingleLeft 
+        from .theorems import subtractCancelComplete
         from proveit.number import Add, Neg
         dummy = self.safeDummyVar()
         eq = Equation()
@@ -151,7 +151,7 @@ class Subtract(Operation):
                 deduceInComplexes(expr.operands[0].operands, assumptions=assumptions)
                 deduceInComplexes(expr.operands[1].operands, assumptions=assumptions)                
                 foundOne = False
-                for idx1 in xrange(len(expr.operands[0].operands)):
+                for idx1 in range(len(expr.operands[0].operands)):
                     try:
                         idx2 = expr.operands[1].operands.index(expr.operands[0].operands[idx1])
                         foundOne = True

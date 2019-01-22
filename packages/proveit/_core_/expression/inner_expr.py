@@ -175,7 +175,7 @@ class InnerExpr:
                 # The replacements should be a function of the parameters encountered
                 # between the top-level expression and the inner expression.
                 lambda_body = Function(lambda_params[0], self.parameters)
-        for expr, idx in reversed(zip(self.exprHierarchy, self.innerExprPath)):
+        for expr, idx in reversed(list(zip(self.exprHierarchy, self.innerExprPath))):
             expr_subs = list(expr.subExprIter())
             lambda_body = expr.__class__._make(expr.coreInfo(), expr.getStyles(), expr_subs[:idx] + [lambda_body] + expr_subs[idx+1:])
         return Lambda(lambda_params, lambda_body)

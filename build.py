@@ -210,7 +210,7 @@ def executeNotebook(notebook_path):
     Read, execute, and write out the notebook at the given path.
     Return the notebook object
     '''
-    print 'Executing', notebook_path
+    print('Executing', notebook_path)
     sys.stdout.flush()
     
     # read
@@ -253,7 +253,7 @@ def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=F
     The notebook object (nb) may be provided, or it will be
     read in from the file.
     '''
-    print 'Exporting', notebook_path, 'to HTML'
+    print('Exporting', notebook_path, 'to HTML')
     orig_strip_links = html_exporter.preprocessors[0].strip_links
     orig_make_images_inline = html_exporter.preprocessors[0].make_images_inline
     try:
@@ -472,7 +472,7 @@ def build(context_paths, all_paths, no_execute=False, just_execute_proofs=False,
             # any of the proof notebooks to account for dependencies properly
             # (avoiding circular dependencies as intended).
             for proof_notebook in proof_notebooks:
-                print 'record presuming info:', proof_notebook
+                print('record presuming info:', proof_notebook)
                 recordPresumingInfo(proof_notebook_theorems[proof_notebook], proof_notebook)
                 
             # Next, execute all of the proof notebooks for each context.
@@ -567,7 +567,7 @@ if __name__ == '__main__':
 
     if args.clean:
         # clean all of the __pv_it directories that may be auto-generated
-        print "Cleaning '__pv_it' directories..."
+        print("Cleaning '__pv_it' directories...")
         sys.stdout.flush()
         for path in all_paths:
             # remove the __pv_it folders from all paths

@@ -17,6 +17,6 @@ class ModAbs(Operation):
         return '\left|'+self.value.string(fence=False)+'\right|_{{\rm mod}~' + self.divisor.string(fence=False) + '\right}'
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == Reals:
             return theorems.modAbsRealClosure

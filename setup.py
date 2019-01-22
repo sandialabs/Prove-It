@@ -50,5 +50,5 @@ setup(name='Prove-It',
       package_dir={'': 'packages'},
       requires=[],
       platforms = ["any"],      
-      classifiers = filter(None, classifiers.split("\n")),
+      classifiers = [_f for _f in classifiers.split("\n") if _f],
      )

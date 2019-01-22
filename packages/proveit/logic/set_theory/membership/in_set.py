@@ -22,7 +22,7 @@ class InSet(Operation):
         object it generates.
         '''
         if 'membershipObject' in self.__dict__:
-            return sorted(set(self.__dict__.keys() + dir(self.membershipObject)))
+            return sorted(set(list(self.__dict__.keys()) + dir(self.membershipObject)))
         else:
             return sorted(self.__dict__.keys())
     
@@ -56,7 +56,7 @@ class InSet(Operation):
         r'''
         Deduce x not in S assuming not(A in S), where self = (x in S).
         '''
-        from not_in_set import NotIn
+        from .not_in_set import NotIn
         yield NotIn(self.element, self.domain).concludeAsFolded(assumptions)
 
     def conclude(self, assumptions):

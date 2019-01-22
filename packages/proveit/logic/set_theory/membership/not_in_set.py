@@ -23,9 +23,9 @@ class NotInSet(Operation):
         isn't defined in 'nonmembershipObject').
         '''
         if 'membershipObject' in self.__dict__:
-            return sorted(set(self.__dict__.keys() + dir(self.membershipObject)))
+            return sorted(set(list(self.__dict__.keys()) + dir(self.membershipObject)))
         else:
-            return sorted(self.__dict__.keys() + 'unfold')
+            return sorted(list(self.__dict__.keys()) + 'unfold')
     
     def __getattr__(self, attr):
         '''
@@ -62,7 +62,7 @@ class NotInSet(Operation):
         '''
         From (x \notin y), derive and return Not(x \in y).
         '''
-        from _theorems_ import unfoldNotInSet
+        from ._theorems_ import unfoldNotInSet
         return unfoldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)
 
     def conclude(self, assumptions):
@@ -80,7 +80,7 @@ class NotInSet(Operation):
         '''
         Attempt to conclude x not in S via Not(x in S).
         '''
-        from _theorems_ import foldNotInSet
+        from ._theorems_ import foldNotInSet
         return foldNotInSet.specialize({x:self.element, S:self.domain}, assumptions=assumptions)        
 
     def evaluation(self, assumptions=USE_DEFAULTS):

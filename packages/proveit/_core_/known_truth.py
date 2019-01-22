@@ -8,7 +8,7 @@ with possibly fewer assumptions, suffices).
 
 from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaningData, styleData
-from defaults import defaults, USE_DEFAULTS
+from .defaults import defaults, USE_DEFAULTS
 import re
 
 class _ExprProofs:
@@ -30,13 +30,13 @@ class _ExprProofs:
         Insert a new proof for the expression, maintaining sorted order
         in the proof size (number of steps).
         '''
-        from proof import Proof
+        from .proof import Proof
         assert isinstance(newproof, Proof)
         assert newproof.provenTruth.expr == self._expr
         self._proofs.add(newproof)
     
     def discard(self, oldproof):
-        from proof import Proof
+        from .proof import Proof
         assert isinstance(oldproof, Proof)
         assert oldproof.provenTruth.expr == self._expr
         assert not oldproof.isUsable(), "Should only remove unusable proofs"
@@ -192,13 +192,13 @@ class KnownTruth:
         '''
         if KnownTruth.theoremBeingProven is not None:
             raise ProofInitiationFailure("May only beginProof once per Python/IPython session.  Restart the notebook to restart the proof.")
-        from proof import Theorem
+        from .proof import Theorem
         if not isinstance(theorem, Theorem):
             raise TypeError('Only begin a proof for a Theorem')
         if theorem.provenTruth != self:
             raise ValueError('Inconsistent theorem for the KnownTruth in beginProof call')
         theorem.recordPresumingInfo(presuming)
-        print "Recorded 'presuming' information"
+        print("Recorded 'presuming' information")
                 
         presumed_theorems, presumed_contexts = set(), set()
         theorem.getRecursivePresumingInfo(presumed_theorems, presumed_contexts)
@@ -238,11 +238,11 @@ class KnownTruth:
         if self._checkIfReadyForQED(self.proof()):
             return self.expr # already proven
         if len(explicit_presumed_contexts) > 0:
-            print "Presuming theorems in %s (except any that depend upon this theorem)."%', '.join(sorted(explicit_presumed_contexts))
+            print("Presuming theorems in %s (except any that depend upon this theorem)."%', '.join(sorted(explicit_presumed_contexts)))
         if len(explicit_presumed_theorems) > 0:
-            print "Presuming %s theorem(s) (and any of their dependencies)."%', '.join(sorted(str(thm) for thm in explicit_presumed_theorems))
+            print("Presuming %s theorem(s) (and any of their dependencies)."%', '.join(sorted(str(thm) for thm in explicit_presumed_theorems)))
         if num_prev_thms > 0:
-            print "Presuming previous theorem(s) in this context (and any of their dependencies)."
+            print("Presuming previous theorem(s) in this context (and any of their dependencies).")
         theorem._meaningData._unusableProof = theorem # can't use itself to prove itself
         return self.expr
     
@@ -292,7 +292,7 @@ class KnownTruth:
         Assuming this KnownTruth represents a Theorem or Axiom, return 
         the Theorem or Axiom object.
         '''
-        from proof import Theorem, Axiom
+        from .proof import Theorem, Axiom
         # Get the theorem associated with the KnownTruth (or raise an exception if there is none)
         if KnownTruth.theoremBeingProven is not None:
             if self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
@@ -314,15 +314,15 @@ class KnownTruth:
         # print the required axioms and unproven theorems 
         requiredAxioms, requiredTheorems = allRequirements(self)
         for axiom in sorted(requiredAxioms):
-            print axiom
+            print(axiom)
         if len(requiredTheorems) == 0:
             assert isFullyProven(self), "certification database is corrupt"
-            print "Theorem is fully proven!"
+            print("Theorem is fully proven!")
         if len(requiredTheorems) > 0:
             assert not isFullyProven(self), "certification database is corrupt"
-            print "\nUnproven theorems:"
+            print("\nUnproven theorems:")
             for theorem in sorted(requiredTheorems):
-                print theorem
+                print(theorem)
 
     def printDependents(self):
         '''
@@ -332,7 +332,7 @@ class KnownTruth:
         from proveit.certify import allDependents
         dependents = allDependents(self)
         for theorem in sorted(dependents):
-            print theorem
+            print(theorem)
     
     def _discardProof(self, proof):
         '''
@@ -496,7 +496,7 @@ class KnownTruth:
                 if not KnownTruth.qedInProgress and len(self.assumptions)==0 and self.expr == KnownTruth.theoremBeingProven.provenTruth.expr:
                     if not KnownTruth.hasBeenProven:
                         KnownTruth.hasBeenProven = True
-                        print '%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".'
+                        print('%s has been proven. '%self.asTheoremOrAxiom().name, r'Now simply execute "%qed".')
                         return True
         return False
     
@@ -556,7 +556,7 @@ class KnownTruth:
         The KnownTruth aquires the attributes of its Expression as well as its
         own attributes.
         '''
-        return sorted(set(dir(self.__class__) + self.__dict__.keys() + dir(self.expr)))
+        return sorted(set(dir(self.__class__) + list(self.__dict__.keys()) + dir(self.expr)))
 
     @staticmethod
     def findKnownTruth(expression, assumptionsSet):
@@ -624,7 +624,7 @@ class KnownTruth:
         '''
         from proveit import Operation, Variable, Lambda, singleOrCompositeExpression
         from proveit.logic import Forall
-        from proof import Specialization, SpecializationFailure, ProofFailure
+        from .proof import Specialization, SpecializationFailure, ProofFailure
         
         if not self.isUsable():
             # If this KnownTruth is not usable, see if there is an alternate under the
@@ -648,7 +648,7 @@ class KnownTruth:
         # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
         # Convert to composite expressions as needed (via singleOrCompositeExpression).
         processedSubMap = dict()
-        for key, sub in specializeMap.iteritems():
+        for key, sub in specializeMap.items():
             sub = singleOrCompositeExpression(sub)
             if isinstance(key, Operation):
                 operation = key
@@ -752,7 +752,7 @@ class KnownTruth:
         return self.asImplication(hypothesis)
 
     def raiseUnusableProof(self):
-        from proof import UnusableProof, Theorem, Axiom
+        from .proof import UnusableProof, Theorem, Axiom
         proof = self.proof()
         unusuable_proof = proof._meaningData._unusableProof
         if proof == unusuable_proof:

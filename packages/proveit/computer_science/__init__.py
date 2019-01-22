@@ -1,2 +1,2 @@
-from regular_expressions import *
+from .regular_expressions import *
 

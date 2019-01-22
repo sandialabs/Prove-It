@@ -10,7 +10,7 @@ class Ceil(Function):
         self.operand = A
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == NaturalsPos:
             return theorems.ceilRealPosClosure
         elif numberSet == Integers:

@@ -113,8 +113,8 @@ class Lambda(Expression):
         mapped_sub_expr_iters = [mapped_sub_expr.subExprIter()]
         while len(lambda_sub_expr_iters) > 0:
             try:
-                lambda_sub_expr = lambda_sub_expr_iters[-1].next()
-                mapped_sub_expr = mapped_sub_expr_iters[-1].next()
+                lambda_sub_expr = next(lambda_sub_expr_iters[-1])
+                mapped_sub_expr = next(mapped_sub_expr_iters[-1])
                 if lambda_sub_expr in parameters:
                     # found a match
                     param_idx = parameters.index(lambda_sub_expr)
@@ -198,7 +198,7 @@ class Lambda(Expression):
         if relabelMap is None: relabelMap = dict()
         assumptions = defaults.checkedAssumptions(assumptions)
         # Can't substitute the lambda parameter variables; they are in a new scope.
-        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterVarSet}
+        innerExprMap = {key:value for (key, value) in exprMap.items() if key not in self.parameterVarSet}
         # Can't use assumptions involving lambda parameter variables
         innerAssumptions = [assumption for assumption in assumptions if self.parameterVarSet.isdisjoint(assumption.freeVars())]
         # Handle relabeling and variable reservations consistent with relabeling.
@@ -241,7 +241,7 @@ class Lambda(Expression):
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         from proveit import Variable, compositeExpression
         # Can't substitute the lambda parameter variables; they are in a new scope.
-        innerExprMap = {key:value for (key, value) in exprMap.iteritems() if key not in self.parameterVarSet}
+        innerExprMap = {key:value for (key, value) in exprMap.items() if key not in self.parameterVarSet}
         # Can't use assumptions involving lambda parameter variables
         innerAssumptions = [assumption for assumption in assumptions if self.parameterVarSet.isdisjoint(assumption.freeVars())]
         # Handle relabeling and variable reservations consistent with relabeling.

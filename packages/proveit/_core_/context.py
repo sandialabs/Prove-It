@@ -22,7 +22,8 @@ the theorem proofs, and it stores theorem proof dependencies.
 
 import os
 import json
-from ._context_storage import ContextStorage, relurl
+from ._context_storage import ContextStorage, relurl#Comment out for python 3
+#from _context_storage import ContextStorage, relurl#Comment in for python 3
 
 class Context:
     '''
@@ -350,7 +351,7 @@ class Context:
                 
     @staticmethod
     def getStoredStmt(fullname, kind):
-        from _context_storage import StoredAxiom, StoredTheorem
+        from ._context_storage import StoredAxiom, StoredTheorem
         split_name = fullname.split('.')
         context_name = '.'.join(split_name[:-1])
         stmt_name = split_name[-1]
@@ -436,7 +437,7 @@ class Axioms:
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self._context.axiomNames())
+        return sorted(list(self.__dict__.keys()) + self._context.axiomNames())
 
     def __getattr__(self, name):
         if name=='__path__':
@@ -465,7 +466,7 @@ class Theorems:
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self._context.theoremNames())
+        return sorted(list(self.__dict__.keys()) + self._context.theoremNames())
                 
     def __getattr__(self, name):
         if name=='__path__':
@@ -500,7 +501,7 @@ class CommonExpressions:
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + list(self._context.commonExpressionNames()))
+        return sorted(list(self.__dict__.keys()) + list(self._context.commonExpressionNames()))
 
     def __getattr__(self, name):
         from proveit import Label

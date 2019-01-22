@@ -12,9 +12,9 @@ class Intersect(Operation):
         Operation.__init__(self, Intersect._operator_, operands)
     
     def membershipObject(self, element):
-        from intersect_membership import IntersectMembership
+        from .intersect_membership import IntersectMembership
         return IntersectMembership(element, self)
 
     def nonmembershipObject(self, element):
-        from intersect_membership import IntersectNonmembership
+        from .intersect_membership import IntersectNonmembership
         return IntersectNonmembership(element, self)

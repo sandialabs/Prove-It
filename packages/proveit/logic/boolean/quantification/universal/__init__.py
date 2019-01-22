@@ -1,1 +1,1 @@
-from forall import Forall
+from .forall import Forall

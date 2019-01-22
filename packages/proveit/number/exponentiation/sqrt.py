@@ -19,13 +19,13 @@ class Sqrt(Operation):
         Distribute the sqrt over a product.
         '''
         from proveit.number import Mult
-        from theorems import sqrtOfProd
+        from .theorems import sqrtOfProd
         if isinstance(self.base, Mult):
             deduceInRealsPos(self.base.factors)
             return sqrtOfProd({xEtc:self.base.factors})
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         from proveit.number import two
         if numberSet == Reals:
             return theorems.sqrtRealClosure            

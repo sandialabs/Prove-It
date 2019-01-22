@@ -13,11 +13,11 @@ class Set(Operation):
         self.elements = self.operands
     
     def membershipObject(self, element):
-        from enum_membership import EnumMembership
+        from .enum_membership import EnumMembership
         return EnumMembership(element, self)
 
     def nonmembershipObject(self, element):
-        from enum_membership import EnumNonmembership
+        from .enum_membership import EnumNonmembership
         return EnumNonmembership(element, self)
 
     def string(self, **kwargs):

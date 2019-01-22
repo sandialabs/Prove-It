@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
 from proveit._common_ import f, S, QQ
-from containment_relation import ContainmentRelation, ContainmentSequence
+from .containment_relation import ContainmentRelation, ContainmentSequence
 
 class SubsetRelation(ContainmentRelation):
     def __init__(self, operator, subset, superset):
@@ -65,7 +65,7 @@ class Subset(SubsetRelation):
         '''
         from proveit.logic import Equals
         from ._theorems_ import transitivitySubsetSubset, transitivitySubsetSubsetEq
-        from superset import Subset, SubsetEq
+        from .superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
         if isinstance(other,Subset) or isinstance(other,SubsetEq):
@@ -105,7 +105,7 @@ class SubsetEq(SubsetRelation):
         '''
         From A subseteq B, derive B supseteq A.
         '''
-        from _theorems_ import reverseSubsetEq
+        from ._theorems_ import reverseSubsetEq
         return reverseSubsetEq.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
         
     def conclude(self, assumptions):
@@ -165,7 +165,7 @@ class SubsetEq(SubsetRelation):
         '''
         from proveit.logic import Equals
         from ._theorems_ import transitivitySubsetEqSubset, transitivitySubsetEqSubsetEq
-        from superset import Subset, SubsetEq
+        from .superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
         if isinstance(other,Subset) or isinstance(other,SubsetEq):
@@ -201,7 +201,7 @@ class NotSubsetEq(Operation):
         '''
         From A nsupseteq B, derive and return not(supseteq(A, B)).
         '''
-        from _theorems_ import unfoldNotSubsetEq
+        from ._theorems_ import unfoldNotSubsetEq
         return unfoldNotSubsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
@@ -209,5 +209,5 @@ class NotSubsetEq(Operation):
         Derive this folded version, A nsupset B, from the unfolded version,
         not(A supset B).
         '''
-        from _theorems_ import foldNotSubsetEq
+        from ._theorems_ import foldNotSubsetEq
         return foldNotSubsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)

@@ -16,7 +16,7 @@ class Indexed(Expression):
     '''
     
     def __init__(self, var, index_or_indices, base=1, styles=dict(), requirements=tuple()):
-        from composite import Composite, singleOrCompositeExpression, compositeExpression
+        from .composite import Composite, singleOrCompositeExpression, compositeExpression
         if not isinstance(var, Variable):
             raise TypeError("'var' being indexed should be a Variable")
         self.index_or_indices = singleOrCompositeExpression(index_or_indices)
@@ -71,10 +71,10 @@ class Indexed(Expression):
         a Indexed expression; once the Variable is replaced with
         a Composite, the indexing should be actualized.
         '''
-        from composite import Composite, _simplifiedCoord
+        from .composite import Composite, _simplifiedCoord
         from proveit.number import num, Subtract, isLiteralInt
-        from expr_list import ExprList
-        from expr_tensor import ExprTensor
+        from .expr_list import ExprList
+        from .expr_tensor import ExprTensor
         
         new_requirements = []
         subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars) # requirements not needed for variable substitution
@@ -127,8 +127,8 @@ class Indexed(Expression):
         are contained in this Composite.  If it is not substituted with
         a composite, no range is yielded.
         '''
-        from composite import Composite, IndexingError, compositeExpression
-        from expr_list import ExprList
+        from .composite import Composite, IndexingError, compositeExpression
+        from .expr_list import ExprList
         from proveit.logic import Equals
         from proveit._core_.expression.expr import _NoExpandedIteration
         

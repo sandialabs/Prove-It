@@ -9,7 +9,7 @@ class Min(Function):
         Function.__init__(self, Min._operator_, operands)
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == Reals:
             return theorems.minRealClosure
         elif numberSet == RealsPos:

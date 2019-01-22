@@ -1,8 +1,8 @@
-from composite import Composite
-from expr_list import ExprList
+from .composite import Composite
+from .expr_list import ExprList
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from iteration import Iter
+from .iteration import Iter
 import itertools
 from ast import literal_eval
                 
@@ -52,7 +52,7 @@ class ExprTensor(Composite, Expression):
         Providing starting and/or ending location(s) can extend the bounds of the tensor beyond
         the elements that are supplied.
         '''
-        from composite import _simplifiedCoord
+        from .composite import _simplifiedCoord
         from proveit._core_ import KnownTruth
         from proveit.number import Less, Greater, zero, one, num, Add, Subtract
         
@@ -72,7 +72,7 @@ class ExprTensor(Composite, Expression):
         if shape is not None:
             shape = ExprTensor.locAsExprs(shape)
             ndims = len(shape)
-        for loc, element in tensor.iteritems():
+        for loc, element in tensor.items():
             if isinstance(element, KnownTruth):
                 element = element.expr # extract the Expression from the KnownTruth
             ndims = len(loc)
@@ -107,7 +107,7 @@ class ExprTensor(Composite, Expression):
         coord_rel_indices = []
         self.sortedCoordLists = []
         self.coordDiffRelationLists = []
-        for axis in xrange(ndims): # for each axis
+        for axis in range(ndims): # for each axis
             # KnownTruth sorting relation for the simplified coordinates used along this axis
             # (something with a form like a < b <= c = d <= e, that sorts the tensor location coordinates): 
             coord_sorting_relation = Less.sort(coord_sets[axis], assumptions=assumptions)
@@ -147,7 +147,7 @@ class ExprTensor(Composite, Expression):
         # convert from the full tensor with arbitrary expression coordinates to coordinates that are
         # mapped according to sorted relation enumerations.
         rel_index_tensor = dict()
-        for loc, element in full_tensor.iteritems():
+        for loc, element in full_tensor.items():
             rel_index_loc = (rel_index_map[coord] for coord, rel_index_map in zip(loc, coord_rel_indices))
             rel_index_tensor[rel_index_loc] = element
                 
@@ -187,7 +187,7 @@ class ExprTensor(Composite, Expression):
         Yields location, element pairs that define a tensor.
         '''
         from proveit._core_ import KnownTruth        
-        from composite import _simplifiedCoord
+        from .composite import _simplifiedCoord
         from proveit.number import zero, one, Add, Subtract
         try:
             coord = zero
@@ -226,14 +226,14 @@ class ExprTensor(Composite, Expression):
         
         Raise an ExprTensorError if there are overlapping entries.
         '''
-        from iteration import Iter
+        from .iteration import Iter
         from proveit.number import Add, Subtract, one
         
         # Create the entry_origins dictionary and check for invalid
         # overlapping entries while we are at it.
         rel_entry_origins = dict()
         rel_index_tensor = self.relIndexTensor
-        for rel_entry_loc, entry in rel_index_tensor.iteritems():
+        for rel_entry_loc, entry in rel_index_tensor.items():
             if isinstance(entry, Iter):
                 loc = self.tensorLoc(rel_entry_loc)
                 
@@ -249,7 +249,7 @@ class ExprTensor(Composite, Expression):
                 # iterate over all of the relative indexed locations from the starting corner to 
                 # the ending corner of the Iter block, populating the entry_origins dictionary and 
                 # making sure none of the locations overlap with something else.
-                for p in itertools.product(*[xrange(start, end) for start, end in zip(rel_entry_loc, rel_entry_end_corner)]):
+                for p in itertools.product(*[range(start, end) for start, end in zip(rel_entry_loc, rel_entry_end_corner)]):
                     p = tuple(p)
                     if p in rel_entry_origins:
                         raise ExprTensorError("Overlapping blocks in the ExprTensor")
@@ -303,19 +303,19 @@ class ExprTensor(Composite, Expression):
         '''
         Yield each relative entry location and corresponding element.
         '''
-        return self.relIndexTensor.iteritems()
+        return iter(self.relIndexTensor.items())
 
     def itervalues(self):
         '''
         Yield each tensor element.
         '''
-        return self.relIndexTensor.itervalues()
+        return iter(self.relIndexTensor.values())
     
     def keys(self):
         '''
         Returns the relative entry location keys
         '''
-        return self.relIndexTensor.keys()
+        return list(self.relIndexTensor.keys())
     
     def relEndCorner(self, rel_entry_loc):
         '''
@@ -343,7 +343,7 @@ class ExprTensor(Composite, Expression):
         end are the same for single-element entries.
         '''
         from proveit.number import one, Add, Subtract
-        from iteration import Iter
+        from .iteration import Iter
         entry = self[self.relEntryLoc(tensor_entry_loc)]
         if isinstance(entry, Iter):
             end_corner = []
@@ -373,8 +373,8 @@ class ExprTensor(Composite, Expression):
         appended to the given 'requirements' (if provided).
         '''
         from proveit.number import Less, Add, Subtract
-        from iteration import Iter
-        from composite import _simplifiedCoord
+        from .iteration import Iter
+        from .composite import _simplifiedCoord
         if len(tensor_loc) != self.ndims:
             raise ExprTensorError("The 'tensor_loc' has the wrong number of dimensions: %d instead of %d"%(len(tensor_loc), self.ndims))
         
@@ -448,7 +448,7 @@ class ExprTensor(Composite, Expression):
         Yield the argument (key, value) pairs that could be used to 
         recreate the ExprTensor.
         '''
-        tensor = {loc:element for loc, element in self.iteritems()}
+        tensor = {loc:element for loc, element in self.items()}
         yield tensor
                                     
     @classmethod
@@ -464,11 +464,11 @@ class ExprTensor(Composite, Expression):
         # coordinate-sorting relations in each dimension
         sorting_relations = subExpressions[:ndims]
         indexed_tensor = {literal_eval(indexed_loc_str):element for indexed_loc_str, element in zip(indexed_loc_strs, subExpressions[ndims+1:])}
-        tensor = {ExprTensor.tensorLocation(indexed_loc, sorting_relations):element for indexed_loc, element in indexed_tensor.iteritems()}
+        tensor = {ExprTensor.tensorLocation(indexed_loc, sorting_relations):element for indexed_loc, element in indexed_tensor.items()}
         return ExprTensor(tensor).withStyles(**styles)
                                                                               
     def string(self, fence=False):
-        return '{' + ', '.join(loc.string(fence=True) + ':' + element.string(fence=True) for loc, element in self.iteritems()) + '}'
+        return '{' + ', '.join(loc.string(fence=True) + ':' + element.string(fence=True) for loc, element in self.items()) + '}'
     
     def _config_latex_tool(self, lt):
         Expression._config_latex_tool(self, lt)
@@ -490,14 +490,14 @@ class ExprTensor(Composite, Expression):
         current_row = -1
         current_col = -1
         # first add arrows at the top for all column alignment indices
-        for c in xrange(-1, ncolumns):
+        for c in range(-1, ncolumns):
             if c in self.alignmentCoordinates[1]:
                 outStr += ' \ar @{->} [0,1]'
             outStr += ' & '
         outStr += r'\\'
         isAlignmentRow = 0 in self.alignmentCoordinates[0]
         # next add the populated elements
-        for (r, c) in self.keys():
+        for (r, c) in list(self.keys()):
             element = self[(r, c)]
             blockAlignmentStr = ''
             if isAlignmentRow and current_col == -1:
@@ -536,7 +536,7 @@ class ExprTensor(Composite, Expression):
                 outStr += r'\exprtensorelem'
             outStr += '{' + element.latex(fence=True) + '}' + blockAlignmentStr
         # finally add arrows at the bottom for all column alignment indices
-        for c in xrange(-1, ncolumns):
+        for c in range(-1, ncolumns):
             if c in self.alignmentCoordinates[1]:
                 outStr += ' \ar @{->} [0,-1]'
             outStr += ' & '
@@ -563,7 +563,7 @@ class ExprTensor(Composite, Expression):
         coord_sorting_relations = [] # expanded sorting relations (including start and end indices) along each axis
         rel_start_loc = [] # start location relative to the new sorting locations along each axis
         rel_end_loc = [] # end location relative to the new sorting locations along each axis
-        for axis in xrange(self.ndims): # for each axis
+        for axis in range(self.ndims): # for each axis
             start_index =start_indices[axis]
             end_index = end_indices[axis]
             
@@ -579,7 +579,7 @@ class ExprTensor(Composite, Expression):
         # For each entry of the substituted tensor, determine if it is within the start/end
         # "window".  If so, yield the intersected range in terms of parameter values
         # (inverted from the tensor coordinates).  Keep track of the requirements.
-        for rel_loc_in_tensor, entry in self.iteritems():
+        for rel_loc_in_tensor, entry in self.items():
             # convert from the relative location within the tensor to the
             # tensor location in absolute coordinates.
             entry_start = self.tensorLoc(rel_loc_in_tensor)
@@ -628,8 +628,8 @@ class ExprTensor(Composite, Expression):
         according to exprMap and/or relabeled according to relabelMap.
         Flattens nested tensors (or lists of lists) that arise from Embed substitutions.
         '''
-        from composite import _simplifiedCoord
-        from iteration import Iter
+        from .composite import _simplifiedCoord
+        from .iteration import Iter
         from proveit.number import Add
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
@@ -637,13 +637,13 @@ class ExprTensor(Composite, Expression):
         if requirements is None: requirements = [] # requirements won't be passed back in this case
 
         tensor = dict()
-        for loc, element in self.iteritems():
+        for loc, element in self.items():
             subbed_loc = loc.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
             subbed_elem = element.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
             if isinstance(element, Iter) and isinstance(subbed_elem, ExprTensor):
                 # An iteration element became an ExprTensor upon substitution,
                 # so insert the elements directly into this outer ExprTensor.
-                for sub_loc, sub_elem in subbed_elem.iteritems():
+                for sub_loc, sub_elem in subbed_elem.items():
                     net_loc = [_simplifiedCoord(Add(main_coord, sub_coord), assumptions, requirements) for main_coord, sub_coord in zip(subbed_loc, sub_loc)]
                     tensor[net_loc] = subbed_elem
             else:
@@ -666,13 +666,13 @@ class ExprTensor(Composite, Expression):
         '''
         Returns the union of the used Variables of the sub-Expressions.
         '''
-        return set().union(*([expr.usedVars for expr in self.sorting_relations] + [expr.usedVars() for expr in self.values()]))
+        return set().union(*([expr.usedVars for expr in self.sorting_relations] + [expr.usedVars() for expr in list(self.values())]))
         
     def freeVars(self):
         '''
         Returns the union of the free Variables of the sub-Expressions.
         '''
-        return set().union(*([expr.freeVars for expr in self.sorting_relations] + [expr.freeVars() for expr in self.values()]))
+        return set().union(*([expr.freeVars for expr in self.sorting_relations] + [expr.freeVars() for expr in list(self.values())]))
 
 class ExprTensorError(Exception):
     def __init__(self, msg):

@@ -1,4 +1,4 @@
-from composite import Composite, _simplifiedCoord
+from .composite import Composite, _simplifiedCoord
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.defaults import USE_DEFAULTS
 
@@ -97,7 +97,7 @@ class ExprList(Composite, Expression):
         Return True if this has a single element that is not an
         iteration.
         '''
-        from iteration import Iter
+        from .iteration import Iter
         return len(self)==1 and not isinstance(self[0], Iter)
     
     def index(self, entry):
@@ -110,7 +110,7 @@ class ExprList(Composite, Expression):
         return self.formatted('latex', **kwargs)
         
     def formatted(self, formatType, fence=True, subFence=False, formattedOperator=None, wrapPositions=tuple()):
-        from iteration import Iter
+        from .iteration import Iter
         outStr = ''
         if len(self) == 0 and fence: 
             # for an empty list, show the parenthesis to show something.            
@@ -151,7 +151,7 @@ class ExprList(Composite, Expression):
         '''
         from proveit.number import one, num, Add, Subtract, Less
         from proveit.logic import Equals
-        from iteration import Iter
+        from .iteration import Iter
         from proveit import ProofFailure
         
         if requirements is None: requirements = [] # requirements won't be passed back in this case
@@ -251,7 +251,7 @@ class ExprList(Composite, Expression):
         according to exprMap and/or relabeled according to relabelMap.
         Flattens nested ExprLists that arise from Embed substitutions.
         '''
-        from iteration import Iter
+        from .iteration import Iter
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         subbed_exprs = []

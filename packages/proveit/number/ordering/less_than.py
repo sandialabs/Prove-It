@@ -1,6 +1,6 @@
 from proveit import Literal, USE_DEFAULTS, asExpression
 from proveit.logic import Equals
-from ordering_relation import OrderingRelation, OrderingSequence
+from .ordering_relation import OrderingRelation, OrderingSequence
 from proveit._common_ import a, b, c, x, y, z
 
 class LesserRelation(OrderingRelation):
@@ -67,7 +67,7 @@ class Less(LesserRelation):
         '''
         Returns the reversed inequality Expression.
         '''
-        from greater_than import GreaterThan
+        from .greater_than import GreaterThan
         return GreaterThan(self.rhs, self.lhs)
 
     def deriveReversed(self, assumptions=USE_DEFAULTS):
@@ -97,7 +97,7 @@ class Less(LesserRelation):
         '''
         from _axioms_ import transitivityLessLess
         from _theorems_ import transitivityLessLessEq
-        from greater_than import Greater, GreaterEq
+        from .greater_than import Greater, GreaterEq
         other = asExpression(other)
         if isinstance(other, Equals):
             return OrderingRelation.applyTransitivity(self, other, assumptions) # handles this special case
@@ -165,7 +165,7 @@ class LessEq(LesserRelation):
         '''
         Returns the reversed inequality Expression.
         '''
-        from greater_than import GreaterThanEquals
+        from .greater_than import GreaterThanEquals
         return GreaterThanEquals(self.rhs, self.lhs)
 
     def deriveReversed(self, assumptions=USE_DEFAULTS):
@@ -191,7 +191,7 @@ class LessEq(LesserRelation):
         of x<=y and y<=x (or x>=y), derive x=z.
         '''
         from _theorems_ import transitivityLessEqLess, transitivityLessEqLessEq, symmetricLessEq
-        from greater_than import Greater, GreaterEq
+        from .greater_than import Greater, GreaterEq
         other = asExpression(other)
         if isinstance(other, Equals):
             return OrderingRelation.applyTransitivity(self, other, assumptions) # handles this special case

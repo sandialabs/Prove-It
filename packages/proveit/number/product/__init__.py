@@ -1,1 +1,1 @@
-from prod import Prod
+from .prod import Prod

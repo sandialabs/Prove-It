@@ -1,1 +1,1 @@
-from enum_set import Set
+from .enum_set import Set

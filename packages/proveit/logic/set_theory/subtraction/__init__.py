@@ -1,1 +1,1 @@
-from difference import Difference
+from .difference import Difference

@@ -49,7 +49,7 @@ class ExpressionInfo:
                     outStr += indent + 'context: ' + expr.context.name + '\n'
                 outStr += indent + 'class: ' + str(expr.__class__) + '\n'
             if isinstance(expr, NamedExprs):
-                for key in expr.keys():
+                for key in list(expr.keys()):
                     outStr += indent + key + ': ' + str(expr_num_map[expr[key]]) + '\n'
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
@@ -117,7 +117,7 @@ class ExpressionInfo:
         for k, expr in enumerate(enumerated_expressions):
             sub_expressions = ''
             if isinstance(expr, NamedExprs):
-                for key in expr.keys():
+                for key in list(expr.keys()):
                     sub_expressions += '%s: %d<br>'%(key, expr_num_map[expr[key]])
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator

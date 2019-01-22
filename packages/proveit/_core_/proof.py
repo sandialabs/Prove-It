@@ -9,8 +9,8 @@ Proof objects form a DAG.
 
 from proveit._core_.known_truth import KnownTruth
 from proveit._core_._unique_data import meaningData, styleData
-from defaults import defaults, USE_DEFAULTS, WILDCARD_ASSUMPTIONS
-from context import Context
+from .defaults import defaults, USE_DEFAULTS, WILDCARD_ASSUMPTIONS
+from .context import Context
 import re
 
 class Proof:
@@ -264,7 +264,7 @@ class Proof:
         order which makes it clear that the dependencies are
         acyclic by making sure requirements come after dependents.
         '''
-        from _dependency_graph import orderedDependencyNodes
+        from ._dependency_graph import orderedDependencyNodes
         return orderedDependencyNodes(self, lambda proof : proof.requiredProofs)
     
     def allRequiredProofs(self):
@@ -358,7 +358,7 @@ class Axiom(Proof):
         return 'axiom'
     
     def _storedAxiom(self):
-        from _context_storage import StoredAxiom
+        from ._context_storage import StoredAxiom
         return StoredAxiom(self.context, self.name)
     
     def getLink(self):
@@ -420,7 +420,7 @@ class Theorem(Proof):
         '''
         s = str(self)
         hierarchy = s.split('.')
-        for k in xrange(1, len(hierarchy)):
+        for k in range(1, len(hierarchy)):
             yield '.'.join(hierarchy[:k])
         yield s
         
@@ -430,7 +430,7 @@ class Theorem(Proof):
             theorem._setUsability()            
         
     def _storedTheorem(self):
-        from _context_storage import StoredTheorem
+        from ._context_storage import StoredTheorem
         return StoredTheorem(self.context, self.name)
 
     def getLink(self):
@@ -755,7 +755,7 @@ class Specialization(Proof):
         from proveit import Lambda, Expression, Iter
         from proveit.logic import Forall
         # check that the mappings are appropriate
-        for key, sub in relabelMap.items():
+        for key, sub in list(relabelMap.items()):
             Specialization._checkRelabelMapping(key, sub, assumptions)
             if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
         for assumption in assumptions:
@@ -763,7 +763,7 @@ class Specialization(Proof):
             if len(assumption.freeVars() & set(relabelMap.keys())) != 0:
                 raise RelabelingFailure(None, assumptions, 'Cannot relabel using assumptions that involve any of the relabeling variables')
         
-        for key, sub in specializeMap.iteritems():
+        for key, sub in specializeMap.items():
             if not isinstance(sub, Expression):
                 raise TypeError("Expecting specialization substitutions to be 'Expression' objects")
             if key in relabelMap:
@@ -808,7 +808,7 @@ class Specialization(Proof):
         # sort the relabeling vars in order of their appearance in the original expression
         relabelVars = []
         visitedVars = set()
-        for var in generalExpr.orderOfAppearance(relabelMap.keys()):
+        for var in generalExpr.orderOfAppearance(list(relabelMap.keys())):
             if var not in visitedVars: # ensure no repeats
                 visitedVars.add(var)
                 relabelVars.append(var)

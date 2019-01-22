@@ -1,2 +1,2 @@
-from existential import Exists, NotExists
-from universal import Forall
+from .existential import Exists, NotExists
+from .universal import Forall

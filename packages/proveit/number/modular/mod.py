@@ -12,14 +12,14 @@ class Mod(Operation):
         self.divisor = self.operands[1]
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == Integers:
             return theorems.modIntClosure
         elif numberSet == Reals:
             return theorems.modRealClosure
     
     def deduceInInterval(self, assumptions=frozenset()):
-        from theorems import modInInterval, modInIntervalCO
+        from .theorems import modInInterval, modInIntervalCO
         from numberSets import deduceInIntegers, deduceInReals
         try:
             # if the operands are integers, then we can deduce that a mod b is in 0..(b-1)

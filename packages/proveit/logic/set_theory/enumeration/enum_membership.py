@@ -46,7 +46,7 @@ class EnumMembership(Membership):
         '''
         From [element in {x, y, ..}], derive and return [(element=x) or (element=y) or ..].
         '''
-        from _theorems_ import unfoldSingleton, unfold
+        from ._theorems_ import unfoldSingleton, unfold
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
             return unfoldSingleton.specialize({x:self.element, y:enum_elements[0]})
@@ -67,7 +67,7 @@ class EnumNonmembership(Nonmembership):
         Deduce and return and [element not in {x, y, ..}] = [(element != x) and (element != y) and ...]
         where self = {y}.
         '''
-        from _theorems_ import notInSingletonEquiv, nonmembershipEquiv
+        from ._theorems_ import notInSingletonEquiv, nonmembershipEquiv
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
             return notInSingletonEquiv.specialize({x:self.element, y:enum_elements})

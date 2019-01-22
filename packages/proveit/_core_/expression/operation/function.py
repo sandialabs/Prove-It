@@ -1,4 +1,4 @@
-from operation import Operation
+from .operation import Operation
 
 class Function(Operation):
     '''

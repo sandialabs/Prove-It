@@ -1,1 +1,1 @@
-from transitivity import TransitiveRelation, TransitiveSequence
+from .transitivity import TransitiveRelation, TransitiveSequence

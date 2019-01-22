@@ -4,7 +4,7 @@ from proveit.number import Naturals, NaturalsPos, Neg, Integers
 from proveit.number import Add, GreaterThanEquals
 from proveit.number import Len
 from proveit.common import n, xMulti, xEtc, x, y, S
-from common import zero, one, two
+from .common import zero, one, two
 from proveit import beginAxioms, endAxioms
 
 beginAxioms(locals())

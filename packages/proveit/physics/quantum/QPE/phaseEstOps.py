@@ -64,7 +64,7 @@ class ModAdd(BinaryOperation, NumberOp):
         BinaryOperation.__init__(self, MOD_ADD, a, b)
 
     def _closureTheorem(self, numberSet):
-        from theorems import modAddClosure
+        from .theorems import modAddClosure
         if numberSet == Integers:
             return modAddClosure
     

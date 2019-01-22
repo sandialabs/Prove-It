@@ -1,1 +1,1 @@
-from divide import Div, Frac
+from .divide import Div, Frac

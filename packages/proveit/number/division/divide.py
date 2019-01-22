@@ -31,7 +31,7 @@ class Div(Operation):
         return Operation.remakeConstructor(self)
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == Reals:
             return theorems.divideRealClosure
         elif numberSet == RealsPos:

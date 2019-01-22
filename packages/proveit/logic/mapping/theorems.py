@@ -1,7 +1,7 @@
 from proveit.statement import Theorems
 from proveit.expression import Lambda, Operation
 from proveit.basiclogic import Forall, Equals, Implies, In
-from mappingOps import Domain
+from .mappingOps import Domain
 from proveit.common import f, g, x, y, Q, fx, fy, gx, gy, Qx, Qy
 from proveit.basiclogic.common import fx_eq_gx
 
