@@ -11,7 +11,7 @@ import lxml.etree
 import shutil
 import argparse
 import nbformat
-from nbconvert.preprocessors import Preprocessor#, ExecutePreprocessor
+from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
 from nbconvert.preprocessors.execute import executenb
 from nbconvert import HTMLExporter
 from IPython.lib.latextools import LaTeXTool
@@ -19,6 +19,9 @@ import base64
 import datetime
 import tarfile
 import urllib
+import tempfile
+import subprocess
+import zmq # to catch ZMQError which randomly occurs when starting a Jupyter kernel
 from proveit import Context
 
 # for compiling LaTeX
@@ -38,8 +41,6 @@ def findContextPaths(path):
                 sub_context_path = os.path.join(path, sub_context)
                 for context_path in findContextPaths(sub_context_path):
                     yield context_path
-
-#execute_processor = ExecutePreprocessor(kernel_name='python2', timeout=-1)
 
 # regular expression for finding 'a' html tags; trivially adapted from
 # http://haacked.com/archive/2004/10/25/usingregularexpressionstomatchhtml.aspx/
@@ -208,10 +209,13 @@ class ProveItHTMLPreprocessor(Preprocessor):
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
 html_exporter.template_file = 'proveit_html'
 
-def executeNotebook(notebook_path):
+def executeNotebook(notebook_path, execute_as_script=False):
     '''
     Read, execute, and write out the notebook at the given path.
-    Return the notebook object
+    Return the notebook object.
+    With exectue_as_script==True, it will run the cells as script
+    which is faster then starting a new Jupyter kernel.  It won't
+    generate the output however.
     '''
     print('Executing ' + notebook_path)
     sys.stdout.flush()
@@ -219,26 +223,47 @@ def executeNotebook(notebook_path):
     # read
     with open(notebook_path) as f:
         nb = nbformat.read(f, as_version=4)
-        
-    # execute using a KernelManager with the appropriate cwd (current working directory)\
-    notebook_dir = os.path.split(notebook_path)[0]
-    executenb(nb, cwd=notebook_dir)
-    #if km is None:
-    #    km = execute_processor.start_new_kernel(cwd=notebook_dir)[0]
-    #else:
-    #    km.client().execute('cd '+os.path.abspath(notebook_dir))
-    #print "execute", km, kc
-    #km = execute_processor.start_new_kernel(cwd=notebook_dir)[0]
-    #execute_processor.preprocess(nb, {'metadata':{'path':os.path.split(notebook_path)[0]}}, km=km)
-    #km.shutdown_kernel(now=False)
-    #km.restart_kernel(now=True)
-    #kc = km.client()
-    #kc.execute("%reset -f", silent=True, reply=True) # reset all variables
-    #msg_id = kc.execute('%reset\n', silent=True, reply=True) # reset all variables
-        
-    # write notebook
-    with open(notebook_path, 'wt') as f:
-        nbformat.write(nb, f)
+    
+    if execute_as_script:
+        temp = tempfile.NamedTemporaryFile(suffix='.py')
+        try:
+            # need an ipython object for executing "magic"
+            temp.write("import IPython\n")
+            temp.write("_ipython = IPython.get_ipython()\n") 
+            for cell in nb.cells:
+                if cell.cell_type=='code':
+                    for line in cell.source.split('\n'):
+                        if len(line)==0: continue
+                        if line[0] == '%': continue # intercepted magic command
+                        #line = "_ipython.magic('%s')"%line[1:].replace("'", "\\'")
+                        temp.write(line + '\n')
+            temp.flush()
+            #temp.seek(0)
+            #print(temp.read())
+            print(temp.name)
+            # ONLY WORKING AS ipython CURRENTLY, BUT THAT DEFEATS THE PURPOSE
+            # COULD CHANGE IT TO ONLY ALLOW PROVEIT MAGIC??
+            subprocess.check_call(["python", temp.name], stderr=sys.stderr)
+        finally:
+            temp.close()
+    else:
+        # execute using a KernelManager with the appropriate cwd (current working directory)\
+        notebook_dir = os.path.split(notebook_path)[0]
+        resources = {'metadata':{'path':notebook_dir}}
+        execute_processor = ExecutePreprocessor(kernel_name='python2', timeout=-1)
+        while True:
+            try:
+                #executenb(nb, cwd=notebook_dir)
+                execute_processor.preprocess(nb, resources)
+                break
+            except zmq.ZMQError:
+                print("ZMQError encountered")
+                execute_processor.km.restart_kernel(newport=True)
+            except RuntimeError:
+                print("Try restarting kernel")
+                execute_processor.km.restart_kernel(newport=True)
+        with open(notebook_path, 'wt') as f:
+            nbformat.write(nb, f)
     return nb
 
 def generate_css_if_missing(path):
@@ -354,11 +379,11 @@ def build(context_paths, all_paths, no_execute=False, just_execute_proofs=False,
     if not just_execute_proofs and not just_execute_demos and not just_execute_expression_nbs:
         # Generate html pages from index.ipynb and brief_guide.ipynb in the packages folder:
         if no_execute:
-            exportToHTML('packages/index.ipynb')
-            exportToHTML('packages/brief_guide.ipynb')
+            exportToHTML('index.ipynb')
+            exportToHTML('brief_guide.ipynb')
         else:
-            executeAndExportNotebook('packages/index.ipynb')
-            executeAndExportNotebook('packages/brief_guide.ipynb')
+            executeAndExportNotebook('index.ipynb')
+            executeAndExportNotebook('brief_guide.ipynb')
         
         # Make sure there is a _common_.py in each context directory.
         # These will be useful in figuring out dependencies between _common_
@@ -598,6 +623,8 @@ if __name__ == '__main__':
         '''
         Download and extract the tarball of __pv_it directories.
         '''
+        if not args.clean:
+            raise ValueError("The '--download' option is currently only implemented to work in conjunction with the '--clean' option")
         if args.noexecute or args.just_execute_proofs or args.just_execute_demos or args.just_execute_expression_nbs:
             raise ValueError("Do not combine the '--download' option with any other option besides '--clean'")
         url = "http://pyproveit.org/pv_it.tar.gz" # tarball url
