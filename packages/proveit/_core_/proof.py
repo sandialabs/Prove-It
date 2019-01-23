@@ -110,7 +110,8 @@ class Proof:
             # to use an "unusable" theorem directly or indirectly.
             raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
         if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
-            if not hadPreviousProof: # don't bother with side-effects if this was already proven (and usable); that should have been done already
+            # don't bother with side-effects if they have already been processed
+            if provenTruth not in KnownTruth.sideeffect_processed: 
                 # may derive any side-effects that are obvious consequences arising from this truth:
                 provenTruth.deriveSideEffects()
 
@@ -335,7 +336,13 @@ class Assumption(Proof):
         '''
         key = (expr, assumptions)
         if key in Assumption.allAssumptions:
-            return Assumption.allAssumptions[key]
+            preexisting = Assumption.allAssumptions[key]
+            if preexisting.provenTruth not in KnownTruth.sideeffect_processed:
+                # The Assumption object exists alread, but it's
+                # side-effects were not derived yet.  This can happen when
+                # automation is temporarily disabled.
+                preexisting.provenTruth.deriveSideEffects()
+            return preexisting
         return Assumption(expr, assumptions)
         
     def stepType(self):
@@ -829,7 +836,7 @@ class Specialization(Proof):
             if not isinstance(sub, Variable):
                 raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
         else:
-            raise RelabelingFailure(None, assumptions, "May only relabel a Variable or a MultiVariable")                       
+            raise RelabelingFailure(None, assumptions, "May only relabel a Variable")                       
 
 class Generalization(Proof):
     def __init__(self, instanceTruth, newForallVarLists, newConditions=tuple()):
@@ -865,12 +872,10 @@ n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the 
                     # the final introduced Forall operation must use all of the remaining conditions
                     newConditions = remainingConditions
                 else:
-                    # use the first applicable condition and all subsequent conditions in order to maintain the supplied order
-                    applicableIndices = [i for i, remainingCondition in enumerate(remainingConditions) if not remainingCondition.freeVars().isdisjoint(newForallVars)]
-                    if len(applicableIndices) > 0:
-                        j = min(applicableIndices)
-                        newConditions = remainingConditions[j:]
-                        remainingConditions = remainingConditions[:j]
+                    # use all applicable conditions in the supplied order
+                    conditionApplicability = [not remainingCondition.freeVars().isdisjoint(newForallVars) for remainingCondition in remainingConditions]
+                    newConditions = [remainingCondition for applicable, remainingCondition in zip(conditionApplicability, remainingConditions) if applicable]
+                    remainingConditions = [remainingCondition for applicable, remainingCondition in zip(conditionApplicability, remainingConditions) if not applicable]
                 # new conditions can eliminate corresponding assumptions
                 assumptions -= set(newConditions)
                 # create the new generalized expression

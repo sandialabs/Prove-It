@@ -15,15 +15,18 @@ class Iter(Expression):
     index (indices) and start index (indices)
     is (are) a known integer(s).
     '''
-    
-    def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices, styles=dict(), requirements=tuple()):
-        if not isinstance(lambda_map, Lambda):
-            raise TypeError('When creating an Iter Expression, the lambda_map argument must be a Lambda expression')
+
+    def __init__(self, parameter_or_parameters, body, start_index_or_indices, end_index_or_indices, styles=dict(), requirements=tuple()):
+        from proveit.logic import InSet
+        from proveit.number import Interval
         
+        parameters = compositeExpression(parameter_or_parameters)
+
+        start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
         if isinstance(start_index_or_indices, ExprList) and len(start_index_or_indices)==1:
             start_index_or_indices = start_index_or_indices[0]
-        self.start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
-        if isinstance(self.start_index_or_indices, Composite):
+        self.start_index_or_indices = start_index_or_indices
+        if isinstance(start_index_or_indices, Composite):
             # a composite of multiple indices
             self.start_indices = self.start_index_or_indices 
         else:
@@ -32,9 +35,10 @@ class Iter(Expression):
             # wrap a single index in a composite for convenience
             self.start_indices = compositeExpression(self.start_index_or_indices)
 
+        end_index_or_indices = singleOrCompositeExpression(end_index_or_indices)
         if isinstance(end_index_or_indices, ExprList) and len(end_index_or_indices)==1:
             end_index_or_indices = end_index_or_indices[0]
-        self.end_index_or_indices = singleOrCompositeExpression(end_index_or_indices)
+        self.end_index_or_indices = end_index_or_indices
         if isinstance(self.end_index_or_indices, Composite):
             # a composite of multiple indices
             self.end_indices = self.end_index_or_indices 
@@ -48,26 +52,64 @@ class Iter(Expression):
         if self.ndims != len(self.end_indices):
             raise ValueError("Inconsistent number of 'start' and 'end' indices")
         
+        if len(parameters) != len(self.start_indices):
+            raise ValueError("Inconsistent number of indices and lambda map parameters")
+        
+        conditions = []
+        for param, start_index, end_index in zip(parameters, self.start_indices, self.end_indices):
+            conditions.append(InSet(param, Interval(start_index, end_index)))
+        
+        lambda_map = Lambda(parameters, body, conditions=conditions)
+        Expression.__init__(self, ['Iter'], [lambda_map], styles=styles, requirements=requirements)
+        self.lambda_map = lambda_map
+    
+    """
+    def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices, styles=dict(), requirements=tuple()):
+        if not isinstance(lambda_map, Lambda):
+            raise TypeError('When creating an Iter Expression, the lambda_map argument must be a Lambda expression')
+        
+        if isinstance(start_index_or_indices, ExprList) and len(start_index_or_indices)==1:
+            start_index_or_indices = start_index_or_indices[0]
+        self.start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
+        
+        self.ndims = len(self.start_indices)
+        if self.ndims != len(self.end_indices):
+            raise ValueError("Inconsistent number of 'start' and 'end' indices")
+        
         if len(lambda_map.parameters) != len(self.start_indices):
             raise ValueError("Inconsistent number of indices and lambda map parameters")
         
         Expression.__init__(self, ['Iter'], [lambda_map, self.start_index_or_indices, self.end_index_or_indices], styles=styles, requirements=requirements)
         self.lambda_map = lambda_map
+    """
     
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
+        from proveit.logic import InSet
+        from proveit.number import Interval
         if subClass != Iter: 
             MakeNotImplemented(subClass)
         if len(coreInfo) != 1 or coreInfo[0] != 'Iter':
             raise ValueError("Expecting Iter coreInfo to contain exactly one item: 'Iter'")
-        return Iter(*subExpressions).withStyles(**styles)
+        lambda_map = subExpressions[0]
+        if len(lambda_map.parameters) != len(lambda_map.conditions):
+            raise ValueError("Expecting the same number of parameters and conditions")
+        start_indices = []
+        end_indices = []
+        for param, condition in zip(lambda_map.parameters, lambda_map.conditions):
+            if not isinstance(condition, InSet) or condition.element != param or not isinstance(condition.domain, Interval):
+                raise ValueError("Expecting each 'Iter' condition to define an 'Interval' domain for the corresponding parameter")
+            start_indices.append(condition.domain.lowerBound)
+            end_indices.append(condition.domain.upperBound)
+        return Iter(lambda_map.parameters, lambda_map.body, start_indices, end_indices).withStyles(**styles)
             
     def remakeArguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Indexed.
         '''
-        yield self.lambda_map
+        yield self.lambda_map.parameter_or_parameters
+        yield self.lambda_map.body
         yield self.start_index_or_indices
         yield self.end_index_or_indices
         
@@ -103,7 +145,7 @@ class Iter(Expression):
             outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
     
-    def getInstance(self, indices, assumptions = USE_DEFAULTS, requirements = None):
+    def getInstance(self, index_or_indices, assumptions = USE_DEFAULTS, requirements = None):
         '''
         Return the iteration instance with the given indices
         as an Expression, using the given assumptions as needed
@@ -113,6 +155,11 @@ class Iter(Expression):
         appended to the given 'requirements' (if provided).
         '''
         from proveit.number import Less
+        
+        if self.ndims==1:
+            indices = [index_or_indices]
+        else:
+            indices = index_or_indices
 
         if requirements is None: requirements = [] # requirements won't be passed back in this case
         
@@ -204,6 +251,10 @@ class Iter(Expression):
         from proveit.number import Less, LessEq, Subtract, Add, one
         from .composite import _simplifiedCoord
         from proveit._core_.expression.expr import _NoExpandedIteration
+        from proveit._core_.expression.label.var import safeDummyVars
+        
+        self._checkRelabelMap(relabelMap)
+        if relabelMap is None: relabelMap = dict()
         
         assumptions = defaults.checkedAssumptions(assumptions)
         arg_sorting_assumptions = list(assumptions)
@@ -222,7 +273,12 @@ class Iter(Expression):
         subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
         subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
         try:
-            for iter_range in self.lambda_map.body._expandingIterRanges(iter_params, subbed_start, subbed_end, exprMap, relabelMap, reservedVars, assumptions, new_requirements):
+            # Need to handle the change in scope within the lambda expression
+            new_params, inner_expr_map, inner_assumptions, inner_reservations = self.lambda_map._innerScopeSub(exprMap, relabelMap, reservedVars, assumptions, requirements)
+            # We won't use 'new_params'.  They aren't relavent after an expansion.
+            # If there is not expansion, we will break out of the try block.
+            
+            for iter_range in self.lambda_map.body._expandingIterRanges(iter_params, subbed_start, subbed_end, inner_expr_map, relabelMap, inner_reservations, inner_assumptions, new_requirements):
                 iter_ranges.add(iter_range)
                 for axis, (start, end) in enumerate(zip(*iter_range)):
                     special_points[axis].add(start)
@@ -230,7 +286,7 @@ class Iter(Expression):
                     # Preemptively include start-1 and end+1 in case it is required for splitting up overlapping ranges
                     # (we won't add simplification requirements until we find we actually need them.)
                     # Not necesary in the 1D case.
-                    # Add the coordinate simplification to argument sorting assumtions -
+                    # Add the coordinate simplification to argument sorting assumptions -
                     # after all, this sorting does not go directly into the requirements.
                     start_minus_one = _simplifiedCoord(Subtract(start, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
                     end_plus_one = _simplifiedCoord(Add(end, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
@@ -245,6 +301,18 @@ class Iter(Expression):
                     # still want things sorted this way while we don't know if the range is empty or not
                     # and it does not go directly into the requirements.
                     arg_sorting_assumptions.append(LessEq(start, end))
+            
+            # add the assumptions for applying ordering transitivity rules used to
+            # sort special points (these relations may or may not need to be added as actual requirements;
+            # in this initial processing, we want everything to go through even if some of these theorems are
+            # not "usable" in this context).
+            try:
+                from proveit.logic.equality._theorems_ import subLeftSideInto, subRightSideInto, equalsReversal
+                from proveit.number.ordering._theorems_ import transitivityLessLess, transitivityLessEqLess, transitivityLessLessEq, transitivityLessEqLessEq
+                arg_sorting_assumptions.extend([subLeftSideInto.expr, subRightSideInto.expr, equalsReversal.expr])
+                arg_sorting_assumptions.extend([transitivityLessLess.expr, transitivityLessEqLess.expr, transitivityLessLessEq.expr, transitivityLessEqLessEq.expr])
+            except:
+                pass # skip this if the theorems have not be defined yet 
             
             # There are Indexed sub-Expressions whose variable is
             # being replaced with a Composite, so let us
@@ -271,32 +339,45 @@ class Iter(Expression):
             
             rel_iter_ranges = sorted(self._makeNonoverlappingRangeSet(rel_iter_ranges, arg_sorting_relations, assumptions, new_requirements))
             
+            #print arg_sorting_relations
             # Generate the expanded list/tensor to replace the iterations.
             if self.ndims==1: lst = []
             else: tensor = dict()            
             for rel_iter_range in rel_iter_ranges:
+                #print rel_iter_range
                 # get the starting location of this iteration range
                 start_loc = tuple(arg_sorting_relation.operands[idx] for arg_sorting_relation, idx in zip(arg_sorting_relations, rel_iter_range[0]))
                 if rel_iter_range[0] == rel_iter_range[1]:
                     # single element entry (starting and ending location the same)
-                    inner_expr_map = dict(exprMap)
-                    inner_expr_map.update({param:arg for param, arg in zip(self.lambda_map.parameters, start_loc)})
+                    entry_inner_expr_map = dict(inner_expr_map)
+                    entry_inner_expr_map.update({param:arg for param, arg in zip(self.lambda_map.parameters, start_loc)})
                     for param in self.lambda_map.parameters: relabelMap.pop(param, None)
-                    entry = self.lambda_map.body.substituted(inner_expr_map, relabelMap, reservedVars, assumptions, new_requirements)
+                    entry = self.lambda_map.body.substituted(entry_inner_expr_map, relabelMap, inner_reservations, inner_assumptions, new_requirements)
                 else:
                     # iterate over a sub-range
                     end_loc = tuple(arg_sorting_relation.operands[idx] for arg_sorting_relation, idx in zip(arg_sorting_relations, rel_iter_range[1]))
                     # Shift the iteration parameter so that the iteration will have the same start-indices
                     # for this sub-range (like shifting a viewing window, moving the origin to the start of the sub-range).
                     # Include assumptions that the lambda_map parameters are in the shifted start_loc to end_loc range.
-                    range_expr_map = dict(exprMap)
-                    range_assumptions = list(assumptions)
-                    for start_idx, param, range_start, range_end in zip(self.start_indices, self.lambda_map.parameters, start_loc, end_loc):
-                        range_expr_map[param] = Add(param, Subtract(range_start, start_idx))
-                        range_assumptions += Less.sort((start_idx, param), reorder=False, assumptions=assumptions)
-                        range_assumptions += Less.sort((param, Subtract(range_end, start_idx)), reorder=False, assumptions=assumptions)
-                    range_lambda_body = self.lambda_map.body.substituted(range_expr_map, relabelMap, reservedVars, range_assumptions, new_requirements)
-                    range_lambda_map = Lambda(self.lambda_map.parameters, range_lambda_body)
+                    range_expr_map = dict(inner_expr_map)
+                    range_assumptions = []
+                    #print start_loc, end_loc, range_expr_map, range_assumptions, self.lambda_map
+                    # generate "safe" new parameters (the Variables are not used for anything that might conflict).
+                    new_params = safeDummyVars(len(self.lambda_map.parameters), [self] + range_expr_map.values() + relabelMap.values())
+                    for start_idx, param, new_param, range_start, range_end in zip(self.start_indices, self.lambda_map.parameters, new_params, start_loc, end_loc):
+                        range_expr_map[param] = Add(new_param, Subtract(range_start, start_idx))
+                        range_assumptions.append(LessEq(start_idx, new_param))
+                        range_assumptions.append(LessEq(new_param, Subtract(range_end, start_idx)))
+                        #range_assumptions.append(LessEq(range_start, param))
+                        #range_assumptions.append(LessEq(param, range_end))
+                    #print range_expr_map, range_assumptions
+                    # We don't need to use inner reservations.  The fact that our "new parameters" are "safe" alleviates the need to reserve anything extra.
+                    range_lambda_body = self.lambda_map.body.substituted(range_expr_map, relabelMap, reservedVars, inner_assumptions+range_assumptions, new_requirements)
+                    # Any requirements that involve the new parameters are a direct consequent of the iteration range and are
+                    # not external requirements:
+                    #   (PERHAPS THES REQUIREMENTS
+                    new_requirements = [requirement for requirement in new_requirements if requirement.freeVars().isdisjoint(new_params)]
+                    range_lambda_map = Lambda(new_params, range_lambda_body)
                     # Add the shifted sub-range iteration to the appropriate starting location.
                     end_indices = [_simplifiedCoord(Subtract(range_end, start_idx), assumptions, new_requirements) for start_idx, range_end in zip(self.start_indices, end_loc)]
                     entry = Iter(range_lambda_map, self.start_indices, end_indices)
@@ -313,7 +394,7 @@ class Iter(Expression):
             # replaced with a Composite, so let us not expand the
             # iteration.  Just do an ordinary substitution.
             subbed_map = self.lambda_map.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-            subbed_self = Iter(subbed_map, subbed_start, subbed_end)
+            subbed_self = Iter(subbed_map.parameters, subbed_map.body, subbed_start, subbed_end)
         
         for requirement in new_requirements:
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        
@@ -326,7 +407,7 @@ def varIter(var, start, end):
     from proveit import safeDummyVar
     from .indexed import Indexed
     param = safeDummyVar(var)
-    return Iter(Lambda(param, Indexed(var, param)), start, end)
+    return Iter(param, Indexed(var, param), start, end)
 
 class IterationError(Exception):
     def __init__(self, msg):

@@ -20,6 +20,7 @@ class Variable(Label):
         according to subMap and/or relabeled according to relabelMap.
         '''
         from proveit._core_.expression.expr import Expression
+        self._checkRelabelMap(relabelMap)
         if (exprMap is not None) and (self in exprMap):
             subbed = exprMap[self]
             if not isinstance(subbed, Expression):
@@ -67,6 +68,12 @@ def safeDummyVar(*expressions):
         i += 1
     return dummyVar(i)
 
+def safeDummyVars(n, *expressions):
+    dummyVars = []
+    for _ in range (n):
+        dummyVars.append(safeDummyVar(*(list(expressions)+list(dummyVars))))
+    return dummyVars
+            
 def safeDefaultOrDummyVar(defaultVar, *expressions):
     usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])
     if defaultVar not in usedVs:

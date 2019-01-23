@@ -119,10 +119,9 @@ class TransitiveRelation(Operation):
         else:
             return RelationClass._fixedTransitivitySort(items, assumptions=assumptions)
     
-    @classmethod
-    def insert(RelationClass, sequence, item, assumptions=USE_DEFAULTS):
+    def insert(self, item, assumptions=USE_DEFAULTS):
         assumptions = defaults.checkedAssumptions(assumptions)
-        return RelationClass._transitivityInsert(sequence, item, assumptions)
+        return self.__class__._transitivityInsert(self.operands, item, assumptions)
                                 
     @classmethod
     def knownRelationsFromLeft(RelationClass, expr, assumptionsSet):
@@ -311,19 +310,25 @@ class TransitiveRelation(Operation):
         
         left_endpoint_chains = {item:[[]] for item in items} # map left end-points to chains going from an item to the end-point
         right_endpoint_chains = {item:[[]] for item in items} # map right end-points to chains going from an item to the end-point
+        left_reachables = {item:set([item]) for item in items} # map each item to expressions reachable from that item via generated chains going left
+        right_reachables = {item:set([item]) for item in items} # map each item to expressions reachable from that item via generated chains going right
         
         # while there are still end-points on the frontier
         while len(frontier_left_chains) + len(frontier_right_chains) > 0:
             # extend to the left or to the right
-            for frontier_chains, known_relations, same_endpoint_chains, opposite_endpoint_chains in zip((frontier_left_chains, frontier_right_chains), (RelationClass.knownRelationsFromRight, RelationClass.knownRelationsFromLeft), (left_endpoint_chains, right_endpoint_chains), (right_endpoint_chains, left_endpoint_chains)):
+            for frontier_chains, reachables, known_relations, same_endpoint_chains, opposite_endpoint_chains in zip((frontier_left_chains, frontier_right_chains), (left_reachables, right_reachables), (RelationClass.knownRelationsFromRight, RelationClass.knownRelationsFromLeft), (left_endpoint_chains, right_endpoint_chains), (right_endpoint_chains, left_endpoint_chains)):
                 # extend chains originating from each item
                 for item, chains in dict(frontier_chains).items():
+                    item_reachables = reachables[item]
                     new_frontier_chains = dict() # new chains from extending the original chains
                     # extend from each frontier end-point
                     for endpoint, chain in chains.items():
                         #print 'starting chain', endpoint, list(chain), ('left' if frontier_chains is frontier_left_chains else 'right')
                         # iterate over each known relation that extend the frontier at the end-point
                         for relation, new_endpoint in known_relations(endpoint, assumptionsSet):
+                            if new_endpoint in item_reachables: continue
+                            if new_endpoint in frontier_chains[item]:
+                                continue # not really a new end-point; same as a known end-point (this can happen via the reflexivity of equality)
                             if frontier_chains is frontier_left_chains:
                                 new_chain = [relation] + chain # extend chain to the left
                             else:
@@ -349,6 +354,8 @@ class TransitiveRelation(Operation):
                                 same_endpoint_chains.setdefault(new_endpoint, []).append(new_chain)
                                 # extend the chain to a new endpoint
                                 new_frontier_chains[new_endpoint] = new_chain
+                                # a new reachable end-point:
+                                item_reachables.add(new_endpoint)
                                 #print "new frontier", new_endpoint, new_chain
                     if len(new_frontier_chains) > 0:
                         frontier_chains[item] = new_frontier_chains # update the frontier
@@ -558,9 +565,17 @@ class TransitiveRelation(Operation):
         Under the given assumptions, insert 'item' into the given sorted sequence (e.g., that had
         been returned from a call to transitivitySort).
         '''
+        try:
+            sequence.operands.index(item)
+            return sequence # item already contained in the sequence
+        except ValueError:
+            pass # item not contained in the sequence
+        Sequence = RelationClass.SequenceClass()
+        assert issubclass(Sequence, TransitiveSequence), "SequenceClass() should return a sub-class TransitiveSequence"
         # generate relations between any of the sorted sequence operands and the "item" to insert,
         # using a meet in the middle strategy to find out where the item fits.
         items = list(sequence.operands) + [item]
+        right_item_idx = None
         for (left_item, right_item), chain in RelationClass._generateSortingRelations(items, assumptions):
             if item == left_item:
                 right_item_idx = items.index(right_item)
@@ -568,13 +583,21 @@ class TransitiveRelation(Operation):
                 if right_item_idx > 0:
                     inserting_relations.append(RelationClass._transitivitySearch(items[right_item_idx-1], item, forceStrong=False, assumptions=assumptions))
                 inserting_relations.append(TransitiveRelation.applyTransitivities(chain, assumptions))
-                return RelationClass.Sequence(sequence.relations[:right_item_idx-1] + inserting_relations + sequence.relations[right_item_idx:])
+                break
             elif item == right_item:
                 left_item_idx = items.index(left_item)
+                right_item_idx = left_item_idx+1
                 inserting_relations = [TransitiveRelation.applyTransitivities(chain, assumptions)]
                 if left_item_idx < len(sequence.operands)-1:
-                   inserting_relations.append(RelationClass._transitivitySearch(item, items[left_item_idx+1], forceStrong=False, assumptions=assumptions))
-                return RelationClass.Sequence(sequence.relations[:left_item_idx] + inserting_relations + sequence.relations[left_item_idx+1:])        
+                   inserting_relations.append(RelationClass._transitivitySearch(item, items[right_item_idx], forceStrong=False, assumptions=assumptions))
+                break
+        if right_item_idx is not None:
+            # found a solution
+            inserting_seq = RelationClass.makeSequence(*inserting_relations)
+            operands = sequence.operands[:right_item_idx-1] + list(inserting_seq.operands) + sequence.operands[right_item_idx+1:]
+            operators = sequence.operators[:right_item_idx-1] + list(inserting_seq.operators) + sequence.operators[right_item_idx:]
+            return Sequence(operators, operands)
+        raise TransitivityException(None, assumptions, "Unable to insert %s into sequence %s"%(str(item), str(sequence)))
 
 class TransitiveSequence(OperationSequence):
     '''
@@ -599,6 +622,11 @@ class TransitiveSequence(OperationSequence):
     @classmethod
     def RelationClass(SequenceClass):
         raise NotImplementedError("Must identify the Relation class for the sequence which should be a TransitiveRelation class")
+    
+    def insert(self, item, assumptions=USE_DEFAULTS):
+        assumptions = defaults.checkedAssumptions(assumptions)
+        Relation = self.__class__.RelationClass()
+        return Relation._transitivityInsert(self, item, assumptions)
 
 class TransitivityException(ProofFailure):
     def __init__(self, expr, assumptions, message):

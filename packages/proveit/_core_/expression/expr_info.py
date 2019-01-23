@@ -28,7 +28,7 @@ class ExpressionInfo:
         from proveit._core_._dependency_graph import orderedDependencyNodes
         return orderedDependencyNodes(self.expr, lambda expr : expr._subExpressions)
 
-    def string(self):
+    def __repr__(self):
         from .composite import NamedExprs, Indexed, Iter
         from .operation import Operation
         from .lambda_expr import Lambda
@@ -90,7 +90,7 @@ class ExpressionInfo:
         return outStr
     
     def __str__(self):
-        return self.string()
+        return repr(self)
     
     def _repr_html_(self):
         from .composite import ExprList, ExprTensor, NamedExprs, Indexed, Iter
@@ -104,13 +104,7 @@ class ExpressionInfo:
         expr_num_map = {expr:k for k, expr in enumerate(enumerated_expressions)}
         
         # map each sub-Expression to an appropriate Context
-        expr_context_map = dict() 
-        for expr in enumerated_expressions:
-            if expr in Expression.contexts:
-                expr_context_map[expr] = Expression.contexts[expr]
-            if expr in expr_context_map:
-                for sub_expr in expr.subExprIter(): # propagate the context to its sub-expressions
-                    expr_context_map[sub_expr] = expr_context_map[expr]
+        expr_context_map = {expr : Expression.contexts.get(expr, None) for expr in enumerated_expressions}
         
         # generate the html as a table with the enumerated expressions on the rows.
         html = '<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>\n'
@@ -157,7 +151,7 @@ class ExpressionInfo:
                 '''
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
-            context = expr_context_map[expr] if expr in expr_context_map else None
+            context = expr_context_map[expr]
             html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
             if self.show_details and expr.__class__ not in (Variable, Literal, Operation, Lambda, Indexed, NamedExprs, ExprList, ExprTensor, Indexed, Iter):
                 # not a core expression so show the actual class when showing the details
@@ -168,7 +162,7 @@ class ExpressionInfo:
                     html += '<tr><td colspan=4 style="text-align:left"><strong>extraCoreInfo:</strong> %s</td></tr>\n'%str(expr._coreInfo[4:])
         html += '</table>\n'
         return html
-    
+                
     def _config_latex_tool(self, lt):
         '''
         Configure the LaTeXTool from IPython.lib.latextools as required by all

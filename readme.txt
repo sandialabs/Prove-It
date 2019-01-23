@@ -26,6 +26,7 @@ methods and automation tools may be added which utilize new theorems and aid
 future proofs.  Mathematical objects and operations, axioms, and theorems 
 are organized into built-in and user-defined packages.  
 
+Visit http://pyproveit.org to view the Prove-It generated web pages.
 
 ******************************************************************************************
 Installation instructions
@@ -48,8 +49,16 @@ Installation instructions
    if you wish to install Prove-It into your main python distribution without
    doing any development on the proveit packages.
    
+3) Run:
+
+   python build.py --clean --download
    
-3) Take a look at the "tutorial" folder.  It has numbered Juptyer notebooks 
+   to download and extract the Prove-It "database" files distributed in "__pv_it"
+   folders throughout the Prove-It sub-folders.  The "--clean" option will erase
+   anything that may have been added to your local database before extracting
+   the downloaded version.
+      
+4) Take a look at the "tutorial" folder.  It has numbered Juptyer notebooks 
    (and html versions for convenience) that introduce Prove-It concepts
    in an appropriate order.  There are also tutorial notebooks/html in various
    packages with specific information about that package.  A particularly
@@ -60,7 +69,7 @@ Installation instructions
    "proofs" folders, without the underscores, are outdated proofs that will
    likely fail to execute.
 
-4) It is intended that packages continue to be added and updated to cover
+5) It is intended that packages continue to be added and updated to cover
    an ever-expanding range of mathematical knowledge.  Packages may have
    cross dependencies (as long as there is no circular reasoning in any
    particular proof).  Classes/objects that should be accessible externally
@@ -73,16 +82,17 @@ Installation instructions
    of top-level packages under development, with brief descriptions:
    
     _core_: Core Prove-It constructs required used to construct/verify proofs.
-    _generic_: Generic operations constructs (e.g., associative operations).
-    lambda_map: Useful methods/classes for generating Lambda maps 
-                (e.g., compositions and sub-expression replacements)
     logic: Boolean arithmetic, equality, and set theory.
     number: Arithmetic and number theory concepts.
+    relations: Some generic routines for search/sorting among transitive 
+               relationships.
     trigonometry: A few things pertaining to trigonometry.
     linalg: A few things pertaining to linear algebra.
     statistics: A few things pertaining to statistics.
     physics: Currently just things related to proving the correctness of the
              Quantum Phase Estimation algorithm at an abstract level.
+             (this was implemented in an older version of Prove-It; redoing
+             it more properly in the current version is in progress.)
 
 
 ******************************************************************************************
