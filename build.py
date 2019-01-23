@@ -6,7 +6,9 @@ and proofs) for the given contexts, including sub-contexts.
 import sys
 import os
 import re
-import lxml.etree
+#import lxml.etree#Comment out for Python 3
+import lxml#Comment in for Python 3
+from lxml import etree#Comment in for Python 3
 import shutil
 import argparse
 import nbformat
