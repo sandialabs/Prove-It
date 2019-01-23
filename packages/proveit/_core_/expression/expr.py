@@ -98,14 +98,18 @@ class Expression:
     
     def _setContext(self, context):
         '''
-        Assign a Context to this expression and any of its sub-expressions
-        that do not yet have an assigned Context.
+        Assign a Context to this expression.
         '''
         self.context = context
         Expression.contexts[self] = context
+        """
+        # Commenting this out because this make a strange first-come, first-serve
+        # context assignment that might keep changing expression representations around;
+        # that can be a nuisance for version controlling the Prove-It notebooks.
         for sub_expr in self._subExpressions:
             if sub_expr not in Expression.contexts:
                 sub_expr._setContext(context)
+        """
     
     def _generate_unique_rep(self, objectRepFn, coreInfo=None, styles=None):
         '''
