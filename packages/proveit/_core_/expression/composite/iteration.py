@@ -22,8 +22,11 @@ class Iter(Expression):
         
         parameters = compositeExpression(parameter_or_parameters)
 
+        start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
+        if isinstance(start_index_or_indices, ExprList) and len(start_index_or_indices)==1:
+            start_index_or_indices = start_index_or_indices[0]
         self.start_index_or_indices = start_index_or_indices
-        if isinstance(self.start_index_or_indices, Composite):
+        if isinstance(start_index_or_indices, Composite):
             # a composite of multiple indices
             self.start_indices = self.start_index_or_indices 
         else:
@@ -32,9 +35,10 @@ class Iter(Expression):
             # wrap a single index in a composite for convenience
             self.start_indices = compositeExpression(self.start_index_or_indices)
 
+        end_index_or_indices = singleOrCompositeExpression(end_index_or_indices)
         if isinstance(end_index_or_indices, ExprList) and len(end_index_or_indices)==1:
             end_index_or_indices = end_index_or_indices[0]
-        self.end_index_or_indices = singleOrCompositeExpression(end_index_or_indices)
+        self.end_index_or_indices = end_index_or_indices
         if isinstance(self.end_index_or_indices, Composite):
             # a composite of multiple indices
             self.end_indices = self.end_index_or_indices 
@@ -93,7 +97,7 @@ class Iter(Expression):
         start_indices = []
         end_indices = []
         for param, condition in zip(lambda_map.parameters, lambda_map.conditions):
-            if not isinstance(condition, InSet) or not condition.element != param or not isinstance(condition.domain, Interval):
+            if not isinstance(condition, InSet) or condition.element != param or not isinstance(condition.domain, Interval):
                 raise ValueError("Expecting each 'Iter' condition to define an 'Interval' domain for the corresponding parameter")
             start_indices.append(condition.domain.lowerBound)
             end_indices.append(condition.domain.upperBound)
@@ -104,7 +108,8 @@ class Iter(Expression):
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Indexed.
         '''
-        yield self.lambda_map
+        yield self.lambda_map.parameter_or_parameters
+        yield self.lambda_map.body
         yield self.start_index_or_indices
         yield self.end_index_or_indices
         
@@ -389,7 +394,7 @@ class Iter(Expression):
             # replaced with a Composite, so let us not expand the
             # iteration.  Just do an ordinary substitution.
             subbed_map = self.lambda_map.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-            subbed_self = Iter(subbed_map, subbed_start, subbed_end)
+            subbed_self = Iter(subbed_map.parameters, subbed_map.body, subbed_start, subbed_end)
         
         for requirement in new_requirements:
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        

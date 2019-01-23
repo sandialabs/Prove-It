@@ -149,8 +149,6 @@ class Indexed(Expression):
                 entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices, end_indices, assumptions, requirements)
             
             for (intersection_start, intersection_end) in entryRangeGenerator:
-                print 'intersection start/end', intersection_start, intersection_end
-
                 # We must put it terms of iter parameter values (arguments) via inverting the index_expr.
                 def coord2param(axis, coord):
                     if subbed_indices[axis] == iterParams[axis]:

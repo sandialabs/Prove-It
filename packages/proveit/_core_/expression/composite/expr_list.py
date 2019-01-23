@@ -238,7 +238,9 @@ class ExprList(Composite, Expression):
             # this will be a finite iteration (if not, the user can decide
             # how long to wait before they realize they are missing something).
             pass
-                
+        
+        end_index = _simplifiedCoord(end_index, assumptions, requirements) 
+                        
         # Iterate over the entries and track the true element index,
         # including ranges of iterations (Iter objects).
         for i, entry in enumerate(self):
