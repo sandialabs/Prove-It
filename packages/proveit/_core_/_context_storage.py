@@ -3,6 +3,7 @@ import shutil
 import sys
 import importlib
 import itertools
+import time
 import json
 import re
 import urllib
@@ -111,6 +112,35 @@ class ContextStorage:
         # can recall this without searching the hard drive again.
         self._proveItObjects = dict()
 
+    def lock(self, storageId=None):
+        '''
+        Place a file lock for a particular storageId directory
+        or, if storageId is None, for the entire __pv_it directory
+        of the context.
+        '''    
+        path = self.pv_it_dir
+        if storageId is not None:
+            path = os.path.join(path, storageId)
+        while True:
+            try:
+                with open(os.path.join(path, 'lock'), 'w') as lock:
+                    lock.write(os.getpid())
+                return # lock obtain
+            except IOError:
+                # waiting for lock
+                time.sleep(0.1)
+    
+    def unlock(self, storageId=None):
+        '''
+        Remove a file lock for a particular storageId directory
+        or, if storageId is None, for the entire __pv_it directory
+        of the context.
+        '''
+        path = self.pv_it_dir
+        if storageId is not None:
+            path = os.path.join(path, storageId)
+        os.remove(os.path.join(path, 'lock'))
+        
     def isRoot(self):
         '''
         Return True iff this ContextStorage is a "root" ContextStorage 
@@ -813,8 +843,15 @@ class ContextStorage:
             item_names[sub_expr] = sub_expr_name
         expr_code += 'expr = ' + json.dumps(self._exprBuildingCode(expr, item_names, isSubExpr=False)).strip('"')
         
-        # read the template and change the contexts as appropriate
+        # link to documentation for the expression's type
         proveit_path = os.path.split(proveit.__file__)[0]
+        doc_root = os.path.join(proveit_path, '..', '..', 'doc', 'html', 'api')
+        class_name = expr.__class__.__name__
+        module_name = self._moduleAbbreviatedName(expr.__class__.__module__, class_name)
+        doc_file = module_name + '.' + class_name + '.html'
+        type_link = relurl(os.path.join(doc_root,doc_file), start=os.path.join(self.pv_it_dir, hash_directory))
+        
+        # read the template and change the contexts as appropriate
         if unofficialNameKindContext is not None:
             template_name = '_unofficial_special_expr_template_.ipynb'
             name, kind, context = unofficialNameKindContext
@@ -832,8 +869,8 @@ class ContextStorage:
                 nb = nb.replace('#EXPR#', expr_code)
             nb = nb.replace('#IMPORTS#', import_code)
             nb = nb.replace('#CONTEXT#', context.name)
-            nb = nb.replace('#TYPE#', expr.__class__.__name__)
-            #nb = nb.replace('#TYPE_LINK#', typeLink.replace('\\', '\\\\'))
+            nb = nb.replace('#TYPE#',class_name)
+            nb = nb.replace('#TYPE_LINK#', type_link.replace('\\', '\\\\'))
             if unofficialNameKindContext is not None or expr_address is not None:
                 kind_str = kind[0].upper() + kind[1:]
                 if kind == 'common': kind_str = 'Common Expression'
@@ -856,8 +893,8 @@ class ContextStorage:
                 nb = template.read()
                 nb = nb.replace('#IMPORTS#', import_code)
                 nb = nb.replace('#CONTEXT#', context.name)
-                nb = nb.replace('#TYPE#', str(expr.__class__).split('.')[-1])
-                #nb = nb.replace('#TYPE_LINK#', typeLink.replace('\\', '\\\\'))
+                nb = nb.replace('#TYPE#', class_name)
+                nb = nb.replace('#TYPE_LINK#', type_link.replace('\\', '\\\\'))
                 nb = nb.replace('#KIND#', kind_str)
                 nb = nb.replace('#SPECIAL_EXPR_NAME#', name)
                 nb = nb.replace('#SPECIAL_EXPR_LINK#', json.dumps(special_expr_link + '#' + name).strip('"'))  
