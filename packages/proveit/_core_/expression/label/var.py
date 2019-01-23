@@ -68,10 +68,10 @@ def safeDummyVar(*expressions):
         i += 1
     return dummyVar(i)
 
-def safeDummyVars(self, n, *expressions):
+def safeDummyVars(n, *expressions):
     dummyVars = []
     for _ in range (n):
-        dummyVars.append(safeDummyVar(*(expressions + dummyVars)))
+        dummyVars.append(safeDummyVar(*(list(expressions)+list(dummyVars))))
     return dummyVars
             
 def safeDefaultOrDummyVar(defaultVar, *expressions):
