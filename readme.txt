@@ -51,10 +51,12 @@ Installation instructions
    
 3) Run:
 
-   python build.py --download
+   python build.py --clean --download
    
    to download and extract the Prove-It "database" files distributed in "__pv_it"
-   folders throughout the Prove-It sub-folders.
+   folders throughout the Prove-It sub-folders.  The "--clean" option will erase
+   anything that may have been added to your local database before extracting
+   the downloaded version.
       
 4) Take a look at the "tutorial" folder.  It has numbered Juptyer notebooks 
    (and html versions for convenience) that introduce Prove-It concepts
