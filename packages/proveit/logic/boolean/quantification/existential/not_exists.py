@@ -49,7 +49,7 @@ class NotExists(OperationOverInstances):
         Prove and return either some NotExists_{x | Q(x)} Not(P(x)) or NotExists_{x | Q(x)} P(x)
         assuming forall_{x | Q(x)} P(x) or assuming forall_{x | Q(x)} (P(x) != TRUE) respectively.
         '''
-        from _theorems_ import forallImpliesNotExistsNot, existsDefNegation
+        from ._theorems_ import forallImpliesNotExistsNot, existsDefNegation
         from proveit.logic.equality.eqOps import NotEquals
         from boolOps import Not
         from boolSet import TRUE

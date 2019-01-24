@@ -73,11 +73,11 @@ class Greater(GreaterRelation):
         '''
         From, x > y derive y < x.
         '''
-        from _theorems_ import reverseGreater
+        from ._theorems_ import reverseGreater
         return reverseGreater.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
                     
     def deduceInBooleans(self, assumptions=frozenset()):
-        from _theorems_ import greaterThanInBools
+        from ._theorems_ import greaterThanInBools
         return greaterThanInBools.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
     
     def deriveRelaxed(self, assumptions=frozenset()):
@@ -85,11 +85,11 @@ class Greater(GreaterRelation):
         Relax a > b to a >= b, deducing the latter from the former (self) and returning the latter.
         Assumptions may be required to deduce that a and b are in Reals.
         '''
-        from _theorems_ import relaxGreaterThan
+        from ._theorems_ import relaxGreaterThan
         return relaxGreaterThan.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
-        from _theorems_ import transitivityGreaterGreater, transitivityGreaterGreaterEq
+        from ._theorems_ import transitivityGreaterGreater, transitivityGreaterGreaterEq
         from .less_than import Less, LessEq
         other = asExpression(other)
         if isinstance(other, Equals):
@@ -114,7 +114,7 @@ class Greater(GreaterRelation):
         From :math:`a > b`, derive and return :math:`-a < -b`.
         Assumptions may be required to prove that a, and b are in Reals.        
         '''
-        from _theorems_ import negatedGreaterThan
+        from ._theorems_ import negatedGreaterThan
         return negatedGreaterThan.specialize({a:self.lhs, b:self.rhs})
 
     def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
@@ -122,7 +122,7 @@ class Greater(GreaterRelation):
         From :math:`a > b`, derive and return :math:`a + c > b + c` where c is the given shift.
         Assumptions may be required to prove that a, b, and c are in Reals.
         '''
-        from _theorems_ import greaterThanAddRight, greaterThanAddLeft, greaterThanSubtract
+        from ._theorems_ import greaterThanAddRight, greaterThanAddLeft, greaterThanSubtract
         if addendSide == 'right':
             '''
             # Do this later and get it to work properly with deriveAdded
@@ -165,15 +165,15 @@ class GreaterEq(GreaterRelation):
         '''
         From, x >= y derive y <= x.
         '''
-        from _theorems_ import reverseGreaterEq
+        from ._theorems_ import reverseGreaterEq
         return reverseGreaterEq.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
                             
     def deduceInBooleans(self, assumptions=frozenset()):
-        from _theorems_ import greaterThanEqualsInBools
+        from ._theorems_ import greaterThanEqualsInBools
         return greaterThanEqualsInBools.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
 
     def unfold(self, assumptions=frozenset()):
-        from _axioms_ import greaterThanEqualsDef
+        from ._axioms_ import greaterThanEqualsDef
         return greaterThanEqualsDef.specialize({x:self.lhs, y:self.rhs})
 
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
@@ -183,7 +183,7 @@ class GreaterEq(GreaterRelation):
         obtain x>z or x>=z as appropriate.  In the special case
         of x>=y and y>=x (or x<=y), derive x=z.
         '''
-        from _theorems_ import transitivityGreaterEqGreater, transitivityGreaterEqGreaterEq, symmetricGreaterEq
+        from ._theorems_ import transitivityGreaterEqGreater, transitivityGreaterEqGreaterEq, symmetricGreaterEq
         from .less_than import Less, LessEq
         other = asExpression(other)
         if isinstance(other, Equals):
@@ -211,7 +211,7 @@ class GreaterEq(GreaterRelation):
         From :math:`a \geq b`, derive and return :math:`-a \leq -b`.
         Assumptions may be required to prove that a, and b are in Reals.        
         '''
-        from _theorems_ import negatedGreaterThanEquals
+        from ._theorems_ import negatedGreaterThanEquals
         return negatedGreaterThanEquals.specialize({a:self.lhs, b:self.rhs})
 
     def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
@@ -219,7 +219,7 @@ class GreaterEq(GreaterRelation):
         From :math:`a \geq b`, derive and return :math:`a + c \geq b + c` where c is the given shift.
         Assumptions may be required to prove that a, b, and c are in Reals.
         '''
-        from _theorems_ import greaterThanEqualsAddRight, greaterThanEqualsAddLeft, greaterThanEqualsSubtract
+        from ._theorems_ import greaterThanEqualsAddRight, greaterThanEqualsAddLeft, greaterThanEqualsSubtract
         if addendSide == 'right':
             '''
             # Do this later and get it to work properly with deriveAdded

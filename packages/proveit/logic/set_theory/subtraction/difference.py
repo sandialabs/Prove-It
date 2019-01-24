@@ -21,7 +21,7 @@ class Difference(Operation):
         Deduce and return and [element not in (A - B)] = [(element not in A) or (element in B)]
         where self = (A - B).
         '''
-        from _theorems_ import nonmembershipEquiv
+        from ._theorems_ import nonmembershipEquiv
         return nonmembershipEquiv.specialize({x:element, A:self.operands[0], B:self.operands[1]})
 
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
@@ -37,7 +37,7 @@ class Difference(Operation):
         From [element in A] and [element not in B], derive and return [element in (A - B)],
         where self represents (A - B). 
         '''
-        from _theorems_ import membershipFolding
+        from ._theorems_ import membershipFolding
         return membershipFolding.specialize({x:element, A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def deduceNonmembership(self, element, assumptions=USE_DEFAULTS):
@@ -45,6 +45,6 @@ class Difference(Operation):
         From either [element not in A] or [element in B], derive and return [element not in (A - B)],
         where self represents (A - B). 
         '''
-        from _theorems_ import nonmembershipFolding
+        from ._theorems_ import nonmembershipFolding
         return nonmembershipFolding.specialize({x:element, A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         

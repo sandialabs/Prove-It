@@ -41,7 +41,7 @@ class Frac(Operation):
         derive and return this fraction expression equated with a simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        from _theorems_ import fracZeroNumer, fracOneDenom
+        from ._theorems_ import fracZeroNumer, fracOneDenom
         from number import zero, one
         if self.numerator == zero:
             return fracZeroNumer.specialize({x:self.denominator})
@@ -64,7 +64,7 @@ class Frac(Operation):
         return maybeFencedLatex(r'\frac{'+self.numerator.latex()+'}{'+self.denominator.latex()+'}', **kwargs)
     
     def combineExponents(self, assumptions=frozenset()):
-        from _theorems_ import fracIntExp, fracNatPosExp
+        from ._theorems_ import fracIntExp, fracNatPosExp
         from proveit.number import Exp
         if isinstance(self.numerator, Exp) and isinstance(self.denominator, Exp):
             if self.numerator.exponent == self.denominator.exponent:
@@ -79,18 +79,18 @@ class Frac(Operation):
         from proveit.number import Mult
         if self.numerator == self.denominator == operand:
             # x/x = 1
-            from _theorems_ import fracCancelComplete
+            from ._theorems_ import fracCancelComplete
             return fracCancelComplete.specialize({x:operand}).checked(assumptions)
         
         if not isinstance(self.numerator,Mult):
-            from _theorems_ import fracCancelNumerLeft
+            from ._theorems_ import fracCancelNumerLeft
             newEq0 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             newEq1 = fracCancelNumerLeft.specialize({x:operand,y:newEq0.rhs.denominator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
             
         assert isinstance(self.numerator,Mult)
         if isinstance(self.denominator,Mult):
-            from _theorems_ import fracCancelLeft
+            from ._theorems_ import fracCancelLeft
             newEq0 = self.numerator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
             newEq1 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             newEq2 = fracCancelLeft.specialize({x:operand,y:newEq1.rhs.numerator.operands[1],z:newEq1.rhs.denominator.operands[1]})
@@ -101,7 +101,7 @@ class Frac(Operation):
 #            denomRemainingOps = newFrac.denominator.operands[1:]
 #            return fracCancel1.specialize({x:operand,Etcetera(y):numRemainingOps,Etcetera(z):denomRemainingOps})
         else:
-            from _theorems_ import fracCancelDenomLeft
+            from ._theorems_ import fracCancelDenomLeft
             newEq0 = self.numerator.factor(operand,pull=pull,groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
             newEq1 = fracCancelDenomLeft.specialize({x:operand,y:newEq0.rhs.numerator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
@@ -121,7 +121,7 @@ class Frac(Operation):
         the associative and commutation theorems are applicable.            
         '''
         from proveit.number import Add, Sub, Sum
-        from _theorems_ import distributeFractionThroughSum, distributeFractionThroughSubtract, distributeFractionThroughSummation
+        from ._theorems_ import distributeFractionThroughSum, distributeFractionThroughSubtract, distributeFractionThroughSummation
         if isinstance(self.numerator, Add):
             return distributeFractionThroughSum.specialize({xEtc:self.numerator.operands, y:self.denominator})
         elif isinstance(self.numerator, Sub):
@@ -149,7 +149,7 @@ class Frac(Operation):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.
         '''        
-        from _theorems_ import fracInProdRev, prodOfFracsRev, prodOfFracsLeftNumerOneRev, prodOfFracsRightNumerOneRev
+        from ._theorems_ import fracInProdRev, prodOfFracsRev, prodOfFracsLeftNumerOneRev, prodOfFracsRightNumerOneRev
         from proveit.number import Mult, num
         dummyVar = safeDummyVar(self)
         eqns = []
