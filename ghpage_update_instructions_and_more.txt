@@ -17,7 +17,7 @@ git rm -rf .
 
 git add .
 git commit -a -m "Git-Hub Pages update"
-git push origin gh-pages-update:gh-pages
+git push -f origin gh-pages-update:gh-pages
 
 git checkout gh-pages
 git branch -D gh-pages-update
