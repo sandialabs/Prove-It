@@ -6,14 +6,42 @@ import itertools
 import time
 import json
 import re
-import urllib.request, urllib.parse, urllib.error
-import imp
+import urllib
 
 def relurl(path, start='.'):
     '''
     Return the relative path as a url
     '''
-    return urllib.request.pathname2url(os.path.relpath(path, start))
+    return urllib.pathname2url(os.path.relpath(path, start))
+
+class _SafeDatabaseModifier:
+    '''
+    Used to modify the database in a safe manner that can fixed
+    if it dies midway through the process.
+    '''
+    
+    def __init__(self, context_storage, referencing_file):
+        self.context_storage = context_storage
+        self.referencing_file = referencing_file
+        self.old_reference_ids = set()
+    
+    def __entry__(self):
+        self.context_storage.lock_and_backup(self.referencing_file)
+        
+        # get any previous common expression ids to see if their reference
+        # count needs to be decremented.
+        if os.path.isfile(self.referencing_file):
+            with open(self.referencing_file, 'r') as f:
+                for line in f.readlines():
+                    name, expr_id = line.split()
+                    self.old_reference_ids.add(expr_id)
+                    self.context_storage.lock_and_backup(expr_id)
+    
+    def addReference(storageId):
+        pass
+    
+    def __exit__(self, type, value, traceback):
+        pass
 
 class ContextStorage:
     '''
@@ -106,7 +134,7 @@ class ContextStorage:
         
         # Map 'common', 'axiom', and 'theorem' to respective modules.
         # Base it upon the context name.
-        self._specialExprModules = {kind:self.name+'.%s'%module_name for kind, module_name in Context.specialExprKindToModuleName.items()}
+        self._specialExprModules = {kind:self.name+'.%s'%module_name for kind, module_name in Context.specialExprKindToModuleName.iteritems()}
                                         
         # For retrieved pv_it files that represent Prove-It object (Expressions, KnownTruths, and Proofs),
         # this maps the object to the pv_it file so we
@@ -323,10 +351,10 @@ class ContextStorage:
                 storedSpecialStmt = Context.getStoredStmt(context_name + '.' + name, kind)
                 if name not in previousDefIds:
                     # added special statement
-                    print('Adding %s %s to %s context'%(kind, name, context_name))
+                    print 'Adding %s %s to %s context'%(kind, name, context_name)
                 elif previousDefIds[name] != expr_id:
                     # modified special statement. remove the old one first.
-                    print('Modifying %s %s in %s context'%(kind, name, context_name))
+                    print 'Modifying %s %s in %s context'%(kind, name, context_name)
                     storedSpecialStmt.remove(keepPath=True)
                 # record the axiom/theorem id (creating the directory if necessary)
                 specialStatementDir = os.path.join(specialStatementsPath, name)
@@ -340,7 +368,7 @@ class ContextStorage:
 
         # Remove the special statements that no longer exist
         for name, stmt in toRemove:
-            print('Removing %s %s from %s context'%(kind, name, context_name))
+            print 'Removing %s %s from %s context'%(kind, name, context_name)
             stmt.remove()
                 
     def _getSpecialStatementExpr(self, kind, name):
@@ -442,7 +470,7 @@ class ContextStorage:
                             return png_file.read(), relurl(png_path)
         # store the latex string in the latex file
         with open(latex_path, 'wb') as latex_file:
-            latex_file.write(latex.encode('ascii'))
+            latex_file.write(latex)
         # generate, store and return the png file
         png = self._generate_png(latex, configLatexToolFn)
         with open(png_path, 'wb') as png_file:
@@ -467,10 +495,10 @@ class ContextStorage:
         '''
         Retrieve a unique id for the Prove-It object based upon its pv_it filename from calling _retrieve.
         '''
-        if isinstance(proveItObjectOrId, str):
+        if type(proveItObjectOrId)==str:
             return proveItObjectOrId
         else:
-            if isinstance(proveItObjectOrId, int):
+            if type(proveItObjectOrId)==int:
                 style_id = proveItObjectOrId # assumed to be a style id if it's an int
                 (context, hash_directory) = self._proveItObjects[style_id]
             else:
@@ -591,7 +619,7 @@ class ContextStorage:
         context_name, hash_directory = self._split(proveItStorageId)
         hash_path = self._storagePath(proveItStorageId)
         if not os.path.isdir(hash_path):
-            print("WARNING: Referenced '__pv_it' path, for removal, does not exist: %s"%hash_path)
+            print "WARNING: Referenced '__pv_it' path, for removal, does not exist: %s"%hash_path
             return # not there -- skip it
         with open(os.path.join(hash_path, 'ref_count.txt'), 'r') as f:
             ref_count = int(f.read().strip()) - 1
@@ -655,7 +683,7 @@ class ContextStorage:
         pv_it_dir = self.pv_it_dir
         unique_rep = self._proveItObjUniqueRep(proveItObject)
         # hash the unique representation and make a sub-directory of this hash value
-        rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
+        rep_hash = hashlib.sha1(unique_rep).hexdigest()
         if not os.path.exists(pv_it_dir):
             os.mkdir(pv_it_dir)
         hash_path = os.path.join(pv_it_dir, rep_hash)
@@ -746,7 +774,7 @@ class ContextStorage:
             if os.path.isfile(orig_notebook_filename):
                 os.remove(orig_notebook_filename) # remove an old one first
             os.rename(filename, orig_notebook_filename)
-            print("%s expression notebook is being updated"%special_name)
+            print "%s expression notebook is being updated"%special_name
         
         expr_classes_and_constructors = set()
         unnamed_subexpr_occurences = dict()
@@ -756,7 +784,7 @@ class ContextStorage:
         named_items = dict() 
         self._exprBuildingPrerequisites(expr, expr_classes_and_constructors, unnamed_subexpr_occurences, named_subexpr_addresses, named_items, isSubExpr=False)
         # find sub-expressions that are used multiple times, these ones will be assigned to a variable
-        multiuse_subexprs = [sub_expr for sub_expr, count in unnamed_subexpr_occurences.items() if count > 1]
+        multiuse_subexprs = [sub_expr for sub_expr, count in unnamed_subexpr_occurences.iteritems() if count > 1]
         # sort the multi-use sub-expressions so that the shallower ones come first
         multiuse_subexprs = sorted(multiuse_subexprs, key = lambda expr : expressionDepth(expr))
         
@@ -779,7 +807,7 @@ class ContextStorage:
             else:
                 direct_imports.add(module_name)
                 item_names[expr_class] = module_name+'.'+constructor
-        for namedExpr, namedExprAddress in named_subexpr_addresses.items():
+        for namedExpr, namedExprAddress in named_subexpr_addresses.iteritems():
             if isinstance(namedExprAddress[0], str):
                 # Must be a special expression (axiom, theorem, or common expression)
                 module_name = namedExprAddress[0]
@@ -798,7 +826,7 @@ class ContextStorage:
         # first, see if we even need to import a module with the same root as our context
         root_context = self.rootContextStorage.context
         context_root_name = root_context.name
-        for module_name in itertools.chain(direct_imports, list(from_imports.keys())):
+        for module_name in itertools.chain(direct_imports, from_imports.keys()):
             if module_name.split('.')[0] == context_root_name:
                 # If we needed to add a path to sys.path for the directory above the root context,
                 # we'll need to do that explicitly in our expression notebook.
@@ -990,7 +1018,7 @@ class ContextStorage:
             if not hasattr(parent_module, objName): break
             if getattr(cur_module, objName) != getattr(parent_module, objName):
                 # reload the parent module and try again
-                imp.reload(parent_module)
+                reload(parent_module)
                 if getattr(cur_module, objName) != getattr(parent_module, objName):
                     break
             split_module_name = split_module_name[:-1]
@@ -1168,7 +1196,7 @@ class ContextStorage:
         while os.path.isfile(filename_base + "~stashed~%d.ipynb"%num):
             num += 1
         new_filename = filename_base + "~stashed~%d.ipynb"%num
-        print("Stashing %s to %s in case it is needed."%(relurl(filename), relurl(new_filename)))
+        print "Stashing %s to %s in case it is needed."%(relurl(filename), relurl(new_filename))
         os.rename(filename, new_filename)
         
     def makeExpression(self, exprId):
@@ -1207,7 +1235,7 @@ class ContextStorage:
         Helper method for makeExpression
         '''
         from proveit import Expression
-        from ._dependency_graph import orderedDependencyNodes
+        from _dependency_graph import orderedDependencyNodes
         from .context import Context
         expr_class_strs = dict() # map expr-ids to lists of Expression class string representations
         expr_class_rel_strs = dict() # relative paths of Expression classes that are local
@@ -1299,7 +1327,7 @@ class ContextStorage:
         referenced_commons_filename = os.path.join(self.referenced_dir, 'commons_dependencies.txt')
         if os.path.isfile(referenced_commons_filename):
             with open(referenced_commons_filename, 'r') as f:
-                return {line.strip() for line in f.readlines()}
+                return set([line.strip() for line in f.readlines()])
         return set() # empty set by default
         
     def cyclicallyReferencedCommonExprContext(self):
@@ -1334,7 +1362,7 @@ class ContextStorage:
         file that stores these references.
         '''
         from proveit import Expression
-        from .context import Context
+        from context import Context
         
         reference_file = os.path.join(self.referenced_dir, name + '_displayed.pv_it')
         
@@ -1719,7 +1747,7 @@ class StoredTheorem(StoredSpecialStmt):
         # record axioms/theorems that this theorem directly uses
         for storedUsedStmts, usedStmtsFilename in ((storedUsedAxioms, 'usedAxioms.txt'), (storedUsedTheorems, 'usedTheorems.txt')):
             with open(os.path.join(self.path, usedStmtsFilename), 'w') as usedStmtsFile:
-                for storedUsedStmt in sorted(storedUsedStmts, key=lambda stmt:str(stmt)):
+                for storedUsedStmt in sorted(storedUsedStmts):
                     self.context._storage._includeMutualReferences(storedUsedStmt.context)
                     usedStmtsFile.write(str(storedUsedStmt) + '\n')
         

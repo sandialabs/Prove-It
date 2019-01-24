@@ -111,11 +111,11 @@ class ProveItHTMLPreprocessor(Preprocessor):
                     if 'target' in atag_root.attrib and atag_root.attrib['target']=='_blank':
                         atag_root.attrib.pop('target')
                     atag = lxml.etree.tostring(atag_root)
-                    if atag[-2:] != '/>':
+                    if atag[-2:] != b'/>':
                         raise Exception("Expecting '/>' at end of remade xml a-tag")
-                    atag = atag[:-2] + '>' # remove the / before >
+                    atag = str(atag[:-2]) + '>' # remove the / before >
             if not self.strip_links:
-                new_text += atag
+                new_text += str(atag)
             last_pos = atag_match.end()
         new_text += text[last_pos:]
         if self.strip_links:
@@ -260,10 +260,12 @@ def executeNotebook(notebook_path, execute_as_script=False):
                 break
             except zmq.ZMQError:
                 print("ZMQError encountered")
-                execute_processor.km.restart_kernel(newport=True)
+                pass
+                #execute_processor.km.restart_kernel(newport=True)
             except RuntimeError:
                 print("Try restarting kernel")
-                execute_processor.km.restart_kernel(newport=True)
+                pass
+                #execute_processor.km.restart_kernel(newport=True)
         with open(notebook_path, 'wt') as f:
             nbformat.write(nb, f)
     return nb

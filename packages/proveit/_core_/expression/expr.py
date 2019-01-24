@@ -365,7 +365,7 @@ class Expression(metaclass=ExprType):
             raise ProofFailure(self, assumptions, "No pre-existing proof")
                                                 
         # Use Expression.in_progress_to_conclude set to prevent an infinite recursion
-        in_progress_key = (self, tuple(sorted(assumptions)))
+        in_progress_key = (self, tuple(sorted(assumptions, key=lambda expr:hash(expr))))
         if in_progress_key in Expression.in_progress_to_conclude:
             raise ProofFailure(self, assumptions, "Infinite 'conclude' recursion blocked.")
         Expression.in_progress_to_conclude.add(in_progress_key)        

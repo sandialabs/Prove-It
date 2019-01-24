@@ -7,16 +7,14 @@ from IPython import get_ipython
 from IPython.display import display, HTML
 import nbformat
 from proveit._core_.expression import Expression
-from proveit._core_ import KnownTruth, Theorem
+from proveit._core_ import KnownTruth
 from proveit._core_.context import Context
 import ipywidgets as widgets
-#import new#Comment out for python 3
-import types#Added for python 3
+import new
 import re
 import os
 import sys
-#from ._context_storage import relurl#Comment out for Python 3
-from proveit._core_._context_storage import relurl#Comment in for Python 3
+from ._context_storage import relurl
 
 class AssignmentBehaviorModifier:
     def __init__(self):
@@ -47,16 +45,14 @@ class AssignmentBehaviorModifier:
                         lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
             new_raw_cell = '\n'.join(lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
-#        ipython.run_cell = new.instancemethod(new_run_cell, ipython)#Comment out for python 3
-        ipython.run_cell = types.MethodType(new_run_cell, ipython)#Add for python 3
+        ipython.run_cell = new.instancemethod(new_run_cell, ipython)
     
     def resetBehavior(self):
         ipython = self.ipython
         ipython.run_cell = ipython.orig_run_cell
 
     def displayAssignments(self, shell):
-#        shell.ex("from proveit._core_.magics import Assignments")#Comment out for Python 3
-        shell.ex("from proveit.magics import Assignments")#Comment in for Python 3
+        shell.ex("from proveit._core_.magics import Assignments")
         self._setBehavior(lambda varnames: "Assignments([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])")
 
 class ContextInterface:
@@ -359,11 +355,11 @@ class ProveItMagic(Magics):
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'axioms':
                 raise ProveItMagicFailure("Run %%begin_axioms in a separate notebook from %%begin_%s."%self.kind)
-            print("WARNING: Re-running %begin_axioms does not reset previously defined axioms.")
-            print("         It is suggested that you restart and run all cells after editing axioms.")
-        print("Defining axioms for context '" + self.context.name + "'")
-        print("Subsequent end-of-cell assignments will define axioms")
-        print("%end_axioms will finalize the definitions")
+            print "WARNING: Re-running %begin_axioms does not reset previously defined axioms."
+            print "         It is suggested that you restart and run all cells after editing axioms."
+        print "Defining axioms for context '" + self.context.name + "'"
+        print "Subsequent end-of-cell assignments will define axioms"
+        print "%end_axioms will finalize the definitions"
 
     def end_axioms(self):
         self._finish('axioms')
@@ -373,11 +369,11 @@ class ProveItMagic(Magics):
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'theorems':
                 raise ProveItMagicFailure("Run %%begin_theorems in a separate notebook from %%begin_%s."%self.kind)
-            print("WARNING: Re-running %begin_theorems does not reset previously defined theorems.")
-            print("         It is suggested that you restart and run all cells after editing theorems.")
-        print("Defining theorems for context '" + self.context.name + "'")
-        print("Subsequent end-of-cell assignments will define theorems")
-        print("'%end theorems' will finalize the definitions")
+            print "WARNING: Re-running %begin_theorems does not reset previously defined theorems."
+            print "         It is suggested that you restart and run all cells after editing theorems."
+        print "Defining theorems for context '" + self.context.name + "'"
+        print "Subsequent end-of-cell assignments will define theorems"
+        print "'%end theorems' will finalize the definitions"
 
     def end_theorems(self):
         self._finish('theorems')
@@ -388,11 +384,11 @@ class ProveItMagic(Magics):
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'common':
                 raise ProveItMagicFailure("Run '%%begin common' in a separate notebook from %%begin_%s."%self.kind)
-            print("WARNING: Re-running '%begin common' does not reset previously defined common expressions.")
-            print("         It is suggested that you restart and run all cells after editing the expressions.")
-        print("Defining common sub-expressions for context '" + self.context.name + "'")
-        print("Subsequent end-of-cell assignments will define common sub-expressions")
-        print("%end_common will finalize the definitions")
+            print "WARNING: Re-running '%begin common' does not reset previously defined common expressions."
+            print "         It is suggested that you restart and run all cells after editing the expressions."
+        print "Defining common sub-expressions for context '" + self.context.name + "'"
+        print "Subsequent end-of-cell assignments will define common sub-expressions"
+        print "%end_common will finalize the definitions"
 
     def end_common(self):
         # Record the context names of common expressions referenced
@@ -478,7 +474,7 @@ class ProveItMagic(Magics):
             raise ProveItMagicFailure("The built '%s' does not match the stored Expression"%expr_name)
         if expr._style_id != stored_expr._style_id:
             raise ProveItMagicFailure("The built '%s' style does not match that of the stored Expression"%expr_name)
-        print("Passed sanity check: built '%s' is the same as the stored Expression."%expr_name)
+        print "Passed sanity check: built '%s' is the same as the stored Expression."%expr_name
                                 
     @line_magic
     def proving(self, line):
@@ -487,12 +483,12 @@ class ProveItMagic(Magics):
         sys.path.append('..')
         theorem_name, presuming_str = str(line.strip()).split(' ', 1)
         if not presuming_str.find('presuming ') == 0:
-            print("Format: %begin_proof <theorem_name> presuming [<list of theorems / context-names>]")
+            print "Format: %begin_proof <theorem_name> presuming [<list of theorems / context-names>]"
             return
         args = presuming_str.split(' ', 1)[-1].strip('[]').split(',')
         proving_theorem = Context('..').getTheorem(theorem_name)
         proving_theorem_truth = proving_theorem.provenTruth
-        print("Beginning proof of", theorem_name)
+        print "Beginning proof of", theorem_name
         presuming = [arg.strip() for arg in args if arg.strip() != '']
         # The list of 'presuming' theorems/context-names may be composed of full-path strings containing '.'s
         # or may be actual theorem variables defined in the IPython sesson.  The latter
@@ -547,11 +543,11 @@ class ProveItMagic(Magics):
             context.expressionNotebook(expr)  
         
         if len(self.definitions)==0:
-            print("Context %s has no %s"%(context.name, kind if kind != 'common' else 'common expressions'))
+            print "Context %s has no %s"%(context.name, kind if kind != 'common' else 'common expressions')
         elif kind=='common':
-            print("Common expressions may be imported from autogenerated _%s_.py"%kind)
+            print "Common expressions may be imported from autogenerated _%s_.py"%kind
         else:
-            print("%s may be imported from autogenerated _%s_.py"%((kind[0].upper() + kind[1:]), kind))
+            print "%s may be imported from autogenerated _%s_.py"%((kind[0].upper() + kind[1:]), kind)
         self.ranFinish = True       
     
     @line_magic
@@ -559,6 +555,7 @@ class ProveItMagic(Magics):
         '''
         Show the dependencies of an axiom or theorem.
         '''
+        from .proof import Theorem
         name = line.strip()
         known_truth = self.shell.user_ns[line.strip()]
         proof = known_truth.proof() # Axiom or Theorem
@@ -642,7 +639,7 @@ class Assignments:
                     raise ValueError('%s should not have free variables; variables must all be bound (e.g. universally quantified).  Free variables: %s'%(proveItMagic.kind, rightSide.freeVars()))
                 if name in proveItMagic.definitions:
                     if proveItMagic.definitions[name] != rightSide:
-                        print('WARNING: Redefining', name)
+                        print 'WARNING: Redefining', name
                     proveItMagic.keys.remove(name)
                 elif name.lower() in proveItMagic.lowerCaseNames:
                     if not(proveItMagic.ranFinish and name in proveItMagic.definitions): # allowed to come back around after it finished once
@@ -682,7 +679,7 @@ class Assignments:
             if kind == 'theorem':
                 html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)<br>'%(prev, prev)
             else:
-                print('WARNING: Duplicate of', prev)
+                print 'WARNING: Duplicate of', prev
         return html
 
     def _repr_html_(self):
@@ -690,7 +687,7 @@ class Assignments:
         try:
             return '\n'.join(self.html_line(name, rightSide) for name, rightSide in zip(self.names, self.rightSides))
         except Exception as e:
-            print(e)
+            print e
         
     def __repr__(self):
         return '\n'.join('%s: %s'%(name, repr(rightSide)) for name, rightSide in zip(self.names, self.rightSides))

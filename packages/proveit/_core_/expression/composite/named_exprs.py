@@ -41,11 +41,11 @@ class NamedExprs(Composite, Expression):
     def __iter__(self):
         return iter(self.elems)
         
-    def iteritems(self):
+    def items(self):
         for key in self.keywords:
             yield key, self.elems[key]
 
-    def itervalues(self):
+    def values(self):
         for key in self.keywords:
             yield self.elems[key]
     
