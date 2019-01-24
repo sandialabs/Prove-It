@@ -113,9 +113,9 @@ class ProveItHTMLPreprocessor(Preprocessor):
                     atag = lxml.etree.tostring(atag_root)
                     if atag[-2:] != b'/>':
                         raise Exception("Expecting '/>' at end of remade xml a-tag")
-                    atag = str(atag[:-2]) + '>' # remove the / before >
+                    atag = atag[:-2].decode('ascii') + '>' # remove the / before >
             if not self.strip_links:
-                new_text += str(atag)
+                new_text += atag
             last_pos = atag_match.end()
         new_text += text[last_pos:]
         if self.strip_links:
