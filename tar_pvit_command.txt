@@ -1,2 +1,0 @@
-find . -name "*.html" -o -name "_common_.py" -o -name "_axioms_.py" -o -name "_theorems_.py" -o -name "__pv_it"  -o -name "notebook.css" | tar -czf pv_it.tar.gz -T -
-find . -name "*.html" -o -name "*.png"  -o -name "notebook.css" | tar -czf pv_it_web.tar.gz -T -

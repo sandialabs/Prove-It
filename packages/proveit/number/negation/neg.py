@@ -43,7 +43,7 @@ class Neg(Operation):
         derive and return this Neg expression equated with the simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        from _theorems_ import negNeg, negZero
+        from ._theorems_ import negNeg, negZero
         
         if isinstance(self.operand, Neg):
             deduceInComplexes(self.operand.operand, assumptions)

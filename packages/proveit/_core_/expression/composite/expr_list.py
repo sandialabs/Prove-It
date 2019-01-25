@@ -96,8 +96,8 @@ class ExprList(Composite, Expression):
         '''
         from proveit.number import num, one, LesserSequence, Less, LessEq, Add, Subtract
         from proveit.logic import Equals
-        from iteration import Iter
-        from composite import _simplifiedCoord
+        from .iteration import Iter
+        from .composite import _simplifiedCoord
         
         if requirements is None:
             requirements = [] # create the requirements list, but it won't be used
@@ -199,10 +199,10 @@ class ExprList(Composite, Expression):
         for wrap_position in wrapPositions:
             if wrap_position%2==1:
                 # wrap after operand (before next operation)
-                formatted_sub_expressions[(wrap_position-1)/2] += r' \\ '
+                formatted_sub_expressions[(wrap_position-1)//2] += r' \\ '
             else:
                 # wrap after operation (before next operand)
-                formatted_sub_expressions[wrap_position/2] = r' \\ ' + formatted_sub_expressions[wrap_position/2]
+                formatted_sub_expressions[wrap_position//2] = r' \\ ' + formatted_sub_expressions[wrap_position//2]
         outStr += (' '+formattedOperator+' ').join(formatted_sub_expressions)
         if fence:            
             outStr += ')' if formatType=='string' else  r'\right)'

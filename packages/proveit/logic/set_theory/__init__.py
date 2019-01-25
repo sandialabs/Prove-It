@@ -7,4 +7,4 @@ from .subtraction import Difference
 from .comprehension import SetOfAll
 from .disjointness import Disjoint, Distinct
 from .cardinality import Card
-from _common_ import EmptySet
+from ._common_ import EmptySet

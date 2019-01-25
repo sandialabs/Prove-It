@@ -7,7 +7,7 @@ from IPython import get_ipython
 from IPython.display import display, HTML
 import nbformat
 from proveit._core_.expression import Expression
-from proveit._core_ import KnownTruth
+from proveit._core_ import KnownTruth, Theorem
 from proveit._core_.context import Context
 import ipywidgets as widgets
 #import new#Comment out for python 3
@@ -559,7 +559,6 @@ class ProveItMagic(Magics):
         '''
         Show the dependencies of an axiom or theorem.
         '''
-        from .proof import Theorem
         name = line.strip()
         known_truth = self.shell.user_ns[line.strip()]
         proof = known_truth.proof() # Axiom or Theorem

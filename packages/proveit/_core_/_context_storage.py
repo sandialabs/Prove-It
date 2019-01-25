@@ -442,7 +442,7 @@ class ContextStorage:
                             return png_file.read(), relurl(png_path)
         # store the latex string in the latex file
         with open(latex_path, 'wb') as latex_file:
-            latex_file.write(latex)
+            latex_file.write(latex.encode('ascii'))
         # generate, store and return the png file
         png = self._generate_png(latex, configLatexToolFn)
         with open(png_path, 'wb') as png_file:
@@ -655,7 +655,7 @@ class ContextStorage:
         pv_it_dir = self.pv_it_dir
         unique_rep = self._proveItObjUniqueRep(proveItObject)
         # hash the unique representation and make a sub-directory of this hash value
-        rep_hash = hashlib.sha1(unique_rep).hexdigest()
+        rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
         if not os.path.exists(pv_it_dir):
             os.mkdir(pv_it_dir)
         hash_path = os.path.join(pv_it_dir, rep_hash)
@@ -1334,7 +1334,7 @@ class ContextStorage:
         file that stores these references.
         '''
         from proveit import Expression
-        from context import Context
+        from .context import Context
         
         reference_file = os.path.join(self.referenced_dir, name + '_displayed.pv_it')
         
@@ -1719,7 +1719,7 @@ class StoredTheorem(StoredSpecialStmt):
         # record axioms/theorems that this theorem directly uses
         for storedUsedStmts, usedStmtsFilename in ((storedUsedAxioms, 'usedAxioms.txt'), (storedUsedTheorems, 'usedTheorems.txt')):
             with open(os.path.join(self.path, usedStmtsFilename), 'w') as usedStmtsFile:
-                for storedUsedStmt in sorted(storedUsedStmts):
+                for storedUsedStmt in sorted(storedUsedStmts, key=lambda stmt:str(stmt)):
                     self.context._storage._includeMutualReferences(storedUsedStmt.context)
                     usedStmtsFile.write(str(storedUsedStmt) + '\n')
         

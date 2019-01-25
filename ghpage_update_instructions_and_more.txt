@@ -1,0 +1,28 @@
+<< HOW TO UPDATE THE GIT-HUB PAGES FOR PROVE-IT >>
+
+<<at the Prove-It level where the source branch (e.g., master) is checked out>>
+cd doc
+make html
+cd ..
+find . -name "*.html" -o -name "_common_.py" -o -name "_axioms_.py" -o -name "_theorems_.py" -o -name "__pv_it"  -o -name "notebook.css" | tar -czf pv_it.tar.gz -T -
+find . -name "*.html" -o -name "*.png"  -o -name "notebook.css" -o -name ".nojekyll" | tar -czf pv_it_web.tar.gz -T -
+
+
+<<in a location where the gh-pages branch is checkout out>>
+git checkout --orphan gh-pages-update
+git rm -rf .
+
+<<move over pv_it_web.tar.gz, extract it via "tar -xzf pv_it_web.tar.gz", and delete it>>
+<<move over pv_it.tar.gz>>
+
+git add .
+git commit -a -m "Git-Hub Pages update"
+git push -f origin gh-pages-update:gh-pages
+
+git checkout gh-pages
+git branch -D gh-pages-update
+
+<< DONE! >>
+
+<< A useful command for adding all notebook updates to the repository >>
+find . \( -name __pv_it -o -name .ipynb_checkpoints \) -prune -o -name "*.ipynb" -not -name "*stashed*.ipynb" -print | xargs git add

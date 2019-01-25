@@ -299,13 +299,13 @@ class ExprTensor(Composite, Expression):
         '''
         return len(self.relIndexTensor)
         
-    def iteritems(self):
+    def items(self):
         '''
         Yield each relative entry location and corresponding element.
         '''
         return iter(self.relIndexTensor.items())
 
-    def itervalues(self):
+    def values(self):
         '''
         Yield each tensor element.
         '''
