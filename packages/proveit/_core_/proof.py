@@ -525,17 +525,15 @@ class Theorem(Proof):
         '''
         Sets the '_unusableProof' attribute to disable the
         theorem if some theorem is being proven and this 
-        theorem is neither presumed nor fully proven and 
-        independent of the theorem being proven.  That is, 
-        ensure no circular logic is being employed when 
-        proving a theorem.  This applies when a proof has 
-        begun (see KnownTruth.beginProof in known_truth.py).  
+        theorem is not presumed or is an alternate proof for the
+        same theorem.  Also, if it is presumed, ensure the logic
+        is not circular.  Generally, this is preventing circular
+        logic.  This applies when a proof has begun 
+        (see KnownTruth.beginProof in known_truth.py).  
         When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
         Otherwise only Theorems in the KnownTruth.presuming 
         set (or whose packages is in the KnownTruth.presuming 
-        set) or Theorems that have been fully proven with no
-        direct/indirect dependence upon KnownTruth.theoremBeingProven
-        are allowed.
+        set) are allowed.
         '''
         #from proveit.certify import isFullyProven
         if KnownTruth.theoremBeingProven is None:
@@ -547,7 +545,13 @@ class Theorem(Proof):
             # the other alternates as well so we will be sure to generate the new proof.
             self.disable()
         elif self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
-            if self._storedTheorem().presumes(str(KnownTruth.theoremBeingProven)):
+            stored_theorem = self._storedTheorem()
+            if stored_theorem.hasProof():
+                # If we have a proof, then if "theorem being proven" is a dependent, the logic is circular.
+                if str(KnownTruth.theoremBeingProven) in stored_theorem.allUsedTheorems():
+                    raise CircularLogic(KnownTruth.theoremBeingProven, self)
+            elif str(KnownTruth.theoremBeingProven) in stored_theorem.presumes():
+                # If we don't have a proof, check the presuming information for circular logic.
                 raise CircularLogic(KnownTruth.theoremBeingProven, self)
             self._meaningData._unusableProof = None # This Theorem is usable because it is being presumed.
         else:
