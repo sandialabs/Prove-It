@@ -31,7 +31,7 @@ LaTeXTool.clear_instance()
 lt = LaTeXTool.instance()
 lt.use_breqn = False
 
-default_paths = ['packages/proveit', 'tutorial']#, 'tutorial/socks_demo']
+default_paths = ['packages/proveit']#, 'tutorial']#, 'tutorial/socks_demo']
 
 def findContextPaths(path):
     if os.path.isfile(os.path.join(path, '_context_.ipynb')):
@@ -252,7 +252,7 @@ def executeNotebook(notebook_path, execute_as_script=False):
         # execute using a KernelManager with the appropriate cwd (current working directory)\
         notebook_dir = os.path.split(notebook_path)[0]
         resources = {'metadata':{'path':notebook_dir}}
-        execute_processor = ExecutePreprocessor(kernel_name='python2', timeout=-1)
+        execute_processor = ExecutePreprocessor(kernel_name='python3', timeout=-1)
         while True:
             try:
                 #executenb(nb, cwd=notebook_dir)
