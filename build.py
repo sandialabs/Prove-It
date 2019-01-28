@@ -389,11 +389,14 @@ def build(context_paths, all_paths, no_execute=False, just_execute_proofs=False,
             executeAndExportNotebook('index.ipynb')
             executeAndExportNotebook('brief_guide.ipynb')
         
-        # Make sure there is a _common_.py in each context directory.
+        # Make sure there is a _common_.py, _axioms_.py, and _theorems_.py
+        # in each context directory.
         # These will be useful in figuring out dependencies between _common_
-        # notebooks (see CommonExpressions in proveit._core_.context
+        # notebooks (see CommonExpressions in proveit._core_.context as well
+        # as avoiding import errors.
         for context_path in context_paths:
-            Context(context_path).makeSpecialExprModule('common')
+            for spec_expr_kind in ('common', 'axioms', 'theorems'):
+                Context(context_path).makeSpecialExprModule(spec_expr_kind)
         
         # Execute the _context_ notebooks in each context directory 
         # and generate _context_.html.
