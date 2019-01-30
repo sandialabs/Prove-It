@@ -487,7 +487,7 @@ class ProveItMagic(Magics):
         sys.path.append('..')
         theorem_name, presuming_str = str(line.strip()).split(' ', 1)
         if not presuming_str.find('presuming ') == 0:
-            print("Format: %begin_proof <theorem_name> presuming [<list of theorems / context-names>]")
+            print("Format: %proving <theorem_name> presuming [<list of theorems / context-names>]")
             return
         args = presuming_str.split(' ', 1)[-1].strip('[]').split(',')
         proving_theorem = Context('..').getTheorem(theorem_name)
