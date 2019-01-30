@@ -246,3 +246,20 @@ def LessSeq(*operands):
 
 def LessEqSeq(*operands):
     return LesserSequence([LessEq._operator_]*(len(operands)-1), operands)
+
+def lesserSequence(operators, operands):
+    '''
+    Create a LessSequence with the given operators or operands,
+    or create an appropriate degenerate Expression when there are
+    fewer than two operators.
+    '''
+    if len(operators)+1 != len(operands):
+        raise ValueError("Expecting one more operand than operators")
+    if operators==0:
+        return operands[0]
+    if operators==1:
+        if operators[0]==Less._operator_:
+            return Less(*operands)
+        elif operators[0]==Equals._operator_:
+            return Equals(*operands)
+    return LesserSequence(operators, operands)

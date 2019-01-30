@@ -239,3 +239,22 @@ def GreaterSeq(*operands):
 
 def GreaterEqSeq(*operands):
     return GreaterSequence([GreaterEq._operator_]*(len(operands)-1), operands)
+
+def greaterSequence(operators, operands):
+    '''
+    Create a GreaterSequence with the given operators or operands,
+    or create an appropriate degenerate Expression when there are
+    fewer than two operators.
+    '''
+    if len(operators)+1 != len(operands):
+        raise ValueError("Expecting one more operand than operators")
+    if operators==0:
+        return operands[0]
+    if operators==1:
+        if operators[0]==Greater._operator_:
+            return Greater(*operands)
+        elif operators[0]==Equals._operator_:
+            return Equals(*operands)
+    return GreaterSequence(operators, operands)
+
+        

@@ -15,7 +15,7 @@ from .summation import Sum
 from .integration import Integrate
 from .modular import Abs, Mod, ModAbs
 from .rounding import Floor, Ceil, Round
-from .ordering import Less, LessEq, LesserSequence, LessSeq, LessEqSeq, Greater, GreaterEq, GreaterSequence, GreaterSeq, GreaterEqSeq, Min, Max
+from .ordering import Less, LessEq, LesserSequence, LessSeq, LessEqSeq, lesserSequence, Greater, GreaterEq, GreaterSequence, GreaterSeq, GreaterEqSeq, greaterSequence, Min, Max
 
 import proveit
 

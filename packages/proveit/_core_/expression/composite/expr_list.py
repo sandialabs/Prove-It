@@ -94,7 +94,7 @@ class ExprList(Composite, Expression):
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
         '''
-        from proveit.number import num, one, LesserSequence, Less, LessEq, Add, Subtract
+        from proveit.number import num, one, lesserSequence, Less, LessEq, Add, Subtract
         from proveit.logic import Equals
         from .iteration import Iter
         from .composite import _simplifiedCoord
@@ -115,7 +115,7 @@ class ExprList(Composite, Expression):
                 coord = _simplifiedCoord(Add(coord, one), assumptions, coord_sort_requirements)
                 less_operators.append(Less._operator_) # we know coord < coord+1
             sorted_coords.append(coord)
-        sorted_coords = LesserSequence(less_operators, sorted_coords)
+        sorted_coords = lesserSequence(less_operators, sorted_coords)
         try:
             sorted_coords_with_index = sorted_coords.insert(index, assumptions=assumptions)
             upper = sorted_coords_with_index.operands.index(index) # coord above 'index' in the sorted order
