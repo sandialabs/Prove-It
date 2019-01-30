@@ -1593,14 +1593,46 @@ class StoredTheorem(StoredSpecialStmt):
                 pass # no contribution if the file doesn't exist
         return (usedAxioms, usedTheorems)
 
-    def recordPresumingInfo(self, presuming):
+    def recordPresumedContexts(self, presumed_contexts):
         '''
-        Record information about what the proof of the theorem
-        presumes -- what other theorems/contexts the proof
-        is expected to depend upon.
+        Record information about what other contexts are
+        presumed in the proof of this theorem.
         '''
-        presuming_str = '\n'.join(presuming) + '\n'
-        presuming_file = os.path.join(self.path, 'presuming.txt')
+        from .context import Context
+        for presumed_context in presumed_contexts:
+            # raises an exception if the context is not known
+            Context.getContext(presumed_context) 
+        presuming_str = '\n'.join(presumed_contexts) + '\n'
+        presuming_file = os.path.join(self.path, 'presumed_contexts.txt')
+        if os.path.isfile(presuming_file):
+            with open(presuming_file, 'r') as f:
+                if presuming_str == f.read():
+                    return # unchanged; don't need to record anything
+        with open(presuming_file, 'w') as f:
+            f.write(presuming_str)
+
+    def presumedContexts(self):
+        '''
+        Return the list of presumed contexts.
+        '''
+        # first read in the presuming info
+        presumptions = []
+        presuming_file = os.path.join(self.path, 'presumed_contexts.txt')
+        if os.path.isfile(presuming_file):
+            with open(presuming_file, 'r') as f:
+                for presumption in f.readlines():
+                    presumption = presumption.strip()
+                    if presumption == '': continue
+                    presumptions.append(presumption)
+        return presumptions
+    
+    def recordPresumedTheorems(self, presumed_theorems):
+        '''
+        Record information about what other theorems are
+        presumed in the proof of this theorem.
+        '''
+        presuming_str = '\n'.join(presumed_theorems) + '\n'
+        presuming_file = os.path.join(self.path, 'presumed_theorems.txt')
         if os.path.isfile(presuming_file):
             with open(presuming_file, 'r') as f:
                 if presuming_str == f.read():
@@ -1608,74 +1640,41 @@ class StoredTheorem(StoredSpecialStmt):
         with open(presuming_file, 'w') as f:
             f.write(presuming_str)
     
-    def getRecursivePresumingInfo(self, presumed_theorems, presumed_contexts):
+    def directlyPresumedTheorems(self):
         '''
-        Append presumed theorem objects and context name strings to 
-        'presumed_theorems' and 'presumed_contexts' respectively.  
-        For each theorem, do this recursively.
+        Return the list of directly presumed theorems.
         '''
-        from .context import Context, ContextException
         # first read in the presuming info
-        presuming = []
-        presuming_file = os.path.join(self.path, 'presuming.txt')
+        presumptions = []
+        presuming_file = os.path.join(self.path, 'presumed_theorems.txt')
         if os.path.isfile(presuming_file):
             with open(presuming_file, 'r') as f:
-                for presume in f.readlines():
-                    presume = presume.strip()
-                    if presume == '': continue
-                    presuming.append(presume)
-        
+                for presumption in f.readlines():
+                    presumption = presumption.strip()
+                    if presumption == '': continue
+                    presumptions.append(presumption)
+        return presumptions        
+    
+    def getRecursivelyPresumedTheorems(self, presumed_theorems):
+        '''
+        Append presumed theorem objects to 'presumed_theorems'.
+        For each theorem, do this recursively.
+        '''
+        from .context import Context
+        # first get the directly presumed theorems
+        presumptions = self.directlyPresumedTheorems()
         # Iterate through each presuming string and add it as
         # a context name or a theorem.  For theorem's, recursively
         # add the presuming information.
-        for presume in presuming:
-            if not isinstance(presume, str):
-                raise ValueError("'presumes' should be a collection of strings for context names and/or full theorem names")
-            thm = None
-            context_name = presume
-            try:
-                if '.' in presume:
-                    context_name, theorem_name = presume.rsplit('.', 1)
-                    thm = Context.getContext(context_name).getTheorem(theorem_name)
-            except (ContextException, KeyError):
-                context_name = presume # not a theorem; must be a context
-            
-            if thm is not None:
-                if thm.context == self.context:
-                    raise ValueError("Do not presume any theorem in this context; prior theorems are implicit and later theorems are off limits")                    
-                # add the theorem and any theorems used by that theorem to the set of presuming theorems
-                if thm not in presumed_theorems:
-                    presumed_theorems.add(thm)
-                    thm.getRecursivePresumingInfo(presumed_theorems, presumed_contexts)
-            else:
-                try:
-                    context = Context.getContext(context_name)
-                except ContextException:
-                    raise ValueError("'%s' not found as a known context or theorem"%presume)
-                if context == self.context:
-                    raise ValueError("Do not presume the current context; prior theorems are implicit and later theorems are off limits")
-                # the entire context is presumed (except where the presumption is mutual)
-                presumed_contexts.add(context.name)
-        
-    def presumes(self, other_theorem_str):
-        '''
-        Return True iff the things that this "stored" theorem 
-        presumes (or is intended to presume) include the other
-        theorem with the given string representation.
-        '''
-        presuming_file = os.path.join(self.path, 'presuming.txt')
-        if os.path.isfile(presuming_file):
-            with open(presuming_file, 'r') as f:
-                for presume in f.readlines():
-                    presume = presume.strip()
-                    if presume == '': continue
-                    if other_theorem_str[:len(presume)] == presume:
-                        # 'presume' includes other_theorem_str (either the theorem
-                        # itself or a context containing it directly or indirectly).
-                        return True
-        # The default is False if no presuming info is stored
-        # for this theorem.
-        return False       
+        for presumption in presumptions:
+            if not isinstance(presumption, str):
+                raise ValueError("'presumptions' should be a collection of strings for context names and/or full theorem names")
+            context_name, theorem_name = presumption.rsplit('.', 1)
+            thm = Context.getContext(context_name).getTheorem(theorem_name)
+            # add the theorem and anything presumed by that theorem to the set of presumed theorems/contexts
+            if thm not in presumed_theorems:
+                presumed_theorems.add(thm)
+                thm.getRecursivelyPresumedTheorems(presumed_theorems)
     
     def recordProof(self, proof):
         '''

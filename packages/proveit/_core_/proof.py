@@ -446,21 +446,38 @@ class Theorem(Proof):
         '''
         return self._storedTheorem().getProofLink()
     
-    def recordPresumingInfo(self, presuming):
+    def recordPresumedContexts(self, presumed_contexts):
         '''
-        Record information about what the proof of the theorem
-        presumes -- what other theorems/contexts the proof
-        is expected to depend upon.
+        Record information about what other contexts are
+        presumed in the proof of this theorem.
         '''
-        self._storedTheorem().recordPresumingInfo(presuming)
+        self._storedTheorem().recordPresumedContexts(presumed_contexts)
 
-    def getRecursivePresumingInfo(self, presumed_theorems, presumed_contexts):
+    def presumedContexts(self):
         '''
-        Append presumed theorem and context strings to 'presumed_theorems'
-        and 'presumed_contexts' respectively.  For each theorem, do this
-        recursively.
+        Return the list of presumed contexts.
         '''
-        self._storedTheorem().getRecursivePresumingInfo(presumed_theorems, presumed_contexts)        
+        return self._storedTheorem().presumedContexts()
+    
+    def recordPresumedTheorems(self, presumed_theorems):
+        '''
+        Record information about what othere theorems are
+        presumed in the proof of this theorem.
+        '''
+        self._storedTheorem().recordPresumedTheorems(presumed_theorems)
+
+    def directlyPresumedTheorems(self):
+        '''
+        Return the list of directly presumed theorems.
+        '''
+        return self._storedTheorem().directlyPresumedTheorems()
+        
+    def getRecursivelyPresumedTheorems(self, presumed_theorems):
+        '''
+        Append presumed theorem name strings to 'presumed_theorems'.
+        For each theorem, do this recursively.
+        '''
+        self._storedTheorem().getRecursivelyPresumedTheorems(presumed_theorems)        
                 
     def recordProof(self, proof):
         '''
@@ -531,30 +548,52 @@ class Theorem(Proof):
         logic.  This applies when a proof has begun 
         (see KnownTruth.beginProof in known_truth.py).  
         When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
-        Otherwise only Theorems in the KnownTruth.presuming 
-        set (or whose packages is in the KnownTruth.presuming 
-        set) are allowed.
+        Otherwise only Theorems in the KnownTruth.presumingTheorems set
+        or contained within any of the KnownTruth.presumingPrefixes
+        (i.e., context) are allowed.
         '''
         #from proveit.certify import isFullyProven
         if KnownTruth.theoremBeingProven is None:
             self._meaningData._unusableProof = None # Nothing being proven, so all Theorems are usable
             return
+        legitimately_presumed = False
+        stored_theorem = self._storedTheorem()
+        theorem_being_proven_str = str(KnownTruth.theoremBeingProven)
         if self.provenTruth==KnownTruth.theoremBeingProven.provenTruth:
             # Note that two differently-named theorems for the same thing may exists in
             # order to show an alternate proof.  In that case, we want to disable
             # the other alternates as well so we will be sure to generate the new proof.
             self.disable()
-        elif self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
-            stored_theorem = self._storedTheorem()
-            if stored_theorem.hasProof():
-                # If we have a proof, then if "theorem being proven" is a dependent, the logic is circular.
-                if str(KnownTruth.theoremBeingProven) in stored_theorem.allUsedTheorems():
-                    raise CircularLogic(KnownTruth.theoremBeingProven, self)
-            elif str(KnownTruth.theoremBeingProven) in stored_theorem.presumes():
-                # If we don't have a proof, check the presuming information for circular logic.
-                raise CircularLogic(KnownTruth.theoremBeingProven, self)
-            self._meaningData._unusableProof = None # This Theorem is usable because it is being presumed.
+            return
         else:
+            presumed_via_context = not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes())
+            if self in KnownTruth.presumingTheorems or presumed_via_context:
+                # This Theorem is being presumed specifically, or a context in which it is contained is presumed.
+                # Presumption via context (a.k.a. prefix) is contingent upon not having a mutual presumption
+                # (that is, some theorem T can presume everything in another context except for theorems 
+                # that presume T or, if proven, depend upon T).
+                # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
+                # is being proven.
+                presumed_theorems = set()
+                # check the "presuming information, recursively, for circular logic.
+                stored_theorem.getRecursivelyPresumedTheorems(presumed_theorems)
+                # If this theorem has a proof, include all dependent theorems as
+                # presumed (this may have been presumed via context, so this can contain
+                # more information than the specifically presumed theorems).
+                if stored_theorem.hasProof():
+                    presumed_theorems.update(stored_theorem.allUsedTheorems())
+                if presumed_via_context:
+                    if theorem_being_proven_str not in presumed_theorems:
+                        # Presumed via context without any mutual specific presumption or existing co-dependence.
+                        legitimately_presumed=True # It's legit; don't disable.
+                    # If there is a conflict, don't presume something via context.
+                else:
+                    # This Theorem is being presumed specifically
+                    if (theorem_being_proven_str in presumed_theorems):
+                        # Theorem-specific presumptions are mutual.  Raise a CircularLogic error.
+                        raise CircularLogic(KnownTruth.theoremBeingProven, self)
+                    legitimately_presumed=True # This theorem is specifically and legitimately being presumed.
+        if not legitimately_presumed:
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all dependents.
             self.disable()
