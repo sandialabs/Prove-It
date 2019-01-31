@@ -224,12 +224,12 @@ def executeNotebook(notebook_path):
     
     # execute using a KernelManager with the appropriate cwd (current working directory)
     notebook_dir = os.path.split(notebook_path)[0]
-    resources = {'metadata':{'path':notebook_dir}}
-    execute_processor = ExecutePreprocessor(kernel_name='python3', timeout=-1)
+    #resources = {'metadata':{'path':notebook_dir}}
+    #execute_processor = ExecutePreprocessor(kernel_name='python3', timeout=-1)
     while True:
         try:
-            #executenb(nb, cwd=notebook_dir)
-            execute_processor.preprocess(nb, resources)
+            executenb(nb, cwd=notebook_dir)
+            #execute_processor.preprocess(nb, resources)
             break
         except zmq.ZMQError:
             print("ZMQError encountered")

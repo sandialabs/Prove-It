@@ -296,6 +296,7 @@ class Iter(Expression):
                     arg_sorting_assumptions.append(Less(start_minus_one, start))
                     arg_sorting_assumptions.append(Less(end, end_plus_one))
                     arg_sorting_assumptions.append(Equals(end, Subtract(end_plus_one, one)))
+                    arg_sorting_assumptions.append(Equals(Subtract(end_plus_one, one), end))
                     # Also add start<=end to ease the argument sorting requirement even though it
                     # may not strictly be true if an empty range is possible.  In such a case, we
                     # still want things sorted this way while we don't know if the range is empty or not
