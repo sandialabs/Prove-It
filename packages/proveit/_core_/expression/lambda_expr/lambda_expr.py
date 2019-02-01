@@ -271,9 +271,9 @@ class Lambda(Expression):
         try:
             newLambda = Lambda(new_params, subbedBody, subbedConditions)
         except TypeError as e:
-            raise ImproperSubstitution(e.message)
+            raise ImproperSubstitution(e.args[0])
         except ValueError as e:
-            raise ImproperSubstitution(e.message)            
+            raise ImproperSubstitution(e.args[0])            
         return newLambda
 
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
