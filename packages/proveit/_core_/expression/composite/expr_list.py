@@ -99,6 +99,9 @@ class ExprList(Composite, Expression):
         from .iteration import Iter
         from .composite import _simplifiedCoord
         
+        if len(self)==0:
+            raise ValueError("An empty ExprList has no elements to get")
+        
         if requirements is None:
             requirements = [] # create the requirements list, but it won't be used
         
@@ -140,7 +143,7 @@ class ExprList(Composite, Expression):
         entry = self[lower]
         if isinstance(entry, Iter):
             # indexing into an iteration
-            entry_origin = sorted_coords[lower]
+            entry_origin = sorted_coords.operands[lower]
             iter_start_index = entry.start_index
             iter_loc = Add(iter_start_index, Subtract(index, entry_origin))
             simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, requirements)

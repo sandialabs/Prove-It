@@ -174,7 +174,7 @@ class Iter(Expression):
                 requirements.append(relation)
         
         # map to the desired instance
-        return self.lambda_map.mapped(indices)
+        return self.lambda_map.mapped(*indices)
     
     def _makeNonoverlappingRangeSet(self, rel_iter_ranges, arg_sorting_relations, assumptions, requirements):
         '''
@@ -364,7 +364,7 @@ class Iter(Expression):
                     range_assumptions = []
                     #print start_loc, end_loc, range_expr_map, range_assumptions, self.lambda_map
                     # generate "safe" new parameters (the Variables are not used for anything that might conflict).
-                    new_params = safeDummyVars(len(self.lambda_map.parameters), [self] + list(range_expr_map.values()) + list(relabelMap.values()))
+                    new_params = safeDummyVars(len(self.lambda_map.parameters), *([self] + list(range_expr_map.values()) + list(relabelMap.values())))
                     for start_idx, param, new_param, range_start, range_end in zip(self.start_indices, self.lambda_map.parameters, new_params, start_loc, end_loc):
                         range_expr_map[param] = Add(new_param, Subtract(range_start, start_idx))
                         range_assumptions.append(LessEq(start_idx, new_param))
