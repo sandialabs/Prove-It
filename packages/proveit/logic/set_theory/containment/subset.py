@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
 from proveit._common_ import f, S, QQ
-from .containment_relation import ContainmentRelation, ContainmentSequence
+from .containment_relation import ContainmentRelation, ContainmentSequence, makeSequenceOrRelation
 
 class SubsetRelation(ContainmentRelation):
     def __init__(self, operator, subset, superset):
@@ -28,7 +28,15 @@ class SubsetSequence(ContainmentSequence):
     @staticmethod
     def RelationClass():
         return SubsetRelation
-                
+
+def subsetSequence(operators, operands):
+    '''
+    Create a SubsetSequence with the given operators or operands,
+    or create an appropriate degenerate Expression when there are
+    fewer than two operators.
+    '''
+    return makeSequenceOrRelation(SubsetSequence, operators, operands)
+  
 class Subset(SubsetRelation):    
     # operator of the Subset operation
     _operator_ = Literal(stringFormat='subset', latexFormat=r'\subset', context=__file__)    

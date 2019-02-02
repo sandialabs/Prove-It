@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
-from .containment_relation import ContainmentRelation, ContainmentSequence
+from .containment_relation import ContainmentRelation, ContainmentSequence, makeSequenceOrRelation
 
 class SupersetRelation(ContainmentRelation):
     def __init__(self, operator, superset, subset):
@@ -27,6 +27,14 @@ class SupersetSequence(ContainmentSequence):
     @staticmethod
     def RelationClass():
         return SupersetRelation
+
+def supersetSequence(operators, operands):
+    '''
+    Create a SupersetSequence with the given operators or operands,
+    or create an appropriate degenerate Expression when there are
+    fewer than two operators.
+    '''
+    return makeSequenceOrRelation(SupersetSequence, operators, operands)
 
 class Superset(SupersetRelation):
     # operator of the Superset operation

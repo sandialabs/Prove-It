@@ -1,4 +1,4 @@
-from proveit.relation import TransitiveRelation, TransitiveSequence
+from proveit.relation import TransitiveRelation, TransitiveSequence, makeSequenceOrRelation
 
 class ContainmentRelation(TransitiveRelation):
     r'''

@@ -1,6 +1,6 @@
 from proveit import Literal, USE_DEFAULTS, asExpression
 from proveit.logic import Equals
-from .ordering_relation import OrderingRelation, OrderingSequence
+from .ordering_relation import OrderingRelation, OrderingSequence, makeSequenceOrRelation
 from proveit._common_ import a, b, c, x, y, z
 
 class GreaterRelation(OrderingRelation):
@@ -234,10 +234,10 @@ class GreaterEq(GreaterRelation):
         else:
             raise ValueError("Unrecognized addend side (should be 'left' or 'right'): " + str(addendSide))
 
-def GreaterSeq(*operands):
+def GreaterOnlySeq(*operands):
     return GreaterSequence([Greater._operator_]*(len(operands)-1), operands)
 
-def GreaterEqSeq(*operands):
+def GreaterEqOnlySeq(*operands):
     return GreaterSequence([GreaterEq._operator_]*(len(operands)-1), operands)
 
 def greaterSequence(operators, operands):
@@ -246,15 +246,4 @@ def greaterSequence(operators, operands):
     or create an appropriate degenerate Expression when there are
     fewer than two operators.
     '''
-    if len(operators)+1 != len(operands):
-        raise ValueError("Expecting one more operand than operators")
-    if operators==0:
-        return operands[0]
-    if operators==1:
-        if operators[0]==Greater._operator_:
-            return Greater(*operands)
-        elif operators[0]==Equals._operator_:
-            return Equals(*operands)
-    return GreaterSequence(operators, operands)
-
-        
+    return makeSequenceOrRelation(GreaterSequence, operators, operands)

@@ -62,10 +62,10 @@ class TransitiveRelation(Operation):
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
         try:
-            return self.concludeViaTransitivity(assumptions)
+            self.concludeViaTransitivity(assumptions)
         except TransitivityException as e:
             raise TransitivityException(self, assumptions, e.message) # indicate the expression we were trying to prove
-        self.prove(assumptions=assumptions, automation=False) # this is just an extra sanity check
+        return self.prove(assumptions=assumptions, automation=False) # may need to derive a weaker form, which should occur as a side-effect
         
     def concludeViaTransitivity(self, assumptions=USE_DEFAULTS):
         from proveit.logic import Equals
@@ -121,7 +121,7 @@ class TransitiveRelation(Operation):
     
     def insert(self, item, assumptions=USE_DEFAULTS):
         assumptions = defaults.checkedAssumptions(assumptions)
-        return self.__class__._transitivityInsert(self.operands, item, assumptions)
+        return self.__class__._transitivityInsert(self, [self.operator], self.operands, item, assumptions)
                                 
     @classmethod
     def knownRelationsFromLeft(RelationClass, expr, assumptionsSet):
@@ -560,21 +560,21 @@ class TransitiveRelation(Operation):
         return RelationClass.applyTransitivities(relations)
     
     @classmethod
-    def _transitivityInsert(RelationClass, sequence, item, assumptions):
+    def _transitivityInsert(RelationClass, orig_sequence, sequence_operators, sequence_elems, item, assumptions):
         '''
         Under the given assumptions, insert 'item' into the given sorted sequence (e.g., that had
         been returned from a call to transitivitySort).
         '''
         try:
-            sequence.operands.index(item)
-            return sequence # item already contained in the sequence
+            sequence_elems.index(item)
+            return orig_sequence # item already contained in the sequence
         except ValueError:
             pass # item not contained in the sequence
         Sequence = RelationClass.SequenceClass()
         assert issubclass(Sequence, TransitiveSequence), "SequenceClass() should return a sub-class TransitiveSequence"
         # generate relations between any of the sorted sequence operands and the "item" to insert,
         # using a meet in the middle strategy to find out where the item fits.
-        items = list(sequence.operands) + [item]
+        items = list(sequence_elems) + [item]
         right_item_idx = None
         for (left_item, right_item), chain in RelationClass._generateSortingRelations(items, assumptions):
             if item == left_item:
@@ -588,16 +588,16 @@ class TransitiveRelation(Operation):
                 left_item_idx = items.index(left_item)
                 right_item_idx = left_item_idx+1
                 inserting_relations = [TransitiveRelation.applyTransitivities(chain, assumptions)]
-                if left_item_idx < len(sequence.operands)-1:
+                if left_item_idx < len(sequence_elems)-1:
                    inserting_relations.append(RelationClass._transitivitySearch(item, items[right_item_idx], forceStrong=False, assumptions=assumptions))
                 break
         if right_item_idx is not None:
             # found a solution
             inserting_seq = RelationClass.makeSequence(*inserting_relations)
-            operands = sequence.operands[:right_item_idx-1] + list(inserting_seq.operands) + sequence.operands[right_item_idx+1:]
-            operators = sequence.operators[:right_item_idx-1] + list(inserting_seq.operators) + sequence.operators[right_item_idx:]
+            operands = sequence_elems[:right_item_idx-1] + list(inserting_seq.operands) + sequence_elems[right_item_idx+1:]
+            operators = sequence_operators[:right_item_idx-1] + list(inserting_seq.operators) + sequence_operators[right_item_idx:]
             return Sequence(operators, operands)
-        raise TransitivityException(None, assumptions, "Unable to insert %s into sequence %s"%(str(item), str(sequence)))
+        raise TransitivityException(None, assumptions, "Unable to insert %s into sequence %s"%(str(item), str(orig_sequence)))
 
 class TransitiveSequence(OperationSequence):
     '''
@@ -607,10 +607,12 @@ class TransitiveSequence(OperationSequence):
     is dictated by the RelationClass() class method defined in the derived class.
     '''
     
-    def __init__(self, operators, operands):
+    def __init__(self, operators, operands, doMinSizeCheck=True):
         from proveit.logic import Equals
-        if len(operators) < 2:
+        if doMinSizeCheck and len(operators) < 2:
             raise ValueError("Do not use a TransitiveSequence for fewer than two relationship (it is unnecessary)")
+        if len(operators)+1 != len(operands):
+            raise ValueError("There must be one more operand than operator in a TransitiveSequence")
         Relation = self.__class__.RelationClass()
         assert issubclass(Relation, TransitiveRelation), "The Relation class of a TransitiveSequence should be a TransitiveRelation"
         relation_operators = (Relation.WeakRelationClass()._operator_, Relation.StrongRelationClass()._operator_, Equals._operator_)
@@ -626,7 +628,20 @@ class TransitiveSequence(OperationSequence):
     def insert(self, item, assumptions=USE_DEFAULTS):
         assumptions = defaults.checkedAssumptions(assumptions)
         Relation = self.__class__.RelationClass()
-        return Relation._transitivityInsert(self, item, assumptions)
+        return Relation._transitivityInsert(self, self.operators, self.operands, item, assumptions)
+
+def makeSequenceOrRelation(TransitiveSequenceClass, operators, operands):
+    '''
+    Create a TransitiveSequence of some kind with the given operators or operands,
+    or create an appropriate degenerate Expression when there are fewer than two operators.
+    '''
+    if len(operators)+1 != len(operands):
+        raise ValueError("Expecting one more operand than operators")
+    if len(operators)==0:
+        return operands[0]
+    if len(operators)==1:
+        return Operation.operationClassOfOperator[operators[0]](*operands)
+    return TransitiveSequenceClass(operators, operands)
 
 class TransitivityException(ProofFailure):
     def __init__(self, expr, assumptions, message):
