@@ -101,7 +101,9 @@ class TransitiveRelation(Operation):
         raise NotImplementedError("The Expression class for the transitive relation sequence should be returned")
 
     @classmethod
-    def makeSequence(self, *relations):
+    def makeSequenceOrRelation(self, *relations):
+        if len(relations)==1:
+            return relations[0] # only 1 relation
         Sequence = self.SequenceClass()
         assert issubclass(Sequence, TransitiveSequence), "SequenceClass() should return a sub-class TransitiveSequence"
         operators = [relation.operator for relation in relations]
@@ -545,7 +547,7 @@ class TransitiveRelation(Operation):
             relations += [Equals(last_item, last_item).prove()]*(repetitions[last_item]-1)
         if len(relations)==1:
             return relations[0]
-        return RelationClass.makeSequence(*relations)
+        return RelationClass.makeSequenceOrRelation(*relations)
     
     @classmethod
     def _fixedTransitivitySort(RelationClass, items, assumptions):
@@ -593,7 +595,7 @@ class TransitiveRelation(Operation):
                 break
         if right_item_idx is not None:
             # found a solution
-            inserting_seq = RelationClass.makeSequence(*inserting_relations)
+            inserting_seq = RelationClass.makeSequenceOrRelation(*inserting_relations)
             operands = sequence_elems[:right_item_idx-1] + list(inserting_seq.operands) + sequence_elems[right_item_idx+1:]
             operators = sequence_operators[:right_item_idx-1] + list(inserting_seq.operators) + sequence_operators[right_item_idx:]
             return Sequence(operators, operands)
