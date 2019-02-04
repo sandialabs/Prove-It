@@ -1,1 +1,1 @@
-from .decimal import num, DecimalSequence, DIGITS
+from .deci import num, DecimalSequence, DIGITS
