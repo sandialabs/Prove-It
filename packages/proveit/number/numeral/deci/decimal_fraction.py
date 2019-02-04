@@ -1,5 +1,5 @@
 from proveit import Literal, Operation
-from proveit.number.set.integer.decimal import WholeDecimal
+from proveit.number.set.integer.deci import WholeDecimal
 
 class DecimalFraction(Operation):
     # operator of the DecimalFraction operation.

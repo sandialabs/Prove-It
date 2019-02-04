@@ -22,7 +22,7 @@ import proveit
 try:
     # Import some fundamental theorems without quantifiers.
     # Fails before running the corresponding _axioms_/_theorems_ notebooks for the first time, but fine after that.
-    from .numeral.decimal._theorems_ import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9
-    from .numeral.decimal._theorems_ import nats_pos_1, nats_pos_2, nats_pos_3, nats_pos_4, nats_pos_5, nats_pos_6, nats_pos_7, nats_pos_8, nats_pos_9
+    from .numeral.deci._theorems_ import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9
+    from .numeral.deci._theorems_ import nats_pos_1, nats_pos_2, nats_pos_3, nats_pos_4, nats_pos_5, nats_pos_6, nats_pos_7, nats_pos_8, nats_pos_9
 except:
     pass

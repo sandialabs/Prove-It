@@ -24,8 +24,8 @@ class Len(Operation):
     def evaluation(self, assumptions=USE_DEFAULTS):
         from proveit.logic import Equals
         from ._axioms_ import listLen0, listLenDef
-        from proveit.number.numeral.decimal._theorems_ import listLen1, listLen2, listLen3, listLen4, listLen5
-        from proveit.number.numeral.decimal._theorems_ import listLen6, listLen7, listLen8, listLen9
+        from proveit.number.numeral.deci._theorems_ import listLen1, listLen2, listLen3, listLen4, listLen5
+        from proveit.number.numeral.deci._theorems_ import listLen6, listLen7, listLen8, listLen9
         if len(self.operands) == 0:
             return listLen0
         elif len(self.operands) == 1:
