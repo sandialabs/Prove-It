@@ -252,32 +252,18 @@ class ContextInterface:
         # rewrite the sub_contexts.txt file with new information.
         self.context.setSubContextNames(self.subContextNames)
 
-@magics_class
-class ProveItMagic(Magics):
-    "Magics that hold additional state"
-
-    def __init__(self, shell, assignmentBehaviorModifier):
+class ProveItMagicCommands:
+    def __init__(self):
         # You must call the parent constructor
-        super(ProveItMagic, self).__init__(shell)
         self.kind = None
         self.definitions = dict() # map name to expression
         self.expr_names = dict() # map expression to names
         self.keys = [] # the keys of the definitions in the order they appear
         self.lowerCaseNames = set()
         self.context = None 
-        self.ranFinish = False
-        self.assignmentBehaviorModifier = assignmentBehaviorModifier
-        assignmentBehaviorModifier.displayAssignments(ip)
+        self.ranFinish = False    
     
-    @line_magic
-    def display_assignments(self, line):
-        if line.strip() == 'off':
-            self.assignmentBehaviorModifier.resetBehavior()        
-        else:
-            self.assignmentBehaviorModifier.displayAssignments(self.shell)
-    
-    @line_magic
-    def contents(self, line):
+    def display_contents(self, context_names):
         '''
         Generates a "table of contents" hierarchy of contexts for the contexts
         listed in the line.
@@ -290,17 +276,16 @@ class ProveItMagic(Magics):
                 html += '<li><a class="ProveItLink" href="%s">%s</a></li>\n'%(href, context.name)
                 html += generateContents(list(context.getSubContexts()))
             return html + '</ul>\n'
-        display(HTML(generateContents([Context(context_name) for context_name in line.split()])))
+        display(HTML(generateContents([Context(context_name) for context_name in context_names])))
             
-    @line_magic
-    def context(self, line):
+    def display_context(self):
         '''
         Create the _common_, _axioms_ and _theorems_ notebooks for the current
         context (if they do not already exist).  Show the table of contents
         for sub-contexts which may be edited.
         '''
         import proveit
-        # create an '_init_.py' in the directory if there is not an existing one.
+        # create an '__init__.py' in the directory if there is not an existing one.
         if not os.path.isfile('__init__.py'):
             open('__init__.py', 'w').close() # create an empty __init__.py
         context = Context()
@@ -365,9 +350,6 @@ class ProveItMagic(Magics):
         print("Subsequent end-of-cell assignments will define axioms")
         print("%end_axioms will finalize the definitions")
 
-    def end_axioms(self):
-        self._finish('axioms')
-
     def begin_theorems(self):
         # context based upon current working directory
         if len(self.definitions) > 0 or self.kind is not None:
@@ -379,11 +361,6 @@ class ProveItMagic(Magics):
         print("Subsequent end-of-cell assignments will define theorems")
         print("'%end theorems' will finalize the definitions")
 
-    def end_theorems(self):
-        self._finish('theorems')
-        # stash proof notebooks that are not active theorems.
-        self.context.stashExtraneousProofNotebooks()
-    
     def begin_common(self):
         if len(self.definitions) > 0 or self.kind is not None:
             if self.kind != 'common':
@@ -394,15 +371,181 @@ class ProveItMagic(Magics):
         print("Subsequent end-of-cell assignments will define common sub-expressions")
         print("%end_common will finalize the definitions")
 
-    def end_common(self):
-        # Record the context names of common expressions referenced
-        # by this context's common expressions notebook...
-        self.context.recordCommonExprDependencies()
-        # and check for illegal mutual references.
-        cyclically_referenced_common_expr_context = self.context.cyclicallyReferencedCommonExprContext()
-        if cyclically_referenced_common_expr_context is not None:
-            raise ProveItMagicFailure("Not allowed to have cyclically dependent 'common expression' notebooks: %s._common_"%cyclically_referenced_common_expr_context)
-        self._finish('common')
+    def clear(self, kind):
+        # context based upon current working directory
+        self.context = Context()        
+        if kind == 'axioms':
+            self.context._clearAxioms()
+        elif kind == 'theorems':
+            self.context._clearTheorems()
+        elif kind == 'common':
+            self.context._clearCommonExressions()
+        elif KnownTruth.theoremBeingProven is not None:
+            kind = '_proof_' + KnownTruth.theoremBeingProven.name
+        # clean unreferenced expressions:
+        self.context.referenceDisplayedExpressions(kind, clear=True)
+        self.context.clean()
+        self.kind = None
+                
+    def check_expr(self, expr_name, expr):
+        _, hash_id = os.path.split(os.path.abspath('.'))
+        context = Context()
+        stored_expr = context.getStoredExpr(hash_id)
+        if expr != stored_expr:
+            raise ProveItMagicFailure("The built '%s' does not match the stored Expression"%expr_name)
+        if expr._style_id != stored_expr._style_id:
+            raise ProveItMagicFailure("The built '%s' style does not match that of the stored Expression"%expr_name)
+        print("Passed sanity check: built '%s' is the same as the stored Expression."%expr_name)
+                                
+    def proving(self, theorem_name, presumptions, justRecordPresumingInfo=False):
+        self.context = Context('..') # the context should be up a directory from the _proofs_ directory
+        sys.path.append('..')
+        proving_theorem = self.context.getTheorem(theorem_name)
+        proving_theorem_truth = proving_theorem.provenTruth
+        print("Beginning proof of", theorem_name)
+        return proving_theorem_truth.beginProof(proving_theorem, presumptions, justRecordPresumingInfo=justRecordPresumingInfo)
+        
+    def qed(self):
+        proof = KnownTruth.theoremBeingProven.provenTruth._qed()
+        proof._repr_html_() # generate expressions that should be referenced
+        self.context.referenceDisplayedExpressions('_proof_' + KnownTruth.theoremBeingProven.name)
+        # clean unreferenced expressions:
+        self.context.clean()
+        return proof
+
+    def end(self, kind):
+        '''
+        Finish 'axioms', 'theorems', 'common', or other (e.g., 'demonstrations')
+        for the Context associated with the current working directory.
+        '''
+        if self.kind != kind:
+            raise ProveItMagicFailure(r"Must run %begin " + kind + r" before %end " + kind)
+        # Add the special statements / expressions to the context
+        context = self.context
+        if kind=='axioms':
+            context._setAxioms(self.keys, self.definitions)
+        elif kind=='theorems':            
+            context._setTheorems(self.keys, self.definitions)
+        elif kind=='common':
+            # Record the context names of common expressions referenced
+            # by this context's common expressions notebook...
+            context.recordCommonExprDependencies()
+            # and check for illegal mutual references.
+            cyclically_referenced_common_expr_context = self.context.cyclicallyReferencedCommonExprContext()
+            if cyclically_referenced_common_expr_context is not None:
+                raise ProveItMagicFailure("Not allowed to have cyclically dependent 'common expression' notebooks: %s._common_"%cyclically_referenced_common_expr_context)
+            context._setCommonExpressions(self.keys, self.definitions)
+        
+        if kind in ('axioms', 'theorems', 'common'):
+            # Make a _common_.py, _axioms_.py or _theorems_.py for importing
+            # expressions from the certified database.
+            context.makeSpecialExprModule(kind)
+    	   
+            # Update the expression notebooks now that these have been registered
+            # as special expressions.
+            for name, expr in self.definitions.items():
+                # remake the expression notebooks using the special expressions of the context
+                context.expressionNotebook(expr)  
+            
+            if len(self.definitions)==0:
+                print("Context %s has no %s"%(context.name, kind if kind != 'common' else 'common expressions'))
+            elif kind=='common':
+                print("Common expressions may be imported from autogenerated _%s_.py"%kind)
+            else:
+                print("%s may be imported from autogenerated _%s_.py"%((kind[0].upper() + kind[1:]), kind))
+        self.ranFinish = True       
+
+        # reference any expressions that were displayed:
+        self.context.referenceDisplayedExpressions(kind)
+        # clean unreferenced expressions:
+        self.context.clean()
+        if kind=='theorems':
+            # stash proof notebooks that are not active theorems.
+            self.context.stashExtraneousProofNotebooks()            
+        self.kind = None
+        
+    def display_dependencies(self, name, known_truth):
+        '''
+        Show the dependencies of an axiom or theorem.
+        '''
+        proof = known_truth.proof() # Axiom or Theorem
+        
+        def displaySpecialStmt(stmt):
+            '''
+            Given an Axiom or Theorem, display HTML with a link
+            to the definition.
+            '''
+            expr = stmt.provenTruth.expr
+            display(HTML('<dt><a class="ProveItLink" href="%s">%s</a></dt><dd>%s</dd>'%(stmt.getLink(), str(stmt), expr._repr_html_())))
+        
+        def stmt_sort(stmt):
+            return str(stmt)
+        
+        if isinstance(proof, Theorem):
+            try:
+                required_axioms, required_unproven_theorems = proof.allRequirements()
+            except:
+                display(HTML('<h3>This theorem has not been proven yet.</h3>'))
+                required_axioms, required_unproven_theorems = tuple(), tuple()
+                
+            if len(required_unproven_theorems) > 0:
+                display(HTML('<h3>Unproven theorems required (directly or indirectly) to prove %s</h3>'%name))
+                display(HTML('<dl>'))
+                for required_unproven_theorem in sorted(required_unproven_theorems, key=stmt_sort):
+                    displaySpecialStmt(Context.findTheorem(required_unproven_theorem))
+                display(HTML('</dl>'))
+            if len(required_axioms) > 0:
+                display(HTML('<h3>Axioms required (directly or indirectly) to prove %s</h3>'%name))
+                display(HTML('<dl>'))
+                for required_axiom in sorted(required_axioms, key=stmt_sort):       
+                    displaySpecialStmt(Context.findAxiom(required_axiom))
+                display(HTML('</dl>'))
+        
+        dependents = proof.directDependents()
+        if len(dependents) == 0:
+            display(HTML('<h3>No theorems depend upon %s</h3>'%name))
+        else:
+            display(HTML('<h3>Theorems that depend directly on %s</h3>'%name))
+            display(HTML('<dl>'))
+            for dependent in sorted(proof.directDependents(), key=stmt_sort):
+                displaySpecialStmt(Context.findTheorem(dependent))
+            display(HTML('</dl>'))
+    
+
+@magics_class
+class ProveItMagic(Magics, ProveItMagicCommands):
+    "Magics that hold additional state"
+
+    def __init__(self, shell, assignmentBehaviorModifier):
+        # You must call the parent constructor
+        Magics.__init__(self, shell)
+        ProveItMagicCommands.__init__(self)
+        self.assignmentBehaviorModifier = assignmentBehaviorModifier
+        assignmentBehaviorModifier.displayAssignments(ip)
+    
+    @line_magic
+    def display_assignments(self, line):
+        if line.strip() == 'off':
+            self.assignmentBehaviorModifier.resetBehavior()        
+        else:
+            self.assignmentBehaviorModifier.displayAssignments(self.shell)
+    
+    @line_magic
+    def contents(self, line):
+        '''
+        Generates a "table of contents" hierarchy of contexts for the contexts
+        listed in the line.
+        '''
+        ProveItMagicCommands.display_contents(self, line.split())
+            
+    @line_magic
+    def context(self, line):
+        '''
+        Create the _common_, _axioms_ and _theorems_ notebooks for the current
+        context (if they do not already exist).  Show the table of contents
+        for sub-contexts which may be edited.
+        '''
+        ProveItMagicCommands.display_context(self)
     
     def _extract_kind(self, line):
         kind = line.strip()
@@ -428,42 +571,15 @@ class ProveItMagic(Magics):
     @line_magic
     def end(self, line):
         kind = self._extract_kind(line)
-        if self.kind != kind:
-            raise ProveItMagicFailure(r"Must run %begin " + kind + r" before %end " + kind)
-        if kind == 'axioms':
-            self.end_axioms()
-        elif kind == 'theorems':
-            self.end_theorems()
-        elif kind == 'common':
-            self.end_common()
-        # reference any expressions that were displayed:
-        self.context.referenceDisplayedExpressions(kind)
-        # clean unreferenced expressions:
-        self.context.clean()
-        self.kind = None
+        ProveItMagicCommands.end(self, kind)
 
     @line_magic
     def clear(self, line):
         kind = line.strip()
-        # context based upon current working directory
-        self.context = Context()        
-        if kind == 'axioms':
-            self.context._clearAxioms()
-        elif kind == 'theorems':
-            self.context._clearTheorems()
-        elif kind == 'common':
-            self.context._clearCommonExressions()
-        elif KnownTruth.theoremBeingProven is not None:
-            kind = '_proof_' + KnownTruth.theoremBeingProven.name
-        # clean unreferenced expressions:
-        self.context.referenceDisplayedExpressions(kind, clear=True)
-        self.context.clean()
-        self.kind = None
+        ProveItMagicCommands.clear(kind)
                 
     @line_magic
     def check_expr(self, line):
-        _, hash_id = os.path.split(os.path.abspath('.'))
-        context = Context()
         expr_name = line.strip()
         if expr_name == '': 
             expr_name = 'expr'
@@ -473,87 +589,37 @@ class ProveItMagic(Magics):
             if isinstance(expr, KnownTruth):
                 # actually a KnownTruth; convert to an Expression
                 expr = expr.expr
-        stored_expr = context.getStoredExpr(hash_id)
-        if expr != stored_expr:
-            raise ProveItMagicFailure("The built '%s' does not match the stored Expression"%expr_name)
-        if expr._style_id != stored_expr._style_id:
-            raise ProveItMagicFailure("The built '%s' style does not match that of the stored Expression"%expr_name)
-        print("Passed sanity check: built '%s' is the same as the stored Expression."%expr_name)
+        ProveItMagicCommands.check_expr(self, expr_name, expr)
                                 
     @line_magic
-    def proving(self, line):
-        from proveit._core_.proof import Theorem
-        self.context = Context('..') # the context should be up a directory from the _proofs_ directory
-        sys.path.append('..')
+    def proving(self, line):        
         theorem_name, presuming_str = str(line.strip()).split(' ', 1)
         if not presuming_str.find('presuming ') == 0:
             print("Format: %proving <theorem_name> presuming [<list of theorems / context-names>]")
             return
         args = presuming_str.split(' ', 1)[-1].strip('[]').split(',')
-        proving_theorem = Context('..').getTheorem(theorem_name)
-        proving_theorem_truth = proving_theorem.provenTruth
-        print("Beginning proof of", theorem_name)
-        presuming = [arg.strip() for arg in args if arg.strip() != '']
+        presumptions = [arg.strip() for arg in args if arg.strip() != '']
         # The list of 'presuming' theorems/context-names may be composed of full-path strings containing '.'s
         # or may be actual theorem variables defined in the IPython sesson.  The latter
         # instances will be converted to strings.
-        for k, arg in enumerate(list(presuming)):
+        for k, arg in enumerate(list(presumptions)):
             if '.' not in arg:
                 knownTruth = self.shell.user_ns[arg]
                 if not isinstance(knownTruth, KnownTruth) or not isinstance(knownTruth.proof(), Theorem):
                     raise ValueError("Presuming list must be composed of full-path theorem/context-name containing '.'s or be KnownTruth variable representing a Theorem")
                 thm = knownTruth.proof()
-                presuming[k] = str(thm) # full path of theorem 
-        begin_proof_result = proving_theorem_truth.beginProof(proving_theorem, presuming)
-        if isinstance(begin_proof_result, Expression):
-            # assign the theorem name to the theorem expression
-            # and display this assignment
-            theorem_expr = proving_theorem_truth.expr
-            self.shell.user_ns[theorem_name] = theorem_expr
-            return Assignments([theorem_name], [theorem_expr], beginningProof=True)
+                presumptions[k] = str(thm) # full path of theorem 
+        begin_proof_result = ProveItMagicCommands.proving(self, theorem_name, presumptions)
+        assert isinstance(begin_proof_result, Expression), "Expecting result of 'proving' to be an expression"
+        # assign the theorem name to the theorem expression
+        # and display this assignment
+        self.shell.user_ns[theorem_name] = begin_proof_result
+        return Assignments([theorem_name], [begin_proof_result], beginningProof=True)
     
     @line_magic
     def qed(self, line):
-        proof = KnownTruth.theoremBeingProven.provenTruth._qed()
-        proof._repr_html_() # generate expressions that should be referenced
-        self.context.referenceDisplayedExpressions('_proof_' + KnownTruth.theoremBeingProven.name)
-        # clean unreferenced expressions:
-        self.context.clean()
-        return proof
+        return ProveItMagicCommands.qed(self)
 
-    def _finish(self, kind):
-        '''
-        Finish 'axioms', 'theorems', or 'common' for the Context
-        associated with the current working directory.
-        '''
-        assert self.kind == kind, "Should have been checked already in %end line magic execution"
-        # Add the special statements / expressions to the context
-        context = self.context
-        if kind=='axioms':
-            context._setAxioms(self.keys, self.definitions)
-        elif kind=='theorems':            
-            context._setTheorems(self.keys, self.definitions)
-        elif kind=='common':
-            context._setCommonExpressions(self.keys, self.definitions)
-        
-        # Make a _common_.py, _axioms_.py or _theorems_.py for importing
-        # expressions from the certified database.
-        context.makeSpecialExprModule(kind)
-	   
-        # Update the expression notebooks now that these have been registered
-        # as special expressions.
-        for name, expr in self.definitions.items():
-            # remake the expression notebooks using the special expressions of the context
-            context.expressionNotebook(expr)  
-        
-        if len(self.definitions)==0:
-            print("Context %s has no %s"%(context.name, kind if kind != 'common' else 'common expressions'))
-        elif kind=='common':
-            print("Common expressions may be imported from autogenerated _%s_.py"%kind)
-        else:
-            print("%s may be imported from autogenerated _%s_.py"%((kind[0].upper() + kind[1:]), kind))
-        self.ranFinish = True       
-    
     @line_magic
     def dependencies(self, line):
         '''
@@ -561,6 +627,8 @@ class ProveItMagic(Magics):
         '''
         name = line.strip()
         known_truth = self.shell.user_ns[line.strip()]
+        ProveItMagicCommands.display_dependencies(self, known_truth)
+        
         proof = known_truth.proof() # Axiom or Theorem
         
         def displaySpecialStmt(stmt):
@@ -709,3 +777,9 @@ class ProveItMagicFailure(Exception):
         self.message = message
     def __str__(self):
         return self.message
+
+def executeWithoutIPython(code):
+    '''
+    
+    '''
+    pass
