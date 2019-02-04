@@ -1,5 +1,6 @@
 from .composite import Composite, _simplifiedCoord
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
 
 class ExprList(Composite, Expression):
@@ -96,6 +97,7 @@ class ExprList(Composite, Expression):
         '''
         from proveit.number import num, one, lesserSequence, Less, LessEq, Add, Subtract
         from proveit.logic import Equals
+        from proveit.relation import TransitivityException
         from .iteration import Iter
         from .composite import _simplifiedCoord
         
@@ -105,54 +107,52 @@ class ExprList(Composite, Expression):
         if requirements is None:
             requirements = [] # create the requirements list, but it won't be used
         
-        sorted_coords = []
-        less_operators = [] 
         coord = num(base)
-        sorted_coords.append(coord)
-        coord_sort_requirements = []
-        for entry in self.entries:
-            if isinstance(entry, Iter):
-                coord = _simplifiedCoord(Add(coord, Subtract(entry.end_index, entry.start_index)), assumptions, coord_sort_requirements)
-                less_operators.append(LessEq._operator_) # we don't necessarily know if coord < coord+(entry.end_index-entry.start_index)
-            else:
-                coord = _simplifiedCoord(Add(coord, one), assumptions, coord_sort_requirements)
-                less_operators.append(Less._operator_) # we know coord < coord+1
-            sorted_coords.append(coord)
-        sorted_coords = lesserSequence(less_operators, sorted_coords)
         try:
-            sorted_coords_with_index = sorted_coords.insert(index, assumptions=assumptions)
-            upper = sorted_coords_with_index.operands.index(index) # coord above 'index' in the sorted order
-            if sorted_coords.operands[upper]==index:
-                lower = upper # 'index' is one of the coordinates
-            elif upper>0 and sorted_coords_with_index.operators[upper-1]==Equals._operator_:
-                lower = upper = upper-1 # 'index' is '=' to the coordinate below it
-            elif upper<len(sorted_coords_with_index.operators) and sorted_coords_with_index.operators[upper]==Equals._operator_:
-                lower = upper # 'index' is '=' to the coordinate after it
-            else:
-                lower = upper-1 # 'index' is not known to be the same as any of the existing coordinates
-        except:
-            raise ExprListError("Could not determine the 'index' range within the ExprList coordinates under the given assumptions")
-        requirements += coord_sort_requirements[:lower]
-        # The relationship to the lower and upper coordinate bounds are requirements for determining
-        # the element being assessed.
-        if upper > 0 and sorted_coords.operands[lower] != index:
-            requirements.append(LessEq.sort((sorted_coords.operands[lower], index), reorder=False, assumptions=assumptions))
-        if lower<upper and upper<len(sorted_coords.operands) and sorted_coords.operands[upper] != index:
-            requirements.append(LessEq.sort((index, sorted_coords.operands[upper]), reorder=False, assumptions=assumptions))
+            for entry in self.entries:
+                if isinstance(entry, Iter):
+                    # An Iter entry.  First, check whether it is an empty iteration.
+                    entry_start_end_relation = Less.sort([entry.start_index, entry.end_index], assumptions=assumptions)
+                    if not entry_start_end_relation.operator == Equals._operator_:
+                        # start and end are not determined to be equal (if they were, the
+                        # iteration would represent a single element).
+                        if entry_start_end_relation.operands[0] == entry.end_index:
+                            if entry_start_end_relation.operator == LessEq._operator_:
+                                # We don't know if the iteration is empty.
+                                raise ExprListError("Could not determine if an Iter entry of the ExprList is empty, so we could not determine the 'index' element.")
+                            # empty iteration.  skip it, but knowing it is empty is an important requirement
+                            requirements.append(entry_start_end_relation) # need to know: end-of-entry < start-of-entry
+                            continue
+                    # shift 'coord' to the end of the entry
+                    next_coord = _simplifiedCoord(Add(coord, Subtract(entry.end_index, entry.start_index)), assumptions, requirements)
+                    # check whether or not the 'index' is within this entry.
+                    index_entryend_relation = Less.sort([index, next_coord], assumptions=assumptions)
+                    if index_entryend_relation.operands[0] == index:
+                        # 'index' within this particular entry                        
+                        iter_start_index = entry.start_index
+                        entry_origin = coord
+                        if index==entry_origin:
+                            # special case - index at the entry origin
+                            return entry.getInstance(iter_start_index, assumptions=assumptions, requirements=requirements)
+                        iter_loc = Add(iter_start_index, Subtract(index, entry_origin))
+                        simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, requirements)
+                        return entry.getInstance(simplified_iter_loc, assumptions=assumptions, requirements=requirements)
+                    coord = next_coord
+                index_coord_relation = Less.sort([index, coord], assumptions=assumptions)
+                if index_coord_relation.operator == Equals._operator_:
+                    # 'index' at this particular single-element entry
+                    requirements.append(index_coord_relation) # need to know: index == coord
+                    return entry
+                elif index_coord_relation.operands[0] == index:
+                    # 'index' is less than the 'coord' but not known to be equal to the 'coord' but also
+                    # not determined to be within a previous entry.  So we simply don't know enough.
+                    raise ExprListError("Could not determine the 'index'-ed element of the ExprList")
+                coord = _simplifiedCoord(Add(coord, one), assumptions, requirements)
+        except TransitivityException:
+            raise ExprListError("Could not determine the 'index'-ed element of the ExprList.")
         
-        entry = self[lower]
-        if isinstance(entry, Iter):
-            # indexing into an iteration
-            entry_origin = sorted_coords.operands[lower]
-            iter_start_index = entry.start_index
-            iter_loc = Add(iter_start_index, Subtract(index, entry_origin))
-            simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, requirements)
-            return entry.getInstance(simplified_iter_loc, assumptions=assumptions, requirements=requirements)
-        else:
-            # just a single-element entry
-            assert lower==upper, "A single-element entry should not have been determined if there was an ambiguous range for the 'index'"
-            return entry        
-        
+        raise IndexError("Index, %s, past the range of the ExprList, %s"%(str(index), str(self)))
+    
     def __add__(self, other):
         '''
         Concatenate ExprList's together via '+' just like
