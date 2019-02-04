@@ -1399,7 +1399,7 @@ class ContextStorage:
         '''
         self.clean()
         for sub_dir in os.listdir(self.pv_it_dir):
-            if sub_dir == '_referenced_' or sub_dir == 'failed_common_import.txt':
+            if sub_dir == '_referenced_': # or sub_dir == 'failed_common_import.txt':
                 continue
             return True # a sub-directory other than _referenced_; assume it is for an expression
         return False

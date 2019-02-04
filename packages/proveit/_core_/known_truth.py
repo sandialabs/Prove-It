@@ -242,7 +242,7 @@ class KnownTruth:
 
         theorem.recordPresumedContexts(sorted(presumed_contexts))
         theorem.recordPresumedTheorems(sorted(presumed_thms))
-        if justRecordPresumingInfo: return
+        if justRecordPresumingInfo: return self.expr
 
         print("Recorded 'presuming' information")        
         presumed_theorems = set()
