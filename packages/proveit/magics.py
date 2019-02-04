@@ -627,7 +627,7 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         '''
         name = line.strip()
         known_truth = self.shell.user_ns[line.strip()]
-        ProveItMagicCommands.display_dependencies(self, known_truth)
+        ProveItMagicCommands.display_dependencies(self, name, known_truth)
         
         proof = known_truth.proof() # Axiom or Theorem
         
