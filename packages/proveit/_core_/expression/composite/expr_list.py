@@ -141,7 +141,8 @@ class ExprList(Composite, Expression):
                 index_coord_relation = Less.sort([index, coord], assumptions=assumptions)
                 if index_coord_relation.operator == Equals._operator_:
                     # 'index' at this particular single-element entry
-                    requirements.append(index_coord_relation) # need to know: index == coord
+                    if index_coord_relation.lhs != index_coord_relation.rhs:
+                        requirements.append(index_coord_relation) # need to know: index == coord, if it's non-trivial
                     return entry
                 elif index_coord_relation.operands[0] == index:
                     # 'index' is less than the 'coord' but not known to be equal to the 'coord' but also
@@ -150,7 +151,6 @@ class ExprList(Composite, Expression):
                 coord = _simplifiedCoord(Add(coord, one), assumptions, requirements)
         except TransitivityException:
             raise ExprListError("Could not determine the 'index'-ed element of the ExprList.")
-        
         raise IndexError("Index, %s, past the range of the ExprList, %s"%(str(index), str(self)))
     
     def __add__(self, other):

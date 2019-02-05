@@ -296,7 +296,6 @@ class Iter(Expression):
                     arg_sorting_assumptions.append(Less(start_minus_one, start))
                     arg_sorting_assumptions.append(Less(end, end_plus_one))
                     arg_sorting_assumptions.append(Equals(end, Subtract(end_plus_one, one)))
-                    arg_sorting_assumptions.append(Equals(Subtract(end_plus_one, one), end))
                     # Also add start<=end to ease the argument sorting requirement even though it
                     # may not strictly be true if an empty range is possible.  In such a case, we
                     # still want things sorted this way while we don't know if the range is empty or not
@@ -310,8 +309,10 @@ class Iter(Expression):
             try:
                 from proveit.logic.equality._theorems_ import subLeftSideInto, subRightSideInto, equalsReversal
                 from proveit.number.ordering._theorems_ import transitivityLessLess, transitivityLessEqLess, transitivityLessLessEq, transitivityLessEqLessEq
+                from proveit.number.subtraction._theorems_ import subtractFromAdd
                 arg_sorting_assumptions.extend([subLeftSideInto.expr, subRightSideInto.expr, equalsReversal.expr])
                 arg_sorting_assumptions.extend([transitivityLessLess.expr, transitivityLessEqLess.expr, transitivityLessLessEq.expr, transitivityLessEqLessEq.expr])
+                arg_sorting_assumptions.append(subtractFromAdd.expr)
             except:
                 pass # skip this if the theorems have not be defined yet 
             
