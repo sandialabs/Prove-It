@@ -65,8 +65,8 @@ class KnownTruth:
     # Expression under various assumptions.
     lookup_dict = dict()
     
-    # KnownTruths for which deriveSideEffects has been called.  We track this to
-    # make sure we didn't miss anything while automation was disabled and then re-enabled.
+    # (KnownTruth, default assumptions) pairs for which deriveSideEffects has been called.  
+    # We track this to make sure we didn't miss anything while automation was disabled and then re-enabled.
     sideeffect_processed = set()
     
     # Call the beginProof method to begin a proof of a Theorem.
@@ -173,7 +173,7 @@ class KnownTruth:
                 except:
                     pass
             KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
-            KnownTruth.sideeffect_processed.add(self)
+            KnownTruth.sideeffect_processed.add((self, defaults.assumptions))
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
@@ -616,20 +616,6 @@ class KnownTruth:
         from proof import Assumption
         KnownTruth.lookup_dict.clear()
         Assumption.allAssumptions.clear()
-    
-    def _canSpecialize(self, var):
-        '''
-        Return True iff the given Variable can be specialized from
-        this KnownTruth directly (an instance Variable of a directly
-        nested Forall operation).
-        '''
-        from proveit.logic import Forall        
-        expr = self.expr
-        while isinstance(expr, Forall):
-            if var in expr.instanceVars:
-                return True
-            expr = expr.instanceExpr
-        return False
     
     def _checkedTruth(self, proof):
         proven_truth = proof.provenTruth
