@@ -52,12 +52,12 @@ class Add(Operation):
         for term in addition.terms:
             Add.knownEqualities.setdefault(term, set()).add(knownTruth)
         if len(addition.terms)==2:
-            # deduce the subtraction form: b-c=a from a+b=c 
+            # deduce the subtraction form: c-b=a from a+b=c 
             yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
 
     def deduceSubtraction(self, rhs, assumptions=USE_DEFAULTS):
         '''
-        From (a + b) = rhs, derive and return b - rhs = a.
+        From (a + b) = rhs, derive and return rhs - b = a.
         '''
         from proveit.number.subtraction._theorems_ import subtractFromAdd
         if len(self.terms) != 2:
