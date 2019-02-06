@@ -77,8 +77,6 @@ class Equals(TransitiveRelation):
         '''
         from proveit.logic.boolean._common_ import FALSE
         yield self.deduceNotEquals # A != B from not(A=B)
-        if self.rhs == FALSE:
-            yield self.deduceViaNegatedFalsification # A from not(A=FALSE) and A in Booleans
                 
     def conclude(self, assumptions):
         '''
@@ -242,17 +240,7 @@ class Equals(TransitiveRelation):
         if isinstance(self.lhs, Not) and self.rhs == FALSE:
             return falsifiedNegationElim.specialize({A:self.lhs.operand}, assumptions=assumptions)
         raise ValueError('Equals.deriveViaContradiction is only applicable if the left-hand-side is a Not operation and the right-hand-side is FALSE')
-    
-    def deduceViaNegatedFalsification(self, assumptions=USE_DEFAULTS):
-        '''
-        From Not(A=FALSE) and assuming A in Booleans derive A, where self is A=FALSE.
-        '''
-        from proveit.logic.boolean import FALSE
-        from proveit.logic.boolean.negation._theorems_ import fromNegatedFalsification
-        if self.rhs == FALSE:
-            return fromNegatedFalsification.specialize({A:self.lhs}, assumptions=assumptions)
-        raise ValueError('Equals.deduceViaNegatedFalsification is only applicable if the right-hand-side is FALSE')
-    
+        
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.
