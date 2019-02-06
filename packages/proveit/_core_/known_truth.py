@@ -604,8 +604,8 @@ class KnownTruth:
             if proof is not None and proof.isUsable() and truth.assumptionsSet.issubset(assumptionsSet):
                 suitableTruths.append(truth)
         if len(suitableTruths)==0: return None # no suitable truth
-        # return one wih the fewest assumptions, AND AMONG THOSE, WITH THE SHORTEST PROOF: TODO
-        return min(suitableTruths, key=lambda truth : len(truth.assumptions))
+        # return one wih the shortest proof, and among those the fewest assumptions
+        return min(suitableTruths, key=lambda truth : (truth.proof().numSteps(), len(truth.assumptions)))
     
     @staticmethod
     def forgetKnownTruths():
