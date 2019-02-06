@@ -27,10 +27,18 @@ class Equals(TransitiveRelation):
     # (known_equality, inversion) pairs, recording previous results
     # of the invert method for future reference.
     inversions = dict()
-        
+    
+    # Record the Equals objects being initialized (to avoid infinite
+    # recursion while automatically deducing an equality is in Booleans).
+    initializing = set()
+    
     def __init__(self, a, b):
         TransitiveRelation.__init__(self, Equals._operator_, a, b)
-        
+        if self not in Equals.initializing:
+            Equals.initializing.add(self)
+            self.deduceInBool() # proactively prove (a=b) in Booleans.
+            Equals.initializing.remove(self)
+    
     def sideEffects(self, knownTruth):
         '''
         Record the knownTruth in Equals.knownEqualities, associated from
