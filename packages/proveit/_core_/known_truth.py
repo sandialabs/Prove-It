@@ -207,17 +207,21 @@ class KnownTruth:
         explicit_presumptions = set(presuming)
         presumptions = set(presuming) # will add in previous theorems of the context
 
-        # presume all previous theorems of the context automatically
+        # Presume all previous theorems of the context automatically.
+        # Just presume the previous one directly, the others will be resumed
+        # via recursion (transitivity).
         context = theorem.context
         num_prev_thms = 0 # number of previous theorems within the context
+        last_thm_str = ''
         for prev_thm_name in context.theoremNames():
             if prev_thm_name == theorem.name:
                 break # concludes all "previous" theorems of the context
-            thm_str = str(context.getTheorem(prev_thm_name))
-            if thm_str in presuming:
+            last_thm_str = str(context.getTheorem(prev_thm_name))
+            if last_thm_str in presuming:
                 raise ValueError("Do not explicitly presuming any previous theorems of the context.  They are automatically presumed.")
-            presumptions.add(thm_str)
             num_prev_thms += 1
+        if last_thm_str != '':
+            presumptions.add(last_thm_str)
         
         # split the presuming information into specific theorems (which are transitively presumed)
         # and entire contexts (which are not transitively presumed only applies to theorems of
