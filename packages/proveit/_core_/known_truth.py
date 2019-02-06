@@ -270,9 +270,11 @@ class KnownTruth:
         if len(presumed_contexts) > 0:
             print("Presuming theorems in %s (except any that presume this theorem)."%', '.join(sorted(presumed_contexts)))
         if len(explicit_presumed_thms) > 0:
-            print("Presuming %s theorem(s) specifically (and any of their specific presumptions)."%', '.join(sorted(str(thm) for thm in explicit_presumed_thms)))
+            theorem_or_theorems = 'theorem' if len(explicit_presumed_thms)==1 else 'theorems'
+            print("Presuming %s %s (applied transitively)."%(', '.join(sorted(str(thm) for thm in explicit_presumed_thms)), theorem_or_theorems))
         if num_prev_thms > 0:
-            print("Presuming previous theorem(s) in this context specifically (and any of their specific presumptions).")
+            theorem_or_theorems = 'theorem' if num_prev_thms==1 else 'theorems'
+            print("Presuming previous %s (applied transitively)."%theorem_or_theorems)
         theorem._meaningData._unusableProof = theorem # can't use itself to prove itself
         return self.expr
     
