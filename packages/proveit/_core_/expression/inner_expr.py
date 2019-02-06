@@ -226,5 +226,5 @@ class InnerExpr:
     def _repr_html_(self):
         return self._expr_rep()._repr_html_()
 
-    def _repr_(self):
-        return self._expr_rep()._repr_()
+    def __repr__(self):
+        return self._expr_rep().__repr__()
