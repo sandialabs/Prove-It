@@ -1,8 +1,0 @@
-import proveit
-context = proveit.Context('..') # the theorem's context is in the parent directory
-__locals = locals()
-__proving_theorem = proveit.Context('..').getTheorem(trueEqTrue)
-__proving_theorem_truth = proving_theorem.provenTruth
-__proving_theorem_truth = proving_theorem.provenTruth
-__presuming = []
-__proving_theorem_truth.beginProof(__proving_theorem, __presuming, justRecordPresumingInfo=True)
