@@ -36,7 +36,11 @@ class Equals(TransitiveRelation):
         TransitiveRelation.__init__(self, Equals._operator_, a, b)
         if self not in Equals.initializing:
             Equals.initializing.add(self)
-            self.deduceInBool() # proactively prove (a=b) in Booleans.
+            try:
+                self.deduceInBool() # proactively prove (a=b) in Booleans.
+            except:
+                # may fail before the relevent _axioms_ have been generated
+                pass # and that's okay            
             Equals.initializing.remove(self)
     
     def sideEffects(self, knownTruth):
