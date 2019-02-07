@@ -9,7 +9,7 @@ from proveit._core_._unique_data import meaningData, styleData
 import sys
 import re
 import os
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 class ExprType(type):
     '''
@@ -26,10 +26,7 @@ class ExprType(type):
             Operation.operationClassOfOperator[value] = cls
         return value
 
-class Expression:
-    __metaclass__ = ExprType
-    
-    # set of expression (style_id, Expression) pairs for which _repr_html_ has been called this session:
+class Expression(metaclass=ExprType):
     displayed_expression_styles = set() 
     
     # map expression to contexts (for expressions that "belong" to a Context)
@@ -287,7 +284,7 @@ class Expression:
         '''
         Return the name of the styles that may be set.
         '''
-        return self._styleData.styles.keys()
+        return list(self._styleData.styles.keys())
     
     def getStyle(self, styleName):
         '''
@@ -368,7 +365,7 @@ class Expression:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
                                                 
         # Use Expression.in_progress_to_conclude set to prevent an infinite recursion
-        in_progress_key = (self, tuple(sorted(assumptions)))
+        in_progress_key = (self, tuple(sorted(assumptions, key=lambda expr:hash(expr))))
         if in_progress_key in Expression.in_progress_to_conclude:
             raise ProofFailure(self, assumptions, "Infinite 'conclude' recursion blocked.")
         Expression.in_progress_to_conclude.add(in_progress_key)        
@@ -573,7 +570,7 @@ class Expression:
         Check that a substituted expression (self) does not use any reserved variables
         (parameters of a Lambda function Expression).
         '''
-        if not reservedVars is None and not self.freeVars().isdisjoint(reservedVars.keys()):
+        if not reservedVars is None and not self.freeVars().isdisjoint(list(reservedVars.keys())):
             raise ScopingViolation("Must not make substitution with reserved variables  (i.e., parameters of a Lambda function)")
         return self
 

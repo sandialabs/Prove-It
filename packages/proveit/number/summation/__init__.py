@@ -1,1 +1,1 @@
-from sum import Sum
+from .sum import Sum

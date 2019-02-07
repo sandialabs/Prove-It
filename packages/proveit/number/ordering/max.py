@@ -9,7 +9,7 @@ class Max(Operation):
         Operation.__init__(self, Max._operator_, operands)
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == Reals:
             return theorems.maxRealClosure
         elif numberSet == RealsPos:

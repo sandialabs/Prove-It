@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS
 from proveit._common_ import A, B, C, x
-from containment_relation import ContainmentRelation, ContainmentSequence
+from .containment_relation import ContainmentRelation, ContainmentSequence, makeSequenceOrRelation
 
 class SupersetRelation(ContainmentRelation):
     def __init__(self, operator, superset, subset):
@@ -28,6 +28,14 @@ class SupersetSequence(ContainmentSequence):
     def RelationClass():
         return SupersetRelation
 
+def supersetSequence(operators, operands):
+    '''
+    Create a SupersetSequence with the given operators or operands,
+    or create an appropriate degenerate Expression when there are
+    fewer than two operators.
+    '''
+    return makeSequenceOrRelation(SupersetSequence, operators, operands)
+
 class Superset(SupersetRelation):
     # operator of the Superset operation
     _operator_ = Literal(stringFormat='supset', latexFormat=r'\supset', context=__file__)    
@@ -46,14 +54,14 @@ class Superset(SupersetRelation):
         '''
         From A subset B, derive B supset A.
         '''
-        from _theorems_ import reverseSupset
+        from ._theorems_ import reverseSupset
         return reverseSupset.specialize({A:self.superset, B:self.subset}, assumptions=assumptions)
 
     def deriveRelaxed(self, assumptions=USE_DEFAULTS):
         '''
         From A supset B, derive A supseteq B.
         '''
-        from _theorems_ import relaxSupset
+        from ._theorems_ import relaxSupset
         return relaxSupset.specialize({A:self.superset, B:self.subset}, assumptions=assumptions)
 
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
@@ -63,8 +71,8 @@ class Superset(SupersetRelation):
         obtain A supset B as appropriate.
         '''
         from proveit.logic import Equals
-        from _theorems_ import transitivitySupsetSupset, transitivitySupsetSupsetEq
-        from superset import Subset, SubsetEq
+        from ._theorems_ import transitivitySupsetSupset, transitivitySupsetSupsetEq
+        from .superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
         if isinstance(other,Subset) or isinstance(other,SubsetEq):
@@ -104,11 +112,11 @@ class SupersetEq(SupersetRelation):
         '''
         From A supseteq B, derive B subseteq A.
         '''
-        from _theorems_ import reverseSupsetEq
+        from ._theorems_ import reverseSupsetEq
         return reverseSupsetEq.specialize({A:self.superset, B:self.subset}, assumptions=assumptions)
         
     def conclude(self, assumptions):
-        from _theorems_ import supersetEqViaEquality
+        from ._theorems_ import supersetEqViaEquality
         from proveit import ProofFailure
         
         try:
@@ -155,7 +163,7 @@ class SupersetEq(SupersetRelation):
         '''
         from proveit.logic import Equals
         from ._theorems_ import transitivitySupsetEqSupset, transitivitySupsetEqSupsetEq
-        from superset import Subset, SubsetEq
+        from .superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
         if isinstance(other,Subset) or isinstance(other,SubsetEq):
@@ -194,7 +202,7 @@ class NotSupersetEq(Operation):
         '''
         From A nsupseteq B, derive and return not(supseteq(A, B)).
         '''
-        from _theorems_ import unfoldNotSupsetEq
+        from ._theorems_ import unfoldNotSupsetEq
         return unfoldNotSupsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
@@ -202,5 +210,5 @@ class NotSupersetEq(Operation):
         Derive this folded version, A nsupset B, from the unfolded version,
         not(A supset B).
         '''
-        from _theorems_ import foldNotSupsetEq
+        from ._theorems_ import foldNotSupsetEq
         return foldNotSupsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)

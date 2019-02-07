@@ -163,7 +163,7 @@ class Operation(Expression):
                         yield (arg, val) # override the default
             if varkw is not None:
                 kw_arg_vals = operationClass.extractInitArgValue(varkw, operator_or_operators, operand_or_operands)
-                for arg, val in kw_arg_vals.iteritems():
+                for arg, val in kw_arg_vals.items():
                     yield (arg, val)
         except NotImplementedError:
             if (varkw is None) and (operationClass.extractInitArgValue == Operation.extractInitArgValue):
@@ -333,7 +333,7 @@ class Operation(Expression):
                 if not reservedVars is None:
                     # the reserved variables of the lambda body excludes the lambda parameters
                     # (i.e., the parameters mask externally reserved variables).
-                    lambdaExprReservedVars = {k:v for k, v in reservedVars.iteritems() if k not in subbedOperator.parameterVarSet}
+                    lambdaExprReservedVars = {k:v for k, v in reservedVars.items() if k not in subbedOperator.parameterVarSet}
                 else: lambdaExprReservedVars = None
                 return subbedOperator.body._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, assumptions=assumptions, requirements=requirements)
         # remake the Expression with substituted operator and/or operands

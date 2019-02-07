@@ -22,7 +22,9 @@ the theorem proofs, and it stores theorem proof dependencies.
 
 import os
 import json
-from ._context_storage import ContextStorage, relurl
+from ._context_storage import ContextStorage, relurl#Comment out for python 3
+#from _context_storage import ContextStorage, relurl#Comment in for python 3
+from types import ModuleType
 
 class Context:
     '''
@@ -208,7 +210,7 @@ class Context:
         if kind=='common': specialStatementsClassName = 'CommonExpressions'        
         output = "import sys\n"
         output += "from proveit._core_.context import %s\n"%specialStatementsClassName
-        output += "sys.modules[__name__] = %s(__file__)\n"%(specialStatementsClassName)        
+        output += "sys.modules[__name__] = %s(__name__, __file__)\n"%(specialStatementsClassName)        
         filename = os.path.join(self._storage.directory, '_%s_.py'%kind)
         if os.path.isfile(filename):
             with open(filename, 'r') as f:
@@ -350,7 +352,7 @@ class Context:
                 
     @staticmethod
     def getStoredStmt(fullname, kind):
-        from _context_storage import StoredAxiom, StoredTheorem
+        from ._context_storage import StoredAxiom, StoredTheorem
         split_name = fullname.split('.')
         context_name = '.'.join(split_name[:-1])
         stmt_name = split_name[-1]
@@ -426,21 +428,20 @@ class Context:
                 return True
         return False                    
 
-class Axioms:
+class Axioms(ModuleType):
     '''
     Used in _axioms_.py modules for accessing Axioms from
     the _certified_ database (returning the associated KnownTruth object).
     '''
-    def __init__(self, filename):
+    def __init__(self, name, filename):
+        ModuleType.__init__(self, name)
         self._context = Context(filename)
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self._context.axiomNames())
+        return sorted(list(self.__dict__.keys()) + self._context.axiomNames())
 
     def __getattr__(self, name):
-        if name=='__path__':
-            return self.__file__
         try:
             axiom_truth = self._context.getAxiom(name).provenTruth
         except KeyError:
@@ -455,21 +456,20 @@ class Axioms:
         """
         return axiom_truth
     
-class Theorems:
+class Theorems(ModuleType):
     '''
     Used in _theorems_.py modules for accessing Theorems from
     the _certified_ database (returning the associated KnownTruth object).
     '''
-    def __init__(self, filename):
+    def __init__(self, name, filename):
+        ModuleType.__init__(self, name)
         self._context = Context(filename)
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + self._context.theoremNames())
+        return sorted(list(self.__dict__.keys()) + self._context.theoremNames())
                 
     def __getattr__(self, name):
-        if name=='__path__':
-            return self.__file__
         try:
             theorem_truth = self._context.getTheorem(name).provenTruth
         except KeyError:
@@ -484,7 +484,7 @@ class Theorems:
         """
         return theorem_truth
 
-class CommonExpressions:
+class CommonExpressions(ModuleType):
     '''
     Used in _common_.py modules for accessing common sub-expressions.
     '''
@@ -495,12 +495,13 @@ class CommonExpressions:
     # set of contexts that has a common expression being referenced
     referenced_contexts = set() # populated in Storage._addReference(...)
     
-    def __init__(self, filename):
+    def __init__(self, name, filename):
+        ModuleType.__init__(self, name)
         self._context = Context(filename)
         self.__file__ = filename
 
     def __dir__(self):
-        return sorted(self.__dict__.keys() + list(self._context.commonExpressionNames()))
+        return sorted(list(self.__dict__.keys()) + list(self._context.commonExpressionNames()))
 
     def __getattr__(self, name):
         from proveit import Label

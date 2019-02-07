@@ -1,1 +1,1 @@
-from union import Union
+from .union import Union

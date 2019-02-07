@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic.boolean.conjunction import compose
-from implies import Implies
+from .implies import Implies
 from proveit._common_ import A, B, C
 from proveit import TransitiveRelation
 
@@ -39,7 +39,7 @@ class Iff(TransitiveRelation):
         Try to automatically conclude this bi-directional implication by 
         reducing its operands to true/false.
         '''
-        from _theorems_ import trueIffTrue, falseIffFalse
+        from ._theorems_ import trueIffTrue, falseIffFalse
         if self in {trueIffTrue, falseIffFalse}:
             # should be proven via one of the imported theorems as a simple special case
             return self.prove() 
@@ -64,35 +64,35 @@ class Iff(TransitiveRelation):
         '''
         From (A<=>B) derive and return B=>A.
         '''
-        from _theorems_ import iffImpliesLeft
+        from ._theorems_ import iffImpliesLeft
         return iffImpliesLeft.specialize({A: self.A, B: self.B}, assumptions=assumptions)
         
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return A assuming B.
         '''
-        from _theorems_ import leftFromIff
+        from ._theorems_ import leftFromIff
         return leftFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
 
     def deriveRightImplication(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return A=>B.
         '''
-        from _theorems_ import iffImpliesRight
+        from ._theorems_ import iffImpliesRight
         return iffImpliesRight.specialize({A: self.A, B: self.B}, assumptions=assumptions)
 
     def deriveRight(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return B assuming A.
         '''
-        from _theorems_ import rightFromIff
+        from ._theorems_ import rightFromIff
         return rightFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
     
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return (B<=>A).
         '''
-        from _theorems_ import iffSymmetry
+        from ._theorems_ import iffSymmetry
         return iffSymmetry.specialize({A:self.A, B:self.B}, assumptions=assumptions)
     
     def applyTransitivity(self, otherIff, assumptions=USE_DEFAULTS):
@@ -101,7 +101,7 @@ class Iff(TransitiveRelation):
         (A <=> C) assuming self and otherIff.
         Also works more generally as long as there is a common side to the equations.
         '''
-        from _theorems_ import iffTransitivity
+        from ._theorems_ import iffTransitivity
         assert isinstance(otherIff, Iff)
         if self.B == otherIff.A:
             # from A <=> B, B <=> C, derive A <=> C
@@ -123,7 +123,7 @@ class Iff(TransitiveRelation):
         '''
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
         '''
-        from _axioms_ import iffDef
+        from ._axioms_ import iffDef
         return iffDef.specialize({A:self.A, B:self.B})
     
     def concludeByDefinition(self, assumptions=USE_DEFAULTS):
@@ -138,21 +138,21 @@ class Iff(TransitiveRelation):
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from _theorems_ import iffTT, iffTF, iffFT, iffFF # IMPORTANT: load in truth-table evaluations
+        from ._theorems_ import iffTT, iffTF, iffFT, iffFF # IMPORTANT: load in truth-table evaluations
         return Operation.evaluation(self, assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.
         '''
-        from _theorems_ import iffClosure
+        from ._theorems_ import iffClosure
         return iffClosure.specialize({A:self.hypothesis, B:self.conclusion}, assumptions=assumptions)
     
     def deriveEquality(self, assumptions=USE_DEFAULTS):
         '''
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
-        from _theorems_ import eqFromIff, eqFromMutualImpl
+        from ._theorems_ import eqFromIff, eqFromMutualImpl
         # We must be able to prove this Iff to do this derivation --
         # then either eqFromIff or eqFromMutualImpl can be used.
         self.prove(assumptions=assumptions) 

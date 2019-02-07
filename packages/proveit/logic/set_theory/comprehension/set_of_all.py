@@ -68,7 +68,7 @@ class SetOfAll(OperationOverInstances):
         From (x in {f(y) | ..Q(y)..})_{y in S}, derive and return exists_{y in S | ..Q(y)..} x = f(y).
         Also derive x in S, but this is not returned.
         '''
-        from _theorems_ import unfoldComprehension, unfoldBasicComprehension, unfoldBasic1CondComprehension, inSupersetIfInComprehension
+        from ._theorems_ import unfoldComprehension, unfoldBasicComprehension, unfoldBasic1CondComprehension, inSupersetIfInComprehension
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0]:
             inSupersetIfInComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instanceVars[0]}, assumptions=assumptions) # x in S side-effect
@@ -85,7 +85,7 @@ class SetOfAll(OperationOverInstances):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''   
-        from _theorems_ import foldComprehension, foldBasicComprehension
+        from ._theorems_ import foldComprehension, foldBasicComprehension
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0] and len(self.conditions) == 1:
             Pop, Psub = Operation(P, self.instanceVars), self.conditions[0]

@@ -6,13 +6,14 @@ import itertools
 import time
 import json
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
+import imp
 
 def relurl(path, start='.'):
     '''
     Return the relative path as a url
     '''
-    return urllib.pathname2url(os.path.relpath(path, start))
+    return urllib.request.pathname2url(os.path.relpath(path, start))
 
 class ContextStorage:
     '''
@@ -105,7 +106,7 @@ class ContextStorage:
         
         # Map 'common', 'axiom', and 'theorem' to respective modules.
         # Base it upon the context name.
-        self._specialExprModules = {kind:self.name+'.%s'%module_name for kind, module_name in Context.specialExprKindToModuleName.iteritems()}
+        self._specialExprModules = {kind:self.name+'.%s'%module_name for kind, module_name in Context.specialExprKindToModuleName.items()}
                                         
         # For retrieved pv_it files that represent Prove-It object (Expressions, KnownTruths, and Proofs),
         # this maps the object to the pv_it file so we
@@ -322,10 +323,10 @@ class ContextStorage:
                 storedSpecialStmt = Context.getStoredStmt(context_name + '.' + name, kind)
                 if name not in previousDefIds:
                     # added special statement
-                    print 'Adding %s %s to %s context'%(kind, name, context_name)
+                    print('Adding %s %s to %s context'%(kind, name, context_name))
                 elif previousDefIds[name] != expr_id:
                     # modified special statement. remove the old one first.
-                    print 'Modifying %s %s in %s context'%(kind, name, context_name)
+                    print('Modifying %s %s in %s context'%(kind, name, context_name))
                     storedSpecialStmt.remove(keepPath=True)
                 # record the axiom/theorem id (creating the directory if necessary)
                 specialStatementDir = os.path.join(specialStatementsPath, name)
@@ -339,7 +340,7 @@ class ContextStorage:
 
         # Remove the special statements that no longer exist
         for name, stmt in toRemove:
-            print 'Removing %s %s from %s context'%(kind, name, context_name)
+            print('Removing %s %s from %s context'%(kind, name, context_name))
             stmt.remove()
                 
     def _getSpecialStatementExpr(self, kind, name):
@@ -441,7 +442,7 @@ class ContextStorage:
                             return png_file.read(), relurl(png_path)
         # store the latex string in the latex file
         with open(latex_path, 'wb') as latex_file:
-            latex_file.write(latex)
+            latex_file.write(latex.encode('ascii'))
         # generate, store and return the png file
         png = self._generate_png(latex, configLatexToolFn)
         with open(png_path, 'wb') as png_file:
@@ -466,10 +467,10 @@ class ContextStorage:
         '''
         Retrieve a unique id for the Prove-It object based upon its pv_it filename from calling _retrieve.
         '''
-        if type(proveItObjectOrId)==str:
+        if isinstance(proveItObjectOrId, str):
             return proveItObjectOrId
         else:
-            if type(proveItObjectOrId)==int:
+            if isinstance(proveItObjectOrId, int):
                 style_id = proveItObjectOrId # assumed to be a style id if it's an int
                 (context, hash_directory) = self._proveItObjects[style_id]
             else:
@@ -590,7 +591,7 @@ class ContextStorage:
         context_name, hash_directory = self._split(proveItStorageId)
         hash_path = self._storagePath(proveItStorageId)
         if not os.path.isdir(hash_path):
-            print "WARNING: Referenced '__pv_it' path, for removal, does not exist: %s"%hash_path
+            print("WARNING: Referenced '__pv_it' path, for removal, does not exist: %s"%hash_path)
             return # not there -- skip it
         with open(os.path.join(hash_path, 'ref_count.txt'), 'r') as f:
             ref_count = int(f.read().strip()) - 1
@@ -654,7 +655,7 @@ class ContextStorage:
         pv_it_dir = self.pv_it_dir
         unique_rep = self._proveItObjUniqueRep(proveItObject)
         # hash the unique representation and make a sub-directory of this hash value
-        rep_hash = hashlib.sha1(unique_rep).hexdigest()
+        rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
         if not os.path.exists(pv_it_dir):
             os.mkdir(pv_it_dir)
         hash_path = os.path.join(pv_it_dir, rep_hash)
@@ -745,7 +746,7 @@ class ContextStorage:
             if os.path.isfile(orig_notebook_filename):
                 os.remove(orig_notebook_filename) # remove an old one first
             os.rename(filename, orig_notebook_filename)
-            print "%s expression notebook is being updated"%special_name
+            print("%s expression notebook is being updated"%special_name)
         
         expr_classes_and_constructors = set()
         unnamed_subexpr_occurences = dict()
@@ -755,7 +756,7 @@ class ContextStorage:
         named_items = dict() 
         self._exprBuildingPrerequisites(expr, expr_classes_and_constructors, unnamed_subexpr_occurences, named_subexpr_addresses, named_items, isSubExpr=False)
         # find sub-expressions that are used multiple times, these ones will be assigned to a variable
-        multiuse_subexprs = [sub_expr for sub_expr, count in unnamed_subexpr_occurences.iteritems() if count > 1]
+        multiuse_subexprs = [sub_expr for sub_expr, count in unnamed_subexpr_occurences.items() if count > 1]
         # sort the multi-use sub-expressions so that the shallower ones come first
         multiuse_subexprs = sorted(multiuse_subexprs, key = lambda expr : expressionDepth(expr))
         
@@ -778,7 +779,7 @@ class ContextStorage:
             else:
                 direct_imports.add(module_name)
                 item_names[expr_class] = module_name+'.'+constructor
-        for namedExpr, namedExprAddress in named_subexpr_addresses.iteritems():
+        for namedExpr, namedExprAddress in named_subexpr_addresses.items():
             if isinstance(namedExprAddress[0], str):
                 # Must be a special expression (axiom, theorem, or common expression)
                 module_name = namedExprAddress[0]
@@ -797,7 +798,7 @@ class ContextStorage:
         # first, see if we even need to import a module with the same root as our context
         root_context = self.rootContextStorage.context
         context_root_name = root_context.name
-        for module_name in itertools.chain(direct_imports, from_imports.keys()):
+        for module_name in itertools.chain(direct_imports, list(from_imports.keys())):
             if module_name.split('.')[0] == context_root_name:
                 # If we needed to add a path to sys.path for the directory above the root context,
                 # we'll need to do that explicitly in our expression notebook.
@@ -989,7 +990,7 @@ class ContextStorage:
             if not hasattr(parent_module, objName): break
             if getattr(cur_module, objName) != getattr(parent_module, objName):
                 # reload the parent module and try again
-                reload(parent_module)
+                imp.reload(parent_module)
                 if getattr(cur_module, objName) != getattr(parent_module, objName):
                     break
             split_module_name = split_module_name[:-1]
@@ -1167,7 +1168,7 @@ class ContextStorage:
         while os.path.isfile(filename_base + "~stashed~%d.ipynb"%num):
             num += 1
         new_filename = filename_base + "~stashed~%d.ipynb"%num
-        print "Stashing %s to %s in case it is needed."%(relurl(filename), relurl(new_filename))
+        print("Stashing %s to %s in case it is needed."%(relurl(filename), relurl(new_filename)))
         os.rename(filename, new_filename)
         
     def makeExpression(self, exprId):
@@ -1206,7 +1207,7 @@ class ContextStorage:
         Helper method for makeExpression
         '''
         from proveit import Expression
-        from _dependency_graph import orderedDependencyNodes
+        from ._dependency_graph import orderedDependencyNodes
         from .context import Context
         expr_class_strs = dict() # map expr-ids to lists of Expression class string representations
         expr_class_rel_strs = dict() # relative paths of Expression classes that are local
@@ -1298,7 +1299,7 @@ class ContextStorage:
         referenced_commons_filename = os.path.join(self.referenced_dir, 'commons_dependencies.txt')
         if os.path.isfile(referenced_commons_filename):
             with open(referenced_commons_filename, 'r') as f:
-                return set([line.strip() for line in f.readlines()])
+                return {line.strip() for line in f.readlines()}
         return set() # empty set by default
         
     def cyclicallyReferencedCommonExprContext(self):
@@ -1333,7 +1334,7 @@ class ContextStorage:
         file that stores these references.
         '''
         from proveit import Expression
-        from context import Context
+        from .context import Context
         
         reference_file = os.path.join(self.referenced_dir, name + '_displayed.pv_it')
         
@@ -1398,7 +1399,7 @@ class ContextStorage:
         '''
         self.clean()
         for sub_dir in os.listdir(self.pv_it_dir):
-            if sub_dir == '_referenced_' or sub_dir == 'failed_common_import.txt':
+            if sub_dir == '_referenced_': # or sub_dir == 'failed_common_import.txt':
                 continue
             return True # a sub-directory other than _referenced_; assume it is for an expression
         return False
@@ -1592,14 +1593,46 @@ class StoredTheorem(StoredSpecialStmt):
                 pass # no contribution if the file doesn't exist
         return (usedAxioms, usedTheorems)
 
-    def recordPresumingInfo(self, presuming):
+    def recordPresumedContexts(self, presumed_contexts):
         '''
-        Record information about what the proof of the theorem
-        presumes -- what other theorems/contexts the proof
-        is expected to depend upon.
+        Record information about what other contexts are
+        presumed in the proof of this theorem.
         '''
-        presuming_str = '\n'.join(presuming) + '\n'
-        presuming_file = os.path.join(self.path, 'presuming.txt')
+        from .context import Context
+        for presumed_context in presumed_contexts:
+            # raises an exception if the context is not known
+            Context.getContext(presumed_context) 
+        presuming_str = '\n'.join(presumed_contexts) + '\n'
+        presuming_file = os.path.join(self.path, 'presumed_contexts.txt')
+        if os.path.isfile(presuming_file):
+            with open(presuming_file, 'r') as f:
+                if presuming_str == f.read():
+                    return # unchanged; don't need to record anything
+        with open(presuming_file, 'w') as f:
+            f.write(presuming_str)
+
+    def presumedContexts(self):
+        '''
+        Return the list of presumed contexts.
+        '''
+        # first read in the presuming info
+        presumptions = []
+        presuming_file = os.path.join(self.path, 'presumed_contexts.txt')
+        if os.path.isfile(presuming_file):
+            with open(presuming_file, 'r') as f:
+                for presumption in f.readlines():
+                    presumption = presumption.strip()
+                    if presumption == '': continue
+                    presumptions.append(presumption)
+        return presumptions
+    
+    def recordPresumedTheorems(self, presumed_theorems):
+        '''
+        Record information about what other theorems are
+        presumed in the proof of this theorem.
+        '''
+        presuming_str = '\n'.join(presumed_theorems) + '\n'
+        presuming_file = os.path.join(self.path, 'presumed_theorems.txt')
         if os.path.isfile(presuming_file):
             with open(presuming_file, 'r') as f:
                 if presuming_str == f.read():
@@ -1607,74 +1640,41 @@ class StoredTheorem(StoredSpecialStmt):
         with open(presuming_file, 'w') as f:
             f.write(presuming_str)
     
-    def getRecursivePresumingInfo(self, presumed_theorems, presumed_contexts):
+    def directlyPresumedTheorems(self):
         '''
-        Append presumed theorem objects and context name strings to 
-        'presumed_theorems' and 'presumed_contexts' respectively.  
-        For each theorem, do this recursively.
+        Return the list of directly presumed theorems.
         '''
-        from .context import Context, ContextException
         # first read in the presuming info
-        presuming = []
-        presuming_file = os.path.join(self.path, 'presuming.txt')
+        presumptions = []
+        presuming_file = os.path.join(self.path, 'presumed_theorems.txt')
         if os.path.isfile(presuming_file):
             with open(presuming_file, 'r') as f:
-                for presume in f.readlines():
-                    presume = presume.strip()
-                    if presume == '': continue
-                    presuming.append(presume)
-        
+                for presumption in f.readlines():
+                    presumption = presumption.strip()
+                    if presumption == '': continue
+                    presumptions.append(presumption)
+        return presumptions        
+    
+    def getRecursivelyPresumedTheorems(self, presumed_theorems):
+        '''
+        Append presumed theorem objects to 'presumed_theorems'.
+        For each theorem, do this recursively.
+        '''
+        from .context import Context
+        # first get the directly presumed theorems
+        presumptions = self.directlyPresumedTheorems()
         # Iterate through each presuming string and add it as
         # a context name or a theorem.  For theorem's, recursively
         # add the presuming information.
-        for presume in presuming:
-            if not isinstance(presume, str):
-                raise ValueError("'presumes' should be a collection of strings for context names and/or full theorem names")
-            thm = None
-            context_name = presume
-            try:
-                if '.' in presume:
-                    context_name, theorem_name = presume.rsplit('.', 1)
-                    thm = Context.getContext(context_name).getTheorem(theorem_name)
-            except (ContextException, KeyError):
-                context_name = presume # not a theorem; must be a context
-            
-            if thm is not None:
-                if thm.context == self.context:
-                    raise ValueError("Do not presume any theorem in this context; prior theorems are implicit and later theorems are off limits")                    
-                # add the theorem and any theorems used by that theorem to the set of presuming theorems
-                if thm not in presumed_theorems:
-                    presumed_theorems.add(thm)
-                    thm.getRecursivePresumingInfo(presumed_theorems, presumed_contexts)
-            else:
-                try:
-                    context = Context.getContext(context_name)
-                except ContextException:
-                    raise ValueError("'%s' not found as a known context or theorem"%presume)
-                if context == self.context:
-                    raise ValueError("Do not presume the current context; prior theorems are implicit and later theorems are off limits")
-                # the entire context is presumed (except where the presumption is mutual)
-                presumed_contexts.add(context.name)
-        
-    def presumes(self, other_theorem_str):
-        '''
-        Return True iff the things that this "stored" theorem 
-        presumes (or is intended to presume) include the other
-        theorem with the given string representation.
-        '''
-        presuming_file = os.path.join(self.path, 'presuming.txt')
-        if os.path.isfile(presuming_file):
-            with open(presuming_file, 'r') as f:
-                for presume in f.readlines():
-                    presume = presume.strip()
-                    if presume == '': continue
-                    if other_theorem_str[:len(presume)] == presume:
-                        # 'presume' includes other_theorem_str (either the theorem
-                        # itself or a context containing it directly or indirectly).
-                        return True
-        # The default is False if no presuming info is stored
-        # for this theorem.
-        return False       
+        for presumption in presumptions:
+            if not isinstance(presumption, str):
+                raise ValueError("'presumptions' should be a collection of strings for context names and/or full theorem names")
+            context_name, theorem_name = presumption.rsplit('.', 1)
+            thm = Context.getContext(context_name).getTheorem(theorem_name)
+            # add the theorem and anything presumed by that theorem to the set of presumed theorems/contexts
+            if thm not in presumed_theorems:
+                presumed_theorems.add(thm)
+                thm.getRecursivelyPresumedTheorems(presumed_theorems)
     
     def recordProof(self, proof):
         '''
@@ -1718,7 +1718,7 @@ class StoredTheorem(StoredSpecialStmt):
         # record axioms/theorems that this theorem directly uses
         for storedUsedStmts, usedStmtsFilename in ((storedUsedAxioms, 'usedAxioms.txt'), (storedUsedTheorems, 'usedTheorems.txt')):
             with open(os.path.join(self.path, usedStmtsFilename), 'w') as usedStmtsFile:
-                for storedUsedStmt in sorted(storedUsedStmts):
+                for storedUsedStmt in sorted(storedUsedStmts, key=lambda stmt:str(stmt)):
                     self.context._storage._includeMutualReferences(storedUsedStmt.context)
                     usedStmtsFile.write(str(storedUsedStmt) + '\n')
         

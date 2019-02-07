@@ -10,14 +10,14 @@ class Abs(Operation):
         self.operand = A
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == Reals:
             return theorems.absComplexClosure # complex in, real out
         elif numberSet == RealsPos:
             return theorems.absNonzeroClosure # nonzero in, real positive out    
 
     def _notEqZeroTheorem(self):
-        import theorems
+        from . import theorems
         return theorems.absNotEqZero
     
     def string(self, **kwargs):
@@ -27,7 +27,7 @@ class Abs(Operation):
         return r'\left|'+self.operand.latex()+r'\right|'
 
     def deduceGreaterThanEqualsZero(self, assumptions=frozenset()):
-        from theorems import absIsNonNeg
+        from .theorems import absIsNonNeg
         deduceInComplexes(self.operand, assumptions)
         return absIsNonNeg.specialize({a:self.operand}).checked(assumptions)
     
@@ -36,7 +36,7 @@ class Abs(Operation):
         Distribute the absolute value over a product or fraction.
         Assumptions may be needed to deduce that the sub-operands are in complexes.
         '''
-        from theorems import absFrac, absProd
+        from .theorems import absFrac, absProd
         from proveit.number import Fraction, Mult
         if isinstance(self.operand, Fraction):
             deduceInComplexes(self.operand.numerator, assumptions)
@@ -53,6 +53,6 @@ class Abs(Operation):
         For some |x| expression, deduce |x| = x after trying to deduce x >= 0.
         Assumptions may be needed to deduce x >= 0.
         '''
-        from theorems import absElim
+        from .theorems import absElim
         # deduceNonNeg(self.operand, assumptions) # NOT YET IMPLEMENTED
         return absElim.specialize({x:self.operand})

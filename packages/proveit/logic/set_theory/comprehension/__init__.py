@@ -1,1 +1,1 @@
-from set_of_all import SetOfAll
+from .set_of_all import SetOfAll

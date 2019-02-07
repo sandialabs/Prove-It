@@ -243,7 +243,7 @@ class Sum(OperationOverInstances):
         if not theFactor.freeVars().isdisjoint(self.indices):
             raise Exception('Cannot factor anything involving summation indices out of a summation')
         # We may need to factor the summand within the summation
-        summand_assumptions = assumptions | set([InSet(index, self.domain) for index in self.indices])
+        summand_assumptions = assumptions | {InSet(index, self.domain) for index in self.indices}
         summandFactorEq = self.summand.factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=summand_assumptions)
         summandInstanceEquivalence = summandFactorEq.generalize(self.indices, domain=self.domain).checked(assumptions)
         eq = Equation(self.instanceSubstitution(summandInstanceEquivalence).checked(assumptions))

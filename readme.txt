@@ -32,8 +32,9 @@ Visit http://pyproveit.org to view the Prove-It generated web pages.
 Installation instructions
 
 1) Make sure you have the required packages installed:
-    - Python2.7
-    - Jupyter
+    - Python3.7 (installing a distribution such as Anaconda is recommended)
+    - Jupyter (included in a distribution such as Anaconda)
+    - LaTeX distribution (e.g. MiKTeX or TeX Live)
 
 2) Run:
 

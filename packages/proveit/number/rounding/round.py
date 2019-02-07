@@ -10,7 +10,7 @@ class Round(Function):
         self.operand = A
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         if numberSet == Naturals:
             return theorems.roundRealPosClosure
         elif numberSet == Integers:

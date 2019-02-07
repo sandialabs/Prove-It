@@ -39,8 +39,8 @@ class Exp(Operation):
         derive and return this exponential expression equated with a simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        from theorems import expZeroEqOne, exponentiatedZero, exponentiatedOne
-        from theorems import expOne
+        from .theorems import expZeroEqOne, exponentiatedZero, exponentiatedOne
+        from .theorems import expOne
         if self.exponent == zero:
             deduceInComplexes(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
@@ -112,7 +112,7 @@ class Exp(Operation):
         
     def raiseExpFactor(self, expFactor, assumptions=frozenset()):
         from proveit.number import Neg
-        from theorems import intExpOfExp, intExpOfNegExp
+        from .theorems import intExpOfExp, intExpOfNegExp
         if isinstance(self.exponent, Neg):
             b_times_c = self.exponent.operand
             thm = intExpOfNegExp
@@ -136,7 +136,7 @@ class Exp(Operation):
 
     def lowerOuterExp(self, assumptions=frozenset()):
         from proveit.number import Neg
-        from theorems import intExpOfExp, intExpOfNegExp, negIntExpOfExp, negIntExpOfNegExp
+        from .theorems import intExpOfExp, intExpOfNegExp, negIntExpOfExp, negIntExpOfNegExp
         if not isinstance(self.base, Exp):
             raise Exception('May only apply lowerOuterExp to nested Exp operations')
         if isinstance(self.base.exponent, Neg) and isinstance(self.exponent, Neg):

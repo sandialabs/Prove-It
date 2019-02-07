@@ -37,7 +37,7 @@ class MatchingSubset(Operation):
         '''
         Derive the definition of this MatchingSubset(S, color) in the form of an equation.
         '''
-        from _axioms_ import matchingSubsetDef
+        from ._axioms_ import matchingSubsetDef
         from _common_ import color
         return matchingSubsetDef.specialize({S:self.sockSet, color:self.color})
     
@@ -45,7 +45,7 @@ class MatchingSubset(Operation):
         '''
         From [x in MatchingSubset(S, color)], derive and return [(x in S) and Color(x)=color], where x is meant as the given element.
         '''
-        from _theorems_ import unfoldMatchingSubset
+        from ._theorems_ import unfoldMatchingSubset
         from _common_ import color
         return unfoldMatchingSubset.specialize({S:self.sockSet, color:self.color, x:element}, assumptions=assumptions)        
         
@@ -90,7 +90,7 @@ class IsMatch(Operation):
         '''
         Derive the definition of this IsMatch(a, b) in the form of an equation.
         '''
-        from _axioms_ import isMatchDef
+        from ._axioms_ import isMatchDef
         from proveit._common_ import a, b
         return isMatchDef.specialize({a:self.a, b:self.b}, assumptions=assumptions)
 
@@ -116,6 +116,6 @@ class ContainsMatch(Operation):
         '''
         Derive the definition of this ContainsMatch(S) in the form of an equation.
         '''
-        from _axioms_ import containsMatchDef
+        from ._axioms_ import containsMatchDef
         from proveit._common_ import S
         return containsMatchDef.specialize({S:self.socks}, assumptions=assumptions)

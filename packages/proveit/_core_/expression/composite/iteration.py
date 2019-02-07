@@ -174,7 +174,7 @@ class Iter(Expression):
                 requirements.append(relation)
         
         # map to the desired instance
-        return self.lambda_map.mapped(indices)
+        return self.lambda_map.mapped(*indices)
     
     def _makeNonoverlappingRangeSet(self, rel_iter_ranges, arg_sorting_relations, assumptions, requirements):
         '''
@@ -184,12 +184,12 @@ class Iter(Expression):
         set of ranges with no overlaps.
         '''
         from proveit.number import Add, Subtract, one
-        from composite import _simplifiedCoord
+        from .composite import _simplifiedCoord
         owning_range = dict() # map relative indices to the owning range; overlap occurs when ownership is contested.
         nonoverlapping_ranges = set()
         while len(rel_iter_ranges) > 0:
             rel_iter_range = rel_iter_ranges.pop()
-            for p in itertools.product(*[xrange(start, end) for start, end in zip(*rel_iter_range)]):
+            for p in itertools.product(*[range(start, end) for start, end in zip(*rel_iter_range)]):
                 p = tuple(p)
                 # Check for contested ownership
                 if p in owning_range and owning_range[p] in nonoverlapping_ranges:
@@ -249,7 +249,7 @@ class Iter(Expression):
         '''
         from proveit.logic import Equals
         from proveit.number import Less, LessEq, Subtract, Add, one
-        from composite import _simplifiedCoord
+        from .composite import _simplifiedCoord
         from proveit._core_.expression.expr import _NoExpandedIteration
         from proveit._core_.expression.label.var import safeDummyVars
         
@@ -269,7 +269,7 @@ class Iter(Expression):
         # needed if there are overlaps): 'special_points'.
         iter_ranges = set()
         iter_params = self.lambda_map.parameters
-        special_points = [set() for _ in xrange(len(iter_params))]
+        special_points = [set() for _ in range(len(iter_params))]
         subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
         subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
         try:
@@ -309,8 +309,10 @@ class Iter(Expression):
             try:
                 from proveit.logic.equality._theorems_ import subLeftSideInto, subRightSideInto, equalsReversal
                 from proveit.number.ordering._theorems_ import transitivityLessLess, transitivityLessEqLess, transitivityLessLessEq, transitivityLessEqLessEq
+                from proveit.number.subtraction._theorems_ import subtractFromAdd
                 arg_sorting_assumptions.extend([subLeftSideInto.expr, subRightSideInto.expr, equalsReversal.expr])
                 arg_sorting_assumptions.extend([transitivityLessLess.expr, transitivityLessEqLess.expr, transitivityLessLessEq.expr, transitivityLessEqLessEq.expr])
+                arg_sorting_assumptions.append(subtractFromAdd.expr)
             except:
                 pass # skip this if the theorems have not be defined yet 
             
@@ -321,7 +323,7 @@ class Iter(Expression):
             # Sort the argument value ranges.
 
             arg_sorting_relations = []
-            for axis in xrange(self.ndims):
+            for axis in range(self.ndims):
                 if len(special_points[axis])==0:
                     arg_sorting_relation = None
                 else:
@@ -363,7 +365,7 @@ class Iter(Expression):
                     range_assumptions = []
                     #print start_loc, end_loc, range_expr_map, range_assumptions, self.lambda_map
                     # generate "safe" new parameters (the Variables are not used for anything that might conflict).
-                    new_params = safeDummyVars(len(self.lambda_map.parameters), [self] + range_expr_map.values() + relabelMap.values())
+                    new_params = safeDummyVars(len(self.lambda_map.parameters), *([self] + list(range_expr_map.values()) + list(relabelMap.values())))
                     for start_idx, param, new_param, range_start, range_end in zip(self.start_indices, self.lambda_map.parameters, new_params, start_loc, end_loc):
                         range_expr_map[param] = Add(new_param, Subtract(range_start, start_idx))
                         range_assumptions.append(LessEq(start_idx, new_param))

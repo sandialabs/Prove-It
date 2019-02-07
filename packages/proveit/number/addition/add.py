@@ -1,8 +1,8 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit._common_ import a, b, c, x, y
 from proveit.logic.irreducible_value import isIrreducibleValue
-from proveit.number.numeral.decimal import DIGITS
-import proveit.number.numeral.decimal._theorems_
+from proveit.number.numeral.deci import DIGITS
+import proveit.number.numeral.deci._theorems_
 
 class Add(Operation):
     # operator of the Add operation
@@ -27,7 +27,7 @@ class Add(Operation):
                 try:
                     # for single digit addition, import the theorem that provides the evaluation
                     Add.addedNumerals.add(self)
-                    proveit.number.numeral.decimal._theorems_.__getattr__('add_%d_%d'%(self.terms[0].asInt(), self.terms[1].asInt()))
+                    proveit.number.numeral.deci._theorems_.__getattr__('add_%d_%d'%(self.terms[0].asInt(), self.terms[1].asInt()))
                 except:
                     # may fail before the relevent _commons_ and _theorems_ have been generated
                     pass # and that's okay
@@ -52,12 +52,12 @@ class Add(Operation):
         for term in addition.terms:
             Add.knownEqualities.setdefault(term, set()).add(knownTruth)
         if len(addition.terms)==2:
-            # deduce the subtraction form: b-c=a from a+b=c 
+            # deduce the subtraction form: c-b=a from a+b=c 
             yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
 
     def deduceSubtraction(self, rhs, assumptions=USE_DEFAULTS):
         '''
-        From (a + b) = rhs, derive and return b - rhs = a.
+        From (a + b) = rhs, derive and return rhs - b = a.
         '''
         from proveit.number.subtraction._theorems_ import subtractFromAdd
         if len(self.terms) != 2:

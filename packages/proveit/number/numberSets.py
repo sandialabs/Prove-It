@@ -254,8 +254,8 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             # For instance expression assumptions, remove any assumptions involving the instance variable and add assumptions 
             # that the instance variable is in the domain and add the condition assumption.
             instanceExpr_assumptions = {assumption for assumption in assumptions if assumption.freeVars().isdisjoint(expr.instanceVars)}
-            instanceExpr_assumptions |= set([In(instanceVar, expr.domain) for instanceVar in expr.instanceVars])
-            instanceExpr_assumptions |= set([condition for condition in expr.conditions])
+            instanceExpr_assumptions |= {In(instanceVar, expr.domain) for instanceVar in expr.instanceVars}
+            instanceExpr_assumptions |= {condition for condition in expr.conditions}
             if hasattr(expr.domain, 'deduceMemberInNaturals'):
                 for instanceVar in expr.instanceVars:
                     try:

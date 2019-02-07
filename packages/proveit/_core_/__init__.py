@@ -12,3 +12,6 @@ from .defaults import defaults, USE_DEFAULTS, InvalidAssumptions
 from .context import Context, ContextException
 from .proof import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
 from .proof import ProofFailure, ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure
+#import _context_storage
+from ._context_storage import relurl, ContextStorage, StoredSpecialStmt, StoredAxiom, StoredTheorem
+#from . import magics#KMR addition 1/7/19

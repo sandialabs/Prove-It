@@ -173,7 +173,7 @@ class Forall(OperationOverInstances):
         as all forall expressions are (they are taken to be false when not true).
         '''
         raise NotImplementedError("Need to update")
-        from _axioms_ import forallInBool
+        from ._axioms_ import forallInBool
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})

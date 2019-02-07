@@ -9,3 +9,6 @@ _theorems_.py
 *.html
 *.tar.gz
 notebook.css
+doc/api
+doc/doctrees
+doc/html

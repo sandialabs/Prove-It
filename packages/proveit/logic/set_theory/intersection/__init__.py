@@ -1,1 +1,1 @@
-from intersect import Intersect
+from .intersect import Intersect

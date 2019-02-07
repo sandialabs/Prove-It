@@ -1,1 +1,1 @@
-from probabilityOps import Prob
+from .probabilityOps import Prob

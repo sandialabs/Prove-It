@@ -1,1 +1,1 @@
-from neg import Neg
+from .neg import Neg

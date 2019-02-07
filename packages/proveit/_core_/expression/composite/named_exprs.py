@@ -1,4 +1,4 @@
-from composite import Composite
+from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.defaults import USE_DEFAULTS
 import re
@@ -27,7 +27,7 @@ class NamedExprs(Composite, Expression):
             if not isinstance(val, Expression): 
                 raise TypeError("Values of an expression dictionary must be Expressions")
         self.keywords, self.elems = keywords, elems
-        Expression.__init__(self, ['NamedExprs'] + self.keys(), [self[key] for key in self.keys()], styles=styles, requirements=requirements)
+        Expression.__init__(self, ['NamedExprs'] + list(self.keys()), [self[key] for key in list(self.keys())], styles=styles, requirements=requirements)
 
     def __getitem__(self, key):
         return self.elems[key]
@@ -41,11 +41,11 @@ class NamedExprs(Composite, Expression):
     def __iter__(self):
         return iter(self.elems)
         
-    def iteritems(self):
+    def items(self):
         for key in self.keywords:
             yield key, self.elems[key]
 
-    def itervalues(self):
+    def values(self):
         for key in self.keywords:
             yield self.elems[key]
     
@@ -60,7 +60,7 @@ class NamedExprs(Composite, Expression):
         Yield the argument (name, value) pairs that could be used to 
         recreate the NamedExprs.  Wrap the names in quotation marks
         '''
-        for name, expr in self.iteritems():
+        for name, expr in self.items():
             yield ('"' + str(name) + '"', expr)
             
     @classmethod
@@ -75,11 +75,11 @@ class NamedExprs(Composite, Expression):
         return NamedExprs([(key,subExpression) for key, subExpression in zip(keys, subExpressions)]).withStyles(**styles)   
         
     def string(self, **kwargs):
-        return '{' + ', '.join(key + ':' + self[key].string(fence=True) for key in self.keys()) + '}'
+        return '{' + ', '.join(key + ':' + self[key].string(fence=True) for key in list(self.keys())) + '}'
 
     def latex(self, **kwargs):
         outStr = r'\left\{ \begin{array}{l}' + '\n'
-        for key in self.keys():
+        for key in list(self.keys()):
             outStr += r'{\rm ' + key.replace('_', r'\_') + r'}: ' + self[key].latex(fence=True) + r'\\' + '\n'
         outStr += r'\end{array} \right\}' + '\n'
         return outStr            
@@ -93,17 +93,17 @@ class NamedExprs(Composite, Expression):
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         else:
-            return NamedExprs([(key,expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)) for key, expr in self.iteritems()])
+            return NamedExprs([(key,expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)) for key, expr in self.items()])
 
     def usedVars(self):
         '''
         Returns the union of the used Variables of the sub-Expressions.
         '''
-        return set().union(*[expr.usedVars() for expr in self.elems.values()])
+        return set().union(*[expr.usedVars() for expr in list(self.elems.values())])
         
     def freeVars(self):
         '''
         Returns the union of the free Variables of the sub-Expressions.
         '''
-        return set().union(*[expr.freeVars() for expr in self.elems.values()])
+        return set().union(*[expr.freeVars() for expr in list(self.elems.values())])
 

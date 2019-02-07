@@ -21,7 +21,7 @@ class Card(Function):
         proves and returns that there exists distinct elements in that domain.
         '''
         from proveit.number import num
-        from _theorems_ import distinctSubsetExistence, distinctPairExistence
+        from ._theorems_ import distinctSubsetExistence, distinctPairExistence
         if len(elems)==2:
             aVar, bVar = elems
             return distinctPairExistence.specialize({S:self.domain}, relabelMap={a:aVar, b:bVar}, assumptions=assumptions)

@@ -27,10 +27,22 @@ class Equals(TransitiveRelation):
     # (known_equality, inversion) pairs, recording previous results
     # of the invert method for future reference.
     inversions = dict()
-        
+    
+    # Record the Equals objects being initialized (to avoid infinite
+    # recursion while automatically deducing an equality is in Booleans).
+    initializing = set()
+    
     def __init__(self, a, b):
         TransitiveRelation.__init__(self, Equals._operator_, a, b)
-        
+        if self not in Equals.initializing:
+            Equals.initializing.add(self)
+            try:
+                self.deduceInBool() # proactively prove (a=b) in Booleans.
+            except:
+                # may fail before the relevent _axioms_ have been generated
+                pass # and that's okay            
+            Equals.initializing.remove(self)
+    
     def sideEffects(self, knownTruth):
         '''
         Record the knownTruth in Equals.knownEqualities, associated from
@@ -69,8 +81,6 @@ class Equals(TransitiveRelation):
         '''
         from proveit.logic.boolean._common_ import FALSE
         yield self.deduceNotEquals # A != B from not(A=B)
-        if self.rhs == FALSE:
-            yield self.deduceViaNegatedFalsification # A from not(A=FALSE) and A in Booleans
                 
     def conclude(self, assumptions):
         '''
@@ -142,7 +152,7 @@ class Equals(TransitiveRelation):
         '''
         Prove and return self of the form x = x.
         '''
-        from _axioms_ import equalsReflexivity
+        from ._axioms_ import equalsReflexivity
         assert self.lhs == self.rhs
         return equalsReflexivity.specialize({x:self.lhs})
                 
@@ -150,14 +160,14 @@ class Equals(TransitiveRelation):
         '''
         From x = y derive y = x.  This derivation is an automatic side-effect.
         '''
-        from _theorems_ import equalsReversal
+        from ._theorems_ import equalsReversal
         return equalsReversal.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
 
     def deduceNotEquals(self, assumptions=USE_DEFAULTS):
         r'''
         Deduce x != y assuming not(x = y), where self is x=y.
         '''
-        from not_equals import NotEquals
+        from .not_equals import NotEquals
         return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
                         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
@@ -167,7 +177,7 @@ class Equals(TransitiveRelation):
         If "other" is not an equality, reverse roles and call 'applyTransitivity'
         from the "other" side.
         '''
-        from _axioms_ import equalsTransitivity
+        from ._axioms_ import equalsTransitivity
         other = asExpression(other)
         if not isinstance(other, Equals):
             # If the other relation is not "Equals", call from the "other" side.
@@ -204,7 +214,7 @@ class Equals(TransitiveRelation):
         From A=FALSE, and assuming A, derive FALSE.
         '''
         from proveit.logic import FALSE        
-        from _theorems_ import contradictionViaFalsification
+        from ._theorems_ import contradictionViaFalsification
         if self.rhs == FALSE:
             return contradictionViaFalsification.specialize({A:self.lhs}, assumptions=assumptions)
         raise ValueError('Equals.deriveContradiction is only applicable if the right-hand-side is FALSE')
@@ -234,17 +244,7 @@ class Equals(TransitiveRelation):
         if isinstance(self.lhs, Not) and self.rhs == FALSE:
             return falsifiedNegationElim.specialize({A:self.lhs.operand}, assumptions=assumptions)
         raise ValueError('Equals.deriveViaContradiction is only applicable if the left-hand-side is a Not operation and the right-hand-side is FALSE')
-    
-    def deduceViaNegatedFalsification(self, assumptions=USE_DEFAULTS):
-        '''
-        From Not(A=FALSE) and assuming A in Booleans derive A, where self is A=FALSE.
-        '''
-        from proveit.logic.boolean import FALSE
-        from proveit.logic.boolean.negation._theorems_ import fromNegatedFalsification
-        if self.rhs == FALSE:
-            return fromNegatedFalsification.specialize({A:self.lhs}, assumptions=assumptions)
-        raise ValueError('Equals.deduceViaNegatedFalsification is only applicable if the right-hand-side is FALSE')
-    
+        
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.
@@ -289,7 +289,7 @@ class Equals(TransitiveRelation):
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
         '''
-        from _axioms_ import substitution
+        from ._axioms_ import substitution
         fxLambda = Equals._lambdaExpr(lambdaMap, self.lhs)
         return substitution.specialize({x:self.lhs, y:self.rhs, f:fxLambda}, assumptions=assumptions)
         
@@ -302,8 +302,8 @@ class Equals(TransitiveRelation):
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.rhs.
         '''
-        from _theorems_ import subLeftSideInto
-        from _theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
+        from ._theorems_ import subLeftSideInto
+        from ._theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
         from proveit.logic import TRUE, FALSE
         Plambda = Equals._lambdaExpr(lambdaMap, self.rhs)
         try:
@@ -329,8 +329,8 @@ class Equals(TransitiveRelation):
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
         '''
-        from _theorems_ import subRightSideInto
-        from _theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
+        from ._theorems_ import subRightSideInto
+        from ._theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
         from proveit.logic import TRUE, FALSE
         Plambda = Equals._lambdaExpr(lambdaMap, self.lhs)
         try:
@@ -351,14 +351,14 @@ class Equals(TransitiveRelation):
         '''
         From A = B, derive B (the Right-Hand-Side) assuming A.
         '''
-        from _theorems_ import rhsViaEquivalence
+        from ._theorems_ import rhsViaEquivalence
         return rhsViaEquivalence.specialize({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
 
     def deriveLeftViaEquivalence(self, assumptions=USE_DEFAULTS):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.
         '''
-        from _theorems_ import lhsViaEquivalence
+        from ._theorems_ import lhsViaEquivalence
         return lhsViaEquivalence.specialize({P:self.lhs, Q:self.rhs}, assumptions=assumptions)
     
     def otherSide(self, expr):
@@ -375,7 +375,7 @@ class Equals(TransitiveRelation):
         '''
         Deduce and return that this equality statement is in the set of Booleans.
         '''
-        from _axioms_ import equalityInBool
+        from ._axioms_ import equalityInBool
         return equalityInBool.specialize({x:self.lhs, y:self.rhs})
         
     def evaluation(self, assumptions=USE_DEFAULTS):

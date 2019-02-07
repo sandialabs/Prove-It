@@ -1,1 +1,1 @@
-from cardinality import Card
+from .cardinality import Card

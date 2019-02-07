@@ -9,8 +9,8 @@ Proof objects form a DAG.
 
 from proveit._core_.known_truth import KnownTruth
 from proveit._core_._unique_data import meaningData, styleData
-from defaults import defaults, USE_DEFAULTS, WILDCARD_ASSUMPTIONS
-from context import Context
+from .defaults import defaults, USE_DEFAULTS, WILDCARD_ASSUMPTIONS
+from .context import Context
 import re
 
 class Proof:
@@ -111,7 +111,7 @@ class Proof:
             raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
         if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             # don't bother with side-effects if they have already been processed
-            if provenTruth not in KnownTruth.sideeffect_processed: 
+            if (provenTruth, defaults.assumptions) not in KnownTruth.sideeffect_processed: 
                 # may derive any side-effects that are obvious consequences arising from this truth:
                 provenTruth.deriveSideEffects()
 
@@ -265,7 +265,7 @@ class Proof:
         order which makes it clear that the dependencies are
         acyclic by making sure requirements come after dependents.
         '''
-        from _dependency_graph import orderedDependencyNodes
+        from ._dependency_graph import orderedDependencyNodes
         return orderedDependencyNodes(self, lambda proof : proof.requiredProofs)
     
     def allRequiredProofs(self):
@@ -337,10 +337,11 @@ class Assumption(Proof):
         key = (expr, assumptions)
         if key in Assumption.allAssumptions:
             preexisting = Assumption.allAssumptions[key]
-            if preexisting.provenTruth not in KnownTruth.sideeffect_processed:
-                # The Assumption object exists alread, but it's
-                # side-effects were not derived yet.  This can happen when
-                # automation is temporarily disabled.
+            if (preexisting.provenTruth, assumptions) not in KnownTruth.sideeffect_processed:
+                # The Assumption object exists already, but it's
+                # side-effects were not derived yet under the given assumptions.
+                # This can happen when automation is temporarily disabled or
+                # when assumptions change.
                 preexisting.provenTruth.deriveSideEffects()
             return preexisting
         return Assumption(expr, assumptions)
@@ -365,7 +366,7 @@ class Axiom(Proof):
         return 'axiom'
     
     def _storedAxiom(self):
-        from _context_storage import StoredAxiom
+        from ._context_storage import StoredAxiom
         return StoredAxiom(self.context, self.name)
     
     def getLink(self):
@@ -427,7 +428,7 @@ class Theorem(Proof):
         '''
         s = str(self)
         hierarchy = s.split('.')
-        for k in xrange(1, len(hierarchy)):
+        for k in range(1, len(hierarchy)):
             yield '.'.join(hierarchy[:k])
         yield s
         
@@ -437,7 +438,7 @@ class Theorem(Proof):
             theorem._setUsability()            
         
     def _storedTheorem(self):
-        from _context_storage import StoredTheorem
+        from ._context_storage import StoredTheorem
         return StoredTheorem(self.context, self.name)
 
     def getLink(self):
@@ -446,21 +447,38 @@ class Theorem(Proof):
         '''
         return self._storedTheorem().getProofLink()
     
-    def recordPresumingInfo(self, presuming):
+    def recordPresumedContexts(self, presumed_contexts):
         '''
-        Record information about what the proof of the theorem
-        presumes -- what other theorems/contexts the proof
-        is expected to depend upon.
+        Record information about what other contexts are
+        presumed in the proof of this theorem.
         '''
-        self._storedTheorem().recordPresumingInfo(presuming)
+        self._storedTheorem().recordPresumedContexts(presumed_contexts)
 
-    def getRecursivePresumingInfo(self, presumed_theorems, presumed_contexts):
+    def presumedContexts(self):
         '''
-        Append presumed theorem and context strings to 'presumed_theorems'
-        and 'presumed_contexts' respectively.  For each theorem, do this
-        recursively.
+        Return the list of presumed contexts.
         '''
-        self._storedTheorem().getRecursivePresumingInfo(presumed_theorems, presumed_contexts)        
+        return self._storedTheorem().presumedContexts()
+    
+    def recordPresumedTheorems(self, presumed_theorems):
+        '''
+        Record information about what othere theorems are
+        presumed in the proof of this theorem.
+        '''
+        self._storedTheorem().recordPresumedTheorems(presumed_theorems)
+
+    def directlyPresumedTheorems(self):
+        '''
+        Return the list of directly presumed theorems.
+        '''
+        return self._storedTheorem().directlyPresumedTheorems()
+        
+    def getRecursivelyPresumedTheorems(self, presumed_theorems):
+        '''
+        Append presumed theorem name strings to 'presumed_theorems'.
+        For each theorem, do this recursively.
+        '''
+        self._storedTheorem().getRecursivelyPresumedTheorems(presumed_theorems)        
                 
     def recordProof(self, proof):
         '''
@@ -525,32 +543,58 @@ class Theorem(Proof):
         '''
         Sets the '_unusableProof' attribute to disable the
         theorem if some theorem is being proven and this 
-        theorem is neither presumed nor fully proven and 
-        independent of the theorem being proven.  That is, 
-        ensure no circular logic is being employed when 
-        proving a theorem.  This applies when a proof has 
-        begun (see KnownTruth.beginProof in known_truth.py).  
+        theorem is not presumed or is an alternate proof for the
+        same theorem.  Also, if it is presumed, ensure the logic
+        is not circular.  Generally, this is preventing circular
+        logic.  This applies when a proof has begun 
+        (see KnownTruth.beginProof in known_truth.py).  
         When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
-        Otherwise only Theorems in the KnownTruth.presuming 
-        set (or whose packages is in the KnownTruth.presuming 
-        set) or Theorems that have been fully proven with no
-        direct/indirect dependence upon KnownTruth.theoremBeingProven
-        are allowed.
+        Otherwise only Theorems in the KnownTruth.presumingTheorems set
+        or contained within any of the KnownTruth.presumingPrefixes
+        (i.e., context) are allowed.
         '''
         #from proveit.certify import isFullyProven
         if KnownTruth.theoremBeingProven is None:
             self._meaningData._unusableProof = None # Nothing being proven, so all Theorems are usable
             return
+        legitimately_presumed = False
+        stored_theorem = self._storedTheorem()
+        theorem_being_proven_str = str(KnownTruth.theoremBeingProven)
         if self.provenTruth==KnownTruth.theoremBeingProven.provenTruth:
             # Note that two differently-named theorems for the same thing may exists in
             # order to show an alternate proof.  In that case, we want to disable
             # the other alternates as well so we will be sure to generate the new proof.
             self.disable()
-        elif self in KnownTruth.presumingTheorems or not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes()):
-            if self._storedTheorem().presumes(str(KnownTruth.theoremBeingProven)):
-                raise CircularLogic(KnownTruth.theoremBeingProven, self)
-            self._meaningData._unusableProof = None # This Theorem is usable because it is being presumed.
+            return
         else:
+            presumed_via_context = not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes())
+            if self in KnownTruth.presumingTheorems or presumed_via_context:
+                # This Theorem is being presumed specifically, or a context in which it is contained is presumed.
+                # Presumption via context (a.k.a. prefix) is contingent upon not having a mutual presumption
+                # (that is, some theorem T can presume everything in another context except for theorems 
+                # that presume T or, if proven, depend upon T).
+                # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
+                # is being proven.
+                presumed_theorems = set()
+                # check the "presuming information, recursively, for circular logic.
+                stored_theorem.getRecursivelyPresumedTheorems(presumed_theorems)
+                # If this theorem has a proof, include all dependent theorems as
+                # presumed (this may have been presumed via context, so this can contain
+                # more information than the specifically presumed theorems).
+                if stored_theorem.hasProof():
+                    presumed_theorems.update(stored_theorem.allUsedTheorems())
+                if presumed_via_context:
+                    if theorem_being_proven_str not in presumed_theorems:
+                        # Presumed via context without any mutual specific presumption or existing co-dependence.
+                        legitimately_presumed=True # It's legit; don't disable.
+                    # If there is a conflict, don't presume something via context.
+                else:
+                    # This Theorem is being presumed specifically
+                    if (theorem_being_proven_str in presumed_theorems):
+                        # Theorem-specific presumptions are mutual.  Raise a CircularLogic error.
+                        raise CircularLogic(KnownTruth.theoremBeingProven, self)
+                    legitimately_presumed=True # This theorem is specifically and legitimately being presumed.
+        if not legitimately_presumed:
             # This Theorem is not usable during the proof (if it is needed, it must be
             # presumed or fully proven).  Propagate this fact to all dependents.
             self.disable()
@@ -762,7 +806,7 @@ class Specialization(Proof):
         from proveit import Lambda, Expression, Iter
         from proveit.logic import Forall
         # check that the mappings are appropriate
-        for key, sub in relabelMap.items():
+        for key, sub in list(relabelMap.items()):
             Specialization._checkRelabelMapping(key, sub, assumptions)
             if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
         for assumption in assumptions:
@@ -770,7 +814,7 @@ class Specialization(Proof):
             if len(assumption.freeVars() & set(relabelMap.keys())) != 0:
                 raise RelabelingFailure(None, assumptions, 'Cannot relabel using assumptions that involve any of the relabeling variables')
         
-        for key, sub in specializeMap.iteritems():
+        for key, sub in specializeMap.items():
             if not isinstance(sub, Expression):
                 raise TypeError("Expecting specialization substitutions to be 'Expression' objects")
             if key in relabelMap:
@@ -815,7 +859,7 @@ class Specialization(Proof):
         # sort the relabeling vars in order of their appearance in the original expression
         relabelVars = []
         visitedVars = set()
-        for var in generalExpr.orderOfAppearance(relabelMap.keys()):
+        for var in generalExpr.orderOfAppearance(list(relabelMap.keys())):
             if var not in visitedVars: # ensure no repeats
                 visitedVars.add(var)
                 relabelVars.append(var)

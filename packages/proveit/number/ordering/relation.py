@@ -1,4 +1,4 @@
-from ordering_relation import OrderingRelation
+from .ordering_relation import OrderingRelation
 from proveit.logic import Equals
 
 class Relation:

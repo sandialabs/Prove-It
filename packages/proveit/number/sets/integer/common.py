@@ -1,6 +1,6 @@
 from proveit import Literal
-from naturals import NaturalsSet, NaturalsPosSet
-from integers import IntegerSet
+from .naturals import NaturalsSet, NaturalsPosSet
+from .integers import IntegerSet
 from digit import DigitLiteral
 
 Naturals = NaturalsSet()

@@ -28,7 +28,7 @@ class Integrate(OperationOverInstances):
         self.integrand = self.instanceExpr
     
     def _closureTheorem(self, numberSet):
-        import theorems
+        from . import theorems
         #import complex.theorems
         if numberSet == Reals:
             return theorems.integrationClosure

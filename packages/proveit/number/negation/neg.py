@@ -43,7 +43,7 @@ class Neg(Operation):
         derive and return this Neg expression equated with the simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        from _theorems_ import negNeg, negZero
+        from ._theorems_ import negNeg, negZero
         
         if isinstance(self.operand, Neg):
             deduceInComplexes(self.operand.operand, assumptions)
@@ -70,7 +70,7 @@ class Neg(Operation):
         '''
         Distribute negation through a sum.
         '''
-        from theorems import distributeNegThroughSum, distributeNegThroughSubtract
+        from .theorems import distributeNegThroughSum, distributeNegThroughSubtract
         from proveit.number import Add, Sub
         if isinstance(self.operand, Add):
             deduceInComplexes(self.operand.operands, assumptions)
@@ -104,7 +104,7 @@ class Neg(Operation):
         the associative and commutation theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''
-        from theorems import negTimesPosRev, posTimesNegRev
+        from .theorems import negTimesPosRev, posTimesNegRev
         if isinstance(operand, Neg):
             if pull == 'left':
                 thm = negTimesPosRev

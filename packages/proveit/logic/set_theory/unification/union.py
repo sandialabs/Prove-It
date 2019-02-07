@@ -12,9 +12,9 @@ class Union(Operation):
         Operation.__init__(self, Union._operator_, operands)
 
     def membershipObject(self, element):
-        from union_membership import UnionMembership
+        from .union_membership import UnionMembership
         return UnionMembership(element, self)
 
     def nonmembershipObject(self, element):
-        from union_membership import UnionNonmembership
+        from .union_membership import UnionNonmembership
         return UnionNonmembership(element, self)

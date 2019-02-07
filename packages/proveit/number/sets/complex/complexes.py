@@ -7,11 +7,11 @@ class ComplexSet(NumberSet):
         NumberSet.__init__(self, 'Complexes', r'\mathbb{C}', context=__file__)
 
     def deduceInSetIsBool(self, element, assumptions=USE_DEFAULTS):
-        from theorems import inComplexesIsBool
+        from .theorems import inComplexesIsBool
         return inComplexesIsBool.specialize({a:element}, assumptions)
     
     def deduceNotInSetIsBool(self, element, assumptions=USE_DEFAULTS):
-        from theorems import notInComplexesIsBool
+        from .theorems import notInComplexesIsBool
         return notInComplexesIsBool.specialize({a:element}, assumptions)
     
 

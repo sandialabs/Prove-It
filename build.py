@@ -7,7 +7,9 @@ from __future__ import print_function
 import sys
 import os
 import re
-import lxml.etree
+#import lxml.etree#Comment out for Python 3
+import lxml#Comment in for Python 3
+from lxml import etree#Comment in for Python 3
 import shutil
 import argparse
 import nbformat
@@ -29,7 +31,7 @@ LaTeXTool.clear_instance()
 lt = LaTeXTool.instance()
 lt.use_breqn = False
 
-default_paths = ['packages/proveit', 'tutorial']#, 'tutorial/socks_demo']
+default_paths = ['packages/proveit']#, 'tutorial']#, 'tutorial/socks_demo']
 
 def findContextPaths(path):
     if os.path.isfile(os.path.join(path, '_context_.ipynb')):
@@ -109,9 +111,9 @@ class ProveItHTMLPreprocessor(Preprocessor):
                     if 'target' in atag_root.attrib and atag_root.attrib['target']=='_blank':
                         atag_root.attrib.pop('target')
                     atag = lxml.etree.tostring(atag_root)
-                    if atag[-2:] != '/>':
+                    if atag[-2:] != b'/>':
                         raise Exception("Expecting '/>' at end of remade xml a-tag")
-                    atag = atag[:-2] + '>' # remove the / before >
+                    atag = atag[:-2].decode('ascii') + '>' # remove the / before >
             if not self.strip_links:
                 new_text += atag
             last_pos = atag_match.end()
@@ -209,61 +211,36 @@ class ProveItHTMLPreprocessor(Preprocessor):
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
 html_exporter.template_file = 'proveit_html'
 
-def executeNotebook(notebook_path, execute_as_script=False):
+def executeNotebook(notebook_path):
     '''
     Read, execute, and write out the notebook at the given path.
     Return the notebook object.
-    With exectue_as_script==True, it will run the cells as script
-    which is faster then starting a new Jupyter kernel.  It won't
-    generate the output however.
     '''
-    print('Executing ' + notebook_path)
-    sys.stdout.flush()
+    print("Executing", notebook_path)
     
     # read
     with open(notebook_path) as f:
         nb = nbformat.read(f, as_version=4)
     
-    if execute_as_script:
-        temp = tempfile.NamedTemporaryFile(suffix='.py')
+    # execute using a KernelManager with the appropriate cwd (current working directory)
+    notebook_dir = os.path.split(notebook_path)[0]
+    #resources = {'metadata':{'path':notebook_dir}}
+    #execute_processor = ExecutePreprocessor(kernel_name='python3', timeout=-1)
+    while True:
         try:
-            # need an ipython object for executing "magic"
-            temp.write("import IPython\n")
-            temp.write("_ipython = IPython.get_ipython()\n") 
-            for cell in nb.cells:
-                if cell.cell_type=='code':
-                    for line in cell.source.split('\n'):
-                        if len(line)==0: continue
-                        if line[0] == '%': continue # intercepted magic command
-                        #line = "_ipython.magic('%s')"%line[1:].replace("'", "\\'")
-                        temp.write(line + '\n')
-            temp.flush()
-            #temp.seek(0)
-            #print(temp.read())
-            print(temp.name)
-            # ONLY WORKING AS ipython CURRENTLY, BUT THAT DEFEATS THE PURPOSE
-            # COULD CHANGE IT TO ONLY ALLOW PROVEIT MAGIC??
-            subprocess.check_call(["python", temp.name], stderr=sys.stderr)
-        finally:
-            temp.close()
-    else:
-        # execute using a KernelManager with the appropriate cwd (current working directory)\
-        notebook_dir = os.path.split(notebook_path)[0]
-        resources = {'metadata':{'path':notebook_dir}}
-        execute_processor = ExecutePreprocessor(kernel_name='python2', timeout=-1)
-        while True:
-            try:
-                #executenb(nb, cwd=notebook_dir)
-                execute_processor.preprocess(nb, resources)
-                break
-            except zmq.ZMQError:
-                print("ZMQError encountered")
-                execute_processor.km.restart_kernel(newport=True)
-            except RuntimeError:
-                print("Try restarting kernel")
-                execute_processor.km.restart_kernel(newport=True)
-        with open(notebook_path, 'wt') as f:
-            nbformat.write(nb, f)
+            executenb(nb, cwd=notebook_dir)
+            #execute_processor.preprocess(nb, resources)
+            break
+        except zmq.ZMQError:
+            print("ZMQError encountered")
+            pass
+            #execute_processor.km.restart_kernel(newport=True)
+        except RuntimeError:
+            print("Try restarting kernel")
+            pass
+            #execute_processor.km.restart_kernel(newport=True)
+    with open(notebook_path, 'wt') as f:
+        nbformat.write(nb, f)
     return nb
 
 def generate_css_if_missing(path):
@@ -281,7 +258,7 @@ def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=F
     The notebook object (nb) may be provided, or it will be
     read in from the file.
     '''
-    print('Exporting '+notebook_path+' to HTML')
+    print('Exporting', notebook_path, 'to HTML')
     orig_strip_links = html_exporter.preprocessors[0].strip_links
     orig_make_images_inline = html_exporter.preprocessors[0].make_images_inline
     try:
@@ -349,21 +326,48 @@ def fix_context(context_path):
 def recordPresumingInfo(theorem, proof_notebook_path):
     '''
     Given a Theorem object and corresponding proof notebook path,
-    read the 'presuming' string from the notebook (on the "%begin_proof"
-    line) and record it for the theorem.
+    record the presuming information from information on the
+    "%proving" command line.  We need to execute preceeding commands
+    because some of the presumed things may be local variables generated
+    in the notebook.
     '''
     with open(proof_notebook_path) as f:
         nb = nbformat.read(f, as_version=4)
-        for cell in nb['cells']:
-            if cell['cell_type'] == 'code':
-                for line in cell['source'].split('\n'):
-                    begin_proof_str = '%begin_proof '
-                    if line[:len(begin_proof_str)] == begin_proof_str:
-                        theorem_name, presuming_str = str(line.strip()).split(' ', 1)
-                        args = line[line.find('[')+1:line.find(']')].split(',')
-                        presuming = [arg.strip() for arg in args if arg.strip() != '']
-                        theorem.recordPresumingInfo(presuming)
-                        return # got what we needed
+    print("Record presuming info:", proof_notebook_path)
+    
+    # use '__' to prepend important local variables because we will start
+    # running exec on user code and we don't want to pollute our locals.
+    __owd = os.getcwd()
+    os.chdir(os.path.split(proof_notebook_path)[0])
+    __theorem = theorem
+    try:
+        for __cell in nb['cells']:
+            if __cell['cell_type'] == 'code':
+                __cellsource = __cell['source']
+                __locls = locals()
+                __begin_proof_str = '%proving '
+                if __cellsource[:len(__begin_proof_str)] == __begin_proof_str or '\n%proving' in __cellsource:
+                    __start = __cellsource.find("%proving")
+                    exec(__cellsource[:__start])
+                    # intercept the proving command
+                    __line=__cellsource[__start+len(__begin_proof_str):]
+                    __theorem_name, __presuming_str = str(__line.strip()).split(' ', 1)
+                    if __theorem_name != __theorem.name:
+                        raise ValueError("Theorem name, %s, does not match expectation, %s, according to filename"%(__theorem_name, theorem.name))
+                    if not __presuming_str.find('presuming ') == 0:
+                        raise ValueError("Bad presuming format: %s"%__presuming_str)
+                    __args = __presuming_str.split(' ', 1)[-1].strip('[]').split(',')
+                    __args = [__arg.strip(" \\\n") for __arg in __args]
+                    __presumptions = [__arg for __arg in __args if __arg != '']
+                    # Some of the presumptions are simply strings, but some are local variables
+                    # we need to extract.  That is why we had to execute the previous lines.
+                    __presumptions = [str(__locls[__presumption].proof()) if __presumption in __locls else __presumption for __presumption in __presumptions]
+                    __theorem.provenTruth.beginProof(__theorem, __presumptions, justRecordPresumingInfo=True)
+                    return
+                elif __cellsource[0] != '%': # skip other magic commands (only the imports should really matter)
+                    exec(__cellsource)
+    finally:
+        os.chdir(__owd)
     
 def build(context_paths, all_paths, no_execute=False, just_execute_proofs=False, just_execute_demos=False, just_execute_expression_nbs=False):
     '''
@@ -385,11 +389,14 @@ def build(context_paths, all_paths, no_execute=False, just_execute_proofs=False,
             executeAndExportNotebook('index.ipynb')
             executeAndExportNotebook('brief_guide.ipynb')
         
-        # Make sure there is a _common_.py in each context directory.
+        # Make sure there is a _common_.py, _axioms_.py, and _theorems_.py
+        # in each context directory.
         # These will be useful in figuring out dependencies between _common_
-        # notebooks (see CommonExpressions in proveit._core_.context
+        # notebooks (see CommonExpressions in proveit._core_.context as well
+        # as avoiding import errors.
         for context_path in context_paths:
-            Context(context_path).makeSpecialExprModule('common')
+            for spec_expr_kind in ('common', 'axioms', 'theorems'):
+                Context(context_path).makeSpecialExprModule(spec_expr_kind)
         
         # Execute the _context_ notebooks in each context directory 
         # and generate _context_.html.
@@ -481,6 +488,8 @@ def build(context_paths, all_paths, no_execute=False, just_execute_proofs=False,
     if not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the contexts.
         proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
+        theorem2notebook = dict() # map theorem to its proof notebook
+        name2theorem = dict() # map theorem name to the theorem
         proof_notebooks = []
         for context_path in context_paths:
             context = Context(context_path)
@@ -488,6 +497,8 @@ def build(context_paths, all_paths, no_execute=False, just_execute_proofs=False,
                 theorem = context.getTheorem(theorem_name)
                 proof_notebook_name = context.proofNotebook(theorem_name, theorem.provenTruth.expr)
                 proof_notebook_theorems[proof_notebook_name] = theorem
+                theorem2notebook[theorem] = proof_notebook_name
+                name2theorem[str(theorem)] = theorem
                 proof_notebooks.append(proof_notebook_name)
         
         if no_execute:
@@ -500,14 +511,13 @@ def build(context_paths, all_paths, no_execute=False, just_execute_proofs=False,
             # any of the proof notebooks to account for dependencies properly
             # (avoiding circular dependencies as intended).
             for proof_notebook in proof_notebooks:
-                print('record presuming info: '+proof_notebook)
                 recordPresumingInfo(proof_notebook_theorems[proof_notebook], proof_notebook)
                 
-            # Next, execute all of the proof notebooks for each context.
-            # the order is not important since we know the dependencies via
-            # the "presuming" information from the previous step.
+            # Next, execute all of the proof notebooks twice
+            # to ensure there are no circular logic violations.
             for proof_notebook in proof_notebooks:
-                #if not os.path.isfile(proof_notebook[-5:] + '.html'): # temporary
+                executeNotebook(proof_notebook)
+            for proof_notebook in proof_notebooks:
                 executeAndExportNotebook(proof_notebook)
             
     if not just_execute_expression_nbs:

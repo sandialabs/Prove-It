@@ -22,7 +22,7 @@ class BooleanSet(Literal):
         from ._theorems_ import falseEqFalse, trueEqTrue 
         from ._theorems_ import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
         from ._common_ import TRUE, FALSE, Booleans
-        from conjunction import compose
+        from .conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply forallEvaluation method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain"
         assert(len(forallStmt.instanceVars) == 1), "May only apply forallEvaluation method of BOOLEANS to a forall statement with 1 instance variable"

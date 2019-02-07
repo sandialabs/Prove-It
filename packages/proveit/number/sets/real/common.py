@@ -1,5 +1,5 @@
-from reals import RealsSet, RealsPosSet, RealsNegSet
-from irrational import IrrationalLiteral
+from .reals import RealsSet, RealsPosSet, RealsNegSet
+from .irrational import IrrationalLiteral
 
 Reals = RealsSet()   
 RealsPos = RealsPosSet()

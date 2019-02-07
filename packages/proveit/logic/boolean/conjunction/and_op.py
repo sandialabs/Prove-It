@@ -53,7 +53,7 @@ class And(Operation):
         From (A and B and ... and Z)` derive each operand:
         A, B, ..., Z.
         '''
-        for i in xrange(len(self.operands)):
+        for i in range(len(self.operands)):
             self.deriveInPart(i, assumptions)        
     
     def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
@@ -102,7 +102,7 @@ class And(Operation):
         '''
         Deduce A in Booleans from (A and B) in Booleans.
         '''
-        from _axioms_ import leftInBool
+        from ._axioms_ import leftInBool
         if len(self.operands) == 2:
             leftInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         
@@ -110,7 +110,7 @@ class And(Operation):
         '''
         Deduce B in Booleans from (A and B) in Booleans.
         '''
-        from _axioms_ import rightInBool
+        from ._axioms_ import rightInBool
         if len(self.operands) == 2:
             rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
@@ -119,7 +119,7 @@ class And(Operation):
         Deduce A in Booleans, B in Booleans, ..., Z in Booleans
         from (A and B and ... and Z) in Booleans.
         '''
-        for i in xrange(len(self.operands)):
+        for i in range(len(self.operands)):
             self.deducePartInBool(i, assumptions)        
 
     def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
