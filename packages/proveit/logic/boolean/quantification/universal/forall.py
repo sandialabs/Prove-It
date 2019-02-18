@@ -86,8 +86,12 @@ class Forall(OperationOverInstances):
         For example, conclude forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
         '''    
         assert self.hasDomain(), "Cannot fold a forall statement with no domain"
-        assert len(self.instanceVars)==1, "Cannot fold a forall statement with more than 1 instance variable (not implemented beyond this)"
-        return self.domain.foldAsForall(self, assumptions)
+        #assert len(self.instanceVars)==1, "Cannot fold a forall statement with more than 1 instance variable (not implemented beyond this)"
+        expr = self.unraveled()
+        truth = expr.domain.foldAsForall(expr, assumptions)
+        print(truth)
+        return truth.generalize(self.instanceVars, conditions=self.conditions)
+
     
     def deriveBundled(self, assumptions=USE_DEFAULTS):
         '''
@@ -177,3 +181,12 @@ class Forall(OperationOverInstances):
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
+
+    def unraveled(self):
+        remainingConditions = self.conditions
+        expr = self.instanceExpr
+        for ivar in reversed(self.instanceVars):
+            localConditions = [conditions for conditions in remainingConditions if ivar in conditions.freeVars()]
+            expr = Forall(ivar, expr, conditions=localConditions)
+            remainingConditions = [conditions for conditions in remainingConditions if conditions not in localConditions]
+        return expr

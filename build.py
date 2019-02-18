@@ -639,7 +639,7 @@ if __name__ == '__main__':
             raise ValueError("Do not combine the '--download' option with any other option besides '--clean'")
         url = "http://pyproveit.org/pv_it.tar.gz" # tarball url
         print("Downloading '%s'"%url)
-        file_tmp = urllib.urlretrieve(url, filename=None)[0]
+        file_tmp = urllib.request.urlretrieve(url, filename=None)[0]
         tar = tarfile.open(file_tmp)
         # extract into the directory of this 'build.py'
         path = os.path.dirname(os.path.realpath(__file__))
