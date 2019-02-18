@@ -195,12 +195,12 @@ class Implies(TransitiveRelation):
         from ._theorems_ import impliesTT, impliesFT, impliesFF, impliesTF # load in truth-table evaluations
         return Operation.evaluation(self, assumptions)
     
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this implication expression is in the set of BOOLEANS.
         '''
         from ._theorems_ import implicationClosure
-        return implicationClosure.specialize({A:self.antecedent, B:self.consequent})
+        return implicationClosure.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
 
 def concludeViaImplication(consequent, assumptions):
     '''
