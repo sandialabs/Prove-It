@@ -210,6 +210,7 @@ class ProveItHTMLPreprocessor(Preprocessor):
 
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
 html_exporter.template_file = 'proveit_html'
+execute_processor = ExecutePreprocessor(kernel_name='python3', timeout=-1)
 
 def executeNotebook(notebook_path):
     '''
@@ -224,12 +225,11 @@ def executeNotebook(notebook_path):
     
     # execute using a KernelManager with the appropriate cwd (current working directory)
     notebook_dir = os.path.split(notebook_path)[0]
-    #resources = {'metadata':{'path':notebook_dir}}
-    #execute_processor = ExecutePreprocessor(kernel_name='python3', timeout=-1)
+    resources = {'metadata':{'path':notebook_dir}}
     while True:
         try:
-            executenb(nb, cwd=notebook_dir)
-            #execute_processor.preprocess(nb, resources)
+            #executenb(nb, cwd=notebook_dir)
+            execute_processor.preprocess(nb, resources)
             break
         except zmq.ZMQError:
             print("ZMQError encountered")
@@ -645,4 +645,3 @@ if __name__ == '__main__':
         path = os.path.dirname(os.path.realpath(__file__))
         print("Extracting tarball into %s"%path)
         tar.extractall(path)
-        
