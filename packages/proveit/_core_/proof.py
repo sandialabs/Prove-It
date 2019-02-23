@@ -803,7 +803,7 @@ class Specialization(Proof):
         map dictionary (subMap), or defaulting basic instance variables as
         themselves. 
         '''
-        from proveit import Lambda, Expression, Iter
+        from proveit import Lambda, Expression, Iter, ExprList
         from proveit.logic import Forall
         # check that the mappings are appropriate
         for key, sub in list(relabelMap.items()):
@@ -845,8 +845,11 @@ class Specialization(Proof):
                 elif parameterVar in relabelMap: subbedParam = relabelMap[parameterVar]
                 if isinstance(parameter, Iter) and subbedParam is not None:
                     expandedParameter = parameter.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
-                    if len(expandedParameter) != len(subbedParam):
-                        raise SpecializationFailure(None, assumptions, "Substitution of iterated instance variables incomplete: %d length expansion versus %d length substitution"%(len(expandedParameter), len(subbedParam)))
+                    did_expand = not isinstance(expandedParameter, Iter) # if it expanded, it should be an ExprList
+                    if did_expand:
+                        assert isinstance(expandedParameter, ExprList), "An Iter of Forall instance Variables should expand to an ExprList"
+                        if len(expandedParameter) != len(subbedParam):
+                            raise SpecializationFailure(None, assumptions, "Substitution of iterated instance variables incomplete: %d length expansion versus %d length substitution"%(len(expandedParameter), len(subbedParam)))
             mappedVarLists.append(instanceVars)
             # include the mapping for the current instance variables in the partial map
             try:
@@ -888,11 +891,11 @@ class Generalization(Proof):
         A Generalization step wraps a KnownTruth (instanceTruth) in one or more Forall operations.
         The number of Forall operations introduced is the number of lists in newForallVarLists.
         The conditions are introduced in the order they are given at the outermost level that is 
-n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the new 
+        applicable.  For example, if newForallVarLists is [[x, y], z]  and the new 
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
-        from proveit import KnownTruth, Variable
+        from proveit import KnownTruth, Variable, Iter, Indexed
         from proveit.logic import Forall
         if not isinstance(instanceTruth, KnownTruth):
             raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
@@ -906,24 +909,32 @@ n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the 
             remainingConditions = list(newConditions)
             expr = instanceTruth.expr
             introducedForallVars = set()
-            for k, newForallVars in enumerate(reversed(newForallVarLists)):
-                for forallVar in newForallVars:
+            for k, newForallParams in enumerate(reversed(newForallVarLists)):
+                newForallVarSet = set()
+                for forallVar in newForallParams:
+                    if isinstance(forallVar, Iter) and isinstance(forallVar.lambda_map.body, Indexed):
+                        newForallVarSet.add(forallVar.lambda_map.body.var)
+                        continue # iterations of indexed variables are allowed
+                    if isinstance(forallVar, Indexed):
+                        newForallVarSet.add(forallVar.var)
+                        continue # an indexed variable is allowed
                     if not isinstance(forallVar, Variable):
-                        raise ValueError('Forall variables of a generalization must be Variable objects')
-                introducedForallVars |= set(newForallVars)
+                        raise ValueError('Forall variables of a generalization must be Variables, Indexed variable, or iteration (Iter) over Indexed variables.')
+                    newForallVarSet.add(forallVar)
+                introducedForallVars.update(newForallVarSet)
                 newConditions = []
                 if k == len(newForallVarLists)-1:
                     # the final introduced Forall operation must use all of the remaining conditions
                     newConditions = remainingConditions
                 else:
                     # use all applicable conditions in the supplied order
-                    conditionApplicability = [not remainingCondition.freeVars().isdisjoint(newForallVars) for remainingCondition in remainingConditions]
+                    conditionApplicability = [not remainingCondition.freeVars().isdisjoint(newForallVarSet) for remainingCondition in remainingConditions]
                     newConditions = [remainingCondition for applicable, remainingCondition in zip(conditionApplicability, remainingConditions) if applicable]
                     remainingConditions = [remainingCondition for applicable, remainingCondition in zip(conditionApplicability, remainingConditions) if not applicable]
                 # new conditions can eliminate corresponding assumptions
                 assumptions -= set(newConditions)
                 # create the new generalized expression
-                generalizedExpr = Forall(instanceVarOrVars=newForallVars, instanceExpr=expr, conditions=newConditions)
+                generalizedExpr = Forall(instanceVarOrVars=newForallParams, instanceExpr=expr, conditions=newConditions)
                 # make sure this is a proper generalization that doesn't break the logic:
                 Generalization._checkGeneralization(generalizedExpr, expr)
                 expr = generalizedExpr
@@ -932,7 +943,7 @@ n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the 
                     raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
             generalizedTruth = KnownTruth(generalizedExpr, assumptions, self)
             self.instanceTruth = instanceTruth
-            self.newForallVars = newForallVars
+            self.newForallVars = newForallParams
             self.newConditions = newConditions
             Proof.__init__(self, generalizedTruth, [self.instanceTruth])
         finally:

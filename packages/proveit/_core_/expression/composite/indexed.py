@@ -105,6 +105,8 @@ class Indexed(Expression):
         # just return the Indexed operation with the substitutions made.
         if result is not None:
             return result
+        elif hasattr(self, 'index'):
+            return Indexed(subbed_var, subbed_indices[0], base=self.base)
         else:
             return Indexed(subbed_var, subbed_indices, base=self.base)
 
