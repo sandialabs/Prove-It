@@ -11,7 +11,14 @@ class OperationOverInstances(Operation):
         under the given conditions.  
         That is, the operation operates over all possibilities of given Variable(s) wherever
         the condition(s) is/are satisfied.  Examples include forall, exists, summation, etc.
-        instanceVars may be singular or plural (iterable).
+        instanceVars may be singular or plural (iterable).  When there are multiple
+        instanceVars, however, it will generate a nested structure in actuality and
+        simply set the style to display these instance variables together.  In other
+        words, whether instance variables are joined together, like
+        "forall_{x, y} P(x, y)" or split in a nested structure like
+        "forall_{x} [forall_y P(x, y)]"
+        is deemed to be a matter of style, not substance.  Internally it is treated as the
+        latter.
               
         If a domain is supplied, additional conditions are generated that each instance 
         Variable is in the domain "set": InSet(x_i, domain), where x_i is for each instance 
@@ -20,8 +27,9 @@ class OperationOverInstances(Operation):
         as an Operation with a single Lambda expression operand with conditions matching
         the OperationOverInstances conditions (a conditional mapping).
         
-        The set of "domain" conditions come at the beginning of this conditions list and
-        can be accessed via the 'implicitConditions' attribute, and the 'domain' or 'domains'
+        At each nested level, the "domain" condition will come at the beginning of 
+        the conditions list and can be accessed via the 'implicitConditions' attribute, 
+        and the 'domain' or 'domains'
         can be accessed via attributes of the same name.  Whether the OperationOverInstances
         is constructed with domain/domains explicitly, or they are provided at the beginning
         of the conditions list (in the proper order) does not matter.  Essentially, the 
@@ -39,20 +47,36 @@ class OperationOverInstances(Operation):
                 raise ValueError("Provide a single domain or multiple domains, not both")
             if not isinstance(domain, Expression):
                 raise TypeError("The domain should be an 'Expression' type")
+            self.domain = domain
             domains = [domain]*len(instanceVars)
-        if domains is not None: 
+        if domains is not None:
+            self.domain = domain[0] 
             # prepend domain conditions
             if len(domains) != len(instanceVars):
                 raise ValueError("When specifying multiple domains, the number should be the same as the number of instance variables.")         
             conditions = [InSet(instanceVar, domain) for instanceVar, domain in zip(instanceVars, domains)] + list(conditions)
-        conditions = compositeExpression(conditions)
+        conditions = compositeExpression(conditions)        
+        
+        self.instanceVar = instanceVars[0]
+        if len(instanceVars) > 1:
+            # "inner" instance variable are all but the first one.
+            inner_instance_vars = instanceVars[1:]
+            # the "inner" conditions are any with free variables containing any of the "inner" instance variables.
+            inner_conditions = [condition for condition in conditions if not condition.freeVars().isdisjoint(inner_instance_vars)]
+            # revise the conditions to exclude any of the "inner" conditions.
+            conditions = [condition for condition in conditions if condition not in inner_conditions]
+            # the instance expression at this level should be the OperationOverInstances at the next level.
+            innerOperand = self._createOperand(inner_instance_vars, instanceExpr, conditions=inner_conditions)
+            instanceExpr = self._class_._make(self.__class__, ['Operation'], styles, [innerOperand])
+            styles['instance_vars'] = 'join_next' # combine instance variables in the style
+        else:
+            styles['instance_vars'] = 'no_join' # no combining instance variables in the style
+            
         Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVars, instanceExpr, conditions), styles=styles)
-        self.instanceVars = instanceVars
-        if len(self.instanceVars) == 1:
-            self.instanceVar = self.instanceVars[0]
         self.instanceExpr = instanceExpr
         self.conditions = conditions
-
+        
+        """
         # extract the domain or domains from the condition (regardless of whether the domain/domains was explicitly provided
         # or implicit through the conditions).
         if len(conditions) >= len(instanceVars):
@@ -66,6 +90,7 @@ class OperationOverInstances(Operation):
                     self.domain_or_domains = self.domain = domains[0] # all the same domain
                 else:
                     self.domain_or_domains = self.domains = ExprList(*domains)
+        """
                         
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, conditions):
@@ -95,6 +120,35 @@ class OperationOverInstances(Operation):
             conditions = operand.conditions
             #if len(conditions)==0: return tuple()
             return conditions
+    
+    def allInstanceVars(self):
+        '''
+        Yields the instance variable of this OperationOverInstances
+        and any instance variables of nested OperationOVerInstances
+        of the same type.
+        '''
+        yield self.instanceVar
+        if isinstance(self.instanceExpr, self.__class__):
+            for innerIvar in self.instanceExpr.instanceVars():
+                yield innerIvar
+    
+    def allDomains(self):
+        '''
+        Yields the domain of this OperationOverInstances
+        and any domains of nested OperationOVerInstances
+        of the same type.  Some of these may be null.
+        '''
+        yield self.domain
+        if isinstance(self.instanceExpr, self.__class__):
+            for domain in self.instanceExpr.domains():
+                yield domain
+    
+    def allConditions(self):
+        for condition in self.conditions:
+            yield condition
+        if isinstance(self.instanceExpr, self.__class__):
+            for condition in self.instanceExpr.allConditions():
+                yield condition
     
     def explicitInstanceVars(self):
         '''
