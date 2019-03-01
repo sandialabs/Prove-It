@@ -20,7 +20,8 @@ from IPython.lib.latextools import LaTeXTool
 import base64
 import datetime
 import tarfile
-import urllib
+#import urllib#Comment out for Python 3
+import urllib.request#Comment in for Python 3
 import tempfile
 import subprocess
 import zmq # to catch ZMQError which randomly occurs when starting a Jupyter kernel
@@ -639,7 +640,8 @@ if __name__ == '__main__':
             raise ValueError("Do not combine the '--download' option with any other option besides '--clean'")
         url = "http://pyproveit.org/pv_it.tar.gz" # tarball url
         print("Downloading '%s'"%url)
-        file_tmp = urllib.urlretrieve(url, filename=None)[0]
+#        file_tmp = urllib.urlretrieve(url, filename=None)[0]#Comment out for Python 3
+        file_tmp = urllib.request.urlretrieve(url, filename=None)#Comment in for Python 3
         tar = tarfile.open(file_tmp)
         # extract into the directory of this 'build.py'
         path = os.path.dirname(os.path.realpath(__file__))
