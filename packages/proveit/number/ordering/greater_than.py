@@ -80,6 +80,7 @@ class Greater(GreaterRelation):
         from ._theorems_ import greaterThanInBools
         return greaterThanInBools.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
     
+    """
     def deriveRelaxed(self, assumptions=frozenset()):
         '''
         Relax a > b to a >= b, deducing the latter from the former (self) and returning the latter.
@@ -87,6 +88,7 @@ class Greater(GreaterRelation):
         '''
         from ._theorems_ import relaxGreaterThan
         return relaxGreaterThan.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
+    """
         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         from ._theorems_ import transitivityGreaterGreater, transitivityGreaterGreaterEq
@@ -205,7 +207,8 @@ class GreaterEq(GreaterRelation):
                 return transitivityGreaterEqGreaterEq.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))        
-
+    
+    """
     def deriveNegated(self, assumptions=frozenset()):
         '''
         From :math:`a \geq b`, derive and return :math:`-a \leq -b`.
@@ -213,6 +216,7 @@ class GreaterEq(GreaterRelation):
         '''
         from ._theorems_ import negatedGreaterThanEquals
         return negatedGreaterThanEquals.specialize({a:self.lhs, b:self.rhs})
+    """
 
     def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
         r'''

@@ -28,7 +28,7 @@ class UnionMembership(Membership):
         operands = self.domain.operands
         return unionDef.specialize({l:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
     
-    def unfold(self, element, assumptions=USE_DEFAULTS):
+    def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From [element in (A union B ...)], derive and return [(element in A) or (element in B) ...],
         where self represents (A union B ...). 
@@ -59,7 +59,7 @@ class UnionNonmembership(Nonmembership):
         Nonmembership.__init__(self, element)
         self.domain = domain
 
-    def equivalence(self, element, assumptions=USE_DEFAULTS):
+    def equivalence(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return and [element not in (A union B ...)] = [(element not in A) and (element not in B) ...]
         where self = (A union B ...).

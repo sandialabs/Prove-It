@@ -14,7 +14,7 @@ class Numeral(Literal, IrreducibleValue):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
     
-    def evalEquality(self, other):
+    def evalEquality(self, other, assumptions=USE_DEFAULTS):
         if other==self:
             return Equals(self, self).prove()
         pass # need axioms/theorems to prove inequality amongst different numerals

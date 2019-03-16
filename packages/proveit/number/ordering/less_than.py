@@ -80,7 +80,8 @@ class Less(LesserRelation):
     def deduceInBooleans(self, assumptions=frozenset()):
         from ._theorems_ import lessThanInBools
         return lessThanInBools.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
-
+    
+    """
     def deriveRelaxed(self, assumptions=frozenset()):
         '''
         Relax a < b to a <= b, deducing the latter from the former (self) and returning the latter.
@@ -88,6 +89,7 @@ class Less(LesserRelation):
         '''
         from ._theorems_ import relaxLessThan
         return relaxLessThan.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
+    """
         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -115,7 +117,8 @@ class Less(LesserRelation):
                 return transitivityLessLessEq.specialize({x:self.lhs, y:self.rhs, z:other.lhs}, assumptions=assumptions)
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))        
-
+    
+    """
     def deriveNegated(self, assumptions=frozenset()):
         '''
         From :math:`a < b`, derive and return :math:`-a > -b`.
@@ -123,6 +126,7 @@ class Less(LesserRelation):
         '''
         from ._theorems_ import negatedLessThan
         return negatedLessThan.specialize({a:self.lhs, b:self.rhs})
+    """
         
     def deriveShifted(self, addend, addendSide='right', assumptions=frozenset()):
         r'''

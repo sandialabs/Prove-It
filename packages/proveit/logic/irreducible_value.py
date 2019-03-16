@@ -7,6 +7,8 @@ Classes used to represent expressions that are irreducible
 IrreducibleValue.
 '''
 
+from proveit import USE_DEFAULTS
+
 class IrreducibleValue:
     def __init__(self):
         pass
@@ -18,14 +20,14 @@ class IrreducibleValue:
         from proveit.logic import Equals
         return Equals(self, self).prove()
     
-    def evalEquality(self, otherIrreducible):
+    def evalEquality(self, otherIrreducible, assumptions=USE_DEFAULTS):
         '''
         Returns the evaluation of the equality between this irreducible
         value and the other irreducible value, if it is well-defined.
         '''
         raise NotImplementedError("evalEquality method must be implemented by IrreducibleValue objects")
 
-    def notEqual(self, otherIrreducible):
+    def notEqual(self, otherIrreducible, assumptions=USE_DEFAULTS):
         '''
         Attempt to prove that this irreducible values is not equal to
         the other irreducible value, returning the KnownTruth.

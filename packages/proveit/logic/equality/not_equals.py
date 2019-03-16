@@ -28,14 +28,14 @@ class NotEquals(Operation):
         from proveit.logic import FALSE
         if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
             # prove that two irreducible values are not equal
-            return self.lhs.notEqual(self.rhs)
+            return self.lhs.notEqual(self.rhs, assumptions)
         if self.lhs == FALSE or self.rhs == FALSE:
             try:
                 # prove something is not false by proving it to be true
                 return self.concludeViaDoubleNegation(assumptions)
             except:
                 pass
-        if hasattr(self.lhs, 'notEquals') and isIrreducibleValue(self.rhs):
+        if hasattr(self.lhs, 'notEqual') and isIrreducibleValue(self.rhs):
             try:
                 return self.lhs.notEqual(self.rhs, assumptions)
             except:
