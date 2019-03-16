@@ -303,7 +303,7 @@ class Context:
         Return the kind and name of the special expression as a tuple,
         assuming the 'expr' is a special expression of this Context.
         '''
-        return self._storage.specialExpressions[expr]
+        return self._storage.specialExpressions[expr._style_id]
     
     def specialExprAddress(self, expr):
         '''
@@ -312,7 +312,7 @@ class Context:
         Provided that the given expression is one of the special expressions
         of this context, return the address as a tuple.
         '''
-        kind, name = self._storage.specialExpressions[expr]
+        kind, name = self._storage.specialExpressions[expr._style_id]
         if kind == 'axiom' or kind=='theorem':
             name = name + '.expr'
         return kind, self._storage._specialExprModules[kind], name

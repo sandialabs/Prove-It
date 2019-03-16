@@ -103,7 +103,7 @@ class Proof:
         if self.isUsable():
             self._setUsability()
         # this new proof may be the first proof, make an old one obselete, or be born obsolete itself.
-        hadPreviousProof = (provenTruth.proof() is not None and provenTruth.isUsable())
+        #hadPreviousProof = (provenTruth.proof() is not None and provenTruth.isUsable())
         provenTruth._addProof(self)
         if requiringUnusableProof:
             # Raise an UnusableProof exception when an attempt is made 
@@ -321,7 +321,7 @@ class Assumption(Proof):
         prev_default_assumptions = defaults.assumptions
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
-            Proof.__init__(self, KnownTruth(expr, {expr}, self), [])
+            Proof.__init__(self, KnownTruth(expr, {expr}), [])
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions            
@@ -357,7 +357,7 @@ class Axiom(Proof):
             raise ValueError("An axiom 'name' must be a string")
         self.context = context
         self.name = name
-        Proof.__init__(self, KnownTruth(expr, expr.getRequirements(), self), [])
+        Proof.__init__(self, KnownTruth(expr, expr.getRequirements()), [])
 
     def _generate_step_info(self, objectRepFn):
         return self.stepType() + '_' + str(self) + ':'
@@ -404,7 +404,7 @@ class Theorem(Proof):
         # before 'beginProof' is called so we will have the proof handy.
         self._possibleProofs = []
         # Note that _setUsability will be called within Proof.__init__
-        Proof.__init__(self, KnownTruth(expr, frozenset(), self), [])
+        Proof.__init__(self, KnownTruth(expr, frozenset()), [])
         Theorem.allTheorems.append(self)
 
     def _generate_step_info(self, objectRepFn):
@@ -637,20 +637,20 @@ class ModusPonens(Proof):
                 # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
                 implicationTruth = implicationExpr.prove(assumptions)
                 _appendExtraAssumptions(assumptions, implicationTruth)
-            except:
+            except ProofFailure:
                 raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implicationExpr))
             try:
                 # Must prove the antecedent under the given assumptions.
                 # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
                 antecedentTruth = implicationExpr.operands[0].prove(assumptions)
                 _appendExtraAssumptions(assumptions, antecedentTruth)
-            except:
+            except ProofFailure:
                 raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Antecedent of %s is not proven'%str(implicationExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = implicationTruth.assumptionsSet | antecedentTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
             # we have what we need; set up the ModusPonens Proof        
-            consequentTruth = KnownTruth(implicationExpr.operands[1], assumptions, self)
+            consequentTruth = KnownTruth(implicationExpr.operands[1], assumptions)
             _checkImplication(implicationTruth.expr, antecedentTruth.expr, consequentTruth.expr)
             self.implicationTruth = implicationTruth
             self.antecedentTruth = antecedentTruth
@@ -670,7 +670,7 @@ class HypotheticalReasoning(Proof):
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
             implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
-            implicationTruth = KnownTruth(implicationExpr, assumptions, self)
+            implicationTruth = KnownTruth(implicationExpr, assumptions)
             self.consequentTruth = consequentTruth
             Proof.__init__(self, implicationTruth, [self.consequentTruth])
         finally:
@@ -726,7 +726,7 @@ class Specialization(Proof):
                         requirementTruths.append(requirementTruth)
                         requirementTruthSet.add(requirementTruth)
                         _appendExtraAssumptions(assumptions, requirementTruth)
-                except:
+                except ProofFailure:
                     raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = generalTruth.assumptionsSet
@@ -738,7 +738,7 @@ class Specialization(Proof):
             self.requirementTruths = requirementTruths
             self.mappedVarLists = mappedVarLists
             self.mappings = mappings
-            specializedTruth = KnownTruth(specializedExpr, assumptions, self)
+            specializedTruth = KnownTruth(specializedExpr, assumptions)
             Proof.__init__(self, specializedTruth, [generalTruth] + requirementTruths)
         finally:
             # restore the original default assumptions
@@ -888,7 +888,7 @@ class Generalization(Proof):
         A Generalization step wraps a KnownTruth (instanceTruth) in one or more Forall operations.
         The number of Forall operations introduced is the number of lists in newForallVarLists.
         The conditions are introduced in the order they are given at the outermost level that is 
-n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the new 
+        applicable.  For example, if newForallVarLists is [[x, y], z]  and the new 
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
@@ -930,7 +930,7 @@ n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the 
             for assumption in assumptions:
                 if not assumption.freeVars().isdisjoint(introducedForallVars):
                     raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
-            generalizedTruth = KnownTruth(generalizedExpr, assumptions, self)
+            generalizedTruth = KnownTruth(generalizedExpr, assumptions)
             self.instanceTruth = instanceTruth
             self.newForallVars = newForallVars
             self.newConditions = newConditions
@@ -953,6 +953,9 @@ n        applicable.  For example, if newForallVarLists is [[x, y], z]  and the 
         lambdaExpr = generalizedExpr.operand
         assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
         expr = lambdaExpr.body
+        while expr != instanceExpr:
+            if not isinstance(expr, Forall): break
+            expr = expr.instanceExpr # take it another nested level if necessary
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
 
 class ProofFailure(Exception):
@@ -987,8 +990,9 @@ class GeneralizationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
 
-class UnusableProof(Exception):
+class UnusableProof(ProofFailure):
     def __init__(self, provingTheorem, unusableProof, extraMsg=''):
+        ProofFailure.__init__(self, unusableProof.provenTruth.expr, [], "Unusable Proof")
         self.provingTheorem = provingTheorem
         self.unusableProof = unusableProof
         self.extraMsg = '; ' + extraMsg
@@ -1005,10 +1009,18 @@ class UnusableProof(Exception):
         else:
             return 'Cannot use disabled proof for ' + self.unusableItemStr
 
-class CircularLogic(Exception):
+class CircularLogic(ProofFailure):
     def __init__(self, provingTheorem, presumedTheorem):
+        ProofFailure.__init__(self, presumedTheorem.provenTruth.expr, [], "Circular Logic")
         self.provingTheorem = provingTheorem
         self.presumedTheorem = presumedTheorem
     def __str__(self):
         return str(self.presumedTheorem) + ' cannot be presumed while proving ' + str(self.provingTheorem) + ' due to a circular dependence'
-        
+
+class CircularLogicLoop(ProofFailure):
+    def __init__(self, presumptionLoop):
+        assert presumptionLoop[0] == presumptionLoop[-1], "expecting a loop"
+        CircularLogic.__init__(self, KnownTruth.theoremBeingProven, presumptionLoop[0])
+        self.presumptionLoop = presumptionLoop
+    def __str__(self):
+        return "Circular presumption dependency detected: %s"%str(self.presumptionLoop)

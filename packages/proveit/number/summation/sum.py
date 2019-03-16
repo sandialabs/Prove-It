@@ -7,6 +7,7 @@ from proveit._common_ import a, f, P, S, QQ, xx
 class Sum(OperationOverInstances):
     # operator of the Sum operation.
     _operator_ = Literal(stringFormat='Sum', latexFormat=r'\sum', context=__file__)   
+    _init_argname_mapping_ = {'indexOrIndices':'instanceVarOrVars', 'summand':'instanceExpr'}
     
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
@@ -19,7 +20,9 @@ class Sum(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, styles=styles)
+        # nestMultiIvars=True will cause it to treat multiple instance variables as nested Sum operations internally
+        # and only join them together as a style consequence.
+        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True, styles=styles)
         if hasattr(self, 'instanceVar'):
             self.index = self.instanceVar
         if hasattr(self, 'instanceVars'):
@@ -54,30 +57,18 @@ class Sum(OperationOverInstances):
         else:
             raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
         return thm.specialize({P_op:P_op_sub, S:self.domain, Q_op:Q_op_sub}, relabelMap={xMulti:self.instanceVars}, 
-                                assumptions=assumptions).deriveConsequent(assumptions=assumptions)
-
-    @staticmethod
-    def extractInitArgValue(argName, operators, operands):
-        '''
-        Given a name of one of the arguments of the __init__ method,
-        return the corresponding value contained in the 'operands'
-        composite expression (i.e., the operands of a constructed operation).
-        '''
-        if argName=='indexOrIndices':
-            argName='instanceVarOrVars'
-        elif argName=='summand':
-            argName='instanceExpr'
-        return OperationOverInstances.extractInitArgValue(argName, operators, operands)
+                                assumptions=assumptions).deriveConsequent(assumptions=assumptions)    
     
     def _formatted(self, formatType, **kwargs):
+        # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
         fence = kwargs['fence'] if 'fence' in kwargs else False
         if isinstance(self.domain,Interval):
             lower = self.domain.lowerBound.formatted(formatType)
             upper = self.domain.upperBound.formatted(formatType)
             formattedInner = self.operator.formatted(formatType)+r'_{'+self.index.formatted(formatType)+'='+lower+r'}'+r'^{'+upper+r'} '
-            explicitIvars = self.explicitInstanceVars()
+            explicitIvars = list(self.explicitInstanceVars())
             hasExplicitIvars = (len(explicitIvars) > 0)
-            explicitConds = self.explicitConditions()
+            explicitConds = list(self.explicitConditions())
             hasExplicitConds = (len(explicitConds) > 0)
             if hasExplicitConds:
                 if hasExplicitIvars: 

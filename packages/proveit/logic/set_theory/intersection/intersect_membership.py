@@ -28,7 +28,7 @@ class IntersectMembership(Membership):
         operands = self.domain.operands
         return intersectionDef.specialize({m:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
     
-    def unfold(self, element, assumptions=USE_DEFAULTS):
+    def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From [element in (A intersection B ...)], derive and return [(element in A) and (element in B) ...],
         where self represents (A intersection B ...). 
@@ -59,7 +59,7 @@ class IntersectNonmembership(Nonmembership):
         Nonmembership.__init__(self, element)
         self.domain = domain
 
-    def equivalence(self, element, assumptions=USE_DEFAULTS):
+    def equivalence(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return [element not in (A intersect B ...)] = [(element not in A) or (element not in B) ...]
         where self = (A intersect B ...).

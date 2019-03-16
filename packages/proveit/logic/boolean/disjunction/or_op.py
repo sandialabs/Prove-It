@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit.logic.boolean.booleans import inBool
 from proveit._common_ import A, B, C, D, AA, CC, m, n
+from proveit.logic.boolean.booleans import inBool
 
 class Or(Operation):
     # The operator of the Or operation
@@ -215,7 +215,7 @@ class Or(Operation):
         from ._theorems_ import notLeftIfNeither
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return notLeftIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+        return notLeftIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)
 
     def deduceNotRightIfNeither(self, assumptions=USE_DEFAULTS):
         '''
@@ -224,7 +224,7 @@ class Or(Operation):
         from ._theorems_ import notRightIfNeither
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return notRightIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+        return notRightIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)
                                 
     def deriveCommonConclusion(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -302,16 +302,18 @@ class Or(Operation):
         Attempt to deduce, then return, that this 'or' expression is in the set of BOOLEANS.
         '''
         from ._theorems_ import binaryClosure, closure
+        from proveit.number import num
         if len(self.operands) == 2:
             return binaryClosure.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return closure.specialize({Amulti:self.operands}, assumptions=assumptions)
+            return closure.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
         
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
         From one true operand, conclude that this 'or' expression is true.
         Requires all of the operands to be in the set of BOOLEANS.
         '''
+        from proveit.number import num
         from ._theorems_ import orIfAny, orIfLeft, orIfRight
         index = self.operands.index(trueOperand)
         if len(self.operands) == 2:
@@ -319,4 +321,4 @@ class Or(Operation):
                 return orIfLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
             elif index == 1:
                 return orIfRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)                
-        return orIfAny.specialize({Amulti:self.operands[:index], B:self.operands[index], Cmulti:self.operands[index+1:]}, assumptions=assumptions)
+        return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)

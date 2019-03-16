@@ -1,6 +1,24 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented, ImproperSubstitution, ScopingViolation
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
+def getParamVar(parameter):
+    '''
+    Parameters may be variables, indexed variables, or iterations over indexed
+    variables.  If it is either of the latter, the associated, intrinsic
+    parameter variable (that is introduced in the new scopse) 
+    is the variable of the Indexed expression.
+    '''
+    from proveit._core_.expression.label import Variable
+    from proveit._core_.expression.composite import Iter, Indexed
+    if isinstance(parameter, Iter) and isinstance(parameter.lambda_map.body, Indexed):
+        return parameter.lambda_map.body.var
+    elif isinstance(parameter, Indexed):
+        return parameter.var
+    elif isinstance(parameter, Variable):
+        return parameter
+    else:
+        raise TypeError('parameters must be a Variables, Indexed variable, or iteration (Iter) over Indexed variables.')
+
 class Lambda(Expression):
     '''
     A lambda-function Expression.  A lambda function maps parameter(s) to
@@ -23,19 +41,9 @@ class Lambda(Expression):
         Expression (that may or may not be a Composite).  Zero or
         more expressions may be provided.
         '''
-        from proveit._core_.expression.composite import compositeExpression, singleOrCompositeExpression, Iter, Indexed
-        from proveit._core_.expression.label import Variable
+        from proveit._core_.expression.composite import compositeExpression, singleOrCompositeExpression, Iter
         self.parameters = compositeExpression(parameter_or_parameters)
-        parameterVars = list()
-        for parameter in self.parameters:
-            if isinstance(parameter, Iter) and isinstance(parameter.lambda_map.body, Indexed):
-                parameterVars.append(parameter.lambda_map.body.var)     
-            elif isinstance(parameter, Indexed):
-                parameterVars.append(parameter.var)
-            elif isinstance(parameter, Variable):
-                parameterVars.append(parameter)
-            else:
-                raise TypeError('parameters must be a Variables, Indexed variable, or iteration (Iter) over Indexed variables.')
+        parameterVars = [getParamVar(parameter) for parameter in self.parameters]
         if len(self.parameters) == 1:
             # has a single parameter
             self.parameter = self.parameters[0]

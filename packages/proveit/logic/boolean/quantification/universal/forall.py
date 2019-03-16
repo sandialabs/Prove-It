@@ -14,8 +14,9 @@ class Forall(OperationOverInstances):
         given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
         may be singular or plural (iterable).
         '''
-
-        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions)
+        # nestMultiIvars=True will cause it to treat multiple instance variables as nested Forall operations internally
+        # and only join them together as a style consequence.
+        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions, nestMultiIvars=True)
         
     def sideEffects(self, knownTruth):
         '''
@@ -31,10 +32,10 @@ class Forall(OperationOverInstances):
         and then generalizing.
         '''
         # first try to prove via generalization without automation
-        extra_assumptions = tuple(self.conditions)
+        extra_assumptions = tuple(self.inclusiveConditions())
         try:
-            proven_inst_expr = self.instanceExpr.prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions), automation=False)
-            return proven_inst_expr.generalize(self.instanceVars, conditions=self.conditions)
+            proven_inst_expr = self.explicitInstanceExpr().prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions), automation=False)
+            return proven_inst_expr.generalize(self.explicitInstanceVars(), conditions=extra_assumptions)
         except:
             pass
         # next try 'foldAsForall' on the domain (if applicable)
@@ -48,13 +49,12 @@ class Forall(OperationOverInstances):
                 pass
         # lastly, try to prove via generalization with automation
         try:
-            extra_assumptions = tuple(self.conditions)
-            proven_inst_expr = self.instanceExpr.prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions))
-            instanceVarLists = [self.instanceVars]
-            conditions = self.conditions
+            proven_inst_expr = self.explicitInstanceExpr().prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions))
+            instanceVarLists = [list(self.explicitInstanceVars())]
+            conditions = list(self.inclusiveConditions())
             # see if we can generalize multiple levels simultaneously for a shorter proof
             while isinstance(proven_inst_expr.proof(), Generalization):
-                instanceVarLists.append(proven_inst_expr.instanceVars)
+                instanceVarLists.append(list(proven_inst_expr.explicitInstanceVars()))
                 conditions += proven_inst_expr.conditions
                 proven_inst_expr = proven_inst_expr.proof().requiredTruths[0]
             return proven_inst_expr.generalize(forallVarLists=instanceVarLists, conditions=conditions)
@@ -71,7 +71,6 @@ class Forall(OperationOverInstances):
         For example, from forall_{A in BOOLEANS} P(A), derives P(TRUE) and P(FALSE).
         '''    
         assert self.hasDomain(), "Cannot unfold a forall statement with no domain"
-        assert len(self.instanceVars)==1, "Cannot unfold a forall statement with more than 1 instance variable (not implemented beyond this)"
         return self.domain.unfoldForall(self, assumptions)
     
     """
@@ -85,13 +84,13 @@ class Forall(OperationOverInstances):
         calling foldAsForall on the condition.
         For example, conclude forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
         '''    
+        from proveit import KnownTruth
         assert self.hasDomain(), "Cannot fold a forall statement with no domain"
         #assert len(self.instanceVars)==1, "Cannot fold a forall statement with more than 1 instance variable (not implemented beyond this)"
-        expr = self.unraveled()
-        truth = expr.domain.foldAsForall(expr, assumptions)
-        print(truth)
-        return truth.generalize(self.instanceVars, conditions=self.conditions)
-
+        #expr = self.unraveled()
+        return self.domain.foldAsForall(self, assumptions)
+        #print(truth)
+        #return truth.generalize(self.instanceVar, conditions=self.conditions)
     
     def deriveBundled(self, assumptions=USE_DEFAULTS):
         '''

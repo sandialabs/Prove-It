@@ -25,7 +25,6 @@ class BooleanSet(Literal):
         from .conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply forallEvaluation method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain"
-        assert(len(forallStmt.instanceVars) == 1), "May only apply forallEvaluation method of BOOLEANS to a forall statement with 1 instance variable"
         instanceVar = forallStmt.instanceVars[0]
         instanceExpr = forallStmt.instanceExpr
         P_op = Operation(P, instanceVar)
@@ -71,8 +70,7 @@ class BooleanSet(Literal):
         from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), "May only apply unfoldForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply unfoldForall method of Booleans to a forall statement with the Booleans domain"
-        assert(len(forallStmt.instanceVars) == 1), "May only apply unfoldForall method of Booleans to a forall statement with 1 instance variable"
-        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]): forallStmt.instanceExpr, A:forallStmt.instanceVars[0]}).deriveConsequent(assumptions)
+        return unfoldForallOverBool.specialize({Operation(P, forallStmt.instanceVar): forallStmt.instanceExpr, A:forallStmt.instanceVar}).deriveConsequent(assumptions)
 
     def foldAsForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
@@ -83,10 +81,10 @@ class BooleanSet(Literal):
         from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
-        assert(len(forallStmt.explicitConditions())==0), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain but no other conditions"
-        assert(len(forallStmt.instanceVars) == 1), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
+        assert(len(list(forallStmt.explicitConditions()))==0), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain but no other conditions"
+        assert(not hasattr(forallStmt, 'instanceVars')), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
         # forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)
-        return foldForallOverBool.specialize({Operation(P, forallStmt.instanceVars[0]):forallStmt.instanceExpr}, {A:forallStmt.instanceVars[0]})
+        return foldForallOverBool.specialize({Operation(P, forallStmt.instanceVar):forallStmt.instanceExpr}, {A:forallStmt.instanceVar})
 
 class BooleanMembership(Membership):
     '''
@@ -184,7 +182,7 @@ class TrueLiteral(Literal, IrreducibleValue):
         from ._axioms_ import trueAxiom
         return trueAxiom
     
-    def evalEquality(self, other):
+    def evalEquality(self, other, assumptions=USE_DEFAULTS):
         from ._theorems_ import trueEqTrue, trueNotFalse
         from ._common_ import TRUE, FALSE
         if other == TRUE:
@@ -192,7 +190,7 @@ class TrueLiteral(Literal, IrreducibleValue):
         elif other == FALSE:
             return trueNotFalse.unfold().equateNegatedToFalse()
 
-    def notEqual(self, other):
+    def notEqual(self, other, assumptions=USE_DEFAULTS):
         from ._theorems_ import trueNotFalse
         from ._common_ import TRUE, FALSE
         if other == FALSE:
@@ -209,7 +207,7 @@ class FalseLiteral(Literal, IrreducibleValue):
     def __init__(self):
         Literal.__init__(self, stringFormat='FALSE', latexFormat=r'\bot')
     
-    def evalEquality(self, other):
+    def evalEquality(self, other, assumptions=USE_DEFAULTS):
         from ._axioms_ import falseNotTrue
         from ._theorems_ import falseEqFalse
         from ._common_ import TRUE, FALSE
@@ -222,7 +220,7 @@ class FalseLiteral(Literal, IrreducibleValue):
         from proveit.logic.boolean.negation._theorems_ import notFalse
         return notFalse # the negation of FALSE
 
-    def notEqual(self, other):
+    def notEqual(self, other, assumptions=USE_DEFAULTS):
         from _.theorems_ import falseNotTrue
         from ._common_ import TRUE, FALSE
         if other == TRUE:

@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
-from proveit.logic.boolean.booleans import inBool
 from proveit._common_ import m, n, A, B, AA, CC
+from proveit.logic.boolean.booleans import inBool
 
 class And(Operation):
     # The operator of the And operation
@@ -114,7 +114,7 @@ class And(Operation):
         if len(self.operands) == 2:
             rightInBool.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
-    def deducePartsInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
+    def deducePartsInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce A in Booleans, B in Booleans, ..., Z in Booleans
         from (A and B and ... and Z) in Booleans.
@@ -144,6 +144,7 @@ class And(Operation):
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
+        from proveit.number import num
         from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations    
         from proveit.logic.boolean._common_ import TRUE, FALSE
         falseIndex = -1
@@ -175,6 +176,7 @@ class And(Operation):
         (convenient especially when there are just two operands).
         Derives and returns the new conjunction operation from the original.
         '''
+        from proveit.number import num
         from ._theorems_ import binaryCommutation, andCommutation
         if startIdx1 is None and endIdx1 is None and startIdx2 is None and endIdx2 is None:
             stattIdx1, endIdx1, startIdx2, endIdx2 = 0, 1, 1, None
@@ -201,8 +203,13 @@ class And(Operation):
         '''
         Attempt to deduce, then return, that this 'and' expression is in the set of BOOLEANS.
         '''
-        from ._theorems_ import conjunctionClosure
-        return conjunctionClosure.specialize({Amulti:self.operands}, assumptions=assumptions)
+        
+        from ._theorems_ import binaryClosure, closure
+        if len(self.operands)==2:
+            return binaryClosure.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        else:
+            from proveit.number import num    
+        return closure.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
     
 def compose(expressions, assumptions=USE_DEFAULTS):
     '''
@@ -213,5 +220,6 @@ def compose(expressions, assumptions=USE_DEFAULTS):
         from ._theorems_ import andIfBoth
         return andIfBoth.specialize({A:expressions[0], B:expressions[1]}, assumptions=assumptions)
     else:
+        from proveit.number import num
         from ._theorems_ import andIfAll
-        return andIfAll.specialize({Amulti:expressions}, assumptions=assumptions)
+        return andIfAll.specialize({m:num(len(expressions)), AA:expressions}, assumptions=assumptions)

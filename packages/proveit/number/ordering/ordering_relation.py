@@ -17,7 +17,7 @@ class OrderingRelation(TransitiveRelation):
         '''
         for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
             yield sideEffect
-        yield self.deriveNegated
+        #yield self.deriveNegated # Needs to be implemented (again)
         if hasattr(self, 'deriveRelaxed'):
             yield self.deriveRelaxed
         yield self.deriveReversed

@@ -67,7 +67,7 @@ class Equals(TransitiveRelation):
             # derive lhs => FALSE from lhs = FALSE
             yield self.deriveContradiction
             # derive lhs from Not(lhs) = FALSE, if self is in this form
-            yield self.deriveViaFalsifiedNegation
+            #yield self.deriveViaFalsifiedNegation
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             yield self.deriveViaBooleanEquality
@@ -99,9 +99,21 @@ class Equals(TransitiveRelation):
             except ProofFailure:
                 pass
         if isIrreducibleValue(self.rhs):
-            return self.lhs.evaluation()
+            try:
+                evaluation = self.lhs.evaluation()
+                if evaluation.rhs != self.rhs:
+                    raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
+                return evaluation
+            except EvaluationError as e:
+                raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
         elif isIrreducibleValue(self.lhs):
-            return self.rhs.evaluation().deriveReversed()
+            try:
+                evaluation = self.rhs.evaluation()
+                if evaluation.rhs != self.lhs:
+                    raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
+                return evaluation.deriveReversed()
+            except EvaluationError as e:
+                raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
             Implies(self.rhs, self.lhs).prove(assumptions, automation=False)
@@ -235,6 +247,7 @@ class Equals(TransitiveRelation):
         from proveit.logic.boolean.implication import denyViaContradiction
         return denyViaContradiction(self, conclusion, assumptions)
             
+    """
     def deriveViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
         '''
         From Not(A)=FALSE, derive A.
@@ -244,6 +257,7 @@ class Equals(TransitiveRelation):
         if isinstance(self.lhs, Not) and self.rhs == FALSE:
             return falsifiedNegationElim.specialize({A:self.lhs.operand}, assumptions=assumptions)
         raise ValueError('Equals.deriveViaContradiction is only applicable if the left-hand-side is a Not operation and the right-hand-side is FALSE')
+    """
         
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
@@ -255,11 +269,13 @@ class Equals(TransitiveRelation):
             return eqTrueIntro.specialize({A:self.lhs}, assumptions=assumptions)
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
-                return self.lhs.evaluation(assumptions=assumptions)
+                evaluation = self.lhs.evaluation(assumptions=assumptions)
+                if evaluation.rhs == self.rhs:
+                    return evaluation
             else:
                 return Not(self.lhs).equateNegatedToFalse(assumptions)
         elif self.lhs == TRUE or self.lhs == FALSE:
-            return Equals(self.rhs, self.lhs).prove(assumptions).deriveReversed(assumptions)
+            return Equals(self.rhs, self.lhs).concludeBooleanEquality(assumptions).deriveReversed(assumptions)
         raise ProofFailure(self, assumptions, "May only conclude via boolean equality if one side of the equality is TRUE or FALSE")
     
     def deriveIsInSingleton(self, assumptions=USE_DEFAULTS):

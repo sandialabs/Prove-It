@@ -14,7 +14,9 @@ class NotExists(OperationOverInstances):
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
         '''
-        OperationOverInstances.__init__(self, NotExists._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions)
+        # nestMultiIvars=True will cause it to treat multiple instance variables as nested NotExists operations internally
+        # and only join them together as a style consequence.
+        OperationOverInstances.__init__(self, NotExists._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions, nestMultiIvars=True)
 
     def sideEffects(self, knownTruth):
         '''
