@@ -24,7 +24,7 @@ class Operation(Expression):
         from proveit._core_.expression.label.label import Label
         if hasattr(self.__class__, '_operator_') and operator_or_operators==self.__class__._operator_:
             operator = operator_or_operators
-            if Expression.contexts[operator] != operator.context:
+            if Expression.contexts[operator._style_id] != operator.context:
                 raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
         self.operator_or_operators = singleOrCompositeExpression(operator_or_operators)
         self.operand_or_operands = singleOrCompositeExpression(operand_or_operands)
@@ -87,9 +87,9 @@ class Operation(Expression):
         if hasattr(operationClass, '_operator_'):
             return operationClass._operator_
         return None
-
-    @staticmethod
-    def extractInitArgValue(argName, operator_or_operators, operand_or_operands):
+    
+    @classmethod
+    def extractInitArgValue(operationClass, argName, operator_or_operators, operand_or_operands):
         '''
         Given a name of one of the arguments of the __init__ method,
         return the corresponding value contained in the 'operands'
@@ -99,18 +99,39 @@ class Operation(Expression):
         into the __init__ method.
         '''
         raise NotImplementedError("'extractInitArgValue' must be appropriately implemented if __init__ arguments do not fall into a simple 'default' scenario")
+
+    def extractMyInitArgValue(self, argName):
+        '''
+        Given a name of one of the arguments of the __init__ method,
+        return the corresponding value appropriate for reconstructing self.
+        The default calls the extractInitArgValue static method.  Overload
+        this when the most proper way to construct the expression is style
+        dependent.  Then "remakeArguments" will use this overloaded method.
+        "_make" will do it via the static method but will fix the styles
+        afterwards.
+        '''
+        return self.__class__.extractInitArgValue(argName, self.operator_or_operators, self.operand_or_operands)
+
+    def _extractMyInitArgs(self):
+        '''
+        Call the _extractInitArgs class method but will set "obj" to "self".
+        This will cause extractMyInitArgValue to be called instead of
+        the extractInitArgValue static method.
+        '''
+        return self.__class__._extractInitArgs(self.operator_or_operators, self.operand_or_operands, obj=self)
     
     @classmethod
-    def _extractInitArgs(operationClass, operator_or_operators, operand_or_operands):
+    def _extractInitArgs(operationClass, operator_or_operators, operand_or_operands, obj=None):
         '''
         For a particular Operation class and given operator(s) and operand(s),
         yield (name, value) pairs to pass into the initialization method
         for creating the operation consistent with the given operator(s) and operand(s).
         
-        First attempt to call 'extractInitArgValue' for each of the __init__
-        arguments to determine how to generate the appropriate __init__ parameters
-        from the given operators and operands.  If that is not implemented,
-        fall back to one of the following default scenarios.
+        First attempt to call 'extractInitArgValue' (or 'extractMyInitArgValue' if
+        'obj' is provided) for each of the __init__ arguments to determine how
+        to generate the appropriate __init__ parameters from the given operators
+        and operands.  If that is not implemented, fall back to one of the 
+        following default scenarios.
         
         If the particular Operation class has an 'implicit operator' defined
         via an _operator_ attribute and the number of __init__ arguments matches the
@@ -145,11 +166,14 @@ class Operation(Expression):
         if len(args)>0 and args[-1]=='styles':
             args = args[:-1] # NOT TREATING 'styles' FULLY AT THIS TIME; THIS NEEDS WORK.
             defaults = defaults[:-1]
-        
+        if obj is None:
+            extract_init_arg_value_fn = lambda arg : operationClass.extractInitArgValue(arg, operator_or_operators, operand_or_operands)
+        else:
+            extract_init_arg_value_fn = lambda arg : obj.extractMyInitArgValue(arg)
         try:
-            arg_vals = [operationClass.extractInitArgValue(arg, operator_or_operators, operand_or_operands) for arg in args]
+            arg_vals = [extract_init_arg_value_fn(arg) for arg in args]
             if varargs is not None:
-                arg_vals += operationClass.extractInitArgValue(varargs, operator_or_operators, operand_or_operands)
+                arg_vals += extract_init_arg_value_fn(varargs)
             if defaults is None: defaults = []
             for k, (arg, val) in enumerate(zip(args, arg_vals)):
                 if len(defaults)-len(args)+k < 0:
@@ -162,11 +186,11 @@ class Operation(Expression):
                     else:
                         yield (arg, val) # override the default
             if varkw is not None:
-                kw_arg_vals = operationClass.extractInitArgValue(varkw, operator_or_operators, operand_or_operands)
+                kw_arg_vals = extract_init_arg_value_fn(varkw)
                 for arg, val in kw_arg_vals.items():
                     yield (arg, val)
         except NotImplementedError:
-            if (varkw is None) and (operationClass.extractInitArgValue == Operation.extractInitArgValue):
+            if (varkw is None): # and (operationClass.extractInitArgValue == Operation.extractInitArgValue):
                 # try some default scenarios (that do not involve keyword arguments)
                 # handle default implicit operator case
                 if implicit_operator and ((len(args)==0 and varargs is not None) or \
@@ -202,7 +226,6 @@ class Operation(Expression):
         and check that the operator is consistent.  Override this method
         if a different behavior is desired.
         '''
-        from proveit._core_.expression.composite.composite import compositeExpression
         if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
             raise ValueError("Expecting Operation coreInfo to contain exactly one item: 'Operation'")
         if len(subExpressions) == 0:
@@ -223,8 +246,7 @@ class Operation(Expression):
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Operation.
         '''
-        operationClass = self.__class__
-        for arg in operationClass._extractInitArgs(self.operator_or_operators, self.operand_or_operands):
+        for arg in self._extractMyInitArgs():
             yield arg
 
     def remakeWithStyleCalls(self):

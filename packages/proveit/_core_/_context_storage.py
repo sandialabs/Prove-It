@@ -91,7 +91,7 @@ class ContextStorage:
             for k, line in enumerate(f.readlines()):
                 self.subContextNames.append(line.strip())
 
-        # map expression objects to special expression kind and name
+        # map expression style ids to special expression kind and name
         # for the associated context (the kind is 'common', 'axiom', or 'theorem').
         self.specialExpressions = dict()
         
@@ -244,9 +244,9 @@ class ContextStorage:
             for name in exprNames:
                 expr = exprDefinitions[name]
                 # record the special expression in this context object
-                if expr not in Expression.contexts:  
+                if expr._style_id not in Expression.contexts:  
                     expr._setContext(self.context)
-                self.specialExpressions[expr] = ('common', name) 
+                self.specialExpressions[expr._style_id] = ('common', name) 
                 # get the expression id to be stored on 'commons.pv_it'           
                 expr_id = self._proveItStorageId(expr)
                 if expr_id in old_expr_ids:
@@ -313,9 +313,9 @@ class ContextStorage:
                 f.write(name + '\n')
                 expr = definitions[name]
                 # record the special expression in this context object
-                if expr not in Expression.contexts:  
+                if expr._style_id not in Expression.contexts:  
                     expr._setContext(self.context)
-                    self.specialExpressions[expr] = (kind, name)            
+                    self.specialExpressions[expr._style_id] = (kind, name)            
                 # add the expression to the "database" via the storage object.
                 expr_id = self._proveItStorageId(expr)
                 if name in previousDefIds and previousDefIds[name] == expr_id:
@@ -350,9 +350,9 @@ class ContextStorage:
             with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
                 expr_id = f.read()
                 expr = self.makeExpression(expr_id)
-                if expr not in Expression.contexts:  
+                if expr._style_id not in Expression.contexts:  
                     expr._setContext(self.context)
-                    self.specialExpressions[expr] = (kind, name)
+                    self.specialExpressions[expr._style_id] = (kind, name)
                 return expr
         except IOError:
             raise KeyError("%s of name '%s' not found"%(kind, name))        
@@ -387,9 +387,9 @@ class ContextStorage:
             expr = self.makeExpression(self._common_expr_ids[name])
         finally:
             Context.default = prev_context_default # reset the default Context 
-        if expr not in Expression.contexts:
+        if expr._style_id not in Expression.contexts:
             expr._setContext(self.context)
-        self.specialExpressions[expr] = ('common', name)
+        self.specialExpressions[expr._style_id] = ('common', name)
         self._loadedCommonExprs[name] = expr
         return expr
     
@@ -422,8 +422,8 @@ class ContextStorage:
         Return the png data and relative url where the png is stored as a tuple.
         '''
         from proveit import Expression
-        if expr in Expression.contexts and Expression.contexts[expr] != self.context:
-            return Expression.contexts[expr]._stored_png(expr, latex, configLatexToolFn)
+        if expr._style_id in Expression.contexts and Expression.contexts[expr._style_id] != self.context:
+            return Expression.contexts[expr._style_id]._stored_png(expr, latex, configLatexToolFn)
         (context, hash_directory) = self._retrieve(expr)
         assert context==self.context, "How did the context end up different from expected??"
         # generate the latex and png file paths, from pv_it_filename and the distinction 
@@ -646,9 +646,9 @@ class ContextStorage:
             return self._proveItObjects[proveItObject._style_id]
         if isinstance(proveItObject, Expression):
             expr = proveItObject
-            if expr in Expression.contexts and Expression.contexts[expr] != self.context:
+            if expr._style_id in Expression.contexts and Expression.contexts[expr._style_id] != self.context:
                 # stored in a different context
-                return Expression.contexts[expr]._storage._retrieve(proveItObject)
+                return Expression.contexts[expr._style_id]._storage._retrieve(proveItObject)
         elif hasattr(proveItObject, 'context') and proveItObject.context != self.context:
             # stored in a different context
             return proveItObject.context._storage._retrieve(proveItObject)
@@ -755,16 +755,16 @@ class ContextStorage:
         # way we will know whether we can use the abbreviated name or full address.
         named_items = dict() 
         self._exprBuildingPrerequisites(expr, expr_classes_and_constructors, unnamed_subexpr_occurences, named_subexpr_addresses, named_items, isSubExpr=False)
-        # find sub-expressions that are used multiple times, these ones will be assigned to a variable
+        # find sub-expression style ids that are used multiple times, these ones will be assigned to a variable
         multiuse_subexprs = [sub_expr for sub_expr, count in unnamed_subexpr_occurences.items() if count > 1]
         # sort the multi-use sub-expressions so that the shallower ones come first
-        multiuse_subexprs = sorted(multiuse_subexprs, key = lambda expr : expressionDepth(expr))
+        multiuse_subexprs = sorted(multiuse_subexprs, key = lambda expr_and_styleid : expressionDepth(expr_and_styleid[0]))
         
         # map modules to lists of objects to import from the module
         from_imports = dict()
         # set of modules to import directly
         direct_imports = set()
-        # map from expression classes or special expressions to their names (abbreviated if there is no
+        # map from expression classes or expression style ids to their names (abbreviated if there is no
         # ambiguity, otherwise using the full address).
         item_names = dict() 
         
@@ -779,18 +779,18 @@ class ContextStorage:
             else:
                 direct_imports.add(module_name)
                 item_names[expr_class] = module_name+'.'+constructor
-        for namedExpr, namedExprAddress in named_subexpr_addresses.items():
+        for namedExprAndStyleId, namedExprAddress in named_subexpr_addresses.items():
             if isinstance(namedExprAddress[0], str):
                 # Must be a special expression (axiom, theorem, or common expression)
                 module_name = namedExprAddress[0]
-                item_names[namedExpr] = itemName = namedExprAddress[-1]
+                item_names[namedExprAndStyleId] = itemName = namedExprAddress[-1]
                 objName = itemName.split('.')[0] # split of '.expr' part if it is a Theorem or Axiom KnownTruth
                 module_name = self._moduleAbbreviatedName(module_name, objName)
                 is_unique = (len(named_items[itemName]) == 1)
                 from_imports.setdefault(module_name, []).append(objName)
             else:
                 # Expression must be an attribute of a class (e.g., '_operator_')
-                item_names[namedExpr] = item_names[namedExprAddress[0]] + '.' + namedExprAddress[1]
+                item_names[namedExprAndStyleId] = item_names[namedExprAddress[0]] + '.' + namedExprAddress[1]
                 
         # see if we need to add anything to the sys.path
         needs_root_path = False # needs the root of this context addedS
@@ -835,13 +835,14 @@ class ContextStorage:
         # generate the code for building the expression
         expr_code = ''
         idx = 0
-        for sub_expr in multiuse_subexprs:
+        for sub_expr_and_style_id in multiuse_subexprs:
+            sub_expr, sub_expr_style_id = sub_expr_and_style_id
             if hasattr(sub_expr, 'context') and sub_expr.context is not None:
                 continue # this expression is pulled from a context and does not need to be built
             idx += 1
             sub_expr_name = 'subExpr%d'%idx
             expr_code += sub_expr_name + ' = ' + json.dumps(self._exprBuildingCode(sub_expr, item_names, isSubExpr=True)).strip('"') + '\\n",\n\t"'
-            item_names[sub_expr] = sub_expr_name
+            item_names[sub_expr_and_style_id] = sub_expr_name
         expr_code += 'expr = ' + json.dumps(self._exprBuildingCode(expr, item_names, isSubExpr=False)).strip('"')
         
         # link to documentation for the expression's type
@@ -927,24 +928,24 @@ class ContextStorage:
             operationClass = Operation.operationClassOfOperator[expr]
             exprClassesAndConstructors.add((operationClass, operationClass.__name__))
             namedItems.setdefault(operationClass.__name__, set()).add(operationClass)
-            namedSubExprAddresses[operationClass._operator_] = (operationClass, '_operator_')
+            namedSubExprAddresses[(operationClass._operator_, operationClass._operator_._style_id)] = (operationClass, '_operator_')
             return
             
-        if expr in Expression.contexts:
+        if expr._style_id in Expression.contexts:
             # expr may be a special expression from a context
             try:
                 # if it is a special expression in a context, 
                 # we want to be able to address it as such.
-                exprAddress = Expression.contexts[expr].specialExprAddress(expr)
-                namedSubExprAddresses[expr] = exprAddress[1:]
+                exprAddress = Expression.contexts[expr._style_id].specialExprAddress(expr)
+                namedSubExprAddresses[(expr, expr._style_id)] = exprAddress[1:]
                 namedItems.setdefault(exprAddress[-1], set()).add(expr)
                 return
             except KeyError:
                 pass
         
         # add to the unnamed sub-expression count
-        unnamedSubExprOccurences[expr] = unnamedSubExprOccurences.get(expr, 0) + 1
-        if unnamedSubExprOccurences[expr] > 1:
+        unnamedSubExprOccurences[(expr, expr._style_id)] = unnamedSubExprOccurences.get((expr, expr._style_id), 0) + 1
+        if unnamedSubExprOccurences[(expr, expr._style_id)] > 1:
             return # already visited this -- no need to reprocess it
         
         if not isSubExpr or expr.__class__ not in (ExprList, NamedExprs, ExprTensor): 
@@ -1001,9 +1002,9 @@ class ContextStorage:
                 
         if expr is None: return 'None' # special 'None' case
         
-        if expr in itemNames:
+        if (expr, expr._style_id) in itemNames:
             # the expression is simply a named item
-            return itemNames[expr]
+            return itemNames[(expr, expr._style_id)]
         
         def argToString(arg):
             if isinstance(arg, str): 
@@ -1185,7 +1186,7 @@ class ContextStorage:
             expr_class_map[exprClassStr] = getattr(module, split_expr_class[-1])
         def exprBuilderFn(exprClassStr, exprInfo, styles, subExpressions, context):
             expr = expr_class_map[exprClassStr]._make(exprInfo, styles, subExpressions)
-            if context is not None and expr not in Expression.contexts:
+            if context is not None and expr._style_id not in Expression.contexts:
                 expr._setContext(context)
                 # see if it is a special expression with an addressable name.
                 # if so, note the address for future reference (in self.specialExpressions)
@@ -1198,7 +1199,7 @@ class ContextStorage:
                         name = nameFile.read()
                     with open(special_expr_kind_filename, 'r') as kindFile:
                         kind = kindFile.read()
-                    context._storage.specialExpressions[expr] = (kind, name)                    
+                    context._storage.specialExpressions[expr._style_id] = (kind, name)                    
             return expr
         return self._makeExpression(exprId, importFn, exprBuilderFn)
         
@@ -1655,14 +1656,21 @@ class StoredTheorem(StoredSpecialStmt):
                     presumptions.append(presumption)
         return presumptions        
     
-    def getRecursivelyPresumedTheorems(self, presumed_theorems):
+    def getRecursivelyPresumedTheorems(self, presumed_theorems, presumption_chain=None):
         '''
         Append presumed theorem objects to 'presumed_theorems'.
         For each theorem, do this recursively.
+        presumption_chain is used internally to detect and reveal
+        circular dependencies.
         '''
         from .context import Context
+        from .proof import CircularLogicLoop
         # first get the directly presumed theorems
         presumptions = self.directlyPresumedTheorems()
+        if presumption_chain is None:
+            presumption_chain = [str(self)]
+        else:
+            presumption_chain.append(str(self))
         # Iterate through each presuming string and add it as
         # a context name or a theorem.  For theorem's, recursively
         # add the presuming information.
@@ -1671,10 +1679,13 @@ class StoredTheorem(StoredSpecialStmt):
                 raise ValueError("'presumptions' should be a collection of strings for context names and/or full theorem names")
             context_name, theorem_name = presumption.rsplit('.', 1)
             thm = Context.getContext(context_name).getTheorem(theorem_name)
+            if str(thm) in presumption_chain:
+                index = presumption_chain.index(str(thm))
+                raise CircularLogicLoop(presumption_chain[index:]+[str(thm)])
             # add the theorem and anything presumed by that theorem to the set of presumed theorems/contexts
             if thm not in presumed_theorems:
                 presumed_theorems.add(thm)
-                thm.getRecursivelyPresumedTheorems(presumed_theorems)
+                thm._storedTheorem().getRecursivelyPresumedTheorems(presumed_theorems, list(presumption_chain))
     
     def recordProof(self, proof):
         '''

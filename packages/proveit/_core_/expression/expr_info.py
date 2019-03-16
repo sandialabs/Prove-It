@@ -104,7 +104,7 @@ class ExpressionInfo:
         expr_num_map = {expr:k for k, expr in enumerate(enumerated_expressions)}
         
         # map each sub-Expression to an appropriate Context
-        expr_context_map = {expr : Expression.contexts.get(expr, None) for expr in enumerated_expressions}
+        expr_context_map = {expr : Expression.contexts.get(expr._style_id, None) for expr in enumerated_expressions}
         
         # generate the html as a table with the enumerated expressions on the rows.
         html = '<table><tr><th>&nbsp;</th><th>core type</th><th>sub-expressions</th><th>expression</th></tr>\n'

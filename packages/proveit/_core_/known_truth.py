@@ -84,9 +84,9 @@ class KnownTruth:
     in_progress_to_derive_sideeffects = set() 
 
 
-    def __init__(self, expression, assumptions, proof):
+    def __init__(self, expression, assumptions):
         '''
-        Create a KnownTruth with the given Expression, set of as_sumptions, and proof.  These
+        Create a KnownTruth with the given Expression, set of assumptions.  These
         should not be created manually but rather through the creation of Proofs which should
         be done indirectly via Expression/KnownTruth derivation-step methods.
         '''
@@ -97,8 +97,6 @@ class KnownTruth:
         for assumption in assumptions:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
-        if not isinstance(proof, Proof):
-            raise ValueError('The proof of a KnownTruth should be a Proof')
         
         # note: these contained expressions are subject to style changes on a KnownTruth instance basis
         self.expr = expression
@@ -158,6 +156,7 @@ class KnownTruth:
         Derive any side-effects that are obvious consequences arising from this truth.
         Called after the corresponding Proof is complete.
         '''
+        from .proof import ProofFailure
         if not defaults.automation:
             return # automation disabled
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
@@ -170,8 +169,10 @@ class KnownTruth:
                     # use the default assumptions which are temporarily set to the
                     # assumptions utilized in the last derivation step.
                     sideEffect(assumptions=defaults.assumptions)     
-                except:
+                except ProofFailure:
                     pass
+                except Exception as e:
+                    raise Exception("Side effect failure for %s: "%str(self.expr) + str(e))
             KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
             KnownTruth.sideeffect_processed.add((self, defaults.assumptions))
 
@@ -243,7 +244,7 @@ class KnownTruth:
                     pass
             # it must not be a theorem; it should be a Context.
             presumed_contexts.append(presumption) # not a theorem; must be a context
-
+        
         theorem.recordPresumedContexts(sorted(presumed_contexts))
         theorem.recordPresumedTheorems(sorted(presumed_thms))
         if justRecordPresumingInfo: return self.expr
@@ -251,6 +252,11 @@ class KnownTruth:
         print("Recorded 'presuming' information")        
         presumed_theorems = set()
         theorem.getRecursivelyPresumedTheorems(presumed_theorems)
+
+        if self in presumed_thms:
+            from .proof import CircularLogic
+            # extra sanity check (should be caught within getRecursivelyPresumedTheorems)
+            raise CircularLogic(theorem, theorem)
         
         KnownTruth.theoremBeingProven = theorem
         KnownTruth.presumingTheorems = set(presumed_theorems)
@@ -594,6 +600,23 @@ class KnownTruth:
         '''
         return sorted(set(dir(self.__class__) + list(self.__dict__.keys()) + dir(self.expr)))
 
+    def withMatchingStyles(self, expr, assumptions):
+        '''
+        Alter the styles of the KnownTruth expression and any of its assumptions
+        to match the given styles.
+        '''
+        self.expr.withMatchingStyle(expr)
+        # storing the assumptions in a trivial dictionary will be useful for popping them out.
+        assumptions_dict = {assumption:assumption for assumption in assumptions}
+        for assumption in self.assumptions:
+            if assumption in assumptions_dict:
+                assumption.withMatchingStyle(assumptions_dict.pop(assumption))
+        proof = self.proof()
+        if proof is not None:
+            if proof.provenTruth._style_id != self._style_id:
+                proof.provenTruth.withMatchingStyles(expr, assumptions)
+        return self
+    
     @staticmethod
     def findKnownTruth(expression, assumptionsSet):
         '''
@@ -669,8 +692,9 @@ class KnownTruth:
                 self.raiseUnusableProof()
             return alternate.specialize(specializeMap, relabelMap, assumptions)
         
-        # if no specializeMap is provided, specialize a single Forall with default mappings (mapping instance variables to themselves)
-        if specializeMap is None: specializeMap = dict()
+        # if no specializeMap is provided, specialize the "explicitInstanceVars" of the Forall with default mappings 
+        # (mapping instance variables to themselves)
+        if specializeMap is None: specializeMap = {ivar:ivar for ivar in self.explicitInstanceVars()}
         if relabelMap is None: relabelMap = dict()
                 
         # Include the KnownTruth assumptions along with any provided assumptions

@@ -29,7 +29,7 @@ class ExprType(type):
 class Expression(metaclass=ExprType):
     displayed_expression_styles = set() 
     
-    # map expression to contexts (for expressions that "belong" to a Context)
+    # map expression style ids to contexts (for expressions that "belong" to a Context)
     contexts = dict() 
     
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
@@ -70,9 +70,8 @@ class Expression(metaclass=ExprType):
         
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
-        if not hasattr(self._meaningData, 'styles'):
-            # initialize the data of self._styleData
-            self._styleData.styles = dict(styles) # formatting style options that don't affect the meaning of the expression
+        # initialize the style options
+        self._styleData.styles = dict(styles) # formatting style options that don't affect the meaning of the expression
 
         # reference this unchanging data of the unique 'meaning' data
         self._meaning_id = self._meaningData._unique_id
@@ -98,13 +97,13 @@ class Expression(metaclass=ExprType):
         Assign a Context to this expression.
         '''
         self.context = context
-        Expression.contexts[self] = context
+        Expression.contexts[self._style_id] = context
         """
         # Commenting this out because this make a strange first-come, first-serve
         # context assignment that might keep changing expression representations around;
         # that can be a nuisance for version controlling the Prove-It notebooks.
         for sub_expr in self._subExpressions:
-            if sub_expr not in Expression.contexts:
+            if sub_expr._style_id not in Expression.contexts:
                 sub_expr._setContext(context)
         """
     
@@ -280,6 +279,20 @@ class Expression(metaclass=ExprType):
         self._styleData.updateStyles(self, styles)
         return self
     
+    def withMatchingStyle(self, expr_with_different_style):
+        '''
+        Alter the styles of this expression to match that of the
+        given "expr_with_different_style".
+        '''
+        if self != expr_with_different_style:
+            raise ValueError("'withMatchingStyle' must be given an expression with the same meaning")
+        if self._style_id == expr_with_different_style._style_id:
+            return # no difference in style actually; do nothing
+        for my_sub_expr, other_sub_expr in zip(self.subExprIter(), expr_with_different_style.subExprIter()):
+            my_sub_expr.withMatchingStyle(other_sub_expr)
+        self.withStyles(**expr_with_different_style.getStyles())
+        return self
+    
     def styleNames(self):
         '''
         Return the name of the styles that may be set.
@@ -353,6 +366,7 @@ class Expression(metaclass=ExprType):
         #   (may not matter, but just in case).
         foundTruth = KnownTruth.findKnownTruth(self, (assumptionsSet - {'*'}))
         if foundTruth is not None: 
+            foundTruth.withMatchingStyles(self, assumptions) # give it the appropriate style
             return foundTruth # found an existing KnownTruth that does the job!
                 
         if self in assumptionsSet or '*' in assumptionsSet:
@@ -382,7 +396,7 @@ class Expression(metaclass=ExprType):
                 try:
                     # first attempt to prove via implication
                     concludedTruth = self.concludeViaImplication(assumptions)
-                except:
+                except ProofFailure:
                     # try the 'conclude' method of the specific Expression class
                     concludedTruth = self.conclude(assumptions)
             if concludedTruth is None:
@@ -390,10 +404,12 @@ class Expression(metaclass=ExprType):
             if not isinstance(concludedTruth, KnownTruth):
                 raise ValueError("'conclude' method should return a KnownTruth (or raise an exception)")
             if concludedTruth.expr != self:
-                raise ValueError("'conclude' method should return a KnownTruth for this Expression object.")
+                raise ValueError("'conclude' method should return a KnownTruth for this Expression object: " + str(concludedTruth.expr) + " does not match " + str(self))
             if not concludedTruth.assumptionsSet.issubset(assumptionsSet):
                 raise ValueError("While proving " + str(self) + ", 'conclude' method returned a KnownTruth with extra assumptions: " + str(set(concludedTruth.assumptions) - assumptionsSet))
-            return concludedTruth
+            if concludedTruth.expr._style_id == self._style_id:
+                return concludedTruth # concludedTruth with the same style as self.
+            return concludedTruth.withMatchingStyles(self, assumptions) # give it the appropriate style
         except NotImplementedError:
             raise ProofFailure(self, assumptions, "'conclude' method not implemented for proof automation")
         finally:

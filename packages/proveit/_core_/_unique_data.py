@@ -51,9 +51,13 @@ class _StyleData:
         while len(set_to_update) > 0:
             obj, obj_id = set_to_update.pop()
             set_to_update.update(_StyleData.parent_map.get(id(obj), set())) # its parents must also be updated
-            if styles is None:
-                styles = dict(obj._styleData.styles)
-            style_rep = obj._generate_unique_rep(lambda o : hex(o._style_id), styles=styles)
+            if hasattr(obj._styleData, 'styles'):
+                if styles is None:
+                    styles = dict(obj._styleData.styles)
+                style_rep = obj._generate_unique_rep(lambda o : hex(o._style_id), styles=styles)
+            else:
+                # styles only apply to Expression objects
+                style_rep = obj._generate_unique_rep(lambda o : hex(o._style_id))
             style_data = styleData(style_rep)
             style_data.styles = styles
             styles=None # only use these styles as the base level
