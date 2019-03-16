@@ -1,46 +1,35 @@
-from proveit import Literal, OperationOverInstances, Operation, ExprList, USE_DEFAULTS
+from proveit import Literal, OperationOverInstances, Operation, ExprList, singleOrCompositeExpression, USE_DEFAULTS
 from proveit._common_ import x, y, f, P, Q, QQ, S, yy
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
     _operator_ = Literal(stringFormat='Set', context=__file__)    
+    _init_argname_mapping_ = {'instanceElement':'instanceExpr'}
     
-    def __init__(self, instanceVar, instanceElement, domain, conditions=tuple()):
+    def __init__(self, instanceVarOrVars, instanceElement, domain=None, domains=None, conditions=tuple()):
         '''
-        Create an expression representing the set of all instanceElement for instanceVars such that the conditions are satisfied:
-        {instanceElement | conditions}_{instanceVar \in S}
+        Create an expression representing the set of all instanceElement for instanceVar(s) such that the conditions are satisfied:
+        {instanceElement | conditions}_{instanceVar(s) \in S}
         '''
-        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVar, instanceElement, domain=domain, conditions=conditions)
+        # nestMultiIvars=False will ensure it does NOT treat multiple instance variables as 
+        # nested SetOfAll operations -- that would not make sense.
+        # (unlike forall, exists, summation, and product where it does make sense).
+        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVarOrVars, instanceElement, domain=domain, conditions=conditions, nestMultiIvars=False)
         self.instanceElement = self.instanceExpr
-
-    @staticmethod
-    def extractInitArgValue(argName, operators, operands):
-        '''
-        Given a name of one of the arguments of the __init__ method,
-        return the corresponding value contained in the 'operands'
-        composite expression (i.e., the operands of a constructed operation).
-        '''
-        from proveit.logic import InSet
-        if argName=='instanceElement':
-            return operands.body # instance mapping
-        elif argName=='instanceVar':
-            return operands.parameter
-        elif argName=='domain':
-            # the first condition must be the domain condition
-            domainCondition = operands.conditions[0]
-            assert isinstance(domainCondition, InSet), "Expecting the first condition of a SetOfAll object to be the domain condition of type InSet"
-            assert domainCondition.element==operands.parameter, "Expecting the first condition of a SetOfAll object to be the domain condition with the proper element"
-            return domainCondition.domain
-        elif argName=='conditions':
-            return ExprList(*operands.conditions[1:]) # all except the domain condition
+        if hasattr(self, 'instanceVar'):
+            if not hasattr(self, 'domain'):
+                raise ValueError("SetOfAll requires a domain")
+        elif hasattr(self, 'instanceVars'):
+            if not hasattr(self, 'domains') or None in self.domains:
+                raise ValueError("SetOfAll requires a domain(s)")
         else:
-            return OperationOverInstances.extractInitArgValue(argName, operators, operands)
-        
+            assert False, "Expecting either 'instanceVar' or 'instanceVars' to be set"
+            
     def _formatted(self, formatType, fence=False, **kwargs):
         outStr = ''
-        explicit_conditions = self.explicitConditions()
+        explicit_conditions = ExprList(self.explicitConditions())
         inner_fence = (len(explicit_conditions) > 0)
-        formatted_instance_vars = ', '.join([var.formatted(formatType) for var in self.instanceVars])
+        formatted_instance_var = self.instanceVar.formatted(formatType)
         formatted_instance_element = self.instanceElement.formatted(formatType, fence=inner_fence)
         formatted_domain = self.domain.formatted(formatType, fence=True)
         if formatType == 'latex': outStr += r"\left\{"
@@ -53,13 +42,16 @@ class SetOfAll(OperationOverInstances):
             outStr += formatted_conditions
         if formatType == 'latex': outStr += r"\right\}"
         else: outStr += "}"
-        outStr += '_{' + formatted_instance_vars
+        outStr += '_{' + formatted_instance_var
         if self.domain is not None:
             if formatType == 'latex': outStr += r' \in '
             else: outStr += ' in '
             outStr += formatted_domain
         outStr += '}'
         return outStr
+    
+    """
+    # The below must be updated
     
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
@@ -69,7 +61,7 @@ class SetOfAll(OperationOverInstances):
         Also derive x in S, but this is not returned.
         '''
         from ._theorems_ import unfoldComprehension, unfoldBasicComprehension, unfoldBasic1CondComprehension, inSupersetIfInComprehension
-        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVar), self.conditions
         if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0]:
             inSupersetIfInComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instanceVars[0]}, assumptions=assumptions) # x in S side-effect
             if len(self.conditions) == 1:
@@ -93,3 +85,4 @@ class SetOfAll(OperationOverInstances):
         else:
             f_op, f_sub = Operation(f, self.instanceVars), self.instanceElement
             return foldComprehension.specialize({S:self.domain, Q_op:Q_op_sub, f_op:f_sub, x:element}, {yMulti:self.instanceVars}).deriveConclusion(assumptions)
+    """

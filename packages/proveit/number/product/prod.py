@@ -15,4 +15,6 @@ class Prod(OperationOverInstances):
         summand: instanceExpressions
         domains: conditions (except no longer optional)
         '''
-        OperationOverInstances.__init__(self, Prod._operator_, indices, summand, domain=domain, conditions=conditions)
+        # nestMultiIvars=True will cause it to treat multiple instance variables as nested Prod operations internally
+        # and only join them together as a style consequence.
+        OperationOverInstances.__init__(self, Prod._operator_, indices, summand, domain=domain, conditions=conditions, nestMultiIvars=True)
