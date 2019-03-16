@@ -1,11 +1,15 @@
-from proveit import Literal, Operation
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic import NotEquals
 from proveit.number.sets import Naturals, NaturalsPos, Integers, Reals, Complexes
-from proveit._common_ import w, x, y, z
+from proveit._common_ import a, b, c, w, x, y, z
 
 class Subtract(Operation):
     # operator of the Sub operation.
     _operator_ = Literal(stringFormat='-', context=__file__)
+
+    # Map operands to sets of KnownTruth equalities that involve
+    # the operand on the left hand side. 
+    knownEqualities = dict()
     
     def __init__(self, operandA, operandB):
         r'''
@@ -38,6 +42,27 @@ class Subtract(Operation):
         NotEquals(self.operands[1], self.operands[0]).deriveReversed()
         return diffNotEqZero
     
+    def equalitySideEffects(self, knownTruth):
+        '''
+        Record the knownTruth in Subtract.knownEqualities, associated for
+        each term.
+        '''
+        subtraction = knownTruth.lhs
+        if not isinstance(subtraction, Subtract):
+            raise ValueError("Expecting lhs of knownTruth to be of an Subtract expression")
+        for operand in self.operands:
+            Subtract.knownEqualities.setdefault(operand, set()).add(knownTruth)
+        # deduce the addition form: c+a=b from a-b=c
+        yield (lambda assumptions : self.deduceAddition(knownTruth.rhs, assumptions))
+
+    def deduceAddition(self, rhs, assumptions=USE_DEFAULTS):
+        '''
+        From (a - b) = rhs, derive and return rhs + b = a.
+        '''
+        from proveit.number.subtraction._theorems_ import addFromSubtract
+        deduction = addFromSubtract.specialize({a:self.operands[0], b:self.operands[1], c:rhs}, assumptions=assumptions)
+        return deduction
+        
     def factor(self, theFactor, pull='left', groupFactor=False, groupRemainder=None, assumptions=frozenset()):
         '''
         Pull out a common factor from a subtraction, pulling it either to the "left" or "right".
