@@ -1,8 +1,6 @@
 import sys
 if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
-if sys.version_info[1] < 7:
-    raise Exception("Must use Python 3.7 or later")
 
 from ._core_ import defaults, USE_DEFAULTS, InvalidAssumptions, Context, ContextException
 from ._core_ import Expression, InnerExpr, Operation, OperationError, Function, OperationSequence, OperationOverInstances
