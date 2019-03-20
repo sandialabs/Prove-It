@@ -10,7 +10,16 @@ class Subtract(Operation):
     # Map operands to sets of KnownTruth equalities that involve
     # the operand on the left hand side. 
     knownEqualities = dict()
-    
+
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information under
+        the Expression jurisdiction.  All Expression classes that store Prove-It
+        state information must implement _clear_ to clear that information.
+        '''
+        Subtract.knownEqualities.clear()
+       
     def __init__(self, operandA, operandB):
         r'''
         Sub one number from another

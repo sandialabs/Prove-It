@@ -56,6 +56,16 @@ class Greater(GreaterRelation):
     #   (populated in TransitivityRelation.sideEffects)
     knownRightSides = dict()   
             
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information under
+        the Expression jurisdiction.  All Expression classes that store Prove-It
+        state information must implement _clear_ to clear that information.
+        '''
+        Greater.knownLeftSides.clear()
+        Greater.knownRightSides.clear()
+    
     def __init__(self, lhs, rhs):
         r'''
         See if first number is at least as big as second.

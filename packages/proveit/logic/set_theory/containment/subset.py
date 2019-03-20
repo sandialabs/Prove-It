@@ -48,6 +48,16 @@ class Subset(SubsetRelation):
     #   (populated in TransitivityRelation.sideEffects)
     knownRightSides = dict()        
     
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information under
+        the Expression jurisdiction.  All Expression classes that store Prove-It
+        state information must implement _clear_ to clear that information.
+        '''
+        Subset.knownLeftSides.clear()
+        Subset.knownRightSides.clear()
+                
     def __init__(self, subset, superset):
         SubsetRelation.__init__(self, Subset._operator_, subset, superset)
  

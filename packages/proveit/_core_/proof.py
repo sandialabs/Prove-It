@@ -19,7 +19,17 @@ class Proof:
     # multiple Proof objects can represent the same Proof and will have the same hash value).
     # Using this, internal references (between KnownTruths and Proofs) unique .
     uniqueProofs = dict()
-    
+
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information in
+        the Proof jurisdiction.
+        '''
+        Proof.uniqueProofs.clear()
+        Assumption.allAssumptions.clear()
+        Theorem.allTheorems.clear()
+        
     def __init__(self, provenTruth, requiredTruths):
         
         '''
