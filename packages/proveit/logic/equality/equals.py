@@ -43,7 +43,7 @@ class Equals(TransitiveRelation):
         Equals.simplifications.clear()
         Equals.evaluations.clear()
         Equals.inversions.clear()
-        assert len(Equals.in_progress_to_conclude), "Unexpected remnant 'initializing' items (should have been temporary)"
+        assert len(Equals.in_progress_to_conclude)=0, "Unexpected remnant 'initializing' items (should have been temporary)"
         
     def __init__(self, a, b):
         TransitiveRelation.__init__(self, Equals._operator_, a, b)

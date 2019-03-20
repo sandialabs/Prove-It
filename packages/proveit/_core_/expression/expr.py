@@ -49,8 +49,8 @@ class Expression(metaclass=ExprType):
         '''
         Expression.displayed_expression_styles.clear()
         Expression.contexts.clear()
-        assert len(Expression.in_progress_to_conclude), "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
-        for expr_class in Expression.expression_classes
+        assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
+        for expr_class in Expression.expression_classes:
             expr_class._clear_()
         Expression.expression_classes.clear()
                         

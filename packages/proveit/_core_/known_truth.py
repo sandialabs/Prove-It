@@ -96,7 +96,7 @@ class KnownTruth:
         KnownTruth.presumingTheorems = None
         KnownTruth.presumingPrefixes = None
         KnownTruth.qedInProgress = False
-        assert len(KnownTruth.in_progress_to_derive_sideeffects), "Unexpected remnant 'in_progress_to_derive_sideeffects' items (should have been temporary)"
+        assert len(KnownTruth.in_progress_to_derive_sideeffects)==0, "Unexpected remnant 'in_progress_to_derive_sideeffects' items (should have been temporary)"
 
     def __init__(self, expression, assumptions):
         '''
