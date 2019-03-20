@@ -312,7 +312,7 @@ class Iter(Expression):
                 from proveit.number.subtraction._theorems_ import subtractFromAdd, addFromSubtract
                 arg_sorting_assumptions.extend([subLeftSideInto.expr, subRightSideInto.expr, equalsReversal.expr])
                 arg_sorting_assumptions.extend([transitivityLessLess.expr, transitivityLessEqLess.expr, transitivityLessLessEq.expr, transitivityLessEqLessEq.expr])
-                arg_sorting_assumptions.append(subtractFromAdd.expr, addFromSubtract.expr)
+                arg_sorting_assumptions.extend([subtractFromAdd.expr, addFromSubtract.expr])
             except:
                 pass # skip this if the theorems have not be defined yet 
             
