@@ -1681,7 +1681,7 @@ class StoredTheorem(StoredSpecialStmt):
             thm = Context.getContext(context_name).getTheorem(theorem_name)
             if str(thm) in presumption_chain:
                 index = presumption_chain.index(str(thm))
-                raise CircularLogicLoop(presumption_chain[index:]+[str(thm)])
+                raise CircularLogicLoop(presumption_chain[index:]+[str(thm)], thm)
             # add the theorem and anything presumed by that theorem to the set of presumed theorems/contexts
             if thm not in presumed_theorems:
                 presumed_theorems.add(thm)
