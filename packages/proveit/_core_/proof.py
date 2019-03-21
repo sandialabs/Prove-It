@@ -1028,9 +1028,10 @@ class CircularLogic(ProofFailure):
         return str(self.presumedTheorem) + ' cannot be presumed while proving ' + str(self.provingTheorem) + ' due to a circular dependence'
 
 class CircularLogicLoop(ProofFailure):
-    def __init__(self, presumptionLoop):
+    def __init__(self, presumptionLoop, presumedTheorem):
         assert presumptionLoop[0] == presumptionLoop[-1], "expecting a loop"
-        CircularLogic.__init__(self, KnownTruth.theoremBeingProven, presumptionLoop[0])
+        assert str(presumedTheorem) == presumptionLoop[0], "expecting presumedTheorem to match the ends of the presumptionLoop"
+        CircularLogic.__init__(self, KnownTruth.theoremBeingProven, presumedTheorem)
         self.presumptionLoop = presumptionLoop
     def __str__(self):
         return "Circular presumption dependency detected: %s"%str(self.presumptionLoop)
