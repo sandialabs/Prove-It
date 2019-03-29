@@ -6,15 +6,28 @@ class Or(Operation):
     # The operator of the Or operation
     _operator_ = Literal(stringFormat='or', latexFormat=r'\lor', context=__file__)
 
+    trivialDisjunctions = set() #used to avoid infinite recursion inside of deduceUnaryEquiv
+
+    
+
     def __init__(self, *operands):
         '''
         Or together any number of operands: A or B or C
         '''
         Operation.__init__(self, Or._operator_, operands)
-        #if list(operands).len() == 1:
-            #operator = operands[0]
-            #if operator.inBool():
-                #unaryDisjunctionDef.prove(automation = off)
+        if self in Or.trivialDisjunctions:
+            return
+        if len(operands) == 0:
+            Or.trivialDisjunctions.add(self)
+            from proveit.logic.boolean.disjunction._axioms_ import emptyDisjunction
+        if len(operands) == 1:
+            operand = operands[0]
+            try: 
+                Or.trivialDisjunctions.add(self)
+                inBool(operand).prove(automation = False)
+                self.deduceUnaryEquiv()
+            except:
+                pass
 
     def conclude(self, assumptions):
         '''
@@ -326,3 +339,10 @@ class Or(Operation):
             elif index == 1:
                 return orIfRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)                
         return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
+
+    def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
+        from proveit.logic.disjunction._theorems_ import unaryDisjunctionDef
+        if len(operands) != 1:
+            raise ValueError("Expression must have a single operand in order to invoke unaryDisjunctionDef")
+        operand = operands[0]
+        unaryDisjunctionDef.specialize({A:operand}, assumptions = assumptions)
