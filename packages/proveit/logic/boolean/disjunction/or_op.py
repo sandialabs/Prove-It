@@ -11,6 +11,10 @@ class Or(Operation):
         Or together any number of operands: A or B or C
         '''
         Operation.__init__(self, Or._operator_, operands)
+        if operands.len() == 1:
+            operator = operands[0]
+            if operator.inBool
+                unaryDisjunctionDef.prove(automation = off)
 
     def conclude(self, assumptions):
         '''
