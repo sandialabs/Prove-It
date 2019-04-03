@@ -15,6 +15,8 @@ class Or(Operation):
         Or together any number of operands: A or B or C
         '''
         Operation.__init__(self, Or._operator_, operands)
+        #deduce trivial disjunctive equivalances with 0 or 1 operand
+        #avoid infinite recursion by storing previously encountered expressions
         if self in Or.trivialDisjunctions:
             return
         if len(operands) == 0:
