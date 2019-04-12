@@ -109,7 +109,7 @@ class Or(Operation):
         elif len(self.operands)==2:
             return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return notOrIfNotAny.specialize({Amulti:self.operands}, assumptions=assumptions)
+            return notOrIfNotAny.specialize({m:len(self.operands),AA:self.operands}, assumptions=assumptions)
     
     def concludeViaBoth(self, assumptions):
         from ._theorems_ import orIfBoth
@@ -265,10 +265,13 @@ class Or(Operation):
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
+        from ._axioms_ import emptyDisjunction
         from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations  
         from ._theorems_ import trueEval, falseEval
         from proveit.logic.boolean._common_ import TRUE, FALSE
         trueIndex = -1
+        if len(self.operands) == 0:
+            return emptyDisjunction
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:
                 # The operands are not always true/false, so try the default evaluation method
