@@ -97,7 +97,13 @@ class ContextStorage:
         
         # map common expression names to storage identifiers:
         self._common_expr_ids = None # read in when needed
-        
+
+        # Names of axioms, theorems, and common expressions that have been read in
+        # and not in need of an update.
+        self._axiom_names = None # store upon request for future reference
+        self._theorem_names = None # store upon request for future reference
+        self._common_expr_names = None # store upon request for future reference
+            
         # store special expressions that have been loaded so they are
         # readily available on the next request.
         self._loadedCommonExprs = dict()
@@ -107,7 +113,13 @@ class ContextStorage:
         # Map 'common', 'axiom', and 'theorem' to respective modules.
         # Base it upon the context name.
         self._specialExprModules = {kind:self.name+'.%s'%module_name for kind, module_name in Context.specialExprKindToModuleName.items()}
-                                        
+        
+        # Reflects the contents of the 'theorem_dependency_order.txt' file
+        # which lists the theorems of the context in order with other
+        # theorems inserted as they are explicitly presumed.
+        # Set to None to indicate it must be updated.
+        self._theorem_dependency_order = self._loadTheoremDependencyOrder()
+        
         # For retrieved pv_it files that represent Prove-It object (Expressions, KnownTruths, and Proofs),
         # this maps the object to the pv_it file so we
         # can recall this without searching the hard drive again.
@@ -223,9 +235,46 @@ class ContextStorage:
             with open(self.pathsFilename, 'a') as pathsFile:
                 pathsFile.write(otherContextName + ' ' + otherStorage.directory + '\n')
             self.referencedContextRoots.add(otherContextName)
+    
+    def _loadTheoremDependencyOrder(self):
+        '''
+        Load the theorem dependency order that is stored in 'theorem_dependency_order.txt'.
+        '''
+        theorems = []
+        theorems_set = set() # to check for repeats
+        filename = os.path.join(self.pv_it_dir, 'theorem_dependency_order.txt')
+        if not os.path.isfile(filename):
+            return theorems # return the empty list
+        with open(filename, 'r') as f:
+            for line in f:
+                theorem_name = line.strip()
+                theorems.append(theorem_name)
+                if '.' not in theorem_name:
+                    assert theorem_name not in theorems_set, "Should not have duplicated theorem names: %s"%theorem_name
+                    theorems_set.add(theorem_name)
+        return theorems       
 
+    def _updateTheoremDependencyOrder(self, context_theorem_names):
+        '''
+        Update the information in 'theorem_dependency_order.txt' according to
+        the order of the theorems in the context and the theorems that are
+        presumed as indicated by their proof notebooks.
+        '''
+        ordered_theorems = []
+        for theorem_name in context_theorem_names:
+            ordered_theorems += self.getTheorem(theorem_name).explicitlyPresumedTheorems()
+            ordered_theorems.append(theorem_name)
+            
+        if self._theorem_dependency_order != ordered_theorems:
+            filename = os.path.join(self.pv_it_dir, 'theorem_dependency_order.txt')
+            with open(filename, 'w') as f:
+                for theorem in ordered_theorems:
+                    f.write(theorem + '\n')
+        self._theorem_dependency_order = self._loadTheoremDependencyOrder()
+        
     def setCommonExpressions(self, exprNames, exprDefinitions, clear=False):
         from proveit import Expression
+        self._common_expr_names = None # force a reload
         self._common_expr_ids = dict()
         commons_filename = os.path.join(self.referenced_dir, 'commons.pv_it')
         
@@ -273,25 +322,33 @@ class ContextStorage:
             # when the common expressions are in a non-generated state.
             os.remove(commons_filename)
 
+    def axiomNames(self):
+        if self._axiom_names is None:
+            self._axiom_names = list(self._loadSpecialStatementNames('axiom'))
+        return self._axiom_names
+
+    def theoremNames(self):
+        if self._theorem_names is None:
+            self._theorem_names = list(self._loadSpecialStatementNames('theorem'))
+        return self._theorem_names
+
     def commonExpressionNames(self):
-        from .context import CommonExpressions
-        commons_filename = os.path.join(self.referenced_dir, 'commons.pv_it')
-        context_name = self.name
-        if os.path.isfile(commons_filename):
-            self._common_expr_ids = dict()
-            with open(commons_filename, 'r') as f:
-                for line in f.readlines():
-                    name, expr_id = line.split()
-                    self._common_expr_ids[name] = expr_id
-                    CommonExpressions.expr_id_contexts[context_name + '.' + expr_id] = self.context
-                    yield name
-        
+        if self._common_expr_names is None:
+            self._common_expr_names = list(self._loadCommonExpressionNames())
+        return self._common_expr_names
+            
     def setSpecialStatements(self, names, definitions, kind):
         from proveit import Expression
         from .context import Context, ContextException
         specialStatementsPath = os.path.join(self.referenced_dir, kind + 's')
         if not os.path.isdir(specialStatementsPath):
             os.makedirs(specialStatementsPath)
+            
+        # Force a reload of the names of this kind:
+        if kind == 'axiom': self._axiom_names = None
+        elif kind == 'theorem': self._theorem_names = None
+        else: raise Exception("Unexpected kind: %s"%kind)
+        
         # First get the previous special statement definitions to find out what has been added/changed/removed
         previousDefIds = dict()
         toRemove = []
@@ -342,6 +399,10 @@ class ContextStorage:
         for name, stmt in toRemove:
             print('Removing %s %s from %s context'%(kind, name, context_name))
             stmt.remove()
+        
+        if kind=='theorem':
+            # update the theorem dependency order when setting the theorems
+            self._updateTheoremDependencyOrder(names)
                 
     def _getSpecialStatementExpr(self, kind, name):
         from proveit import Expression
@@ -357,7 +418,20 @@ class ContextStorage:
         except IOError:
             raise KeyError("%s of name '%s' not found"%(kind, name))        
 
-    def getSpecialStatementNames(self, kind):
+    def _loadCommonExpressionNames(self):
+        from .context import CommonExpressions
+        commons_filename = os.path.join(self.referenced_dir, 'commons.pv_it')
+        context_name = self.name
+        if os.path.isfile(commons_filename):
+            self._common_expr_ids = dict()
+            with open(commons_filename, 'r') as f:
+                for line in f.readlines():
+                    name, expr_id = line.split()
+                    self._common_expr_ids[name] = expr_id
+                    CommonExpressions.expr_id_contexts[context_name + '.' + expr_id] = self.context
+                    yield name
+    
+    def _loadSpecialStatementNames(self, kind):
         '''
         Yield names of axioms/theorems.
         '''
@@ -413,7 +487,55 @@ class ContextStorage:
             return self._loadedTheorems[name]
         expr = self._getSpecialStatementExpr('theorem', name)
         thm = self._loadedTheorems[name] = Theorem(expr, self.context, name)
-        return thm                      
+        return thm
+    
+    def getAllPresumedTheoremNames(self, theorem_name):
+        '''
+        Return the set of full names of presumed theorems that are 
+        directly or indirectly presumed by the theorem of the given name
+        in this context.
+        '''
+        presumed_theorems = set()
+        full_theorem_name = self.name + '.' + theorem_name
+        self._allPresumedTheoremNames(theorem_name, presumed_theorems, [full_theorem_name])
+        return presumed_theorems
+    
+    def _allPresumedTheoremNames(self, theorem_name, presumed_theorem_names, presumption_chain):
+        '''
+        Pass back the presumed_theorem_names, a set of full
+        names of theorems, that are directly or indirectly presumed
+        by the theorem of the given name in this context.  
+        The presumption_chain lists the stack of recursively 
+        presumed theorems to check for circular logic.
+        '''
+        from .context import Context
+        from .proof import CircularLogicLoop
+        if self._theorem_dependency_order is None:
+            # The theorem dependency order is stale -- needs to be updated.
+            self._updateTheoremDependencyOrder() # update the dependency order first
+        idx = self._theorem_dependency_order.index(theorem_name)
+        # new presumptions in an external context as the full theorem name (with context prefix)
+        new_external_presumptions = []
+        
+        for presumption_name in self._theorem_dependency_order[:idx]:
+            if '.' in presumption_name:
+                # external presumption
+                new_external_presumptions.append(presumption_name)
+            else:
+                presumed_theorem_names.add(self.name + '.' + presumption_name) # use full name
+        
+        for presumption_name in new_external_presumptions:
+            context_name, theorem_name = presumption_name.rsplit('.', 1)
+            context = Context.getContext(context_name)
+            if theorem_name not in context.theoremNames():
+                raise KeyError("Theorem %s not found in context %s"%theorem_name, context.name)
+            if presumption_name in presumption_chain:
+                chain_index = presumption_chain.index(presumption_name)
+                presumption = context.getTheorem(theorem_name)
+                raise CircularLogicLoop(presumption_chain[chain_index:]+[presumption_name], presumption)
+            if presumption_name not in presumed_theorem_names:
+                presumed_theorem_names.add(presumption_name)
+                context._storage._allPresumedTheoremNames(theorem_name, presumed_theorem_names, presumption_chain+[presumption_name])
                                                                                                               
     def retrieve_png(self, expr, latex, configLatexToolFn):
         '''
@@ -1582,9 +1704,9 @@ class StoredTheorem(StoredSpecialStmt):
         Returns the used set of axioms and theorems (as a tuple of sets
         of strings) that are used by the given theorem as recorded in the database.
         '''
-        usedAxioms = set()
-        usedTheorems = set()
-        for usedStmts, usedStmtsFilename in ((usedAxioms, 'usedAxioms.txt'), (usedTheorems, 'usedTheorems.txt')):
+        usedAxiomNames = set()
+        usedTheoremNames = set()
+        for usedStmts, usedStmtsFilename in ((usedAxiomNames, 'usedAxioms.txt'), (usedTheoremNames, 'usedTheorems.txt')):
             try:
                 with open(os.path.join(self.path, usedStmtsFilename), 'r') as usedStmtsFile:
                     for line in usedStmtsFile:
@@ -1592,18 +1714,18 @@ class StoredTheorem(StoredSpecialStmt):
                         usedStmts.add(line)
             except IOError:
                 pass # no contribution if the file doesn't exist
-        return (usedAxioms, usedTheorems)
+        return (usedAxiomNames, usedTheoremNames)
 
-    def recordPresumedContexts(self, presumed_contexts):
+    def recordPresumedContexts(self, presumed_context_names):
         '''
         Record information about what other contexts are
         presumed in the proof of this theorem.
         '''
         from .context import Context
-        for presumed_context in presumed_contexts:
+        for presumed_context in presumed_context_names:
             # raises an exception if the context is not known
             Context.getContext(presumed_context) 
-        presuming_str = '\n'.join(presumed_contexts) + '\n'
+        presuming_str = '\n'.join(presumed_context_names) + '\n'
         presuming_file = os.path.join(self.path, 'presumed_contexts.txt')
         if os.path.isfile(presuming_file):
             with open(presuming_file, 'r') as f:
@@ -1627,12 +1749,12 @@ class StoredTheorem(StoredSpecialStmt):
                     presumptions.append(presumption)
         return presumptions
     
-    def recordPresumedTheorems(self, presumed_theorems):
+    def recordPresumedTheorems(self, explicitly_presumed_theorem_names):
         '''
         Record information about what other theorems are
-        presumed in the proof of this theorem.
+        explicitly presumed in the proof of this theorem.
         '''
-        presuming_str = '\n'.join(presumed_theorems) + '\n'
+        presuming_str = '\n'.join(explicitly_presumed_theorem_names) + '\n'
         presuming_file = os.path.join(self.path, 'presumed_theorems.txt')
         if os.path.isfile(presuming_file):
             with open(presuming_file, 'r') as f:
@@ -1640,12 +1762,16 @@ class StoredTheorem(StoredSpecialStmt):
                     return # unchanged; don't need to record anything
         with open(presuming_file, 'w') as f:
             f.write(presuming_str)
+        
+        # The context's theorem dependency order is now stale
+        # and needs to be updated:
+        self.context._storage._theorem_dependency_order = None
     
-    def directlyPresumedTheorems(self):
+    def explicitlyPresumedTheorems(self):
         '''
-        Return the list of directly presumed theorems.
+        Return the list of names of explicitly presumed theorems
+        (indicated after 'presuming' in the proof notebook). 
         '''
-        # first read in the presuming info
         presumptions = []
         presuming_file = os.path.join(self.path, 'presumed_theorems.txt')
         if os.path.isfile(presuming_file):
@@ -1656,6 +1782,7 @@ class StoredTheorem(StoredSpecialStmt):
                     presumptions.append(presumption)
         return presumptions        
     
+    """
     def getRecursivelyPresumedTheorems(self, presumed_theorems, presumption_chain=None):
         '''
         Append presumed theorem objects to 'presumed_theorems'.
@@ -1686,6 +1813,13 @@ class StoredTheorem(StoredSpecialStmt):
             if thm not in presumed_theorems:
                 presumed_theorems.add(thm)
                 thm._storedTheorem().getRecursivelyPresumedTheorems(presumed_theorems, list(presumption_chain))
+    """
+    def getAllPresumedTheoremNames(self):
+        '''
+        Return the set of full names of theorems that are presumed directly or indirectly
+        by this one.
+        '''
+        return self.context._storage.getAllPresumedTheoremNames(self.name)
     
     def recordProof(self, proof):
         '''
@@ -1711,23 +1845,23 @@ class StoredTheorem(StoredSpecialStmt):
         with open(os.path.join(self.path, 'proof.pv_it'), 'w') as proofFile:
             proofFile.write(proofId)
         
-        usedAxioms = [str(usedAxiom) for usedAxiom in proof.usedAxioms()]
-        usedTheorems = [str(usedTheorem) for usedTheorem in proof.usedTheorems()]
+        usedAxiomNames = [str(usedAxiom) for usedAxiom in proof.usedAxiomNames()]
+        usedTheoremNames = [str(usedTheorem) for usedTheorem in proof.usedTheoremNames()]
         
         # Remove usedBy links that are obsolete because the proof has changed
-        prevUsedAxioms, prevUsedTheorems = self.readDependencies()
-        for prevUsedAxiom in prevUsedAxioms:
-            if prevUsedAxiom not in usedAxioms:
+        prevUsedAxiomNames, prevUsedTheoremNames = self.readDependencies()
+        for prevUsedAxiom in prevUsedAxiomNames:
+            if prevUsedAxiom not in usedAxiomNames:
                 Context.getStoredAxiom(prevUsedAxiom)._removeUsedByEntry(str(self))
-        for prevUsedTheorem in prevUsedTheorems:
-            if prevUsedTheorem not in usedTheorems:
+        for prevUsedTheorem in prevUsedTheoremNames:
+            if prevUsedTheorem not in usedTheoremNames:
                 Context.getStoredTheorem(prevUsedTheorem)._removeUsedByEntry(str(self))
 
-        storedUsedAxioms = [Context.getStoredAxiom(usedAxiom) for usedAxiom in usedAxioms]
-        storedUsedTheorems = [Context.getStoredTheorem(usedTheorem) for usedTheorem in usedTheorems]
+        storedUsedAxiomNames = [Context.getStoredAxiom(usedAxiomName) for usedAxiomName in usedAxiomNames]
+        storedUsedTheoremNames = [Context.getStoredTheorem(usedTheoremName) for usedTheoremName in usedTheoremNames]
         
         # record axioms/theorems that this theorem directly uses
-        for storedUsedStmts, usedStmtsFilename in ((storedUsedAxioms, 'usedAxioms.txt'), (storedUsedTheorems, 'usedTheorems.txt')):
+        for storedUsedStmts, usedStmtsFilename in ((storedUsedAxiomNames, 'usedAxioms.txt'), (storedUsedTheoremNames, 'usedTheorems.txt')):
             with open(os.path.join(self.path, usedStmtsFilename), 'w') as usedStmtsFile:
                 for storedUsedStmt in sorted(storedUsedStmts, key=lambda stmt:str(stmt)):
                     self.context._storage._includeMutualReferences(storedUsedStmt.context)
@@ -1735,12 +1869,12 @@ class StoredTheorem(StoredSpecialStmt):
         
         # record any used theorems that are already completely proven
         with open(os.path.join(self.path, 'completeUsedTheorems.txt'), 'w') as completedTheoremsFile:
-            for usedTheorem in usedTheorems:
+            for usedTheorem in usedTheoremNames:
                 if Context.getStoredTheorem(usedTheorem).isComplete():
                     completedTheoremsFile.write(usedTheorem + '\n')
         
         # for each used axiom/theorem, record that it is used by the newly proven theorem
-        for storedUsedStmts, prevUsedStmts in ((storedUsedAxioms, prevUsedAxioms), (storedUsedTheorems, prevUsedTheorems)):
+        for storedUsedStmts, prevUsedStmts in ((storedUsedAxiomNames, prevUsedAxiomNames), (storedUsedTheoremNames, prevUsedTheoremNames)):
             for storedUsedStmt in storedUsedStmts:
                 if str(storedUsedStmt) not in prevUsedStmts: # otherwise the link should already exist
                     with open(os.path.join(storedUsedStmt.path, 'usedBy.txt'), 'a') as usedByFile:
@@ -1809,10 +1943,10 @@ class StoredTheorem(StoredSpecialStmt):
             proof_id = f.read()
             self.context._storage._removeReference(proof_id)
         # Remove obsolete usedBy links that refer to this theorem by its old proof
-        prevUsedAxioms, prevUsedTheorems = self.readDependencies()
-        for usedAxiom in prevUsedAxioms:
+        prevUsedAxiomNames, prevUsedTheoremNames = self.readDependencies()
+        for usedAxiom in prevUsedAxiomNames:
             Context.getStoredAxiom(usedAxiom)._removeUsedByEntry(str(self))
-        for usedTheorem in prevUsedTheorems:
+        for usedTheorem in prevUsedTheoremNames:
             Context.getStoredTheorem(usedTheorem)._removeUsedByEntry(str(self))
         # If it was previously complete before, we need to inform dependents that
         # it is not longer complete.
@@ -1838,11 +1972,11 @@ class StoredTheorem(StoredSpecialStmt):
         from .context import Context
         if not self.hasProof():
             raise Exception('The theorem must be proven in order to obtain its requirements')
-        usedAxioms, usedTheorems = self.readDependencies()
-        requiredAxioms = usedAxioms # just a start
+        usedAxiomNames, usedTheoremNames = self.readDependencies()
+        requiredAxioms = usedAxiomNames # just a start
         requiredTheorems = set()
         processed = set()
-        toProcess = usedTheorems
+        toProcess = usedTheoremNames
         while len(toProcess) > 0:
             nextTheorem = toProcess.pop()
             storedTheorem = Context.getStoredTheorem(nextTheorem)
@@ -1850,41 +1984,41 @@ class StoredTheorem(StoredSpecialStmt):
                 requiredTheorems.add(nextTheorem)
                 processed.add(nextTheorem)
                 continue
-            usedAxioms, usedTheorems = storedTheorem.readDependencies()
-            requiredAxioms.update(usedAxioms)
-            for usedTheorem in usedTheorems:
+            usedAxiomNames, usedTheoremNames = storedTheorem.readDependencies()
+            requiredAxioms.update(usedAxiomNames)
+            for usedTheorem in usedTheoremNames:
                 if usedTheorem not in processed:
                     toProcess.add(usedTheorem)
             processed.add(nextTheorem)
         return (requiredAxioms, requiredTheorems)
     
-    def allUsedTheorems(self):
+    def allUsedTheoremNames(self):
         '''
-        Returns the set of theorems used to prove the given theorem, directly
+        Returns the set of names of theorems used to prove the given theorem, directly
         or indirectly.
         '''
         from .context import Context
         if not self.hasProof():
             raise Exception('The theorem must be proven in order to obtain its requirements')
-        _, usedTheorems = self.readDependencies()
-        allUsedTheorems = set()
+        _, usedTheoremNames = self.readDependencies()
+        allUsedTheoremNames = set()
         processed = set()
-        toProcess = usedTheorems
+        toProcess = usedTheoremNames
         while len(toProcess) > 0:
-            nextTheorem = toProcess.pop()
-            allUsedTheorems.add(nextTheorem)
-            storedTheorem = Context.getStoredTheorem(nextTheorem)
+            nextTheoremName = toProcess.pop()
+            allUsedTheoremNames.add(nextTheoremName)
+            storedTheorem = Context.getStoredTheorem(nextTheoremName)
             if not storedTheorem.hasProof():
-                processed.add(nextTheorem)
+                processed.add(nextTheoremName)
                 continue
-            _, usedTheorems = storedTheorem.readDependencies()
-            for usedTheorem in usedTheorems:
-                if usedTheorem not in processed:
-                    toProcess.add(usedTheorem)
-            processed.add(nextTheorem)
-        return allUsedTheorems 
+            _, usedTheoremNames = storedTheorem.readDependencies()
+            for usedTheoremName in usedTheoremNames:
+                if usedTheoremName not in processed:
+                    toProcess.add(usedTheoremName)
+            processed.add(nextTheoremName)
+        return allUsedTheoremNames 
 
-    def _undoDependentCompletion(self, usedTheorem):
+    def _undoDependentCompletion(self, usedTheoremName):
         '''
         Due to the proof being removed, a dependent theorem is no longer complete.
         This new status must be updated and propagated.
@@ -1892,7 +2026,7 @@ class StoredTheorem(StoredSpecialStmt):
         from .context import Context
         wasComplete = self.isComplete() # was it complete before?
         # remove the entry from completeUsedTheorems.txt
-        self._removeEntryFromFile('completeUsedTheorems.txt', str(usedTheorem))
+        self._removeEntryFromFile('completeUsedTheorems.txt', usedTheoremName)
         if self.isComplete():
             raise Exception('Corrupt _certified_ database')
         # If this theorem was previously complete before, we need to inform 
