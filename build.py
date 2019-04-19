@@ -246,9 +246,10 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
         exec_count = 0
         for index, cell in enumerate(nb.cells): 
             cell, resources = self.preprocess_cell(cell, resources, index)
-            if hasattr(cell, 'execution_count'):
+            if 'execution_count' in cell:
                 # make proper execution counts
                 exec_count += 1
+                cell['execution_count'] = exec_count
                 if 'outputs' in cell:
                     for output in cell['outputs']:
                         if 'execution_count' in output:
