@@ -1,7 +1,7 @@
 from proveit import Operation, Literal, USE_DEFAULTS, ProofFailure
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.set_theory.membership import Membership, Nonmembership
-from proveit._common_ import A, C, P
+from proveit._common_ import A, C, P, Q
 
 class BooleanSet(Literal):
     def __init__(self):
@@ -77,14 +77,20 @@ class BooleanSet(Literal):
         Given forall_{A in Booleans} P(A), conclude and return it from [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall
-        from ._theorems_ import foldForallOverBool
+        from ._theorems_ import foldForallOverBool, foldConditionedForallOverBool
         from ._common_ import Booleans
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
-        assert(len(list(forallStmt.explicitConditions()))==0), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain but no other conditions"
+        assert(len(forallStmt.conditions) <= 2), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain but no other conditions"
         assert(not hasattr(forallStmt, 'instanceVars')), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
-        # forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)
-        return foldForallOverBool.specialize({Operation(P, forallStmt.instanceVar):forallStmt.instanceExpr}, {A:forallStmt.instanceVar})
+        if(len(forallStmt.conditions)==2):
+            Q_op, Q_op_sub = Operation(Q, forallStmt.instanceVar), forallStmt.conditions[1]
+            P_op, P_op_sub = Operation(P, forallStmt.instanceVar), forallStmt.instanceExpr
+            return foldConditionedForallOverBool.specialize({Q_op:Q_op_sub, P_op:P_op_sub}, {A:forallStmt.instanceVar})
+        else:
+            # forall_{A in Booleans} P(A), assuming P(TRUE) and P(FALSE)
+            P_op, P_op_sub = Operation(P, forallStmt.instanceVar), forallStmt.instanceExpr
+            return foldForallOverBool.specialize({P_op:P_op_sub}, {A:forallStmt.instanceVar})
 
 class BooleanMembership(Membership):
     '''
