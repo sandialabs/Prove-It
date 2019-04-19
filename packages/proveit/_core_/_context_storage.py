@@ -8,7 +8,6 @@ import json
 import re
 import urllib.request, urllib.parse, urllib.error
 import imp
-import nbformat
 
 def relurl(path, start='.'):
     '''
