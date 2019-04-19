@@ -221,10 +221,10 @@ class Context:
                 f.write(output)
     
     def axiomNames(self):
-        return list(self._storage.getSpecialStatementNames('axiom'))
+        return self._storage.axiomNames()
     
     def theoremNames(self):
-        return list(self._storage.getSpecialStatementNames('theorem'))
+        return self._storage.theoremNames()
     
     def commonExpressionNames(self):
         return self._storage.commonExpressionNames()
