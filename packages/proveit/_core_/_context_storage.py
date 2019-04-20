@@ -262,7 +262,7 @@ class ContextStorage:
         '''
         ordered_theorems = []
         for theorem_name in context_theorem_names:
-            ordered_theorems += self.getTheorem(theorem_name).explicitlyPresumedTheorems()
+            ordered_theorems += self.getTheorem(theorem_name).explicitlyPresumedTheoremNames()
             ordered_theorems.append(theorem_name)
             
         if self._theorem_dependency_order != ordered_theorems:
@@ -1767,7 +1767,7 @@ class StoredTheorem(StoredSpecialStmt):
         # and needs to be updated:
         self.context._storage._theorem_dependency_order = None
     
-    def explicitlyPresumedTheorems(self):
+    def explicitlyPresumedTheoremNames(self):
         '''
         Return the list of names of explicitly presumed theorems
         (indicated after 'presuming' in the proof notebook). 
