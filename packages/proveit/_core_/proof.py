@@ -242,17 +242,17 @@ class Proof:
         '''
         return self._meaningData.numSteps
     
-    def usedAxioms(self):
+    def usedAxiomNames(self):
         '''
-        Returns the set of axioms that are used directly (not via other theorems) in this proof. 
+        Returns the set of names of axioms that are used directly (not via other theorems) in this proof. 
         '''
-        return set().union(*[requiredProof.usedAxioms() for requiredProof in self.requiredProofs])
+        return set().union(*[requiredProof.usedAxiomNames() for requiredProof in self.requiredProofs])
 
-    def usedTheorems(self):
+    def usedTheoremNames(self):
         '''
-        Returns the set of axioms that are used directly (not via other theorems) in this proof. 
+        Returns the set of names of axioms that are used directly (not via other theorems) in this proof. 
         '''
-        return set().union(*[requiredProof.usedTheorems() for requiredProof in self.requiredProofs])
+        return set().union(*[requiredProof.usedTheoremNames() for requiredProof in self.requiredProofs])
     
     def assumptions(self):
         return self.provenTruth.assumptions
@@ -457,12 +457,12 @@ class Theorem(Proof):
         '''
         return self._storedTheorem().getProofLink()
     
-    def recordPresumedContexts(self, presumed_contexts):
+    def recordPresumedContexts(self, presumed_context_names):
         '''
         Record information about what other contexts are
         presumed in the proof of this theorem.
         '''
-        self._storedTheorem().recordPresumedContexts(presumed_contexts)
+        self._storedTheorem().recordPresumedContexts(presumed_context_names)
 
     def presumedContexts(self):
         '''
@@ -470,25 +470,27 @@ class Theorem(Proof):
         '''
         return self._storedTheorem().presumedContexts()
     
-    def recordPresumedTheorems(self, presumed_theorems):
+    def recordPresumedTheorems(self, explicitly_presumed_theorem_names):
         '''
         Record information about what othere theorems are
         presumed in the proof of this theorem.
         '''
-        self._storedTheorem().recordPresumedTheorems(presumed_theorems)
-
-    def directlyPresumedTheorems(self):
+        self._storedTheorem().recordPresumedTheorems(explicitly_presumed_theorem_names)
+    
+    def explicitlyPresumedTheoremNames(self):
         '''
-        Return the list of directly presumed theorems.
+        Return the list of names of explicitly presumed theorems.
+        (indicated after 'presuming' in the proof notebook). 
         '''
-        return self._storedTheorem().directlyPresumedTheorems()
+        return self._storedTheorem().explicitlyPresumedTheoremNames()       
         
-    def getRecursivelyPresumedTheorems(self, presumed_theorems):
+    def getAllPresumedTheoremNames(self):
         '''
-        Append presumed theorem name strings to 'presumed_theorems'.
-        For each theorem, do this recursively.
+        Return the set of full names of presumed theorems that are 
+        directly or indirectly presumed by the theorem of the given name
+        in this context.
         '''
-        self._storedTheorem().getRecursivelyPresumedTheorems(presumed_theorems)        
+        return self._storedTheorem().getAllPresumedTheoremNames()        
                 
     def recordProof(self, proof):
         '''
@@ -529,12 +531,12 @@ class Theorem(Proof):
         '''
         return self._storedTheorem().allRequirements()
 
-    def allUsedTheorems(self):
+    def allUsedTheoremNames(self):
         '''
         Returns the set of theorems used to prove the given theorem, directly
         or indirectly.
         '''
-        return self._storedTheorem().allUsedTheorems()
+        return self._storedTheorem().allUsedTheoremNames()
 
     def directDependents(self):
         '''
@@ -559,7 +561,7 @@ class Theorem(Proof):
         logic.  This applies when a proof has begun 
         (see KnownTruth.beginProof in known_truth.py).  
         When KnownTruth.theoremBeingProven is None, all Theorems are allowed.
-        Otherwise only Theorems in the KnownTruth.presumingTheorems set
+        Otherwise only Theorems named in the KnownTruth.presumingTheoremNames set
         or contained within any of the KnownTruth.presumingPrefixes
         (i.e., context) are allowed.
         '''
@@ -578,29 +580,28 @@ class Theorem(Proof):
             return
         else:
             presumed_via_context = not KnownTruth.presumingPrefixes.isdisjoint(self.containingPrefixes())
-            if self in KnownTruth.presumingTheorems or presumed_via_context:
+            if str(self) in KnownTruth.presumingTheoremNames or presumed_via_context:
                 # This Theorem is being presumed specifically, or a context in which it is contained is presumed.
                 # Presumption via context (a.k.a. prefix) is contingent upon not having a mutual presumption
                 # (that is, some theorem T can presume everything in another context except for theorems 
                 # that presume T or, if proven, depend upon T).
                 # When Theorem-specific presumptions are mutual, a CircularLogic error is raised when either
                 # is being proven.
-                presumed_theorems = set()
                 # check the "presuming information, recursively, for circular logic.
-                stored_theorem.getRecursivelyPresumedTheorems(presumed_theorems)
+                presumed_theorem_names = stored_theorem.getAllPresumedTheoremNames()
                 # If this theorem has a proof, include all dependent theorems as
                 # presumed (this may have been presumed via context, so this can contain
                 # more information than the specifically presumed theorems).
                 if stored_theorem.hasProof():
-                    presumed_theorems.update(stored_theorem.allUsedTheorems())
+                    presumed_theorem_names.update(stored_theorem.allUsedTheoremNames())
                 if presumed_via_context:
-                    if theorem_being_proven_str not in presumed_theorems:
+                    if theorem_being_proven_str not in presumed_theorem_names:
                         # Presumed via context without any mutual specific presumption or existing co-dependence.
                         legitimately_presumed=True # It's legit; don't disable.
                     # If there is a conflict, don't presume something via context.
                 else:
                     # This Theorem is being presumed specifically
-                    if (theorem_being_proven_str in presumed_theorems):
+                    if (theorem_being_proven_str in presumed_theorem_names):
                         # Theorem-specific presumptions are mutual.  Raise a CircularLogic error.
                         raise CircularLogic(KnownTruth.theoremBeingProven, self)
                     legitimately_presumed=True # This theorem is specifically and legitimately being presumed.
@@ -1028,9 +1029,10 @@ class CircularLogic(ProofFailure):
         return str(self.presumedTheorem) + ' cannot be presumed while proving ' + str(self.provingTheorem) + ' due to a circular dependence'
 
 class CircularLogicLoop(ProofFailure):
-    def __init__(self, presumptionLoop):
+    def __init__(self, presumptionLoop, presumedTheorem):
         assert presumptionLoop[0] == presumptionLoop[-1], "expecting a loop"
-        CircularLogic.__init__(self, KnownTruth.theoremBeingProven, presumptionLoop[0])
+        assert str(presumedTheorem) == presumptionLoop[0], "expecting presumedTheorem to match the ends of the presumptionLoop"
+        CircularLogic.__init__(self, KnownTruth.theoremBeingProven, presumedTheorem)
         self.presumptionLoop = presumptionLoop
     def __str__(self):
         return "Circular presumption dependency detected: %s"%str(self.presumptionLoop)

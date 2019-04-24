@@ -75,7 +75,7 @@ class KnownTruth:
                          # Goes from None to False (after beginning a proof and disabling Theorems that cannot be used)
                          # to True (when there is a legitimate proof).
     # Set of theorems/packages that are presumed to be True for the purposes of the proof being proven:
-    presumingTheorems = None # set of Theorem objects when in use
+    presumingTheoremNamess = None # set of full names of presumed theorems when in use
     presumingPrefixes = None # set of context names or full theorem names when in use.
     qedInProgress = False # set to true when "%qed" is in progress
 
@@ -218,63 +218,58 @@ class KnownTruth:
             raise TypeError('Only begin a proof for a Theorem')
         if theorem.provenTruth != self:
             raise ValueError('Inconsistent theorem for the KnownTruth in beginProof call')
-        
-        explicit_presumptions = set(presuming)
-        presumptions = set(presuming) # will add in previous theorems of the context
-
-        # Presume all previous theorems of the context automatically.
-        # Just presume the previous one directly, the others will be resumed
-        # via recursion (transitivity).
+                
+        # Note: all previous theorems of the context are presumed automatically.
         context = theorem.context
         num_prev_thms = 0 # number of previous theorems within the context
-        last_thm_str = ''
         for prev_thm_name in context.theoremNames():
             if prev_thm_name == theorem.name:
                 break # concludes all "previous" theorems of the context
-            last_thm_str = str(context.getTheorem(prev_thm_name))
-            if last_thm_str in presuming:
+            if str(context.getTheorem(prev_thm_name)) in presuming:
                 raise ValueError("Do not explicitly presuming any previous theorems of the context.  They are automatically presumed.")
             num_prev_thms += 1
-        if last_thm_str != '':
-            presumptions.add(last_thm_str)
         
         # split the presuming information into specific theorems (which are transitively presumed)
         # and entire contexts (which are not transitively presumed only applies to theorems of
         # the other context that do not presume this one).
-        presumed_thms = [] # list of theorem name strings
-        explicit_presumed_thms = set() # presumed_thms that were in the original explicit_presumptions
-        presumed_contexts = [] # list of context name strings
-        for presumption in presumptions:
-            if '.' in presumption:
+        explicitly_presumed_thm_names = [] # list of theorem name strings
+        presumed_context_names = [] # list of context name strings
+        for presumption_name in presuming:
+            if '.' in presumption_name:
                 try:
-                    context_name, theorem_name = presumption.rsplit('.', 1)
-                    thm = Context.getContext(context_name).getTheorem(theorem_name)
-                    # it must be a theorem
-                    presumed_thms.append(presumption) # append as a string
-                    if presumption in explicit_presumptions:
-                        explicit_presumed_thms.add(presumption)
+                    context_name, theorem_name = presumption_name.rsplit('.', 1)
+                    context = Context.getContext(context_name)
+                    # Ensure we load the theorem and derive its automatic side-effects
+                    # for these explicitly presumed theorems (but not the indirectly
+                    # presumed ones).
+                    context.getTheorem(theorem_name)
+                    # it is a theorem
+                    explicitly_presumed_thm_names.append(presumption_name) # append as a string
                     continue # continue to the next thing
                 except (ContextException, KeyError):
                     pass
             # it must not be a theorem; it should be a Context.
-            presumed_contexts.append(presumption) # not a theorem; must be a context
+            presumed_context_names.append(presumption_name) # not a theorem; must be a context
         
-        theorem.recordPresumedContexts(sorted(presumed_contexts))
-        theorem.recordPresumedTheorems(sorted(presumed_thms))
+        # record the explicitly presumed theorems
+        theorem.recordPresumedContexts(sorted(presumed_context_names))
+        theorem.recordPresumedTheorems(sorted(explicitly_presumed_thm_names))
         if justRecordPresumingInfo: return self.expr
+        print("Recorded 'presuming' information")
+        
+        # The full list of presumed theorems includes all previous theorems
+        # of the context and all indirectly presumed theorems via transitivity
+        # (a presumption of a presumption is a presumption).
+        presumed_theorem_names = theorem.getAllPresumedTheoremNames()
 
-        print("Recorded 'presuming' information")        
-        presumed_theorems = set()
-        theorem.getRecursivelyPresumedTheorems(presumed_theorems)
-
-        if self in presumed_thms:
+        if str(self) in presumed_theorem_names:
             from .proof import CircularLogic
-            # extra sanity check (should be caught within getRecursivelyPresumedTheorems)
+            # extra sanity check (should be caught within getAllPresumedTheoremNames)
             raise CircularLogic(theorem, theorem)
         
         KnownTruth.theoremBeingProven = theorem
-        KnownTruth.presumingTheorems = set(presumed_theorems)
-        KnownTruth.presumingPrefixes = set(presumed_contexts)
+        KnownTruth.presumingTheoremNames = set(presumed_theorem_names)
+        KnownTruth.presumingPrefixes = set(presumed_context_names)
         Theorem.updateUsability()
         
         # change KnownTruth.hasBeenProven
@@ -291,11 +286,11 @@ class KnownTruth:
         """
         if self._checkIfReadyForQED(self.proof()):
             return self.expr # already proven
-        if len(presumed_contexts) > 0:
-            print("Presuming theorems in %s (except any that presume this theorem)."%', '.join(sorted(presumed_contexts)))
-        if len(explicit_presumed_thms) > 0:
-            theorem_or_theorems = 'theorem' if len(explicit_presumed_thms)==1 else 'theorems'
-            print("Presuming %s %s (applied transitively)."%(', '.join(sorted(str(thm) for thm in explicit_presumed_thms)), theorem_or_theorems))
+        if len(presumed_context_names) > 0:
+            print("Presuming theorems in %s (except any that presume this theorem)."%', '.join(sorted(presumed_context_names)))
+        if len(explicitly_presumed_thm_names) > 0:
+            theorem_or_theorems = 'theorem' if len(explicitly_presumed_thm_names)==1 else 'theorems'
+            print("Presuming %s %s (applied transitively)."%(', '.join(sorted(str(thm) for thm in explicitly_presumed_thm_names)), theorem_or_theorems))
         if num_prev_thms > 0:
             theorem_or_theorems = 'theorem' if num_prev_thms==1 else 'theorems'
             print("Presuming previous %s (applied transitively)."%theorem_or_theorems)
