@@ -512,7 +512,7 @@ class ContextStorage:
         from .proof import CircularLogicLoop
         if self._theorem_dependency_order is None:
             # The theorem dependency order is stale -- needs to be updated.
-            self._updateTheoremDependencyOrder() # update the dependency order first
+            self._updateTheoremDependencyOrder(self.theoremNames()) # update the dependency order first
         idx = self._theorem_dependency_order.index(theorem_name)
         # new presumptions in an external context as the full theorem name (with context prefix)
         new_external_presumptions = []
