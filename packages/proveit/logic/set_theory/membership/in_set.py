@@ -56,8 +56,8 @@ class InSet(Operation):
         r'''
         Deduce x not in S assuming not(A in S), where self = (x in S).
         '''
-        from .not_in_set import NotIn
-        yield NotIn(self.element, self.domain).concludeAsFolded(assumptions)
+        from .not_in_set import NotInSet
+        yield NotInSet(self.element, self.domain).concludeAsFolded(assumptions)
 
     def conclude(self, assumptions):
         '''
@@ -89,7 +89,7 @@ class InSet(Operation):
         TRUE or FALSE.  If the domain has a 'membershipObject' method,
         attempt to use the 'equivalence' method from the object it generates.
         '''
-        from proveit.logic import Equals, TRUE, NotIn
+        from proveit.logic import Equals, TRUE, NotInSet
         evaluation = None
         try: # try an 'equivalence' method (via the membership object)
             equiv = self.membershipObject.equivalence(assumptions)
@@ -105,7 +105,7 @@ class InSet(Operation):
                 if hasattr(self, 'membershipObject'):
                     self.membershipObject.conclude(assumptions=assumptions)
             else:
-                notInDomain = NotIn(self.element, self.domain)
+                notInDomain = NotInSet(self.element, self.domain)
                 if hasattr(notInDomain, 'nonmembershipObject'):
                     notInDomain.nonmembershipObject.conclude(assumptions=assumptions)
         except:
