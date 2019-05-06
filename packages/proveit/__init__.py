@@ -36,7 +36,6 @@ def reset():
     This should make a clean slate w.r.t. Prove-It.
     '''
     Expression._clear_()
-    # but what about core references to Forall and Implies???
     Literal._clear_()
     Operation._clear_()
     KnownTruth._clear_()
