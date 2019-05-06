@@ -242,17 +242,17 @@ class Proof:
         '''
         return self._meaningData.numSteps
     
-    def usedAxiomNames(self):
+    def usedAxioms(self):
         '''
         Returns the set of names of axioms that are used directly (not via other theorems) in this proof. 
         '''
-        return set().union(*[requiredProof.usedAxiomNames() for requiredProof in self.requiredProofs])
+        return set().union(*[requiredProof.usedAxioms() for requiredProof in self.requiredProofs])
 
-    def usedTheoremNames(self):
+    def usedTheorems(self):
         '''
         Returns the set of names of axioms that are used directly (not via other theorems) in this proof. 
         '''
-        return set().union(*[requiredProof.usedTheoremNames() for requiredProof in self.requiredProofs])
+        return set().union(*[requiredProof.usedTheorems() for requiredProof in self.requiredProofs])
     
     def assumptions(self):
         return self.provenTruth.assumptions
@@ -334,7 +334,7 @@ class Assumption(Proof):
             Proof.__init__(self, KnownTruth(expr, {expr}), [])
         finally:
             # restore the original default assumptions
-            defaults.assumptions = prev_default_assumptions            
+            defaults.assumptions = prev_default_assumptions
         Assumption.allAssumptions[(expr, assumptions)] = self
     
     @staticmethod
