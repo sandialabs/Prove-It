@@ -16,16 +16,6 @@ class Add(Operation):
     # Track which ones we have encountered already.
     addedNumerals = set()
     
-    @staticmethod
-    def _clear_():
-        '''
-        Clear all references to Prove-It information under
-        the Expression jurisdiction.  All Expression classes that store Prove-It
-        state information must implement _clear_ to clear that information.
-        '''
-        Add.knownEqualities.clear()
-        Add.addedNumerals.clear()
-        
     def __init__(self, *operands):
         r'''
         Add together any number of operands.

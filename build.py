@@ -16,6 +16,7 @@ import nbformat
 from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
 from nbconvert.preprocessors.execute import executenb
 from nbconvert import HTMLExporter
+import IPython
 from IPython.lib.latextools import LaTeXTool
 import base64
 import datetime
@@ -27,6 +28,8 @@ import subprocess
 import zmq # to catch ZMQError which randomly occurs when starting a Jupyter kernel
 import proveit
 from proveit import Context
+
+#IPython.InteractiveShell.cache_size=0
 
 # for compiling LaTeX
 LaTeXTool.clear_instance()
@@ -231,7 +234,16 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
         # Record initial loaded modules.  All other moduels will be deleted when
         # we are done so we can "recycle" our Kernel to be used cleanly
         # for the next notebook.
-        init_modules_source = "import sys\n__init_modules = list(sys.modules.keys())\nimport proveit.magics"
+        init_modules_source = """
+import sys
+from proveit import *
+import proveit.magics
+__init_modules = list(sys.modules.keys())
+import gc
+gc.collect()
+__init_gc_objects = {id(obj) for obj in gc.get_objects()}
+%store __init_gc_objects
+"""
         init_modules_cell = nbformat.NotebookNode(cell_type='code', source=init_modules_source, metadata=dict())
         cell, _ = self.preprocess_cell(init_modules_cell, resources, 0)
         
@@ -256,14 +268,58 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
                             output['execution_count'] = exec_count
             nb.cells[index]
         
-        
         # Delete all modules except those that were initially loaded.
         # Also, %reset local variables.
         # We are preparing the Kernel to be recycled.
-        reset_source = "import sys\nfor m in list(sys.modules.keys()):\n\tif m not in __init_modules:\n\t\tdel(sys.modules[m])\n%reset"
+        reset_source = """
+import sys
+import proveit
+proveit.reset()
+# delete all modules but initial modules and proveit._core_ modules
+for m in list(sys.modules.keys()):
+    #retained_packages = ['proveit._core_', 'proveit.logic. 
+    if m not in __init_modules:# and m[:len(proveit_core)]!=proveit_core:
+        parent, child = m.rsplit('.', 1)
+        if parent in __init_modules:
+            # remove the module being deleted from its parent package
+            sys.modules[parent].__dict__.pop(child)
+        del(sys.modules[m])
+%reset
+"""
         reset_cell = nbformat.NotebookNode(cell_type='code', source=reset_source, metadata=dict())
         cell, _ = self.preprocess_cell(reset_cell, resources, 0)
         
+        garbage_collect_source = """import sys
+%store -r
+import gc
+import IPython
+gc.collect()
+found=False
+new_objs = [obj for obj in gc.get_objects() if id(obj) not in __init_gc_objects]
+'''
+for obj in list(gc.get_objects()):
+    if id(obj) not in __init_gc_objects:
+        if 'proveit.' in str(obj.__class__):
+            found=True
+            break
+'''
+obj = new_objs[-300]
+#sys.modules['__main__'].__dict__.keys()
+len(new_objs) #, obj, gc.get_referrers(obj)[2].__class__, gc.get_referrers(gc.get_referrers(obj)[2])[0])#, gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[2])[0])[0].__class__)
+#found
+#sys.modules['__main__'].__dict__
+#(obj, gc.get_referrers(obj)[1].__class__, gc.get_referrers(gc.get_referrers(obj)[1])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0].__class__,  gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0])[0])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0])[0])[0])[0], gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0])[0])[0])[0])[0].__class__)
+#(obj._context.name, obj.__class__, gc.get_referrers(obj)[1].keys(), gc.get_referrers(gc.get_referrers(obj)[1])[1].__class__)
+#(obj.__class__, gc.get_referrers(obj)[1].keys(), gc.get_referrers(gc.get_referrers(obj)[1])[1])
+#(obj.__class__, gc.get_referrers(obj)[1].__class__, gc.get_referrers(gc.get_referrers(obj)[1])[1].__class__,  gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[1])[0].keys())
+#len(new_displayhook_objs)
+#(found, len(gc.get_objects()))
+#{obj.__class__ for obj in new_objs}
+#found
+"""
+        garbage_collect_cell = nbformat.NotebookNode(cell_type='code', source=garbage_collect_source, metadata=dict())
+        cell, _ = self.preprocess_cell(garbage_collect_cell, resources, 0)
+        print('num gc objects', cell['outputs'][0]['data']['text/plain'])        
         return nb, resources
 
     def executeNotebook(self, notebook_path):
@@ -619,6 +675,11 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
             break # no more new ones to process
 
 if __name__ == '__main__':
+    notebook_path = 'packages/proveit/logic/equality/_demonstrations_.ipynb'
+    with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+        for _ in range(100):
+            execute_processor.executeNotebook(notebook_path)        
+    """
     if os.path.sep != '/':
         # use the appropriate path separator for the OS
         default_paths = [path.replace('/', os.path.sep) for path in default_paths]
@@ -701,3 +762,4 @@ if __name__ == '__main__':
         path = os.path.dirname(os.path.realpath(__file__))
         print("Extracting tarball into %s"%path)
         tar.extractall(path)
+   """

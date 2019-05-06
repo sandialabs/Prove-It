@@ -15,13 +15,3 @@ from .proof import ProofFailure, ModusPonensFailure, RelabelingFailure, Speciali
 #import _context_storage
 from ._context_storage import relurl, ContextStorage, StoredSpecialStmt, StoredAxiom, StoredTheorem
 #from . import magics#KMR addition 1/7/19
-
-def clear():
-    '''
-    Clear all references to Prove-It information.
-    This should make a clean slate w.r.t. Prove-It.
-    '''
-    Expression._clear_()
-    KnownTruth._clear_()
-    Proof._clear_()
-    Context._clear_()

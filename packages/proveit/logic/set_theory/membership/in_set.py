@@ -6,15 +6,6 @@ class InSet(Operation):
     
     # maps elements to InSet KnownTruths.  For exmple, map x to (x in S) if (x in S) is a KnownTruth.
     knownMemberships = dict()
-    
-    @staticmethod
-    def _clear_():
-        '''
-        Clear all references to Prove-It information under
-        the Expression jurisdiction.  All Expression classes that store Prove-It
-        state information must implement _clear_ to clear that information.
-        '''
-        InSet.knownMemberships.clear()
         
     def __init__(self, element, domain):
         Operation.__init__(self, InSet._operator_, (element, domain))

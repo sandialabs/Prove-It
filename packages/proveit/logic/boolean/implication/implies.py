@@ -12,16 +12,6 @@ class Implies(TransitiveRelation):
     # map right-hand-sides to Subset KnownTruths
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()        
-    
-    @staticmethod
-    def _clear_():
-        '''
-        Clear all references to Prove-It information under
-        the Expression jurisdiction.  All Expression classes that store Prove-It
-        state information must implement _clear_ to clear that information.
-        '''
-        Implies.knownLeftSides.clear()
-        Implies.knownRightSides.clear()
                 
     def __init__(self, antecedent, consequent):
         TransitiveRelation.__init__(self, Implies._operator_, antecedent, consequent)

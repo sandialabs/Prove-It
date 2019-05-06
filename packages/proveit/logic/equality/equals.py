@@ -32,19 +32,6 @@ class Equals(TransitiveRelation):
     # recursion while automatically deducing an equality is in Booleans).
     initializing = set()
 
-    @staticmethod
-    def _clear_():
-        '''
-        Clear all references to Prove-It information under
-        the Expression jurisdiction.  All Expression classes that store Prove-It
-        state information must implement _clear_ to clear that information.
-        '''
-        Equals.knownEqualities.clear()
-        Equals.simplifications.clear()
-        Equals.evaluations.clear()
-        Equals.inversions.clear()
-        assert len(Equals.in_progress_to_conclude), "Unexpected remnant 'initializing' items (should have been temporary)"
-        
     def __init__(self, a, b):
         TransitiveRelation.__init__(self, Equals._operator_, a, b)
         if self not in Equals.initializing:

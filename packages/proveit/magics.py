@@ -56,8 +56,8 @@ class AssignmentBehaviorModifier:
 
     def displayAssignments(self, shell):
 #        shell.ex("from proveit._core_.magics import Assignments")#Comment out for Python 3
-        shell.ex("from proveit.magics import Assignments")#Comment in for Python 3
-        self._setBehavior(lambda varnames: "Assignments([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])")
+        shell.ex("import proveit.magics")#Comment in for Python 3
+        self._setBehavior(lambda varnames: "proveit.magics.Assignments([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])")
 
 class ContextInterface:
     '''
@@ -254,6 +254,9 @@ class ContextInterface:
 
 class ProveItMagicCommands:
     def __init__(self):
+        self.reset()
+    
+    def reset(self):
         # You must call the parent constructor
         self.kind = None
         self.definitions = dict() # map name to expression
@@ -734,9 +737,3 @@ class ProveItMagicFailure(Exception):
         self.message = message
     def __str__(self):
         return self.message
-
-def executeWithoutIPython(code):
-    '''
-    
-    '''
-    pass
