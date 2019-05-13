@@ -225,6 +225,7 @@ class Or(Operation):
         if len(self.operands)==2:
             if idx==0: return self.deduceLeftInBool(assumptions)
             elif idx==1: return self.deduceRightInBool(assumptions)
+        #attempt to replace with AA and CC over Amulti and Cmulti    
         return eachInBool.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
                 
     def deduceNotLeftIfNeither(self, assumptions=USE_DEFAULTS):
