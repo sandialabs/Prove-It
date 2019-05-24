@@ -7,6 +7,8 @@ from __future__ import print_function
 import sys
 import os
 import re
+from time import monotonic
+from queue import Empty
 #import lxml.etree#Comment out for Python 3
 import lxml#Comment in for Python 3
 from lxml import etree#Comment in for Python 3
@@ -231,7 +233,8 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
         self.km, self.kc = None, None
         
     def preprocess(self, nb, resources, path):
-        # Record initial loaded modules.  All other moduels will be deleted when
+        # Record initial loaded modules, including the proveit defaults and
+        # proveit.magics.  All other modules will be deleted when
         # we are done so we can "recycle" our Kernel to be used cleanly
         # for the next notebook.
         init_modules_source = """
@@ -239,10 +242,6 @@ import sys
 from proveit import *
 import proveit.magics
 __init_modules = list(sys.modules.keys())
-import gc
-gc.collect()
-__init_gc_objects = {id(obj) for obj in gc.get_objects()}
-%store __init_gc_objects
 """
         init_modules_cell = nbformat.NotebookNode(cell_type='code', source=init_modules_source, metadata=dict())
         cell, _ = self.preprocess_cell(init_modules_cell, resources, 0)
@@ -268,8 +267,9 @@ __init_gc_objects = {id(obj) for obj in gc.get_objects()}
                             output['execution_count'] = exec_count
             nb.cells[index]
         
+        # "reset" the stored Prove-It data.  Also,
         # Delete all modules except those that were initially loaded.
-        # Also, %reset local variables.
+        # Also, %reset local variables and history.
         # We are preparing the Kernel to be recycled.
         reset_source = """
 import sys
@@ -277,50 +277,67 @@ import proveit
 proveit.reset()
 # delete all modules but initial modules and proveit._core_ modules
 for m in list(sys.modules.keys()):
-    #retained_packages = ['proveit._core_', 'proveit.logic. 
-    if m not in __init_modules:# and m[:len(proveit_core)]!=proveit_core:
-        parent, child = m.rsplit('.', 1)
-        if parent in __init_modules:
-            # remove the module being deleted from its parent package
-            sys.modules[parent].__dict__.pop(child)
+    if m not in __init_modules:
+        if '.' in m:
+            parent, child = m.rsplit('.', 1)
+            if parent in __init_modules:
+                # remove the module being deleted from its parent package
+                sys.modules[parent].__dict__.pop(child)
         del(sys.modules[m])
 %reset
+%reset in
+%reset out
 """
         reset_cell = nbformat.NotebookNode(cell_type='code', source=reset_source, metadata=dict())
         cell, _ = self.preprocess_cell(reset_cell, resources, 0)
         
+        # Garbage collect.
         garbage_collect_source = """import sys
-%store -r
 import gc
-import IPython
 gc.collect()
-found=False
-new_objs = [obj for obj in gc.get_objects() if id(obj) not in __init_gc_objects]
-'''
-for obj in list(gc.get_objects()):
-    if id(obj) not in __init_gc_objects:
-        if 'proveit.' in str(obj.__class__):
-            found=True
-            break
-'''
-obj = new_objs[-300]
-#sys.modules['__main__'].__dict__.keys()
-len(new_objs) #, obj, gc.get_referrers(obj)[2].__class__, gc.get_referrers(gc.get_referrers(obj)[2])[0])#, gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[2])[0])[0].__class__)
-#found
-#sys.modules['__main__'].__dict__
-#(obj, gc.get_referrers(obj)[1].__class__, gc.get_referrers(gc.get_referrers(obj)[1])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0].__class__,  gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0])[0])[0].__class__, gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0])[0])[0])[0], gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[0])[0])[0])[0])[0])[0])[0])[0].__class__)
-#(obj._context.name, obj.__class__, gc.get_referrers(obj)[1].keys(), gc.get_referrers(gc.get_referrers(obj)[1])[1].__class__)
-#(obj.__class__, gc.get_referrers(obj)[1].keys(), gc.get_referrers(gc.get_referrers(obj)[1])[1])
-#(obj.__class__, gc.get_referrers(obj)[1].__class__, gc.get_referrers(gc.get_referrers(obj)[1])[1].__class__,  gc.get_referrers(gc.get_referrers(gc.get_referrers(obj)[1])[1])[0].keys())
-#len(new_displayhook_objs)
-#(found, len(gc.get_objects()))
-#{obj.__class__ for obj in new_objs}
-#found
+len(gc.get_objects()) # used to check for memory leaks
 """
         garbage_collect_cell = nbformat.NotebookNode(cell_type='code', source=garbage_collect_source, metadata=dict())
         cell, _ = self.preprocess_cell(garbage_collect_cell, resources, 0)
-        print('num gc objects', cell['outputs'][0]['data']['text/plain'])        
+        # Useful debugging to check for memory leaks:
+        #print('num gc objects', cell['outputs'][0]['data']['text/plain'])    
         return nb, resources
+
+    def run_cell(self, cell, cell_index=0):
+        from nbconvert.preprocessors.execute import CellExecutionComplete
+        parent_msg_id = self.kc.execute(cell.source, store_history=False)
+        self.log.debug("Executing cell:\n%s", cell.source)
+        exec_reply = self._wait_for_reply(parent_msg_id, cell)
+
+        cell.outputs = []
+        self.clear_before_next_output = False
+
+        while True:
+            try:
+                # We've already waited for execute_reply, so all output
+                # should already be waiting. However, on slow networks, like
+                # in certain CI systems, waiting < 1 second might miss messages.
+                # So long as the kernel sends a status:idle message when it
+                # finishes, we won't actually have to wait this long, anyway.
+                msg = self.kc.iopub_channel.get_msg(timeout=self.iopub_timeout)
+            except Empty:
+                self.log.warning("Timeout waiting for IOPub output")
+                if self.raise_on_iopub_timeout:
+                    raise RuntimeError("Timeout waiting for IOPub output")
+                else:
+                    break
+            if msg['parent_header'].get('msg_id') != parent_msg_id:
+                # not an output from our execution
+                continue
+
+            # Will raise CellExecutionComplete when completed
+            try:
+                self.process_message(msg, cell, cell_index)
+            except CellExecutionComplete:
+                break
+
+        # Return cell.outputs still for backwards compatability
+        return exec_reply, cell.outputs
 
     def executeNotebook(self, notebook_path):
         '''
