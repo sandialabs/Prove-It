@@ -242,6 +242,7 @@ import sys
 from proveit import *
 import proveit.magics
 __init_modules = list(sys.modules.keys())
+__init_modules # avoid Prove-It magic assignment
 """
         init_modules_cell = nbformat.NotebookNode(cell_type='code', source=init_modules_source, metadata=dict())
         cell, _ = self.preprocess_cell(init_modules_cell, resources, 0)
@@ -692,11 +693,6 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
             break # no more new ones to process
 
 if __name__ == '__main__':
-    notebook_path = 'packages/proveit/logic/equality/_demonstrations_.ipynb'
-    with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
-        for _ in range(100):
-            execute_processor.executeNotebook(notebook_path)        
-    """
     if os.path.sep != '/':
         # use the appropriate path separator for the OS
         default_paths = [path.replace('/', os.path.sep) for path in default_paths]
@@ -779,4 +775,3 @@ if __name__ == '__main__':
         path = os.path.dirname(os.path.realpath(__file__))
         print("Extracting tarball into %s"%path)
         tar.extractall(path)
-   """
