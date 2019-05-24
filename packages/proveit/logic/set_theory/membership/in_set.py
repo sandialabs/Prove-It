@@ -6,7 +6,7 @@ class InSet(Operation):
     
     # maps elements to InSet KnownTruths.  For exmple, map x to (x in S) if (x in S) is a KnownTruth.
     knownMemberships = dict()
-    
+        
     def __init__(self, element, domain):
         Operation.__init__(self, InSet._operator_, (element, domain))
         self.element = self.operands[0]

@@ -11,6 +11,15 @@ class Literal(Label):
     
     instances = dict() # map core information to Literal instances
     
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information under
+        the Expression jurisdiction.  All Expression classes that store Prove-It
+        state information must implement _clear_ to clear that information.
+        '''
+        Literal.instances.clear()
+        
     def __init__(self, stringFormat, latexFormat=None, extraCoreInfo=tuple(), context=None):
         '''
         Create a Literal.  If latexFormat is not supplied, the stringFormat is used for both.

@@ -12,7 +12,7 @@ class Implies(TransitiveRelation):
     # map right-hand-sides to Subset KnownTruths
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict()        
-        
+                
     def __init__(self, antecedent, consequent):
         TransitiveRelation.__init__(self, Implies._operator_, antecedent, consequent)
         self.antecedent = antecedent

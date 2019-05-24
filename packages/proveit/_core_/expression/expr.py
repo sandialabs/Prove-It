@@ -27,6 +27,7 @@ class ExprType(type):
         return value
 
 class Expression(metaclass=ExprType):
+    # set of (style-id, Expression) tuples
     displayed_expression_styles = set() 
     
     # map expression style ids to contexts (for expressions that "belong" to a Context)
@@ -35,7 +36,18 @@ class Expression(metaclass=ExprType):
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
     in_progress_to_conclude = set() 
-            
+
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information under
+        the Expression jurisdiction.  All Expression classes that store Prove-It
+        state information must implement _clear_ to clear that information.
+        '''
+        Expression.displayed_expression_styles.clear()
+        Expression.contexts.clear()
+        assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
+                        
     def __init__(self, coreInfo, subExpressions=tuple(), styles=dict(), requirements=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type

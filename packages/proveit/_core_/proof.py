@@ -19,7 +19,17 @@ class Proof:
     # multiple Proof objects can represent the same Proof and will have the same hash value).
     # Using this, internal references (between KnownTruths and Proofs) unique .
     uniqueProofs = dict()
-    
+
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information in
+        the Proof jurisdiction.
+        '''
+        Proof.uniqueProofs.clear()
+        Assumption.allAssumptions.clear()
+        Theorem.allTheorems.clear()
+        
     def __init__(self, provenTruth, requiredTruths):
         
         '''
@@ -232,17 +242,17 @@ class Proof:
         '''
         return self._meaningData.numSteps
     
-    def usedAxiomNames(self):
+    def usedAxioms(self):
         '''
         Returns the set of names of axioms that are used directly (not via other theorems) in this proof. 
         '''
-        return set().union(*[requiredProof.usedAxiomNames() for requiredProof in self.requiredProofs])
+        return set().union(*[requiredProof.usedAxioms() for requiredProof in self.requiredProofs])
 
-    def usedTheoremNames(self):
+    def usedTheorems(self):
         '''
         Returns the set of names of axioms that are used directly (not via other theorems) in this proof. 
         '''
-        return set().union(*[requiredProof.usedTheoremNames() for requiredProof in self.requiredProofs])
+        return set().union(*[requiredProof.usedTheorems() for requiredProof in self.requiredProofs])
     
     def assumptions(self):
         return self.provenTruth.assumptions
@@ -324,7 +334,7 @@ class Assumption(Proof):
             Proof.__init__(self, KnownTruth(expr, {expr}), [])
         finally:
             # restore the original default assumptions
-            defaults.assumptions = prev_default_assumptions            
+            defaults.assumptions = prev_default_assumptions
         Assumption.allAssumptions[(expr, assumptions)] = self
     
     @staticmethod

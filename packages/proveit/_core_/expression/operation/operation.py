@@ -10,6 +10,15 @@ class Operation(Expression):
     # is accessed (see ExprType in proveit._core_.expression.expr).
     operationClassOfOperator = dict()
     
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information under
+        the Expression jurisdiction.  All Expression classes that store Prove-It
+        state information must implement _clear_ to clear that information.
+        '''
+        Operation.operationClassOfOperator.clear()
+        
     def __init__(self, operator_or_operators, operand_or_operands, styles=dict(), requirements=tuple()):
         '''
         Create an operation with the given operator(s) and operand(s).

@@ -31,7 +31,7 @@ class Equals(TransitiveRelation):
     # Record the Equals objects being initialized (to avoid infinite
     # recursion while automatically deducing an equality is in Booleans).
     initializing = set()
-    
+
     def __init__(self, a, b):
         TransitiveRelation.__init__(self, Equals._operator_, a, b)
         if self not in Equals.initializing:

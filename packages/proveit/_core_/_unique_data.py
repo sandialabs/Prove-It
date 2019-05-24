@@ -87,3 +87,8 @@ def meaningData(unique_rep):
 
 def styleData(unique_rep):
     return uniqueData(_StyleData, unique_rep)
+
+def clear_unique_data():
+    _MeaningData.unique_id_map.clear()
+    _StyleData.unique_id_map.clear()
+    _StyleData.parent_map.clear()

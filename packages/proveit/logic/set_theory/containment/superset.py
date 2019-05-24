@@ -46,7 +46,7 @@ class Superset(SupersetRelation):
     # map right-hand-sides to Superset KnownTruths
     #   (populated in TransitivityRelation.deriveSideEffects)
     knownRightSides = dict() 
-            
+    
     def __init__(self, superset, subset):
         SupersetRelation.__init__(self, Superset._operator_, superset, subset)
 

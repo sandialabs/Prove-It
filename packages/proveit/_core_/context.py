@@ -51,6 +51,18 @@ class Context:
     storages = dict()
 
     specialExprKindToModuleName = {'common':'_common_', 'axiom':'_axioms_', 'theorem':'_theorems_'}
+    
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information in
+        the Context jurisdiction.
+        '''
+        Context._rootContextPaths.clear()
+        Context.default = None
+        Context.storages.clear()
+        CommonExpressions.expr_id_contexts.clear()
+        CommonExpressions.referenced_contexts.clear()        
         
     # externals.txt at top level to track relative path to external
     # contexts.

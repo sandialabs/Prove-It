@@ -29,3 +29,19 @@ from .relation import TransitiveRelation, TransitiveSequence
 # %begin_axioms, %end_axioms, %begin_theorems, %end_theorems, %begin_proof, and %display_assignment
 #from . import _core_.magics
 from . import magics
+
+def reset():
+    '''
+    Clear all references to Prove-It information.
+    This should make a clean slate w.r.t. Prove-It.
+    '''
+    Expression._clear_()
+    Literal._clear_()
+    Operation._clear_()
+    KnownTruth._clear_()
+    Proof._clear_()
+    Context._clear_()
+    defaults.reset()
+    magics.proveItMagic.reset()
+    from proveit._core_._unique_data import clear_unique_data
+    clear_unique_data()

@@ -1845,8 +1845,8 @@ class StoredTheorem(StoredSpecialStmt):
         with open(os.path.join(self.path, 'proof.pv_it'), 'w') as proofFile:
             proofFile.write(proofId)
         
-        usedAxiomNames = [str(usedAxiom) for usedAxiom in proof.usedAxiomNames()]
-        usedTheoremNames = [str(usedTheorem) for usedTheorem in proof.usedTheoremNames()]
+        usedAxiomNames = [str(usedAxiom) for usedAxiom in proof.usedAxioms()]
+        usedTheoremNames = [str(usedTheorem) for usedTheorem in proof.usedTheorems()]
         
         # Remove usedBy links that are obsolete because the proof has changed
         prevUsedAxiomNames, prevUsedTheoremNames = self.readDependencies()

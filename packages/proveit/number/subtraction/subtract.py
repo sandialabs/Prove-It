@@ -10,7 +10,7 @@ class Subtract(Operation):
     # Map operands to sets of KnownTruth equalities that involve
     # the operand on the left hand side. 
     knownEqualities = dict()
-    
+       
     def __init__(self, operandA, operandB):
         r'''
         Sub one number from another

@@ -83,6 +83,21 @@ class KnownTruth:
     # recursion when deducing side effects after something is proven.
     in_progress_to_derive_sideeffects = set() 
 
+    @staticmethod
+    def _clear_():
+        '''
+        Clear all references to Prove-It information in
+        the KnownTruth jurisdiction.
+        '''
+        KnownTruth.lookup_dict.clear()
+        KnownTruth.sideeffect_processed.clear()
+        KnownTruth.theoremBeingProven = None
+        KnownTruth.hasBeenProven = None
+        KnownTruth.presumingTheorems = None
+        KnownTruth.presumingPrefixes = None
+        KnownTruth.qedInProgress = False
+        _ExprProofs.all_expr_proofs.clear()
+        assert len(KnownTruth.in_progress_to_derive_sideeffects)==0, "Unexpected remnant 'in_progress_to_derive_sideeffects' items (should have been temporary)"
 
     def __init__(self, expression, assumptions):
         '''
