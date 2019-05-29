@@ -2,13 +2,10 @@ from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic import IrreducibleValue, Equals
 
 class Numeral(Literal, IrreducibleValue):
-    '''
-    # Obsolete, need to revisit:
     _inNaturalsStmts = None # initializes when needed
     _inNaturalsPosStmts = None # initializes when needed
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
-    '''
     
     def __init__(self, n, stringFormat=None, latexFormat=None):
         if stringFormat is None: stringFormat=str(n)
