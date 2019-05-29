@@ -21,7 +21,10 @@ class Or(Operation):
             return
         if len(operands) == 0:
             Or.trivialDisjunctions.add(self)
-            from proveit.logic.boolean.disjunction._axioms_ import emptyDisjunction
+            try:
+                from proveit.logic.boolean.disjunction._axioms_ import emptyDisjunction
+            except:
+                pass # emptyDisjunction not initially defined when doing a clean rebuild
         if len(operands) == 1:
             operand = operands[0]
             try: 
