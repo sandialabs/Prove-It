@@ -177,18 +177,20 @@ class KnownTruth:
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
             KnownTruth.in_progress_to_derive_sideeffects.add(self)
-            for sideEffect in self.expr.sideEffects(self):
-                # Attempt each side-effect derivation, specific to the
-                # type of Expression.
-                try:
-                    # use the default assumptions which are temporarily set to the
-                    # assumptions utilized in the last derivation step.
-                    sideEffect(assumptions=defaults.assumptions)     
-                except ProofFailure:
-                    pass
-                except Exception as e:
-                    raise Exception("Side effect failure for %s: "%str(self.expr) + str(e))
-            KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
+            try:
+                for sideEffect in self.expr.sideEffects(self):
+                    # Attempt each side-effect derivation, specific to the
+                    # type of Expression.
+                    try:
+                        # use the default assumptions which are temporarily set to the
+                        # assumptions utilized in the last derivation step.
+                        sideEffect(assumptions=defaults.assumptions)     
+                    except ProofFailure:
+                        pass
+                    except Exception as e:
+                        raise Exception("Side effect failure for %s: "%str(self.expr) + str(e))
+            finally:
+                KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
             KnownTruth.sideeffect_processed.add((self, defaults.assumptions))
 
     def __eq__(self, other):
