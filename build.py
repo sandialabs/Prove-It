@@ -257,15 +257,16 @@ __init_modules # avoid Prove-It magic assignment
         # are actually recycling the Kernel).
         exec_count = 0
         for index, cell in enumerate(nb.cells): 
-            cell, resources = self.preprocess_cell(cell, resources, index)
-            if 'execution_count' in cell:
-                # make proper execution counts
-                exec_count += 1
-                cell['execution_count'] = exec_count
-                if 'outputs' in cell:
-                    for output in cell['outputs']:
-                        if 'execution_count' in output:
-                            output['execution_count'] = exec_count
+            if hasattr(cell, 'source') and cell['source'] != '':
+                cell, resources = self.preprocess_cell(cell, resources, index)
+                if 'execution_count' in cell:
+                    # make proper execution counts
+                    exec_count += 1
+                    cell['execution_count'] = exec_count
+                    if 'outputs' in cell:
+                        for output in cell['outputs']:
+                            if 'execution_count' in output:
+                                output['execution_count'] = exec_count
             nb.cells[index]
         
         # "reset" the stored Prove-It data.  Also,
