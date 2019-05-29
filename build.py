@@ -257,7 +257,7 @@ __init_modules # avoid Prove-It magic assignment
         # are actually recycling the Kernel).
         exec_count = 0
         for index, cell in enumerate(nb.cells): 
-            if hasattr(cell, 'source') and cell['source'] != '':
+            if hasattr(cell, 'source') and cell['source'].strip() != '':
                 cell, resources = self.preprocess_cell(cell, resources, index)
                 if 'execution_count' in cell:
                     # make proper execution counts
