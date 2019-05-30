@@ -12,3 +12,4 @@ notebook.css
 doc/api
 doc/doctrees
 doc/html
+.DS_Store
