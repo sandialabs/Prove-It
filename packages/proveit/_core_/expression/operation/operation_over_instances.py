@@ -256,6 +256,9 @@ class OperationOverInstances(Operation):
         if isinstance(self.instanceExpr, self.__class__):
             for condition in self.instanceExpr.allConditions():
                 yield condition
+                
+    def allConditionsList(self):
+        return list(self.allConditions())
     
     def joinedNestings(self):
         '''
