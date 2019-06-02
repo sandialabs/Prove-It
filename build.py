@@ -585,10 +585,11 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                 exportToHTML(os.path.join(context_path, '_common_.ipynb'))
         else:
             # execute the commons notebooks first, and do this twice to work out inter-dependencies
-            for context_path in context_paths:
-                #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-                execute_processor.executeNotebook(os.path.join(context_path, '_common_.ipynb'))
-            # the second time we'll export to html
+            for _ in range(2):
+                for context_path in context_paths:
+                    #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
+                    execute_processor.executeNotebook(os.path.join(context_path, '_common_.ipynb'))
+            # one last time to eliminate "expression notebook ... updated" messages and we'll export to html
             for context_path in context_paths:
                 #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_common_.ipynb'))
