@@ -813,8 +813,9 @@ class Specialization(Proof):
             if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
         for assumption in assumptions:
             if assumption == WILDCARD_ASSUMPTIONS: continue # ignore the wildcard for this purpose
-            if len(assumption.freeVars() & set(relabelMap.keys())) != 0:
-                raise RelabelingFailure(None, assumptions, 'Cannot relabel using assumptions that involve any of the relabeling variables')
+            vars_in_violation = assumption.freeVars() & set(relabelMap.keys())
+            if len(vars_in_violation) != 0:
+                raise RelabelingFailure(None, assumptions, 'Attempting to relabel variable(s) that are free in the assumptions: ' + str(vars_in_violation))
         
         for key, sub in specializeMap.items():
             if not isinstance(sub, Expression):
