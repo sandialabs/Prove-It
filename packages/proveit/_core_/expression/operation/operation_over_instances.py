@@ -258,6 +258,12 @@ class OperationOverInstances(Operation):
                 yield condition
                 
     def allConditionsList(self):
+        '''
+        Added here on 5/30/19 by wdc.
+        Returns the entire list of conditions of this OperationOverInstances,
+        including any conditions of nested OprtationOverInstances,
+        relying on the allConditions() generator defined above.
+        '''
         return list(self.allConditions())
     
     def joinedNestings(self):
