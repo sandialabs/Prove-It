@@ -17,7 +17,14 @@ class Implies(TransitiveRelation):
         TransitiveRelation.__init__(self, Implies._operator_, antecedent, consequent)
         self.antecedent = antecedent
         self.consequent = consequent
-        
+        try:
+            # Automatically import Not(TRUE => FALSE) theorem when we create a TRUE => FALSE object.
+            from proveit.logic.boolean._common_ import FALSE, TRUE
+            if self.antecedent == FALSE and self.consequent == TRUE:
+                from ._theorems_ import trueImpliesFalseNegated
+        except:
+            pass
+
     @staticmethod
     def WeakRelationClass():
         '''
@@ -76,13 +83,21 @@ class Implies(TransitiveRelation):
         except:
             pass
         try:
+            # Try evaluating the antecedent.
+            evaluation = self.antecedent.evaluation(assumptions)
+            if evaluation.rhs == FALSE:
+                # Derive A => B given Not(A); it doesn't matter what B is if A is FALSE
+                return falseAntecedentImplication.specialize({A: self.antecedent, B: self.consequent}, assumptions=assumptions)
+        except:
+            pass
+        try:
             # Use a breadth-first search approach to find the shortest
             # path to get from one end-point to the other.
             return TransitiveRelation.conclude(self, assumptions)            
         except:
             pass
         # try to prove the implication via hypothetical reasoning.
-        return self.consequent.prove(assumptions + (self.antecedent,)).asImplication(self.antecedent)
+        return self.consequent.prove(tuple(assumptions) + (self.antecedent,)).asImplication(self.antecedent)
     
     def deriveConsequent(self, assumptions=USE_DEFAULTS):
         r'''
