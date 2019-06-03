@@ -244,7 +244,7 @@ class ContextStorage:
         theorems_set = set() # to check for repeats
         filename = os.path.join(self.pv_it_dir, 'theorem_dependency_order.txt')
         if not os.path.isfile(filename):
-            return theorems # return the empty list
+            return None # must be updated and stored to be used
         with open(filename, 'r') as f:
             for line in f:
                 theorem_name = line.strip()
@@ -262,7 +262,8 @@ class ContextStorage:
         '''
         ordered_theorems = []
         for theorem_name in context_theorem_names:
-            ordered_theorems += self.getTheorem(theorem_name).explicitlyPresumedTheoremNames()
+            ordered_theorems += StoredTheorem(self.context, theorem_name).explicitlyPresumedTheoremNames()
+            #ordered_theorems += self.context.getTheorem(theorem_name).explicitlyPresumedTheoremNames()
             ordered_theorems.append(theorem_name)
             
         if self._theorem_dependency_order != ordered_theorems:
@@ -271,6 +272,16 @@ class ContextStorage:
                 for theorem in ordered_theorems:
                     f.write(theorem + '\n')
         self._theorem_dependency_order = self._loadTheoremDependencyOrder()
+    
+    def invalidateTheoremDependencyOrder(self):
+        '''
+        Invalidate the theorem dependency order (both in memory and on file)
+        to force it to be updated when required.
+        '''
+        self._theorem_dependency_order = None
+        filename = os.path.join(self.pv_it_dir, 'theorem_dependency_order.txt')
+        if os.path.isfile(filename):
+            os.remove(filename)
         
     def setCommonExpressions(self, exprNames, exprDefinitions, clear=False):
         from proveit import Expression
@@ -1765,7 +1776,7 @@ class StoredTheorem(StoredSpecialStmt):
         
         # The context's theorem dependency order is now stale
         # and needs to be updated:
-        self.context._storage._theorem_dependency_order = None
+        self.context._storage.invalidateTheoremDependencyOrder()
     
     def explicitlyPresumedTheoremNames(self):
         '''

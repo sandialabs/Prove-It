@@ -257,15 +257,16 @@ __init_modules # avoid Prove-It magic assignment
         # are actually recycling the Kernel).
         exec_count = 0
         for index, cell in enumerate(nb.cells): 
-            cell, resources = self.preprocess_cell(cell, resources, index)
-            if 'execution_count' in cell:
-                # make proper execution counts
-                exec_count += 1
-                cell['execution_count'] = exec_count
-                if 'outputs' in cell:
-                    for output in cell['outputs']:
-                        if 'execution_count' in output:
-                            output['execution_count'] = exec_count
+            if hasattr(cell, 'source') and cell['source'].strip() != '':
+                cell, resources = self.preprocess_cell(cell, resources, index)
+                if 'execution_count' in cell:
+                    # make proper execution counts
+                    exec_count += 1
+                    cell['execution_count'] = exec_count
+                    if 'outputs' in cell:
+                        for output in cell['outputs']:
+                            if 'execution_count' in output:
+                                output['execution_count'] = exec_count
             nb.cells[index]
         
         # "reset" the stored Prove-It data.  Also,
@@ -584,10 +585,11 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                 exportToHTML(os.path.join(context_path, '_common_.ipynb'))
         else:
             # execute the commons notebooks first, and do this twice to work out inter-dependencies
-            for context_path in context_paths:
-                #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
-                execute_processor.executeNotebook(os.path.join(context_path, '_common_.ipynb'))
-            # the second time we'll export to html
+            for _ in range(2):
+                for context_path in context_paths:
+                    #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
+                    execute_processor.executeNotebook(os.path.join(context_path, '_common_.ipynb'))
+            # one last time to eliminate "expression notebook ... updated" messages and we'll export to html
             for context_path in context_paths:
                 #revise_special_notebook(os.path.join(context_path, '_common_.ipynb'))
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_common_.ipynb'))

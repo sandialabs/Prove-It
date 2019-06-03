@@ -21,7 +21,10 @@ class Or(Operation):
             return
         if len(operands) == 0:
             Or.trivialDisjunctions.add(self)
-            from proveit.logic.boolean.disjunction._axioms_ import emptyDisjunction
+            try:
+                from proveit.logic.boolean.disjunction._axioms_ import emptyDisjunction
+            except:
+                pass # emptyDisjunction not initially defined when doing a clean rebuild
         if len(operands) == 1:
             operand = operands[0]
             try: 
@@ -219,13 +222,15 @@ class Or(Operation):
         provided X by expression or index number.
         '''
         from ._theorems_ import eachInBool
+        from proveit.number import num
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
         if len(self.operands)==2:
             if idx==0: return self.deduceLeftInBool(assumptions)
             elif idx==1: return self.deduceRightInBool(assumptions)
-        return eachInBool.specialize({Amulti:self.operands[:idx], B:self.operands[idx], Cmulti:self.operands[idx+1:]}, assumptions=assumptions)
+        #attempt to replace with AA and CC over Amulti and Cmulti    
+        return eachInBool.specialize({m:num(idx), n:num(len(self.operands)-idx-1), AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
                 
     def deduceNotLeftIfNeither(self, assumptions=USE_DEFAULTS):
         '''

@@ -146,7 +146,7 @@ class Iff(TransitiveRelation):
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.
         '''
         from ._theorems_ import iffClosure
-        return iffClosure.specialize({A:self.hypothesis, B:self.conclusion}, assumptions=assumptions)
+        return iffClosure.specialize({A:self.A, B:self.B}, assumptions=assumptions)
     
     def deriveEquality(self, assumptions=USE_DEFAULTS):
         '''

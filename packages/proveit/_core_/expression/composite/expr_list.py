@@ -244,6 +244,8 @@ class ExprList(Composite, Expression):
         
         end_index = _simplifiedCoord(end_index, assumptions, requirements) 
                         
+        arrived_at_end = False
+        
         # Iterate over the entries and track the true element index,
         # including ranges of iterations (Iter objects).
         for i, entry in enumerate(self):
@@ -271,7 +273,6 @@ class ExprList(Composite, Expression):
                 entry_span = Subtract(entry.end_index, entry.start_index)
                 entry_end =  _simplifiedCoord(Add(index, entry_span), assumptions, requirements)
             
-            arrived_at_end = False
             if index==end_index:
                 arrived_at_end = True
             else:
