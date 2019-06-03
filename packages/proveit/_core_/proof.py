@@ -296,7 +296,7 @@ class Proof:
             html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
             if isinstance(proof, Specialization):
-                html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof.mappingHTML() + '</td></tr>'
+                html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
@@ -315,7 +315,7 @@ class Proof:
             out_str += proof.provenTruth.string(performUsabilityCheck=False)
             out_str += '\n'
             if isinstance(proof, Specialization):
-                out_str += '\t' + proof.mappingStr() + '\n'
+                out_str += '\t' + proof._mapping('str') + '\n'
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
                 out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
         return out_str
@@ -768,40 +768,31 @@ class Specialization(Proof):
             return 'specialization'
         return 'relabeling' # relabeling only
     
-    def mappingHTML(self):
-        from proveit import Lambda
-        from proveit.logic import Set
+    def _single_mapping(self, var, replacement, formatType):
+        from proveit import Function, Lambda
+        formatted = lambda expr : expr._repr_html_() if formatType=='HTML' else str(expr)
+        if isinstance(replacement, Lambda):
+            return formatted(Function(var, replacement.parameter_or_parameters)) + ' : ' + formatted(replacement.body)
+        return formatted(var) + ' : ' + formatted(replacement)
+    
+    def _mapping(self, formatType='HTML'):
         mappedVarLists = self.mappedVarLists
-        html = '<span style="font-size:20px;">'
+        if formatType=='HTML':
+            out = '<span style="font-size:20px;">'
+        else: out = ''
         if len(mappedVarLists) == 1 or (len(mappedVarLists) == 2 and len(mappedVarLists[-1]) == 0):
             # a single relabeling map, or a single specialization map with no relabeling map
             mappedVars = mappedVarLists[0]
-            html += ', '.join(Lambda(var, self.mappings[var])._repr_html_() for var in mappedVars)
+            out += ', '.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars)
         else:
-            html += ', '.join(Set(*[Lambda(var, self.mappings[var]) for var in mappedVars])._repr_html_() for mappedVars in mappedVarLists[:-1])
+            out += ', '.join(','.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars) for mappedVars in mappedVarLists[:-1])
             if len(mappedVarLists[-1]) > 0:
                 # the last group is the relabeling map, if there is one
                 mappedVars = mappedVarLists[-1]
-                html += ', relabeling ' + Set(*[Lambda(var, self.mappings[var]) for var in mappedVars])._repr_html_()
-        html += '</span>'
-        return html
-
-    def mappingStr(self):
-        from proveit import Lambda
-        from proveit.logic import Set
-        mappedVarLists = self.mappedVarLists
-        out_str = ''
-        if len(mappedVarLists) == 1 or (len(mappedVarLists) == 2 and len(mappedVarLists[-1]) == 0):
-            # a single relabeling map, or a single specialization map with no relabeling map
-            mappedVars = mappedVarLists[0]
-            out_str += ', '.join(str(Lambda(var, self.mappings[var])) for var in mappedVars)
-        else:
-            out_str += ', '.join(str(Set(*[Lambda(var, self.mappings[var]) for var in mappedVars])) for mappedVars in mappedVarLists[:-1])
-            if len(mappedVarLists[-1]) > 0:
-                # the last group is the relabeling map, if there is one
-                mappedVars = mappedVarLists[-1]
-                out_str += ', relabeling ' + str(Set(*[Lambda(var, self.mappings[var]) for var in mappedVars]))
-        return out_str
+                out += ', relabeling ' + ','.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars)
+        if formatType=='HTML':
+            out += '</span>'
+        return out
 
     @staticmethod
     def _specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions):
