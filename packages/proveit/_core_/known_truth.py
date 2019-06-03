@@ -228,7 +228,7 @@ class KnownTruth:
         for prev_thm_name in context.theoremNames():
             if prev_thm_name == theorem.name:
                 break # concludes all "previous" theorems of the context
-            if str(context.getTheorem(prev_thm_name)) in presuming:
+            if (context.name + '.' +  prev_thm_name) in presuming:
                 raise ValueError("Do not explicitly presuming any previous theorems of the context.  They are automatically presumed.")
             num_prev_thms += 1
         
