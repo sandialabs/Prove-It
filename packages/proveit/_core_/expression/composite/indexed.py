@@ -16,18 +16,16 @@ class Indexed(Expression):
     '''
     
     def __init__(self, var, index_or_indices, base=1, styles=dict(), requirements=tuple()):
-        from .composite import Composite, singleOrCompositeExpression, compositeExpression
+        from .composite import compositeExpression
         if not isinstance(var, Variable):
             raise TypeError("'var' being indexed should be a Variable")
-        self.index_or_indices = singleOrCompositeExpression(index_or_indices)
-        if isinstance(self.index_or_indices, Composite):
-            # a composite of multiple indices
-            self.indices = self.index_or_indices 
+        self.indices = compositeExpression(index_or_indices)
+        if len(self.indices) == 1:
+            # has a single parameter
+            self.index = self.indices[0]
+            self.index_or_indices = self.index
         else:
-            # a single index
-            self.index = self.index_or_indices
-            # wrap a single index in a composite for convenience
-            self.indices = compositeExpression(self.index)
+            self.index_or_indices = self.indices
         if not isinstance(base, int):
             raise TypeError("'base' should be an integer")
         Expression.__init__(self, ['Indexed', str(base)], [var, self.index_or_indices], styles=styles, requirements=requirements)
