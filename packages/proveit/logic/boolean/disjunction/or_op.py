@@ -222,6 +222,7 @@ class Or(Operation):
         provided X by expression or index number.
         '''
         from ._theorems_ import eachInBool
+        from proveit.number import num
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
@@ -229,7 +230,7 @@ class Or(Operation):
             if idx==0: return self.deduceLeftInBool(assumptions)
             elif idx==1: return self.deduceRightInBool(assumptions)
         #attempt to replace with AA and CC over Amulti and Cmulti    
-        return eachInBool.specialize({AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
+        return eachInBool.specialize({m:num(idx), n:num(len(self.operands)-idx-1), AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
                 
     def deduceNotLeftIfNeither(self, assumptions=USE_DEFAULTS):
         '''
