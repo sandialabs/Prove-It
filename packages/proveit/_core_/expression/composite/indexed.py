@@ -20,17 +20,17 @@ class Indexed(Expression):
         if not isinstance(var, Variable):
             raise TypeError("'var' being indexed should be a Variable")
         self.index_or_indices = singleOrCompositeExpression(index_or_indices)
-        if isinstance(index_or_indices, Composite):
+        if isinstance(self.index_or_indices, Composite):
             # a composite of multiple indices
-            self.indices = index_or_indices 
+            self.indices = self.index_or_indices 
         else:
             # a single index
-            self.index = index_or_indices
+            self.index = self.index_or_indices
             # wrap a single index in a composite for convenience
             self.indices = compositeExpression(self.index)
         if not isinstance(base, int):
             raise TypeError("'base' should be an integer")
-        Expression.__init__(self, ['Indexed', str(base)], [var, index_or_indices], styles=styles, requirements=requirements)
+        Expression.__init__(self, ['Indexed', str(base)], [var, self.index_or_indices], styles=styles, requirements=requirements)
         self.var = var
         self.base = base
     

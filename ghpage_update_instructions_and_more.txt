@@ -4,7 +4,7 @@
 cd doc
 make html
 cd ..
-find . -name "*.html" -o -name "_common_.py" -o -name "_axioms_.py" -o -name "_theorems_.py" -o -name "__pv_it"  -o -name "notebook.css" | tar -czf pv_it.tar.gz -T -
+find . -name "*.html" -o -name "_common_.py" -o -name "_axioms_.py" -o -name "_theorems_.py" -o -name "__pv_it"  -o -name "notebook.css" | tar -czf pv_it.tar.gz -T - --exclude="paths.txt"
 find . -name "*.html" -o -name "*.png"  -o -name "notebook.css" -o -name ".nojekyll" | tar -czf pv_it_web.tar.gz -T -
 
 
@@ -12,8 +12,8 @@ find . -name "*.html" -o -name "*.png"  -o -name "notebook.css" -o -name ".nojek
 git checkout --orphan gh-pages-update
 git rm -rf .
 
-<<move over pv_it_web.tar.gz, extract it via "tar -xzf pv_it_web.tar.gz", and delete it>>
-<<move over pv_it.tar.gz>>
+<<move over pv_it_web.tar.gz and pv_it.tar.gz>>
+tar -xzf pv_it_web.tar.gz; rm pv_it_web.tar.gz
 
 git add .
 git commit -a -m "Git-Hub Pages update"
