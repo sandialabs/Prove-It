@@ -770,6 +770,7 @@ if __name__ == '__main__':
             raise ValueError("Do not combine the '--download' option with any other option besides '--clean'")
         url = "http://pyproveit.org/pv_it.tar.gz" # tarball url
         print("Downloading '%s'"%url)
+        print("NOTE: If this fails (e.g., due to a firewall), it may be easiest to manually download and extract pv_it.tar.gz in this folder.")
 #        file_tmp = urllib.urlretrieve(url, filename=None)[0]#Comment out for Python 3
         file_tmp = urllib.request.urlretrieve(url, filename=None)[0]#Comment in for Python 3
         tar = tarfile.open(file_tmp)

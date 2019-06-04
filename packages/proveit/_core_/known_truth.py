@@ -312,11 +312,13 @@ class KnownTruth:
         if len(self.assumptions) > 0:
             raise Exception('qed proof should not have any remaining assumptions')
         KnownTruth.qedInProgress = True
-        proof = self.expr.prove().proof()
-        if not proof.isUsable():
-            proof.provenTruth.raiseUnusableProof()
-        KnownTruth.theoremBeingProven.recordProof(proof)
-        KnownTruth.qedInProgress = False
+        try:
+            proof = self.expr.prove().proof()
+            if not proof.isUsable():
+                proof.provenTruth.raiseUnusableProof()
+            KnownTruth.theoremBeingProven.recordProof(proof)
+        finally:
+            KnownTruth.qedInProgress = False
         return proof
 
     def proof(self):
