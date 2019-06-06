@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
 from proveit._common_ import A, B, C, D, AA, CC, m, n
 from proveit.logic.boolean.booleans import inBool
 
@@ -34,7 +34,7 @@ class Or(Operation):
             except:
                 pass
 
-    def conclude(self, assumptions):
+    def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Try to automatically conclude this disjunction.  If any of its
         operands have pre-existing proofs, it will be proven via the orIfAny
@@ -55,7 +55,7 @@ class Or(Operation):
                     operand.prove(assumptions, automation=useAutomationForOperand)
                     provenOperandIndices.append(k)
                     self.concludeViaExample(operand) # possible way to prove it
-                except:
+                except ProofFailure:
                     pass
             if len(self.operands) == 2 and len(provenOperandIndices) > 0:
                 # One or both of the two operands were known to be true (without automation).
@@ -112,7 +112,8 @@ class Or(Operation):
         elif len(self.operands)==2:
             return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return notOrIfNotAny.specialize({m:len(self.operands),AA:self.operands}, assumptions=assumptions)
+            from proveit.number import num
+            return notOrIfNotAny.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
     
     def concludeViaBoth(self, assumptions):
         from ._theorems_ import orIfBoth
@@ -139,19 +140,19 @@ class Or(Operation):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
         '''
-        from ._theorems_ import orImpliesRightIfNotLeft
+        from ._theorems_ import rightIfNotLeft
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+        return rightIfNotLeft.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)#.deriveConclusion(assumptions)
 
     def deriveLeftIfNotRight(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return A assuming inBool(A), Not(B).
         '''
-        from ._theorems_ import orImpliesLeftIfNotRight
+        from ._theorems_ import leftIfNotRight
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+        return leftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)#.deriveConclusion(assumptions)
 
     def deriveViaSingularDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -351,8 +352,8 @@ class Or(Operation):
         return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
 
     def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
-        from proveit.logic.disjunction._theorems_ import unaryDisjunctionDef
-        if len(operands) != 1:
+        from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
+        if len(self.operands) != 1:
             raise ValueError("Expression must have a single operand in order to invoke unaryDisjunctionDef")
-        operand = operands[0]
-        unaryDisjunctionDef.specialize({A:operand}, assumptions = assumptions)
+        operand = self.operands[0]
+        return unaryDisjunctionDef.specialize({A:operand}, assumptions = assumptions)
