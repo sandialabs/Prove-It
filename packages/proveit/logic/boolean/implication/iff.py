@@ -20,6 +20,7 @@ class Iff(TransitiveRelation):
         TransitiveRelation.__init__(self, Iff._operator_, A, B)
         self.A = A
         self.B = B
+
     
     def sideEffects(self, knownTruth):
         '''
@@ -39,10 +40,13 @@ class Iff(TransitiveRelation):
         Try to automatically conclude this bi-directional implication by 
         reducing its operands to true/false.
         '''
-        from ._theorems_ import trueIffTrue, falseIffFalse
+        from ._theorems_ import  iffTT, iffTF, iffFT, iffFF, trueIffTrue, falseIffFalse
         if self in {trueIffTrue, falseIffFalse}:
             # should be proven via one of the imported theorems as a simple special case
-            return self.prove() 
+            try:
+                self.evaluation(assumptions)
+            except:
+                return self.prove()
         try:
             # try to prove the bi-directional implication via evaluation reduction.
             # if that is possible, it is a relatively straightforward thing to do.
@@ -59,7 +63,17 @@ class Iff(TransitiveRelation):
         # the last attempt is to introduce the Iff via implications each way, an
         # essentially direct consequence of the definition.
         return self.concludeByDefinition(assumptions)
-    
+
+    def concludeNegation(self, assumptions=USE_DEFAULTS):
+        from proveit.logic.boolean._common_ import FALSE, TRUE
+        try:
+            if self.A == TRUE and self.B == FALSE:
+                from ._theorems_ import trueIffFalseNegated, falseIffTrueNegated
+            elif self.B == TRUE and self.A == FALSE:
+                from ._theorems_ import trueIffFalseNegated, falseIffTrueNegated
+        except:
+            pass
+
     def deriveLeftImplication(self, assumptions=USE_DEFAULTS):
         '''
         From (A<=>B) derive and return B=>A.
@@ -105,8 +119,7 @@ class Iff(TransitiveRelation):
         assert isinstance(otherIff, Iff)
         if self.B == otherIff.A:
             # from A <=> B, B <=> C, derive A <=> C
-            compose([self, otherIff], assumptions) # A <=> B and B <=> C
-            return iffTransitivity.specialize({A:self.A, B:self.B, C:otherIff.B}).deriveConclusion(assumptions)
+            return iffTransitivity.specialize({A:self.A, B:self.B, C:otherIff.B}, assumptions=assumptions)
         elif self.A == otherIff.A:
             # from y = x and y = z, derive x = z
             return self.deriveReversed(assumptions).applyTransitivity(otherIff, assumptions)
@@ -161,4 +174,3 @@ class Iff(TransitiveRelation):
             return eqFromMutualImpl.specialize({A:self.A, B:self.B}, assumptions=assumptions)
         eqFromMutualImpl.specialize({A:self.A, B:self.B}, assumptions=assumptions)
         return eqFromIff.specialize({A:self.A, B:self.B}, assumptions=assumptions)
-        

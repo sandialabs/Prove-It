@@ -1,5 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import m, n, A, B, AA, CC
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
+from proveit._common_ import m, n, A, B, AA, CC, C
 from proveit.logic.boolean.booleans import inBool
 
 class And(Operation):
@@ -21,13 +21,48 @@ class And(Operation):
         from ._theorems_ import trueAndTrue
         if self == trueAndTrue.expr: return trueAndTrue # simple special case
         return self.concludeViaComposition(assumptions)
-    
+
+    def concludeNegation(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import trueAndFalseNegated, falseAndTrueNegated, falseAndFalseNegated
+        from proveit.number import num
+        from proveit.logic.boolean._common_ import TRUE, FALSE
+        if len(self.operands) == 2:
+            if self.operands == (TRUE, FALSE):
+                return trueAndFalseNegated
+            if self.operands == (FALSE, TRUE):
+                return falseAndTrueNegated
+            if self.operands == (FALSE, FALSE):
+                return falseAndFalseNegated
+        for idx,operand in enumerate(self.operands):
+            try:
+                evaluation = operand.evaluation(assumptions, automation = False)
+            except ProofFailure:
+                continue
+            if evaluation.rhs == FALSE:
+                if len(self.operands) == 2:
+                    if idx == 0:
+                        try:
+                            from ._theorems_ import nandIfNotLeft
+                            return nandIfNotLeft.specialize({A: self.operands[0], B: self.operands[1]},assumptions=assumptions)
+                        except ProofFailure:
+                            continue
+                    if idx == 1:
+                        from ._theorems_ import nandIfNotRight
+                        return nandIfNotRight.specialize({A: self.operands[0], B: self.operands[1]},assumptions=assumptions)
+                else:
+                    mVal, nVal = num(idx), num(len(self.operands) - idx - 1)
+                    from ._theorems_ import nandIfNotOne
+                    try:
+                        return nandIfNotOne.specialize({m: mVal, n: nVal, AA: self.operands[:idx], B: self.operands[idx], CC: self.operands[idx + 1:]},assumptions=assumptions)
+                    except ProofFailure:
+                        continue
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically.
         '''
         yield self.deriveInBool
         yield self.deriveParts
+        yield self.deriveCommutation
 
     def negationSideEffects(self, knownTruth):
         '''
@@ -41,7 +76,7 @@ class And(Operation):
         (Z in Booleans).
         '''
         yield self.deducePartsInBool
- 
+
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
         From (A and B and ... and Z) derive [(A and B and ... and Z) in Booleans].
@@ -54,8 +89,8 @@ class And(Operation):
         A, B, ..., Z.
         '''
         for i in range(len(self.operands)):
-            self.deriveInPart(i, assumptions)        
-    
+            self.deriveInPart(i, assumptions)
+
     def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
         r'''
         From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies 
@@ -90,6 +125,10 @@ class And(Operation):
         if len(self.operands) != 2:
             raise Exception('deriveRight only applicable for binary conjunction operations')
         return self.deriveInPart(1, assumptions)
+
+    def deriveCommutation(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import commutation
+        return commutation.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
         
     def concludeViaComposition(self, assumptions=USE_DEFAULTS):
         '''
@@ -132,42 +171,41 @@ class And(Operation):
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
         if len(self.operands)==2:
-            if idx==0: return self.deduceLeftInBool(assumptions)
-            elif idx==1: return self.deduceRightInBool(assumptions)
+            if idx == 0:
+                return self.deduceLeftInBool(assumptions)
+            elif idx==1:
+                return self.deduceRightInBool(assumptions)
         else:
             from proveit.number import num
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
             return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
-    
+
     def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
         from proveit.number import num
-        from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations    
+        from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations
         from proveit.logic.boolean._common_ import TRUE, FALSE
-        falseIndex = -1
         for i, operand in enumerate(self.operands):
             if operand != TRUE and operand != FALSE:
                 # The operands are not all true/false, so try the default evaluation method
                 # which will attempt to evaluate each of the operands.
                 return Operation.evaluation(self, assumptions)
-            if operand == FALSE:
-                falseIndex = i
+            if operand == FALSE and len(self.operands) > 2:
+                # one operand is FALSE so the whole conjunction evaluates to FALSE.
+                from ._theorems_ import falseEval
+                from proveit.number import num
+                mVal, nVal = num(i), num(len(self.operands) - i - 1)
+                return falseEval.specialize({m: mVal, n: nVal, AA: self.operands[:i], CC: self.operands[i + 1:]})
         if len(self.operands) == 2:
             # This will automatically return andTT, andTF, andFT, or andFF
             return Operation.evaluation(self, assumptions)
         from ._theorems_ import trueEval, falseEval
-        if falseIndex >= 0:
-            # one operand is FALSE so the whole conjunction evaluates to FALSE.
-            from proveit.number import num
-            mVal, nVal = num(falseIndex), num(len(self.operands)-falseIndex-1)
-            return falseEval.specialize({m:mVal, n:nVal, AA:self.operands[:falseIndex], CC:self.operands[falseIndex+1:]})
-        else:
-            # no operand is FALSE so the whole disjunction evaluates to TRUE.
-            from proveit.number import num
-            return trueEval.specialize({m:num(len(self.operands)), AA:self.operands})
+        # no operand is FALSE so the whole disjunction evaluates to TRUE.
+        from proveit.number import num
+        return trueEval.specialize({m:num(len(self.operands)), AA:self.operands})
     
     def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
         '''

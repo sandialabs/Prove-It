@@ -11,7 +11,7 @@ class NotEquals(Operation):
         Operation.__init__(self, NotEquals._operator_, (a, b))
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
-            
+
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically for

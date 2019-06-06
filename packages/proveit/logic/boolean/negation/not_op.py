@@ -175,7 +175,7 @@ class Not(Operation):
 
     def concludeViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
         r'''
-        Prove and return self of the from not(A) assuming A=FALSE.
+        Prove and return self of the form not(A) assuming A=FALSE.
         '''
         from ._axioms_ import negationIntro
         return negationIntro.specialize({A:self.operand}, assumptions=assumptions)                        
@@ -205,10 +205,11 @@ class Not(Operation):
                         
     def deduceDoubleNegationEquiv(self, assumptions=USE_DEFAULTS):
         '''
-        For some not(not(A), derive and return A = not(not(A)) assuming A in Booleans.
+        For some not(not(A)), derive and return A = not(not(A)) assuming A in Booleans.
         '''
         from ._theorems_ import doubleNegationEquiv
         if isinstance(self.operand, Not):
             Asub = self.operand.operand
             return doubleNegationEquiv.specialize({A:Asub}, assumptions=assumptions)
+
 

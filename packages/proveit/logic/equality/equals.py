@@ -11,7 +11,7 @@ class Equals(TransitiveRelation):
     # map Expressions to sets of KnownTruths of equalities that involve the Expression
     # on the left hand or right hand side.
     knownEqualities = dict()
-    
+
     # Map Expressions to a subset of knownEqualities that are 
     # deemed to effect simplifications of the inner expression
     # on te right hand side according to some canonical method 
@@ -181,6 +181,16 @@ class Equals(TransitiveRelation):
         '''
         from .not_equals import NotEquals
         return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
+
+    def deduceNegated(self, i, assumptions=USE_DEFAULTS):
+        from proveit.logic.boolean.conjunction._theorems_ import falsifiedAndIfNotRight, falsifiedAndIfNotLeft, falsifiedAndIfNeither
+        if i == 0:
+            # Deduce Not(A and B) from Not(A).
+            return falsifiedAndIfNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+        if i == 1:
+            return falsifiedAndIfNotLeft.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+        else:
+            return falsifiedAndIfNeither.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -638,11 +648,11 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
         simplification = Equals(topLevel, reducedSimplification.rhs).concludeViaTransitivity(assumptions)
     if not inPlace and topLevel==inner:
         # store direct simplifications in the simplifications dictionary for next time
-        Equals.simplifications.setdefault(topLevel).add(simplification)
+        Equals.simplifications.setdefault(topLevel, set()).add(simplification)
         if isinstance(value, IrreducibleValue):
             # also store it in the evaluations dictionary for next time
             # since it evaluated to an irreducible value.
-            Equals.evaluations.setdefault(topLevel).add(simplification)
+            Equals.evaluations.setdefault(topLevel, set()).add(simplification)
     return simplification  
 
 def evaluateTruth(expr, assumptions):
