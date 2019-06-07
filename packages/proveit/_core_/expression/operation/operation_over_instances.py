@@ -215,11 +215,14 @@ class OperationOverInstances(Operation):
             # return the joined conditions excluding domain conditions
             return singleOrCompositeExpression(OperationOverInstances.explicitConditions(self))
         
-    def allInstanceVars(self):
+    def _allInstanceVars(self):
         '''
         Yields the instance variable of this OperationOverInstances
         and any instance variables of nested OperationOVerInstances
         of the same type.
+        Modified by wdc on 6/06/2019, modifying generator fxn name
+        from allInstanceVars() to _allInstanceVars() and adding a separate
+        non-generator version of the allInstanceVars() fxn below.
         '''
         if hasattr(self, 'instanceVars'):
             for ivar in self.instanceVars:
@@ -229,6 +232,16 @@ class OperationOverInstances(Operation):
             if isinstance(self.instanceExpr, self.__class__):
                 for innerIvar in self.instanceExpr.instanceVars():
                     yield innerIvar
+    
+    def allInstanceVars(self):
+        '''
+        Returns all instance variables of this OperationOverInstances
+        and all instance variables of nested OperationOverInstances
+        of the same type. Relies on the Python generator function
+        _allInstanceVars() defined above.
+        Added by wdc on 6/06/2019.
+        '''
+        return list(self._allInstanceVars())
     
     def allDomains(self):
         '''
@@ -245,17 +258,30 @@ class OperationOverInstances(Operation):
                 for domain in self.instanceExpr.domains():
                     yield domain
     
-    def allConditions(self):
+    def _allConditions(self):
         '''
         Yields each condition of this OperationOverInstances
         and any conditions of nested OperationOverInstances
         of the same type.
+        Modified by wdc on 6/06/2019, modifying generator fxn name
+        from allConditions() to _allConditions() and adding a separate
+        non-generator version of the allConditions() fxn below.
         '''
         for condition in self.conditions:
             yield condition
         if isinstance(self.instanceExpr, self.__class__):
             for condition in self.instanceExpr.allConditions():
                 yield condition
+                
+    def allConditions(self):
+        '''
+        Returns all conditions of this OperationOverInstances
+        and all conditions of nested OperationOverInstances
+        of the same type. Relies on the Python generator function
+        _allConditions() defined above.
+        Added by wdc on 6/06/2019.
+        '''
+        return list(self._allConditions());
     
     def joinedNestings(self):
         '''
