@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
-from proveit._common_ import A, B, C, D, AA, CC, m, n
+from proveit._common_ import A, B, C, D, AA, BB, CC, m, n
 from proveit.logic.boolean.booleans import inBool
 
 class Or(Operation):
@@ -54,7 +54,7 @@ class Or(Operation):
                 try:
                     operand.prove(assumptions, automation=useAutomationForOperand)
                     provenOperandIndices.append(k)
-                    self.concludeViaExample(operand) # possible way to prove it
+                    self.concludeViaExample(operand, assumptions=assumptions) # possible way to prove it
                 except ProofFailure:
                     pass
             if len(self.operands) == 2 and len(provenOperandIndices) > 0:
@@ -168,18 +168,27 @@ class Or(Operation):
         From (A or B) as self, and assuming A => C, B => D, and A, B, C, and D are Booleans,
         derive and return the conclusion, C or D.
         '''
-        from ._theorems_ import constructiveDilemma
-        if len(self.operands) == 2:
-            if isinstance(conclusion, Or) and len(conclusion.operands)==2:
+        from ._theorems_ import constructiveDilemma, destructiveDilemma, constructiveMultiDilemma, destructiveMultiDilemma
+        from proveit.logic import Not, Or
+        from proveit.number import num
+        assert isinstance(conclusion, Or) and len(conclusion.operands) == len(self.operands), "deriveViaMultiDilemma requires conclusion to be a disjunction, the same number of operands as self."
+        # Check for destructive versus constructive dilemma cases.
+        if all(isinstance(operand, Not) for operand in self.operands) and all(isinstance(operand, Not) for operand in conclusion.operands):
+            # destructive case.
+            if len(self.operands) == 2:
+                # From Not(C) or Not(D), A => C, B => D, conclude Not(A) or Not(B)
+                return destructiveDilemma.specialize({C:self.operands[0].operand, D:self.operands[1].operand, A:conclusion.operands[0].operand, B:conclusion.operands[1].operand}, assumptions=assumptions)
+            #raise NotImplementedError("Generalized destructive multi-dilemma not implemented yet.")
+            # Iterated destructive case.  From (Not(A) or Not(B) or Not(C) or Not(D)) as self
+            return destructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: conclusion.operands, BB: self.operands}, assumptions=assumptions)
+        else:
+            # constructive case.
+            if len(self.operands) == 2:
                 # From (A or B), A => C, B => D, conclude C or D.
-                # Try this first for a shorter proof, if it works.
-                # try both ways to assign C and D.
-                for (C_, D_) in [(conclusion.operands[0], conclusion.operands[1]), (conclusion.operands[1], conclusion.operands[0])]:
-                    #try:
-                    return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:C_, D:D_}, assumptions=assumptions)
-                    #except:
-                    #    pass # that didn't work.  let's try the singular version which is more powerful.
-                    
+                return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion.operands[0], D:conclusion.operands[1]}, assumptions=assumptions)
+            #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
+            return constructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: self.operands, BB: conclusion.operands},assumptions=assumptions)
+
     def deriveViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         If the conclusion is also an Or operation with the same number of operands as
@@ -189,7 +198,7 @@ class Or(Operation):
         if isinstance(conclusion, Or) and len(conclusion.operands)==len(self.operands):
             try:
                 return self.deriveViaMultiDilemma(conclusion, assumptions)
-            except:
+            except ProofFailure:
                 pass
         return self.deriveViaSingularDilemma(conclusion, assumptions)
 
@@ -272,31 +281,17 @@ class Or(Operation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._axioms_ import emptyDisjunction
-        from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations  
-        from ._theorems_ import trueEval, falseEval
-        from proveit.logic.boolean._common_ import TRUE, FALSE
-        trueIndex = -1
+        from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations
         if len(self.operands) == 0:
             return emptyDisjunction
-        for i, operand in enumerate(self.operands):
-            if operand != TRUE and operand != FALSE:
-                # The operands are not always true/false, so try the default evaluation method
-                # which will attempt to evaluate each of the operands.
-                return Operation.evaluation(self, assumptions)
-            if operand == TRUE:
-                trueIndex = i
-        if len(self.operands) == 2:
-            # This will automatically return orTT, orTF, orFT, or orFF
-            return Operation.evaluation(self, assumptions)
-        if trueIndex >= 0:
-            # one operand is TRUE so the whole disjunction evaluates to TRUE.
-            from proveit.number import num
-            mVal, nVal = num(trueIndex), num(len(self.operands)-trueIndex-1)
-            return trueEval.specialize({m:mVal, n:nVal, AA:self.operands[:trueIndex], CC:self.operands[trueIndex+1:]}, assumptions=assumptions)
-        else:
-            # no operand is TRUE so the whole disjunction evaluates to FALSE.
-            from proveit.number import num
-            return falseEval.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+        try:
+            self.prove(assumptions)
+        except ProofFailure:
+            try:
+                self.disprove(assumptions)
+            except ProofFailure:
+                raise EvaluationError("Unable to evaluate disjunction.")
+        return Operation.evaluation(self, assumptions)
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''

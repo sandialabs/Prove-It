@@ -56,6 +56,7 @@ class And(Operation):
                         return nandIfNotOne.specialize({m: mVal, n: nVal, AA: self.operands[:idx], B: self.operands[idx], CC: self.operands[idx + 1:]},assumptions=assumptions)
                     except ProofFailure:
                         continue
+
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically.
@@ -180,32 +181,20 @@ class And(Operation):
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
             return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
-        from proveit.number import num
         from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations
-        from proveit.logic.boolean._common_ import TRUE, FALSE
-        for i, operand in enumerate(self.operands):
-            if operand != TRUE and operand != FALSE:
-                # The operands are not all true/false, so try the default evaluation method
-                # which will attempt to evaluate each of the operands.
-                return Operation.evaluation(self, assumptions)
-            if operand == FALSE and len(self.operands) > 2:
-                # one operand is FALSE so the whole conjunction evaluates to FALSE.
-                from ._theorems_ import falseEval
-                from proveit.number import num
-                mVal, nVal = num(i), num(len(self.operands) - i - 1)
-                return falseEval.specialize({m: mVal, n: nVal, AA: self.operands[:i], CC: self.operands[i + 1:]})
-        if len(self.operands) == 2:
-            # This will automatically return andTT, andTF, andFT, or andFF
-            return Operation.evaluation(self, assumptions)
-        from ._theorems_ import trueEval, falseEval
-        # no operand is FALSE so the whole disjunction evaluates to TRUE.
-        from proveit.number import num
-        return trueEval.specialize({m:num(len(self.operands)), AA:self.operands})
+        try:
+            self.prove(assumptions)
+        except ProofFailure:
+            try:
+                self.disprove(assumptions)
+            except ProofFailure:
+                raise EvaluationError("Unable to evaluate conjunction.")
+        return Operation.evaluation(self, assumptions)
     
     def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
         '''
