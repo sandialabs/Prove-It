@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
-from proveit._common_ import m, n, A, B, AA, CC, C
+from proveit._common_ import j,k,l,m, n, A, B, C, D, E, F, G,  AA, BB, CC, DD, EE
 from proveit.logic.boolean.booleans import inBool
 
 class And(Operation):
@@ -130,6 +130,20 @@ class And(Operation):
     def deriveCommutation(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import commutation
         return commutation.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+
+    def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
+        '''
+        From (A and B and ... and Y and Z), assuming in Booleans and given beginning and end of group, derive and return
+        (A and B ... and (l and ... and M) and ... and X and Z).
+        '''
+        from ._theorems_ import group
+        from proveit.number import num
+        if end <= beg:
+            raise IndexError ("Beginning and end value must be of the form beginning < end.")
+        if end > len(self.operands) -1:
+            raise IndexError("End value must be less than length of expression.")
+        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), AA:self.operands[:beg], BB:self.operands[beg : end], CC: self.operands[end :]}, assumptions=assumptions)
+
         
     def concludeViaComposition(self, assumptions=USE_DEFAULTS):
         '''

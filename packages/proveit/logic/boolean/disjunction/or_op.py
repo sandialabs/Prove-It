@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
-from proveit._common_ import A, B, C, D, AA, BB, CC, m, n
+from proveit._common_ import A, B, C, D, AA, BB, CC, DD, EE, i,j,k,l, m, n
 from proveit.logic.boolean.booleans import inBool
 
 class Or(Operation):
@@ -159,9 +159,11 @@ class Or(Operation):
         From (A or B) as self, and assuming A => C, B => C, and A and B are Booleans,
         derive and return the conclusion, C.  Self is (A or B).
         '''
-        from ._theorems_ import singularConstructiveDilemma
+        from ._theorems_ import singularConstructiveDilemma, singularConstructiveMultiDilemma
         if len(self.operands) == 2:
             return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
+        from proveit.number import num
+        return singularConstructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: self.operands, C:conclusion}, assumptions=assumptions)
 
     def deriveViaMultiDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -303,7 +305,35 @@ class Or(Operation):
         else:
             from proveit.number import num
             return orContradiction.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
-            
+
+    def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B or ... or Y or Z), assuming in Booleans and given beginning and end of group, derive and return
+        (A or B ... or (l or ... or M) or ... or X or Z).
+        '''
+        from ._theorems_ import group
+        from proveit.number import num
+        if end <= beg:
+            raise IndexError ("Beginning and end value must be of the form beginning < end.")
+        if end > len(self.operands) -1:
+            raise IndexError("End value must be less than length of expression.")
+        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), AA:self.operands[:beg], BB:self.operands[beg : end], CC: self.operands[end :]}, assumptions=assumptions)
+
+    def deriveSwap(self, beg1, end1, beg2, end2, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B or C or D or ... or W or X or Y or Z), assuming in Booleans and given
+        the beginning and end of the groups to be switched,
+        derive and return (A or B or W or X ... or C or  D or X or Z).
+        '''
+        from ._theorems_ import swap
+        from proveit.number import num
+        if beg1 < end1 < beg2 < end2 < len(self.operands) - 1:
+            if beg1 + (end1 - beg1) + (beg2 - end1) + (end2 - beg2) + len(self.operands)-end2 != len(self.operands):
+                raise IndexError("ExprList index out of range. The different 'chunks' between the beginnings and ends must add up to the length of the expression.")
+            return swap.specialize({i: num(beg1), j: num(end1 - beg1), k: num(beg2 - end1), l: num(end2 - beg2), m: num(len(self.operands) - end2), AA: self.operands[:beg1], BB: self.operands[beg1:end1], CC: self.operands[end1:beg2], DD: self.operands[beg2:end2], EE: self.operands[end2:]}, assumptions=assumptions)
+        else:
+            raise IndexError("Beginnings and ends must be of the type: a<b<c<d.")
+
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B), derive the conclusion provided that the negated
@@ -314,6 +344,7 @@ class Or(Operation):
 
     def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
+
         From (A or B), derive the negated conclusion provided that the
         conclusion implies both not(A) and not(B), and the conclusion is a Boolean.
         '''
