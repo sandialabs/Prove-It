@@ -327,6 +327,8 @@ class ExprList(Composite, Expression):
         Flattens nested ExprLists that arise from Embed substitutions.
         '''
         from .iteration import Iter
+        from proveit import Indexed
+        from proveit.number import Add, one
         self._checkRelabelMap(relabelMap)
         if (exprMap is not None) and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
@@ -337,9 +339,31 @@ class ExprList(Composite, Expression):
                 # The iterated expression is being expanded 
                 # and should be embedded into the list.
                 for iter_expr in subbed_expr:
+
                     subbed_exprs.append(iter_expr)
             else:
                 subbed_exprs.append(subbed_expr)
+                
+        
+        for idx, (it, itNext) in enumerate(zip(subbed_exprs[:-1],subbed_exprs[1:])):
+            if (isinstance(it, Iter) and isinstance(itNext, Iter)):
+                if it.lambda_map == itNext.lambda_map:
+                    if Add(it.end_index, one) == itNext.start_index:
+                        newExpr = Iter(it.lambda_map.parameter_or_parameters, it.lambda_map.body, it.start_index, itNext.end_index)
+                        new_subbed_exprs[idx] = newExpr
+                        subbed_exprs.pop(idx+1)
+                    
+            if (isinstance(it, Iter) and isinstance(itNext, Indexed)):
+                if Add(it.end_index,one) == itNext.index:
+                    newExpr = Iter(it.lambda_map.parameter_or_parameters, it.lambda_map.body, it.start_index, Add(it.end_index,one))
+                    subbed_exprs[idx] = newExpr
+                    subbed_exprs.pop(idx+1)
+            
+            if (isinstance(it, Indexed) and isinstance(itNext, Iter)):
+                if Add(it.index, one) == itNext.start_index:
+                    subbed_exprs[idx+1] = itNext 
+                    subbed_exprs.pop(idx)
+                
         return ExprList(*subbed_exprs)
 
 class ExprListError(Exception):
