@@ -11,7 +11,7 @@ class Iter(Expression):
     composite Expression.
     
     Upon substitution, it automatically expands to
-    a list (tensor) if the difference between the end 
+    a ExprList (ExprTensor) if the difference between the end 
     index (indices) and start index (indices)
     is (are) a known integer(s).
     '''
@@ -240,9 +240,12 @@ class Iter(Expression):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
-        Attempt to automatically expand the iteration if any Indexed 
-        sub-expressions substitute their variable for a composite
-        (list or tensor).  Indexed should index variables that represent
+        There are two ways in which an iteration will be expanded.  One
+        way is if the end index is known to come before the start index
+        under our assumptions in which case it collapses to an empty
+        ExprList/ExprTensor.  The other is when any Indexed sub-expression substitutes
+        its variable for a composite (ExprList or ExprTensor).  
+        Indexed should index variables that represent
         composites, but substituting the composite is a signal that
         an outer iteration should be expanded.  An exception is
         raised if this fails.
@@ -262,7 +265,7 @@ class Iter(Expression):
         new_requirements = []
         
         # Collect the iteration ranges from Indexed sub-Expressions
-        # whose variable is being replaced with a Composite (list or tensor).
+        # whose variable is being replaced with a Composite (ExprList or ExprTensor).
         # If there are not any, we won't expand the iteration at this point.
         # While we are at it, get all of the end points of the
         # ranges along each axis (as well as end points +/-1 that may be
@@ -272,6 +275,20 @@ class Iter(Expression):
         special_points = [set() for _ in range(len(iter_params))]
         subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
         subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
+        
+        # Let's do a check to see if this Iter is known to be vacuous.  If so,
+        # we will return the empty ExprList/ExprTensor.
+        for start_index, end_index in zip(subbed_start, subbed_end):
+            if Less(end_index, start_index).prove(assumptions, automation=False):
+                # Iteration known to be vacuous.  Return an empty ExprList/ExprTensor.
+                new_requirements.append(Less(end_index, start_index)) # end < start is a requirement in taking this step
+                for requirement in new_requirements:
+                    requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        
+                if requirements is not None:
+                    requirements += new_requirements # append new requirements                
+                if self.ndims==1: return compositeExpression(list())
+                return compositeExpression(dict())
+        
         try:
             # Need to handle the change in scope within the lambda expression
             new_params, inner_expr_map, inner_assumptions, inner_reservations = self.lambda_map._innerScopeSub(exprMap, relabelMap, reservedVars, assumptions, requirements)
@@ -342,7 +359,7 @@ class Iter(Expression):
             rel_iter_ranges = sorted(self._makeNonoverlappingRangeSet(rel_iter_ranges, arg_sorting_relations, assumptions, new_requirements))
             
             #print arg_sorting_relations
-            # Generate the expanded list/tensor to replace the iterations.
+            # Generate the expanded ExprList/ExprTensor to replace the iterations.
             if self.ndims==1: lst = []
             else: tensor = dict()            
             for rel_iter_range in rel_iter_ranges:
