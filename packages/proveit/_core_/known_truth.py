@@ -188,7 +188,7 @@ class KnownTruth:
                     except ProofFailure:
                         pass
                     except Exception as e:
-                        raise Exception("Side effect failure for %s: "%str(self.expr) + str(e))
+                        raise Exception("Side effect failure for %s, while running %s: "%(str(self.expr), str(sideEffect)) + str(e))
             finally:
                 KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
             KnownTruth.sideeffect_processed.add((self, defaults.assumptions))

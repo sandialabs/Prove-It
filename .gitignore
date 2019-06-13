@@ -12,3 +12,17 @@ notebook.css
 doc/api
 doc/doctrees
 doc/html
+
+\.idea/misc\.xml
+
+\.idea/modules\.xml
+
+\.idea/Prove-It\.iml
+
+\.idea/vcs\.xml
+
+\.idea/workspace\.xml
+
+packages/proveit/logic/boolean/disjunction/_proofs_/orIfOnlyRight\.ipynb
+
+tutorial/tutorial03_implies\.ipynb

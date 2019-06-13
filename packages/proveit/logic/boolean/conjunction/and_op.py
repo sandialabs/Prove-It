@@ -61,6 +61,7 @@ class And(Operation):
         '''
         Side-effect derivations to attempt automatically.
         '''
+        return
         yield self.deriveInBool
         yield self.deriveParts
         yield self.deriveCommutation
@@ -69,6 +70,7 @@ class And(Operation):
         '''
         Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
         '''
+        return
         yield self.deriveInBool # (A and B and ... and Z) in Booleans
         
     def inBoolSideEffects(self, knownTruth):
@@ -144,7 +146,19 @@ class And(Operation):
             raise IndexError("End value must be less than length of expression.")
         return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), AA:self.operands[:beg], BB:self.operands[beg : end], CC: self.operands[end :]}, assumptions=assumptions)
 
-        
+    def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
+        '''
+        From (A and ... and H and I and J or ... or L and M or N and ... and Q), assuming in Booleans and given
+        the beginning and end of the groups to be switched,
+        derive and return (A and ... and H and M and J and ... and L and I and N and ... and Q).
+        '''
+        from ._theorems_ import swap
+        from proveit.number import num
+        if 0 < i < j < len(self.operands) - 1:
+            return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands) - j - 1), AA: self.operands[:i],B: self.operands[i], CC: self.operands[i + 1:j], D: self.operands[j], EE: self.operands[j + 1:]},assumptions=assumptions)
+        else:
+            raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
+
     def concludeViaComposition(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return some (A and B ... and ... Z) via A, B, ..., Z each proven individually.

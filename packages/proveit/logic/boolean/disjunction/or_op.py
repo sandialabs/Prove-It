@@ -180,9 +180,11 @@ class Or(Operation):
             if len(self.operands) == 2:
                 # From Not(C) or Not(D), A => C, B => D, conclude Not(A) or Not(B)
                 return destructiveDilemma.specialize({C:self.operands[0].operand, D:self.operands[1].operand, A:conclusion.operands[0].operand, B:conclusion.operands[1].operand}, assumptions=assumptions)
-            #raise NotImplementedError("Generalized destructive multi-dilemma not implemented yet.")
+            # raise NotImplementedError("Generalized destructive multi-dilemma not implemented yet.")
             # Iterated destructive case.  From (Not(A) or Not(B) or Not(C) or Not(D)) as self
-            return destructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: conclusion.operands, BB: self.operands}, assumptions=assumptions)
+            negatedOperandsSelf = [operand.operand for operand in self.operands]
+            negatedOperandsConc = [operand.operand for operand in conclusion.operands]
+            return destructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: negatedOperandsSelf, BB: negatedOperandsConc}, assumptions=assumptions)
         else:
             # constructive case.
             if len(self.operands) == 2:
@@ -319,20 +321,31 @@ class Or(Operation):
             raise IndexError("End value must be less than length of expression.")
         return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), AA:self.operands[:beg], BB:self.operands[beg : end], CC: self.operands[end :]}, assumptions=assumptions)
 
-    def deriveSwap(self, beg1, end1, beg2, end2, assumptions=USE_DEFAULTS):
+    def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
         '''
-        From (A or B or C or D or ... or W or X or Y or Z), assuming in Booleans and given
+        From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Booleans and given
         the beginning and end of the groups to be switched,
-        derive and return (A or B or W or X ... or C or  D or X or Z).
+        derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).
         '''
         from ._theorems_ import swap
         from proveit.number import num
-        if beg1 < end1 < beg2 < end2 < len(self.operands) - 1:
-            if beg1 + (end1 - beg1) + (beg2 - end1) + (end2 - beg2) + len(self.operands)-end2 != len(self.operands):
-                raise IndexError("ExprList index out of range. The different 'chunks' between the beginnings and ends must add up to the length of the expression.")
-            return swap.specialize({i: num(beg1), j: num(end1 - beg1), k: num(beg2 - end1), l: num(end2 - beg2), m: num(len(self.operands) - end2), AA: self.operands[:beg1], BB: self.operands[beg1:end1], CC: self.operands[end1:beg2], DD: self.operands[beg2:end2], EE: self.operands[end2:]}, assumptions=assumptions)
+        if 0 < i < j < len(self.operands) - 1:
+            return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands)-j - 1), AA: self.operands[:i], B: self.operands[i], CC: self.operands[i+1:j], D: self.operands[j], EE: self.operands[j + 1:]}, assumptions=assumptions)
         else:
-            raise IndexError("Beginnings and ends must be of the type: a<b<c<d.")
+            raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
+
+    def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
+        '''
+        From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Booleans and given
+        the beginning and end of the groups to be switched,
+        derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).
+        '''
+        from ._theorems_ import swap
+        from proveit.number import num
+        if 0 < i < j < len(self.operands) - 1:
+            return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands)-j - 1), AA: self.operands[:i], B: self.operands[i], CC: self.operands[i+1:j], D: self.operands[j], EE: self.operands[j + 1:]}, assumptions=assumptions)
+        else:
+            raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
 
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
