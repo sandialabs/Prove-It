@@ -345,24 +345,24 @@ class ExprList(Composite, Expression):
                 subbed_exprs.append(subbed_expr)
                 
         
-        for idx, (it, itNext) in enumerate(zip(subbed_exprs[:-1],subbed_exprs[1:])):
-            if (isinstance(it, Iter) and isinstance(itNext, Iter)):
-                if it.lambda_map == itNext.lambda_map:
-                    if Add(it.end_index, one) == itNext.start_index:
-                        newExpr = Iter(it.lambda_map.parameter_or_parameters, it.lambda_map.body, it.start_index, itNext.end_index)
-                        new_subbed_exprs[idx] = newExpr
-                        subbed_exprs.pop(idx+1)
-                    
-            if (isinstance(it, Iter) and isinstance(itNext, Indexed)):
-                if Add(it.end_index,one) == itNext.index:
-                    newExpr = Iter(it.lambda_map.parameter_or_parameters, it.lambda_map.body, it.start_index, Add(it.end_index,one))
-                    subbed_exprs[idx] = newExpr
-                    subbed_exprs.pop(idx+1)
-            
-            if (isinstance(it, Indexed) and isinstance(itNext, Iter)):
-                if Add(it.index, one) == itNext.start_index:
-                    subbed_exprs[idx+1] = itNext 
-                    subbed_exprs.pop(idx)
+#        for idx, (it, itNext) in enumerate(zip(subbed_exprs[:-1],subbed_exprs[1:])):
+#            if (isinstance(it, Iter) and isinstance(itNext, Iter)):
+#                if it.lambda_map == itNext.lambda_map:
+#                    if Add(it.end_index, one) == itNext.start_index:
+#                        newExpr = Iter(it.lambda_map.parameter_or_parameters, it.lambda_map.body, it.start_index, itNext.end_index)
+#                        subbed_exprs[idx] = newExpr
+#                        subbed_exprs.pop(idx+1)
+#                    
+#            if (isinstance(it, Iter) and isinstance(itNext, Indexed)):
+#                if Add(it.end_index,one) == itNext.index:
+#                    newExpr = Iter(it.lambda_map.parameter_or_parameters, it.lambda_map.body, it.start_index, Add(it.end_index,one))
+#                    subbed_exprs[idx] = newExpr
+#                    subbed_exprs.pop(idx+1)
+#            
+#            if (isinstance(it, Indexed) and isinstance(itNext, Iter)):
+#                if Add(it.index, one) == itNext.start_index:
+#                    subbed_exprs[idx+1] = itNext 
+#                    subbed_exprs.pop(idx)
                 
         return ExprList(*subbed_exprs)
 
