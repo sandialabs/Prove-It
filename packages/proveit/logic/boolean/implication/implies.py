@@ -60,10 +60,11 @@ class Implies(TransitiveRelation):
         whose assumptions are covered by the given assumptions.
         '''
         from ._axioms_ import untrueAntecedentImplication
-        from ._theorems_ import impliesTT, impliesFT, impliesFF, impliesTF, trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, falseAntecedentImplication
+        from ._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, falseAntecedentImplication
         from proveit.logic import TRUE, FALSE
         if self.antecedent == self.consequent:
             return self.concludeSelfImplication()
+
         if self in {trueImpliesTrue, falseImpliesTrue, falseImpliesFalse}:
             # should be proven via one of the imported theorems as a simple special case
             try:
