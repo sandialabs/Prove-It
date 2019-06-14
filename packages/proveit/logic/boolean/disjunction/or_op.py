@@ -334,19 +334,6 @@ class Or(Operation):
         else:
             raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
 
-    def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
-        '''
-        From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Booleans and given
-        the beginning and end of the groups to be switched,
-        derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).
-        '''
-        from ._theorems_ import swap
-        from proveit.number import num
-        if 0 < i < j < len(self.operands) - 1:
-            return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands)-j - 1), AA: self.operands[:i], B: self.operands[i], CC: self.operands[i+1:j], D: self.operands[j], EE: self.operands[j + 1:]}, assumptions=assumptions)
-        else:
-            raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
-
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B), derive the conclusion provided that the negated
