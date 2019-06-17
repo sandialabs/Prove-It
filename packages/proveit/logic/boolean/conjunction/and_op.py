@@ -69,7 +69,7 @@ class And(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
         yield self.deriveInBool
-        #yield self.deriveParts
+        yield self.deriveParts
         #yield self.deriveCommutation
 
     def negationSideEffects(self, knownTruth):

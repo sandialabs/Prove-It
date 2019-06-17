@@ -43,6 +43,7 @@ class InSet(Operation):
         '''
         InSet.knownMemberships.setdefault(self.element, set()).add(knownTruth)
         if hasattr(self, 'membershipObject'):
+            #print("calling in set for", self)
             for sideEffect in self.membershipObject.sideEffects(knownTruth):
                 yield sideEffect
 
