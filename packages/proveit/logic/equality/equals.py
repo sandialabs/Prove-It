@@ -579,7 +579,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
                 candidates.append(knownTruth) # found existing evaluation suitable for the assumptions
         if len(candidates) >= 1:
             # return the "best" candidate with respect to fewest number of steps
-            evaluation = min(candidates, key=lambda knownTruth: knownTruth.proof().numSteps)
+            evaluation = min(candidates, key=lambda knownTruth: knownTruth.proof().numSteps())
             return innerSimplification(evaluation)
             
     if not automation:
