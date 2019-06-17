@@ -123,7 +123,7 @@ class Proof:
             # don't bother with side-effects if they have already been processed
             if (provenTruth, defaults.assumptions) not in KnownTruth.sideeffect_processed: 
                 # may derive any side-effects that are obvious consequences arising from this truth:
-                provenTruth.deriveSideEffects()
+                provenTruth.deriveSideEffects(defaults.assumptions)
 
     def _updateDependencies(self, newproof):
         '''
@@ -352,7 +352,7 @@ class Assumption(Proof):
                 # side-effects were not derived yet under the given assumptions.
                 # This can happen when automation is temporarily disabled or
                 # when assumptions change.
-                preexisting.provenTruth.deriveSideEffects()
+                preexisting.provenTruth.deriveSideEffects(assumptions)
             return preexisting
         return Assumption(expr, assumptions)
         

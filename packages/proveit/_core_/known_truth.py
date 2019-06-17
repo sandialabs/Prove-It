@@ -167,7 +167,7 @@ class KnownTruth:
         objIds =  re.split(";|\[|,|\]",unique_rep)
         return [objId for objId in objIds if len(objId) > 0]           
                 
-    def deriveSideEffects(self):
+    def deriveSideEffects(self, assumptions):
         '''
         Derive any side-effects that are obvious consequences arising from this truth.
         Called after the corresponding Proof is complete.
@@ -191,14 +191,15 @@ class KnownTruth:
                     try:
                         # use the default assumptions which are temporarily set to the
                         # assumptions utilized in the last derivation step.
-                        sideEffect(assumptions=defaults.assumptions)     
+                        sideEffect(assumptions=assumptions)     
                     except ProofFailure:
                         pass
                     except Exception as e:
                         raise Exception("Side effect failure for %s, while running %s: "%(str(self.expr), str(sideEffect)) + str(e))
             finally:
-                KnownTruth.in_progress_to_derive_sideeffects.remove(self)
-            KnownTruth.sideeffect_processed.add((self, defaults.assumptions))
+                KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
+            KnownTruth.sideeffect_processed.add((self, assumptions))
+
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
