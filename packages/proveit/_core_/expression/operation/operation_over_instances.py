@@ -50,6 +50,7 @@ class OperationOverInstances(Operation):
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         instanceVars = compositeExpression(instanceVarOrVars)
+        
         if len(instanceVars)==0:
             raise ValueError("Expecting at least one instance variable when constructing an OperationOverInstances")
         
@@ -95,7 +96,7 @@ class OperationOverInstances(Operation):
                     conditions = [] # no domain conditions
                     inner_conditions = [] # inner or outer
                 else:
-                    inner_conditions = conditions[1:len(domains)] # everythong but the outer domain condition
+                    inner_conditions = conditions[1:len(domains)] # everything but the outer domain condition
                     conditions = [conditions[0]] # outer domain condition
                 
                 # Apart from the domain conditions, the "inner" conditions start with the
@@ -230,24 +231,27 @@ class OperationOverInstances(Operation):
         else:
             yield self.instanceVar
             if isinstance(self.instanceExpr, self.__class__):
-                for innerIvar in self.instanceExpr.instanceVars():
+                for innerIvar in self.instanceExpr.allInstanceVars():
                     yield innerIvar
     
     def allInstanceVars(self):
         '''
         Returns all instance variables of this OperationOverInstances
         and all instance variables of nested OperationOverInstances
-        of the same type. Relies on the Python generator function
+        of the same type. Relies on the generator function
         _allInstanceVars() defined above.
         Added by wdc on 6/06/2019.
         '''
         return list(self._allInstanceVars())
     
-    def allDomains(self):
+    def _allDomains(self):
         '''
         Yields the domain of this OperationOverInstances
         and any domains of nested OperationOVerInstances
         of the same type.  Some of these may be null.
+        Modified by wdc on 6/17/2019, modifying generator fxn name
+        from alldomains() to _alldomains() and adding a separate
+        non-generator version of the alldomains() fxn below.
         '''
         if hasattr(self, 'domains'):
             for domain in self.domains:
@@ -255,8 +259,18 @@ class OperationOverInstances(Operation):
         else:
             yield self.domain
             if isinstance(self.instanceExpr, self.__class__):
-                for domain in self.instanceExpr.domains():
+                for domain in self.instanceExpr.allDomains():
                     yield domain
+    
+    def allDomains(self):
+        '''
+        Returns all domains of this OperationOverInstances
+        including domains of nested OperationOverInstances
+        of the same type. Relies on the generator function
+        _allDomains() defined above.
+        Added by wdc on 6/17/2019.
+        '''
+        return list(self._allDomains())
     
     def _allConditions(self):
         '''
@@ -326,7 +340,7 @@ class OperationOverInstances(Operation):
     
     def explicitConditions(self):
         '''
-        Yield the conditions that are to be shown explicitly in the formatting
+        Return the conditions that are to be shown explicitly in the formatting
         (after the "such that" symbol "|") at this level according to the style.
         By default, this includes all of the 'joined' conditions except 
         implicit 'domain' conditions.
