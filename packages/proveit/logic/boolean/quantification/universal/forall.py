@@ -114,16 +114,17 @@ class Forall(OperationOverInstances):
         '''
         return self.prove(assumptions).specialize(specializeMap, relabelMap, assumptions=assumptions)
 
-    def _specializeUnravelingTheorem(self, theorem, *instanceVarLists):
+    def _specializeUnravelingTheorem(self, theorem, instanceVarLists):
         raise NotImplementedError("Need to update")
-        assert len(self.instanceVars) > 1, "Can only unravel a forall statement with multiple instance variables"
+        assert len(instanceVarLists) > 1, "Can only unravel a forall statement with multiple instance variables"
         if len(instanceVarLists) == 1:
             raise ValueError("instanceVarLists should be a list of 2 or more Variable lists")
         if len(instanceVarLists) > 2:
             return self.deriveUnraveled(ExprList(instanceVarLists[:-1]), instanceVarLists[-1]).deriveUnraveled(*instanceVarLists[:-1]).checked({self})
         outerVars, innerVars = instanceVarLists
         outerVarSet, innerVarSet = set(outerVars), set(innerVars)
-        assert innerVarSet | outerVarSet == set(self.instanceVars), "outerVars and innterVars must combine to the full set of instance variables"
+        unpackListSet = set(*zip(*instanceVarLists))
+        assert innerVarSet | outerVarSet == unpackListSet, "outerVars and innterVars must combine to the full set of instance variables"
         assert innerVarSet.isdisjoint(outerVarSet), "outerVars and innterVars must be disjoint sets"
         innerConditions = []
         outerConditions = []
@@ -131,7 +132,7 @@ class Forall(OperationOverInstances):
             if condition.freeVars().isdisjoint(innerVars):
                 outerConditions.append(condition)
             else: innerConditions.append(condition)
-        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        P_op, P_op_sub = Operation(P, instanceVarLists), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, outerVars), outerConditions
         R_op, R_op_sub = Operation(Rmulti, innerVars), innerConditions
         return theorem.specialize({xMulti:outerVars, yMulti:innerVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}) 
@@ -162,12 +163,13 @@ class Forall(OperationOverInstances):
         by calling the condition's forallEvaluation method
         '''
         assert self.hasDomain(), "Cannot automatically evaluate a forall statement with no domain"
-        if len(self.instanceVars) == 1:
+
+        if len(list(self.instanceVarLists())) == 1:
             # Use the domain's forallEvaluation method
             return self.domain.forallEvaluation(self, assumptions)
         else:
             # Evaluate an unravelled version
-            unravelledEquiv = self.deriveUnraveledEquiv(*[[var] for var in self.instanceVars])
+            unravelledEquiv = self.deriveUnraveledEquiv([var for var in (list(self.instanceVarLists()))])
             return unravelledEquiv.rhs.evaluation(assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):

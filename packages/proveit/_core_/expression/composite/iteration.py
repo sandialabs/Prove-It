@@ -279,15 +279,19 @@ class Iter(Expression):
         # Let's do a check to see if this Iter is known to be vacuous.  If so,
         # we will return the empty ExprList/ExprTensor.
         for start_index, end_index in zip(subbed_start, subbed_end):
-            if Less(end_index, start_index).prove(assumptions, automation=False):
+            try:
+                Less(end_index, start_index).prove(assumptions, automation=False)
                 # Iteration known to be vacuous.  Return an empty ExprList/ExprTensor.
                 new_requirements.append(Less(end_index, start_index)) # end < start is a requirement in taking this step
                 for requirement in new_requirements:
-                    requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        
+                    requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope
                 if requirements is not None:
-                    requirements += new_requirements # append new requirements                
+                    requirements += new_requirements # append new requirements
                 if self.ndims==1: return compositeExpression(list())
                 return compositeExpression(dict())
+            except:
+                pass
+
         
         try:
             # Need to handle the change in scope within the lambda expression

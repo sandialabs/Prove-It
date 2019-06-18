@@ -339,31 +339,33 @@ class ExprList(Composite, Expression):
                 # The iterated expression is being expanded 
                 # and should be embedded into the list.
                 for iter_expr in subbed_expr:
-
                     subbed_exprs.append(iter_expr)
             else:
                 subbed_exprs.append(subbed_expr)
-                
-        
-#        for idx, (it, itNext) in enumerate(zip(subbed_exprs[:-1],subbed_exprs[1:])):
-#            if (isinstance(it, Iter) and isinstance(itNext, Iter)):
-#                if it.lambda_map == itNext.lambda_map:
-#                    if Add(it.end_index, one) == itNext.start_index:
-#                        newExpr = Iter(it.lambda_map.parameter_or_parameters, it.lambda_map.body, it.start_index, itNext.end_index)
-#                        subbed_exprs[idx] = newExpr
-#                        subbed_exprs.pop(idx+1)
-#                    
-#            if (isinstance(it, Iter) and isinstance(itNext, Indexed)):
-#                if Add(it.end_index,one) == itNext.index:
-#                    newExpr = Iter(it.lambda_map.parameter_or_parameters, it.lambda_map.body, it.start_index, Add(it.end_index,one))
-#                    subbed_exprs[idx] = newExpr
-#                    subbed_exprs.pop(idx+1)
-#            
-#            if (isinstance(it, Indexed) and isinstance(itNext, Iter)):
-#                if Add(it.index, one) == itNext.start_index:
-#                    subbed_exprs[idx+1] = itNext 
-#                    subbed_exprs.pop(idx)
-                
+        if len(subbed_exprs)>1:
+            new_subbed_exprs = []
+            current = subbed_exprs[0]
+            for itNext in subbed_exprs[1:]:
+                if isinstance(current, Iter) and isinstance(itNext, Iter):
+                    if current.lambda_map == itNext.lambda_map:
+                        if Add(current.end_index, one) == itNext.start_index:
+                            current = Iter(current.lambda_map.parameter_or_parameters, current.lambda_map.body, current.start_index, itNext.end_index)
+                            new_subbed_exprs.append(new_expr)
+                elif isinstance(current, Iter) and isinstance(itNext, Indexed):
+                    if Add(current.end_index, one) == itNext.index:
+                        current = Iter(current.lambda_map.parameter_or_parameters, current.lambda_map.body, current.start_index, Add(current.end_index,one))
+                        new_subbed_exprs.append(current)
+                elif isinstance(current, Indexed) and isinstance(itNext, Iter):
+                    if Add(current.index, one) == itNext.start_index:
+                        # print("indexed and iter")
+                        current = itNext
+                        new_subbed_exprs.append(current)
+                else:
+                    new_subbed_exprs.append(current)
+                    new_subbed_exprs.append(itNext)
+                    current = itNext
+            subbed_exprs = new_subbed_exprs
+
         return ExprList(*subbed_exprs)
 
 class ExprListError(Exception):
