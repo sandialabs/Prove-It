@@ -1,5 +1,5 @@
 from proveit import Function, Literal, USE_DEFAULTS
-from proveit._common_ import S, a, b, N, xx
+from proveit._common_ import N, S, a, b, l, xx
 
 class Card(Function):
     # operator of the Card operation
@@ -14,6 +14,11 @@ class Card(Function):
     
     def latex(self, fence=False):
         return '|' + self.domain.latex(fence=False) + '|'
+
+    def conclude(self, elems=None, assumptions=USE_DEFAULTS):
+        from proveit.number import num
+        from ._theorems_ import enumSetCard
+        return enumSetCard.specialize({l:num(len(elems[0].operands)), xx:elems[0].operands}, assumptions=assumptions)
     
     def distinctSubsetExistence(self, elems=None, assumptions=USE_DEFAULTS):
         '''
@@ -22,6 +27,7 @@ class Card(Function):
         '''
         from proveit.number import num
         from ._theorems_ import distinctSubsetExistence, distinctPairExistence
+        print(elems)
         if len(elems)==2:
             aVar, bVar = elems
             return distinctPairExistence.specialize({S:self.domain}, relabelMap={a:aVar, b:bVar}, assumptions=assumptions)

@@ -650,7 +650,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
             for proof_notebook in proof_notebooks:
                 executeAndExportNotebook(execute_processor, proof_notebook)
             
-    if not just_execute_expression_nbs:
+    if not just_execute_proofs and not just_execute_expression_nbs:
         # Next, run any other notebooks within path/context directories
         # (e.g., with tests and demonstrations).
         for path in all_paths:

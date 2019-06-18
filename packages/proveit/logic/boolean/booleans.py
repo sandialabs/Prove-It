@@ -110,9 +110,13 @@ class BooleanMembership(Membership):
         from proveit.logic.boolean._theorems_ import unfoldInBool
         if hasattr(self.element, 'inBoolSideEffects'):
             for sideEffect in self.element.inBoolSideEffects(knownTruth):
+                #print("to yield side effects")
+
                 yield sideEffect
+                #print("done with side effect?")
         # don't automatically do unfoldInBoolExplicit if unfoldInBool is unusable -- avoids infinite recursion
         if unfoldInBool.isUsable():
+
             yield self.unfold
     
     def conclude(self, assumptions=USE_DEFAULTS):
