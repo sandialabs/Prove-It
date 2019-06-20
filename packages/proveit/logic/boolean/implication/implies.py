@@ -52,6 +52,7 @@ class Implies(TransitiveRelation):
         '''
         yield self.deduceNegatedLeftImpl # Not(A <=> B) given Not(B => A)
         yield self.deduceNegatedRightImpl # Not(A <=> B) given Not(A => B)
+        yield self.deduceNegatedReflex # B => A given Not(A => B)
             
     def conclude(self, assumptions):
         '''
@@ -152,6 +153,10 @@ class Implies(TransitiveRelation):
         from ._theorems_ import notIffViaNotLeftImpl
         return notIffViaNotLeftImpl.specialize({B: self.antecedent, A: self.consequent}, assumptions=assumptions)
 
+    def deduceNegatedReflex(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import negatedReflex
+        return negatedReflex.specialize({A:self.antecedent, B:self.consequent},assumptions=assumptions)
+
     def denyAntecedent(self, assumptions=USE_DEFAULTS):
         '''
         From A => B, derive and return Not(A) assuming Not(B).
@@ -178,15 +183,17 @@ class Implies(TransitiveRelation):
         Or from (A => FALSE), derive and return Not(A) assuming A in Booleans`.
         '''
         from proveit.logic import FALSE
-        from ._theorems_ import affirmViaContradiction, denyViaContradiction
+        from ._theorems_ import affirmViaContradiction, denyViaContradiction, notTrueViaContradiction
         if self.consequent != FALSE:
             raise ValueError('deriveViaContridiction method is only applicable if FALSE is implicated, not for ' + str(self))
         if isinstance(self.antecedent, Not):
             stmt = self.antecedent.operand
             return affirmViaContradiction.specialize({A:stmt}, assumptions=assumptions)
         else:
-            return denyViaContradiction.specialize({A:self.antecedent}, assumptions=assumptions)
-    
+            try:
+                return denyViaContradiction.specialize({A:self.antecedent}, assumptions=assumptions)
+            except ProofFailure:
+                return notTrueViaContradiction.specialize({A:self.antecedent},assumptions=assumptions)
     def concludeSelfImplication(self):
         from ._theorems_ import selfImplication
         if self.antecedent != self.consequent:
