@@ -59,7 +59,8 @@ class _StyleData:
                 # styles only apply to Expression objects
                 style_rep = obj._generate_unique_rep(lambda o : hex(o._style_id))
             style_data = styleData(style_rep)
-            style_data.styles = styles
+            if styles is not None:
+                style_data.styles = styles
             styles=None # only use these styles as the base level
             obj.__dict__['_styleData'] = style_data
             obj.__dict__['_style_id'] = style_data._unique_id
