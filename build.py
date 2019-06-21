@@ -614,7 +614,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                 #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_axioms_.ipynb'))
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_theorems_.ipynb'))    
-        
+    
     if not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the contexts.
         proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
@@ -650,7 +650,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
             for proof_notebook in proof_notebooks:
                 executeAndExportNotebook(execute_processor, proof_notebook)
             
-    if not just_execute_expression_nbs:
+    if not just_execute_expression_nbs and not just_execute_proofs:
         # Next, run any other notebooks within path/context directories
         # (e.g., with tests and demonstrations).
         for path in all_paths:
@@ -659,40 +659,41 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                 if os.path.isfile(full_path) and os.path.splitext(full_path)[1] == '.ipynb':
                     if sub == '_demonstrations_.ipynb': #or sub[0] != '_': # temporarily exclude other notebooks
                         executeAndExportNotebook(execute_processor, full_path, no_execute=no_execute)
-        
-    # Lastly, run expr.ipynb and dependencies.ipynb within the hash directories
-    # of the __pv_it folders for each context.
-    # May require multiple passes (showing expression info may generate
-    # expr.ipynb notebooks for sub-expressions).
-    executed_hash_paths = set()  # hash paths whose notebooks have been executed
-    while True: # repeat until there are no more new notebooks to process
-        prev_num_executed = len(executed_hash_paths)
-        for path in all_paths:
-            pv_it_dir = os.path.join(path, '__pv_it')
-            if os.path.isdir(pv_it_dir):
-                for hash_directory in os.listdir(pv_it_dir):
-                    hash_path = os.path.join(pv_it_dir, hash_directory)
-                    if os.path.isdir(hash_path):
-                        if hash_path in executed_hash_paths:
-                            continue # already executed this case
-                        expr_html = os.path.join(hash_path, 'expr.html')
-                        expr_notebook = os.path.join(hash_path, 'expr.ipynb')
-                        if os.path.isfile(expr_notebook):
-                            if no_execute:
-                                exportToHTML(expr_notebook)
-                            else:
-                                # if expr_html doesn't exist or is older than expr_notebook, generate it
-                                if not os.path.isfile(expr_html) or os.path.getmtime(expr_html) < os.path.getmtime(expr_notebook):
-                                    # execute the expr.ipynb notebook
-                                    executeAndExportNotebook(execute_processor, expr_notebook)
-                                    executed_hash_paths.add(hash_path) # done
-                        # always execute the dependencies notebook for now to be safes
-                        dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
-                        if os.path.isfile(dependencies_notebook):
-                            # execute the dependencies.ipynb notebook
-                            executeAndExportNotebook(execute_processor, dependencies_notebook, no_execute=no_execute)
-        if len(executed_hash_paths) == prev_num_executed:
-            break # no more new ones to process
+                        
+    if not just_execute_proofs and not just_execute_demos:
+        # Lastly, run expr.ipynb and dependencies.ipynb within the hash directories
+        # of the __pv_it folders for each context.
+        # May require multiple passes (showing expression info may generate
+        # expr.ipynb notebooks for sub-expressions).
+        executed_hash_paths = set()  # hash paths whose notebooks have been executed
+        while True: # repeat until there are no more new notebooks to process
+            prev_num_executed = len(executed_hash_paths)
+            for path in all_paths:
+                pv_it_dir = os.path.join(path, '__pv_it')
+                if os.path.isdir(pv_it_dir):
+                    for hash_directory in os.listdir(pv_it_dir):
+                        hash_path = os.path.join(pv_it_dir, hash_directory)
+                        if os.path.isdir(hash_path):
+                            if hash_path in executed_hash_paths:
+                                continue # already executed this case
+                            expr_html = os.path.join(hash_path, 'expr.html')
+                            expr_notebook = os.path.join(hash_path, 'expr.ipynb')
+                            if os.path.isfile(expr_notebook):
+                                if no_execute:
+                                    exportToHTML(expr_notebook)
+                                else:
+                                    # if expr_html doesn't exist or is older than expr_notebook, generate it
+                                    if not os.path.isfile(expr_html) or os.path.getmtime(expr_html) < os.path.getmtime(expr_notebook):
+                                        # execute the expr.ipynb notebook
+                                        executeAndExportNotebook(execute_processor, expr_notebook)
+                                        executed_hash_paths.add(hash_path) # done
+                            # always execute the dependencies notebook for now to be safes
+                            dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
+                            if os.path.isfile(dependencies_notebook):
+                                # execute the dependencies.ipynb notebook
+                                executeAndExportNotebook(execute_processor, dependencies_notebook, no_execute=no_execute)
+            if len(executed_hash_paths) == prev_num_executed:
+                break # no more new ones to process
 
 if __name__ == '__main__':
     if os.path.sep != '/':
@@ -709,10 +710,10 @@ if __name__ == '__main__':
                         help='download and extract the tarball of __pv_it directories from http://pyproveit.org')    
     parser.add_argument('--justproofs', dest='just_execute_proofs', action='store_const',
                         const=True, default=False,
-                        help='only execute proofs (not _common_, _axioms_, or _theorems_)')   
+                        help='only execute proofs')   
     parser.add_argument('--justdemos', dest='just_execute_demos', action='store_const',
                         const=True, default=False,
-                        help='only execute demonstration (not _common_, _axioms_, _theorems_, or proofs)')   
+                        help='only execute demonstrations')   
     parser.add_argument('--justexpressions', dest='just_execute_expression_nbs', action='store_const',
                         const=True, default=False,
                         help='only execute expression notebooks')   
