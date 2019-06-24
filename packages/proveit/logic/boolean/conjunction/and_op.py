@@ -290,7 +290,7 @@ class And(Operation):
             self.prove(assumptions)
         except ProofFailure:
             try:
-                self.prove(assumptions)
+                self.disprove(assumptions)
             except ProofFailure:
                 raise EvaluationError("Unable to evaluate conjunction.")
         return Operation.evaluation(self, assumptions)
