@@ -24,7 +24,52 @@ class And(Operation):
         return self.concludeViaComposition(assumptions)
 
     def concludeNegation(self, assumptions=USE_DEFAULTS):
-        # ~ Joaquin
+        # Created by JML on 6/24/19
+        from ._theorems_ import trueAndFalseNegated, falseAndTrueNegated, falseAndFalseNegated,andIfBoth, nandIfLeftButNotRight, nandIfRightButNotLeft
+        from proveit.number import num
+        if self in {trueAndFalseNegated.expr, falseAndTrueNegated.expr, falseAndFalseNegated.expr}:
+            # should be disproven via one of the imported theorems as a simple special case
+            return self.prove()
+            # Prove that the conjunction is true by proving that one of its operands is false and then negate it.
+        # In the first attempt, don't use automation to prove any of the operands so that
+        # we don't waste time trying to prove operands when we already know one to be false
+        for useAutomationForOperand in [False, True]:
+            disprovenOperandIndices = []
+            for k, operand in enumerate(self.operands):
+                try:
+                    operand.disprove(assumptions, automation=useAutomationForOperand)
+                    disprovenOperandIndices.append(k)
+                    self.concludeViaExample(operand, assumptions=assumptions)  # possible way to prove it
+                except ProofFailure:
+                    pass
+            if len(self.operands) == 2 and len(disprovenOperandIndices) > 0:
+                # One or both of the two operands were known to be true (without automation).
+                # Try a possibly simpler proof than concludeViaExample.
+                try:
+                    if len(disprovenOperandIndices) == 2:
+                        return self.andIfBoth(assumptions)
+                    elif disprovenOperandIndices[0] == 0:
+                        return nandIfLeftButNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                    else:
+                        from ._theorems_ import nandIfNotLeft
+                        return nandIfRightButNotLeft.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                except:
+                    pass
+            if len(disprovenOperandIndices) > 0:
+                try:
+                    # proven using concludeViaExample above (unless orIf[Any,Left,Right] was not a usable theorem,
+                    # in which case this will fail and we can simply try the default below)
+                    return self.prove(assumptions, automation=False)
+                except:
+                    # orIf[Any,Left,Right] must not have been a usable theorem; use the default below.
+                    break
+
+
+        '''
+        If there is a negation, try to automatically conclude a few special cases.
+        Then, evaluate each operand to prove the expression FALSE so the negation
+        will be true.
+        
         from ._theorems_ import trueAndFalseNegated, falseAndTrueNegated, falseAndFalseNegated
         from proveit.number import num
         from proveit.logic.boolean._common_ import TRUE, FALSE
@@ -39,7 +84,7 @@ class And(Operation):
         # Loop over the operands and see if there is an evaluation for the operands
         for idx,operand in enumerate(self.operands):
             try:
-                evaluation = operand.evaluation(assumptions, automation = False)
+                evaluation = operand.evaluation(assumptions)
             except ProofFailure:
                 continue
             if evaluation.rhs == FALSE:
@@ -63,7 +108,7 @@ class And(Operation):
                         return nandIfNotOne.specialize({m: mVal, n: nVal, AA: self.operands[:idx], B: self.operands[idx], CC: self.operands[idx + 1:]},assumptions=assumptions)
                     except ProofFailure:
                         continue
-
+        '''
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically.
@@ -220,6 +265,21 @@ class And(Operation):
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
             return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
 
+    def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
+        '''
+        From one true operand, conclude that this 'or' expression is true.
+        Requires all of the operands to be in the set of BOOLEANS.
+        '''
+        from proveit.number import num
+        from ._theorems_ import nandIfNotOne, nandIfNotLeft, nandIfNotRight
+        index = self.operands.index(trueOperand)
+        if len(self.operands) == 2:
+            if index == 0:
+                return nandIfNotLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            elif index == 1:
+                return nandIfNotRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return nandIfNotOne.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
+
     def evaluation(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
@@ -230,7 +290,7 @@ class And(Operation):
             self.prove(assumptions)
         except ProofFailure:
             try:
-                self.disprove(assumptions)
+                self.prove(assumptions)
             except ProofFailure:
                 raise EvaluationError("Unable to evaluate conjunction.")
         return Operation.evaluation(self, assumptions)
