@@ -24,9 +24,11 @@ class And(Operation):
         return self.concludeViaComposition(assumptions)
 
     def concludeNegation(self, assumptions=USE_DEFAULTS):
+        # ~ Joaquin
         from ._theorems_ import trueAndFalseNegated, falseAndTrueNegated, falseAndFalseNegated
         from proveit.number import num
         from proveit.logic.boolean._common_ import TRUE, FALSE
+        # Try a few special cases
         if len(self.operands) == 2:
             if self.operands == (TRUE, FALSE):
                 return trueAndFalseNegated
@@ -34,6 +36,7 @@ class And(Operation):
                 return falseAndTrueNegated
             if self.operands == (FALSE, FALSE):
                 return falseAndFalseNegated
+        # Loop over the operands and see if there is an evaluation for the operands
         for idx,operand in enumerate(self.operands):
             try:
                 evaluation = operand.evaluation(assumptions, automation = False)
@@ -42,15 +45,18 @@ class And(Operation):
             if evaluation.rhs == FALSE:
                 if len(self.operands) == 2:
                     if idx == 0:
+                        # if the left side is false
                         try:
                             from ._theorems_ import nandIfNotLeft
                             return nandIfNotLeft.specialize({A: self.operands[0], B: self.operands[1]},assumptions=assumptions)
                         except ProofFailure:
                             continue
                     if idx == 1:
+                        # if the right side is false
                         from ._theorems_ import nandIfNotRight
                         return nandIfNotRight.specialize({A: self.operands[0], B: self.operands[1]},assumptions=assumptions)
                 else:
+                    # if there is more than two operands, see if at least one of them is false. 
                     mVal, nVal = num(idx), num(len(self.operands) - idx - 1)
                     from ._theorems_ import nandIfNotOne
                     try:
