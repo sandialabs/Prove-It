@@ -8,8 +8,6 @@ class Or(Operation):
 
     trivialDisjunctions = set() #used to avoid infinite recursion inside of deduceUnaryEquiv
 
-    
-
     def __init__(self, *operands):
         '''
         Or together any number of operands: A or B or C
