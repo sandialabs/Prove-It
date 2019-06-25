@@ -120,10 +120,9 @@ class Proof:
             # to use an "unusable" theorem directly or indirectly.
             raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
         if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
-            # don't bother with side-effects if they have already been processed
-            if (provenTruth, defaults.assumptions) not in KnownTruth.sideeffect_processed: 
-                # may derive any side-effects that are obvious consequences arising from this truth:
-                provenTruth.deriveSideEffects()
+            # May derive any side-effects that are obvious consequences arising from this truth
+            # (if it has not already been processed):
+            provenTruth.deriveSideEffects(defaults.assumptions)
 
     def _updateDependencies(self, newproof):
         '''
@@ -347,12 +346,12 @@ class Assumption(Proof):
         key = (expr, assumptions)
         if key in Assumption.allAssumptions:
             preexisting = Assumption.allAssumptions[key]
-            if (preexisting.provenTruth, assumptions) not in KnownTruth.sideeffect_processed:
-                # The Assumption object exists already, but it's
-                # side-effects were not derived yet under the given assumptions.
-                # This can happen when automation is temporarily disabled or
-                # when assumptions change.
-                preexisting.provenTruth.deriveSideEffects()
+            # The Assumption object exists already, but it's
+            # side-effects may not have been derived yet under the 
+            # given assumptions.
+            # This can happen when automation is temporarily disabled or
+            # when assumptions change.
+            preexisting.provenTruth.deriveSideEffects(assumptions)
             return preexisting
         return Assumption(expr, assumptions)
         
