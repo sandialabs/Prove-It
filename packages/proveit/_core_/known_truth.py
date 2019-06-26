@@ -176,8 +176,8 @@ class KnownTruth:
             return # automation disabled
         # Sort the assumptions according to hash key so that sets of assumptions
         # are unique for determining which side-effects have been processed already.
-        assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
-        if (self.expr, assumptions) in KnownTruth.sideeffect_processed:
+        sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
+        if (self.expr, sorted_assumptions) in KnownTruth.sideeffect_processed:
             return # has already been processed
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
@@ -196,7 +196,7 @@ class KnownTruth:
                         raise Exception("Side effect failure for %s, while running %s: "%(str(self.expr), str(sideEffect)) + str(e))
             finally:
                 KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
-            KnownTruth.sideeffect_processed.add((self.expr, assumptions))
+            KnownTruth.sideeffect_processed.add((self.expr, sorted_assumptions))
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
