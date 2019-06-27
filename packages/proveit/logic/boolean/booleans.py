@@ -106,8 +106,9 @@ class BooleanMembership(Membership):
         '''
         Yield side-effect methods to try when the element is proven to be in the set of Booleans
         by calling 'inBoolSideEffects' on the element if it has such a method.
+        Edited by JML on 6/27/19 to add foldInBool sideEffect
         '''
-        from proveit.logic.boolean._theorems_ import unfoldInBool
+        from proveit.logic.boolean._theorems_ import unfoldInBool, foldInBool
         if hasattr(self.element, 'inBoolSideEffects'):
             for sideEffect in self.element.inBoolSideEffects(knownTruth):
                 #print("to yield side effects")
@@ -116,7 +117,6 @@ class BooleanMembership(Membership):
                 #print("done with side effect?")
         # don't automatically do unfoldInBoolExplicit if unfoldInBool is unusable -- avoids infinite recursion
         if unfoldInBool.isUsable():
-
             yield self.unfold
     
     def conclude(self, assumptions=USE_DEFAULTS):
@@ -161,7 +161,15 @@ class BooleanMembership(Membership):
         else:
             #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
             return unfoldInBoolExplicit.specialize({A:self.element}, assumptions=assumptions)
-    
+    def fold(self, assumptions=USE_DEFAULTS):
+        '''
+        From [(element=TRUE) or (element=FALSE)], derive inBool(Element).
+        Created by JML on 6/27/19 for foldInBool sideEffect
+        '''
+        from ._theorems_ import foldInBool
+        if foldInBool.isUsable():
+            return foldInBool.specialize({A:self.element}, assumptions=assumptions)
+
     def deriveViaExcludedMiddle(self, consequent, assumptions=USE_DEFAULTS):
         '''
         Derive the consequent from (element in Booleans)
