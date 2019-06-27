@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 A KnownTruth represents an expression that has been proven to be a true
 statement.  A KnownTruth wraps an Expression (acting like the Expression
