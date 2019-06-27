@@ -133,14 +133,16 @@ class Expression(metaclass=ExprType):
     
     def _class_path(self):
         ExprClass = self.__class__
-        class_module = sys.modules[ExprClass.__module__]
-        if hasattr(class_module, '__file__'):
-            context = Context(class_module.__file__)
-        else:
-            context = Context() # use the current directory if using the main module
-        # get the full class path relative to the root context where the class is defined
-        class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
-        return class_path
+        if not hasattr(ExprClass, '__pvitpath'):
+            class_module = sys.modules[ExprClass.__module__]
+            if hasattr(class_module, '__file__'):
+                context = Context(class_module.__file__)
+            else:
+                context = Context() # use the current directory if using the main module
+            # get the full class path relative to the root context where the class is defined
+            class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
+            ExprClass.__pvitpath = class_path
+        return ExprClass.__pvitpath
 
     @staticmethod
     def _extractExprClass(unique_rep):
