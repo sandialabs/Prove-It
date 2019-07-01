@@ -49,6 +49,7 @@ class Implies(TransitiveRelation):
     def negationSideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically when an implication is negated.
+        implemented by JML on 6/17/19
         '''
         yield self.deduceNegatedLeftImpl # Not(A <=> B) given Not(B => A)
         yield self.deduceNegatedRightImpl # Not(A <=> B) given Not(A => B)
@@ -107,6 +108,7 @@ class Implies(TransitiveRelation):
     def concludeNegation(self, assumptions=USE_DEFAULTS):
         '''
         Try to conclude True when Not(TRUE => FALSE) is called.
+        implemented by JML on 6/18/19
         '''
         from proveit.logic.boolean._common_ import FALSE, TRUE
         try:
@@ -118,6 +120,7 @@ class Implies(TransitiveRelation):
     def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
         '''
         From A => B return A => Not(Not(B)).
+        implemented by JML on 6/18/19
         '''
         from ._theorems_ import doubleNegateConsequent
         if isinstance(self.consequent.operand, Not):
@@ -142,6 +145,7 @@ class Implies(TransitiveRelation):
     def deduceNegatedRightImpl(self, assumptions=USE_DEFAULTS):
         r'''
         From Not(A => B) derive and return Not(A <=> B).
+        implemented by JML on 6/18/19
         '''
         from ._theorems_ import notIffViaNotRightImpl
         return notIffViaNotRightImpl.specialize({A:self.antecedent, B:self.consequent},assumptions=assumptions)
@@ -149,11 +153,13 @@ class Implies(TransitiveRelation):
     def deduceNegatedLeftImpl(self, assumptions=USE_DEFAULTS):
         r'''
         From Not(B => A) derive and return Not(A <=> B).
+        implemented by JML on 6/18/19
         '''
         from ._theorems_ import notIffViaNotLeftImpl
         return notIffViaNotLeftImpl.specialize({B: self.antecedent, A: self.consequent}, assumptions=assumptions)
 
     def deduceNegatedReflex(self, assumptions=USE_DEFAULTS):
+        #implemented by JML on 6/18/19
         from ._theorems_ import negatedReflex
         return negatedReflex.specialize({A:self.antecedent, B:self.consequent},assumptions=assumptions)
 
