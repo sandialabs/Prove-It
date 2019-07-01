@@ -272,12 +272,12 @@ class And(Operation):
         # created by JML 6/28/19
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
-        from ._theorems_ import demorganslawOrtoAnd, demorganslawOrtoAndBin
+        from ._theorems_ import demorgansLawOrToAnd, demorgansLawOrToAndBin
         from proveit.number import num
         if len(self.operands) == 2:
-            return demorganslawOrtoAndBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return demorgansLawOrToAndBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return demorganslawOrtoAnd.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+            return demorgansLawOrToAnd.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
 
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
