@@ -90,7 +90,7 @@ class NamedExprs(Composite, Expression):
         according to exprMap and/or relabeled according to relabelMap.`
         '''
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         else:
             return NamedExprs([(key,expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)) for key, expr in self.items()])

@@ -1,4 +1,5 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented, ImproperSubstitution, ScopingViolation
+from proveit._core_.expression.label.var import safeDummyVars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 def getParamVar(parameter):
@@ -66,6 +67,15 @@ class Lambda(Expression):
                 raise LambdaError("Cannot generate a Lambda expression with parameter variables involved in Lambda body requirements: " + str(requirement))
         sub_exprs = [self.parameter_or_parameters, self.body]
         if len(self.conditions)>0: sub_exprs.append(self.conditions)
+        
+        # Create a "generic" version (if not already) of the Lambda expression since the 
+        # choice of parameter labeling is irrelevant.
+        used_vars = self.usedVars()
+        generic_params = tuple(safeDummyVars(len(self.parameterVars), *(used_vars-self.parameterVarSet)))
+        if generic_params != self.parameterVars:
+            relabel_map = {param:generic_param for param, generic_param in zip(self.parameterVars, generic_params)}
+            self._generic_expr = self.relabeled(relabel_map)
+        
         Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles, requirements=requirements)
         
     @classmethod
@@ -195,7 +205,7 @@ class Lambda(Expression):
         scope properly as well as parameter relabeling (or iterated parameter expansion).
         '''
         
-        from proveit import compositeExpression, Iter
+        from proveit import compositeExpression, Iter, ExprList
         
         # Can't substitute the lambda parameter variables; they are in a new scope.
         inner_expr_map = {key:value for (key, value) in exprMap.items() if key not in self.parameterVarSet}
@@ -211,10 +221,14 @@ class Lambda(Expression):
             # For example, we can relabel y to z in (x, y) -> f(x, y), but not f to x. 
             if parameterVar in relabelMap:
                 if isinstance(parameter, Iter):
-                    # expanding an iteration.  For example: x_1, ..., x_n -> a, b, c, d 
                     relabeledParams = parameter.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-                    if len(relabeledParams) != len(relabelMap[parameterVar]):
-                        raise ImproperSubstitution("Relabeling of iterated parameters incomplete: %d length expansion versus %d length substitution"%(len(relabeledParams), len(relabelMap[parameterVar])))
+                    if isinstance(relabeledParams, ExprList):
+                        # expanding an iteration.  For example: x_1, ..., x_n -> a, b, c, d 
+                        if len(relabeledParams) != len(relabelMap[parameterVar]):
+                            raise ImproperSubstitution("Relabeling of iterated parameters incomplete: %d length expansion versus %d length substitution"%(len(relabeledParams), len(relabelMap[parameterVar])))
+                    else:
+                        # e.g., x_1, ..., x_n -> y_1, ..., y_n
+                        relabeledParams = compositeExpression(relabeledParams)
                 else:
                     relabeledParams = compositeExpression(relabelMap[parameterVar])
                 for relabeledParam in relabeledParams:
@@ -243,7 +257,7 @@ class Lambda(Expression):
         from proveit.logic import Forall
         
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             # the full expression is to be substituted
             return exprMap[self]._restrictionChecked(reservedVars)        
         if relabelMap is None: relabelMap = dict()

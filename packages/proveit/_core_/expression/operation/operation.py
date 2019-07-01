@@ -67,7 +67,7 @@ class Operation(Expression):
             styles['wrapPositions'] = '()' # no wrapping by default
         if 'justification' not in styles:
             styles['justification'] = 'center'
-        Expression.__init__(self, ['Operation'], [self.operator_or_operators, self.operand_or_operands], styles=styles, requirements=requirements)
+        Expression.__init__(self, ['Operation'], (self.operator_or_operators, self.operand_or_operands), styles=styles, requirements=requirements)
 
     def styleOptions(self):
         options = StyleOptions(self)
@@ -345,7 +345,7 @@ class Operation(Expression):
         from proveit._core_.expression.composite.composite import compositeExpression
         from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
         subbed_operand_or_operands = self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         subbed_operands = compositeExpression(subbed_operand_or_operands)

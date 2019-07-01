@@ -66,19 +66,33 @@ class Expression(metaclass=ExprType):
                 raise TypeError('Expecting subExpression elements to be of Expression type')
                 
         # note: these contained expressions are subject to style changes on an Expression instance basis
-        self._subExpressions = subExpressions 
+        self._subExpressions = tuple(subExpressions)
         
-        # The meaning data is shared among Expressions with the same structure disregarding style
-        self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id), coreInfo))
-        if not hasattr(self._meaningData, '_coreInfo'):
-            # initialize the data of self._meaningData
-            self._meaningData._coreInfo = tuple(coreInfo)
-            # combine requirements from all sub-expressions
-            requirements = sum([subExpression.getRequirements() for subExpression in subExpressions], tuple()) + requirements
-            # Expression requirements are essentially assumptions that need to be proven for the expression to
-            # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
-            # (which may not be necessary, but does not hurt).   
-            self._meaningData._requirements = defaults.checkedAssumptions(requirements)
+        # The 'generic' version of this expression, in which deterministic 'dummy' variables
+        # are used as Lambda parameters, determines the 'meaning' of the expression.
+        generic_sub_expressions = tuple(sub_expr._genericExpr for sub_expr in subExpressions)
+        if hasattr(self, '_genericExpr'):
+            # The _genericExpr attribute was already set -- must be a Lambda Expression.
+            self._meaningData = self._genericExpr._meaningData            
+        elif self._subExpressions != generic_sub_expressions:
+            # The 'generic' sub-expressions are different than the sub-expressions,
+            # so that propagates to this Expression's generic version.
+            self._genericExpr = self.__class__._make(coreInfo, styles, subExpressions)
+            self._meaningData = self._genericExpr._meaningData
+        else:
+            # This is this 'generic' version:
+            self._genericExpr = self
+            # The meaning data is shared among Expressions with the same structure disregarding style
+            self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id), coreInfo))
+            if not hasattr(self._meaningData, '_coreInfo'):
+                # initialize the data of self._meaningData
+                self._meaningData._coreInfo = tuple(coreInfo)
+                # combine requirements from all sub-expressions
+                requirements = sum([subExpression.getRequirements() for subExpression in subExpressions], tuple()) + requirements
+                # Expression requirements are essentially assumptions that need to be proven for the expression to
+                # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
+                # (which may not be necessary, but does not hurt).   
+                self._meaningData._requirements = defaults.checkedAssumptions(requirements)
         
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
@@ -501,7 +515,7 @@ class Expression(metaclass=ExprType):
         for the substitution to be valid.
         '''
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         else:
             return self

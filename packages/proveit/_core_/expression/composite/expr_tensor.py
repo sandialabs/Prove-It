@@ -637,7 +637,7 @@ class ExprTensor(Composite, Expression):
         from .iteration import Iter
         from proveit.number import Add
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
 
         if requirements is None: requirements = [] # requirements won't be passed back in this case
