@@ -86,6 +86,7 @@ class Or(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return # stop to avoid infinite recursion.
         yield self.deriveInBool
+        #yield self.deriveParts # added by JML 6/28/19
 
     def negationSideEffects(self, knownTruth):
         '''
@@ -133,6 +134,30 @@ class Or(Operation):
         From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].
         '''
         return inBool(self).prove(assumptions=assumptions)
+
+    def deriveParts(self, assumptions=USE_DEFAULTS):
+        r'''
+        From (A or B or ... or Z)` derive each operand:
+        A, B, ..., Z.
+        '''
+        for i in range(len(self.operands)):
+            self.deriveInPart(i, assumptions)
+
+    def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
+        r'''
+        From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies
+        :math:`X` either by index or the expr.
+        '''
+        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
+        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
+        if idx < 0 or idx >= len(self.operands):
+            raise IndexError("Operand out of range: " + str(idx))
+        if len(self.operands)==2:
+            pass
+        else:
+            from proveit.number import num
+            mVal, nVal = num(idx), num(len(self.operands)-idx-1)
+            return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
     
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
@@ -261,7 +286,19 @@ class Or(Operation):
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return notRightIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)
-                                
+
+    def deduceDemorgansEquiv(self, assumptions=USE_DEFAULTS):
+        '''
+        # created by JML 6/28/19
+        From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
+        '''
+        from ._theorems_ import demorganslawAndtoOr, demorganslawAndtoOrBin
+        from proveit.number import num
+        if len(self.operands) == 2:
+            return demorganslawAndtoOrBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        else:
+            return demorganslawAndtoOr.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+
     def deriveCommonConclusion(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.

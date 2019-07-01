@@ -13,10 +13,11 @@ class BooleanSet(Literal):
     def nonmembershipObject(self, element):
         return BooleanNonmembership(element)
     
-    def forallEvaluation(self, forallStmt, assumptions):
+    def forallEvaluation(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
         Given a forall statement over the BOOLEANS domain, evaluate to TRUE or FALSE
         if possible.
+        updated by JML 6/28/19
         '''        
         from proveit.logic import Forall, Equals, EvaluationError
         from ._theorems_ import falseEqFalse, trueEqTrue 
@@ -25,7 +26,8 @@ class BooleanSet(Literal):
         from .conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply forallEvaluation method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain"
-        instanceVar = forallStmt.instanceVars[0]
+        instanceList = list(forallStmt.instanceVarLists())
+        instanceVar = instanceList[0][0]
         instanceExpr = forallStmt.instanceExpr
         P_op = Operation(P, instanceVar)
         trueInstance = instanceExpr.substituted({instanceVar:TRUE})

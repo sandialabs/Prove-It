@@ -265,6 +265,18 @@ class And(Operation):
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
             return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
 
+    def deduceDemorgansEquiv(self, assumptions=USE_DEFAULTS):
+        '''
+        # created by JML 6/28/19
+        From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
+        '''
+        from ._theorems_ import demorganslawOrtoAnd, demorganslawOrtoAndBin
+        from proveit.number import num
+        if len(self.operands) == 2:
+            return demorganslawOrtoAndBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        else:
+            return demorganslawOrtoAnd.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
         From one true operand, conclude that this 'or' expression is true.

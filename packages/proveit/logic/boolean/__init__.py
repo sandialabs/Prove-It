@@ -1,6 +1,6 @@
 from .quantification import Forall, Exists, NotExists
 from ._common_ import Booleans, TRUE, FALSE
-from .booleans import inBool
+from .booleans import inBool, BooleanSet # added by JML 6/28/19
 from .conjunction import And, compose
 from .disjunction import Or
 from .negation import Not
