@@ -119,15 +119,23 @@ class And(Operation):
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
+        return
         yield self.deriveInBool
         yield self.deriveParts
         #yield self.deriveCommutation
+
 
     def negationSideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
         '''
+        from proveit.logic import Not, Or
         yield self.deriveInBool # (A and B and ... and Z) in Booleans
+        # implemented by JML on 7/2/19
+        # If all of the operands are negated call the disjunction form of DeMorgan's
+        if all(isinstance(operand, Not) for operand in self.operands):
+            demorganOr = Or(*[operand.operand for operand in self.operands])
+            yield demorganOr.concludeViaDemorgans
         
     def inBoolSideEffects(self, knownTruth):
         '''
@@ -267,7 +275,7 @@ class And(Operation):
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
             return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
 
-    def deduceDemorgansEquiv(self, assumptions=USE_DEFAULTS):
+    def concludeViaDemorgans(self, assumptions=USE_DEFAULTS):
         '''
         # created by JML 6/28/19
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
