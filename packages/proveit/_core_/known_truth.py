@@ -107,13 +107,12 @@ class KnownTruth:
         '''
         from proveit._core_.proof import Proof
         # do some type checking
-
         if not isinstance(expression, Expression):
             raise ValueError('The expression (expr) of a KnownTruth should be an Expression')
         for assumption in assumptions:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
-
+        
         # note: these contained expressions are subject to style changes on a KnownTruth instance basis
         self.expr = expression
         # store the assumptions as an ordered list (with the desired order for display)
@@ -133,7 +132,7 @@ class KnownTruth:
             self._meaningData._exprProofs = exprProofs
             # Initially, _proof is None but will be assigned and updated via _addProof()
             self._meaningData._proof = None
-        # print(self)
+        
         # The style data is shared among KnownTruths with the same structure and style.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id)))
         
@@ -150,7 +149,7 @@ class KnownTruth:
         
         # The _proof can change so it must be accessed via indirection into self._meaningData
         # (see proof() method).
-
+    
     def _generate_unique_rep(self, objectRepFn):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
@@ -175,16 +174,15 @@ class KnownTruth:
         from .proof import ProofFailure
         if not defaults.automation:
             return # automation disabled
+        # Sort the assumptions according to hash key so that sets of assumptions
+        # are unique for determining which side-effects have been processed already.
+        sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
+        if (self.expr, sorted_assumptions) in KnownTruth.sideeffect_processed:
+            return # has already been processed
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
-            #print(self, (self, defaults.assumptions) in KnownTruth.sideeffect_processed)
-
-            #assert (self, defaults.assumptions) not in KnownTruth.sideeffect_processed
-
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
             KnownTruth.in_progress_to_derive_sideeffects.add(self)
-
             try:
-                #print(self.expr.sideEffects(self))
                 for sideEffect in self.expr.sideEffects(self):
                     # Attempt each side-effect derivation, specific to the
                     # type of Expression.
@@ -198,8 +196,7 @@ class KnownTruth:
                         raise Exception("Side effect failure for %s, while running %s: "%(str(self.expr), str(sideEffect)) + str(e))
             finally:
                 KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
-            KnownTruth.sideeffect_processed.add((self, assumptions))
-
+            KnownTruth.sideeffect_processed.add((self.expr, sorted_assumptions))
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):

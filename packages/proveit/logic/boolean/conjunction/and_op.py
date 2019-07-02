@@ -193,6 +193,7 @@ class And(Operation):
         '''
         From (A and B and ... and Y and Z), assuming in Booleans and given beginning and end of group, derive and return
         (A and B ... and (l and ... and M) and ... and X and Z).
+        Created by JML on 6/10/19
         '''
         from ._theorems_ import group
         from proveit.number import num
@@ -207,6 +208,7 @@ class And(Operation):
         From (A and ... and H and I and J or ... or L and M or N and ... and Q), assuming in Booleans and given
         the beginning and end of the groups to be switched,
         derive and return (A and ... and H and M and J and ... and L and I and N and ... and Q).
+        Created by JML on 6/10/19
         '''
         from ._theorems_ import swap
         from proveit.number import num
@@ -270,12 +272,12 @@ class And(Operation):
         # created by JML 6/28/19
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
-        from ._theorems_ import demorganslawOrtoAnd, demorganslawOrtoAndBin
+        from ._theorems_ import demorgansLawOrToAnd, demorgansLawOrToAndBin
         from proveit.number import num
         if len(self.operands) == 2:
-            return demorganslawOrtoAndBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return demorgansLawOrToAndBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return demorganslawOrtoAnd.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+            return demorgansLawOrToAnd.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
 
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''

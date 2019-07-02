@@ -181,7 +181,7 @@ class ExpSetMembership(Membership):
         exponent_eval = domain.exponent.evaluation(assumptions=assumptions)
         exponent = exponent_eval.rhs
         base = domain.base
-        print(exponent, base, exponent.asInt(),element, domain, len(element))
+        #print(exponent, base, exponent.asInt(),element, domain, len(element))
         if isLiteralInt(exponent):
             if exponent == zero:
                 return exp_set_0.specialize({x:element, S:base}, assumptions=assumptions)

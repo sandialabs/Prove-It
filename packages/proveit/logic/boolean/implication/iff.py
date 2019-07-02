@@ -65,6 +65,7 @@ class Iff(TransitiveRelation):
         return self.concludeByDefinition(assumptions)
 
     def concludeNegation(self, assumptions=USE_DEFAULTS):
+        # implemented by Joaquin on 6/17/19
         from proveit.logic.boolean._common_ import FALSE, TRUE
         try:
             if self.A == TRUE and self.B == FALSE:

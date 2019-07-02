@@ -38,7 +38,7 @@ LaTeXTool.clear_instance()
 lt = LaTeXTool.instance()
 lt.use_breqn = False
 
-default_paths = ['packages/proveit']#, 'tutorial']#, 'tutorial/socks_demo']
+default_paths = ['packages/proveit', 'tutorial']#, 'tutorial/socks_demo']
 
 def findContextPaths(path):
     if os.path.isfile(os.path.join(path, '_context_.ipynb')):

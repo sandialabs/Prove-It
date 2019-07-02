@@ -292,12 +292,12 @@ class Or(Operation):
         # created by JML 6/28/19
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
         '''
-        from ._theorems_ import demorganslawAndtoOr, demorganslawAndtoOrBin
+        from ._theorems_ import demorgansLawAndToOr, demorgansLawAndToOrBin
         from proveit.number import num
         if len(self.operands) == 2:
-            return demorganslawAndtoOrBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+            return demorgansLawAndToOrBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return demorganslawAndtoOr.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+            return demorgansLawAndToOr.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
 
     def deriveCommonConclusion(self, conclusion, assumptions=USE_DEFAULTS):
         '''

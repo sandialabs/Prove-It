@@ -45,6 +45,7 @@ class EnumMembership(Membership):
             return enumSetDef.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements}, assumptions=assumptions)
 
     def deriveInSingleton(self, expression, assumptions=USE_DEFAULTS):
+        # implemented by JML 6/28/19
         from proveit.logic import TRUE, FALSE
         from ._theorems_ import inSingletonEvalFalse, inSingletonEvalTrue
         if expression.rhs == FALSE:
