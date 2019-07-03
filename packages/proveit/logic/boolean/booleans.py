@@ -13,10 +13,11 @@ class BooleanSet(Literal):
     def nonmembershipObject(self, element):
         return BooleanNonmembership(element)
     
-    def forallEvaluation(self, forallStmt, assumptions):
+    def forallEvaluation(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
         Given a forall statement over the BOOLEANS domain, evaluate to TRUE or FALSE
         if possible.
+        updated by JML 6/28/19
         '''        
         from proveit.logic import Forall, Equals, EvaluationError
         from ._theorems_ import falseEqFalse, trueEqTrue 
@@ -25,7 +26,8 @@ class BooleanSet(Literal):
         from .conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply forallEvaluation method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain"
-        instanceVar = forallStmt.instanceVars[0]
+        instanceList = list(forallStmt.instanceVarLists())
+        instanceVar = instanceList[0][0]
         instanceExpr = forallStmt.instanceExpr
         P_op = Operation(P, instanceVar)
         trueInstance = instanceExpr.substituted({instanceVar:TRUE})
@@ -106,11 +108,15 @@ class BooleanMembership(Membership):
         '''
         Yield side-effect methods to try when the element is proven to be in the set of Booleans
         by calling 'inBoolSideEffects' on the element if it has such a method.
+        Edited by JML on 6/27/19 to add foldInBool sideEffect
         '''
-        from proveit.logic.boolean._theorems_ import unfoldInBool
+        from proveit.logic.boolean._theorems_ import unfoldInBool, foldInBool
         if hasattr(self.element, 'inBoolSideEffects'):
             for sideEffect in self.element.inBoolSideEffects(knownTruth):
+                #print("to yield side effects")
+
                 yield sideEffect
+                #print("done with side effect?")
         # don't automatically do unfoldInBoolExplicit if unfoldInBool is unusable -- avoids infinite recursion
         if unfoldInBool.isUsable():
             yield self.unfold
@@ -157,7 +163,15 @@ class BooleanMembership(Membership):
         else:
             #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
             return unfoldInBoolExplicit.specialize({A:self.element}, assumptions=assumptions)
-    
+    def fold(self, assumptions=USE_DEFAULTS):
+        '''
+        From [(element=TRUE) or (element=FALSE)], derive inBool(Element).
+        Created by JML on 6/27/19 for foldInBool sideEffect
+        '''
+        from ._theorems_ import foldInBool
+        if foldInBool.isUsable():
+            return foldInBool.specialize({A:self.element}, assumptions=assumptions)
+
     def deriveViaExcludedMiddle(self, consequent, assumptions=USE_DEFAULTS):
         '''
         Derive the consequent from (element in Booleans)
