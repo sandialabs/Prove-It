@@ -64,11 +64,11 @@ class IntersectNonmembership(Nonmembership):
         Deduce and return [element not in (A intersect B ...)] = [(element not in A) or (element not in B) ...]
         where self = (A intersect B ...).
         '''
-        from ._theorems_ import nonMembershipEquiv
+        from ._theorems_ import nonmembershipEquiv
         from proveit.number import num
         element = self.element
         operands = self.domain.operands
-        return nonMembershipEquiv.specialize({m:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
+        return nonmembershipEquiv.specialize({m:num(len(operands)), x:element, AA:operands}, assumptions=assumptions)
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''

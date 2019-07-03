@@ -1,5 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS
-from proveit._common_ import A, B, C, D, AA, CC, m, n
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
+from proveit._common_ import A, B, C, D, AA, BB, CC, DD, EE, i,j,k,l, m, n
 from proveit.logic.boolean.booleans import inBool
 
 class Or(Operation):
@@ -7,8 +7,6 @@ class Or(Operation):
     _operator_ = Literal(stringFormat='or', latexFormat=r'\lor', context=__file__)
 
     trivialDisjunctions = set() #used to avoid infinite recursion inside of deduceUnaryEquiv
-
-    
 
     def __init__(self, *operands):
         '''
@@ -34,7 +32,7 @@ class Or(Operation):
             except:
                 pass
 
-    def conclude(self, assumptions):
+    def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Try to automatically conclude this disjunction.  If any of its
         operands have pre-existing proofs, it will be proven via the orIfAny
@@ -54,8 +52,8 @@ class Or(Operation):
                 try:
                     operand.prove(assumptions, automation=useAutomationForOperand)
                     provenOperandIndices.append(k)
-                    self.concludeViaExample(operand) # possible way to prove it
-                except:
+                    self.concludeViaExample(operand, assumptions=assumptions) # possible way to prove it
+                except ProofFailure:
                     pass
             if len(self.operands) == 2 and len(provenOperandIndices) > 0:
                 # One or both of the two operands were known to be true (without automation).
@@ -88,6 +86,7 @@ class Or(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return # stop to avoid infinite recursion.
         yield self.deriveInBool
+        #yield self.deriveParts # added by JML 6/28/19
 
     def negationSideEffects(self, knownTruth):
         '''
@@ -112,7 +111,8 @@ class Or(Operation):
         elif len(self.operands)==2:
             return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return notOrIfNotAny.specialize({m:len(self.operands),AA:self.operands}, assumptions=assumptions)
+            from proveit.number import num
+            return notOrIfNotAny.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
     
     def concludeViaBoth(self, assumptions):
         from ._theorems_ import orIfBoth
@@ -134,51 +134,88 @@ class Or(Operation):
         From (A or B or ... or Z) derive [(A or B or ... or Z) in Booleans].
         '''
         return inBool(self).prove(assumptions=assumptions)
+
+    def deriveParts(self, assumptions=USE_DEFAULTS):
+        r'''
+        From (A or B or ... or Z)` derive each operand:
+        A, B, ..., Z.
+        '''
+        for i in range(len(self.operands)):
+            self.deriveInPart(i, assumptions)
+
+    def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
+        r'''
+        From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies
+        :math:`X` either by index or the expr.
+        '''
+        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
+        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
+        if idx < 0 or idx >= len(self.operands):
+            raise IndexError("Operand out of range: " + str(idx))
+        if len(self.operands)==2:
+            pass
+        else:
+            from proveit.number import num
+            mVal, nVal = num(idx), num(len(self.operands)-idx-1)
+            return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
     
     def deriveRightIfNotLeft(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return B assuming Not(A), inBool(B). 
         '''
-        from ._theorems_ import orImpliesRightIfNotLeft
+        from ._theorems_ import rightIfNotLeft
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return orImpliesRightIfNotLeft.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+        return rightIfNotLeft.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)#.deriveConclusion(assumptions)
 
     def deriveLeftIfNotRight(self, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return A assuming inBool(A), Not(B).
         '''
-        from ._theorems_ import orImpliesLeftIfNotRight
+        from ._theorems_ import leftIfNotRight
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
-        return orImpliesLeftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions).deriveConclusion(assumptions)
+        return leftIfNotRight.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)#.deriveConclusion(assumptions)
 
     def deriveViaSingularDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B) as self, and assuming A => C, B => C, and A and B are Booleans,
         derive and return the conclusion, C.  Self is (A or B).
         '''
-        from ._theorems_ import singularConstructiveDilemma
+        from ._theorems_ import singularConstructiveDilemma, singularConstructiveMultiDilemma
         if len(self.operands) == 2:
             return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
+        from proveit.number import num
+        return singularConstructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: self.operands, C:conclusion}, assumptions=assumptions)
 
     def deriveViaMultiDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B) as self, and assuming A => C, B => D, and A, B, C, and D are Booleans,
         derive and return the conclusion, C or D.
         '''
-        from ._theorems_ import constructiveDilemma
-        if len(self.operands) == 2:
-            if isinstance(conclusion, Or) and len(conclusion.operands)==2:
+        from ._theorems_ import constructiveDilemma, destructiveDilemma, constructiveMultiDilemma, destructiveMultiDilemma
+        from proveit.logic import Not, Or
+        from proveit.number import num
+        assert isinstance(conclusion, Or) and len(conclusion.operands) == len(self.operands), "deriveViaMultiDilemma requires conclusion to be a disjunction, the same number of operands as self."
+        # Check for destructive versus constructive dilemma cases.
+        if all(isinstance(operand, Not) for operand in self.operands) and all(isinstance(operand, Not) for operand in conclusion.operands):
+            # destructive case.
+            if len(self.operands) == 2:
+                # From Not(C) or Not(D), A => C, B => D, conclude Not(A) or Not(B)
+                return destructiveDilemma.specialize({C:self.operands[0].operand, D:self.operands[1].operand, A:conclusion.operands[0].operand, B:conclusion.operands[1].operand}, assumptions=assumptions)
+            # raise NotImplementedError("Generalized destructive multi-dilemma not implemented yet.")
+            # Iterated destructive case.  From (Not(A) or Not(B) or Not(C) or Not(D)) as self
+            negatedOperandsSelf = [operand.operand for operand in self.operands]
+            negatedOperandsConc = [operand.operand for operand in conclusion.operands]
+            return destructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: negatedOperandsSelf, BB: negatedOperandsConc}, assumptions=assumptions)
+        else:
+            # constructive case.
+            if len(self.operands) == 2:
                 # From (A or B), A => C, B => D, conclude C or D.
-                # Try this first for a shorter proof, if it works.
-                # try both ways to assign C and D.
-                for (C_, D_) in [(conclusion.operands[0], conclusion.operands[1]), (conclusion.operands[1], conclusion.operands[0])]:
-                    #try:
-                    return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:C_, D:D_}, assumptions=assumptions)
-                    #except:
-                    #    pass # that didn't work.  let's try the singular version which is more powerful.
-                    
+                return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion.operands[0], D:conclusion.operands[1]}, assumptions=assumptions)
+            #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
+            return constructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: self.operands, BB: conclusion.operands},assumptions=assumptions)
+
     def deriveViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         If the conclusion is also an Or operation with the same number of operands as
@@ -188,7 +225,7 @@ class Or(Operation):
         if isinstance(conclusion, Or) and len(conclusion.operands)==len(self.operands):
             try:
                 return self.deriveViaMultiDilemma(conclusion, assumptions)
-            except:
+            except ProofFailure:
                 pass
         return self.deriveViaSingularDilemma(conclusion, assumptions)
 
@@ -249,7 +286,19 @@ class Or(Operation):
         assert len(self.operands) == 2
         leftOperand, rightOperand = self.operands
         return notRightIfNeither.specialize({A:leftOperand, B:rightOperand}, assumptions=assumptions)
-                                
+
+    def deduceDemorgansEquiv(self, assumptions=USE_DEFAULTS):
+        '''
+        # created by JML 6/28/19
+        From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
+        '''
+        from ._theorems_ import demorgansLawAndToOr, demorgansLawAndToOrBin
+        from proveit.number import num
+        if len(self.operands) == 2:
+            return demorgansLawAndToOrBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        else:
+            return demorgansLawAndToOr.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+
     def deriveCommonConclusion(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.
@@ -271,31 +320,17 @@ class Or(Operation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._axioms_ import emptyDisjunction
-        from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations  
-        from ._theorems_ import trueEval, falseEval
-        from proveit.logic.boolean._common_ import TRUE, FALSE
-        trueIndex = -1
+        from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations
         if len(self.operands) == 0:
             return emptyDisjunction
-        for i, operand in enumerate(self.operands):
-            if operand != TRUE and operand != FALSE:
-                # The operands are not always true/false, so try the default evaluation method
-                # which will attempt to evaluate each of the operands.
-                return Operation.evaluation(self, assumptions)
-            if operand == TRUE:
-                trueIndex = i
-        if len(self.operands) == 2:
-            # This will automatically return orTT, orTF, orFT, or orFF
-            return Operation.evaluation(self, assumptions)
-        if trueIndex >= 0:
-            # one operand is TRUE so the whole disjunction evaluates to TRUE.
-            from proveit.number import num
-            mVal, nVal = num(trueIndex), num(len(self.operands)-trueIndex-1)
-            return trueEval.specialize({m:mVal, n:nVal, AA:self.operands[:trueIndex], CC:self.operands[trueIndex+1:]}, assumptions=assumptions)
-        else:
-            # no operand is TRUE so the whole disjunction evaluates to FALSE.
-            from proveit.number import num
-            return falseEval.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+        try:
+            self.prove(assumptions)
+        except ProofFailure:
+            try:
+                self.disprove(assumptions)
+            except ProofFailure:
+                raise EvaluationError("Unable to evaluate disjunction.")
+        return Operation.evaluation(self, assumptions)
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
@@ -307,7 +342,33 @@ class Or(Operation):
         else:
             from proveit.number import num
             return orContradiction.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
-            
+
+    def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
+        '''
+        From (A or B or ... or Y or Z), assuming in Booleans and given beginning and end of group, derive and return
+        (A or B ... or (l or ... or M) or ... or X or Z).
+        '''
+        from ._theorems_ import group
+        from proveit.number import num
+        if end <= beg:
+            raise IndexError ("Beginning and end value must be of the form beginning < end.")
+        if end > len(self.operands) -1:
+            raise IndexError("End value must be less than length of expression.")
+        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), AA:self.operands[:beg], BB:self.operands[beg : end], CC: self.operands[end :]}, assumptions=assumptions)
+
+    def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
+        '''
+        From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Booleans and given
+        the beginning and end of the groups to be switched,
+        derive and return (A or ... or H or M or J or ... or L or I or N or ... or Q).
+        '''
+        from ._theorems_ import swap
+        from proveit.number import num
+        if 0 < i < j < len(self.operands) - 1:
+            return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands)-j - 1), AA: self.operands[:i], B: self.operands[i], CC: self.operands[i+1:j], D: self.operands[j], EE: self.operands[j + 1:]}, assumptions=assumptions)
+        else:
+            raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
+
     def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
         From (A or B), derive the conclusion provided that the negated
@@ -318,6 +379,7 @@ class Or(Operation):
 
     def denyViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
         '''
+
         From (A or B), derive the negated conclusion provided that the
         conclusion implies both not(A) and not(B), and the conclusion is a Boolean.
         '''
@@ -351,8 +413,8 @@ class Or(Operation):
         return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
 
     def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
-        from proveit.logic.disjunction._theorems_ import unaryDisjunctionDef
-        if len(operands) != 1:
+        from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
+        if len(self.operands) != 1:
             raise ValueError("Expression must have a single operand in order to invoke unaryDisjunctionDef")
-        operand = operands[0]
-        unaryDisjunctionDef.specialize({A:operand}, assumptions = assumptions)
+        operand = self.operands[0]
+        return unaryDisjunctionDef.specialize({A:operand}, assumptions = assumptions)
