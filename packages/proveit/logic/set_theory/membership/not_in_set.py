@@ -89,7 +89,7 @@ class NotInSet(Operation):
         TRUE or FALSE.  If the domain has a 'membershipObject' method,
         attempt to use the 'equivalence' method from the object it generates.
         '''
-        from proveit.logic import Equals, TRUE, In
+        from proveit.logic import Equals, TRUE, InSet
         evaluation = None
         try: # try an 'equivalence' method (via the nonmembership object)
             equiv = self.nonmembershipObject.equivalence(assumptions)
