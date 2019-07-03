@@ -20,8 +20,21 @@ class RealsNegSet(NumberSet):
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from real.theorems import inRealsNeg_iff_negative
-        return inRealsNeg_iff_negative.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)    
-
+        return inRealsNeg_iff_negative.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)
+    
+class RationalsSet(NumberSet):
+    def __init__(self):
+        NumberSet.__init__(self, 'Rationals',r'\mathbb{Q}', context=__file__)
+    
+class RationalsPosSet(NumberSet):
+    def __init__(self):
+        NumberSet.__init__(self, 'RationalsPos', r'\mathbb{Q}^+', context=__file__)
+    
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
+        from real.theorems import inRationalsPos_iff_positive
+        return inRationalsPos_iff_positive.specialize({a:member},
+                                                      assumptions=assumptions).deriveRightImplication(assumptions)        
+        
 
 try:
     # Import some fundamental axioms and theorems without quantifiers.
