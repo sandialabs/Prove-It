@@ -33,6 +33,9 @@ class Defaults:
                 # Prove each assumption, by assumption, to deduce any side-effects.
                 # Note that while we only need THE assumption to prove itself, 
                 Assumption.makeAssumption(assumption, assumptions) # having the other assumptions around can be useful for deriving side-effects.
+            if not self.automation:
+                # consideration doesn't fully count if automation is off
+                Defaults.consideredAssumptionSets.remove(sorted_assumptions) 
             #print("considered assumptions")
         return assumptions
     
