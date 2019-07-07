@@ -1,7 +1,7 @@
 import hashlib, os
 
 class Defaults:
-    provingAssumptions = set() # used to avoid infinite recursion
+    consideredAssumptionSets = set() # used to avoid infinite recursion and extra work
     
     def __init__(self):
         self.reset()
@@ -9,7 +9,7 @@ class Defaults:
     def reset(self):
         self.assumptions = tuple()
         self.automation = True
-        assert len(Defaults.provingAssumptions)==0, "Unexpected remnant 'provingAssumptions' items (should have been temporary)"
+        Defaults.consideredAssumptionSets.clear()
     
     def checkedAssumptions(self, assumptions):
         '''
@@ -23,14 +23,20 @@ class Defaults:
             return tuple(self.assumptions)
             
         assumptions = tuple(self._checkAssumptions(assumptions))
+        sorted_assumptions = tuple(sorted(assumptions,  key=lambda expr : hash(expr)))
         
-        for assumption in assumptions:
-            # Prove each assumption, by assumption, to deduce any side-effects.
-            if assumption not in Defaults.provingAssumptions: # avoid infinite recursion
-                Defaults.provingAssumptions.add(assumption)
+        # avoid infinite recursion and extra work
+        if sorted_assumptions not in Defaults.consideredAssumptionSets: 
+            Defaults.consideredAssumptionSets.add(sorted_assumptions) 
+            #print("consider assumptions", assumptions)
+            for assumption in assumptions:
+                # Prove each assumption, by assumption, to deduce any side-effects.
                 # Note that while we only need THE assumption to prove itself, 
                 Assumption.makeAssumption(assumption, assumptions) # having the other assumptions around can be useful for deriving side-effects.
-                Defaults.provingAssumptions.remove(assumption) 
+            if not self.automation:
+                # consideration doesn't fully count if automation is off
+                Defaults.consideredAssumptionSets.remove(sorted_assumptions) 
+            #print("considered assumptions")
         return assumptions
     
     def _checkAssumptions(self, assumptions):
