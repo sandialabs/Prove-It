@@ -25,11 +25,11 @@ class OperationOverInstances(Operation):
         instanceExpr under the given conditions.  
         That is, the operation operates over all possibilities of given Variable(s) wherever
         the condition(s) is/are satisfied.  Examples include forall, exists, summation, etc.
-        instanceVar may be singular or plural (iterable).  An OperationOverInstances is
+        instanceVars may be singular or plural (iterable).  An OperationOverInstances is
         effected as an Operation over a conditional Lambda map.
         
         If nestMultiIvars is True do the following:
-        When there are multiple instanceVar, this will generate a nested structure in 
+        When there are multiple instanceVars, this will generate a nested structure in 
         actuality and simply set the style to display these instance variables together.
         In other words, whether instance variables are joined together, like
         "forall_{x, y} P(x, y)" or split in a nested structure like
@@ -49,9 +49,9 @@ class OperationOverInstances(Operation):
         '''
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
-        instanceVar = compositeExpression(instanceVarOrVars)
+        instanceVars = compositeExpression(instanceVarOrVars)
         
-        if len(instanceVar)==0:
+        if len(instanceVars)==0:
             raise ValueError("Expecting at least one instance variable when constructing an OperationOverInstances")
         
         if domain is not None:
@@ -60,35 +60,35 @@ class OperationOverInstances(Operation):
                 raise ValueError("Provide a single domain or multiple domains, not both")
             if not isinstance(domain, Expression):
                 raise TypeError("The domain should be an 'Expression' type")
-            domains = [domain]*len(instanceVar)
+            domains = [domain]*len(instanceVars)
         
         
         if domains is not None:
             # Prepend domain conditions.  Note that although we start with all domain conditions at the beginning,
             # some may later get pushed back as "inner conditions" (see below),
-            if len(domains) != len(instanceVar):
+            if len(domains) != len(instanceVars):
                 raise ValueError("When specifying multiple domains, the number should be the same as the number of instance variables.")         
             for domain in domains:
                 if domain is None:
                     raise ValueError("When specifying multiple domains, none of them can be the None value")
-            conditions = [InSet(instanceVar, domain) for instanceVar, domain in zip(instanceVar, domains)] + list(conditions)
+            conditions = [InSet(instanceVar, domain) for instanceVar, domain in zip(instanceVars, domains)] + list(conditions)
             domain = domains[0]  # domain of the outermost instance variable
         conditions = compositeExpression(conditions)        
                 
         # domain(s) may be implied via the conditions.  If domain(s) were supplied, this should simply reproduce
         # them from the conditions that were prepended.
-        if len(conditions)>=len(instanceVar) and all(isinstance(cond, InSet) and cond.element==ivar for ivar, cond in zip(instanceVar, conditions)):
-            domains = [cond.domain for cond in conditions[:len(instanceVar)]]
+        if len(conditions)>=len(instanceVars) and all(isinstance(cond, InSet) and cond.element==ivar for ivar, cond in zip(instanceVars, conditions)):
+            domains = [cond.domain for cond in conditions[:len(instanceVars)]]
             domain = domains[0] # used if we have a single instance variable or nestMultiIvars is True
-            nondomain_conditions = conditions[len(instanceVar):]
+            nondomain_conditions = conditions[len(instanceVars):]
         else:
             domain = domains = None
             nondomain_conditions = conditions
                 
-        if len(instanceVar) > 1:
+        if len(instanceVars) > 1:
             if nestMultiIvars:
                 # "inner" instance variable are all but the first one.
-                inner_instance_vars = instanceVar[1:]
+                inner_instance_vars = instanceVars[1:]
                 inner_instance_param_vars = set(getParamVar(ivar) for ivar in inner_instance_vars)
 
                 # start with the domain conditions
@@ -114,12 +114,12 @@ class OperationOverInstances(Operation):
                 innerOperand = self._createOperand(inner_instance_vars, instanceExpr, conditions=inner_conditions)
                 instanceExpr = self.__class__._make(['Operation'], styles, [operator, innerOperand])
                 styles['instance_vars'] = 'join_next' # combine instance variables in the style
-                instanceVarOrVars = instanceVar = instanceVar[0]
+                instanceVarOrVars = instanceVar = instanceVars[0]
             else:
-                self.instanceVar = instanceVarOrVars = instanceVar
+                self.instanceVars = instanceVarOrVars = instanceVars
                 self.domains = domains # Domain for each instance variable
         else:
-            instanceVarOrVars = instanceVar = instanceVar[0]
+            instanceVarOrVars = instanceVar = instanceVars[0]
             styles['instance_vars'] = 'no_join' # no combining instance variables in the style
 
         Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVarOrVars, instanceExpr, conditions), styles=styles)
@@ -127,7 +127,7 @@ class OperationOverInstances(Operation):
         self.instanceExpr = instanceExpr
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
         
-        if not hasattr(self, 'instanceVar'):
+        if not hasattr(self, 'instanceVars'):
             self.instanceVar = instanceVar
             '''Outermost instance variable (or iteration of indexed variables) of the OperationOverInstance.'''
             self.domain = domain
