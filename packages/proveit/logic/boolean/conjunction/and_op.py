@@ -186,9 +186,12 @@ class And(Operation):
         From (A and ... and B and ... C) derive any one index even if it is an iteration. 
         '''
         from proveit import ExprList
+        from proveit.logic.boolean.conjunction._theorems_ import someFromAnd
         lVal = ExprList(*self.operands[:idx]).len()
-        print(lVal)
-        return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:2, BB:2, CC:2}, assumptions = assumptions)
+        mVal = ExprList(self.operands[idx]).len()
+        nVal = ExprList(*self.operands[idx:]).len()
+        print(lVal, mVal, nVal)
+        return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:self.operands[:idx], BB:self.operands[idx], CC:self.operands[idx:]}, assumptions = assumptions)
 
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         r'''
