@@ -163,7 +163,7 @@ class And(Operation):
         From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
         '''
-        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
+        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd, someFromAnd
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
@@ -174,9 +174,22 @@ class And(Operation):
                 return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             from proveit.number import num
-            mVal, nVal = num(idx), num(len(self.operands)-idx-1)
-            return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
-    
+            try:
+                mVal, nVal = num(idx), num(len(self.operands)-idx-1)
+                return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
+            except ProofFailure:
+                self.deriveSomeFromAnd(idx, assumptions)
+
+    def deriveSomeFromAnd(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        added by JML 7/9/19
+        From (A and ... and B and ... C) derive any one index even if it is an iteration. 
+        '''
+        from proveit import ExprList
+        lVal = ExprList(*self.operands[:idx]).len()
+        print(lVal)
+        return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:2, BB:2, CC:2}, assumptions = assumptions)
+
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \land B)` derive :math:`A`.
