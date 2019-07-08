@@ -4,8 +4,8 @@ class Prod(OperationOverInstances):
     # operator of the Prod operation.
     _operator_ = Literal(stringFormat='Prod', latexFormat=r'prod', context=__file__)
     
-#    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
-#    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
+#    def __init__(self, summand-instanceExpression, indices-instanceVar, domains):
+#    def __init__(self, instanceVar, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
     def __init__(self, indices, summand, domain, conditions = tuple()):
         r'''
