@@ -342,21 +342,23 @@ class ExprList(Composite, Expression):
                 subbed_exprs.append(subbed_expr)
         return ExprList(*subbed_exprs)
 
-    def len(self):
+    def len(self, assumptions=USE_DEFAULTS):
         '''
         Return the length of an Expression list by treating iterations as a collection of items themselves.
         ExpList(A_1 ... A_m, B, C_1 ... C_n).len() should return m+1+n
         added by JML on 7/8/19
         '''
         from proveit import Iter
-        length = 0
+        from proveit.number import Add, Subtract, one
+        nonIterSum = 0
+        iterContribs = []
         for entry in self.entries:
-            print(entry)
             if isinstance(entry, Iter):
-                length += int(entry.end_index)
+                iterContribs.append(Add(Subtract(entry.end_index, entry.start_index), one).simplification(assumptions=assumptions).rhs)
             else:
-                length += 1
-        return length
+                nonIterSum += 1
+        print(iterContribs,[nonIterSum])
+        return Add(*(iterContribs + [nonIterSum]))
 
 
 class ExprListError(Exception):

@@ -25,11 +25,11 @@ class OperationOverInstances(Operation):
         instanceExpr under the given conditions.  
         That is, the operation operates over all possibilities of given Variable(s) wherever
         the condition(s) is/are satisfied.  Examples include forall, exists, summation, etc.
-        instanceVars may be singular or plural (iterable).  An OperationOverInstances is
+        instanceVar may be singular or plural (iterable).  An OperationOverInstances is
         effected as an Operation over a conditional Lambda map.
         
         If nestMultiIvars is True do the following:
-        When there are multiple instanceVars, this will generate a nested structure in 
+        When there are multiple instanceVar, this will generate a nested structure in 
         actuality and simply set the style to display these instance variables together.
         In other words, whether instance variables are joined together, like
         "forall_{x, y} P(x, y)" or split in a nested structure like
@@ -49,9 +49,9 @@ class OperationOverInstances(Operation):
         '''
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
-        instanceVars = compositeExpression(instanceVarOrVars)
+        instanceVar = compositeExpression(instanceVarOrVars)
         
-        if len(instanceVars)==0:
+        if len(instanceVar)==0:
             raise ValueError("Expecting at least one instance variable when constructing an OperationOverInstances")
         
         if domain is not None:
@@ -60,35 +60,35 @@ class OperationOverInstances(Operation):
                 raise ValueError("Provide a single domain or multiple domains, not both")
             if not isinstance(domain, Expression):
                 raise TypeError("The domain should be an 'Expression' type")
-            domains = [domain]*len(instanceVars)
+            domains = [domain]*len(instanceVar)
         
         
         if domains is not None:
             # Prepend domain conditions.  Note that although we start with all domain conditions at the beginning,
             # some may later get pushed back as "inner conditions" (see below),
-            if len(domains) != len(instanceVars):
+            if len(domains) != len(instanceVar):
                 raise ValueError("When specifying multiple domains, the number should be the same as the number of instance variables.")         
             for domain in domains:
                 if domain is None:
                     raise ValueError("When specifying multiple domains, none of them can be the None value")
-            conditions = [InSet(instanceVar, domain) for instanceVar, domain in zip(instanceVars, domains)] + list(conditions)
+            conditions = [InSet(instanceVar, domain) for instanceVar, domain in zip(instanceVar, domains)] + list(conditions)
             domain = domains[0]  # domain of the outermost instance variable
         conditions = compositeExpression(conditions)        
                 
         # domain(s) may be implied via the conditions.  If domain(s) were supplied, this should simply reproduce
         # them from the conditions that were prepended.
-        if len(conditions)>=len(instanceVars) and all(isinstance(cond, InSet) and cond.element==ivar for ivar, cond in zip(instanceVars, conditions)):
-            domains = [cond.domain for cond in conditions[:len(instanceVars)]]
+        if len(conditions)>=len(instanceVar) and all(isinstance(cond, InSet) and cond.element==ivar for ivar, cond in zip(instanceVar, conditions)):
+            domains = [cond.domain for cond in conditions[:len(instanceVar)]]
             domain = domains[0] # used if we have a single instance variable or nestMultiIvars is True
-            nondomain_conditions = conditions[len(instanceVars):]
+            nondomain_conditions = conditions[len(instanceVar):]
         else:
             domain = domains = None
             nondomain_conditions = conditions
                 
-        if len(instanceVars) > 1:
+        if len(instanceVar) > 1:
             if nestMultiIvars:
                 # "inner" instance variable are all but the first one.
-                inner_instance_vars = instanceVars[1:]
+                inner_instance_vars = instanceVar[1:]
                 inner_instance_param_vars = set(getParamVar(ivar) for ivar in inner_instance_vars)
 
                 # start with the domain conditions
@@ -114,12 +114,12 @@ class OperationOverInstances(Operation):
                 innerOperand = self._createOperand(inner_instance_vars, instanceExpr, conditions=inner_conditions)
                 instanceExpr = self.__class__._make(['Operation'], styles, [operator, innerOperand])
                 styles['instance_vars'] = 'join_next' # combine instance variables in the style
-                instanceVarOrVars = instanceVar = instanceVars[0]
+                instanceVarOrVars = instanceVar = instanceVar[0]
             else:
-                self.instanceVars = instanceVarOrVars = instanceVars
+                self.instanceVar = instanceVarOrVars = instanceVar
                 self.domains = domains # Domain for each instance variable
         else:
-            instanceVarOrVars = instanceVar = instanceVars[0]
+            instanceVarOrVars = instanceVar = instanceVar[0]
             styles['instance_vars'] = 'no_join' # no combining instance variables in the style
 
         Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVarOrVars, instanceExpr, conditions), styles=styles)
@@ -127,7 +127,7 @@ class OperationOverInstances(Operation):
         self.instanceExpr = instanceExpr
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
         
-        if not hasattr(self, 'instanceVars'):
+        if not hasattr(self, 'instanceVar'):
             self.instanceVar = instanceVar
             '''Outermost instance variable (or iteration of indexed variables) of the OperationOverInstance.'''
             self.domain = domain
@@ -139,12 +139,12 @@ class OperationOverInstances(Operation):
         """
         # extract the domain or domains from the condition (regardless of whether the domain/domains was explicitly provided
         # or implicit through the conditions).
-        if len(conditions) >= len(instanceVars):
+        if len(conditions) >= len(instanceVar):
             domains = []
-            for instanceVar, condition in zip(instanceVars, conditions):
+            for instanceVar, condition in zip(instanceVar, conditions):
                 if isinstance(condition, InSet) and condition.element == instanceVar:
                     domains.append(condition.domain)
-            if len(domains) == len(instanceVars):
+            if len(domains) == len(instanceVar):
                 # There is a domain condition for each instance variable.
                 if all(domain==domains[0] for domain in domains):
                     self.domain_or_domains = self.domain = domains[0] # all the same domain
@@ -158,8 +158,8 @@ class OperationOverInstances(Operation):
         return self.domain is not None
                         
     @staticmethod
-    def _createOperand(instanceVars, instanceExpr, conditions):
-        return Lambda(instanceVars, instanceExpr, conditions)
+    def _createOperand(instanceVar, instanceExpr, conditions):
+        return Lambda(instanceVar, instanceExpr, conditions)
     
     @classmethod
     def extractInitArgValue(operationClass, argName, operator, operand):
@@ -225,8 +225,8 @@ class OperationOverInstances(Operation):
         from allInstanceVars() to _allInstanceVars() and adding a separate
         non-generator version of the allInstanceVars() fxn below.
         '''
-        if hasattr(self, 'instanceVars'):
-            for ivar in self.instanceVars:
+        if hasattr(self, 'instanceVar'):
+            for ivar in self.instanceVar:
                 yield ivar
         else:
             yield self.instanceVar
@@ -391,8 +391,8 @@ class OperationOverInstances(Operation):
         iVarGroup = []
         expr = self
         while isinstance(expr, self.__class__):
-            if hasattr(expr, 'instanceVars'):
-                yield expr.instanceVars # grouped together intrinsically -- no nestMultiIvars
+            if hasattr(expr, 'instanceVar'):
+                yield expr.instanceVar # grouped together intrinsically -- no nestMultiIvars
             else:
                 iVarGroup.append(expr.instanceVar)
                 iVarStyle = expr.getStyle('instance_vars')
@@ -481,27 +481,27 @@ class OperationOverInstances(Operation):
             universality = universality.expr
         if not isinstance(universality, Forall):
             raise InstanceSubstitutionException("'universality' must be a forall expression", self, universality)
-        if len(universality.instanceVars) != len(self.instanceVars):
+        if len(universality.instanceVar) != len(self.instanceVar):
             raise InstanceSubstitutionException("'universality' must have the same number of variables as the OperationOverInstances having instances substituted", self, universality)
         if universality.domain != self.domain:
             raise InstanceSubstitutionException("'universality' must have the same domain as the OperationOverInstances having instances substituted", self, universality)
         # map from the forall instance variables to self's instance variables
-        iVarSubstitutions = {forallIvar:selfIvar for forallIvar, selfIvar in zip(universality.instanceVars, self.instanceVars)}
+        iVarSubstitutions = {forallIvar:selfIvar for forallIvar, selfIvar in zip(universality.instanceVar, self.instanceVar)}
         if universality.conditions.substituted(iVarSubstitutions) != self.conditions:
             raise InstanceSubstitutionException("'universality' must have the same conditions as the OperationOverInstances having instances substituted", self, universality)
         if not isinstance(universality.instanceExpr, Equals):
             raise InstanceSubstitutionException("'universality' must be an equivalence within Forall: " + str(universality))
         if universality.instanceExpr.lhs.substituted(iVarSubstitutions) != self.instanceExpr:
             raise InstanceSubstitutionException("lhs of equivalence in 'universality' must match the instance expression of the OperationOverInstances having instances substituted", self, universality)
-        f_op, f_op_sub = Operation(f, self.instanceVars), self.instanceExpr
-        g_op, g_op_sub = Operation(g, self.instanceVars), universality.instanceExpr.rhs.substituted(iVarSubstitutions)
-        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        f_op, f_op_sub = Operation(f, self.instanceVar), self.instanceExpr
+        g_op, g_op_sub = Operation(g, self.instanceVar), universality.instanceExpr.rhs.substituted(iVarSubstitutions)
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVar), self.conditions
         if self.hasDomain():
             return instanceSubstitution.specialize({Upsilon:self.operator, Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub}, 
-                                                    relabelMap={xMulti:universality.instanceVars, yMulti:self.instanceVars, zMulti:self.instanceVars}, assumptions=assumptions).deriveConsequent(assumptions=assumptions)
+                                                    relabelMap={xMulti:universality.instanceVar, yMulti:self.instanceVar, zMulti:self.instanceVar}, assumptions=assumptions).deriveConsequent(assumptions=assumptions)
         else:
             return noDomainInstanceSubstitution.specialize({Upsilon:self.operator, Q_op:Q_op_sub, f_op:f_op_sub, g_op:g_op_sub}, 
-                                                             relabelMap={xMulti:universality.instanceVars, yMulti:self.instanceVars, zMulti:self.instanceVars}, assumptions=assumptions).deriveConsequent(assumptions=assumptions)
+                                                             relabelMap={xMulti:universality.instanceVar, yMulti:self.instanceVar, zMulti:self.instanceVar}, assumptions=assumptions).deriveConsequent(assumptions=assumptions)
 
     def substituteInstances(self, universality, assumptions=USE_DEFAULTS):
         '''
