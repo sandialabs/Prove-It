@@ -282,11 +282,11 @@ class Add(Operation):
     
     def join(self, assumptions=frozenset()):
         '''
-        For joining two summations (could be more sophistocated later).
+        For joining two summations (could be more sophisticated later).
         '''
         from proveit.number import Sum
         if len(self.terms) != 2 or not all(isinstance(term, Sum) for term in self.terms):
-            raise Exception("Sum joinoing currently only implemented for two summation terms.")
+            raise Exception("Sum joining currently only implemented for two summation terms.")
         return self.terms[0].join(self.terms[1], assumptions)
     
     """
