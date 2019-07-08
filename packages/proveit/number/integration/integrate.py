@@ -6,8 +6,8 @@ class Integrate(OperationOverInstances):
     # operator of the Integrate operation.
     _operator_ = Literal(stringFormat='Integrate', latexFormat=r'\int', context=__file__)    
 
-#    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
-#    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
+#    def __init__(self, summand-instanceExpression, indices-instanceVar, domains):
+#    def __init__(self, instanceVar, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
     def __init__(self, index, integrand, domain, conditions = tuple()):
         r'''
@@ -18,13 +18,13 @@ class Integrate(OperationOverInstances):
         domains: conditions (except no longer optional)
         '''
         OperationOverInstances.__init__(self, Integrate._operator_, index, integrand, domain=domain, conditions=conditions)
-        if len(self.instanceVars) != 1:
+        if len(self.instanceVar) != 1:
             raise ValueError('Only one index allowed per integral!')
         elif isinstance(self.domain,Interval):
             raise ValueError('Can\'t integrate over DiscreteContiguousSet!')
         elif self.domain == Reals:
             self.domain = IntervalCC(Neg(infinity),infinity)
-        self.index = self.instanceVars[0]
+        self.index = self.instanceVar[0]
         self.integrand = self.instanceExpr
     
     def _closureTheorem(self, numberSet):
