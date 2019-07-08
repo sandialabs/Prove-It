@@ -173,9 +173,13 @@ class And(Operation):
             elif idx==1:
                 return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
+            from proveit import ExprList
             from proveit.number import num
             try:
                 mVal, nVal = num(idx), num(len(self.operands)-idx-1)
+                print(mVal,nVal)
+                mVal, nVal = ExprList(*self.operands[:idx]).len(), ExprList(*self.operands[idx + 1:]).len()
+                print(mVal, nVal)
                 return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
             except ProofFailure:
                 self.deriveSomeFromAnd(idx, assumptions)
@@ -189,9 +193,10 @@ class And(Operation):
         from proveit.logic.boolean.conjunction._theorems_ import someFromAnd
         lVal = ExprList(*self.operands[:idx]).len()
         mVal = ExprList(self.operands[idx]).len()
-        nVal = ExprList(*self.operands[idx:]).len()
+        nVal = ExprList(*self.operands[idx + 1:]).len()
         print(lVal, mVal, nVal)
-        return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:self.operands[:idx], BB:self.operands[idx], CC:self.operands[idx:]}, assumptions = assumptions)
+        print(self.operands[:idx], self.operands[idx], self.operands[idx + 1:])
+        return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:self.operands[:idx], BB:self.operands[idx], CC:self.operands[idx + 1:]}, assumptions = assumptions)
 
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         r'''

@@ -349,7 +349,7 @@ class ExprList(Composite, Expression):
         added by JML on 7/8/19
         '''
         from proveit import Iter
-        from proveit.number import Add, Subtract, one
+        from proveit.number import Add, Subtract, one, num
         nonIterSum = 0
         iterContribs = []
         for entry in self.entries:
@@ -357,8 +357,8 @@ class ExprList(Composite, Expression):
                 iterContribs.append(Add(Subtract(entry.end_index, entry.start_index), one).simplification(assumptions=assumptions).rhs)
             else:
                 nonIterSum += 1
-        print(iterContribs,[nonIterSum])
-        return Add(*(iterContribs + [nonIterSum]))
+        #print(Add(*(iterContribs + [num(nonIterSum)])))
+        return Add(*(iterContribs + [num(nonIterSum)]))
 
 
 class ExprListError(Exception):
