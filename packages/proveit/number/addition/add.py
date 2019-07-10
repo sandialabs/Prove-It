@@ -45,7 +45,7 @@ class Add(Operation):
             kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
             return maybeFencedLatex(self.operands[0].latex() + '-' +self.operands[1].latex(), **kwargs)
         else:
-            return Operation.latex(self,**kwargs)#Operation.latex(**kwargs)  # normal division
+            return Operation.latex(self,**kwargs) # normal addition
 
     def remakeConstructor(self):
         # Added by JML on 9/10/19
@@ -643,4 +643,5 @@ class Add(Operation):
     """
 
 def Subtract(one, two):
-    return Add(one, two).withStyles(addition='Subtract')
+    from proveit.number import Neg
+    return Add(one, Neg(two)).withStyles(addition='Subtract')

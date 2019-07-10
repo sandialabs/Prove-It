@@ -44,12 +44,14 @@ class Neg(Operation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         from ._theorems_ import negNeg, negZero
-        
+        from proveit.number import zero
+        from proveit.logic import Equals
         if isinstance(self.operand, Neg):
             deduceInComplexes(self.operand.operand, assumptions)
             return negNeg.specialize({a:self.operand.operand}).checked(assumptions)
         elif self.operand == zero:
             return negZero
+        return Equals(self, self)
         raise ValueError('Only trivial simplification is implemented (double negation or negating zero)')
         
     def simplified(self, assumptions=frozenset()):
