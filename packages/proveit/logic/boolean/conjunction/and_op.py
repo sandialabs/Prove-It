@@ -162,6 +162,7 @@ class And(Operation):
         r'''
         From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
+        edited by JML 7/9/19 implement someFromAnd for side effect use
         '''
         from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd, someFromAnd
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
@@ -186,7 +187,7 @@ class And(Operation):
 
     def deriveSomeFromAnd(self, idx, assumptions=USE_DEFAULTS):
         '''
-        added by JML 7/9/19
+        added by JML 7/8/19
         From (A and ... and B and ... C) derive any one index even if it is an iteration. 
         '''
         from proveit import ExprList
@@ -194,8 +195,8 @@ class And(Operation):
         lVal = ExprList(*self.operands[:idx]).len()
         mVal = ExprList(self.operands[idx]).len()
         nVal = ExprList(*self.operands[idx + 1:]).len()
-        print(lVal, mVal, nVal)
-        print(self.operands[:idx], self.operands[idx], self.operands[idx + 1:])
+        print("lVal, mVal, nVal", lVal, mVal, nVal)
+        print("before, idx, after", self.operands[:idx], self.operands[idx], self.operands[idx + 1:])
         return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:self.operands[:idx], BB:self.operands[idx], CC:self.operands[idx + 1:]}, assumptions = assumptions)
 
     def deriveLeft(self, assumptions=USE_DEFAULTS):
