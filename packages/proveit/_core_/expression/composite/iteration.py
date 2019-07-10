@@ -309,7 +309,7 @@ class Iter(Expression):
             try:
                 from proveit.logic.equality._theorems_ import subLeftSideInto, subRightSideInto, equalsReversal
                 from proveit.number.ordering._theorems_ import transitivityLessLess, transitivityLessEqLess, transitivityLessLessEq, transitivityLessEqLessEq
-                from proveit.number.subtraction._theorems_ import subtractFromAdd, addFromSubtract
+                from proveit.number.addition.subtraction._theorems_ import subtractFromAdd, addFromSubtract
                 arg_sorting_assumptions.extend([subLeftSideInto.expr, subRightSideInto.expr, equalsReversal.expr])
                 arg_sorting_assumptions.extend([transitivityLessLess.expr, transitivityLessEqLess.expr, transitivityLessLessEq.expr, transitivityLessEqLessEq.expr])
                 arg_sorting_assumptions.extend([subtractFromAdd.expr, addFromSubtract.expr])
