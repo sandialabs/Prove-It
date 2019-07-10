@@ -20,7 +20,7 @@ class Add(Operation):
         r'''
         Add together any number of operands.
         '''
-        Operation.__init__(self, Add._operator_, operands)
+        Operation.__init__(self, Add._operator_, operands, styles={'addition': 'Add'})
         self.terms = self.operands
         if len(self.terms)==2 and all(term in DIGITS for term in self.terms):
             if self not in Add.addedNumerals:
@@ -31,7 +31,28 @@ class Add(Operation):
                 except:
                     # may fail before the relevent _commons_ and _theorems_ have been generated
                     pass # and that's okay
-    
+
+    def styleOptions(self):
+        # Added by JML on 9/10/19
+        options = StyleOptions(self)
+        options.add('addition', "'Subtract': uses '-'; 'Add': uses + ")
+        return options
+
+    def latex(self, **kwargs):
+        # Added by JML on 9/10/19
+        if self.getStyle('addition') == 'Subtract':
+            # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
+            kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+            return maybeFencedLatex(self.operands[0].latex() + '-' +self.operands[1].latex(), **kwargs)
+        else:
+            return Operation.latex(self,**kwargs)#Operation.latex(**kwargs)  # normal division
+
+    def remakeConstructor(self):
+        # Added by JML on 9/10/19
+        if self.getStyle('addition') == 'Subtract':
+            return 'Subtract'  # use a different constructor if using the subtraction style
+        return Operation.remakeConstructor(self)
+
     def _closureTheorem(self, numberSet):
         import theorems
         if numberSet == Reals:
@@ -67,7 +88,7 @@ class Add(Operation):
         '''
         From (a + b) = rhs, derive and return rhs - b = a.
         '''
-        from proveit.number.subtraction._theorems_ import subtractFromAdd
+        from proveit.number.addition.subtraction._theorems_ import subtractFromAdd
         if len(self.terms) != 2:
             raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
         deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
@@ -131,7 +152,7 @@ class Add(Operation):
         may be necessary to deduce operands being in the set of Complexes.
         '''
         from proveit.number import Neg
-        from proveit.number.subtraction.theorems import addNegAsSubtract
+        from proveit.number.addition.subtraction.theorems import addNegAsSubtract
         if termIdx is None:
             for k, term in enumerate(self.terms):
                 if isinstance(term, Neg):
@@ -342,47 +363,13 @@ class Add(Operation):
     """
 
 
-class Subtract(Operation):
-    # operator of the Sub operation.
-    _operator_ = Literal(stringFormat='-', context=__file__)
+#class Subtract(Operation):
 
-    # Map operands to sets of KnownTruth equalities that involve
-    # the operand on the left hand side.
-    knownEqualities = dict()
-
-    def __init__(self, operandA, operandB):
-        r'''
-        Sub one number from another
-        '''
-        from proveit.number import Add, isLiteralInt, num
-        Operation.__init__(self, Subtract._operator_, (operandA, operandB), styles={'subtraction':'Subtract'})
-        if all(isLiteralInt(operand) for operand in self.operands):
-            # With literal integer operands, we can import useful theorems for evaluation.
-            # From c - b, make the a+b which equals c.  This will import the theorems we need.
-            Add(num(self.operands[0].asInt() - self.operands[1].asInt()), self.operands[1])
-
-    def styleOptions(self):
-        options = StyleOptions(self)
-        options.add('subtraction', "'Subtract': uses '-'; 'add': + (-)")
-        return options
-
-    def latex(self, **kwargs):
-        if self.getStyle('subtraction') == 'add':
-            # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
-            kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-            return maybeFencedLatex(r'\minus{' +self.operand.latex() + '}',**kwargs)
-        else:
-            return Operation.latex(**kwargs)  # normal division
-
-    def remakeConstructor(self):
-        if self.getStyle('subtraction') == 'add':
-            return 'Add'  # use a different constructor if using the fraction style
-        return Operation.remakeConstructor(self)
-
+"""
     def _closureTheorem(self, numberSet):
         from . import theorems
         if numberSet == Reals:
-            return theorems.subtractRealClosure
+            return subtraction._theorems_.subtractRealClosure
         elif numberSet == Complexes:
             return theorems.subtractComplexClosure
         elif numberSet == Integers:
@@ -416,7 +403,7 @@ class Subtract(Operation):
         '''
         From (a - b) = rhs, derive and return rhs + b = a.
         '''
-        from proveit.number.subtraction._theorems_ import addFromSubtract
+        from proveit.number.addition.subtraction._theorems_ import addFromSubtract
         deduction = addFromSubtract.specialize({a: self.operands[0], b: self.operands[1], c: rhs},
                                                assumptions=assumptions)
         return deduction
@@ -653,3 +640,7 @@ class Subtract(Operation):
         if isinstance(eq.eqExpr.rhs, Neg) and (isinstance(eq.eqExpr.rhs.operand, Neg) or eq.eqExpr.rhs.operand == zero):
             eq.update(eq.eqExpr.rhs.simplification(assumptions))  # take care of double negation or zero negation
         return eq.eqExpr
+    """
+
+def Subtract(one, two):
+    return Add(one, two).withStyles(addition='Subtract')
