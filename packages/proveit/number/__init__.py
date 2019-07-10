@@ -5,8 +5,7 @@ from .sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, In
 from .sets import e, pi, i, infinity
 from .numeral import num, Numeral, DecimalSequence, DIGITS, isLiteralInt
 from .numeral import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
-from .addition import Add
-from .subtraction import Subtract
+from .addition import Add, Subtract
 from .negation import Neg
 from .multiplication import Mult
 from .division import Div, Frac

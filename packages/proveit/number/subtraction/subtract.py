@@ -1,3 +1,4 @@
+"""
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic import NotEquals
 from proveit.number.sets import Naturals, NaturalsPos, Integers, Reals, Complexes
@@ -8,9 +9,9 @@ class Subtract(Operation):
     _operator_ = Literal(stringFormat='-', context=__file__)
 
     # Map operands to sets of KnownTruth equalities that involve
-    # the operand on the left hand side. 
+    # the operand on the left hand side.
     knownEqualities = dict()
-       
+
     def __init__(self, operandA, operandB):
         r'''
         Sub one number from another
@@ -21,7 +22,7 @@ class Subtract(Operation):
             # With literal integer operands, we can import useful theorems for evaluation.
             # From c - b, make the a+b which equals c.  This will import the theorems we need.
             Add(num(self.operands[0].asInt() - self.operands[1].asInt()), self.operands[1])
-      
+
     def _closureTheorem(self, numberSet):
         from . import theorems
         if numberSet == Reals:
@@ -34,14 +35,14 @@ class Subtract(Operation):
             return theorems.subtractClosureNats
         elif numberSet == NaturalsPos:
             return theorems.subtractClosureNatsPos
-    
+
     def _notEqZeroTheorem(self):
         from .theorems import diffNotEqZero
         # Can derive (a - b) != 0 given a != b.
         # Derive a != b from b != a in case we have proven b != a instead of a != b.
         NotEquals(self.operands[1], self.operands[0]).deriveReversed()
         return diffNotEqZero
-    
+
     def equalitySideEffects(self, knownTruth):
         '''
         Record the knownTruth in Subtract.knownEqualities, associated for
@@ -62,12 +63,12 @@ class Subtract(Operation):
         from proveit.number.subtraction._theorems_ import addFromSubtract
         deduction = addFromSubtract.specialize({a:self.operands[0], b:self.operands[1], c:rhs}, assumptions=assumptions)
         return deduction
-        
+
     def factor(self, theFactor, pull='left', groupFactor=False, groupRemainder=None, assumptions=frozenset()):
         '''
         Pull out a common factor from a subtraction, pulling it either to the "left" or "right".
-        If there are multiple occurrences in any term, the first occurrence is used.  
-        If groupFactor is True and theFactor is a product, it will be grouped together as a 
+        If there are multiple occurrences in any term, the first occurrence is used.
+        If groupFactor is True and theFactor is a product, it will be grouped together as a
         sub-product.  groupRemainder is not relevant kept for compatibility with other factor
         methods.  Returns the equality that equates self to this new version.
         Give any assumptions necessary to prove that the operands are in Complexes so that
@@ -90,7 +91,7 @@ class Subtract(Operation):
             xSub = factorEqLeft.rhs.operands[num:]
             ySub = factorEqRight.rhs.operands[num:]
             zEtcSub = []
-        elif pull == 'right':            
+        elif pull == 'right':
             wEtcSub = []
             xSub = factorEqLeft.rhs.operands[:-num]
             ySub = factorEqRight.rhs.operands[:-num]
@@ -103,9 +104,9 @@ class Subtract(Operation):
             if pull=='left':
                 eq.update(eq.eqExpr.rhs.group(endIdx=num, assumptions=assumptions))
             elif pull=='right':
-                eq.update(eq.eqExpr.rhs.group(startIdx=-num, assumptions=assumptions))                
+                eq.update(eq.eqExpr.rhs.group(startIdx=-num, assumptions=assumptions))
         return eq.eqExpr.checked(assumptions)
-    
+
     def convertToAdd(self, assumptions=frozenset()):
         '''
         Given (x - y) deduce and return (x - y) = (x + (-y)).
@@ -119,7 +120,7 @@ class Subtract(Operation):
         '''
         Given something of the form (a + b + ...) - (x + y + ...), deduce and return
         (a + b + ...) - (x + y + ...) = a + b + ... + (-x) + (-y) + ....
-        Assumptions may be needed to deduce that the operands are in Complexes.        
+        Assumptions may be needed to deduce that the operands are in Complexes.
         '''
         # first deduce: (a + b + ...) - (x + y + ...)  = (a + b + ...) + (-x) + (-y) + ...
         from proveit.number import Add
@@ -141,7 +142,7 @@ class Subtract(Operation):
                 eqn.update(negTermSimplification.substitution(Add(*(expr.terms[:k+1] + [dummyVar] + expr.terms[k+2:])), dummyVar)).checked(assumptions)
                 expr = eqn.eqExpr.rhs
             except:
-                pass # skip over 
+                pass # skip over
         # ungroup the first part if it is a sum: (a + b + ...) + (-x) + (-y) + ... = a + b + ... + (-x) + (-y) + ...
         if isinstance(self.operands[0], Add):
             eqn.update(expr.applyTransitivity(expr.ungroup(0)).checked(assumptions))
@@ -151,11 +152,11 @@ class Subtract(Operation):
         '''
         Attempt to cancel any term of a subtraction and return the resulting equivalence.
         The first term on the left that is the same as on the right will be canceled.
-        Assumptions may be needed to deduce that the operands are in Complexes.        
+        Assumptions may be needed to deduce that the operands are in Complexes.
         '''
         from .theorems import subtractCancelElimSums, subtractCancelElimLeftSum, subtractCancelElimRightSum
         from .theorems import subtractCancelTwoSums, subtractCancelLeftSum, subtractCancelRightSum
-        from .theorems import subtractCancelLeftSumSingleRight, subtractCancelLeftSumSingleLeft, subtractCancelRightSumSingleRight, subtractCancelRightSumSingleLeft 
+        from .theorems import subtractCancelLeftSumSingleRight, subtractCancelLeftSumSingleLeft, subtractCancelRightSumSingleRight, subtractCancelRightSumSingleLeft
         from .theorems import subtractCancelComplete
         from proveit.number import Add, Neg
         dummy = self.safeDummyVar()
@@ -174,7 +175,7 @@ class Subtract(Operation):
         if isinstance(expr.operands[0], Add):
             if isinstance(expr.operands[1], Add):
                 deduceInComplexes(expr.operands[0].operands, assumptions=assumptions)
-                deduceInComplexes(expr.operands[1].operands, assumptions=assumptions)                
+                deduceInComplexes(expr.operands[1].operands, assumptions=assumptions)
                 foundOne = False
                 for idx1 in range(len(expr.operands[0].operands)):
                     try:
@@ -234,36 +235,36 @@ class Subtract(Operation):
                     eq.update(subtractCancelTwoSums.specialize({vEtc:vSub, w:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions))
             else:
                 deduceInComplexes(expr.operands[0].operands, assumptions=assumptions)
-                deduceInComplexes(expr.operands[1], assumptions=assumptions)                
+                deduceInComplexes(expr.operands[1], assumptions=assumptions)
                 ySub = expr.operands[1]
                 try:
                     idx1 = expr.operands[0].operands.index(ySub)
                 except:
-                    raise Exception(str(ySub) + " not found in " + str(expr.operands[0]) + " for a subtraction cancel")                    
+                    raise Exception(str(ySub) + " not found in " + str(expr.operands[0]) + " for a subtraction cancel")
                 if len(expr.operands[0].operands) == 2:
                     # only one term remains
                     if idx1 == 0:
                         eq.update(subtractCancelLeftSumSingleRight.specialize({y:ySub, x:expr.operands[0].operands[1]})).checked(assumptions)
                     else:
-                        eq.update(subtractCancelLeftSumSingleLeft.specialize({y:ySub, x:expr.operands[0].operands[0]})).checked(assumptions)                        
+                        eq.update(subtractCancelLeftSumSingleLeft.specialize({y:ySub, x:expr.operands[0].operands[0]})).checked(assumptions)
                 else:
                     xSub = expr.operands[0].operands[:idx1]
                     zSub = expr.operands[0].operands[idx1+1:]
                     eq.update(subtractCancelLeftSum.specialize({xEtc:xSub, y:ySub, zEtc:zSub}).checked(assumptions))
         else:
             deduceInComplexes(expr.operands[0], assumptions=assumptions)
-            deduceInComplexes(expr.operands[1].operands, assumptions=assumptions)                
+            deduceInComplexes(expr.operands[1].operands, assumptions=assumptions)
             ySub = expr.operands[0]
             try:
                 idx2 = expr.operands[1].operands.index(ySub)
             except:
-                raise Exception(str(ySub) + " not found in " + str(expr.operands[1]) + " for a subtraction cancel")                    
+                raise Exception(str(ySub) + " not found in " + str(expr.operands[1]) + " for a subtraction cancel")
             if len(expr.operands[1].operands) == 2:
                 # only one term remains
                 if idx2 == 0:
                     eq.update(subtractCancelRightSumSingleRight.specialize({y:ySub, x:expr.operands[1].operands[1]})).checked(assumptions)
                 else:
-                    eq.update(subtractCancelRightSumSingleLeft.specialize({y:ySub, x:expr.operands[1].operands[0]})).checked(assumptions)                        
+                    eq.update(subtractCancelRightSumSingleLeft.specialize({y:ySub, x:expr.operands[1].operands[0]})).checked(assumptions)
             else:
                 xSub = expr.operands[1].operands[:idx2]
                 zSub = expr.operands[1].operands[idx2+1:]
@@ -271,4 +272,4 @@ class Subtract(Operation):
         if isinstance(eq.eqExpr.rhs, Neg) and (isinstance(eq.eqExpr.rhs.operand, Neg) or eq.eqExpr.rhs.operand == zero):
             eq.update(eq.eqExpr.rhs.simplification(assumptions)) # take care of double negation or zero negation
         return eq.eqExpr
-
+"""
