@@ -23,7 +23,7 @@ class Div(Operation):
             kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
             return maybeFencedLatex(r'\frac{'+self.numerator.latex()+'}{'+self.denominator.latex()+'}', **kwargs)
         else:
-            return Operation.latex(**kwargs) # normal division
+            return Operation.latex(self,**kwargs) # normal division
     
     def remakeConstructor(self):
         if self.getStyle('division') == 'fraction':
