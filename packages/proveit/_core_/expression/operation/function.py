@@ -6,6 +6,7 @@ class Function(Operation):
     f(x), Q(x, y), etc.
     '''
     
-    def __init__(self, operator, operand_or_operands, styles=dict(), requirements=tuple()):
+    def __init__(self, operator, operand_or_operands, styles=None, requirements=tuple()):
+        if styles is None: styles = dict()
         styles['operation']='function'
         Operation.__init__(self, operator, operand_or_operands, styles=styles, requirements=requirements)

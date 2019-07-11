@@ -31,7 +31,7 @@ class Lambda(Expression):
     defines the mapping (x, y) -> x / y as long as x and y are Reals
     and y is not zero.
     '''
-    def __init__(self, parameter_or_parameters, body, conditions=tuple(), styles=dict(), requirements=tuple()):
+    def __init__(self, parameter_or_parameters, body, conditions=tuple(), styles=None, requirements=tuple()):
         '''
         Initialize a Lambda function expression given parameter(s) and a body.
         Each parameter must be a Variable.
@@ -43,6 +43,7 @@ class Lambda(Expression):
         more expressions may be provided.
         '''
         from proveit._core_.expression.composite import compositeExpression, singleOrCompositeExpression, Iter
+        if styles is None: styles = dict()
         self.parameters = compositeExpression(parameter_or_parameters)
         parameterVars = [getParamVar(parameter) for parameter in self.parameters]
         if len(self.parameters) == 1:
@@ -82,11 +83,11 @@ class Lambda(Expression):
             generic_parameters = self.parameters._genericExpr.relabeled(relabel_map)
             generic_body = self.body._genericExpr.relabeled(relabel_map)
             generic_conditions = self.conditions._genericExpr.relabeled(relabel_map)
-            self._genericExpr = Lambda(generic_parameters, generic_body, generic_conditions, styles=styles, requirements=requirements)
+            self._genericExpr = Lambda(generic_parameters, generic_body, generic_conditions, styles=dict(styles), requirements=requirements)
             defaults.automation = prev_automation # restore to previous value
         
         Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles, requirements=requirements)
-        
+    
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
         if len(coreInfo) != 1 or coreInfo[0] != 'Lambda':

@@ -48,7 +48,7 @@ class Expression(metaclass=ExprType):
         Expression.contexts.clear()
         assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
                         
-    def __init__(self, coreInfo, subExpressions=tuple(), styles=dict(), requirements=tuple()):
+    def __init__(self, coreInfo, subExpressions=tuple(), styles=None, requirements=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
         level) which should be a list (or tuple) of strings, and a list (or tuple) of subExpressions.
@@ -58,6 +58,7 @@ class Expression(metaclass=ExprType):
         The "requirements" are expressions that must be proven to be true in order for the Expression
         to make sense.
         '''
+        if styles is None: styles = dict()
         for coreInfoElem in coreInfo:
             if not isinstance(coreInfoElem, str):
                 raise TypeError('Expecting coreInfo elements to be of string type')
@@ -79,7 +80,7 @@ class Expression(metaclass=ExprType):
         elif sub_expression_styles != generic_sub_expression_styles:
             # The 'generic' sub-expressions are different than the sub-expressions,
             # so that propagates to this Expression's generic version.
-            self._genericExpr = self.__class__._make(coreInfo, styles, generic_sub_expressions)
+            self._genericExpr = self.__class__._make(coreInfo, dict(styles), generic_sub_expressions)
             self._meaningData = self._genericExpr._meaningData
         else:
             # This is this 'generic' version:

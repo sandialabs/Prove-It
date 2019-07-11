@@ -12,7 +12,7 @@ class Sum(OperationOverInstances):
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
-    def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple(), styles=dict()):
+    def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple()):
         r'''
         Sum summand over indices over domains.
         Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):

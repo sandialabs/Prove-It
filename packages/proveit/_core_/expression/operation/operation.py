@@ -19,7 +19,7 @@ class Operation(Expression):
         '''
         Operation.operationClassOfOperator.clear()
         
-    def __init__(self, operator_or_operators, operand_or_operands, styles=dict(), requirements=tuple()):
+    def __init__(self, operator_or_operators, operand_or_operands, styles=None, requirements=tuple()):
         '''
         Create an operation with the given operator(s) and operand(s).
         The operator(s) must be Label(s) (a Variable or a Literal).
@@ -31,6 +31,7 @@ class Operation(Expression):
         '''
         from proveit._core_.expression.composite import Composite, compositeExpression, singleOrCompositeExpression, Iter, Indexed
         from proveit._core_.expression.label.label import Label
+        if styles is None: styles = dict()
         if hasattr(self.__class__, '_operator_') and operator_or_operators==self.__class__._operator_:
             operator = operator_or_operators
             if Expression.contexts[operator._style_id] != operator.context:
