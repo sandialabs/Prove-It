@@ -71,13 +71,15 @@ class Expression(metaclass=ExprType):
         # The 'generic' version of this expression, in which deterministic 'dummy' variables
         # are used as Lambda parameters, determines the 'meaning' of the expression.
         generic_sub_expressions = tuple(sub_expr._genericExpr for sub_expr in subExpressions)
+        generic_sub_expression_styles = tuple(generic_sub_expr._styleData for generic_sub_expr in generic_sub_expressions)
+        sub_expression_styles = tuple(sub_expr._styleData for sub_expr in subExpressions)
         if hasattr(self, '_genericExpr'):
             # The _genericExpr attribute was already set -- must be a Lambda Expression.
             self._meaningData = self._genericExpr._meaningData            
-        elif self._subExpressions != generic_sub_expressions:
+        elif sub_expression_styles != generic_sub_expression_styles:
             # The 'generic' sub-expressions are different than the sub-expressions,
             # so that propagates to this Expression's generic version.
-            self._genericExpr = self.__class__._make(coreInfo, styles, subExpressions)
+            self._genericExpr = self.__class__._make(coreInfo, styles, generic_sub_expressions)
             self._meaningData = self._genericExpr._meaningData
         else:
             # This is this 'generic' version:

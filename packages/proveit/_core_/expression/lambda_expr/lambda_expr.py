@@ -70,11 +70,20 @@ class Lambda(Expression):
         
         # Create a "generic" version (if not already) of the Lambda expression since the 
         # choice of parameter labeling is irrelevant.
-        used_vars = self.usedVars()
-        generic_params = tuple(safeDummyVars(len(self.parameterVars), *(used_vars-self.parameterVarSet)))
+        generic_body_vars = self.body._genericExpr.usedVars()
+        generic_condition_vars = self.conditions._genericExpr.usedVars()
+        used_generic_vars = generic_body_vars.union(generic_condition_vars)
+        generic_params = tuple(safeDummyVars(len(self.parameterVars), *(used_generic_vars-self.parameterVarSet)))
         if generic_params != self.parameterVars:
             relabel_map = {param:generic_param for param, generic_param in zip(self.parameterVars, generic_params)}
-            self._generic_expr = self.relabeled(relabel_map)
+            # temporarily disable automation during the relabeling process
+            prev_automation = defaults.automation
+            defaults.automation = False
+            generic_parameters = self.parameters._genericExpr.relabeled(relabel_map)
+            generic_body = self.body._genericExpr.relabeled(relabel_map)
+            generic_conditions = self.conditions._genericExpr.relabeled(relabel_map)
+            self._genericExpr = Lambda(generic_parameters, generic_body, generic_conditions, styles=styles, requirements=requirements)
+            defaults.automation = prev_automation # restore to previous value
         
         Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles, requirements=requirements)
         
