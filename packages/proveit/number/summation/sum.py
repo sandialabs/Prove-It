@@ -22,7 +22,7 @@ class Sum(OperationOverInstances):
         '''
         # nestMultiIvars=True will cause it to treat multiple instance variables as nested Sum operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True, styles=styles)
+        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True)
         if hasattr(self, 'instanceVar'):
             self.index = self.instanceVar
         if hasattr(self, 'instanceVars'):
