@@ -150,16 +150,14 @@ class Expression(metaclass=ExprType):
     
     def _class_path(self):
         ExprClass = self.__class__
-        if not hasattr(ExprClass, '__pvitpath'):
-            class_module = sys.modules[ExprClass.__module__]
-            if hasattr(class_module, '__file__'):
-                context = Context(class_module.__file__)
-            else:
-                context = Context() # use the current directory if using the main module
-            # get the full class path relative to the root context where the class is defined
-            class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
-            ExprClass.__pvitpath = class_path
-        return ExprClass.__pvitpath
+        class_module = sys.modules[ExprClass.__module__]
+        if hasattr(class_module, '__file__'):
+            context = Context(class_module.__file__)
+        else:
+            context = Context() # use the current directory if using the main module
+        # get the full class path relative to the root context where the class is defined
+        class_path = context.name + '.' + ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
+        return class_path
 
     @staticmethod
     def _extractExprClass(unique_rep):
@@ -585,20 +583,34 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.label.var import safeDummyVars
         return safeDummyVars(n, self)
             
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation = True):
         '''
         If possible, return a KnownTruth of this expression equal to its
         irreducible value.  Override for other appropriate functionality.
         '''
-        from proveit.logic import defaultSimplification
+        from proveit.logic import defaultSimplification, Equals
+        from proveit import ProofFailure
+        if not automation:
+            # Without automation, we'll just grab an arbitrary evaluation that we already know
+            evaluations = Equals.evaluations.get(self, set())
+            if len(evaluations) == 0:
+                raise ProofFailure(self, assumptions, "No existing evaluation; cannot perform 'evaluation' without automation")
+            return list(evaluations)[0]
         return defaultSimplification(self.innerExpr(), inPlace=False, mustEvaluate=True, assumptions=assumptions)
 
-    def simplification(self, assumptions=USE_DEFAULTS):
+    def simplification(self, assumptions=USE_DEFAULTS, automation = True):
         '''
         If possible, return a KnownTruth of this expression equal to its
         irreducible value.  Override for other appropriate functionality.
         '''
-        from proveit.logic import defaultSimplification
+        from proveit.logic import defaultSimplification, Equals
+        from proveit import ProofFailure
+        if not automation:
+            # Without automation, we'll just grab an arbitrary simplification that we already know
+            simplifications = Equals.simplifications.get(self, set())
+            if len(simplifications) == 0:
+                raise ProofFailure(self, assumptions, "No existing simplification; cannot perform 'simplification' without automation")
+            return list(simplifications)[0]
         return defaultSimplification(self.innerExpr(), inPlace=False, assumptions=assumptions)        
     
     def orderOfAppearance(self, subExpressions):

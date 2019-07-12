@@ -181,11 +181,12 @@ class ExpSetMembership(Membership):
         exponent_eval = domain.exponent.evaluation(assumptions=assumptions)
         exponent = exponent_eval.rhs
         base = domain.base
+        #print(exponent, base, exponent.asInt(),element, domain, len(element))
         if isLiteralInt(exponent):
+            if exponent == zero:
+                return exp_set_0.specialize({x:element, S:base}, assumptions=assumptions)
             if len(element) != exponent.asInt():
                 raise ProofFailure(elem_in_set, assumptions, "Element not a member of the exponentiated set; incorrect list length")
-            if exponent == zero:
-                elem_in_set = exp_set_0.specialize({x:element, S:base}, assumptions=assumptions)
             elif exponent in DIGITS:
                 # thm = forall_S forall_{a, b... in S} (a, b, ...) in S^n
                 thm = locals()['exp_set_%d'%exponent.asInt()]

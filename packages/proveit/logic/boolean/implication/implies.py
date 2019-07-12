@@ -17,7 +17,7 @@ class Implies(TransitiveRelation):
         TransitiveRelation.__init__(self, Implies._operator_, antecedent, consequent)
         self.antecedent = antecedent
         self.consequent = consequent
-        
+
     @staticmethod
     def WeakRelationClass():
         '''
@@ -45,6 +45,15 @@ class Implies(TransitiveRelation):
         yield self.deriveConsequent # B given A=>B and A
         if self.consequent == FALSE:
             yield self.deriveViaContradiction # Not(A) given A=>FALSE or A given Not(A)=>FALSE
+
+    def negationSideEffects(self, knownTruth):
+        '''
+        Side-effect derivations to attempt automatically when an implication is negated.
+        implemented by JML on 6/17/19
+        '''
+        yield self.deduceNegatedLeftImpl # Not(A <=> B) given Not(B => A)
+        yield self.deduceNegatedRightImpl # Not(A <=> B) given Not(A => B)
+        yield self.deduceNegatedReflex # B => A given Not(A => B)
             
     def conclude(self, assumptions):
         '''
@@ -56,10 +65,14 @@ class Implies(TransitiveRelation):
         from ._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, falseAntecedentImplication
         from proveit.logic import TRUE, FALSE
         if self.antecedent == self.consequent:
-            return self.concludeSelfImplication()    
+            return self.concludeSelfImplication()
+
         if self in {trueImpliesTrue, falseImpliesTrue, falseImpliesFalse}:
             # should be proven via one of the imported theorems as a simple special case
-            return self.prove()
+            try:
+                return self.evaluation(assumptions)
+            except:
+                return self.prove()
         try:
             # Try evaluating the consequent.
             evaluation = self.consequent.evaluation(assumptions)
@@ -76,14 +89,45 @@ class Implies(TransitiveRelation):
         except:
             pass
         try:
+            # Try evaluating the antecedent.
+            evaluation = self.antecedent.evaluation(assumptions)
+            if evaluation.rhs == FALSE:
+                # Derive A => B given Not(A); it doesn't matter what B is if A is FALSE
+                return falseAntecedentImplication.specialize({A: self.antecedent, B: self.consequent}, assumptions=assumptions)
+        except:
+            pass
+        try:
             # Use a breadth-first search approach to find the shortest
             # path to get from one end-point to the other.
             return TransitiveRelation.conclude(self, assumptions)            
         except:
             pass
         # try to prove the implication via hypothetical reasoning.
-        return self.consequent.prove(assumptions + (self.antecedent,)).asImplication(self.antecedent)
-    
+        return self.consequent.prove(tuple(assumptions) + (self.antecedent,)).asImplication(self.antecedent)
+
+    def concludeNegation(self, assumptions=USE_DEFAULTS):
+        '''
+        Try to conclude True when Not(TRUE => FALSE) is called.
+        implemented by JML on 6/18/19
+        '''
+        from proveit.logic.boolean._common_ import FALSE, TRUE
+        try:
+            if self.antecedent == TRUE and self.consequent == FALSE:
+                from ._theorems_ import trueImpliesFalseNegated
+        except:
+            pass
+
+    def concludeViaDoubleNegation(self, assumptions=USE_DEFAULTS):
+        '''
+        From A => B return A => Not(Not(B)).
+        implemented by JML on 6/18/19
+        '''
+        from ._theorems_ import doubleNegateConsequent
+        if isinstance(self.consequent.operand, Not):
+            return doubleNegateConsequent.specialize({A: self.antecedent, B: self.consequent.operand.operand}, assumptions=assumptions)
+        return "Not of the form 'A => B'"
+
+
     def deriveConsequent(self, assumptions=USE_DEFAULTS):
         r'''
         From A => B derive and return B assuming A.
@@ -97,7 +141,28 @@ class Implies(TransitiveRelation):
         '''
         from proveit.logic import Iff
         return Iff(self.A, self.B).concludeViaDefinition()
-        
+
+    def deduceNegatedRightImpl(self, assumptions=USE_DEFAULTS):
+        r'''
+        From Not(A => B) derive and return Not(A <=> B).
+        implemented by JML on 6/18/19
+        '''
+        from ._theorems_ import notIffViaNotRightImpl
+        return notIffViaNotRightImpl.specialize({A:self.antecedent, B:self.consequent},assumptions=assumptions)
+
+    def deduceNegatedLeftImpl(self, assumptions=USE_DEFAULTS):
+        r'''
+        From Not(B => A) derive and return Not(A <=> B).
+        implemented by JML on 6/18/19
+        '''
+        from ._theorems_ import notIffViaNotLeftImpl
+        return notIffViaNotLeftImpl.specialize({B: self.antecedent, A: self.consequent}, assumptions=assumptions)
+
+    def deduceNegatedReflex(self, assumptions=USE_DEFAULTS):
+        #implemented by JML on 6/18/19
+        from ._theorems_ import negatedReflex
+        return negatedReflex.specialize({A:self.antecedent, B:self.consequent},assumptions=assumptions)
+
     def denyAntecedent(self, assumptions=USE_DEFAULTS):
         '''
         From A => B, derive and return Not(A) assuming Not(B).
@@ -124,15 +189,17 @@ class Implies(TransitiveRelation):
         Or from (A => FALSE), derive and return Not(A) assuming A in Booleans`.
         '''
         from proveit.logic import FALSE
-        from ._theorems_ import affirmViaContradiction, denyViaContradiction
+        from ._theorems_ import affirmViaContradiction, denyViaContradiction, notTrueViaContradiction
         if self.consequent != FALSE:
             raise ValueError('deriveViaContridiction method is only applicable if FALSE is implicated, not for ' + str(self))
         if isinstance(self.antecedent, Not):
             stmt = self.antecedent.operand
             return affirmViaContradiction.specialize({A:stmt}, assumptions=assumptions)
         else:
-            return denyViaContradiction.specialize({A:self.antecedent}, assumptions=assumptions)
-    
+            try:
+                return denyViaContradiction.specialize({A:self.antecedent}, assumptions=assumptions)
+            except ProofFailure:
+                return notTrueViaContradiction.specialize({A:self.antecedent},assumptions=assumptions)
     def concludeSelfImplication(self):
         from ._theorems_ import selfImplication
         if self.antecedent != self.consequent:
