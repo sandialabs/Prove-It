@@ -119,7 +119,7 @@ class Proof:
             # Raise an UnusableProof exception when an attempt is made 
             # to use an "unusable" theorem directly or indirectly.
             raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
-        if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
+        if provenTruth.proof()==self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             # May derive any side-effects that are obvious consequences arising from this truth
             # (if it has not already been processed):
             provenTruth.deriveSideEffects(defaults.assumptions)
