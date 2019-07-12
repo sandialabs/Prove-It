@@ -320,9 +320,10 @@ class Proof:
         return out_str
 
 class Assumption(Proof):
-    allAssumptions = dict() # map expression and the to assumption object
+    allAssumptions = dict() # map expression and to the assumption object
      
     def __init__(self, expr, assumptions=None):
+        assert expr not in Assumption.allAssumptions, "Do not create an Assumption object directly; use Assumption.makeAssumption instead."
         assumptions = defaults.checkedAssumptions(assumptions)
         if expr not in assumptions:
             # an Assumption proof must assume itself; that's what it does.
@@ -334,7 +335,7 @@ class Assumption(Proof):
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
-        Assumption.allAssumptions[(expr, assumptions)] = self
+        Assumption.allAssumptions[expr] = self
     
     @staticmethod
     def makeAssumption(expr, assumptions):
@@ -343,9 +344,8 @@ class Assumption(Proof):
         already exist.  assumptions must already be 'checked' and in
         tuple form.
         '''
-        key = (expr, assumptions)
-        if key in Assumption.allAssumptions:
-            preexisting = Assumption.allAssumptions[key]
+        if expr in Assumption.allAssumptions:
+            preexisting = Assumption.allAssumptions[expr]
             # The Assumption object exists already, but it's
             # side-effects may not have been derived yet under the 
             # given assumptions.
