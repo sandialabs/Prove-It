@@ -315,10 +315,16 @@ class Expression(metaclass=ExprType):
         '''
         if self != expr_with_different_style:
             raise ValueError("'withMatchingStyle' must be given an expression with the same meaning")
+        return self._withMatchingStyle(expr_with_different_style)
+    
+    def _withMatchingStyle(self, expr_with_different_style):
+        '''
+        Helper function for 'withMatchingStyle.
+        '''
         if self._style_id == expr_with_different_style._style_id:
             return # no difference in style actually; do nothing
         for my_sub_expr, other_sub_expr in zip(self.subExprIter(), expr_with_different_style.subExprIter()):
-            my_sub_expr.withMatchingStyle(other_sub_expr)
+            my_sub_expr._withMatchingStyle(other_sub_expr)
         self.withStyles(**expr_with_different_style.getStyles())
         return self
     
