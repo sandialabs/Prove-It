@@ -38,12 +38,22 @@ class Add(Operation):
         options.add('addition', "'Subtract': uses '-'; 'Add': uses + ")
         return options
 
+    def string(self, **kwargs):
+        outStr = ''
+        if self.getStyle('addition') == 'Subtract':
+            # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
+            outStr += str(self.operands[0]) + ' - ' + str(self.operands[1].operand)
+            return outStr
+        else:
+            outStr += str(self.operands[0]) + ' + ' + str(self.operands[1])  # normal addition
+            return outStr
+
     def latex(self, **kwargs):
         # Added by JML on 9/10/19
         if self.getStyle('addition') == 'Subtract':
             # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
             kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-            return maybeFencedLatex(self.operands[0].latex() + '-' +self.operands[1].latex(), **kwargs)
+            return maybeFencedLatex(self.operands[0].latex() + '-' +self.operands[1].operand.latex(), **kwargs)
         else:
             return Operation.latex(self,**kwargs) # normal addition
 
