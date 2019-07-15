@@ -38,8 +38,11 @@ class Add(Operation):
         options.add('addition', "'Subtract': uses '-'; 'Add': uses + ")
         return options
 
+    '''
     def string(self, **kwargs):
+        from proveit import Iter
         outStr = ''
+
         if self.getStyle('addition') == 'Subtract':
             # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
             outStr += str(self.operands[0]) + ' - ' + str(self.operands[1].operand)
@@ -56,7 +59,7 @@ class Add(Operation):
             return maybeFencedLatex(self.operands[0].latex() + '-' +self.operands[1].operand.latex(), **kwargs)
         else:
             return Operation.latex(self,**kwargs) # normal addition
-
+    '''
     def remakeConstructor(self):
         # Added by JML on 9/10/19
         if self.getStyle('addition') == 'Subtract':
@@ -120,14 +123,13 @@ class Add(Operation):
         from _theorems_ import addNegSelf
         return addNegSelf.specialize({x:self.terms[0]}, assumptions=assumptions)
 
-    """
     def simplification(self, assumptions=frozenset()):
         '''
         For the trivial case of a zero term,
         derive and return this Add expression equated with a simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        from theorems import addZero
+        from ._theorems_ import addZero
         eq = Equation()
         expr = self
         try:
@@ -143,7 +145,27 @@ class Add(Operation):
             return eq.update(addZero.specialize({x:expr.operands[1]}))
         except ValueError:
             raise ValueError('Only trivial simplification is implemented (zero term)')
-        
+            #self.sort()
+
+    def sort(self, assumptions=USE_DEFAULTS):
+        '''
+        Added by JML on 7/15/19
+        for a given algebraic expression, sort the contents from smallest to largest, with variables being alphabetical
+        '''
+        from proveit.number import zero
+        list = []
+        expr = zero
+        for i, term in enumerate(self.terms):
+            print(i, term)
+            list.append(term)
+        print(list)
+        #list.sort()
+        for operand in list:
+            expr = Add(expr, operand)
+        return expr
+
+
+
     def simplified(self, assumptions=frozenset()):
         '''
         For the trivial case of a zero term,
@@ -152,7 +174,7 @@ class Add(Operation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         return self.simplification(assumptions).rhs
-    """
+
     
     def subtractionFolding(self, termIdx=None, assumptions=frozenset()):
         '''
