@@ -95,7 +95,6 @@ class ExprList(Composite, Expression):
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
         '''
-        print("index", index)
         from proveit.number import num, one, lesserSequence, Less, LessEq, Add, Subtract
         from proveit.logic import Equals
         from proveit.relation import TransitivityException
@@ -151,7 +150,6 @@ class ExprList(Composite, Expression):
                     raise ExprListError("Could not determine the 'index'-ed element of the ExprList")
                 coord = _simplifiedCoord(Add(coord, one), assumptions, requirements)
         except TransitivityException:
-            print("index", index)
             raise ExprListError("Could not determine the 'index'-ed element of the ExprList.")
         raise IndexError("Index, %s, past the range of the ExprList, %s"%(str(index), str(self)))
     
@@ -219,14 +217,12 @@ class ExprList(Composite, Expression):
         via start_indices and end_indices (as Expressions that can be provably sorted
         against list indices), yield the start and end of the intersection of the
         entry range and the window.
-
-        Edited by JML on 7/9/19 - implemented proper iteration counting
         '''
         from proveit.number import one, num, Add, Subtract, Less
         from proveit.logic import Equals
         from .iteration import Iter
         from proveit import ProofFailure
-        print("self, base, start_index, end_index, assumptions, requirements", self,base, start_index, end_index, assumptions, requirements)
+        
         if requirements is None: requirements = [] # requirements won't be passed back in this case
         
         index = num(base)
@@ -252,7 +248,6 @@ class ExprList(Composite, Expression):
         
         # Iterate over the entries and track the true element index,
         # including ranges of iterations (Iter objects).
-
         for i, entry in enumerate(self):
             if not started:
                 # We have not yet encounted an entry within the desired window,
@@ -276,20 +271,8 @@ class ExprList(Composite, Expression):
             entry_end = index # unless it is an Iter:
             if isinstance(entry, Iter):
                 entry_span = Subtract(entry.end_index, entry.start_index)
-                entry_end =  _simplifiedCoord(Add(entry_span, index), assumptions, requirements)
-                print("self.len, entry_end", self.len(), entry_end)
-                if end_index == entry_end:
-                    arrived_at_end = True
-                else:
-                    try:
-                        index_eq_end_iter = Equals(self.len(), entry_end).prove(assumptions=assumptions, automation=False)
-                        requirements.append(index_eq_end_iter)
-                        arrived_at_end == True
-                    except ProofFailure:
-                        print("there was an actual proof failure")
-                print("iter, entry_span, entry_end, arrived_at_end", entry_span, entry_end, arrived_at_end)
-            print("index, end_index", index, end_index)
-
+                entry_end =  _simplifiedCoord(Add(index, entry_span), assumptions, requirements)
+            
             if index==end_index:
                 arrived_at_end = True
             else:
@@ -297,9 +280,8 @@ class ExprList(Composite, Expression):
                     index_eq_end = Equals(end_index, index).prove(assumptions=assumptions, automation=False)
                     requirements.append(index_eq_end)
                     arrived_at_end == True
-                except ProofFailure:
-                    next_index = _simplifiedCoord(Add(entry_end, one), assumptions, requirements)
-                    print("ProofFailure, next_index", next_index)
+                except ProofFailure:                    
+                    next_index = _simplifiedCoord(Add(entry_end, one), assumptions, requirements) 
                     """
                     # TO KEEP THINGS SIMPLE, LET'S INSIST THAT THE INDEX MUST MATCH THE END EXACTLY TO STOP
                     # (NOT GOING BEYOND WITHOUT MATCHING).
@@ -334,7 +316,6 @@ class ExprList(Composite, Expression):
             
             index = next_index # Move on to the next entry.
             prev_end = entry_end
-            print("index, arrived_at_end:", index, arrived_at_end)
         
         if not arrived_at_end:
             raise IndexError("ExprList index out of range")
@@ -360,29 +341,6 @@ class ExprList(Composite, Expression):
             else:
                 subbed_exprs.append(subbed_expr)
         return ExprList(*subbed_exprs)
-
-    def len(self, assumptions=USE_DEFAULTS):
-        '''
-        Return the length of an Expression list by treating iterations as a collection of items themselves.
-        ExpList(A_1 ... A_m, B, C_1 ... C_n).len() should return m+1+n
-        added by JML on 7/8/19
-        '''
-        from proveit import Iter
-        from proveit.number import Add, Subtract, one, num
-        nonIterSum = 0
-        iterContribs = num(0)
-        for entry in self.entries:
-            if isinstance(entry, Iter):
-                iterContribs = Add(iterContribs, Add(Subtract(entry.end_index, entry.start_index), one)).simplification(assumptions=assumptions).rhs
-            else:
-                nonIterSum += 1
-        print( "the addition of iter and nonIter/iter/nonIter", Add(iterContribs, num(nonIterSum)),"/", iterContribs, "/", nonIterSum)
-        if nonIterSum == 0:
-            return iterContribs
-        elif iterContribs == num(0):
-            return num(nonIterSum)
-        return Add(iterContribs, num(nonIterSum))
-
 
 class ExprListError(Exception):
     def __init__(self, msg):
