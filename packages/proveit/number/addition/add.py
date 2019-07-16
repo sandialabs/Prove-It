@@ -67,19 +67,23 @@ class Add(Operation):
         return Operation.remakeConstructor(self)
 
     def _closureTheorem(self, numberSet):
-        import theorems
+        from ._theorems_ import addNatClosure, addRealClosure, addComplexClosure, addIntClosure
+        from proveit.number import Reals, Complexes, Integers, Naturals
         if numberSet == Reals:
-            return theorems.addRealClosure
+            return addRealClosure
         elif numberSet == Complexes:
-            return theorems.addComplexClosure
+            return addComplexClosure
         elif numberSet == Integers:
-            return theorems.addIntClosure
+            return addIntClosure
+        elif numberSet == Naturals:
+            return addNatClosure
 
     def sideEffects(self, knownTruth):
         '''
         side effects for addition
         added by JML on 9/10/19
         '''
+        print("side effects")
         yield self.deduceAddZero
         yield self.deriveZeroFromNegSelf
     
@@ -112,7 +116,7 @@ class Add(Operation):
         added by JML on 9/10/19
         Given x + 0 return x.
         '''
-        from _theorems_ import addZero
+        from ._theorems_ import addZero
         return addZero.specialize({x:self.terms[1]}, assumptions=assumptions)
 
     def deriveZeroFromNegSelf(self, assumptions=USE_DEFAULTS):
@@ -120,9 +124,9 @@ class Add(Operation):
         added by JML on 9/10/19
         Given x + (-x) return x.
         '''
-        from _theorems_ import addNegSelf
+        from ._theorems_ import addNegSelf
         return addNegSelf.specialize({x:self.terms[0]}, assumptions=assumptions)
-
+    """
     def simplification(self, assumptions=frozenset()):
         '''
         For the trivial case of a zero term,
@@ -147,25 +151,6 @@ class Add(Operation):
             raise ValueError('Only trivial simplification is implemented (zero term)')
             #self.sort()
 
-    def sort(self, assumptions=USE_DEFAULTS):
-        '''
-        Added by JML on 7/15/19
-        for a given algebraic expression, sort the contents from smallest to largest, with variables being alphabetical
-        '''
-        from proveit.number import zero
-        list = []
-        expr = zero
-        for i, term in enumerate(self.terms):
-            print(i, term)
-            list.append(term)
-        print(list)
-        #list.sort()
-        for operand in list:
-            expr = Add(expr, operand)
-        return expr
-
-
-
     def simplified(self, assumptions=frozenset()):
         '''
         For the trivial case of a zero term,
@@ -175,7 +160,7 @@ class Add(Operation):
         '''
         return self.simplification(assumptions).rhs
 
-    
+    """
     def subtractionFolding(self, termIdx=None, assumptions=frozenset()):
         '''
         Given a negated term, termIdx or the first negated term if termIdx is None,
@@ -209,19 +194,20 @@ class Add(Operation):
         '''
         If all of the terms are in Naturals and just one is positive, then the sum is positive.
         '''
-        from numberSets import DeduceInNumberSetException
-        from theorems import addNatPosClosure
-        
+        from proveit.number.numberSets import DeduceInNumberSetException, deduceInNaturals, deducePositive
+        from ._theorems_ import addNatPosClosure
+        from proveit.number import NaturalsPos, Naturals, num
+        from proveit._common_  import AA, B, CC, m,n
         # first make sure all the terms are in Naturals
         for term in self.operands:
-            deduceInNaturals(term, assumptions) 
+            deduceInNaturals(term, assumptions)
         for k, term in enumerate(self.operands):
-            try:
+            #try:
                 # found one positive term to make the sum positive
-                deducePositive(term, assumptions)
-                return addNatPosClosure.specialize({aEtc:self.operands[:k], b:term, cEtc:self.operands[k+1:]}).checked(assumptions)
-            except:
-                pass
+            deducePositive(term, assumptions)
+            return addNatPosClosure.specialize({m:num(k), n:num(len(self.operands)-k-1), AA:self.operands[:k], B:term, CC:self.operands[k+1:]}, assumptions=assumptions)
+            #except:
+               # pass
         # need to have one of the elements positive for the sum to be positive
         raise DeduceInNumberSetException(self, NaturalsPos, assumptions)
 
@@ -231,7 +217,7 @@ class Add(Operation):
         the statement that the sum is greater than the term at lowerBoundTermIndex.
         Assumptions may be needed to deduce that the terms are in RealsPos or Reals.
         '''
-        from theorems import strictlyIncreasingAdditions        
+        from ._theorems_ import strictlyIncreasingAdditions
         for i, term in enumerate(self.terms):
             if i == lowerBoundTermIndex:
                 deduceInReals(term, assumptions)
@@ -245,7 +231,7 @@ class Add(Operation):
         the statement that the sum is less than the term at upperBoundTermIndex.
         Assumptions may be needed to deduce that the terms are in RealsPos or Reals.
         '''
-        from theorems import strictlyDecreasingAdditions        
+        from ._theorems_ import strictlyDecreasingAdditions
         for i, term in enumerate(self.terms):
             if i == upperBoundTermIndex:
                 deduceInReals(term, assumptions)
@@ -262,7 +248,7 @@ class Add(Operation):
         Give any assumptions necessary to prove that the operands are in 
         Complexes so that the commutation theorem is applicable.
         '''
-        from theorems import addComm
+        from ._theorems_ import addComm
         if startIdx1 is None and endIdx1 is None and startIdx2 is None and endIdx2 is None:
             stattIdx1, endIdx1, startIdx2, endIdx2 = 0, 1, 1, None
         nOperands = len(self.operands)

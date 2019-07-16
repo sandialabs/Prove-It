@@ -1,9 +1,8 @@
-from proveit import Expression, Literal, Operation, Etcetera, ExpressionList
-from proveit import AssociativeOperation, OperationOverInstances
-from proveit.common import a, b, n
-from proveit.logic import Forall, Implies, InSet, Or, NotEquals
-from proveit.logic import generateSubExpressions
-
+from proveit import Expression, Literal, Operation, ExprList
+from proveit import OperationOverInstances #AssociativeOperation,
+from proveit._common_ import a, b, n
+from proveit.logic import Forall, Implies, InSet, Or, NotEquals #generateSubExpressions
+from proveit.number import Reals, Complexes, Naturals, Integers, NaturalsPos, RealsPos, RealsNeg
 pkg = __package__
 
 class NumberOp:
@@ -87,15 +86,20 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
     derive it from being in a subset in ruledOutSets.
     If successful, returns the deduced statement, otherwise raises an Exception.   
     '''
-    from proveit.number.common import ComplexesSansZero
-    import integer.theorems
-    import natural.theorems
-    import real.theorems
-    import complex.theorems
-    if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
-        raise Exception('assumptions should be a set')
+    from proveit.number._common_ import ComplexesSansZero
+    print(assumptions)
+    isSet = False
+    sets = [Integers, Naturals, NaturalsPos, Reals, RealsNeg, RealsPos, Complexes]
 
-    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
+    for entry in assumptions:
+        print(entry.operands[1])
+        for set in sets:
+            if entry.operands[1] == set:
+                isSet = True
+        if not isSet and not isinstance(entry.operands[1], frozenset):
+            raise Exception('assumptions should be a set')
+
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]    
     expr = exprOrList # just a single expression
@@ -453,18 +457,27 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     under the given assumptions.  If successful, returns the deduced statement,
     otherwise raises an Exception.  
     '''
-    from proveit.number import GreaterThan, num
-    import real.theorems
-    if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
-        raise Exception('assumptions should be a set')
-    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
+    from proveit.number import Greater, num
+
+    isSet = False
+    sets = [Integers, Naturals, NaturalsPos, Reals, RealsNeg, RealsPos, Complexes]
+
+    for entry in assumptions:
+        print(entry.operands[1])
+        for set in sets:
+            if entry.operands[1] == set:
+                isSet = True
+        if not isSet and not isinstance(entry.operands[1], frozenset):
+            raise Exception('assumptions should be a set')
+
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deducePositive(expr, assumptions=assumptions) for expr in exprOrList]
     # A single Expression:
     expr = exprOrList
     try:
         # may be done before we started
-        return GreaterThan(expr, num(0)).checked(assumptions)
+        return Greater(expr, num(0)).checked(assumptions)
     except:
         pass # not so simple
 

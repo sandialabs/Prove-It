@@ -36,7 +36,7 @@ class Neg(Operation):
         only works if the operand is a literal int.
         '''
         return -self.operand.asInt()    
-    
+    """
     def simplification(self, assumptions=frozenset()):
         '''
         For trivial cases, double negation or negating zero,
@@ -61,7 +61,7 @@ class Neg(Operation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         return self.simplification(assumptions).rhs
-    
+    """
     def string(self, **kwargs):
         return maybeFencedString('-'+self.operand.string(fence=True), **kwargs)
 
