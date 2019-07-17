@@ -77,16 +77,26 @@ class Add(Operation):
             return addIntClosure
         elif numberSet == Naturals:
             return addNatClosure
-
+    """
+    def conclude(selfs, assumptions=USE_DEFAULTS):
+        '''
+        created by JML 7/17/19
+        conclude method for proof automation
+        '''
+        raise ValueError("conclude currently not implemented for add")
+    """
     def sideEffects(self, knownTruth):
         '''
         side effects for addition
         added by JML on 9/10/19
         '''
         print("side effects")
-        yield self.deduceAddZero
+        from proveit.number import zero
         yield self.deriveZeroFromNegSelf
-    
+        if (self.terms[0] == zero or self.terms[1] == zero) and len(self.terms) == 2:
+            yield self.deduceAddZero
+
+
     def equalitySideEffects(self, knownTruth):
         '''
         Record the knownTruth in Add.knownEqualities, associated for
@@ -100,6 +110,33 @@ class Add(Operation):
         if len(addition.terms)==2:
             # deduce the subtraction form: c-b=a from a+b=c 
             yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
+        from proveit.number import zero
+        yield self.deriveZeroFromNegSelf
+        if (self.terms[0] == zero or self.terms[1] == zero) and len(self.terms) == 2:
+            yield self.deduceAddZero
+
+    def concludeStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
+        '''
+        created by JML 7/17/19
+
+        '''
+        from ._theorems_ import strictlyIncreasingAdditions
+        from proveit._common_ import m, n, AA, B, CC
+        from proveit.number import num
+        print(b)
+        for i, term in enumerate(self.terms):
+            if term == b:
+                idx = i
+        nVal = len(self.terms) -1 - idx
+        print(strictlyIncreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
+        return strictlyIncreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx +1:]}, assumptions=assumptions)
+
+    def concludeStrictDecAdd(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML 7/17/19
+
+        '''
+
 
     def deduceSubtraction(self, rhs, assumptions=USE_DEFAULTS):
         '''
@@ -117,7 +154,44 @@ class Add(Operation):
         Given x + 0 return x.
         '''
         from ._theorems_ import addZero
-        return addZero.specialize({x:self.terms[1]}, assumptions=assumptions)
+        from proveit.number import zero
+        if self.terms[1] ==  zero:
+            value = 0
+        elif self.terms[0] == zero:
+            value = 1
+        return addZero.specialize({x:self.terms[value]}, assumptions=assumptions)
+
+    def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
+        '''
+        From (A + ... + H + I + J + ... + L + M + N + ... + Q), assuming in Booleans and given
+        the beginning and end of the groups to be switched,
+        derive and return (A + ... + H + M + J + ... + L + I + N + ... + Q).
+        Created by JML on 7/17/19
+        '''
+        from ._theorems_ import swap
+        from proveit.number import num
+        from proveit._common_ import l,m,n,AA,B,CC,D,EE
+        if 0 < i < j <= len(self.terms) - 1:
+            return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.terms) - j - 1), AA: self.terms[:i],B: self.terms[i], CC: self.terms[i + 1:j], D: self.terms[j], EE: self.terms[j + 1:]},assumptions=assumptions)
+        else:
+            raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
+
+    def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
+        '''
+        From (A + B + ... + Y + Z), assuming in Reals and given beginning and end of group, derive and return
+        (A + B ... + (l + ... + M) + ... + X + Z).
+        Created by JML on 7/17/19
+        '''
+        from ._theorems_ import group
+        from proveit.number import num
+        from proveit._common_ import l, m, n, AA, BB, CC, DD, EE
+        if end <= beg:
+            raise IndexError("Beginning and end value must be of the form beginning < end.")
+        if end > len(self.operands) -1:
+            raise IndexError("End value must be less than length of expression.")
+        print(group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions))
+        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions)
+
 
     def deriveZeroFromNegSelf(self, assumptions=USE_DEFAULTS):
         '''
