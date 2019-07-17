@@ -459,16 +459,8 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     '''
     from proveit.number import Greater, num
 
-    isSet = False
-    sets = [Integers, Naturals, NaturalsPos, Reals, RealsNeg, RealsPos, Complexes]
-
-    for entry in assumptions:
-        print(entry.operands[1])
-        for set in sets:
-            if entry.operands[1] == set:
-                isSet = True
-        if not isSet and not isinstance(entry.operands[1], frozenset):
-            raise Exception('assumptions should be a set')
+    if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
+        raise Exception('assumptions should be a set')
 
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprList):
         # If it isn't an Expression, assume it's iterable and deduce each
