@@ -15,7 +15,7 @@ class Indexed(Expression):
     integer (or list of integers).
     '''
     
-    def __init__(self, var, index_or_indices, base=1, styles=dict(), requirements=tuple()):
+    def __init__(self, var, index_or_indices, base=1, styles=None, requirements=tuple()):
         from .composite import compositeExpression
         if not isinstance(var, Variable):
             raise TypeError("'var' being indexed should be a Variable")

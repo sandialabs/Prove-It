@@ -12,7 +12,7 @@ class Sum(OperationOverInstances):
 #    def __init__(self, summand-instanceExpression, indices-instanceVar, domains):
 #    def __init__(self, instanceVar, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
-    def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple(), styles=dict()):
+    def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple()):
         r'''
         Sum summand over indices over domains.
         Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
@@ -22,7 +22,7 @@ class Sum(OperationOverInstances):
         '''
         # nestMultiIvars=True will cause it to treat multiple instance variables as nested Sum operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True, styles=styles)
+        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True)
         if hasattr(self, 'instanceVar'):
             self.index = self.instanceVar
         if hasattr(self, 'instanceVar'):

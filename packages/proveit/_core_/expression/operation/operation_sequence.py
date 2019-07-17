@@ -1,7 +1,7 @@
 from .operation import Operation
 
 class OperationSequence(Operation):
-    def __init__(self, operators, operands, styles=dict(), requirements=tuple()):
+    def __init__(self, operators, operands, styles=None, requirements=tuple()):
         from proveit import Iter
         if len(operands) != len(operators)+1:
             raise ValueError("An operation sequence must have one more operand than operators")

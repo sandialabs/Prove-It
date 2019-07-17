@@ -18,7 +18,7 @@ class OperationOverInstances(Operation):
     '''
     _init_argname_mapping_ = {'instanceVarOrVars':'instanceVarOrVars', 'instanceExpr':'instanceExpr', 'domain':'domain', 'domains':'domains', 'conditions':'conditions'}
     
-    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=dict()):
+    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=None):
         '''
         Create an Operation for the given operator that is applied over instances of the 
         given instance Variable(s), instanceVarOrVars, for the given instance Expression, 
@@ -50,6 +50,8 @@ class OperationOverInstances(Operation):
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         instanceVars = compositeExpression(instanceVarOrVars)
+        
+        if styles is None: styles=dict()
         
         if len(instanceVars)==0:
             raise ValueError("Expecting at least one instance variable when constructing an OperationOverInstances")
@@ -112,7 +114,7 @@ class OperationOverInstances(Operation):
                 
                 # the instance expression at this level should be the OperationOverInstances at the next level.
                 innerOperand = self._createOperand(inner_instance_vars, instanceExpr, conditions=inner_conditions)
-                instanceExpr = self.__class__._make(['Operation'], styles, [operator, innerOperand])
+                instanceExpr = self.__class__._make(['Operation'], dict(styles), [operator, innerOperand])
                 styles['instance_vars'] = 'join_next' # combine instance variables in the style
                 instanceVarOrVars = instanceVar = instanceVars[0]
             else:

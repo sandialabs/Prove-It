@@ -16,7 +16,7 @@ class Iter(Expression):
     is (are) a known integer(s).
     '''
 
-    def __init__(self, parameter_or_parameters, body, start_index_or_indices, end_index_or_indices, styles=dict(), requirements=tuple()):
+    def __init__(self, parameter_or_parameters, body, start_index_or_indices, end_index_or_indices, styles=None, requirements=tuple()):
         from proveit.logic import InSet
         from proveit.number import Interval
         
@@ -64,7 +64,7 @@ class Iter(Expression):
         self.lambda_map = lambda_map
     
     """
-    def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices, styles=dict(), requirements=tuple()):
+    def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices, styles=None, requirements=tuple()):
         if not isinstance(lambda_map, Lambda):
             raise TypeError('When creating an Iter Expression, the lambda_map argument must be a Lambda expression')
         
