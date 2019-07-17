@@ -235,14 +235,15 @@ class And(Operation):
 
     def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
         '''
-        From (A and ... and H and I and J or ... or L and M or N and ... and Q), assuming in Booleans and given
+        From (A and ... and H and I and J and ... and L and M and N and ... and Q), assuming in Booleans and given
         the beginning and end of the groups to be switched,
         derive and return (A and ... and H and M and J and ... and L and I and N and ... and Q).
         Created by JML on 6/10/19
         '''
         from ._theorems_ import swap
         from proveit.number import num
-        if 0 < i < j < len(self.operands) - 1:
+
+        if 0 < i < j <= len(self.operands) - 1:
             return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands) - j - 1), AA: self.operands[:i],B: self.operands[i], CC: self.operands[i + 1:j], D: self.operands[j], EE: self.operands[j + 1:]},assumptions=assumptions)
         else:
             raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
