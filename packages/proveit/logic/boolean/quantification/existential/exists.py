@@ -22,6 +22,7 @@ class Exists(OperationOverInstances):
         '''
         Side-effect derivations to attempt automatically for an exists operations.
         '''
+        return
         yield self.deriveNegatedForall # derive the negated forall form
 
     def negationSideEffects(self, knownTruth):
