@@ -315,8 +315,11 @@ class ExprList(Composite, Expression):
                 yield (index, entry_end) # Yield the full range of the entry.
             
             if not arrived_at_end:
-                index = next_index # Move on to the next entry.
-                prev_end = entry_end
+                try:
+                    index = next_index # Move on to the next entry.
+                    prev_end = entry_end
+                except:
+                    pass
         
         if not arrived_at_end:
             raise IndexError("ExprList index out of range")
