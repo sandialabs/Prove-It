@@ -15,7 +15,8 @@ class Mult(Operation):
         self.factors = operands
     
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
-        from ._theorems_ import multIntClosure, multNatsClosure, multNatsPosClosure, multRealClosure, multRealPosClosure, multComplexClosure
+        from ._theorems_ import multIntClosure, multNatClosure, multNatPosClosure, multRealClosure, multRealPosClosure, multComplexClosure
+        print(numberSet)
         if numberSet == Integers:
             thm = multIntClosure
         elif numberSet == Naturals:
