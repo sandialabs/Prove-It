@@ -131,11 +131,23 @@ class Add(Operation):
         print(strictlyIncreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
         return strictlyIncreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx +1:]}, assumptions=assumptions)
 
-    def concludeStrictDecAdd(self, assumptions=USE_DEFAULTS):
+    def concludeStrictDecAdd(self, b, assumptions=USE_DEFAULTS):
         '''
         created by JML 7/17/19
 
         '''
+        from ._theorems_ import strictlyDecreasingAdditions
+        from proveit._common_ import m, n, AA, B, CC
+        from proveit.number import num
+        print(b)
+        print(self.terms)
+        for i, term in enumerate(self.terms):
+            if term == b:
+                idx = i
+        nVal = len(self.terms) -1 - idx
+        print(nVal)
+        #print(strictlyDecreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
+        return strictlyDecreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx +1:]}, assumptions=assumptions)
 
 
     def deduceSubtraction(self, rhs, assumptions=USE_DEFAULTS):
