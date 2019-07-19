@@ -680,6 +680,18 @@ class KnownTruth:
         '''
         from proveit._core_.proof import Specialization
         return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
+    
+    def relabelFully(self, relabelMap):
+        '''
+        Exploratory function created 7/16/2019 by wdc, based on the existing relabel() method above
+        Performs a relabeling derivation step, deriving another KnownTruth
+        from this KnownTruth, but now performing the relabeling of Variables on
+        both sides of the |- operator. This is different from relabel() method only in that it
+        accesses the new/modified class Specialization_02 instead of Specialization.
+        Returns the proven fully-relabeled KnownTruth, or throws an exception if the proof fails.
+        '''
+        from proveit._core_.proof import Specialization, Specialization_02
+        return self._checkedTruth(Specialization_02(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
         
     def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
         '''
