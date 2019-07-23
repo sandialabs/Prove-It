@@ -48,7 +48,7 @@ class Expression(metaclass=ExprType):
         Expression.contexts.clear()
         assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
                         
-    def __init__(self, coreInfo, subExpressions=tuple(), styles=dict(), requirements=tuple()):
+    def __init__(self, coreInfo, subExpressions=tuple(), styles=None, requirements=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
         level) which should be a list (or tuple) of strings, and a list (or tuple) of subExpressions.
@@ -58,6 +58,7 @@ class Expression(metaclass=ExprType):
         The "requirements" are expressions that must be proven to be true in order for the Expression
         to make sense.
         '''
+        if styles is None: styles = dict()
         for coreInfoElem in coreInfo:
             if not isinstance(coreInfoElem, str):
                 raise TypeError('Expecting coreInfo elements to be of string type')
@@ -66,19 +67,35 @@ class Expression(metaclass=ExprType):
                 raise TypeError('Expecting subExpression elements to be of Expression type')
                 
         # note: these contained expressions are subject to style changes on an Expression instance basis
-        self._subExpressions = subExpressions 
-
-        # The meaning data is shared among Expressions with the same structure disregarding style
-        self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id), coreInfo))
-        if not hasattr(self._meaningData, '_coreInfo'):
-            # initialize the data of self._meaningData
-            self._meaningData._coreInfo = tuple(coreInfo)
-            # combine requirements from all sub-expressions
-            requirements = sum([subExpression.getRequirements() for subExpression in subExpressions], tuple()) + requirements
-            # Expression requirements are essentially assumptions that need to be proven for the expression to
-            # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
-            # (which may not be necessary, but does not hurt).   
-            self._meaningData._requirements = defaults.checkedAssumptions(requirements)
+        self._subExpressions = tuple(subExpressions)
+        
+        # The 'generic' version of this expression, in which deterministic 'dummy' variables
+        # are used as Lambda parameters, determines the 'meaning' of the expression.
+        generic_sub_expressions = tuple(sub_expr._genericExpr for sub_expr in subExpressions)
+        generic_sub_expression_styles = tuple(generic_sub_expr._styleData for generic_sub_expr in generic_sub_expressions)
+        sub_expression_styles = tuple(sub_expr._styleData for sub_expr in subExpressions)
+        if hasattr(self, '_genericExpr'):
+            # The _genericExpr attribute was already set -- must be a Lambda Expression.
+            self._meaningData = self._genericExpr._meaningData            
+        elif sub_expression_styles != generic_sub_expression_styles:
+            # The 'generic' sub-expressions are different than the sub-expressions,
+            # so that propagates to this Expression's generic version.
+            self._genericExpr = self.__class__._make(coreInfo, dict(styles), generic_sub_expressions)
+            self._meaningData = self._genericExpr._meaningData
+        else:
+            # This is this 'generic' version:
+            self._genericExpr = self
+            # The meaning data is shared among Expressions with the same structure disregarding style
+            self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id), coreInfo))
+            if not hasattr(self._meaningData, '_coreInfo'):
+                # initialize the data of self._meaningData
+                self._meaningData._coreInfo = tuple(coreInfo)
+                # combine requirements from all sub-expressions
+                requirements = sum([subExpression.getRequirements() for subExpression in subExpressions], tuple()) + requirements
+                # Expression requirements are essentially assumptions that need to be proven for the expression to
+                # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
+                # (which may not be necessary, but does not hurt).   
+                self._meaningData._requirements = defaults.checkedAssumptions(requirements)
         
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
@@ -298,10 +315,16 @@ class Expression(metaclass=ExprType):
         '''
         if self != expr_with_different_style:
             raise ValueError("'withMatchingStyle' must be given an expression with the same meaning")
+        return self._withMatchingStyle(expr_with_different_style)
+    
+    def _withMatchingStyle(self, expr_with_different_style):
+        '''
+        Helper function for 'withMatchingStyle.
+        '''
         if self._style_id == expr_with_different_style._style_id:
             return # no difference in style actually; do nothing
         for my_sub_expr, other_sub_expr in zip(self.subExprIter(), expr_with_different_style.subExprIter()):
-            my_sub_expr.withMatchingStyle(other_sub_expr)
+            my_sub_expr._withMatchingStyle(other_sub_expr)
         self.withStyles(**expr_with_different_style.getStyles())
         return self
     
@@ -499,7 +522,7 @@ class Expression(metaclass=ExprType):
         for the substitution to be valid.
         '''
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         else:
             return self

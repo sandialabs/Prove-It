@@ -328,7 +328,7 @@ class ExprList(Composite, Expression):
         '''
         from .iteration import Iter
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         subbed_exprs = []
         for expr in self:

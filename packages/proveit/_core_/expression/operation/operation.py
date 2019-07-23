@@ -19,7 +19,7 @@ class Operation(Expression):
         '''
         Operation.operationClassOfOperator.clear()
         
-    def __init__(self, operator_or_operators, operand_or_operands, styles=dict(), requirements=tuple()):
+    def __init__(self, operator_or_operators, operand_or_operands, styles=None, requirements=tuple()):
         '''
         Create an operation with the given operator(s) and operand(s).
         The operator(s) must be Label(s) (a Variable or a Literal).
@@ -31,6 +31,7 @@ class Operation(Expression):
         '''
         from proveit._core_.expression.composite import Composite, compositeExpression, singleOrCompositeExpression, Iter, Indexed
         from proveit._core_.expression.label.label import Label
+        if styles is None: styles = dict()
         if hasattr(self.__class__, '_operator_') and operator_or_operators==self.__class__._operator_:
             operator = operator_or_operators
             if Expression.contexts[operator._style_id] != operator.context:
@@ -67,7 +68,7 @@ class Operation(Expression):
             styles['wrapPositions'] = '()' # no wrapping by default
         if 'justification' not in styles:
             styles['justification'] = 'center'
-        Expression.__init__(self, ['Operation'], [self.operator_or_operators, self.operand_or_operands], styles=styles, requirements=requirements)
+        Expression.__init__(self, ['Operation'], (self.operator_or_operators, self.operand_or_operands), styles=styles, requirements=requirements)
 
     def styleOptions(self):
         options = StyleOptions(self)
@@ -345,7 +346,7 @@ class Operation(Expression):
         from proveit._core_.expression.composite.composite import compositeExpression
         from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
         subbed_operand_or_operands = self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         subbed_operands = compositeExpression(subbed_operand_or_operands)

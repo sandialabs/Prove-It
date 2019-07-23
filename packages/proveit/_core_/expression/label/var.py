@@ -21,7 +21,7 @@ class Variable(Label):
         '''
         from proveit._core_.expression.expr import Expression
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             subbed = exprMap[self]
             if not isinstance(subbed, Expression):
                 raise TypeError('Must substitute a Variable with an Expression (not %s)'%subbed.__class__)
