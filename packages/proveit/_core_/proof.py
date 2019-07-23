@@ -905,10 +905,10 @@ class Specialization_02(Proof):
     def __init__(self, generalTruth, numForallEliminations, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
         '''
         Create the Specialization proof step that specializes the given general expression
-        using the substitution map (subMap) under the given assumptions.  
+        using the substitution map (subMap) under the given assumptions.
         Eliminates the number of nested Forall operations as indicated, substituting
-        their instance variables according to subMap.  The default for any unspecified instance 
-        variable is to specialize it to itself, or, in the case of a bundled variable 
+        their instance variables according to subMap.  The default for any unspecified instance
+        variable is to specialize it to itself, or, in the case of a bundled variable
         (Etcetera-wrapped MultiVariables), the default is to specialize it to an empty list.
         Substitution of variables that are not instance variables of the Forall operations
         being eliminated are to be relabeled.  Relabeling is limited to substituting
@@ -918,7 +918,6 @@ class Specialization_02(Proof):
         print('assumptions initially passed to Specialization_02: ', assumptions)            ## for testing; delete later
         assumptions = list(defaults.checkedAssumptions(assumptions))
         print('assumptions after checkedAssumptions call: ', assumptions)                    ## for testing; delete later
-        print('assumptionsSet after checkedAssumptions call: ', generalTruth.assumptionsSet) ## for testing; delete later
         prev_default_assumptions = defaults.assumptions
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
@@ -946,22 +945,13 @@ class Specialization_02(Proof):
             specializedExpr, requirements, mappedVarLists, mappings, assumptions = Specialization_02._specialized_expr(
                 generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions
             )
-            print('After call to _specialized_expr')                             ## for testing; delete later
-            print('specializedExpr: ', specializedExpr)                          ## for testing; delete later
-            print('assumptions: ', assumptions)                                  ## for testing; delete later
+            print('After call to _specialized_expr:')              ## for testing; delete later
+            print('     specializedExpr = ', specializedExpr)      ## for testing; delete later
+            print('     assumptions = ', assumptions)              ## for testing; delete later
             
-            # update the frozenset version of the assumptions to reflect the relabeled assumptions:
-            print('The generalTruth is: ', type(generalTruth))
-            print('Before updating the assumptionsSet: ', generalTruth.assumptionsSet )
-            # ugh it turns out to be difficult to reset the assumptionsSet
-            # generalTruth.__setattr__('assumptionsSet', frozenset(assumptions)) ## this did not work, but next line does
-            # generalTruth.__dict__['assumptionsSet'] = frozenset(assumptions)     ## to reassign a frozen attribute
-            # unfortunately, the line above appears to change the assumptionsSet on the original generalTruth
-            # causing problems when the original generalTruth once again calls relabelFully()
-            # so try something simpler instead:
+            # create a frozenset version of the assumptions to reflect the relabeled assumptions:
+            # (do not attempt to modify the original frozenset generalTruth.assumptionsSet)
             tempAssumptionsSet = frozenset(assumptions)
-            print('After updating the assumptionsSet:')                          ## for testing; delete later
-            print('tempAssumptionsSet: ', tempAssumptionsSet)                    ## for testing; delete later
             
             # obtain the KnownTruths for the substituted conditions
             requirementTruths = []
@@ -981,7 +971,7 @@ class Specialization_02(Proof):
             assumptionsSet = generalTruth.assumptionsSet
             # instead, try this:
             assumptionsSet = tempAssumptionsSet
-            print('Local var assumptionsSet is then = ', assumptionsSet) # for testing, to be deleted later
+            # don't yet understand what requirementTruths is doing here
             for requirementTruth in requirementTruths:
                 assumptionsSet |= requirementTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
@@ -1003,19 +993,19 @@ class Specialization_02(Proof):
         mappingInfo = ';'.join(','.join(objectRepFn(var) + ':' + objectRepFn(self.mappings[var]) for var in mappedVars) \
                                 for mappedVars in self.mappedVarLists)
         return self.stepType() + ':{' + mappingInfo + '}'
-                                
+
     def stepType(self):
         if len(self.mappedVarLists) > 1:
             return 'specialization'
         return 'relabeling' # relabeling only
-    
+
     def _single_mapping(self, var, replacement, formatType):
         from proveit import Function, Lambda
         formatted = lambda expr : expr._repr_html_() if formatType=='HTML' else str(expr)
         if isinstance(replacement, Lambda):
             return formatted(Function(var, replacement.parameter_or_parameters)) + ' : ' + formatted(replacement.body)
         return formatted(var) + ' : ' + formatted(replacement)
-    
+
     def _mapping(self, formatType='HTML'):
         mappedVarLists = self.mappedVarLists
         if formatType=='HTML':
@@ -1044,7 +1034,8 @@ class Specialization_02(Proof):
         Eliminates the specified number of Forall operations, substituting all
         of the corresponding instance variables according to the substitution
         map dictionary (subMap), or defaulting basic instance variables as
-        themselves. 
+        themselves.
+        Also now returns a relabeled version of the assumptions (wdc 7/18/2019)
         '''
         from proveit import Lambda, Expression, Iter
         from proveit.logic import Forall
@@ -1052,10 +1043,7 @@ class Specialization_02(Proof):
         for key, sub in list(relabelMap.items()):
             Specialization._checkRelabelMapping(key, sub, assumptions)
             if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
-                
         
-        # THE FOLLOWING DOES NOT HELP HERE IN THE BROADER SCHEME,
-        # because the _specialized_expr() method doesn't return the modified assumptions
         # prepare for relabeled assumptions
         relabeledAssumptions = list()
         # relabel assumptions
@@ -1064,39 +1052,36 @@ class Specialization_02(Proof):
             relabeledAssumptions.append(oldAssumption.relabeled(relabelMap))
         # replace old assumptions with newly relabeled assumptions
         assumptions = relabeledAssumptions
-        # check on the assumptions
-        print(assumptions)
-        print('assumptions has type: ', type(assumptions))
+        
+        # check on the assumptions -- delete this later
+        print('Inside _specialized_expr, relabeledAssumptions = ', assumptions)
         
         for assumption in assumptions:
             if assumption == WILDCARD_ASSUMPTIONS: continue # ignore the wildcard for this purpose
             
-            # the following vars_in_violation is keeping us from relabeling variables that appear
-            # in the LHS (assumptions) of a KnownTruth --
-            # but it's not clear why we would disallow this
-            # checking some things for experimenting:
-            print('assumption is: ', assumption)
-            print("assumption's free vars: ", assumption.freeVars())
-            vars_in_violation = assumption.freeVars() & set(relabelMap.keys()) # collects freeVars that are also being
-                                                                               # asked to be relabeled
-            # temporarily introduce an empty list instead, which allows relabeling to proceed
-            # but eventually relabels only the RHS of a known truth truth |- operator instead of both sides
-            # vars_in_violation = set()
+            # the following vars_in_violation originally kept us from relabeling variables that appear
+            # in the LHS (assumptions) of a KnownTruth -- but it's not clear why we would disallow this
+            # Now, it shouldn't find anything problematic, because we have already relabeled
+            # the assumptions (see for loop a few lines above)
             
-            # alternatively, if a variable is listed in the vars_in_violation set, perform the substitution
-            # then remove that variable from the vars_in_violation list
-            # this is a temporary effort to achieve the LHS relabeling and should be reworked later
-            # relabeledAssumptions.append(assumption.relabeled(relabelMap))
-            
+            # collect freeVars that are also being asked to be relabeled
+            vars_in_violation = assumption.freeVars() & set(relabelMap.keys())
             
             if len(vars_in_violation) != 0:
-                raise RelabelingFailure(None, assumptions, 'Attempting to relabel variable(s) that are free in the assumptions (!): ' + str(vars_in_violation))
+                raise RelabelingFailure(
+                    None, assumptions,
+                    'Attempting to relabel variable(s) that are free in the assumptions (!): '
+                    + str(vars_in_violation)
+                )
         
         for key, sub in specializeMap.items():
             if not isinstance(sub, Expression):
                 raise TypeError("Expecting specialization substitutions to be 'Expression' objects")
             if key in relabelMap:
-                raise SpecializationFailure(None, assumptions, 'Attempting to specialize and relabel the same variable: %s'%str(key))
+                raise SpecializationFailure(
+                    None, assumptions,
+                    'Attempting to specialize and relabel the same variable: %s'%str(key)
+                )
         
         # Eliminate the desired number of Forall operations and extracted appropriately mapped conditions
         expr = generalExpr
@@ -1108,7 +1093,10 @@ class Specialization_02(Proof):
         while remainingForallEliminations>0:
             remainingForallEliminations -= 1
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+                raise SpecializationFailure(
+                    None, assumptions,
+                    'May only specialize instance variables of directly nested Forall operations'
+                )
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
@@ -1122,15 +1110,23 @@ class Specialization_02(Proof):
                 if parameterVar in specializeMap: subbedParam = specializeMap[parameterVar]
                 elif parameterVar in relabelMap: subbedParam = relabelMap[parameterVar]
                 if isinstance(parameter, Iter) and subbedParam is not None:
-                    expandedParameter = parameter.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
+                    expandedParameter = parameter.substituted(
+                        specializeMap, relabelMap, assumptions=assumptions, requirements=requirements
+                    )
                     if len(expandedParameter) != len(subbedParam):
-                        raise SpecializationFailure(None, assumptions, "Substitution of iterated instance variables incomplete: %d length expansion versus %d length substitution"%(len(expandedParameter), len(subbedParam)))
+                        raise SpecializationFailure(
+                            None, assumptions,
+                            "Substitution of iterated instance variables incomplete: %d length expansion versus %d length substitution"%(len(expandedParameter), len(subbedParam))
+                        )
             mappedVarLists.append(instanceVars)
             # include the mapping for the current instance variables in the partial map
             try:
                 partialMap.update({iVar:specializeMap[iVar] for iVar in instanceVars})
             except KeyError:
-                raise SpecializationFailure(None, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
+                raise SpecializationFailure(
+                    None, assumptions,
+                    'Must specialize all of the instance variables of the Forall operations to be eliminated'
+                )
             # make substitutions in the condition
             subbedConditions += conditions.substituted(partialMap, relabelMap)
                         
@@ -1148,9 +1144,13 @@ class Specialization_02(Proof):
         
         # the following is performing the substitution only on the RHS of the KnownTruth
         print('Just before expr.substituted() call, assumptions = ', assumptions)
-        subbed_expr = expr.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
+        subbed_expr = expr.substituted(
+            specializeMap, relabelMap,
+            assumptions=assumptions, requirements=requirements
+        )
         
-        # Return the expression and conditions with substitutions and the information to reconstruct the specialization
+        # Return the expression and conditions with substitutions
+        # and the information to reconstruct the specialization
         # return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
         # Try returning the same items, but now also return the modifed assumptions as well
         return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings, assumptions
