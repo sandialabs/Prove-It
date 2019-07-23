@@ -90,6 +90,7 @@ class Add(Operation):
         side effects for addition
         added by JML on 9/10/19
         '''
+        return
         print("side effects")
         from proveit.number import zero
         yield self.deriveZeroFromNegSelf
@@ -110,10 +111,6 @@ class Add(Operation):
         if len(addition.terms)==2:
             # deduce the subtraction form: c-b=a from a+b=c 
             yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
-        from proveit.number import zero
-        yield self.deriveZeroFromNegSelf
-        if (self.terms[0] == zero or self.terms[1] == zero) and len(self.terms) == 2:
-            yield self.deduceAddZero
 
     def concludeStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
         '''
@@ -171,6 +168,7 @@ class Add(Operation):
             value = 0
         elif self.terms[0] == zero:
             value = 1
+        print(self)
         return addZero.specialize({x:self.terms[value]}, assumptions=assumptions)
 
     def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):

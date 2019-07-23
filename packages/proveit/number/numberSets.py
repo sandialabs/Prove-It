@@ -87,24 +87,15 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
     If successful, returns the deduced statement, otherwise raises an Exception.   
     '''
     from proveit.number._common_ import ComplexesSansZero
-    print(assumptions)
-    isSet = False
-    sets = [Integers, Naturals, NaturalsPos, Reals, RealsNeg, RealsPos, Complexes]
 
-    for entry in assumptions:
-        print(entry.operands[1])
-        for set in sets:
-            if entry.operands[1] == set:
-                isSet = True
-        if not isSet and not isinstance(entry.operands[1], frozenset):
-            raise Exception('assumptions should be a set')
+    if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
+        raise Exception('assumptions should be a set')
 
     if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]    
     expr = exprOrList # just a single expression
-    
-    #print expr, numberSet
+
     try:
         return InSet(expr, numberSet).prove(assumptions)
     except:
@@ -320,7 +311,7 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             assert len(iVars) == len(expr.operands), 'Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression'
             closureSpec = closureThm.specialize({iVar:operand for iVar, operand in zip(iVars, expr.operands)})
     # deduce any of the requirements for the closureThm application
-    #print closureThm
+
     _deduceRequirements(closureThm, closureSpec, assumptions)
     try:
         return In(expr, numberSet).checked(assumptions)

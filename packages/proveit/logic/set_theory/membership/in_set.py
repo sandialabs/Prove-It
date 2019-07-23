@@ -81,8 +81,6 @@ class InSet(Operation):
                         pass # no luck, keep trying
         # could not prove it through a subset relationship, now try to use a MembershipObject
         if hasattr(self, 'membershipObject'):
-            print(self)
-            print(self.membershipObject())
             return self.membershipObject.conclude(assumptions)
               
     def evaluation(self, assumptions=USE_DEFAULTS):

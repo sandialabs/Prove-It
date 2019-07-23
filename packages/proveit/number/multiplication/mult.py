@@ -16,7 +16,8 @@ class Mult(Operation):
     
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
         from ._theorems_ import multIntClosure, multNatClosure, multNatPosClosure, multRealClosure, multRealPosClosure, multComplexClosure
-        print(numberSet)
+        numberSet = numberSet.number_set
+
         if numberSet == Integers:
             thm = multIntClosure
         elif numberSet == Naturals:
@@ -31,7 +32,8 @@ class Mult(Operation):
             thm = multComplexClosure
         else:
             raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
-        return thm.specialize({xMulti:self.operands}, assumptions=assumptions)
+        from proveit._common_ import AA
+        return thm.specialize({AA:self.operands}, assumptions=assumptions)
     
     def notEqual(self, rhs, assumptions=USE_DEFAULTS):
         from ._theorems_ import multNotEqZero
