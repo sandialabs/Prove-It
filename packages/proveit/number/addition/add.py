@@ -1,5 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS,StyleOptions, maybeFencedLatex
-from proveit._common_ import a, b, c, x, y
+from proveit import Literal, Operation, USE_DEFAULTS,StyleOptions, maybeFencedLatex, ProofFailure
+from proveit._common_ import a, b, c, l, m, n, x, y, AA, BB, CC, A, B, C
 from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit.number.numeral.deci import DIGITS
 import proveit.number.numeral.deci._theorems_
@@ -90,8 +90,7 @@ class Add(Operation):
         side effects for addition
         added by JML on 9/10/19
         '''
-        return
-        print("side effects")
+
         from proveit.number import zero
         yield self.deriveZeroFromNegSelf
         if (self.terms[0] == zero or self.terms[1] == zero) and len(self.terms) == 2:
@@ -103,17 +102,18 @@ class Add(Operation):
         Record the knownTruth in Add.knownEqualities, associated for
         each term.
         '''
+        from proveit.number import Neg
+        if isinstance(self.operands[0], Neg) or isinstance(self.operands[1], Neg):
+            return
         addition = knownTruth.lhs
         if not isinstance(addition, Add):
             raise ValueError("Expecting lhs of knownTruth to be of an Add expression")
         for term in addition.terms:
             Add.knownEqualities.setdefault(term, set()).add(knownTruth)
-        #yield self.deduceAddZero
-        yield self.deduceSubtraction(knownTruth.rhs)
-        #if len(addition.terms)==2:
+
+        if len(addition.terms)==2:
             # deduce the subtraction form: c-b=a from a+b=c
-            #print(self.deduceSubtraction(knownTruth.rhs))
-            #yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
+            yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
 
     def concludeStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
         '''
@@ -146,7 +146,6 @@ class Add(Operation):
                 idx = i
         nVal = len(self.terms) -1 - idx
         print(nVal)
-        #print(strictlyDecreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
         return strictlyDecreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx +1:]}, assumptions=assumptions)
 
 
@@ -159,7 +158,7 @@ class Add(Operation):
         if len(self.terms) != 2:
             raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
         deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
-        print("deducation", deduction)
+        print("deduction", deduction)
         return deduction
 
     def deduceAddZero(self, assumptions=USE_DEFAULTS):
@@ -173,7 +172,6 @@ class Add(Operation):
             value = 0
         elif self.terms[0] == zero:
             value = 1
-        print(self)
         return addZero.specialize({x:self.terms[value]}, assumptions=assumptions)
 
     def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
@@ -289,7 +287,7 @@ class Add(Operation):
         from proveit._common_  import AA, B, CC, m,n
         # first make sure all the terms are in Naturals
         for term in self.operands:
-            deduceInNaturals(term, assumptions)
+            deduceInNumberSet(term, assumptions)
         for k, term in enumerate(self.operands):
             #try:
                 # found one positive term to make the sum positive
@@ -299,6 +297,46 @@ class Add(Operation):
                # pass
         # need to have one of the elements positive for the sum to be positive
         raise DeduceInNumberSetException(self, NaturalsPos, assumptions)
+
+    def deduceInNumberSet(self, NumberSet,assumptions=USE_DEFAULTS):
+        '''
+        given a number set, attempt to prove that the given expression is in that
+        number set using the appropriate closure theorem
+        '''
+
+        from proveit.number.addition._theorems_ import addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure, addNatPosClosure, addRealClosureBin, addRealClosure, addComplexClosureBin, addComplexClosure
+        from proveit.number import num, Greater, Integers, Naturals, Reals, Complexes, NaturalsPos, zero
+        if NumberSet == Integers:
+            if len(self.operands) == 2:
+                return addIntClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addIntClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+        if NumberSet == Naturals:
+            if len(self.operands) == 2:
+                return addNatClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addNatClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+        if NumberSet == NaturalsPos:
+            val = -1
+            for i, operand in enumerate(self.operands):
+                try:
+                    Greater(operand, zero).prove(assumptions=assumptions)
+                    val = i
+                    print(b)
+                    break
+                except ProofFailure:
+                    pass
+            if val == -1:
+                raise ValueError("Expecting at least one value to be greater than zero")
+            print(len(self.operands))
+            return addNatPosClosure.specialize({m: num(val), n:num(len(self.operands) - val - 1), AA:self.operands[:val], B: self.operands[val], CC: self.operands[val + 1:]}, assumptions=assumptions)
+        if NumberSet == Reals:
+            if len(self.operands) == 2:
+                return addRealClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addRealClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+        if NumberSet == Complexes:
+            if len(self.operands) == 2:
+                return addComplexClosureBin.specialize({a:self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addComplexClosure.specialize({m:num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+
 
     def deduceStrictIncrease(self, lowerBoundTermIndex, assumptions=frozenset()):
         '''
