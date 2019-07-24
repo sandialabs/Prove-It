@@ -153,12 +153,12 @@ class Add(Operation):
         '''
         From (a + b) = rhs, derive and return rhs - b = a.
         '''
-        print(self)
+        #print(self)
         from proveit.number.addition.subtraction._theorems_ import subtractFromAdd
         if len(self.terms) != 2:
             raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
         deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
-        print("deduction", deduction)
+        #print("deduction", deduction)
         return deduction
 
     def deduceAddZero(self, assumptions=USE_DEFAULTS):
@@ -202,8 +202,8 @@ class Add(Operation):
             raise IndexError("Beginning and end value must be of the form beginning < end.")
         if end > len(self.operands) -1:
             raise IndexError("End value must be less than length of expression.")
-        print(group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions))
-        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions)
+        #print(group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions))
+        return group.specialize({l :num(beg), m:num(end - beg + 1), n: num(len(self.terms) - end - 1), AA:self.terms[:beg], BB:self.terms[beg : end + 1], CC: self.terms[end+1:]}, assumptions=assumptions)
 
 
     def deriveZeroFromNegSelf(self, assumptions=USE_DEFAULTS):
@@ -213,6 +213,100 @@ class Add(Operation):
         '''
         from ._theorems_ import addNegSelf
         return addNegSelf.specialize({x:self.terms[0]}, assumptions=assumptions)
+
+    def createDict(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML 7/24/19
+        creates a dictionary from an addition expression where the keys are either a literal, or the variables themselves
+        '''
+        from proveit import Variable
+        from proveit.number import one, two, num
+        from proveit import ExprList
+        hold = {}
+        hold["Lit"] = []
+        other = []
+        for i, val in enumerate(self.operands):
+            if isinstance(val, Add):
+                other = [val.operands]
+                print("other", other)
+            if isinstance(val, Literal):
+                hold["Lit"].append([i, val])
+            elif isinstance(val, Variable):
+                if val in hold:
+                    hold[val].append([i, one])
+                else:
+                    hold[val] = [[i, one]]
+            if len(other) != 0:
+                print("length of other is greater than 0:", len(other), other[0][0])
+                if isinstance(other[0][0], Literal):
+
+                    hold["Lit"].append([i, other])
+                elif isinstance(other[0][0], Variable):
+                    if val in hold:
+                        hold[other[0][0]].append([i, two])
+                    else:
+                        hold[other[0][0]] = [[i, two]]
+            other = []
+        print(hold)
+        return hold
+
+    def simplifications(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML on 7/24/19
+        combine like terms
+        '''
+        from proveit import Variable
+        from proveit.number import zero, one
+
+        expr = self
+        # separate the types of operands in a dictionary
+        hold = expr.createDict(assumptions)
+        for key in hold:
+            # loop through all the keys (literals, and any variable keys)
+            print("before loop",hold[key], key)
+            for l, item in enumerate(hold[key]):
+                # loop through all the values in each key
+                print("in loop, l, item, len (l < len)", l, item, len(hold[key])-1)
+                if l < len(hold[key]) - 1:
+                    # this if statement ensures that we don't go out of the range of values for each key
+                    print("before if", hold[key][l][0], hold[key][l+1][0] - 1)
+                    if hold[key][l][0] != hold[key][l+1][0] - 1:
+                        # if the index of the first item in the values is not one less than the index of the second value,
+                        # then they are not next to each other in the expression.
+                        # Swap the second value with whatever is next to the first item.
+                        print("in if", hold[key][l][0], hold[key][l+1][0])
+                        print("swap values",hold[key][l][0]+1, hold[key][l+1][0])
+                        print(expr.deriveSwap(hold[key][l][0]+1, hold[key][l+1][0], assumptions=assumptions))
+                        expr = expr.deriveSwap(hold[key][l][0] + 1, hold[key][l + 1][0], assumptions=assumptions).rhs
+                        # rewrite the dictionary to reflect this change
+                        hold = expr.createDict(assumptions)
+                        print("new dict after swap", hold)
+                elif expr.operands[len(expr.operands)-1] == key:
+                    # if the index of the first item in the values is not one less than the index of the second value,
+                    # then they are not next to each other in the expression.
+                    # Swap the second value with whatever is next to the first item.
+                    print("in elif: last, key", expr.operands[len(expr.operands - 1)], key)
+                    print("swap values", hold[key][l][0] + 1, expr.operands[len(expr.operands - 1)])
+                    print(expr.deriveSwap(hold[key][l][0] + 1,expr.operands[len(expr.operands - 1)], assumptions=assumptions))
+                    expr = expr.deriveSwap(hold[key][l][0] + 1, expr.operands[len(expr.operands - 1)], assumptions=assumptions).rhs
+                    # rewrite the dictionary to reflect this change
+                    hold = expr.createDict(assumptions)
+                    print("new dict after swap", hold)
+
+                    # if the index of the first item in the values is one less than the index of the second value,
+                    # they must be next to each other in the expression.  Group them to prevent swapping them away
+                    # from each other.
+                if hold[key][1][0] != len(expr.operands) -1:
+                    if expr.operands[hold[key][1][0]] == expr.operands[hold[key][1][0] + 1] or (isinstance(expr.operands[hold[key][1][0]], Literal) and isinstance(expr.operands[hold[key][1][0] + 1], Literal)):
+                        print("in else", hold[key][l][0], hold[key][l + 1][0])
+                        print("group values", hold[key][l][0], hold[key][l + 1][0])
+                        expr = expr.deriveGroup(hold[key][l][0], hold[key][l + 1][0], assumptions=assumptions).rhs
+                        print(expr)
+                        # rewrite the dictionary to reflect this change
+                        hold = expr.createDict(assumptions)
+                        print("new dict after group", hold)
+
+        return expr
     """
     def simplification(self, assumptions=frozenset()):
         '''
@@ -236,7 +330,7 @@ class Add(Operation):
             return eq.update(addZero.specialize({x:expr.operands[1]}))
         except ValueError:
             raise ValueError('Only trivial simplification is implemented (zero term)')
-            #self.sort()
+
 
     def simplified(self, assumptions=frozenset()):
         '''
@@ -246,7 +340,6 @@ class Add(Operation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         return self.simplification(assumptions).rhs
-
     """
     def subtractionFolding(self, termIdx=None, assumptions=frozenset()):
         '''
