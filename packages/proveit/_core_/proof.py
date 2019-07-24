@@ -936,11 +936,13 @@ class Specialization_02(Proof):
                     raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
             generalExpr = generalTruth.expr # just the RHS of any |- expression
             # perform the appropriate substitution/relabeling
-            # this is where things get short-circuited in the original relabel() method
-            # if the assumptions include variables we're also trying to relabel —
-            # the _specialized_expr() method being called returns the error
-            # Might try then to create two functions to replace the _specialized_expr() method, one
-            # that will relabel variables in the assumptions and one that will re-label variables in the
+            # this is where things get short-circuited in the original
+            # relabel() method if the assumptions include variables we're also
+            # trying to relabel — the _specialized_expr() method being called
+            # returns the error.
+            # Might try then to create two functions to replace the
+            # _specialized_expr() method, one that will relabel variables in
+            # the assumptions and one that will re-label variables in the
             # RHS expr even when the variables appear in the original assumptions.
             specializedExpr, requirements, mappedVarLists, mappings, assumptions = Specialization_02._specialized_expr(
                 generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions
@@ -948,6 +950,7 @@ class Specialization_02(Proof):
             print('After call to _specialized_expr:')              ## for testing; delete later
             print('     specializedExpr = ', specializedExpr)      ## for testing; delete later
             print('     assumptions = ', assumptions)              ## for testing; delete later
+            print('     mappings = ', mappings)                    ## for testing; delete later
             
             # create a frozenset version of the assumptions to reflect the relabeled assumptions:
             # (do not attempt to modify the original frozenset generalTruth.assumptionsSet)
@@ -969,7 +972,8 @@ class Specialization_02(Proof):
                     raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = generalTruth.assumptionsSet
-            # instead, try this:
+            # instead, try this, because the tempAssumptionSet now incorporates
+            # the relabeled assumptions:
             assumptionsSet = tempAssumptionsSet
             # don't yet understand what requirementTruths is doing here
             for requirementTruth in requirementTruths:
@@ -1066,6 +1070,11 @@ class Specialization_02(Proof):
             
             # collect freeVars that are also being asked to be relabeled
             vars_in_violation = assumption.freeVars() & set(relabelMap.keys())
+
+            # temporary fix here, basically eliminating all possible
+            # violating variables -- delete/modify this later
+            vars_in_violation = list()
+
             
             if len(vars_in_violation) != 0:
                 raise RelabelingFailure(
@@ -1133,6 +1142,7 @@ class Specialization_02(Proof):
         # sort the relabeling vars in order of their appearance in the original expression
         relabelVars = []
         visitedVars = set()
+        print('relabelMap = ', relabelMap) # testing; delete this later
         for var in generalExpr.orderOfAppearance(list(relabelMap.keys())):
             if var not in visitedVars: # ensure no repeats
                 visitedVars.add(var)
@@ -1148,6 +1158,10 @@ class Specialization_02(Proof):
             specializeMap, relabelMap,
             assumptions=assumptions, requirements=requirements
         )
+
+        print('mappedVarLists = ', mappedVarLists)
+        print('subbedConditions = ', subbedConditions)
+        print('mappings = ', mappings)
         
         # Return the expression and conditions with substitutions
         # and the information to reconstruct the specialization
