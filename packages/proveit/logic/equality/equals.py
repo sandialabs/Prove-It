@@ -54,7 +54,6 @@ class Equals(TransitiveRelation):
         derivations are also attempted depending upon the form of
         this equality.
         '''
-        print("beg equal side effects", self)
         from proveit.logic.boolean._common_ import TRUE, FALSE
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
@@ -73,7 +72,6 @@ class Equals(TransitiveRelation):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             yield self.deriveViaBooleanEquality
         if hasattr(self.lhs, 'equalitySideEffects'):
-            print("before loop",self)
             for i, sideEffect in enumerate(self.lhs.equalitySideEffects(knownTruth)):
                 yield sideEffect
         
