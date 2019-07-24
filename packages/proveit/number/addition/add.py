@@ -108,9 +108,12 @@ class Add(Operation):
             raise ValueError("Expecting lhs of knownTruth to be of an Add expression")
         for term in addition.terms:
             Add.knownEqualities.setdefault(term, set()).add(knownTruth)
-        if len(addition.terms)==2:
-            # deduce the subtraction form: c-b=a from a+b=c 
-            yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
+        #yield self.deduceAddZero
+        yield self.deduceSubtraction(knownTruth.rhs)
+        #if len(addition.terms)==2:
+            # deduce the subtraction form: c-b=a from a+b=c
+            #print(self.deduceSubtraction(knownTruth.rhs))
+            #yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
 
     def concludeStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
         '''
@@ -151,10 +154,12 @@ class Add(Operation):
         '''
         From (a + b) = rhs, derive and return rhs - b = a.
         '''
+        print(self)
         from proveit.number.addition.subtraction._theorems_ import subtractFromAdd
         if len(self.terms) != 2:
             raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
         deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
+        print("deducation", deduction)
         return deduction
 
     def deduceAddZero(self, assumptions=USE_DEFAULTS):
