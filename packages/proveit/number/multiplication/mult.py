@@ -120,11 +120,11 @@ class Mult(Operation):
         Give any assumptions necessary to prove that the operands are in 
         Complexes so that the commutation theorem is applicable.
         '''
-        from ._axioms_ import multAssoc
+        from ._theorems_ import multAssoc
         xSub = self.operands[:startIdx] if startIdx is not None else []
         ySub = self.operands[startIdx:endIdx]
         zSub = self.operands[endIdx:] if endIdx is not None else []
-        return multAssoc.specialize({xMulti:xSub, yMulti:ySub, zMulti:zSub}, assumptions=assumptions)
+        return multAssoc.specialize({AA:xSub, BB:ySub, CC:zSub}, assumptions=assumptions)
 
     def ungroup(self, idx, assumptions=USE_DEFAULTS):
         '''
