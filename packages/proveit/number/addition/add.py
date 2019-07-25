@@ -205,6 +205,24 @@ class Add(Operation):
         #print(group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions))
         return group.specialize({l :num(beg), m:num(end - beg + 1), n: num(len(self.terms) - end - 1), AA:self.terms[:beg], BB:self.terms[beg : end + 1], CC: self.terms[end+1:]}, assumptions=assumptions)
 
+    def deriveUnGroup(self, beg, assumptions=USE_DEFAULTS):
+        '''
+        From (A + B ... + (l + ... + M) + ... + X + Z), assuming in Reals and given beginning and end of group, derive
+        and return (A + B + ... + Y + Z).
+        Created by JML on 7/25/19
+        '''
+        from ._theorems_ import unGroup
+        from proveit.number import num
+        from proveit._common_ import l, m, n, AA, BB, CC, DD, EE
+        if beg > len(self.operands) -1:
+            raise IndexError("End value must be less than length of expression.")
+        if not isinstance(self.operands[beg], Add):
+            raise ValueError("Expecting operand at %s to be an add expression" %str(beg))
+        print("index",beg)
+        print("m", num(len(self.operands[beg].operands)))
+        print("n", num(len(self.terms) - beg - 1))
+        #print(group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions))
+        return unGroup.specialize({l :num(beg), m:num(len(self.operands[beg].operands)), n: num(len(self.terms) - beg - 1), AA:self.terms[:beg], BB:self.operands[beg].terms[0:], CC: self.terms[beg+1:]}, assumptions=assumptions)
 
     def deriveZeroFromNegSelf(self, assumptions=USE_DEFAULTS):
         '''
@@ -226,87 +244,210 @@ class Add(Operation):
         hold["Lit"] = []
         other = []
         for i, val in enumerate(self.operands):
+            # loop through each operand
             if isinstance(val, Add):
+                # must be grouped, set other = to the operands
                 other = [val.operands]
                 print("other", other)
             if isinstance(val, Literal):
+                # must be a number, put it in key: Lit
                 hold["Lit"].append([i, val])
             elif isinstance(val, Variable):
+                # is a variable, either create a new key  or put in existing key
                 if val in hold:
                     hold[val].append([i, one])
                 else:
                     hold[val] = [[i, one]]
             if len(other) != 0:
+                # there is a group of values
                 print("length of other is greater than 0:", len(other), other[0][0])
                 if isinstance(other[0][0], Literal):
-
+                    # if the group is a literal, put it in Lit
                     hold["Lit"].append([i, other])
                 elif isinstance(other[0][0], Variable):
-                    if val in hold:
-                        hold[other[0][0]].append([i, two])
+                    # if its a variable, check to see if a key already exists
+                    if other[0][0] in hold:
+                        hold[other[0][0]].append([i, num(len(other[0]))])
                     else:
-                        hold[other[0][0]] = [[i, two]]
+                        hold[other[0][0]] = [[i, num(len(other[0]))]]
             other = []
         print(hold)
         return hold
 
-    def simplifications(self, assumptions=USE_DEFAULTS):
+    def groupLikeTerms(self, assumptions=USE_DEFAULTS):
+        '''
+        Given an expression, group terms that are similar
+        created by JML 7/25/19
+        '''
+
+        m = 0
+        expr = self
+        length = len(expr.operands)
+        while m < length:
+            # we will cycle through all values in the expression.
+            print("m",m)
+            if m + 1 < length - 1:
+                # check to see if we have reached the end
+                idx = 1
+                One = expr.operands[m]
+                Two = expr.operands[m + idx]
+                print("one, two", One, Two)
+                print("==", One ==  Two, "literal:", (isinstance(One, Literal) and isinstance(Two, Literal)))
+                new = False
+                while One == Two or (isinstance(One, Literal) and isinstance(Two, Literal)):
+                    # check to see if the current value is equal to the rest of the values
+                    print("in loop idx", idx)
+                    idx += 1
+                    if idx < length - 1:
+                        Two = expr.operands[m + idx]
+                        new = True
+                        print("new two", Two)
+                print("idx before -1",idx)
+                if new: idx -= 1
+                print("idx after loop", idx)
+                print("m+idx", expr.operands[m+idx])
+                print("==", One, expr.operands[m + idx], "literal:", isinstance(One, Literal), isinstance(expr.operands[m+idx], Literal))
+                if One == expr.operands[m + idx] or (isinstance(One, Literal) and isinstance(expr.operands[m+idx], Literal)):
+                    print("going to group", m , idx)
+                    expr = expr.deriveGroup(m, m + idx, assumptions).rhs
+                    print("after group", expr)
+                    length -= idx
+            m += 1
+
+        return expr
+
+    def simplification(self, assumptions=USE_DEFAULTS):
         '''
         created by JML on 7/24/19
         combine like terms
         '''
         from proveit import Variable
         from proveit.number import zero, one
+        from proveit.logic import Equals
 
         expr = self
         # separate the types of operands in a dictionary
         hold = expr.createDict(assumptions)
+
+        #key = len(hold.keys())
+        #print("key",key)
         for key in hold:
             # loop through all the keys (literals, and any variable keys)
             print("before loop",hold[key], key)
+            print("values per key", len(hold[key]))
+            size = len(hold[key])
             for l, item in enumerate(hold[key]):
+                place = l
                 # loop through all the values in each key
-                print("in loop, l, item, len (l < len)", l, item, len(hold[key])-1)
-                if l < len(hold[key]) - 1:
-                    # this if statement ensures that we don't go out of the range of values for each key
-                    print("before if", hold[key][l][0], hold[key][l+1][0] - 1)
-                    if hold[key][l][0] != hold[key][l+1][0] - 1:
-                        # if the index of the first item in the values is not one less than the index of the second value,
-                        # then they are not next to each other in the expression.
-                        # Swap the second value with whatever is next to the first item.
-                        print("in if", hold[key][l][0], hold[key][l+1][0])
-                        print("swap values",hold[key][l][0]+1, hold[key][l+1][0])
-                        print(expr.deriveSwap(hold[key][l][0]+1, hold[key][l+1][0], assumptions=assumptions))
-                        expr = expr.deriveSwap(hold[key][l][0] + 1, hold[key][l + 1][0], assumptions=assumptions).rhs
-                        # rewrite the dictionary to reflect this change
-                        hold = expr.createDict(assumptions)
-                        print("new dict after swap", hold)
+                print("in loop, place, item, size (place < size)", place, item, size-1)
+                if place < size - 1:
+                    # ensures that we cycle through all of the values for each key despite the changing length of
+                    # each key because of grouping.
+                    print("key", key)
+                    print("hold[key]", hold[key])
+                    print("place", place)
+                    print("hold[key][place]", hold[key][place])
+                    print("index", hold[key][place][0])
+                    print("key, hold[key], place, hold[key][place], index", key, hold[key], place, hold[key][place],
+                          hold[key][place][0])
+                    print("len of expr", len(expr.operands) - 1)
+                    if place != len(hold[key]) - 1:
+                        # this if statement ensures that we don't go out of the range of values for each key
+                        print("before if", hold[key][place][0], hold[key][place+1][0] - 1)
+                        if hold[key][place][0] != hold[key][place+1][0] - 1:
+                            # if the index of the first item in the values is not one less than the index of the second value,
+                            # then they are not next to each other in the expression.
+                            # We must group values that are similar in order to avoid undoing previous swapping.
+                            expr = expr.groupLikeTerms(assumptions)
+                            print("expr after group like terms", expr)
+                            # create new dictionary to reflect these changes.
+                            hold = expr.createDict(assumptions)
+                            print("new dict", hold)
+                            # Swap the second value with whatever is next to the first item.
+                            print("in if", hold[key][place][0], hold[key][place+1][0])
+                            print("swap values",hold[key][place][0]+1, hold[key][place+1][0])
+                            print(expr.deriveSwap(hold[key][place][0]+1, hold[key][place+1][0], assumptions=assumptions))
+                            expr = expr.deriveSwap(hold[key][place][0] + 1, hold[key][place + 1][0], assumptions=assumptions).rhs
+                            # ungroup the expression
+                            n = 0
+                            length = len(expr.operands) - 1
+                            while n < length:
+                                # loop through all operands
+                                print("n, length", n, length)
+                                if isinstance(expr.operands[n], Add):
+                                    # if it is grouped, ungroup it
+                                    print("to ungroup")
+                                    expr = expr.deriveUnGroup(n, assumptions).rhs
+                                    print("new expr",expr)
+                                length = len(expr.operands)
+                                n += 1
+                            # rewrite the dictionary to reflect this change
+                            hold = expr.createDict(assumptions)
+                            print("new dict after swap", hold)
+                '''
                 elif expr.operands[len(expr.operands)-1] == key:
                     # if the index of the first item in the values is not one less than the index of the second value,
                     # then they are not next to each other in the expression.
+                    # We must group values that are similar in order to avoid undoing previous swapping.
+                    expr = expr.groupLikeTerms(assumptions)
+                    print("expr after group like terms", expr)
+                    # create new dictionary to reflect these changes.
+                    hold = expr.createDict(assumptions)
                     # Swap the second value with whatever is next to the first item.
-                    print("in elif: last, key", expr.operands[len(expr.operands - 1)], key)
-                    print("swap values", hold[key][l][0] + 1, expr.operands[len(expr.operands - 1)])
-                    print(expr.deriveSwap(hold[key][l][0] + 1,expr.operands[len(expr.operands - 1)], assumptions=assumptions))
-                    expr = expr.deriveSwap(hold[key][l][0] + 1, expr.operands[len(expr.operands - 1)], assumptions=assumptions).rhs
+                    print("in elif: last, key", expr.operands[len(expr.operands)-1], key)
+                    print("swap values", hold[key][place][0] + 1, len(expr.operands )-1)
+                    print(expr.deriveSwap(hold[key][place][0] + 1,len(expr.operands)-1, assumptions=assumptions))
+                    expr = expr.deriveSwap(hold[key][place][0] + 1, len(expr.operands) -1, assumptions=assumptions).rhs
                     # rewrite the dictionary to reflect this change
                     hold = expr.createDict(assumptions)
                     print("new dict after swap", hold)
-
+                    # ungroup the expression
+                    n = 0
+                    length = len(expr.operands) - 1
+                    while n < length:
+                        print("n, length", n, length)
+                        # loop through all operands
+                        if isinstance(expr.operands[n], Add):
+                            # if it is grouped, ungroup it
+                            print("to ungroup")
+                            expr = expr.deriveUnGroup(n, assumptions).rhs
+                            print("new expr", expr)
+                        length = len(expr.operands)
+                        n += 1
                     # if the index of the first item in the values is one less than the index of the second value,
                     # they must be next to each other in the expression.  Group them to prevent swapping them away
                     # from each other.
-                if hold[key][1][0] != len(expr.operands) -1:
-                    if expr.operands[hold[key][1][0]] == expr.operands[hold[key][1][0] + 1] or (isinstance(expr.operands[hold[key][1][0]], Literal) and isinstance(expr.operands[hold[key][1][0] + 1], Literal)):
-                        print("in else", hold[key][l][0], hold[key][l + 1][0])
-                        print("group values", hold[key][l][0], hold[key][l + 1][0])
-                        expr = expr.deriveGroup(hold[key][l][0], hold[key][l + 1][0], assumptions=assumptions).rhs
+                '''
+                '''
+                if place <= len(hold[key]) - 1: # and hold[key][place][0] != len(expr.operands) -1:
+                    # as long as we haven't gotten to the last value of a key (and we are not currently the last value
+                    # of the expression - a given if we are not the last value of a key), we can group all of the values
+                    # that are similar that we have seen so far, together.
+                    check = expr.operands[hold[key][0][0]]
+                    if isinstance(check, Add):
+                        expr = expr.deriveUnGroup(hold[key][0][0], assumptions)
+                    if isinstance(expr.operands[hold[key][place][0] + 1], Add):
+                        expr = expr.deriveUnGroup(hold[key][place][0], assumptions)
+                    if check == expr.operands[hold[key][place][0] + 1] or (isinstance(check, Literal) and isinstance(expr.operands[hold[key][place][0] + 1], Literal)):
+                        # as long as the first value in the key equals the current value of the key + 1 or they are both
+                        # literals, we can group the entire set.
+                        print("in else", hold[key][0][0], hold[key][place + 1][0])
+                        print("group values", hold[key][0][0], hold[key][place + 1][0])
+                        expr = expr.deriveGroup(hold[key][0][0], hold[key][place + 1][0], assumptions=assumptions).rhs
                         print(expr)
                         # rewrite the dictionary to reflect this change
                         hold = expr.createDict(assumptions)
                         print("new dict after group", hold)
-
-        return expr
+                        group = True
+                        # we have just grouped
+                    else:
+                        # we have not grouped
+                        group = False
+                else:
+                    # we have not grouped
+                    group = False
+                '''
+        return Equals(self,expr)
     """
     def simplification(self, assumptions=frozenset()):
         '''
@@ -487,7 +628,7 @@ class Add(Operation):
         zSub = self.operands[endIdx2:] if endIdx2 is not None else []
         deduceInComplexes(self.operands, assumptions)
         return addComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}, assumptions=assumptions)
-    
+    """
     def group(self, startIdx=None, endIdx=None, assumptions=frozenset()):
         '''
         Group together (associate as a sub-sum wrapped in parenthesis)
@@ -521,7 +662,7 @@ class Add(Operation):
         ySub = self.operands[idx].operands
         zSub = self.operands[idx+1:] if idx is not None else []
         return addAssocRev.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
-
+    """
     def factor(self, theFactor, pull="left", groupFactor=True, assumptions=frozenset()):
         '''
         Factor out "theFactor" from this sum, pulling it either to the "left" or "right".
