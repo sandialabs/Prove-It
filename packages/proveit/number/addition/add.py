@@ -161,6 +161,38 @@ class Add(Operation):
         #print("deduction", deduction)
         return deduction
 
+    def deriveMultDef(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML on 7/25/19
+        Given the addition of the same values, derive the multiplication
+        a + a + a = 3 * a
+        '''
+        from proveit.number import num, Mult
+
+        for operand in self.operands:
+            if self.operands[1] != operand:
+                raise ValueError("Expecting inputs to be equal to each other.")
+        return Mult(num(len(self.operands)), self.operands[0]).concludeMultDef(self, assumptions).rhs
+
+    def deriveExpandedMultDef(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        created by JML on 7/25/19
+        given an addition where there is a group of the same values, derive the multiplication
+        a + (b + b + b) + c = a + (3 * b) + c
+        '''
+        from ._theorems_ import expandedMultDef
+        from proveit.number import num
+        if not isinstance(self.operands[idx], Add):
+            raise ValueError("expecting group at %s to be addition"%str(idx))
+        print(self.operands[idx].operands)
+        for operand in self.operands[idx].operands:
+            print(operand)
+            if self.operands[idx].operands[0] != operand:
+                raise ValueError("Expecting inputs to be equal to each other.")
+        print("on to specialization")
+        print(expandedMultDef.specialize({l:num(idx),m:num(len(self.operands[idx].operands)),n:num(len(self.operands)-1 - idx), AA:self.operands[:idx],BB:self.operands[idx].operands,CC:self.operands[idx + 1:]}, assumptions=assumptions))
+        return expandedMultDef.specialize({l:num(idx),m:num(len(self.operands[idx].operands)),n:num(len(self.operands)-1 - idx), AA:self.operands[:idx],BB:self.operands[idx].operands,CC:self.operands[idx + 1:]}, assumptions=assumptions)
+
     def deduceAddZero(self, assumptions=USE_DEFAULTS):
         '''
         added by JML on 9/10/19
@@ -404,9 +436,10 @@ class Add(Operation):
         # combine like terms
         for key in hold:
             # loop through all the different types of terms
-            
-            if key == "Lit":
-                self = self.evaluation(assumptions)
+            if key != "lit":
+                return "test"
+            else:
+                expr = expr.evaluation(assumptions)
         return Equals(self,expr).prove(assumptions)
     """
     def simplification(self, assumptions=frozenset()):
