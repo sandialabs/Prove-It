@@ -98,7 +98,7 @@ class Greater(GreaterRelation):
         from proveit.number import Add
 
         if isinstance(self.lhs,Add):
-            self.lhs.concludeStrictIncAdd(self.rhs, assumptions)
+            return self.lhs.concludeStrictIncAdd(self.rhs, assumptions)
         else:
             raise ValueError("expected self.lhs to be addition")
 

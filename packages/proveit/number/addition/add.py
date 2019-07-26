@@ -1,5 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS,StyleOptions, maybeFencedLatex
-from proveit._common_ import a, b, c, x, y
+from proveit import Literal, Operation, USE_DEFAULTS,StyleOptions, maybeFencedLatex, ProofFailure
+from proveit._common_ import a, b, c, l, m, n, x, y, AA, BB, CC, A, B, C
 from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit.number.numeral.deci import DIGITS
 import proveit.number.numeral.deci._theorems_
@@ -90,8 +90,7 @@ class Add(Operation):
         side effects for addition
         added by JML on 9/10/19
         '''
-        return
-        print("side effects")
+
         from proveit.number import zero
         yield self.deriveZeroFromNegSelf
         if (self.terms[0] == zero or self.terms[1] == zero) and len(self.terms) == 2:
@@ -103,17 +102,18 @@ class Add(Operation):
         Record the knownTruth in Add.knownEqualities, associated for
         each term.
         '''
+        from proveit.number import Neg
+        if isinstance(self.operands[0], Neg) or isinstance(self.operands[1], Neg):
+            return
         addition = knownTruth.lhs
         if not isinstance(addition, Add):
             raise ValueError("Expecting lhs of knownTruth to be of an Add expression")
         for term in addition.terms:
             Add.knownEqualities.setdefault(term, set()).add(knownTruth)
-        #yield self.deduceAddZero
-        yield self.deduceSubtraction(knownTruth.rhs)
-        #if len(addition.terms)==2:
+
+        if len(addition.terms)==2:
             # deduce the subtraction form: c-b=a from a+b=c
-            #print(self.deduceSubtraction(knownTruth.rhs))
-            #yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
+            yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
 
     def concludeStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
         '''
@@ -146,7 +146,6 @@ class Add(Operation):
                 idx = i
         nVal = len(self.terms) -1 - idx
         print(nVal)
-        #print(strictlyDecreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx+1:]}, assumptions=assumptions))
         return strictlyDecreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx +1:]}, assumptions=assumptions)
 
 
@@ -154,13 +153,45 @@ class Add(Operation):
         '''
         From (a + b) = rhs, derive and return rhs - b = a.
         '''
-        print(self)
+        #print(self)
         from proveit.number.addition.subtraction._theorems_ import subtractFromAdd
         if len(self.terms) != 2:
             raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
         deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
-        print("deducation", deduction)
+        #print("deduction", deduction)
         return deduction
+
+    def deriveMultDef(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML on 7/25/19
+        Given the addition of the same values, derive the multiplication
+        a + a + a = 3 * a
+        '''
+        from proveit.number import num, Mult
+
+        for operand in self.operands:
+            if self.operands[1] != operand:
+                raise ValueError("Expecting inputs to be equal to each other.")
+        return Mult(num(len(self.operands)), self.operands[0]).concludeMultDef(self, assumptions).rhs
+
+    def deriveExpandedMultDef(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        created by JML on 7/25/19
+        given an addition where there is a group of the same values, derive the multiplication
+        a + (b + b + b) + c = a + (3 * b) + c
+        '''
+        from ._theorems_ import expandedMultDef
+        from proveit.number import num
+        if not isinstance(self.operands[idx], Add):
+            raise ValueError("expecting group at %s to be addition"%str(idx))
+        print(self.operands[idx].operands)
+        for operand in self.operands[idx].operands:
+            print(operand)
+            if self.operands[idx].operands[0] != operand:
+                raise ValueError("Expecting inputs to be equal to each other.")
+        print("on to specialization")
+        print(expandedMultDef.specialize({l:num(idx),m:num(len(self.operands[idx].operands)),n:num(len(self.operands)-1 - idx), AA:self.operands[:idx],BB:self.operands[idx].operands,CC:self.operands[idx + 1:]}, assumptions=assumptions))
+        return expandedMultDef.specialize({l:num(idx),m:num(len(self.operands[idx].operands)),n:num(len(self.operands)-1 - idx), AA:self.operands[:idx],BB:self.operands[idx].operands,CC:self.operands[idx + 1:]}, assumptions=assumptions)
 
     def deduceAddZero(self, assumptions=USE_DEFAULTS):
         '''
@@ -173,7 +204,6 @@ class Add(Operation):
             value = 0
         elif self.terms[0] == zero:
             value = 1
-        print(self)
         return addZero.specialize({x:self.terms[value]}, assumptions=assumptions)
 
     def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
@@ -197,6 +227,7 @@ class Add(Operation):
         (A + B ... + (l + ... + M) + ... + X + Z).
         Created by JML on 7/17/19
         '''
+        print("self, beg, end",self,beg,end)
         from ._theorems_ import group
         from proveit.number import num
         from proveit._common_ import l, m, n, AA, BB, CC, DD, EE
@@ -204,9 +235,22 @@ class Add(Operation):
             raise IndexError("Beginning and end value must be of the form beginning < end.")
         if end > len(self.operands) -1:
             raise IndexError("End value must be less than length of expression.")
-        print(group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions))
-        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.terms) - end), AA:self.terms[:beg], BB:self.terms[beg : end], CC: self.terms[end :]}, assumptions=assumptions)
+        return group.specialize({l :num(beg), m:num(end - beg + 1), n: num(len(self.terms) - end - 1), AA:self.terms[:beg], BB:self.terms[beg : end + 1], CC: self.terms[end+1:]}, assumptions=assumptions)
 
+    def deriveUnGroup(self, beg, assumptions=USE_DEFAULTS):
+        '''
+        From (A + B ... + (l + ... + M) + ... + X + Z), assuming in Reals and given beginning and end of group, derive
+        and return (A + B + ... + Y + Z).
+        Created by JML on 7/25/19
+        '''
+        from ._theorems_ import unGroup
+        from proveit.number import num
+        from proveit._common_ import l, m, n, AA, BB, CC, DD, EE
+        if beg > len(self.operands) -1:
+            raise IndexError("End value must be less than length of expression.")
+        if not isinstance(self.operands[beg], Add):
+            raise ValueError("Expecting operand at %s to be an add expression" %str(beg))
+        return unGroup.specialize({l :num(beg), m:num(len(self.operands[beg].operands)), n: num(len(self.terms) - beg - 1), AA:self.terms[:beg], BB:self.operands[beg].terms[0:], CC: self.terms[beg+1:]}, assumptions=assumptions)
 
     def deriveZeroFromNegSelf(self, assumptions=USE_DEFAULTS):
         '''
@@ -215,6 +259,188 @@ class Add(Operation):
         '''
         from ._theorems_ import addNegSelf
         return addNegSelf.specialize({x:self.terms[0]}, assumptions=assumptions)
+
+    def createDict(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML 7/24/19
+        creates a dictionary from an addition expression where the keys are either a literal, or the variables themselves
+        '''
+        from proveit import Variable
+        from proveit.number import one, two, num, Neg
+        from proveit import ExprList
+        hold = {}
+        hold["Lit"] = []
+        other = []
+        for i, val in enumerate(self.operands):
+            # loop through each operand
+            if isinstance(val, Neg):
+                # place it in the correct place regardless of negation
+                val = val.operands[0]
+            if isinstance(val, Add):
+                # must be grouped, set other = to the operands
+                other = [val.operands]
+            elif isinstance(val, Literal):
+                # must be a number, put it in key: Lit
+                hold["Lit"].append([i, val])
+            elif isinstance(val, Variable):
+                # is a variable, either create a new key  or put in existing key
+                if val in hold:
+                    hold[val].append([i, one])
+                else:
+                    hold[val] = [[i, one]]
+            else:
+                raise ValueError("simplification not implemented for %s in Add" %str(val))
+            if len(other) != 0:
+                # there is a group of values
+                val = other[0][0]
+                if isinstance(val, Neg):
+                    val = other[0][0].operand
+                if isinstance(val, Literal):
+                    # if the group is a literal, put it in Lit
+                    hold["Lit"].append([i, other])
+                elif isinstance(val, Variable):
+                    # if its a variable, check to see if a key already exists
+                    if val in hold:
+                        hold[val].append([i, num(len(other[0]))])
+                    else:
+                        hold[val] = [[i, num(len(other[0]))]]
+            other = []
+        return hold
+
+    def groupLikeTerms(self, assumptions=USE_DEFAULTS):
+        '''
+        Given an expression, group terms that are similar
+        created by JML 7/25/19
+        '''
+        from proveit.number import Neg
+        m = 0
+        expr = self
+        length = len(expr.operands)
+        while m < length:
+            # we will cycle through all values in the expression.
+            if m + 1 < length - 1:
+                # check to see if we have reached the end
+                idx = 1
+                One = expr.operands[m]
+                Two = expr.operands[m + idx]
+                if isinstance(One, Neg):
+                    One = expr.operands[m].operand
+                if isinstance(Two, Neg):
+                    Two = expr.operands[m + idx].operand
+                new = False # used to check if Two has changed
+                while One == Two or (isinstance(One, Literal) and isinstance(Two, Literal)):
+                    # check to see if the current value is equal to the rest of the values
+                    print("in loop idx, m", idx, m)
+                    idx += 1
+                    if m + idx < length - 1:
+                        Two = expr.operands[m + idx]
+                        if isinstance(Two, Neg):
+                            Two = expr.operands[m + idx].operand
+                        new = True
+                    else:
+                        break
+                if new: idx -= 1
+                Two = expr.operands[m + idx]
+                if isinstance(Two, Neg):
+                    Two = expr.operands[m + idx].operand
+                if One == Two or (isinstance(One, Literal) and isinstance(Two, Literal)):
+                    expr = expr.deriveGroup(m, m + idx, assumptions).rhs
+                    length -= idx
+            m += 1
+        return expr
+
+    def simplifications(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML on 7/24/19
+        combine like terms
+        '''
+        from proveit import Variable
+        from proveit.number import zero, one, Neg
+        from proveit.logic import Equals
+
+        expr = self
+        # ungroup the expression
+        n = 0
+        length = len(expr.operands) - 1
+        while n < length:
+            # loop through all operands
+            print("n, length", n, length)
+            if isinstance(expr.operands[n], Add):
+                # if it is grouped, ungroup it
+                print("to ungroup")
+                expr = expr.deriveUnGroup(n, assumptions).rhs
+                print("new expr", expr)
+            length = len(expr.operands)
+            n += 1
+        print("expr after initial ungroup",expr)
+        # separate the types of operands in a dictionary
+        hold = expr.createDict(assumptions)
+
+        # Group like terms
+        for key in hold:
+            # loop through all the keys (literals, and any variable keys)
+            print("before loop",hold[key], key)
+            size = len(hold[key])
+            for l, item in enumerate(hold[key]):
+                place = l
+                # loop through all the values in each key
+                print("in loop, place, item, size (place < size)", place, item, size-1)
+                if place < size - 1:
+                    # ensures that we cycle through all of the values for each key despite the changing length of
+                    # each key because of grouping.
+                    if place != len(hold[key]) - 1:
+                        # this if statement ensures that we don't go out of the range of values for each key
+                        print("before if", hold[key][place][0], hold[key][place+1][0] - 1)
+                        if hold[key][place][0] != hold[key][place+1][0] - 1:
+                            # if the index of the first item in the values is not one less than the index of the second value,
+                            # then they are not next to each other in the expression.
+                            # We must group values that are similar in order to avoid undoing previous swapping.
+                            expr = expr.groupLikeTerms(assumptions)
+                            print("expr after group like terms", expr)
+                            for term in expr.operands:
+                                # loop through all the operands
+                                if isinstance(term, Add):
+                                    val = term.operands[0]
+                                    if isinstance(val, Neg):
+                                        val = term.operands[0].operand
+                                    if (val == key or (key == "Lit" and isinstance(val, Literal))):
+                                        # if something is grouped and it is the same type as the current key, we assume
+                                        # that the original place has been put into the group or it is the first value
+                                        place = 0
+                            # create new dictionary to reflect these changes.
+                            hold = expr.createDict(assumptions)
+                            print("new dict", hold)
+                            # Swap the second value with whatever is next to the first item.
+                            print("place", place)
+                            print("in if", hold[key][place][0], hold[key][place+1][0])
+                            print("swap values",hold[key][place][0]+1, hold[key][place+1][0])
+                            print(expr.deriveSwap(hold[key][place][0]+1, hold[key][place+1][0], assumptions=assumptions))
+                            expr = expr.deriveSwap(hold[key][place][0] + 1, hold[key][place + 1][0], assumptions=assumptions).rhs
+                            # ungroup the expression
+                            n = 0
+                            length = len(expr.operands) - 1
+                            while n < length:
+                                # loop through all operands
+                                print("n, length", n, length)
+                                if isinstance(expr.operands[n], Add):
+                                    # if it is grouped, ungroup it
+                                    print("to ungroup")
+                                    expr = expr.deriveUnGroup(n, assumptions).rhs
+                                    print("new expr",expr)
+                                length = len(expr.operands)
+                                n += 1
+                            # rewrite the dictionary to reflect this change
+                            hold = expr.createDict(assumptions)
+                            print("new dict after swap", hold)
+                print("looping again", l, hold[key])
+        # combine like terms
+        for key in hold:
+            # loop through all the different types of terms
+            if key != "lit":
+                return "test"
+            else:
+                expr = expr.evaluation(assumptions)
+        return Equals(self,expr).prove(assumptions)
     """
     def simplification(self, assumptions=frozenset()):
         '''
@@ -238,7 +464,7 @@ class Add(Operation):
             return eq.update(addZero.specialize({x:expr.operands[1]}))
         except ValueError:
             raise ValueError('Only trivial simplification is implemented (zero term)')
-            #self.sort()
+
 
     def simplified(self, assumptions=frozenset()):
         '''
@@ -248,7 +474,6 @@ class Add(Operation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         return self.simplification(assumptions).rhs
-
     """
     def subtractionFolding(self, termIdx=None, assumptions=frozenset()):
         '''
@@ -289,7 +514,7 @@ class Add(Operation):
         from proveit._common_  import AA, B, CC, m,n
         # first make sure all the terms are in Naturals
         for term in self.operands:
-            deduceInNaturals(term, assumptions)
+            deduceInNumberSet(term, assumptions)
         for k, term in enumerate(self.operands):
             #try:
                 # found one positive term to make the sum positive
@@ -299,6 +524,46 @@ class Add(Operation):
                # pass
         # need to have one of the elements positive for the sum to be positive
         raise DeduceInNumberSetException(self, NaturalsPos, assumptions)
+
+    def deduceInNumberSet(self, NumberSet,assumptions=USE_DEFAULTS):
+        '''
+        given a number set, attempt to prove that the given expression is in that
+        number set using the appropriate closure theorem
+        '''
+
+        from proveit.number.addition._theorems_ import addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure, addNatPosClosure, addRealClosureBin, addRealClosure, addComplexClosureBin, addComplexClosure
+        from proveit.number import num, Greater, Integers, Naturals, Reals, Complexes, NaturalsPos, zero
+        if NumberSet == Integers:
+            if len(self.operands) == 2:
+                return addIntClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addIntClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+        if NumberSet == Naturals:
+            if len(self.operands) == 2:
+                return addNatClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addNatClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+        if NumberSet == NaturalsPos:
+            val = -1
+            for i, operand in enumerate(self.operands):
+                try:
+                    Greater(operand, zero).prove(assumptions=assumptions)
+                    val = i
+                    print(b)
+                    break
+                except ProofFailure:
+                    pass
+            if val == -1:
+                raise ValueError("Expecting at least one value to be greater than zero")
+            print(len(self.operands))
+            return addNatPosClosure.specialize({m: num(val), n:num(len(self.operands) - val - 1), AA:self.operands[:val], B: self.operands[val], CC: self.operands[val + 1:]}, assumptions=assumptions)
+        if NumberSet == Reals:
+            if len(self.operands) == 2:
+                return addRealClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addRealClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+        if NumberSet == Complexes:
+            if len(self.operands) == 2:
+                return addComplexClosureBin.specialize({a:self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addComplexClosure.specialize({m:num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+
 
     def deduceStrictIncrease(self, lowerBoundTermIndex, assumptions=frozenset()):
         '''
@@ -356,7 +621,7 @@ class Add(Operation):
         zSub = self.operands[endIdx2:] if endIdx2 is not None else []
         deduceInComplexes(self.operands, assumptions)
         return addComm.specialize({vEtc:vSub, wEtc:wSub, xEtc:xSub, yEtc:ySub, zEtc:zSub}, assumptions=assumptions)
-    
+    """
     def group(self, startIdx=None, endIdx=None, assumptions=frozenset()):
         '''
         Group together (associate as a sub-sum wrapped in parenthesis)
@@ -390,7 +655,7 @@ class Add(Operation):
         ySub = self.operands[idx].operands
         zSub = self.operands[idx+1:] if idx is not None else []
         return addAssocRev.specialize({xEtc:xSub, yEtc:ySub, zEtc:zSub}).checked(assumptions)
-
+    """
     def factor(self, theFactor, pull="left", groupFactor=True, assumptions=frozenset()):
         '''
         Factor out "theFactor" from this sum, pulling it either to the "left" or "right".

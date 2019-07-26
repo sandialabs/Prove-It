@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
 from proveit.logic import Equals, InSet
 from proveit.number.sets import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
-from proveit._common_ import a, b, c, d, n, v, w, x, y, z, vv, ww, xx, yy, zz, S
+from proveit._common_ import a, b, c, d, m, n, v, w, x, y, z, vv, ww, xx, yy, zz, S, AA
 
 class Mult(Operation):
     # operator of the Mult operation.
@@ -84,6 +84,21 @@ class Mult(Operation):
         '''
         return self.simplification(assumptions).rhs
         
+    def concludeMultDef(self, expr, assumptions=USE_DEFAULTS):
+        '''
+        created on 7/25/19 by JML
+        given the addition of the same thing, return the equality of the multiplication:
+        c + c + c = 3c
+        '''
+        from ._axioms_ import multDef
+        from proveit.number import num, Add
+        if not isinstance(expr, Add):
+            raise ValueError("Expecting expression to be addition")
+        for operand in expr.operands:
+            if self.operands[1] != operand:
+                raise ValueError("Expecting inputs to be equal to each other.")
+        return multDef.specialize({m:self.operands[0], AA:expr.operands, x: self.operands[1]}, assumptions=assumptions)
+
     def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=USE_DEFAULTS):
         '''
         Commute self.operands[startIdx1:endIdx1] with self.operands[startIdx2:endIdx2].  
@@ -120,11 +135,11 @@ class Mult(Operation):
         Give any assumptions necessary to prove that the operands are in 
         Complexes so that the commutation theorem is applicable.
         '''
-        from ._axioms_ import multAssoc
+        from ._theorems_ import multAssoc
         xSub = self.operands[:startIdx] if startIdx is not None else []
         ySub = self.operands[startIdx:endIdx]
         zSub = self.operands[endIdx:] if endIdx is not None else []
-        return multAssoc.specialize({xMulti:xSub, yMulti:ySub, zMulti:zSub}, assumptions=assumptions)
+        return multAssoc.specialize({AA:xSub, BB:ySub, CC:zSub}, assumptions=assumptions)
 
     def ungroup(self, idx, assumptions=USE_DEFAULTS):
         '''

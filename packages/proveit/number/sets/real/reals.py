@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS
+from proveit import USE_DEFAULTS, maybeFencedString
 from proveit._common_ import a
 from proveit.number.sets.number_set import NumberSet
 
@@ -12,8 +12,20 @@ class RealsPosSet(NumberSet):
     
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from real.theorems import inRealsPos_iff_positive
-        return inRealsPos_iff_positive.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)    
+        return inRealsPos_iff_positive.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)   
+    
+    def string(self, **kwargs):
+        inner_str = NumberSet.string(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        return maybeFencedString(inner_str, **kwargs)
 
+    def latex(self, **kwargs):
+        inner_str = NumberSet.latex(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        return maybeFencedString(inner_str, **kwargs)
+            
 class RealsNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
@@ -21,7 +33,18 @@ class RealsNegSet(NumberSet):
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from real.theorems import inRealsNeg_iff_negative
         return inRealsNeg_iff_negative.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)    
+    
+    def string(self, **kwargs):
+        inner_str = NumberSet.string(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        return maybeFencedString(inner_str, **kwargs)
 
+    def latex(self, **kwargs):
+        inner_str = NumberSet.latex(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        return maybeFencedString(inner_str, **kwargs)
 
 try:
     # Import some fundamental axioms and theorems without quantifiers.
