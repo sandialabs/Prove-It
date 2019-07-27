@@ -90,10 +90,12 @@ class Add(Operation):
         side effects for addition
         added by JML on 9/10/19
         '''
-
+        #print("sideEffects")
         from proveit.number import zero
+        #print("deriving zero from neg self")
         yield self.deriveZeroFromNegSelf
         if (self.terms[0] == zero or self.terms[1] == zero) and len(self.terms) == 2:
+           # print("deducing add zero")
             yield self.deduceAddZero
 
 
@@ -102,18 +104,23 @@ class Add(Operation):
         Record the knownTruth in Add.knownEqualities, associated for
         each term.
         '''
-        from proveit.number import Neg
+        #print("equality side Effects on", self)
+        from proveit.number import Neg, zero
         if isinstance(self.operands[0], Neg) or isinstance(self.operands[1], Neg):
+            #print("there is a neg:", self)
             return
         addition = knownTruth.lhs
         if not isinstance(addition, Add):
             raise ValueError("Expecting lhs of knownTruth to be of an Add expression")
         for term in addition.terms:
+            #print("adding known equalities:", term)
             Add.knownEqualities.setdefault(term, set()).add(knownTruth)
 
         if len(addition.terms)==2:
             # deduce the subtraction form: c-b=a from a+b=c
+            #print("deducing subtraction terms:", self)
             yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
+        
 
     def concludeStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
         '''
@@ -181,21 +188,36 @@ class Add(Operation):
         a + (b + b + b) + c = a + (3 * b) + c
         '''
         from ._theorems_ import expandedMultDef
-        from proveit.number import num
-        if not isinstance(self.operands[idx], Add):
-            raise ValueError("expecting group at %s to be addition"%str(idx))
-        print(self.operands[idx].operands)
-        for operand in self.operands[idx].operands:
-            print(operand)
-            if self.operands[idx].operands[0] != operand:
-                raise ValueError("Expecting inputs to be equal to each other.")
-        print("on to specialization")
-        print(expandedMultDef.specialize({l:num(idx),m:num(len(self.operands[idx].operands)),n:num(len(self.operands)-1 - idx), AA:self.operands[:idx],BB:self.operands[idx].operands,CC:self.operands[idx + 1:]}, assumptions=assumptions))
-        return expandedMultDef.specialize({l:num(idx),m:num(len(self.operands[idx].operands)),n:num(len(self.operands)-1 - idx), AA:self.operands[:idx],BB:self.operands[idx].operands,CC:self.operands[idx + 1:]}, assumptions=assumptions)
+        from proveit.number import num, Neg
+        expr = self
+        if not isinstance(expr.operands[idx], Add):
+            raise ValueError("Expecting value at %s to be grouped addition"%str(idx))
+
+        for i, operand in enumerate(expr.operands[idx].operands):
+            # loop through all the operands in the grouped idx
+            print("operand", operand)
+            print("expr.operands", expr.operands)
+            print("idx", idx)
+
+            if isinstance(expr.operands[idx], Add):
+                print("expr.operands[idx].operands[0]", expr.operands[idx].operands[0])
+                if expr.operands[idx].operands[0] != operand:
+                    # if they are not equal raise a valueError
+                    raise ValueError("Expecting inputs to be equal to each other.")
+
+        print("expr, idx", expr, idx)
+        print("l", num(idx))
+        print("m", num(len(expr.operands[idx].operands)))
+        print("m", num(len(expr.operands) - 1 - idx))
+        print("aa", expr.operands[:idx])
+        print("bb", expr.operands[idx].operands)
+        print("cc", expr.operands[idx + 1:])
+        print("x", expr.operands[idx].operands[0])
+        return expandedMultDef.specialize({l:num(idx),m:num(len(expr.operands[idx].operands)), n: num(len(expr.operands)-1 - idx), AA:expr.operands[:idx],BB:expr.operands[idx].operands,CC:expr.operands[idx + 1:], x:expr.operands[idx].operands[0]}, assumptions=assumptions)
 
     def deduceAddZero(self, assumptions=USE_DEFAULTS):
         '''
-        added by JML on 9/10/19
+        added by JML on 7/10/19
         Given x + 0 return x.
         '''
         from ._theorems_ import addZero
@@ -259,6 +281,74 @@ class Add(Operation):
         '''
         from ._theorems_ import addNegSelf
         return addNegSelf.specialize({x:self.terms[0]}, assumptions=assumptions)
+
+    def deriveExpandedNegSelf(self, idx=0, assumptions=USE_DEFAULTS):
+        '''
+        created by JML on 7/26/19
+        given an expression with a term that is a negation of itself cancel them out
+        a + b + (-b) + c = a + c
+        '''
+        from ._theorems_ import expandedAddNegSelf
+        from proveit.number import Neg, num
+        expr = self
+        print("self, idx in addNegSelf", expr, idx)
+        if len(expr.operands) ==2:
+            # the simple binary case
+            return expr.deriveZeroFromNegSelf(assumptions)
+        '''
+        # ungroup the expression
+        j = 0
+        length = len(expr.operands) - 1
+        while j < length:
+            # loop through all operands
+            print("j, length", j, length)
+            if isinstance(expr.operands[j], Add):
+                # if it is grouped, ungroup it
+                if j < idx:
+                    idx += len(expr.operands[j].operands)
+                # if there was any grouping prior to the index, account for it by adding the number of operands in the
+                # expression to the index
+                print("to ungroup")
+                expr = expr.deriveUnGroup(j, assumptions).rhs
+                print("new expr", expr)
+            length = len(expr.operands)
+            j += 1
+
+        if i != False:
+            idx += i
+        '''
+        if idx < 0 or idx > len(expr.operands) - 1:
+            raise IndexError("Index must be between 0 and %s"%str(len(expr.operands)-1))
+        if not isinstance(expr.operands[idx], Neg):
+            raise ValueError("Expecting value at %s to be negated"%str(idx))
+
+        #if not i:
+        if idx != len(expr.operands) - 1 and expr.operands[idx + 1] == expr.operands[idx].operand:
+            one = expr.operands[idx].operand
+            two = expr.operands[idx + 1]
+            oneIdx = idx
+            twoIdx = idx + 1
+        elif idx != 0 and expr.operands[idx - 1] == expr.operands[idx].operand:
+            one = expr.operands[idx - 1]
+            two = expr.operands[idx].operand
+            oneIdx = idx - 1
+            twoIdx = idx
+        else:
+            raise ValueError("Expecting a value next to %s to be equal to %s"%(str(expr.operands[idx]), str(expr.operands[idx].operand)))
+        '''
+        else:
+            oneIdx = idx
+            twoIdx = idx + 1
+            if i != len(self.operands[idx].operands) - 1 and self.operands[idx].operands[i + 1] == self.operands[idx].operands[i].operand:
+                one = self.operands[idx].operands[i].operand
+                two = self.operands[idx].operands[i + 1]
+            elif i != 0 and self.operands[idx].operands[i - 1] == self.operands[idx].operands[i].operand:
+                one = self.operands[idx].operands[i-1]
+                two = self.operands[idx].operands[i].operand
+            else:
+                raise ValueError("Expecting a value next to %s to be equal to %s"%(str(self.operands[idx]), str(self.operands[idx].operand)))
+        '''
+        return expandedAddNegSelf.specialize({m:num(oneIdx),n:num(len(expr.operands)-1-twoIdx), AA:expr.operands[:oneIdx], y:one, x:two, BB:expr.operands[twoIdx + 1:]}, assumptions=assumptions)
 
     def createDict(self, assumptions=USE_DEFAULTS):
         '''
@@ -434,12 +524,40 @@ class Add(Operation):
                             print("new dict after swap", hold)
                 print("looping again", l, hold[key])
         # combine like terms
+        # cancel negated terms if it can be done
+        j = 0
+        for i, operand in enumerate(expr.operands):
+            # loop through all the operands
+            if isinstance(operand, Neg):
+                # the operand is negated
+                print("expr, operand, j", expr, operand, j)
+                if j != len(expr.operands) - 1 and expr.operands[j + 1] == expr.operands[j].operand:
+                    expr = expr.deriveExpandedNegSelf(j, assumptions).rhs
+                    j -=2
+                elif j != 0 and expr.operands[j - 1] == expr.operands[j].operand:
+                    expr = expr.deriveExpandedNegSelf(j, assumptions).rhs
+                    j-=2
+            j += 1
+
+        # group the terms so we can easily combine them
+        expr = expr.groupLikeTerms(assumptions)
+        print("expr after group like terms", expr)
+        # rewrite the dictionary to reflect this change
+        hold = expr.createDict(assumptions)
+        print("new dict after swap", hold)
         for key in hold:
             # loop through all the different types of terms
             if key != "lit":
-                return "test"
+                # for all the keys that are not literals, derive the multiplication from the addition
+                print("hold[key][0][0]", hold[key][0][0])
+                if isinstance(expr.operands[hold[key][0][0]], Add):
+                    expr = expr.deriveExpandedMultDef(hold[key][0][0], assumptions).rhs
+                    # rewrite the dictionary to reflect this change
+                    hold = expr.createDict(assumptions)
+                    print("new dict after swap", hold)
             else:
-                expr = expr.evaluation(assumptions)
+                pass
+        expr = expr.evaluation(assumptions)
         return Equals(self,expr).prove(assumptions)
     """
     def simplification(self, assumptions=frozenset()):
