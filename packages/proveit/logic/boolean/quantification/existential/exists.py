@@ -22,6 +22,11 @@ class Exists(OperationOverInstances):
         '''
         Side-effect derivations to attempt automatically for an exists operations.
         '''
+        # temporarily insert a return here, short-circuiting the yield
+        # see related comments at
+        # https://stackoverflow.com/questions/6266561/how-to-write-python-generator-
+        # function-that-never-yields-anything
+        return
         yield self.deriveNegatedForall # derive the negated forall form
 
     def negationSideEffects(self, knownTruth):
@@ -68,7 +73,7 @@ class Exists(OperationOverInstances):
         From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
         From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
         '''
-        raise NotImplementedError("Need to update")
+        raise NotImplementedError("Need to update") # temporarily commented out for testing wdc 20190728
         from ._axioms_ import existsDef
         from ._theorems_ import existsNotImpliesNotForall
         from proveit.logic import Not
