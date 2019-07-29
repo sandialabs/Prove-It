@@ -356,13 +356,16 @@ class Add(Operation):
         creates a dictionary from an addition expression where the keys are either a literal, or the variables themselves
         '''
         from proveit import Variable
-        from proveit.number import one, two, num, Neg
+        from proveit.number import one, two, num, Neg, Mult
         from proveit import ExprList
         hold = {}
         hold["Lit"] = []
         other = []
         for i, val in enumerate(self.operands):
             # loop through each operand
+            if isinstance(val, Mult):
+                # place it in the correct place regardless of multiplication
+                val = val.operands[1]
             if isinstance(val, Neg):
                 # place it in the correct place regardless of negation
                 val = val.operands[0]
@@ -547,7 +550,7 @@ class Add(Operation):
         print("new dict after swap", hold)
         for key in hold:
             # loop through all the different types of terms
-            if key != "lit":
+            if key != "Lit":
                 # for all the keys that are not literals, derive the multiplication from the addition
                 print("hold[key][0][0]", hold[key][0][0])
                 if isinstance(expr.operands[hold[key][0][0]], Add):
@@ -557,7 +560,22 @@ class Add(Operation):
                     print("new dict after swap", hold)
             else:
                 pass
-        expr = expr.evaluation(assumptions)
+        print("expr after mult", expr)
+        # ungroup the expression
+        n = 0
+        length = len(expr.operands) - 1
+        while n < length:
+            # loop through all operands
+            print("n, length", n, length)
+            if isinstance(expr.operands[n], Add):
+                # if it is grouped, ungroup it
+                print("to ungroup")
+                expr = expr.deriveUnGroup(n, assumptions).rhs
+                print("new expr", expr)
+            length = len(expr.operands)
+            n += 1
+        #expr = expr.evaluation(assumptions).rhs
+        print("expr after evaluation", expr)
         return Equals(self,expr).prove(assumptions)
     """
     def simplification(self, assumptions=frozenset()):
