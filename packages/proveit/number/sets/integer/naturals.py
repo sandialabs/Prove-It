@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS
+from proveit import USE_DEFAULTS, maybeFencedString
 from proveit.logic import Membership
 from proveit.number.sets.number_set import NumberSet
 
@@ -23,6 +23,18 @@ class NaturalsPosSet(NumberSet):
     def deduceMemberLowerBound(self, member):
         from ._theorems_ import naturalsPosLowerBound
         return naturalsPosLowerBound.specialize({n:member})  
+    
+    def string(self, **kwargs):
+        inner_str = NumberSet.string(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        return maybeFencedString(inner_str, **kwargs)
+
+    def latex(self, **kwargs):
+        inner_str = NumberSet.latex(self, **kwargs)
+        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        return maybeFencedString(inner_str, **kwargs)
 
 class NaturalsMembership(Membership):
     '''

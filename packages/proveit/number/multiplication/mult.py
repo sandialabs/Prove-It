@@ -15,25 +15,56 @@ class Mult(Operation):
         self.factors = operands
     
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
-        from ._theorems_ import multIntClosure, multNatClosure, multNatPosClosure, multRealClosure, multRealPosClosure, multComplexClosure
-        numberSet = numberSet.number_set
-
+        from ._theorems_ import multIntClosure, multIntClosureBin, multNatClosure, multNatClosureBin, multNatPosClosure, multNatClosureBin, multRealClosure, multRealClosureBin, multRealPosClosure, multRealPosClosureBin, multComplexClosure, multComplexClosureBin
+        from proveit.number import num
+        if hasattr(self, 'number_set'):
+            numberSet = numberSet.number_set
+        bin = False
         if numberSet == Integers:
-            thm = multIntClosure
+            if len(self.operands) == 2:
+                thm = multIntClosureBin
+                bin = True
+            else:
+                thm = multIntClosure
         elif numberSet == Naturals:
-            thm = multNatsClosure
+            if len(self.operands) == 2:
+                thm = multNatsClosureBin
+                bin = True
+            else:
+                thm = multNatsClosure
         elif numberSet == NaturalsPos:
-            thm = multNatsPosClosure
+            if len(self.operands) == 2:
+                thm = multNatsPosClosureBin
+                bin = True
+            else:
+                thm = multNatsPosClosure
         elif numberSet == Reals:
-            thm = multRealClosure
+            if len(self.operands) == 2:
+                thm = multRealClosureBin
+                bin = True
+            else:
+                thm = multRealClosure
         elif numberSet == RealsPos:
-            thm = multRealPosClosure
+            if len(self.operands) == 2:
+                thm = multRealsPosClosureBin
+                bin = True
+            else:
+                thm = multRealPosClosure
         elif numberSet == Complexes:
-            thm = multComplexClosure
+            if len(self.operands) == 2:
+                thm = multComplexClosureBin
+                bin = True
+            else:
+                thm = multComplexClosure
         else:
             raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
         from proveit._common_ import AA
-        return thm.specialize({AA:self.operands}, assumptions=assumptions)
+        print("thm", thm)
+        print("self in deduce in number set", self)
+        print("self.operands", self.operands)
+        if bin:
+            return thm.specialize({a:self.operands[0], b:self.operands[1]}, assumptions=assumptions)
+        return thm.specialize({m:num(len(self.operands)),AA:self.operands}, assumptions=assumptions)
     
     def notEqual(self, rhs, assumptions=USE_DEFAULTS):
         from ._theorems_ import multNotEqZero
