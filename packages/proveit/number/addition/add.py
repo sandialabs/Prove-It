@@ -190,6 +190,7 @@ class Add(Operation):
         from ._theorems_ import expandedMultDef
         from proveit.number import num, Neg
         expr = self
+        end = idx + 1
         started = False
         for i, operand in enumerate(expr.operands):
             # loop through all the operands in the grouped idx
@@ -602,7 +603,7 @@ class Add(Operation):
             print("before loop",hold[key], key)
             size = len(order)
             for l, item in enumerate(hold[key]):
-
+                place = l
                 # loop through all the values in each key
                 print("in loop, place, item, size (place < size)", place, item, size-1)
                 if place < size - 1:
@@ -614,7 +615,7 @@ class Add(Operation):
                         if hold[key][place][0] != hold[key][place+1][0] - 1:
                             # if the index of the first item in the values is not one less than the index of the second value,
                             # then they are not next to each other in the expression.
-                            '''
+
                             for term in expr.operands:
                                 # loop through all the operands
                                 if isinstance(term, Add):
@@ -625,12 +626,13 @@ class Add(Operation):
                                         # if something is grouped and it is the same type as the current key, we assume
                                         # that the original place has been put into the group or it is the first value
                                         place = 0
-                            '''
+
                             # Swap the second value with whatever is next to the first item.
                             print("place", place)
                             print("in if", hold[key][place][0], hold[key][place+1][0])
                             print("swap values",hold[key][place+1][0],hold[key][place][0]+1)
-                            print(expr.deriveCommutation(hold[key][place + 1][0], hold[key][place][0] + 1, assumptions=assumptions))
+                            print(expr.deriveCommutation(hold[key][place + 1][0], hold[key][place][0] + 1,
+                                                         assumptions=assumptions))
                             if hold[key][place + 1][0] < hold[key][place][0] + 1:
                                 expr = expr.deriveCommutation(hold[key][place + 1][0], hold[key][place][0] + 1,assumptions=assumptions).rhs
                             if hold[key][place + 1][0] > hold[key][place][0] + 1:
@@ -641,9 +643,28 @@ class Add(Operation):
                             # rewrite the dictionary to reflect this change
                             hold, no = expr.createDict(assumptions)
                             print("new dict after swap", hold)
-                    else:
+                    elif j + 1 < len(order) and hold[order[j]][len(hold[order[j]])-1][0] + 1 != hold[order[j + 1]][0][0]:
                         # make sure that the next variable is right next to the previous one.
-
+                        print("j", j)
+                        print("order[j]", order[j])
+                        print("hold", hold)
+                        print("in else", hold[order[j]][len(hold[order[j]])-1][0], hold[order[j + 1]][0][0])
+                        print("swap values", hold[order[j + 1]][0][0] , hold[order[j]][len(hold[order[j]])-1][0] + 1)
+                        print(expr.deriveCommutation(hold[order[j + 1]][0][0] , hold[order[j]][len(hold[order[j]])-1][0] + 1,
+                                                     assumptions=assumptions))
+                        if hold[order[j + 1]][0][0] < hold[order[j]][len(hold[order[j]])-1][0] + 1:
+                            expr = expr.deriveCommutation(hold[order[j + 1]][0][0] , hold[order[j]][len(hold[order[j]])-1][0] + 1,
+                                                          assumptions=assumptions).rhs
+                            print("rhs")
+                        if hold[order[j + 1]][0][0] > hold[order[j]][len(hold[order[j]])-1][0] + 1:
+                            expr = expr.deriveCommutation(hold[order[j + 1]][0][0] , hold[order[j]][len(hold[order[j]])-1][0] + 1,
+                                                          assumptions=assumptions).lhs
+                            print("lhs")
+                        print(603, expr)
+                        Equals(self, expr).prove(assumptions)
+                        # rewrite the dictionary to reflect this change
+                        hold, no = expr.createDict(assumptions)
+                        print("new dict after swap", hold)
                         break
                 print("looping again", l, hold[key])
 
@@ -658,6 +679,16 @@ class Add(Operation):
                 print("expr, operand, j", expr, operand, j)
                 if j != len(expr.operands) - 1 and expr.operands[j + 1] == expr.operands[j].operand:
                     # checks to make sure that there is a term after the negated term
+                    key = "-" + str(operand.operand)
+                    if key in hold:
+                        if len(hold["-"+str(operand.operand)]) == 1:
+                            # if the negated operand is the only value in it's key, delete the key as well.
+                            del order[order.index("-"+str(operand.operand))]
+                    key = str(operand.operand)
+                    if key in hold:
+                        if len(hold[str(operand.operand)]) == 1:
+                            # if the operand that will be cancelled is the only value in it's key, delete the key as well.
+                            del order[order.index(str(operand.operand))]
                     expr = expr.deriveExpandedNegSelf(j, assumptions).rhs
                     print(637)
                     Equals(self, expr).prove(assumptions)
@@ -665,6 +696,16 @@ class Add(Operation):
                     j -=2
                 elif j != 0 and expr.operands[j - 1] == expr.operands[j].operand:
                     # if there is not a term after the negated term, checks to make sure there is one before
+                    key = "-"+str(operand.operand)
+                    if key in hold:
+                        if len(hold[key]) == 1:
+                            # if the negated operand is the only value in it's key, delete the key as well.
+                            del order[order.index("-"+str(operand.operand))]
+                    key = str(operand.operand)
+                    if key in hold:
+                        if len(hold[key]) == 1:
+                            # if the operand that will be cancelled is the only value in it's key, delete the key as well.
+                            del order[order.index(str(operand.operand))]
                     expr = expr.deriveExpandedNegSelf(j, assumptions).rhs
                     print(644)
                     Equals(self, expr).prove(assumptions)
@@ -686,6 +727,7 @@ class Add(Operation):
         # combine like terms by multiplying
         for key in order:
             # loop through all the different types of terms
+            print("key",key)
             if key != "Lit" and key != "LitNeg":
                 # for all the keys that are not literals, derive the multiplication from the addition
                 print("hold[key][0][0]", hold[key][0][0])
