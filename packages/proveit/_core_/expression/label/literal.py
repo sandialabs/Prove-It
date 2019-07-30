@@ -102,7 +102,12 @@ class Literal(Label):
             
             Literal.instances.pop(coreInfo)
             return made_obj.withStyles(**styles)
-        
+
+    def usedLiterals(self):
+        '''
+        Introduced 7/30/2019 by wdc to help implement skolemization.
+        '''
+        return {self}
 
 class DuplicateLiteralError(Exception):
     def __init__(self, message):

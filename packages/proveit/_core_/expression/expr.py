@@ -562,6 +562,14 @@ class Expression(metaclass=ExprType):
         if len(relabelMap) != len(set(relabelMap.values())):
             raise ImproperRelabeling("Cannot relabel different Variables to the same Variable.")
     
+    def usedLiterals(self):
+        '''
+        Returns the union of the used Literals of the sub-Expressions.
+        Modeled on the usedVars() method(s) and introduced here 7/30/2019 by wdc
+        in part to support a KnownTruth skolemize() derivation method.
+        '''
+        return set().union(*[expr.usedLiterals() for expr in self.subExprIter()])
+    
     def usedVars(self):
         '''
         Returns the union of the used Variables of the sub-Expressions.
