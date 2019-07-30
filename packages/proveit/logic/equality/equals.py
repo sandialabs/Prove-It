@@ -70,7 +70,7 @@ class Equals(TransitiveRelation):
             yield self.deriveContradiction
             # derive lhs from Not(lhs) = FALSE, if self is in this form
             #print("deriveFalsified Negation", self)
-            yield self.deriveViaFalsifiedNegation
+            #yield self.deriveViaFalsifiedNegation
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             #print("booelan equality", self)
