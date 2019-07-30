@@ -419,19 +419,19 @@ class Add(Operation):
             elif isinstance(val, Variable):
                 # is a variable, either create a new key  or put in existing key
                 if neg:
-                    key = "-"+str(val)
+                    key = Neg(val)
                     if key in hold:
                         # if the key is already there, add it to the list of values
-                        hold["-" + str(val)].append([i,one])
+                        hold[Neg(val)].append([i,one])
                     else:
                         # if not, create the key and add the value
-                        hold["-" + str(val)] = [[i, one]]
+                        hold[Neg(val)] = [[i, one]]
                         if val in order:
                             # if there is already a positive value, add the negative value after it.
-                            order.insert(order.index(val) + 1, "-" + str(val))
+                            order.insert(order.index(val) + 1, Neg(val))
                         else:
                             # if not, just add the negative value
-                            order.append("-"+str(val))
+                            order.append(Neg(val))
                 else:
                     if val in hold:
                         # if the key exists, just add the value to the list
@@ -439,7 +439,7 @@ class Add(Operation):
                     else:
                         # if not, create the key and add the value
                         hold[val] = [[i, one]]
-                        key = "-"+str(val)
+                        key = Neg(val)
                         if key in order:
                             # if the negative value is already there, add the positive value before it.
                             order.insert(order.index(key),val)
@@ -487,16 +487,16 @@ class Add(Operation):
                     if neg:
                         if val in hold:
                             # if the key is already there, add it to the list of values
-                            hold["-" + str(val)].append([i, num(len(other[0]))])
+                            hold[Neg(val)].append([i, num(len(other[0]))])
                         else:
                             # if not, create the key and add the value
-                            hold["-" + str(val)] = [[i, num(len(other[0]))]]
+                            hold[Neg(val)] = [[i, num(len(other[0]))]]
                             if val in order:
                                 # if there is already a positive value, add the negative value after it.
-                                order.insert(order.index(val) + 1, "-" + str(val))
+                                order.insert(order.index(val) + 1, Neg(val))
                             else:
                                 # if not, just add the negative value
-                                order.append("-" + srt(val))
+                                order.append(Neg(val))
                     else:
                         if val in hold:
                             # if the key exists, just add the value to the list
@@ -504,7 +504,7 @@ class Add(Operation):
                         else:
                             # if not, create the key and add the value
                             hold[val] = [[i, num(len(other[0]))]]
-                            key = "-" + str(val)
+                            key = Neg(val)
                             if key in order:
                                 # if the negative value is already there, add the positive value before it.
                                 order.insert(order.index(key), val)
@@ -687,11 +687,11 @@ class Add(Operation):
                 print("expr, operand, j", expr, operand, j)
                 if j != len(expr.operands) - 1 and expr.operands[j + 1] == expr.operands[j].operand:
                     # checks to make sure that there is a term after the negated term
-                    key = "-" + str(operand.operand)
+                    key = operand
                     if key in hold:
-                        if len(hold["-"+str(operand.operand)]) == 1:
+                        if len(hold[operand]) == 1:
                             # if the negated operand is the only value in it's key, delete the key as well.
-                            del order[order.index("-"+str(operand.operand))]
+                            del order[order.index(operand)]
                     key = str(operand.operand)
                     if key in hold:
                         if len(hold[str(operand.operand)]) == 1:
@@ -710,11 +710,11 @@ class Add(Operation):
                     j -=2
                 elif j != 0 and expr.operands[j - 1] == expr.operands[j].operand:
                     # if there is not a term after the negated term, checks to make sure there is one before
-                    key = "-"+str(operand.operand)
+                    key = operand
                     if key in hold:
                         if len(hold[key]) == 1:
                             # if the negated operand is the only value in it's key, delete the key as well.
-                            del order[order.index("-"+str(operand.operand))]
+                            del order[order.index(operand)]
                     key = str(operand.operand)
                     if key in hold:
                         if len(hold[key]) == 1:
@@ -752,6 +752,7 @@ class Add(Operation):
                 # for all the keys that are not literals, derive the multiplication from the addition
                 print("hold[key][0][0]", hold[key][0][0])
                 if isinstance(expr.operands[hold[key][0][0]], Add):
+                    '''
                     idx = hold[key][0][0]
                     print(idx)
                     print(expr.operands[idx].deriveMultDef(assumptions))
@@ -766,6 +767,25 @@ class Add(Operation):
                     Equals(self, expr).prove(assumptions)
                     # rewrite the dictionary to reflect this change
                     hold,no = expr.createDict(assumptions)
+                    print("new dict after mult", hold)
+                    print("order", order)
+                    '''
+                    idx = hold[key][0][0]
+                    print("idx",idx)
+                    print("operand at idx", expr.operands[idx])
+                    print("factor operand at idx", expr.operands[idx].factor(key, assumptions=assumptions))
+                    sub = expr.operands[idx].factor(key, assumptions=assumptions)
+                    print("sub", sub)
+                    print("expr", expr)
+                    print("expr.innerExpr()", expr.innerExpr())
+                    print("expr.innerExpr().operands[idx]", expr.innerExpr().operands[idx])
+                    print("the substitution", sub.substitution(expr.innerExpr().operands[idx], assumptions=assumptions))
+                    expr = sub.substitution(expr.innerExpr().operands[idx], assumptions=assumptions).lhs
+                    print("expr before equals", expr)
+                    print(689)
+                    Equals(self, expr).prove(assumptions)
+                    # rewrite the dictionary to reflect this change
+                    hold, no = expr.createDict(assumptions)
                     print("new dict after mult", hold)
                     print("order", order)
             else:
@@ -1086,7 +1106,8 @@ class Add(Operation):
         print("cc",theFactor)
         print(1045)
         Equals(self, expr).prove(assumptions)
-        return distributeThroughSum.specialize({l:num(len(a)),m:num(len(b)),n:one,AA:a,BB:b,CC:theFactor}, assumptions=assumptions)
+        #print(Equals(self,distributeThroughSum.specialize({l:num(len(a)),m:num(len(b)),n:one,AA:a,BB:b,CC:[theFactor]}, assumptions=assumptions).rhs ).prove(assumptions=assumptions))
+        return distributeThroughSum.specialize({l:num(len(a)),m:num(len(b)),n:one,AA:a,BB:b,CC:[theFactor]}, assumptions=assumptions)
     """
     def factor(self, theFactor, pull="left", groupFactor=True, assumptions=frozenset()):
         '''
