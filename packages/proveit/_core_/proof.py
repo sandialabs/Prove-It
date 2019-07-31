@@ -366,6 +366,15 @@ class Axiom(Proof):
             raise ValueError("An axiom 'name' must be a string")
         self.context = context
         self.name = name
+        
+        # Introduced 7/31/2019 by wdc, working on skolemization.
+        # Find all Literals in the expr and mark them as constrained.
+        # This is still somewhat odd in that it is also marking
+        # Literals such as exists, equals, forall, etc.
+#         for theLiteral in expr.usedLiterals():
+#             theLiteral.markAsConstrained()
+        markAllUsedLiterals(expr);
+            
         Proof.__init__(self, KnownTruth(expr, expr.getRequirements()), [])
 
     def _generate_step_info(self, objectRepFn):
@@ -1027,3 +1036,8 @@ class CircularLogicLoop(ProofFailure):
         self.presumptionLoop = presumptionLoop
     def __str__(self):
         return "Circular presumption dependency detected: %s"%str(self.presumptionLoop)
+
+# outside of any class
+def markAllUsedLiterals(expr):
+    for theLiteral in expr.usedLiterals():
+            theLiteral.markAsConstrained()
