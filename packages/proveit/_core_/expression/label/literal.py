@@ -105,9 +105,21 @@ class Literal(Label):
 
     def usedLiterals(self):
         '''
-        Introduced 7/30/2019 by wdc to help implement skolemization.
+        Analogous to usedVars() method in Variable class.
+        Introduced 7/30/2019 by wdc to complement the usedLiterals()
+        method in the Expression super-class and help implement skolemization.
         '''
         return {self}
+    
+    def markAsConstrained(self):
+        '''
+        Introduced 7/31/2019 by wdc to help implement skolemization.
+        Used to "constrain" a literal being used as an instantiated constant
+        in a Known Truth, to indicate that it shouldn't be used again in
+        an unrelated expression.
+        '''
+        if not(hasattr(self, '_constrained')):
+            self._constrained = True
 
 class DuplicateLiteralError(Exception):
     def __init__(self, message):
