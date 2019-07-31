@@ -760,6 +760,26 @@ class KnownTruth:
                     processedSubMap[iVar] = iVar
 
         return self._checkedTruth(Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions))
+    
+    def skolemize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+        '''
+        Performs a specialize derivation step to be proven under the given
+        assumptions, in addition to the assumptions of the KnownTruth.
+        This will eliminate one or more nested Forall operations, specializing
+        the instance variables according to specializeMap.  Eliminates
+        the number of Forall operations required to utilize all of the
+        specializeMap keys.  The default mapping of all instance variables
+        is a mapping to itself (e.g., {x:x, y:y}).  Simultaneously, variables 
+        may be relabeled via relabelMap (see the relabel method).  Note, there 
+        is a difference between  making substitutons simultaneously versus 
+        in-series.  For example, the {x:y, y:x} mapping will swap x and y 
+        variables, but mapping {x:y} then {y:x} in series would set both 
+        variables to x.
+        Returns the proven specialized KnownTruth, or throws an exception if the
+        proof fails.        
+        '''
+        
+        
         
     def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
         '''
