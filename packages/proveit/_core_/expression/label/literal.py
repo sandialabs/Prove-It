@@ -120,6 +120,17 @@ class Literal(Label):
         '''
         if not(hasattr(self, '_constrained')):
             self._constrained = True
+            
+    def isConstrained(self):
+        '''
+        Introduced 7/31/2019 byh wdc to help implement skolemization.
+        Returns False if Literal has no _constrained attribute;
+        otherwise returns the True/False value of the _constrained attribute.
+        '''
+        if not(hasattr(self, '_constrained')):
+            return False
+        else:
+            return self._constrained
 
 class DuplicateLiteralError(Exception):
     def __init__(self, message):
