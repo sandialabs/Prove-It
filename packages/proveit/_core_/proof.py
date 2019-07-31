@@ -371,9 +371,7 @@ class Axiom(Proof):
         # Find all Literals in the expr and mark them as constrained.
         # This is still somewhat odd in that it is also marking
         # Literals such as exists, equals, forall, etc.
-#         for theLiteral in expr.usedLiterals():
-#             theLiteral.markAsConstrained()
-        markAllUsedLiterals(expr);
+        markAllUsedLiterals(expr)
             
         Proof.__init__(self, KnownTruth(expr, expr.getRequirements()), [])
 
@@ -418,6 +416,13 @@ class Theorem(Proof):
             raise ValueError("A theorem 'name' must be a string")
         self.context = context
         self.name = name
+        
+        # Introduced 7/31/2019 by wdc, working on skolemization.
+        # Find all Literals in the expr and mark them as constrained.
+        # This is still somewhat odd in that it is also marking
+        # Literals such as exists, equals, forall, etc.
+        markAllUsedLiterals(expr)
+        
         # keep track of proofs that may be used to prove the theorem
         # before 'beginProof' is called so we will have the proof handy.
         self._possibleProofs = []
