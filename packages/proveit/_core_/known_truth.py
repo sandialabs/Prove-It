@@ -720,7 +720,7 @@ class KnownTruth:
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptions += self.assumptions
 
-        # For any entrys in the subMap with Operation keys, convert
+        # For any entries in the subMap with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
         # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
         # Convert to composite expressions as needed (via singleOrCompositeExpression).
@@ -760,8 +760,14 @@ class KnownTruth:
                     processedSubMap[iVar] = iVar
 
         return self._checkedTruth(Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions))
-    
-    def skolemize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+
+
+    # Introduced by wdc starting Tues 7/30/2019
+    # (1) Verify that a skolemizeMap has been provided.
+    # (2) Check that the skolemizeMap uses only Variable:Literal
+    #     mappings.
+    def skolemize( self, skolemizeMap=None, relabelMap=None,
+                   assumptions=USE_DEFAULTS):
         '''
         Performs a specialize derivation step to be proven under the given
         assumptions, in addition to the assumptions of the KnownTruth.
@@ -779,6 +785,157 @@ class KnownTruth:
         proof fails.        
         '''
         
+        from proveit import (
+            Lambda, Literal, Operation,
+            singleOrCompositeExpression, Variable 
+        )
+        from proveit.logic import Exists, Forall
+        from .proof import (
+            ProofFailure, Skolemization, SkolemizationFailure,
+            Specialization, SpecializationFailure
+        )
+        # will be able to delete a few of those imports
+        # a little later — probably the Forall and Specialization-
+        # related stuff.
+        
+        # If no skolemizeMap is provided, raise a SkolemizationFailure
+        # error message. Notice that this is different from the
+        # specialize() method, which provides for a default
+        # specializeMap. We might reconsider this later.
+        if skolemizeMap is None:
+            raise SkolemizationFailure(
+                None,
+                assumptions,
+                ('skolemizeMap appears to be NONE. Expecting ' + 
+                 'a skolemizeMap to specify the Variable-to-Literal ' + 
+                 'mapping details.')
+            )
+        if relabelMap is None: relabelMap = dict()
+
+        # Include the KnownTruth assumptions along with any provided
+        # assumptions.
+        assumptions = defaults.checkedAssumptions(assumptions)
+        assumptions += self.assumptions
+
+        if not self.isUsable():
+            # If this KnownTruth is not usable (i.e. we have somehow
+            # restricted its use to avoid circular reasoning, etc),
+            # see if there is an alternate under the set of assumptions
+            # that is usable.
+            try:
+                alternate = self.expr.prove(assumptions, automation=False)
+            except ProofFailure:
+                self.raiseUnusableProof()
+            return alternate.specialize(specializeMap,
+                                        relabelMap,
+                                        assumptions)
+        
+        
+        # The following is the same as in the specialize() method above.
+        # For any entries in the skolemizeMap with Operation keys,
+        # convert them to corresponding operator keys with Lambda
+        # substitutions. For example f(x,y):g(x,y) would become
+        # f:[(x,y) -> g(x,y)]. Convert to composite expressions as
+        # needed (via singleOrCompositeExpression). Provide error
+        # message if any skolemizeMap keys are NOT Variables,
+        # Multivariables, or Operations with Variable/MultiVariable
+        # operators.
+        processedSubMap = dict()
+        for key, sub in skolemizeMap.items():
+            sub = singleOrCompositeExpression(sub)
+            if isinstance(key, Operation):
+                operation = key
+                subVar = operation.operator
+                sub = Lambda(operation.operands, sub)
+                processedSubMap[subVar] = sub
+            elif isinstance(key, Variable):
+                processedSubMap[key] = sub
+            else:
+                raise SkolemizationFailure(
+                    None,
+                    assumptions,
+                    ('Expecting skolemizeMap keys to be Variables, ' +
+                     'MultiVariables, or Operations with ' +
+                     'Variable/MultiVariable operators; ' +
+                     'but "%s" is %s'%(key, str(key.__class__)))
+                )
+        # collect the remaining substitution variables
+        remainingSubVars = set(processedSubMap.keys())
+        print("remainingSubVars = ", remainingSubVars)
+
+        # Verify that all requested substitution values are actually
+        # Literals; if not, raise a SkolemizationFailure error message.
+        for key, sub in skolemizeMap.items():
+            sub = singleOrCompositeExpression(sub)                              # might not need this?
+            print("This is sub: ", sub)                                         # for testing; delete later
+            print("This sub is a Literal: ", isinstance(sub, Literal))          # for testing; delete later
+            if not isinstance(sub, Literal):
+                raise SkolemizationFailure(
+                        None,
+                        assumptions,
+                        ('Expecting skolemizeMap substitution values ' +
+                         'to be Literals, but "%s" is %s'%(
+                            sub, str(key.__class__))
+                        )
+                )
+
+        # The following block being adapted from the specialize()
+        # method. It was originally used to determine the number of
+        # Forall eliminations (specialize only applied to a Forall).
+        # Here we need to verify instead that we're dealing with
+        # an Exists expression.
+        # Determine the number of Forall eliminations.  There must be at least
+        # one (if zero is desired, relabel should be called instead).
+        # The number is determined by the instance variables that occur as keys
+        # in the subMap.
+        expr = self.expr
+        print("expr = ", expr)                                                  # for testing; delete later
+        # numForallEliminations = 0
+        numExistsEliminations = 0
+        while numExistsEliminations==0 or len(remainingSubVars) > 0:
+            numExistsEliminations += 1
+            # if not isinstance(expr, Forall):
+            #     raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+            if not isinstance(expr, Exists):
+                raise SkolemizationFailure(
+                        None, assumptions,
+                        'May only skolemize instance variables ' +
+                        'of an Exists expression.')
+            lambdaExpr = expr.operand
+            print("lambdaExpr = ", lambdaExpr)                                  # for testing; delete later
+            assert isinstance(lambdaExpr, Lambda), (
+                "Exists Operation operand must be a Lambda function")
+            instanceVars, expr, conditions  = (lambdaExpr.parameterVars,
+                                               lambdaExpr.body,
+                                               lambdaExpr.conditions)
+            print("Inside the while loop:")                                     # for testing; delete later
+            print("instanceVars = ", instanceVars)                              # for testing; delete later
+            print("expr = ", expr)                                              # for testing; delete later
+            print("conditions = ", conditions)                                  # for testing; delete later
+            for iVar in instanceVars:
+                if iVar in remainingSubVars:
+                    # remove this instance variable from the remaining
+                    # substitution variables; this instance variable
+                    # should already be in the processedSubMap
+                    remainingSubVars.remove(iVar)
+                elif iVar not in processedSubMap:
+                    # default is to map instance variables to themselves
+                    processedSubMap[iVar] = iVar
+
+
+        
+        print("Things seemed to have worked OK. numExistsEliminations = ",
+                numExistsEliminations)
+
+        return self._checkedTruth(
+            Skolemization(
+                self, numExistsEliminations=numExistsEliminations,
+                skolemizeMap=processedSubMap, relabelMap=relabelMap,
+                assumptions=assumptions
+            )
+        )
+
+        return True
         
         
     def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):

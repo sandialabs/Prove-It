@@ -704,6 +704,253 @@ class HypotheticalReasoning(Proof):
     def stepType(self):
         return 'hypothetical reasoning'
 
+# Skolemization class added Thurs 8/1 by wdc
+# initially copied from the Specialization class.
+# working on KnownTruth skolemize() method analogous to 
+# KnownTruth specialize() method. Trying to achieve this
+# by a modification of the Specialization machinery.
+class Skolemization(Proof):
+    def __init__(self, generalTruth, numExistsEliminations,
+                 skolemizeMap=None, relabelMap=None,
+                 assumptions=USE_DEFAULTS):
+        '''
+        Create the Skolemization proof step that skolemizes the given
+        general expression using the skolemization map under
+        the given assumptions. Eliminates the numberÏ of nested Exists
+        operations as indicated, substituting Literals for their
+        instance variables according to skolemization map. 
+        The default for any unspecified instance 
+        variable is to specialize it to itself, or, in the case of a bundled variable 
+        (Etcetera-wrapped MultiVariables), the default is to specialize it to an empty list.
+        Substitution of variables that are not instance variables of the Forall operations
+        being eliminated are to be relabeled.  Relabeling is limited to substituting
+        a Variable to another Variable or substituting a bundled variable to
+        another bundled variable or list of variables (bundled or not).
+        '''
+        assumptions = list(defaults.checkedAssumptions(assumptions))
+        prev_default_assumptions = defaults.assumptions
+        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        try:
+            if relabelMap is None: relabelMap = dict()
+            if skolemizeMap is None: skolemizeMap = dict()
+            Failure = SpecializationFailure if numExistsEliminations>0 else RelabelingFailure
+            if not isinstance(generalTruth, KnownTruth):
+                raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
+            if generalTruth.proof() is None:
+                raise UnusableProof(KnownTruth.theoremBeingProven, generalTruth)
+            if not generalTruth.assumptionsSet.issubset(assumptions):
+                if '*' in assumptions:
+                    # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
+                    _appendExtraAssumptions(assumptions, generalTruth)
+                else:
+                    raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
+            generalExpr = generalTruth.expr
+            # perform the appropriate substitution/relabeling
+            specializedExpr, requirements, mappedVarLists, mappings = Skolemization._skolemized_expr(generalExpr, numExistsEliminations, skolemizeMap, relabelMap, assumptions)
+            # obtain the KnownTruths for the substituted conditions
+            requirementTruths = []
+            requirementTruthSet = set() # avoid repeats of requirements
+            for requirementExpr in requirements:
+                try:
+                    # each substituted condition must be proven under the assumptions
+                    # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
+                    requirementTruth = requirementExpr.prove(assumptions)
+                    if requirementTruth not in requirementTruthSet:
+                        requirementTruths.append(requirementTruth)
+                        requirementTruthSet.add(requirementTruth)
+                        _appendExtraAssumptions(assumptions, requirementTruth)
+                except ProofFailure:
+                    raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
+            # remove any unnecessary assumptions (but keep the order that was provided)
+            assumptionsSet = generalTruth.assumptionsSet
+            for requirementTruth in requirementTruths:
+                assumptionsSet |= requirementTruth.assumptionsSet
+            assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
+            # we have what we need; set up the Specialization Proof
+            self.generalTruth = generalTruth
+            self.requirementTruths = requirementTruths
+            self.mappedVarLists = mappedVarLists
+            self.mappings = mappings
+            specializedTruth = KnownTruth(specializedExpr, assumptions)
+            Proof.__init__(self, specializedTruth, [generalTruth] + requirementTruths)
+        finally:
+            # restore the original default assumptions
+            defaults.assumptions = prev_default_assumptions
+
+    def _generate_step_info(self, objectRepFn):
+        '''
+        Generate information about this proof step, including mapping information for this specialization.
+        '''
+        mappingInfo = ';'.join(','.join(objectRepFn(var) + ':' + objectRepFn(self.mappings[var]) for var in mappedVars) \
+                                for mappedVars in self.mappedVarLists)
+        return self.stepType() + ':{' + mappingInfo + '}'
+                                
+    def stepType(self):
+        if len(self.mappedVarLists) > 1:
+            return 'specialization'
+        return 'relabeling' # relabeling only
+    
+    def _single_mapping(self, var, replacement, formatType):
+        from proveit import Function, Lambda
+        formatted = lambda expr : expr._repr_html_() if formatType=='HTML' else str(expr)
+        if isinstance(replacement, Lambda):
+            return formatted(Function(var, replacement.parameter_or_parameters)) + ' : ' + formatted(replacement.body)
+        return formatted(var) + ' : ' + formatted(replacement)
+    
+    def _mapping(self, formatType='HTML'):
+        mappedVarLists = self.mappedVarLists
+        if formatType=='HTML':
+            out = '<span style="font-size:20px;">'
+        else: out = ''
+        if len(mappedVarLists) == 1 or (len(mappedVarLists) == 2 and len(mappedVarLists[-1]) == 0):
+            # a single relabeling map, or a single specialization map with no relabeling map
+            mappedVars = mappedVarLists[0]
+            out += ', '.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars)
+        else:
+            out += ', '.join(','.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars) for mappedVars in mappedVarLists[:-1])
+            if len(mappedVarLists[-1]) > 0:
+                # the last group is the relabeling map, if there is one
+                mappedVars = mappedVarLists[-1]
+                out += ', relabeling ' + ','.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars)
+        if formatType=='HTML':
+            out += '</span>'
+        return out
+
+    @staticmethod
+    def _skolemized_expr(generalExpr, numExistsEliminations, skolemizeMap, relabelMap, assumptions):
+        '''
+        Return a tuple of (specialization, conditions).  The 
+        specialization derives from the given "general" expression and its conditions
+        via a specialization inference rule (or relabeling as a special case).
+        Eliminates the specified number of Forall operations, substituting all
+        of the corresponding instance variables according to the substitution
+        map dictionary (subMap), or defaulting basic instance variables as
+        themselves. 
+        '''
+        from proveit import Lambda, Expression, Iter
+        from proveit.logic import Forall, Exists
+        # check that the mappings are appropriate
+        for key, sub in list(relabelMap.items()):
+            Skolemization._checkRelabelMapping(key, sub, assumptions)
+            if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
+        for assumption in assumptions:
+            if assumption == WILDCARD_ASSUMPTIONS: continue # ignore the wildcard for this purpose
+            vars_in_violation = assumption.freeVars() & set(relabelMap.keys())
+            if len(vars_in_violation) != 0:
+                raise RelabelingFailure(None, assumptions, 'Attempting to relabel variable(s) that are free in the assumptions: ' + str(vars_in_violation))
+        
+        for key, sub in skolemizeMap.items():
+            if not isinstance(sub, Expression): # CHECK THIS LATER — SHOULD ACTUALLY BE LITERAL???
+                raise TypeError("Expecting skolemization substitutions to be 'Expression' objects")
+            if key in relabelMap:
+                raise SkolemizationFailure(None, assumptions, (
+                        'Attempting to skolemize and relabel the same ',
+                        ' variable: %s'%str(key))
+                )
+        
+        # Eliminate the desired number of Exists operations and
+        # extracted appropriately mapped conditions
+        expr = generalExpr
+        remainingExistsEliminations = numExistsEliminations
+        partialMap = dict()
+        subbedConditions = []
+        mappedVarLists = []
+        requirements = []
+        while remainingExistsEliminations>0:
+            remainingExistsEliminations -= 1
+            if not isinstance(expr, Exists):
+                raise SkolemizationFailure(None, assumptions, (
+                    'May only skolemize instance variables of ',
+                    'directly nested Exists operations')
+                )
+            lambdaExpr = expr.operand
+            assert isinstance(lambdaExpr, Lambda), (
+                    "Exists Operation lambdaExpr must be a ",
+                    "Lambda function")
+            instanceVars, expr, conditions  = (lambdaExpr.parameterVars,
+                                               lambdaExpr.body,
+                                               lambdaExpr.conditions)
+            # When substituting an iterated instance variable, we need
+            # to make sure that the expansion is complete: that there
+            # are as many elements of the expansion as the number of
+            # elements of the substitution.  For example,
+            # x_1, ..., x_n and x -> [a, b, c, d], then
+            # x_1, ..., x_n -> a, b, c, d and not a subset.
+            for parameter, parameterVar in zip(lambdaExpr.parameters,
+                                               lambdaExpr.parameterVars):
+                subbedParam = None
+                if parameterVar in skolemizeMap:
+                    subbedParam = skolemizeMap[parameterVar]
+                elif parameterVar in relabelMap:
+                    subbedParam = relabelMap[parameterVar]
+                if isinstance(parameter, Iter) and subbedParam is not None:
+                    expandedParameter = parameter.substituted(
+                            skolemizeMap, relabelMap,
+                            assumptions=assumptions, requirements=requirements)
+                    if len(expandedParameter) != len(subbedParam):
+                        raise SkolemizationFailure(None, assumptions, (
+                                "Substitution of iterated instance variables ",
+                                "incomplete: %d length expansion versus %d ",
+                                "length substitution"%(
+                                    len(expandedParameter), len(subbedParam)
+                                    )
+                                )
+                        )
+            mappedVarLists.append(instanceVars)
+            # include the mapping for the current instance variables
+            # in the partial map
+            try:
+                partialMap.update({iVar:skolemizeMap[iVar] for iVar in instanceVars})
+            except KeyError:
+                raise SkolemizationFailure(
+                        None,
+                        assumptions,
+                        ('Must specialize all of the instance ',
+                         'variables of the Exists operations to be ',
+                         'eliminated')
+                )
+            # make substitutions in the condition
+            subbedConditions += conditions.substituted(partialMap, relabelMap)
+                        
+        # sort the relabeling vars in order of their appearance in
+        # the original expression
+        relabelVars = []
+        visitedVars = set()
+        for var in generalExpr.orderOfAppearance(list(relabelMap.keys())):
+            if var not in visitedVars: # ensure no repeats
+                visitedVars.add(var)
+                relabelVars.append(var)
+        
+        # relabel vars always the last of the mapped variable lists
+        mappedVarLists.append(relabelVars) 
+        mappings = dict(skolemizeMap)
+        mappings.update(relabelMap) # mapping everything
+        
+        subbed_expr = expr.substituted(
+                skolemizeMap, relabelMap,
+                assumptions=assumptions, requirements=requirements
+                )
+        
+        # Return the expression and conditions with substitutions
+        # and the information to reconstruct the specialization
+        return (subbed_expr, subbedConditions + requirements,
+                mappedVarLists, mappings)
+
+    @staticmethod
+    def _checkRelabelMapping(key, sub, assumptions):
+        from proveit import Variable
+        if isinstance(key, Variable):
+            if not isinstance(sub, Variable):
+                raise RelabelingFailure(
+                        None, assumptions,
+                        'May only relabel a Variable to a Variable.'
+                )
+        else:
+            raise RelabelingFailure(
+                    None, assumptions,
+                    "May only relabel a Variable"
+            ) 
+
 class Specialization(Proof):
     def __init__(self, generalTruth, numForallEliminations, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
         '''
@@ -994,6 +1241,10 @@ class ModusPonensFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
 
+class SkolemizationFailure(ProofFailure):
+    def __init__(self, expr, assumptions, message):
+        ProofFailure.__init__(self, expr, assumptions, message)
+        
 class SpecializationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
@@ -1043,6 +1294,8 @@ class CircularLogicLoop(ProofFailure):
         return "Circular presumption dependency detected: %s"%str(self.presumptionLoop)
 
 # outside of any class
+# Introduced 7/31/2019 by wdc, working on skolemization.
+# Find all Literals in a given expr and mark them as constrained.
 def markAllUsedLiterals(expr):
     for theLiteral in expr.usedLiterals():
             theLiteral.markAsConstrained()
