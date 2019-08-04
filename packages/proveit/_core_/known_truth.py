@@ -763,26 +763,27 @@ class KnownTruth:
 
 
     # Introduced by wdc starting Tues 7/30/2019
-    # (1) Verify that a skolemizeMap has been provided.
-    # (2) Check that the skolemizeMap uses only Variable:Literal
-    #     mappings.
+    # still cleaning up details on Sat 8/03/2019
+    # May need to restrict Skolem constants from being utilized in
+    # the specialize() method!
     def skolemize( self, skolemizeMap=None, relabelMap=None,
                    assumptions=USE_DEFAULTS):
         '''
-        Performs a specialize derivation step to be proven under the given
-        assumptions, in addition to the assumptions of the KnownTruth.
-        This will eliminate one or more nested Forall operations, specializing
-        the instance variables according to specializeMap.  Eliminates
-        the number of Forall operations required to utilize all of the
-        specializeMap keys.  The default mapping of all instance variables
-        is a mapping to itself (e.g., {x:x, y:y}).  Simultaneously, variables 
-        may be relabeled via relabelMap (see the relabel method).  Note, there 
-        is a difference between  making substitutons simultaneously versus 
-        in-series.  For example, the {x:y, y:x} mapping will swap x and y 
-        variables, but mapping {x:y} then {y:x} in series would set both 
-        variables to x.
-        Returns the proven specialized KnownTruth, or throws an exception if the
-        proof fails.        
+        Performs a skolemize derivation step to be proven under the
+        given assumptions, in addition to the assumptions of the
+        KnownTruth. This will eliminate one or more nested Exists
+        operations, skolemizing the Exists instance variables according
+        to specializeMap.  Eliminates the number of Exists operations
+        required to utilize all of the skolemizeMap keys. There is no
+        default skolemizeMap implemented -- if a skolemize map is not
+        provided, then the method returns an error.  Simultaneously,
+        variables may be relabeled via relabelMap (see the relabel
+        method).  Note, there is a difference between  making 
+        ubstitutons simultaneously versus in-series. For example, the
+        {x:y, y:x} mapping will swap x and y variables, but mapping
+        {x:y} then {y:x} in series would set both variables to x.
+        Returns the proven skolemized KnownTruth, or throws an
+        exception if the proof fails.        
         '''
         
         from proveit import (
@@ -831,7 +832,8 @@ class KnownTruth:
                                         assumptions)
         
         
-        # The following is the same as in the specialize() method above.
+        # The following mimics a similar block of code in the
+        # specialize() method above.
         # For any entries in the skolemizeMap with Operation keys,
         # convert them to corresponding operator keys with Lambda
         # substitutions. For example f(x,y):g(x,y) would become
@@ -863,55 +865,27 @@ class KnownTruth:
         remainingSubVars = set(processedSubMap.keys())
         print("remainingSubVars = ", remainingSubVars)
 
-        # Verify that all requested substitution values are actually
-        # Literals; if not, raise a SkolemizationFailure error message.
-        for key, sub in skolemizeMap.items():
-            sub = singleOrCompositeExpression(sub)                              # might not need this?
-            print("This is sub: ", sub)                                         # for testing; delete later
-            print("This sub is a Literal: ", isinstance(sub, Literal))          # for testing; delete later
-            if not isinstance(sub, Literal):
-                raise SkolemizationFailure(
-                        None,
-                        assumptions,
-                        ('Expecting skolemizeMap substitution values ' +
-                         'to be Literals, but "%s" is %s'%(
-                            sub, str(key.__class__))
-                        )
-                )
 
-        # The following block being adapted from the specialize()
-        # method. It was originally used to determine the number of
-        # Forall eliminations (specialize only applied to a Forall).
-        # Here we need to verify instead that we're dealing with
-        # an Exists expression.
-        # Determine the number of Forall eliminations.  There must be at least
-        # one (if zero is desired, relabel should be called instead).
-        # The number is determined by the instance variables that occur as keys
-        # in the subMap.
+        # Determine the number of Exists eliminations.
+        # There must be at least one. If zero is desired, then relabel
+        # should be called instead. The number is determined by the
+        # instance variables that occur as keys in the skolemizeMap.
         expr = self.expr
-        print("expr = ", expr)                                                  # for testing; delete later
         # numForallEliminations = 0
         numExistsEliminations = 0
         while numExistsEliminations==0 or len(remainingSubVars) > 0:
             numExistsEliminations += 1
-            # if not isinstance(expr, Forall):
-            #     raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             if not isinstance(expr, Exists):
                 raise SkolemizationFailure(
                         None, assumptions,
                         'May only skolemize instance variables ' +
                         'of an Exists expression.')
             lambdaExpr = expr.operand
-            print("lambdaExpr = ", lambdaExpr)                                  # for testing; delete later
             assert isinstance(lambdaExpr, Lambda), (
                 "Exists Operation operand must be a Lambda function")
             instanceVars, expr, conditions  = (lambdaExpr.parameterVars,
                                                lambdaExpr.body,
                                                lambdaExpr.conditions)
-            print("Inside the while loop:")                                     # for testing; delete later
-            print("instanceVars = ", instanceVars)                              # for testing; delete later
-            print("expr = ", expr)                                              # for testing; delete later
-            print("conditions = ", conditions)                                  # for testing; delete later
             for iVar in instanceVars:
                 if iVar in remainingSubVars:
                     # remove this instance variable from the remaining
@@ -922,6 +896,31 @@ class KnownTruth:
                     # default is to map instance variables to themselves
                     processedSubMap[iVar] = iVar
 
+        # Verify that all requested substitution values are actually
+        # Literals and not previously skolemized. If a substitution
+        # value is not a Literal or if a substitution value is a
+        # Literal that has previously been used as a Skolem constant,
+        # raise a SkolemizationFailure error message.
+        for key, sub in skolemizeMap.items():
+            sub = singleOrCompositeExpression(sub) # might not need this?
+            if not isinstance(sub, Literal):
+                raise SkolemizationFailure(
+                        None,
+                        assumptions,
+                        ('Expecting skolemizeMap substitution values ' +
+                         'to be Literals, but "%s" is %s'%(
+                            sub, str(key.__class__))
+                        )
+                )
+            if isinstance(sub, Literal) and sub.isSkolemConstant():
+                raise SkolemizationFailure(
+                        None,
+                        assumptions,
+                        ('Expecting skolemizeMap substitution ' +
+                         'values to be Literals not previously ' +
+                         'used to skolemize. "%s" has already been ' +
+                         'used to skolemize.')%sub
+                )
 
         
         print("Things seemed to have worked OK. numExistsEliminations = ",
@@ -935,7 +934,6 @@ class KnownTruth:
             )
         )
 
-        return True
         
         
     def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):

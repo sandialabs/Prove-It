@@ -132,6 +132,35 @@ class Literal(Label):
         else:
             return self._constrained
 
+    # def markAsSkolemized(self):
+    #     '''
+    #     '''
+    #     if not(hasattr(self, '_skolemized')):
+    #         self._skolemized = True
+
+    # def isSkolemized(self):
+    #     '''
+    #     '''
+    #     if not(hasattr(self, '_skolemized')):
+    #         return False
+    #     else:
+    #         return self._skolemized
+
+    def markAsSkolemConstant(self):
+        '''
+        '''
+        if not(hasattr(self, '_skolemConstant')):
+            self._skolemConstant = True
+
+    def isSkolemConstant(self):
+        '''
+        '''
+        if not(hasattr(self, '_skolemConstant')):
+            return False
+        else:
+            return self._skolemConstant
+
+
 class DuplicateLiteralError(Exception):
     def __init__(self, message):
         self.message = message
