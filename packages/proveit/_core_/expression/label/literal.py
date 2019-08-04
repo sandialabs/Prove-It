@@ -114,16 +114,16 @@ class Literal(Label):
     def markAsConstrained(self):
         '''
         Introduced 7/31/2019 by wdc to help implement skolemization.
-        Used to "constrain" a literal being used as an instantiated constant
-        in a Known Truth, to indicate that it shouldn't be used again in
-        an unrelated expression.
+        Used to "constrain" a literal being used in an Axiom or
+        Theorem, to indicate that it shouldn't be used as a Skolem
+        constant in a Skolemization process.
         '''
         if not(hasattr(self, '_constrained')):
             self._constrained = True
             
     def isConstrained(self):
         '''
-        Introduced 7/31/2019 byh wdc to help implement skolemization.
+        Introduced 7/31/2019 by wdc to help implement skolemization.
         Returns False if Literal has no _constrained attribute;
         otherwise returns the True/False value of the _constrained attribute.
         '''
@@ -132,28 +132,23 @@ class Literal(Label):
         else:
             return self._constrained
 
-    # def markAsSkolemized(self):
-    #     '''
-    #     '''
-    #     if not(hasattr(self, '_skolemized')):
-    #         self._skolemized = True
-
-    # def isSkolemized(self):
-    #     '''
-    #     '''
-    #     if not(hasattr(self, '_skolemized')):
-    #         return False
-    #     else:
-    #         return self._skolemized
-
     def markAsSkolemConstant(self):
         '''
+        Introduced 7/31/2019 by wdc to help implement skolemization.
+        Used to mark a Literal being used as an instantiated constant
+        (known as a Skolem constant) in a Known Truth, to indicate
+        that it shouldn't be used again as a Skolem constant elsewhere.
         '''
         if not(hasattr(self, '_skolemConstant')):
             self._skolemConstant = True
 
     def isSkolemConstant(self):
         '''
+        Introduced 7/31/2019 by wdc to help implement skolemization.
+        Returns False is Literal has no _skolemConstant attribute,
+        which means the Literal has not served as a Skolem constant
+        in a skolemization process; otherwise returns the
+        True/False value of the _skolemConstant attribute.
         '''
         if not(hasattr(self, '_skolemConstant')):
             return False
