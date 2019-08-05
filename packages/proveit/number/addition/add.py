@@ -827,9 +827,10 @@ class Add(Operation):
                 print(Equals(self, expr).prove(assumptions))
 
             elif isinstance(operand, Mult):
-                sub = expr.operands[i].operands[0].evaluations(assumptions)
-                expr = sub.substitution(expr.innerExpr().operands[i].operands[0], assumptions).rhs
-                print(Equals(self, expr).prove(assumptions))
+                if not isinstance(operand.operands[0], Mult):
+                    sub = expr.operands[i].operands[0].evaluations(assumptions)
+                    expr = sub.substitution(expr.innerExpr().operands[i].operands[0], assumptions).rhs
+                    print(Equals(self, expr).prove(assumptions))
                 if isinstance(expr.operands[i].operands[0], Add):
                     from proveit.number.addition._axioms_ import singleAdd
                     sub = singleAdd.specialize({x:expr.operands[i].operands[0].operands[0]})
