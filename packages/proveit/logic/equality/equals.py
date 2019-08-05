@@ -62,25 +62,17 @@ class Equals(TransitiveRelation):
             Equals.evaluations.setdefault(self.lhs, set()).add(knownTruth)
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
-            #print("derive Reversed", self)
             yield self.deriveReversed
         if self.rhs == FALSE:
             # derive lhs => FALSE from lhs = FALSE
-            #print("derive contradiction", self)
             yield self.deriveContradiction
             # derive lhs from Not(lhs) = FALSE, if self is in this form
-            #print("deriveFalsified Negation", self)
             #yield self.deriveViaFalsifiedNegation
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
-            #print("booelan equality", self)
             yield self.deriveViaBooleanEquality
-        #print("self in equals sideEffects",self)
         if hasattr(self.lhs, 'equalitySideEffects'):
-            #print("self.lhs", self.lhs)
-            #print("enumerate", self.lhs.equalitySideEffects(knownTruth))
             for sideEffect in self.lhs.equalitySideEffects(knownTruth):
-               # print("sideEffect", sideEffect)
                 yield sideEffect
         
     def negationSideEffects(self, knownTruth):

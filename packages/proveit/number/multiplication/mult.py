@@ -15,6 +15,7 @@ class Mult(Operation):
         self.factors = operands
     
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
+        # edited by JML 7/20/19
         from ._theorems_ import multIntClosure, multIntClosureBin, multNatClosure, multNatClosureBin, multNatPosClosure, multNatClosureBin, multRealClosure, multRealClosureBin, multRealPosClosure, multRealPosClosureBin, multComplexClosure, multComplexClosureBin
         from proveit.number import num
         if hasattr(self, 'number_set'):

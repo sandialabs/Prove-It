@@ -124,7 +124,6 @@ class And(Operation):
         yield self.deriveParts
         #yield self.deriveCommutation
 
-
     def negationSideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
