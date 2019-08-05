@@ -799,6 +799,7 @@ class Add(Operation):
                     print(785)
                     print(Equals(self, expr).prove(assumptions))
                     # rewrite the dictionary to reflect this change
+                    print("expr.operands[hold[key][0][0]].operands",expr.operands[hold[key][0][0]].operands)
                     hold, no = expr.createDict(assumptions)
                     print("new dict after mult", hold)
                     print("order", order)
@@ -834,7 +835,7 @@ class Add(Operation):
                     sub = expr.operands[i].operands[0].evaluations(assumptions)
                     expr = sub.substitution(expr.innerExpr().operands[i].operands[0], assumptions).rhs
                     print(Equals(self, expr).prove(assumptions))
-                if isinstance(expr.operands[i].operands[0], Add):
+                if isinstance(expr.operands[i].operands[0], Add) and len(expr.operands[i].operands[0].operands) == 1:
                     from proveit.number.addition._axioms_ import singleAdd
                     sub = singleAdd.specialize({x:expr.operands[i].operands[0].operands[0]})
                     print("single Add", sub)
@@ -867,7 +868,7 @@ class Add(Operation):
         created by JML on 7/31/19
         evaluate literals in a given expression (used for simplification)
         '''
-        from proveit.logic import Equals
+        from proveit.logic import Equals, EvaluationError
         from proveit.number import Numeral
         expr = self
         length = len(expr.operands)
@@ -875,9 +876,19 @@ class Add(Operation):
         import pdb # for tracing
         #pdb.set_trace()  # BREAKPOINT
         if length == 2:
-            expr = expr.evaluation(assumptions).rhs
-            print(Equals(self, expr).prove(assumptions))
-            return Equals(self, expr).prove(assumptions)
+
+            try:
+                expr = expr.evaluation(assumptions).rhs
+                print(Equals(self, expr).prove(assumptions))
+                return Equals(self, expr).prove(assumptions)
+            except EvaluationError:
+                print("return 883")
+                if isinstance(expr.operands[0], Literal) and isinstance(expr.operands[1], Literal):
+                    raise EvaluationError("Unable to evaluate %s, evaluation is not implemented for a sum greater than 9" % str(expr))
+                else:
+                    raise EvaluationError(
+                        "Unable to evaluate %s, simplification not implemented for variable coefficients." % str(
+                            expr))
         while i < length:
            # if not isinstance(expr.operands[i], Literal):
                # raise ValueError("expecting addition of literals")
@@ -885,13 +896,26 @@ class Add(Operation):
                # if not isinstance(expr.operands[i + 1], Literal):
                   #  raise ValueError("expecting addition of literals")
                 expr = expr.deriveGroup(i, i + 1, assumptions).rhs
-                print(Equals(self, expr).prove(assumptions))
+                print("after group in evaluations", Equals(self, expr).prove(assumptions))
                 #pdb.set_trace()  # BREAKPOINT
-                sub = expr.operands[i].evaluation(assumptions)
-                print(sub)
-                expr = sub.substitution(expr.innerExpr().operands[i], assumptions).rhs
-                print(Equals(self, expr).prove(assumptions))
-                length -= 1
+                try:
+                    sub = expr.operands[i].evaluation(assumptions)
+                    print(sub)
+                    expr = sub.substitution(expr.innerExpr().operands[i], assumptions).rhs
+                    print(Equals(self, expr).prove(assumptions))
+
+                except EvaluationError:
+                    literal = True
+                    for operand in expr.operands[i].operands:
+                        if not isinstance(operand, Literal):
+                            literal = False
+                    if not literal:
+                        raise EvaluationError("Unable to evaluate %s, simplification not implemented for variable coefficients"%str(expr.operands[i]))
+                    else:
+                        raise EvaluationError("Unable to evaluate %s, evaluation not implemented for a sum greater than 9"%str(expr.operands[i]))
+
+                    pass
+                length -=1
             else:
                 break
         print(expr)

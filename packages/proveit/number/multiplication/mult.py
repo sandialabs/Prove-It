@@ -66,7 +66,14 @@ class Mult(Operation):
         if bin:
             return thm.specialize({a:self.operands[0], b:self.operands[1]}, assumptions=assumptions)
         return thm.specialize({m:num(len(self.operands)),AA:self.operands}, assumptions=assumptions)
-    
+
+    def concludeMultOne(self, k=0, assumptions=USE_DEFAULTS):
+        '''
+        created by JML on 7/9/19
+        '''
+        from ._theorems_ import multOne
+        return multOne.specialize({x:self.operands[k]}, assumptions=assumptions)
+
     def notEqual(self, rhs, assumptions=USE_DEFAULTS):
         from ._theorems_ import multNotEqZero
         if rhs == zero:
