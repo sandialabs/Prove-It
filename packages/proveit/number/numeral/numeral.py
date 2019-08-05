@@ -72,9 +72,9 @@ class Numeral(Literal, IrreducibleValue):
 
     def deducePositive(self):
         if Numeral._positiveStmts is None:
-            from .deci._theorems_ import oneIsPositive, twoIsPositive, threeIsPositive, fourIsPositive, fiveIsPositive
-            from .deci._theorems_ import sixIsPositive, sevenIsPositive, eightIsPositive, nineIsPositive
-            Numeral._positiveStmts = {1:oneIsPositive, 2:twoIsPositive, 3:threeIsPositive, 4:fourIsPositive, 5:fiveIsPositive, 6:sixIsPositive, 7:sevenIsPositive, 8:eightIsPositive, 9:nineIsPositive}
+            from .deci._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
+            from .deci._theorems_ import posnat6, posnat7, posnat8, posnat9
+            Numeral._positiveStmts = {1:posnat1, 2:posnat2, 3:posnat3, 4:posnat4, 5:posnat5, 6:posnat6, 7:posnat7, 8:posnat8, 9:posnat9}
         return Numeral._positiveStmts[self.n]
 
 class NumeralSequence(Operation):

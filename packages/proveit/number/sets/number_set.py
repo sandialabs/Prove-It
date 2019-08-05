@@ -25,6 +25,6 @@ class NumberMembership(Membership):
         Try to deduce that the given element is in the number set under the given assumptions.
         '''   
         if hasattr(self.element, 'deduceInNumberSet'):
-            return self.element.deduceInNumberSet(self, assumptions=assumptions)
+            return self.element.deduceInNumberSet(self.number_set, assumptions=assumptions)
         raise ProofFailure(InSet(self.element, self.number_set), assumptions, str(self.element) + " has no 'deduceInNumberSet' method.")
 

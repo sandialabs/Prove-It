@@ -313,7 +313,7 @@ class ExprList(Composite, Expression):
             elif started:
                 # We have encountered the start but not the end.
                 yield (index, entry_end) # Yield the full range of the entry.
-            
+
             index = next_index # Move on to the next entry.
             prev_end = entry_end
         

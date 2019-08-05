@@ -835,7 +835,7 @@ class Specialization(Proof):
                 raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
+            instanceVar, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
             # When substituting an iterated instance variable, we need to make sure that the
             # expansion is complete: that there are as many elements of the expansion as
             # the number of elements of the substitution.  For example,
@@ -849,10 +849,10 @@ class Specialization(Proof):
                     expandedParameter = parameter.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
                     if len(expandedParameter) != len(subbedParam):
                         raise SpecializationFailure(None, assumptions, "Substitution of iterated instance variables incomplete: %d length expansion versus %d length substitution"%(len(expandedParameter), len(subbedParam)))
-            mappedVarLists.append(instanceVars)
+            mappedVarLists.append(instanceVar)
             # include the mapping for the current instance variables in the partial map
             try:
-                partialMap.update({iVar:specializeMap[iVar] for iVar in instanceVars})
+                partialMap.update({iVar:specializeMap[iVar] for iVar in instanceVar})
             except KeyError:
                 raise SpecializationFailure(None, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
             # make substitutions in the condition

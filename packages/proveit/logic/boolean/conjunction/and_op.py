@@ -119,15 +119,23 @@ class And(Operation):
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
+        return
         yield self.deriveInBool
         yield self.deriveParts
         #yield self.deriveCommutation
+
 
     def negationSideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
         '''
+        from proveit.logic import Not, Or
         yield self.deriveInBool # (A and B and ... and Z) in Booleans
+        # implemented by JML on 7/2/19
+        # If all of the operands are negated call the disjunction form of DeMorgan's
+        if all(isinstance(operand, Not) for operand in self.operands):
+            demorganOr = Or(*[operand.operand for operand in self.operands])
+            yield demorganOr.concludeViaDemorgans
         
     def inBoolSideEffects(self, knownTruth):
         '''
@@ -154,8 +162,9 @@ class And(Operation):
         r'''
         From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
+        edited by JML 7/9/19 implement someFromAnd for side effect use
         '''
-        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
+        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd, someFromAnd
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
@@ -165,10 +174,31 @@ class And(Operation):
             elif idx==1:
                 return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
+            from proveit import ExprList
             from proveit.number import num
-            mVal, nVal = num(idx), num(len(self.operands)-idx-1)
-            return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
-    
+            try:
+                mVal, nVal = num(idx), num(len(self.operands)-idx-1)
+                print(mVal,nVal)
+                mVal, nVal = ExprList(*self.operands[:idx]).len(), ExprList(*self.operands[idx + 1:]).len()
+                print(mVal, nVal)
+                return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
+            except ProofFailure:
+                self.deriveSomeFromAnd(idx, assumptions)
+
+    def deriveSomeFromAnd(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        added by JML 7/8/19
+        From (A and ... and B and ... C) derive any one index even if it is an iteration. 
+        '''
+        from proveit import ExprList
+        from proveit.logic.boolean.conjunction._theorems_ import someFromAnd
+        lVal = ExprList(*self.operands[:idx]).len()
+        mVal = ExprList(self.operands[idx]).len()
+        nVal = ExprList(*self.operands[idx + 1:]).len()
+        print("lVal, mVal, nVal", lVal, mVal, nVal)
+        print("before, idx, after", self.operands[:idx], self.operands[idx], self.operands[idx + 1:])
+        return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:self.operands[:idx], BB:self.operands[idx], CC:self.operands[idx + 1:]}, assumptions = assumptions)
+
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \land B)` derive :math:`A`.
@@ -205,14 +235,15 @@ class And(Operation):
 
     def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
         '''
-        From (A and ... and H and I and J or ... or L and M or N and ... and Q), assuming in Booleans and given
+        From (A and ... and H and I and J and ... and L and M and N and ... and Q), assuming in Booleans and given
         the beginning and end of the groups to be switched,
         derive and return (A and ... and H and M and J and ... and L and I and N and ... and Q).
         Created by JML on 6/10/19
         '''
         from ._theorems_ import swap
         from proveit.number import num
-        if 0 < i < j < len(self.operands) - 1:
+
+        if 0 < i < j <= len(self.operands) - 1:
             return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands) - j - 1), AA: self.operands[:i],B: self.operands[i], CC: self.operands[i + 1:j], D: self.operands[j], EE: self.operands[j + 1:]},assumptions=assumptions)
         else:
             raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
@@ -267,7 +298,7 @@ class And(Operation):
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
             return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
 
-    def deduceDemorgansEquiv(self, assumptions=USE_DEFAULTS):
+    def concludeViaDemorgans(self, assumptions=USE_DEFAULTS):
         '''
         # created by JML 6/28/19
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
