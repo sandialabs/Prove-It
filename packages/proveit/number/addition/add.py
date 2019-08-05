@@ -451,6 +451,9 @@ class Add(Operation):
             if len(other) != 0:
                 # there is a group of values
                 val = other[0][0]
+                if isinstance(val, Mult):
+                    # place it in the correct place regardless of multiplication
+                    val = val.operands[1]
                 if isinstance(val, Neg):
                     val = other[0][0].operand
                     neg = True
@@ -519,7 +522,7 @@ class Add(Operation):
         Given an expression, group terms that are similar
         created by JML 7/25/19
         '''
-        from proveit.number import Neg
+        from proveit.number import Mult
         m = 0
         expr = self
         length = len(expr.operands)
@@ -529,12 +532,12 @@ class Add(Operation):
                 # check to see if we have reached the end
                 idx = 1
                 One = expr.operands[m]
-                #if isinstance(One, Neg):
-                   # One = One.operand
+                if isinstance(One, Mult):
+                   One = One.operands[1]
                 # the first value of a group
                 Two = expr.operands[m + idx]
-                #if isinstance(Two, Neg):
-                   # Two = Two.operand
+                if isinstance(Two, Mult):
+                   Two = Two.operands[1]
                 # the last value of a group
 
                 new = False # used to check if Two has changed
@@ -548,8 +551,8 @@ class Add(Operation):
                     if m + idx < length:
                         # check to see if we have reached the end
                         Two = expr.operands[m + idx]
-                        #if isinstance(Two, Neg):
-                            #Two = Two.operand
+                        if isinstance(Two, Mult):
+                            Two = Two.operands[1]
                         # move on to the next operand
                         new = True
                         # we have moved on to another operand
@@ -562,8 +565,8 @@ class Add(Operation):
                 print("one, two, idx", One,Two,idx)
                 # if we incremented at least once, we need to subtract 1 because the last value was not equal
                 Two = expr.operands[m + idx]
-                #if isinstance(Two, Neg):
-                    #Two = Two.operand
+                if isinstance(Two, Mult):
+                    Two = Two.operands[1]
                 # redefine two to reflect the end of the group
 
                 if One == Two or (isinstance(One, Literal) and isinstance(Two, Literal)):
@@ -827,7 +830,7 @@ class Add(Operation):
                 print(Equals(self, expr).prove(assumptions))
 
             elif isinstance(operand, Mult):
-                if not isinstance(operand.operands[0], Mult):
+                if isinstance(operand.operands[0], Add):
                     sub = expr.operands[i].operands[0].evaluations(assumptions)
                     expr = sub.substitution(expr.innerExpr().operands[i].operands[0], assumptions).rhs
                     print(Equals(self, expr).prove(assumptions))
