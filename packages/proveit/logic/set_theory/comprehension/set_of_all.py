@@ -19,11 +19,11 @@ class SetOfAll(OperationOverInstances):
         if hasattr(self, 'instanceVar'):
             if not hasattr(self, 'domain'):
                 raise ValueError("SetOfAll requires a domain")
-        elif hasattr(self, 'instanceVar'):
+        elif hasattr(self, 'instanceVars'):
             if not hasattr(self, 'domains') or None in self.domains:
                 raise ValueError("SetOfAll requires a domain(s)")
         else:
-            assert False, "Expecting either 'instanceVar' or 'instanceVar' to be set"
+            assert False, "Expecting either 'instanceVar' or 'instanceVars' to be set"
             
     def _formatted(self, formatType, fence=False, **kwargs):
         outStr = ''
@@ -62,27 +62,27 @@ class SetOfAll(OperationOverInstances):
         '''
         from ._theorems_ import unfoldComprehension, unfoldBasicComprehension, unfoldBasic1CondComprehension, inSupersetIfInComprehension
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVar), self.conditions
-        if len(self.instanceVar) == 1 and self.instanceElement == self.instanceVar[0]:
-            inSupersetIfInComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instanceVar[0]}, assumptions=assumptions) # x in S side-effect
+        if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0]:
+            inSupersetIfInComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instanceVars[0]}, assumptions=assumptions) # x in S side-effect
             if len(self.conditions) == 1:
-                Q_op, Q_op_sub = Operation(Q, self.instanceVar), self.conditions[0]
-                return unfoldBasic1CondComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element},  {y:self.instanceVar[0]}, assumptions=assumptions)
+                Q_op, Q_op_sub = Operation(Q, self.instanceVars), self.conditions[0]
+                return unfoldBasic1CondComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element},  {y:self.instanceVars[0]}, assumptions=assumptions)
             else:
-                return unfoldBasicComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instanceVar[0]}, assumptions=assumptions)
+                return unfoldBasicComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instanceVars[0]}, assumptions=assumptions)
         else:
-            f_op, f_sub = Operation(f, self.instanceVar), self.instanceElement
-            return unfoldComprehension.specialize({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {yMulti:self.instanceVar}).deriveConclusion(assumptions)
+            f_op, f_sub = Operation(f, self.instanceVars), self.instanceElement
+            return unfoldComprehension.specialize({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {yMulti:self.instanceVars}).deriveConclusion(assumptions)
     
     def deduceMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''   
         from ._theorems_ import foldComprehension, foldBasicComprehension
-        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVar), self.conditions
-        if len(self.instanceVar) == 1 and self.instanceElement == self.instanceVar[0] and len(self.conditions) == 1:
-            Pop, Psub = Operation(P, self.instanceVar), self.conditions[0]
-            return foldBasicComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instanceVar[0]}, assumptions=assumptions)
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0] and len(self.conditions) == 1:
+            Pop, Psub = Operation(P, self.instanceVars), self.conditions[0]
+            return foldBasicComprehension.specialize({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instanceVars[0]}, assumptions=assumptions)
         else:
-            f_op, f_sub = Operation(f, self.instanceVar), self.instanceElement
-            return foldComprehension.specialize({S:self.domain, Q_op:Q_op_sub, f_op:f_sub, x:element}, {yMulti:self.instanceVar}).deriveConclusion(assumptions)
+            f_op, f_sub = Operation(f, self.instanceVars), self.instanceElement
+            return foldComprehension.specialize({S:self.domain, Q_op:Q_op_sub, f_op:f_sub, x:element}, {yMulti:self.instanceVars}).deriveConclusion(assumptions)
     """

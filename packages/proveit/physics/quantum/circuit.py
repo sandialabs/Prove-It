@@ -360,22 +360,22 @@ class ForallWithImplicitIdentities(Forall):
     method.
     '''
     
-    def __init__(self, instanceVar, instanceExpr, conditions=None):
+    def __init__(self, instanceVars, instanceExpr, conditions=None):
         '''
         Create a special Forall expression with ImplicitIdentities as one or
-        more of the instanceVar.  Adds appropriate conditions that restrict
+        more of the instanceVars.  Adds appropriate conditions that restrict
         these to be specialized as one or more identities.
         '''
-        Forall.__init__(self, instanceVar, instanceExpr, conditions=ForallWithImplicitIdentities._with_implicit_conditions(instanceVar, conditions))
+        Forall.__init__(self, instanceVars, instanceExpr, conditions=ForallWithImplicitIdentities._with_implicit_conditions(instanceVars, conditions))
         # Extract the ImplicitIdentities
-        self.implicit_identities = {var for var in instanceVar if isinstance(var, ImplicitIdentities)}
+        self.implicit_identities = {var for var in instanceVars if isinstance(var, ImplicitIdentities)}
         # Extract the conditions involving ImplicitIdentities
         self.implicit_conditions = {condition for condition in self.condition if not condition.freeVars().isdisjoint(self.implicit_identities)}
     
     @staticmethod
-    def _with_implicit_conditions(instanceVar, conditions):
+    def _with_implicit_conditions(instanceVars, conditions):
         conditions = [] if conditions is None else list(conditions)
-        for var in instanceVar:
+        for var in instanceVars:
             if isinstance(var, ImplicitIdentities):
                 conditions.append(areIdentities(var))
         return conditions
@@ -618,22 +618,22 @@ class ForallWithImplicitIdentities(Forall):
     method.
     '''
     
-    def __init__(self, instanceVar, instanceExpr, conditions=None):
+    def __init__(self, instanceVars, instanceExpr, conditions=None):
         '''
         Create a special Forall expression with ImplicitIdentities as one or
-        more of the instanceVar.  Adds appropriate conditions that restrict
+        more of the instanceVars.  Adds appropriate conditions that restrict
         these to be specialized as one or more identities.
         '''
-        Forall.__init__(self, instanceVar, instanceExpr, conditions=ForallWithImplicitIdentities._with_implicit_conditions(instanceVar, conditions))
+        Forall.__init__(self, instanceVars, instanceExpr, conditions=ForallWithImplicitIdentities._with_implicit_conditions(instanceVars, conditions))
         # Extract the ImplicitIdentities
-        self.implicit_identities = {var for var in instanceVar if isinstance(var, ImplicitIdentities)}
+        self.implicit_identities = {var for var in instanceVars if isinstance(var, ImplicitIdentities)}
         # Extract the conditions involving ImplicitIdentities
         self.implicit_conditions = {condition for condition in self.condition if not condition.freeVars().isdisjoint(self.implicit_identities)}
     
     @staticmethod
-    def _with_implicit_conditions(instanceVar, conditions):
+    def _with_implicit_conditions(instanceVars, conditions):
         conditions = [] if conditions is None else list(conditions)
-        for var in instanceVar:
+        for var in instanceVars:
             if isinstance(var, ImplicitIdentities):
                 conditions.append(areIdentities(var))
         return conditions

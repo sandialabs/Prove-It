@@ -9,8 +9,8 @@ class Sum(OperationOverInstances):
     _operator_ = Literal(stringFormat='Sum', latexFormat=r'\sum', context=__file__)   
     _init_argname_mapping_ = {'indexOrIndices':'instanceVarOrVars', 'summand':'instanceExpr'}
     
-#    def __init__(self, summand-instanceExpression, indices-instanceVar, domains):
-#    def __init__(self, instanceVar, instanceExpr, conditions = tuple(), domain=EVERYTHING):
+#    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
+#    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
     def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple()):
         r'''
@@ -25,8 +25,8 @@ class Sum(OperationOverInstances):
         OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True)
         if hasattr(self, 'instanceVar'):
             self.index = self.instanceVar
-        if hasattr(self, 'instanceVar'):
-            self.indices = self.instanceVar
+        if hasattr(self, 'instanceVars'):
+            self.indices = self.instanceVars
         self.summand = self.instanceExpr
         """
         # think about this later
@@ -42,9 +42,9 @@ class Sum(OperationOverInstances):
 
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
         from ._theorems_ import summationNatsClosure, summationIntsClosure, summationRealsClosure, summationComplexesClosure
-        P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVar), self.conditions
-        Operation(P, self.instanceVar)
+        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        Operation(P, self.instanceVars)
         self.summand
         if numberSet == Naturals:
             thm = summationNatsClosure
@@ -56,7 +56,7 @@ class Sum(OperationOverInstances):
             thm = summationComplexesClosure
         else:
             raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
-        return thm.specialize({P_op:P_op_sub, S:self.domain, Q_op:Q_op_sub}, relabelMap={xMulti:self.instanceVar}, 
+        return thm.specialize({P_op:P_op_sub, S:self.domain, Q_op:Q_op_sub}, relabelMap={xMulti:self.instanceVars}, 
                                 assumptions=assumptions).deriveConsequent(assumptions=assumptions)    
     
     def _formatted(self, formatType, **kwargs):
@@ -89,9 +89,9 @@ class Sum(OperationOverInstances):
         '''
         from axioms import sumSingle
         if isinstance(self.domain, Interval) and self.domain.lowerBound == self.domain.upperBound:
-            if len(self.instanceVar) == 1:
+            if len(self.instanceVars) == 1:
                 deduceInIntegers(self.domain.lowerBound, assumptions)
-                return sumSingle.specialize({Operation(f, self.instanceVar):self.summand}).specialize({a:self.domain.lowerBound})
+                return sumSingle.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound})
         raise Exception("Sum simplification only implemented for a summation over a Interval of one instance variable where the upper and lower bound is the same")
 
     def simplified(self, assumptions=frozenset()):
@@ -176,7 +176,7 @@ class Sum(OperationOverInstances):
         deduceInIntegers(lowerBound, assumptions)
         deduceInIntegers(upperBound, assumptions)
         deduceInIntegers(splitIndex, assumptions)
-        return sumSplit.specialize({Operation(f, self.instanceVar):self.summand}).specialize({a:lowerBound, b:splitIndex, c:upperBound, x:self.indices[0]}).deriveReversed()
+        return sumSplit.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:lowerBound, b:splitIndex, c:upperBound, x:self.indices[0]}).deriveReversed()
         
     def split(self, splitIndex, side='after', assumptions=frozenset()):
         r'''
@@ -191,33 +191,33 @@ class Sum(OperationOverInstances):
             raise Exception('Sum splitting only implemented for Interval domains')
         if side=='before' and self.domain.upperBound==splitIndex: return self.splitOffLast()
         if side=='after' and self.domain.lowerBound==splitIndex: return self.splitOffFirst()
-        if isinstance(self.domain, Interval) and len(self.instanceVar) == 1:
+        if isinstance(self.domain, Interval) and len(self.instanceVars) == 1:
             from theorems import sumSplitAfter, sumSplitBefore
             sumSplit = sumSplitAfter if side == 'after' else sumSplitBefore
             deduceInIntegers(self.domain.lowerBound, assumptions)
             deduceInIntegers(self.domain.upperBound, assumptions)
             deduceInIntegers(splitIndex, assumptions)
             # Also needs lowerBound <= splitIndex and splitIndex < upperBound
-            return sumSplit.specialize({Operation(f, self.instanceVar):self.summand}).specialize({a:self.domain.lowerBound, b:splitIndex, c:self.domain.upperBound, x:self.indices[0]})
+            return sumSplit.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:splitIndex, c:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")
 
 
     def splitOffLast(self, assumptions=frozenset()):
         from axioms import sumSplitLast
-        if isinstance(self.domain, Interval) and len(self.instanceVar) == 1:
+        if isinstance(self.domain, Interval) and len(self.instanceVars) == 1:
             deduceInIntegers(self.domain.lowerBound, assumptions)
             deduceInIntegers(self.domain.upperBound, assumptions)
             # Also needs lowerBound < upperBound
-            return sumSplitLast.specialize({Operation(f, self.instanceVar):self.summand}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
+            return sumSplitLast.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")
 
     def splitOffFirst(self, assumptions=frozenset()):
         from theorems import sumSplitFirst # only for associative summation
-        if isinstance(self.domain, Interval) and len(self.instanceVar) == 1:
+        if isinstance(self.domain, Interval) and len(self.instanceVars) == 1:
             deduceInIntegers(self.domain.lowerBound, assumptions)
             deduceInIntegers(self.domain.upperBound, assumptions)
             # Also needs lowerBound < upperBound
-            return sumSplitFirst.specialize({Operation(f, self.instanceVar):self.summand}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
+            return sumSplitFirst.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound, b:self.domain.upperBound, x:self.indices[0]})
         raise Exception("splitOffLast only implemented for a summation over a Interval of one instance variable")
 
     def factor(self, theFactor, pull="left", groupFactor=False, groupRemainder=None, assumptions=frozenset()):

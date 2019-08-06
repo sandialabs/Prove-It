@@ -9,7 +9,7 @@ class NotExists(OperationOverInstances):
     def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple()):
         '''
         Create a exists (there exists) expression:
-        exists_{instanceVar | conditions} instanceExpr
+        exists_{instanceVars | conditions} instanceExpr
         This expresses that there exists a value of the instanceVar(s) for which the optional condition(s)
         is/are satisfied and the instanceExpr is true.  The instanceVar(s) and condition(s) may be 
         singular or plural (iterable).
@@ -29,9 +29,9 @@ class NotExists(OperationOverInstances):
         Derive and return Not(Exists_{x | Q(x)} P(x)) from NotExists_{x | Q(x)} P(x)
         '''
         from ._theorems_ import notExistsUnfolding
-        P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVar)), self.conditions
-        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVar, S:self.domain}).deriveConclusion(assumptions)
+        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        return notExistsUnfolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain}).deriveConclusion(assumptions)
     
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
@@ -39,9 +39,9 @@ class NotExists(OperationOverInstances):
         This is automatically derived; see Not.deriveSideEffects(..) and Not.deriveNotExists(..).
         '''
         from ._theorems_ import notExistsFolding
-        P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpr
-        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVar)), self.conditions
-        folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVar, S:self.domain})
+        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        Q_op, Q_op_sub = Etcetera(Operation(Q, self.instanceVars)), self.conditions
+        folding = notExistsFolding.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
         return folding.deriveConclusion(assumptions)
 
     """
@@ -55,15 +55,15 @@ class NotExists(OperationOverInstances):
         from proveit.logic.equality.eqOps import NotEquals
         from boolOps import Not
         from boolSet import TRUE
-        Q_op, Q_op_sub = Operation(Q, self.instanceVar), self.conditions
+        Q_op, Q_op_sub = Operation(Q, self.instanceVars), self.conditions
         operand = self.operans[0]
         if isinstance(self.instanceExpr, Not):
-            P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpr.etcExpr
+            P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr.etcExpr
             assumption = Forall(operand.arguments, operand.expression.etcExpr, operand.domainCondition)
-            return forallImpliesNotExistsNot.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVar}).deriveConclusion().checked({assumption})
+            return forallImpliesNotExistsNot.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveConclusion().checked({assumption})
         else:
-            P_op, P_op_sub = Operation(P, self.instanceVar), self.instanceExpr
+            P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
             assumption = Forall(operand.arguments, NotEquals(operand.expression, TRUE), operand.domainCondition)
-            return existsDefNegation.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVar}).deriveLeftViaEquivalence().checked({assumption})
+            return existsDefNegation.specialize({P_op:P_op_sub, Q_op:Q_op_sub, x:self.instanceVars}).deriveLeftViaEquivalence().checked({assumption})
     """
 

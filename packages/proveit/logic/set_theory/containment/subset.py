@@ -139,9 +139,9 @@ class SubsetEq(SubsetRelation):
         if isinstance(self.subset, SetOfAll):
             from proveit.logic.set_theory.comprehension._theorems_ import comprehensionIsSubset
             setOfAll = self.subset
-            if len(setOfAll.instanceVar)==1 and setOfAll.instanceElement == setOfAll.instanceVar[0] and setOfAll.domain==self.superset:
-                Q_op, Q_op_sub = Operation(Qmulti, setOfAll.instanceVar), setOfAll.conditions
-                return comprehensionIsSubset.specialize({S:setOfAll.domain, Q_op:Q_op_sub}, relabelMap={x:setOfAll.instanceVar[0]}, assumptions=assumptions)
+            if len(setOfAll.instanceVars)==1 and setOfAll.instanceElement == setOfAll.instanceVars[0] and setOfAll.domain==self.superset:
+                Q_op, Q_op_sub = Operation(Qmulti, setOfAll.instanceVars), setOfAll.conditions
+                return comprehensionIsSubset.specialize({S:setOfAll.domain, Q_op:Q_op_sub}, relabelMap={x:setOfAll.instanceVars[0]}, assumptions=assumptions)
         
         # Finally, attempt to conclude A subseteq B via forall_{x in A} x in B.
         # Issue: Variables do not match when using safeDummyVar: _x_ to x.
