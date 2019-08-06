@@ -31,6 +31,7 @@ class Add(Operation):
                 except:
                     # may fail before the relevent _commons_ and _theorems_ have been generated
                     pass # and that's okay
+        #assert not isinstance(self.operands[0], Add)
 
     def styleOptions(self):
         # Added by JML on 9/10/19
@@ -826,13 +827,13 @@ class Add(Operation):
         for i, operand in enumerate(expr.operands):
             print("expr, i, length", expr, i, length)
             if isinstance(operand, Add):
-                sub = expr.operands[i].evaluations(assumptions)
+                sub = expr.operands[i].evaluation(assumptions)
                 expr = sub.substitution(expr.innerExpr().operands[i], assumptions).rhs
                 print(Equals(self, expr).prove(assumptions))
 
             elif isinstance(operand, Mult):
                 if isinstance(operand.operands[0], Add):
-                    sub = expr.operands[i].operands[0].evaluations(assumptions)
+                    sub = expr.operands[i].operands[0].evaluation(assumptions)
                     expr = sub.substitution(expr.innerExpr().operands[i].operands[0], assumptions).rhs
                     print(Equals(self, expr).prove(assumptions))
                 if isinstance(expr.operands[i].operands[0], Add) and len(expr.operands[i].operands[0].operands) == 1:
@@ -863,7 +864,7 @@ class Add(Operation):
         print("last equals!")
         return Equals(self,expr).prove(assumptions)
 
-    def evaluations(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         created by JML on 7/31/19
         evaluate literals in a given expression (used for simplification)
@@ -875,32 +876,41 @@ class Add(Operation):
         i = 0
         import pdb # for tracing
         #pdb.set_trace()  # BREAKPOINT
-        if length == 2:
 
-            try:
-                expr = expr.evaluation(assumptions).rhs
-                print(Equals(self, expr).prove(assumptions))
-                return Equals(self, expr).prove(assumptions)
-            except EvaluationError:
-                print("return 883")
-                if isinstance(expr.operands[0], Literal) and isinstance(expr.operands[1], Literal):
-                    raise EvaluationError("Unable to evaluate %s, evaluation is not implemented for a sum greater than 9" % str(expr))
-                else:
-                    raise EvaluationError(
-                        "Unable to evaluate %s, simplification not implemented for variable coefficients." % str(
-                            expr))
         while i < length:
            # if not isinstance(expr.operands[i], Literal):
                # raise ValueError("expecting addition of literals")
+            print("i, length", i, length)
             if i + 1 < length:
                # if not isinstance(expr.operands[i + 1], Literal):
                   #  raise ValueError("expecting addition of literals")
-                expr = expr.deriveGroup(i, i + 1, assumptions).rhs
+                if len(expr.operands) > 2:
+                    expr = expr.deriveGroup(i, i + 1, assumptions).rhs
+
                 print("after group in evaluations", Equals(self, expr).prove(assumptions))
                 #pdb.set_trace()  # BREAKPOINT
+                if length == 2:
+
+                    try:
+                        sub = Operation.evaluation(expr, assumptions)
+                        print("sub", sub)
+                        print("expr before sub", expr)
+                        expr = sub.subRightSideInto(Equals(self,expr))
+                        print("expr", expr)
+                        print(Equals(self, expr.rhs).prove(assumptions))
+                        return Equals(self, expr.rhs).prove(assumptions)
+                    except EvaluationError:
+                        print("return 883")
+                        if isinstance(expr.operands[0], Literal) and isinstance(expr.operands[1], Literal):
+                            raise EvaluationError(
+                                "Unable to evaluate %s, evaluation is not implemented for a sum greater than 9" % str(expr))
+                        else:
+                            raise EvaluationError(
+                                "Unable to evaluate %s, simplification not implemented for variable coefficients." % str(
+                                    expr))
                 try:
                     sub = expr.operands[i].evaluation(assumptions)
-                    print(sub)
+                    print("sub", sub)
                     expr = sub.substitution(expr.innerExpr().operands[i], assumptions).rhs
                     print(Equals(self, expr).prove(assumptions))
 
