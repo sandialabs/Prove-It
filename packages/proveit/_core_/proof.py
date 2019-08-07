@@ -33,11 +33,15 @@ class Proof:
     def __init__(self, provenTruth, requiredTruths):
         
         '''
-        # Uncomment to print useful debugging information when tracking side-effects.
-        if not isinstance(self, Theorem) and not isinstance(self, Axiom):
-            print "prove", provenTruth.expr
         '''
+        # Uncomment to print useful debugging information when tracking side-effects.
+        # if not isinstance(self, Theorem) and not isinstance(self, Axiom):
+        #    print("prove", provenTruth.expr)
         
+        print('provenTruth assumptions = ', provenTruth.assumptions)            # for testing; delete later
+        print('provenTruth operands = ', provenTruth.operands)                  # for testing; delete later
+        print('provenTruth expr = ', provenTruth.expr)                          # for testing; delete later
+        print('requiredTruths = ', requiredTruths)                              # for testing; delete later
         assert isinstance(provenTruth, KnownTruth)
         for requiredTruth in requiredTruths:
             assert isinstance(requiredTruth, KnownTruth)
@@ -778,7 +782,7 @@ class Skolemization(Proof):
             generalExpr = generalTruth.expr
 
             # perform the appropriate substitution/relabeling
-            skomelizedExpr, requirements, mappedVarLists, mappings = (
+            skolemizedExpr, requirements, mappedVarLists, mappings = (
                 Skolemization._skolemized_expr(
                         generalExpr, numExistsEliminations,
                         skolemizeMap, relabelMap, assumptions)
@@ -799,7 +803,7 @@ class Skolemization(Proof):
                         requirementTruthSet.add(requirementTruth)
                         _appendExtraAssumptions(assumptions, requirementTruth)
                 except ProofFailure:
-                    raise Failure(skomelizedExpr, assumptions, (
+                    raise Failure(skolemizedExpr, assumptions, (
                         'Unmet specialization requirement: ' +
                         str(requirementExpr))
                     )
@@ -814,10 +818,10 @@ class Skolemization(Proof):
             self.requirementTruths = requirementTruths
             self.mappedVarLists = mappedVarLists
             self.mappings = mappings
-            skomelizedTruth = KnownTruth(skomelizedExpr, assumptions)
+            skolemizedTruth = KnownTruth(skolemizedExpr, assumptions)
             Proof.__init__(
                     self,
-                    skomelizedTruth,
+                    skolemizedTruth,
                     [generalTruth] + requirementTruths)
 
             # Mark each of the Skolem constants as Skolem constants
@@ -842,7 +846,7 @@ class Skolemization(Proof):
                                 
     def stepType(self):
         if len(self.mappedVarLists) > 1:
-            return 'skomelization'
+            return 'skolemization'
         return 'relabeling' # relabeling only
     
     def _single_mapping(self, var, replacement, formatType):
@@ -876,9 +880,9 @@ class Skolemization(Proof):
                          skolemizeMap, relabelMap, assumptions):
         '''
         DESCRIPTION NEEDS WORK!
-        Return a tuple of (skomelization, conditions).  The 
-        skomelization derives from the given "general" expression and
-        its conditions via a skomelization inference rule (or
+        Return a tuple of (skolemization, conditions).  The 
+        skolemization derives from the given "general" expression and
+        its conditions via a skolemization inference rule (or
         relabeling as a special case). Eliminates the specified number
         of Exists operations, substituting all of the corresponding
         instance variables according to the substitution map dictionary
@@ -1027,20 +1031,25 @@ class Skolemization(Proof):
 class Specialization(Proof):
     def __init__(self, generalTruth, numForallEliminations, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
         '''
-        Create the Specialization proof step that specializes the given general expression
-        using the substitution map (subMap) under the given assumptions.  
-        Eliminates the number of nested Forall operations as indicated, substituting
-        their instance variables according to subMap.  The default for any unspecified instance 
-        variable is to specialize it to itself, or, in the case of a bundled variable 
-        (Etcetera-wrapped MultiVariables), the default is to specialize it to an empty list.
-        Substitution of variables that are not instance variables of the Forall operations
-        being eliminated are to be relabeled.  Relabeling is limited to substituting
-        a Variable to another Variable or substituting a bundled variable to
-        another bundled variable or list of variables (bundled or not).
+        Create the Specialization proof step that specializes the given
+        general expression using the substitution map (subMap) under
+        the given assumptions. Eliminates the number of nested Forall
+        operations as indicated, substituting their instance variables
+        according to subMap.  The default for any unspecified instance
+        variable is to specialize it to itself, or, in the case of a
+        bundled variable (Etcetera-wrapped MultiVariables), the default
+        is to specialize it to an empty list.  Substitution of variables
+        that are not instance variables of the Forall operations being
+        eliminated are to be relabeled.  Relabeling is limited to
+        substituting a Variable to another Variable or substituting a
+        bundled variable to another bundled variable or list of
+        variables (bundled or not).
         '''
         assumptions = list(defaults.checkedAssumptions(assumptions))
         prev_default_assumptions = defaults.assumptions
-        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        # default assumptions set to be used for deriving any
+        # side-effects
+        defaults.assumptions = assumptions
         try:
             if relabelMap is None: relabelMap = dict()
             if specializeMap is None: specializeMap = dict()
@@ -1051,20 +1060,40 @@ class Specialization(Proof):
                 raise UnusableProof(KnownTruth.theoremBeingProven, generalTruth)
             if not generalTruth.assumptionsSet.issubset(assumptions):
                 if '*' in assumptions:
-                    # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
+                    # if WILDCARD_ASSUMPTIONS is included, add any
+                    # extra assumptions that are needed
                     _appendExtraAssumptions(assumptions, generalTruth)
                 else:
-                    raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
+                    raise Failure(
+                            None, [],
+                            ('Assumptions do not include the ' +
+                             'assumptions required by generalTruth')
+                    )
             generalExpr = generalTruth.expr
+            print('generalExpr = ', generalExpr)                                # for testing; delete later
             # perform the appropriate substitution/relabeling
-            specializedExpr, requirements, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
+            specializedExpr, requirements, mappedVarLists, mappings = (
+                Specialization._specialized_expr(
+                        generalExpr,
+                        numForallEliminations,
+                        specializeMap,
+                        relabelMap,
+                        assumptions)
+            )
+            print('AFTER _specialized_expr:')                                   # for testing; delete later
+            print('    specializedExpr = ', specializedExpr)                    # for testing; delete later
+            print('    requirements = ', requirements)                          # for testing; delete later
+            print('    mappedVarLists = ', mappedVarLists)                      # for testing; delete later
+            print('    mappings = ', mappings)                                  # for testing; delete later
             # obtain the KnownTruths for the substituted conditions
             requirementTruths = []
             requirementTruthSet = set() # avoid repeats of requirements
             for requirementExpr in requirements:
                 try:
-                    # each substituted condition must be proven under the assumptions
-                    # (if WILDCARD_ASSUMPTIONS is included, it will be proven by assumption if there isn't an existing proof otherwise)
+                    # each substituted condition must be proven under
+                    # the assumptions (if WILDCARD_ASSUMPTIONS is
+                    # included, it will be proven by assumption if
+                    # there isn't an existing proof otherwise)
                     requirementTruth = requirementExpr.prove(assumptions)
                     if requirementTruth not in requirementTruthSet:
                         requirementTruths.append(requirementTruth)
@@ -1074,15 +1103,21 @@ class Specialization(Proof):
                     raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = generalTruth.assumptionsSet
+            print('assumptionsSet = ', assumptionsSet)                          # for testing; delete later
             for requirementTruth in requirementTruths:
                 assumptionsSet |= requirementTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
+            print('assumptions = ', assumptions)                                # for testing; delete later
             # we have what we need; set up the Specialization Proof
             self.generalTruth = generalTruth
             self.requirementTruths = requirementTruths
             self.mappedVarLists = mappedVarLists
             self.mappings = mappings
             specializedTruth = KnownTruth(specializedExpr, assumptions)
+            print("specializedTruth assumptions = ", specializedTruth.assumptions)   # for testing; delete later
+            print("specializedTruth expr = ", specializedTruth.expr)                 # for testing; delete later
+            print("generalTruth = ", generalTruth)                                   # for testing; delete later
+            print("requirementTruths = ", requirementTruths)                         # for testing; delete later
             Proof.__init__(self, specializedTruth, [generalTruth] + requirementTruths)
         finally:
             # restore the original default assumptions
@@ -1131,12 +1166,15 @@ class Specialization(Proof):
     def _specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions):
         '''
         Return a tuple of (specialization, conditions).  The 
-        specialization derives from the given "general" expression and its conditions
-        via a specialization inference rule (or relabeling as a special case).
-        Eliminates the specified number of Forall operations, substituting all
-        of the corresponding instance variables according to the substitution
-        map dictionary (subMap), or defaulting basic instance variables as
-        themselves. 
+        specialization derives from the given "general" expression and
+        its conditions via a specialization inference rule (or
+        relabeling as a special case). Eliminates the specified number
+        of Forall operations, substituting all of the corresponding
+        instance variables according to the substitution map dictionary
+        (subMap), or defaulting basic instance variables as themselves.
+        Note from wdc: this method essentially performs the substitution
+        and returns the new expression with the substitution -- it
+        doesn't prove anything. 
         '''
         from proveit import Lambda, Expression, Iter
         from proveit.logic import Forall
@@ -1206,7 +1244,12 @@ class Specialization(Proof):
         
         subbed_expr = expr.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
         
-        # Return the expression and conditions with substitutions and the information to reconstruct the specialization
+        # Return the expression and conditions with substitutions and
+        # the information to reconstruct the specialization
+        print('[_specialized_expression]subbed_expr = ', subbed_expr)           # for testing; delete later
+        print('[_specialized_expression]conditions = ', subbedConditions + requirements) # for testing; delete later
+        print('[_specialized_expression]mappedVarLists = ', mappedVarLists)     # for testing; delete later
+        print('[_specialized_expression]mappings = ', mappings)                 # for testing; delete later
         return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
 
     @staticmethod

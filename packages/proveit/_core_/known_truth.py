@@ -106,12 +106,15 @@ class KnownTruth:
         be done indirectly via Expression/KnownTruth derivation-step methods.
         '''
         from proveit._core_.proof import Proof
+        print("Begin Initializing KnownTruth!")                                 # for testing; delete later
         # do some type checking
         if not isinstance(expression, Expression):
             raise ValueError('The expression (expr) of a KnownTruth should be an Expression')
         for assumption in assumptions:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
+
+        print("KnownTruth.__init__ finished type-checking. expression = ", expression) # for testing; delete later
         
         # note: these contained expressions are subject to style changes on a KnownTruth instance basis
         self.expr = expression
@@ -683,37 +686,50 @@ class KnownTruth:
         
     def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
         '''
-        Performs a specialize derivation step to be proven under the given
-        assumptions, in addition to the assumptions of the KnownTruth.
-        This will eliminate one or more nested Forall operations, specializing
-        the instance variables according to specializeMap.  Eliminates
-        the number of Forall operations required to utilize all of the
-        specializeMap keys.  The default mapping of all instance variables
-        is a mapping to itself (e.g., {x:x, y:y}).  Simultaneously, variables 
-        may be relabeled via relabelMap (see the relabel method).  Note, there 
-        is a difference between  making substitutons simultaneously versus 
-        in-series.  For example, the {x:y, y:x} mapping will swap x and y 
-        variables, but mapping {x:y} then {y:x} in series would set both 
-        variables to x.
-        Returns the proven specialized KnownTruth, or throws an exception if the
-        proof fails.        
+        Performs a specialize derivation step to be proven under the
+        given assumptions, in addition to the assumptions of the
+        KnownTruth. This will eliminate one or more nested Forall
+        operations, specializing the instance variables according to
+        specializeMap.  Eliminates the number of Forall operations
+        required to utilize all of the specializeMap keys.  The default
+        mapping of all instance variables is a mapping to itself
+        (e.g., {x:x, y:y}).  Simultaneously, variables may be relabeled
+        via relabelMap (see the relabel method).  Note, there is a
+        difference between  making substitutons simultaneously versus
+        in-series.  For example, the {x:y, y:x} mapping will swap x and
+        y variables, but mapping {x:y} then {y:x} in series would set
+        both variables to x.
+        Returns the proven specialized KnownTruth, or throws an
+        exception if the proof fails.        
         '''
-        from proveit import Operation, Variable, Lambda, singleOrCompositeExpression
+        from proveit import (
+                Lambda,
+                Operation,
+                singleOrCompositeExpression,
+                Variable)
         from proveit.logic import Forall
-        from .proof import Specialization, SpecializationFailure, ProofFailure
+        from .proof import (
+                ProofFailure,
+                Specialization,
+                SpecializationFailure)
         
         if not self.isUsable():
-            # If this KnownTruth is not usable, see if there is an alternate under the
-            # set of assumptions that is usable.
+            # If this KnownTruth is not usable (i.e. its use has been
+            # restricted) see if there is an alternate under the set
+            # of assumptions that is usable.
             try:
                 alternate = self.expr.prove(assumptions, automation=False)
             except ProofFailure:
                 self.raiseUnusableProof()
-            return alternate.specialize(specializeMap, relabelMap, assumptions)
+            return alternate.specialize(specializeMap,
+                                        relabelMap,
+                                        assumptions)
         
-        # if no specializeMap is provided, specialize the "explicitInstanceVars" of the Forall with default mappings 
+        # if no specializeMap is provided, specialize the
+        # "explicitInstanceVars" of the Forall with default mappings 
         # (mapping instance variables to themselves)
-        if specializeMap is None: specializeMap = {ivar:ivar for ivar in self.explicitInstanceVars()}
+        if specializeMap is None:
+            specializeMap = {ivar:ivar for ivar in self.explicitInstanceVars()}
         if relabelMap is None: relabelMap = dict()
                 
         # Include the KnownTruth assumptions along with any provided assumptions
@@ -723,7 +739,8 @@ class KnownTruth:
         # For any entries in the subMap with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
         # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
-        # Convert to composite expressions as needed (via singleOrCompositeExpression).
+        # Convert to composite expressions as needed
+        # (via singleOrCompositeExpression).
         processedSubMap = dict()
         for key, sub in specializeMap.items():
             sub = singleOrCompositeExpression(sub)
@@ -735,31 +752,50 @@ class KnownTruth:
             elif isinstance(key, Variable):
                 processedSubMap[key] = sub
             else:
-                raise SpecializationFailure(None, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
+                raise SpecializationFailure(
+                        None, assumptions,
+                        ('Expecting specializeMap keys to be ' +
+                         'Variables, MultiVariables, or Operations ' +
+                         'with Variable/MultiVariable operators; not ' +
+                         ' %s'%str(key.__class__))
+                )
         remainingSubVars = set(processedSubMap.keys())
         
-        # Determine the number of Forall eliminations.  There must be at least
-        # one (if zero is desired, relabel should be called instead).
-        # The number is determined by the instance variables that occur as keys
-        # in the subMap.
+        # Determine the number of Forall eliminations.  There must be
+        # at least one (if zero is desired, relabel should be called
+        # instead). The number is determined by the instance variables
+        # that occur as keys in the subMap.
         expr = self.expr
         numForallEliminations = 0
         while numForallEliminations==0 or len(remainingSubVars) > 0:
             numForallEliminations += 1
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+                raise SpecializationFailure(
+                        None, assumptions,
+                        ('May only specialize instance variables of ' +
+                        ' directly nested Forall operations')
+                )
             lambdaExpr = expr.operand
-            assert isinstance(lambdaExpr, Lambda), "Forall Operation operand must be a Lambda function"
+            assert isinstance(lambdaExpr, Lambda), (
+                "Forall Operation operand must be a Lambda function")
             instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
             for iVar in instanceVars:
                 if iVar in remainingSubVars:
-                    # remove this instance variable from the remaining substitution variables
+                    # remove this instance variable from the remaining
+                    # substitution variables
                     remainingSubVars.remove(iVar)
                 elif iVar not in processedSubMap:
                     # default is to map instance variables to themselves
                     processedSubMap[iVar] = iVar
 
-        return self._checkedTruth(Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions))
+        return self._checkedTruth(
+                Specialization(
+                        self,
+                        numForallEliminations=numForallEliminations,
+                        specializeMap=processedSubMap,
+                        relabelMap=relabelMap,
+                        assumptions=assumptions)
+                )
 
 
     # Introduced by wdc starting Tues 7/30/2019
@@ -863,7 +899,6 @@ class KnownTruth:
                 )
         # collect the remaining substitution variables
         remainingSubVars = set(processedSubMap.keys())
-        print("remainingSubVars = ", remainingSubVars)
 
 
         # Determine the number of Exists eliminations.
@@ -921,10 +956,6 @@ class KnownTruth:
                          'used to skolemize. "%s" has already been ' +
                          'used to skolemize.')%sub
                 )
-
-        
-        print("Things seemed to have worked OK. numExistsEliminations = ",
-                numExistsEliminations)
 
         return self._checkedTruth(
             Skolemization(
