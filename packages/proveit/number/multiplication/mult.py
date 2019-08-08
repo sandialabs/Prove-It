@@ -60,9 +60,9 @@ class Mult(Operation):
         else:
             raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
         from proveit._common_ import AA
-        print("thm", thm)
-        print("self in deduce in number set", self)
-        print("self.operands", self.operands)
+        # print("thm", thm)
+        # print("self in deduce in number set", self)
+        # print("self.operands", self.operands)
         if bin:
             return thm.specialize({a:self.operands[0], b:self.operands[1]}, assumptions=assumptions)
         return thm.specialize({m:num(len(self.operands)),AA:self.operands}, assumptions=assumptions)
