@@ -39,33 +39,46 @@ class Add(Operation):
         options.add('addition', "'Subtract': uses '-'; 'Add': uses + ")
         return options
 
-    '''
     def string(self, **kwargs):
         from proveit import Iter
         outStr = ''
 
         if self.getStyle('addition') == 'Subtract':
             # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
-            outStr += str(self.operands[0]) + ' - ' + str(self.operands[1].operand)
+            outStr += str(self.operands[0]) + ' - ' + self.operands[1].operand.string(fence=True)
             return outStr
         else:
-            outStr += str(self.operands[0]) + ' + ' + str(self.operands[1])  # normal addition
-            return outStr
+            return Operation.string(self, **kwargs) # normal addition
 
     def latex(self, **kwargs):
         # Added by JML on 9/10/19
         if self.getStyle('addition') == 'Subtract':
             # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
-            kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
-            return maybeFencedLatex(self.operands[0].latex() + '-' +self.operands[1].operand.latex(), **kwargs)
+            return self.operands[0].latex() + '-' +self.operands[1].operand.latex(fence=True)
         else:
             return Operation.latex(self,**kwargs) # normal addition
-    '''
+
     def remakeConstructor(self):
         # Added by JML on 9/10/19
         if self.getStyle('addition') == 'Subtract':
             return 'Subtract'  # use a different constructor if using the subtraction style
         return Operation.remakeConstructor(self)
+
+    def remakeArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Operation.
+        '''
+        from proveit.number import Neg
+        if self.getStyle('addition') == 'Subtract':
+            assert len(self.operands) == 2, "Subtract only implemented for the binary case"
+            yield self.operands[0]
+            assert isinstance(self.operands[1], Neg), "The second operand must be negated"
+            yield self.operands[1].operand
+        else:
+            for operand in self.operands:
+                yield operand
+
 
     def _closureTheorem(self, numberSet):
         from ._theorems_ import addNatClosure, addRealClosure, addComplexClosure, addIntClosure
