@@ -753,10 +753,15 @@ class Skolemization(Proof):
         '''
         from proveit import singleOrCompositeExpression, Literal
 
+        print("Initial generalTruth in Skolemization class: ")                  # for testing; delete later
+        print("    ", generalTruth)                                             # for testing; delete later
+        print("    ", generalTruth.assumptions)                                 # for testing; delete later
+
         assumptions = list(defaults.checkedAssumptions(assumptions))
         prev_default_assumptions = defaults.assumptions
         # these assumptions will be used for deriving any side-effects
-        defaults.assumptions = assumptions 
+        defaults.assumptions = assumptions
+        print("Initial assumptions in Skolemization class: ", assumptions)      # for testing; delete later
         try:
             if relabelMap is None: relabelMap = dict()
             if skolemizeMap is None: skolemizeMap = dict()
@@ -788,6 +793,12 @@ class Skolemization(Proof):
                         skolemizeMap, relabelMap, assumptions)
             )
 
+            print("Just after returning from _skolemized_expr:")                # for testing; delete later
+            print("    skolemizedExpr: ", skolemizedExpr)                       # for testing; delete later
+            print("    requirements: ", requirements)                           # for testing; delete later
+            print("    mappedVarLists: ", mappedVarLists)                       # for testing; delete later
+            print("    mappings: ", mappings)                                   # for testing; delete later
+
             # obtain the KnownTruths for the substituted conditions
             requirementTruths = []
             requirementTruthSet = set() # avoid repeats of requirements
@@ -807,18 +818,23 @@ class Skolemization(Proof):
                         'Unmet specialization requirement: ' +
                         str(requirementExpr))
                     )
+
+            print("requirementTruths: ", requirementTruths)                     # for testing; delete later
             # remove any unnecessary assumptions
             # (but keep the order that was provided)
             assumptionsSet = generalTruth.assumptionsSet
+            print("assumptionsSet: ", assumptionsSet)                           # for testing; delete later
             for requirementTruth in requirementTruths:
                 assumptionsSet |= requirementTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
+            print("assumptions: ", assumptions)                                 # for testing; delete later
             # we have what we need; set up the Skolemization Proof
             self.generalTruth = generalTruth
             self.requirementTruths = requirementTruths
             self.mappedVarLists = mappedVarLists
             self.mappings = mappings
-            skolemizedTruth = KnownTruth(skolemizedExpr, assumptions)
+            # skolemizedTruth = KnownTruth(skolemizedExpr, assumptions)
+            skolemizedTruth = KnownTruth(skolemizedExpr, generalTruth.assumptions)
             Proof.__init__(
                     self,
                     skolemizedTruth,
@@ -1010,6 +1026,12 @@ class Skolemization(Proof):
         
         # Return the expression and conditions with substitutions
         # and the information to reconstruct the specialization
+        print("Just before returning from the _skolemized_expression method:")  # for testing; delete later
+        print("    subbed_expr = ", subbed_expr)                                    # for testing; delete later
+        print("    subbedConditions = ", subbedConditions)                          # for testing; delete later
+        print("    requirements = ", requirements)                                  # for testing; delete later
+        print("    mappedVarLists = ", mappedVarLists)                              # for testing; delete later
+        print("    mappings = ", mappings)                                          # for testing; delete later
         return (subbed_expr, subbedConditions + requirements,
                 mappedVarLists, mappings)
 
@@ -1247,10 +1269,17 @@ class Specialization(Proof):
         # Return the expression and conditions with substitutions and
         # the information to reconstruct the specialization
         print('[_specialized_expression]subbed_expr = ', subbed_expr)           # for testing; delete later
-        print('[_specialized_expression]conditions = ', subbedConditions + requirements) # for testing; delete later
+        print('[_specialized_expression]subbedConditions = ', subbedConditions) # for testing; delete later
+        print('[_specialized_expression]requirements = ', requirements)         # for testing; delete later
         print('[_specialized_expression]mappedVarLists = ', mappedVarLists)     # for testing; delete later
         print('[_specialized_expression]mappings = ', mappings)                 # for testing; delete later
         return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
+
+        # for skolemization
+        # above we actually want to return multiple subbed expressions
+        # for example, given Exists(x, P(x), assumptions = A, conditions = {Q(x), R(x)})
+        # we want to return subbed expressions P(c), Q(c), and R(c)
+        # to eventually produce A |– P(c), A |– Q(c), and A |– R(c)
 
     @staticmethod
     def _checkRelabelMapping(key, sub, assumptions):
