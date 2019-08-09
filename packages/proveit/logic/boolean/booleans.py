@@ -84,7 +84,6 @@ class BooleanSet(Literal):
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.conditions) <= 2), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain but no other conditions"
-        assert(not hasattr(forallStmt, 'instanceVar')), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
         if(len(forallStmt.conditions)==2):
             Q_op, Q_op_sub = Operation(Q, forallStmt.instanceVar), forallStmt.conditions[1]
             P_op, P_op_sub = Operation(P, forallStmt.instanceVar), forallStmt.instanceExpr
