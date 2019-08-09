@@ -805,7 +805,11 @@ class KnownTruth:
     def skolemize( self, skolemizeMap=None, relabelMap=None,
                    assumptions=USE_DEFAULTS):
         '''
-        Performs a skolemize derivation step to be proven under the
+        Performs a skolemization derivation step or possibly multiple
+        skolemization steps, based on the user-provided skolemizeMap
+        specifying a Literal to be substituted for each desired
+        Exists instance variable.
+        to be proven under the
         given assumptions, in addition to the assumptions of the
         KnownTruth. This will eliminate one or more nested Exists
         operations, skolemizing the Exists instance variables according
@@ -815,7 +819,7 @@ class KnownTruth:
         provided, then the method returns an error.  Simultaneously,
         variables may be relabeled via relabelMap (see the relabel
         method).  Note, there is a difference between  making 
-        ubstitutons simultaneously versus in-series. For example, the
+        substitutons simultaneously versus in-series. For example, the
         {x:y, y:x} mapping will swap x and y variables, but mapping
         {x:y} then {y:x} in series would set both variables to x.
         Returns the proven skolemized KnownTruth, or throws an
@@ -860,7 +864,8 @@ class KnownTruth:
             # see if there is an alternate under the set of assumptions
             # that is usable.
             try:
-                alternate = self.expr.prove(assumptions, automation=False)
+                alternate = self.expr.prove(assumptions,
+                                            automation=False)
             except ProofFailure:
                 self.raiseUnusableProof()
             return alternate.specialize(specializeMap,
@@ -887,6 +892,8 @@ class KnownTruth:
                 sub = Lambda(operation.operands, sub)
                 processedSubMap[subVar] = sub
             elif isinstance(key, Variable):
+                # proceed as normal, keeping the original
+                # key:sub values
                 processedSubMap[key] = sub
             else:
                 raise SkolemizationFailure(
@@ -897,8 +904,9 @@ class KnownTruth:
                      'Variable/MultiVariable operators; ' +
                      'but "%s" is %s'%(key, str(key.__class__)))
                 )
-        # collect the remaining substitution variables
+        # collect the remaining variables to be substituted for
         remainingSubVars = set(processedSubMap.keys())
+        print("skolemize() remainingSubVars = ", remainingSubVars)              # for testing; delete later
 
 
         # Determine the number of Exists eliminations.
@@ -921,6 +929,12 @@ class KnownTruth:
             instanceVars, expr, conditions  = (lambdaExpr.parameterVars,
                                                lambdaExpr.body,
                                                lambdaExpr.conditions)
+
+            print("skolemize() Checking number of Exists eliminations:")         # for testing; delete later
+            print("    skolemize() instanceVars = ", instanceVars)               # for testing; delete later
+            print("    skolemize() expr = ", expr)                               # for testing; delete later
+            print("    skolemize() conditions = ", conditions)                   # for testing; delete later
+
             for iVar in instanceVars:
                 if iVar in remainingSubVars:
                     # remove this instance variable from the remaining
@@ -957,7 +971,14 @@ class KnownTruth:
                          'used to skolemize.')%sub
                 )
 
-        checkedTruths = [self._checkedTruth(truth) for truth in Skolemization._makeSkolemizations(self, numExistsEliminations=numExistsEliminations, skolemizeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions)]
+        checkedTruths = KnownTruths(
+            [self._checkedTruth(truth) for truth in Skolemization._makeSkolemizations(
+                self,
+                numExistsEliminations=numExistsEliminations,
+                skolemizeMap=processedSubMap,
+                relabelMap=relabelMap,
+                assumptions=assumptions)]
+            )
 
         # return self._checkedTruth(
         #     Skolemization(
@@ -1108,6 +1129,16 @@ class KnownTruth:
         html += self.expr._repr_html_()
         html += '</span>'
         return html
+
+class KnownTruths(list):
+    '''
+    A list of KnownTruths, the class defined to help provide a way
+    to print/output a list of KnownTruths returned by something like
+    the skolemize() or specialize() KnownTruth methods.
+    '''
+
+    def _repr_html_(self):
+        return "; ".join(kt._repr_html_() for kt in self)
 
 def asExpression(truthOrExpression):
     '''
