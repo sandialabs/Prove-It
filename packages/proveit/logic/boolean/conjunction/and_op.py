@@ -119,7 +119,6 @@ class And(Operation):
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
-        return
         yield self.deriveInBool
         yield self.deriveParts
         #yield self.deriveCommutation
