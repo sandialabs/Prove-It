@@ -957,13 +957,21 @@ class KnownTruth:
                          'used to skolemize.')%sub
                 )
 
-        return self._checkedTruth(
-            Skolemization(
-                self, numExistsEliminations=numExistsEliminations,
-                skolemizeMap=processedSubMap, relabelMap=relabelMap,
-                assumptions=assumptions
-            )
-        )
+        checkedTruths = [self._checkedTruth(truth) for truth in Skolemization._makeSkolemizations(self, numExistsEliminations=numExistsEliminations, skolemizeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions)]
+
+        # return self._checkedTruth(
+        #     Skolemization(
+        #         self, numExistsEliminations=numExistsEliminations,
+        #         skolemizeMap=processedSubMap, relabelMap=relabelMap,
+        #         assumptions=assumptions
+        #     )
+        # )
+
+        if len(checkedTruths)==1:
+            return checkedTruths[0]
+        # Multiple proofs may be generated when skolemizing an
+        # expression that includes conditions
+        return checkedTruths
 
         
         

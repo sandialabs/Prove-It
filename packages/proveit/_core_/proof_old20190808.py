@@ -300,8 +300,6 @@ class Proof:
             html += '</tr>\n'
             if isinstance(proof, Specialization):
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
-            if isinstance(proof, Skolemization):
-                html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
             if isinstance(proof, Axiom) or isinstance(proof, Theorem):
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
@@ -735,11 +733,10 @@ class HypotheticalReasoning(Proof):
 # working on KnownTruth skolemize() method analogous to 
 # KnownTruth specialize() method. Trying to achieve this
 # by a modification of the Specialization machinery.
-# Also incorporating recent work by WW on specialization of
-# iterated instances.
 class Skolemization(Proof):
-    def __init__(self, generalTruth, skolemizedExpr, requirements,
-                 mappedVarLists, mappings, assumptions, Failure):
+    def __init__(self, generalTruth, numExistsEliminations,
+                 skolemizeMap=None, relabelMap=None,
+                 assumptions=USE_DEFAULTS):
         '''
         Create the Skolemization proof step that skolemizes the given
         general expression using the skolemization map under
@@ -754,65 +751,111 @@ class Skolemization(Proof):
         Variable or substituting a bundled variable to another bundled
         variable or list of variables (bundled or not).
         '''
-
         from proveit import singleOrCompositeExpression, Literal
 
-        # obtain the KnownTruths for the substituted conditions
+        print("Initial generalTruth in Skolemization class: ")                  # for testing; delete later
+        print("    ", generalTruth)                                             # for testing; delete later
+        print("    ", generalTruth.assumptions)                                 # for testing; delete later
 
-        skolemizeMap = mappings # temporary fix; fix better later
-        requirementTruths = []
-        requirementTruthSet = set() # avoid repeats of requirements
-        for requirementExpr in requirements:
-            try:
-                # each substituted condition must be proven under
-                # the assumptions (if WILDCARD_ASSUMPTIONS is
-                # included, it will be proven by assumption if
-                # there isn't an existing proof otherwise)
-                requirementTruth = requirementExpr.prove(assumptions)
-                if requirementTruth not in requirementTruthSet:
-                    requirementTruths.append(requirementTruth)
-                    requirementTruthSet.add(requirementTruth)
-                    _appendExtraAssumptions(assumptions, requirementTruth)
-            except ProofFailure:
-                raise Failure(skolemizedExpr, assumptions, (
-                    'Unmet specialization requirement: ' +
-                    str(requirementExpr))
+        assumptions = list(defaults.checkedAssumptions(assumptions))
+        prev_default_assumptions = defaults.assumptions
+        # these assumptions will be used for deriving any side-effects
+        defaults.assumptions = assumptions
+        print("Initial assumptions in Skolemization class: ", assumptions)      # for testing; delete later
+        try:
+            if relabelMap is None: relabelMap = dict()
+            if skolemizeMap is None: skolemizeMap = dict()
+            Failure = SkolemizationFailure if numExistsEliminations>0 else RelabelingFailure
+            if not isinstance(generalTruth, KnownTruth):
+                raise Failure(
+                    None, [],
+                    'May only skolemize/relabel a KnownTruth'
                 )
+            if generalTruth.proof() is None:
+                raise UnusableProof(KnownTruth.theoremBeingProven,
+                                    generalTruth)
+            if not generalTruth.assumptionsSet.issubset(assumptions):
+                if '*' in assumptions:
+                    # if WILDCARD_ASSUMPTIONS is included,
+                    # add any extra assumptions that are needed
+                    _appendExtraAssumptions(assumptions, generalTruth)
+                else:
+                    raise Failure(None, [], (
+                        'Assumptions do not include the assumptions ' +
+                        'required by generalTruth')
+                    )
+            generalExpr = generalTruth.expr
 
-        print("requirementTruths: ", requirementTruths)                     # for testing; delete later
-        # remove any unnecessary assumptions
-        # (but keep the order that was provided)
-        assumptionsSet = generalTruth.assumptionsSet
-        print("assumptionsSet: ", assumptionsSet)                           # for testing; delete later
-        for requirementTruth in requirementTruths:
-            assumptionsSet |= requirementTruth.assumptionsSet
-        assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
-        print("assumptions: ", assumptions)                                 # for testing; delete later
-        # we have what we need; set up the Skolemization Proof
-        self.generalTruth = generalTruth
-        self.requirementTruths = requirementTruths
-        self.mappedVarLists = mappedVarLists
-        self.mappings = mappings
-        # skolemizedTruth = KnownTruth(skolemizedExpr, assumptions)
-        # can we turn the followin into a loop that uses ALL skolemized expressions
-        # i.e. what is currently called the skolemizedExpr, PLUS the "requirements"
-        # then skolemizedTruths = a list of KnownTruths
-        # try first combining the skolemizedExpr with the requirements:
-        skolemizedExpressions = [skolemizedExpr, *requirements]
-        print("skolemizedExpressions: ", skolemizedExpressions)
-        skolemizedTruth = KnownTruth(skolemizedExpr, generalTruth.assumptions)
-        Proof.__init__(
-                self,
-                skolemizedTruth,
-                [generalTruth] + requirementTruths)
+            # perform the appropriate substitution/relabeling
+            skolemizedExpr, requirements, mappedVarLists, mappings = (
+                Skolemization._skolemized_expr(
+                        generalExpr, numExistsEliminations,
+                        skolemizeMap, relabelMap, assumptions)
+            )
 
-        # Mark each of the Skolem constants as Skolem constants
-        # so they cannot be used as Skolem constants elsewhere
-        # this might now belong in the makeSkolemizations() method below
-        for key, sub in skolemizeMap.items():
-            sub = singleOrCompositeExpression(sub) # might not need this?
-            sub.markAsSkolemConstant()
+            print("Just after returning from _skolemized_expr:")                # for testing; delete later
+            print("    skolemizedExpr: ", skolemizedExpr)                       # for testing; delete later
+            print("    requirements: ", requirements)                           # for testing; delete later
+            print("    mappedVarLists: ", mappedVarLists)                       # for testing; delete later
+            print("    mappings: ", mappings)                                   # for testing; delete later
 
+            # obtain the KnownTruths for the substituted conditions
+            requirementTruths = []
+            requirementTruthSet = set() # avoid repeats of requirements
+            for requirementExpr in requirements:
+                try:
+                    # each substituted condition must be proven under
+                    # the assumptions (if WILDCARD_ASSUMPTIONS is
+                    # included, it will be proven by assumption if
+                    # there isn't an existing proof otherwise)
+                    requirementTruth = requirementExpr.prove(assumptions)
+                    if requirementTruth not in requirementTruthSet:
+                        requirementTruths.append(requirementTruth)
+                        requirementTruthSet.add(requirementTruth)
+                        _appendExtraAssumptions(assumptions, requirementTruth)
+                except ProofFailure:
+                    raise Failure(skolemizedExpr, assumptions, (
+                        'Unmet specialization requirement: ' +
+                        str(requirementExpr))
+                    )
+
+            print("requirementTruths: ", requirementTruths)                     # for testing; delete later
+            # remove any unnecessary assumptions
+            # (but keep the order that was provided)
+            assumptionsSet = generalTruth.assumptionsSet
+            print("assumptionsSet: ", assumptionsSet)                           # for testing; delete later
+            for requirementTruth in requirementTruths:
+                assumptionsSet |= requirementTruth.assumptionsSet
+            assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
+            print("assumptions: ", assumptions)                                 # for testing; delete later
+            # we have what we need; set up the Skolemization Proof
+            self.generalTruth = generalTruth
+            self.requirementTruths = requirementTruths
+            self.mappedVarLists = mappedVarLists
+            self.mappings = mappings
+            # skolemizedTruth = KnownTruth(skolemizedExpr, assumptions)
+            # can we turn the followin into a loop that uses ALL skolemized expressions
+            # i.e. what is currently called the skolemizedExpr, PLUS the "requirements"
+            # then skolemizedTruths = a list of KnownTruths
+            # try first combining the skolemizedExpr with the requirements:
+            skolemizedExpressions = [skolemizedExpr, *requirements]
+            print("skolemizedExpressions: ", skolemizedExpressions)
+            skolemizedTruth = KnownTruth(skolemizedExpr, generalTruth.assumptions)
+            Proof.__init__(
+                    self,
+                    skolemizedTruth,
+                    [generalTruth] + requirementTruths)
+
+            # Mark each of the Skolem constants as Skolem constants
+            # so they cannot be used as Skolem constants elsewhere
+            for key, sub in skolemizeMap.items():
+                sub = singleOrCompositeExpression(sub) # might not need this?
+                sub.markAsSkolemConstant()
+
+
+        finally:
+            # restore the original default assumptions
+            defaults.assumptions = prev_default_assumptions
 
     @staticmethod
     def _makeSkolemizations(
@@ -839,9 +882,7 @@ class Skolemization(Proof):
         '''
         assumptions = list(defaults.checkedAssumptions(assumptions))
         prev_default_assumptions = defaults.assumptions
-        # these assumptions will be used for deriving any side-effects
-        defaults.assumptions = assumptions
-
+        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
         try:
             if relabelMap is None: relabelMap = dict()
             if skolemizeMap is None: skolemizeMap = dict()
@@ -867,21 +908,12 @@ class Skolemization(Proof):
             generalExpr = generalTruth.expr
             # perform the appropriate substitution/relabeling
             # here things get dicey — _skolemized_expr is not set up
-            # to return multiple skomelized expressions, so we
-            # engineer a related generator-based method called
+            # to return multiple skomelized expressions, so we will
+            # need to modify or create a new method called
             # _skolemized_expressions, which will return the multiple
-            # skolemized items (the skolemized expression, plus
-            # skolemized versions of the conditions)
-            for (skolemizedExpr, requirements, mappedVarLists, mappings) in (
-                    Skolemization._skolemized_expressions(
-                            generalExpr, numExistsEliminations,
-                            skolemizeMap, relabelMap, assumptions
-                        )
-                ):
-                yield Skolemization(
-                        generalTruth, skolemizedExpr,
-                        requirements, mappedVarLists,
-                        mappings, assumptions, Failure)
+            # skolemized items
+            for skolemizedExpr, requirements, mappedVarLists, mappings in Specialization._skolemized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions):
+                yield Skolemization(generalTruth, skolemizedExpr, requirements, mappedVarLists, mappings, assumptions, Failure)
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
@@ -889,7 +921,7 @@ class Skolemization(Proof):
     def _generate_step_info(self, objectRepFn):
         '''
         Generate information about this proof step,
-        including mapping information for this skolemization.
+        including mapping information for this specialization.
         '''
         mappingInfo = ';'.join(','.join(objectRepFn(var) + ':' + objectRepFn(self.mappings[var]) for var in mappedVars) \
                                 for mappedVars in self.mappedVarLists)
@@ -913,7 +945,7 @@ class Skolemization(Proof):
             out = '<span style="font-size:20px;">'
         else: out = ''
         if len(mappedVarLists) == 1 or (len(mappedVarLists) == 2 and len(mappedVarLists[-1]) == 0):
-            # a single relabeling map, or a single skolemization map with no relabeling map
+            # a single relabeling map, or a single specialization map with no relabeling map
             mappedVars = mappedVarLists[0]
             out += ', '.join(self._single_mapping(var, self.mappings[var], formatType) for var in mappedVars)
         else:
@@ -1069,153 +1101,6 @@ class Skolemization(Proof):
         print("    mappings = ", mappings)                                          # for testing; delete later
         return (subbed_expr, subbedConditions + requirements,
                 mappedVarLists, mappings)
-
-    def _skolemized_expressions(generalExpr, numExistsEliminations,
-                         skolemizeMap, relabelMap, assumptions):
-        '''
-        DESCRIPTION NEEDS WORK!
-        Return a tuple of (skolemization, conditions).  The 
-        skolemization derives from the given "general" expression and
-        its conditions via a skolemization inference rule (or
-        relabeling as a special case). Eliminates the specified number
-        of Exists operations, substituting all of the corresponding
-        instance variables according to the substitution map dictionary
-        (subMap). 
-        '''
-        from proveit import Lambda, Expression, Iter
-        from proveit.logic import Forall, Exists
-        # check that the mappings are appropriate
-        for key, sub in list(relabelMap.items()):
-            Skolemization._checkRelabelMapping(key, sub, assumptions)
-            # no need to relabel if it is unchanged:
-            if key==sub: relabelMap.pop(key) 
-        for assumption in assumptions:
-            # ignore the wildcard for this purpose:
-            if assumption == WILDCARD_ASSUMPTIONS: continue 
-            vars_in_violation = assumption.freeVars() & set(relabelMap.keys())
-            if len(vars_in_violation) != 0:
-                raise RelabelingFailure(
-                        None,
-                        assumptions,
-                        ('Attempting to relabel variable(s) that are ' +
-                         'free in the assumptions: ' +
-                         str(vars_in_violation))
-                )
-        
-        for key, sub in skolemizeMap.items():
-            if not isinstance(sub, Expression):
-                raise TypeError(
-                        "Expecting skolemization substitutions " +
-                        "to be 'Expression' objects")
-            if key in relabelMap:
-                raise SkolemizationFailure(
-                        None,
-                        assumptions,
-                        ('Attempting to skolemize and relabel the ' +
-                        'same variable: %s'%str(key))
-                )
-        
-        # Eliminate the desired number of Exists operations and
-        # extracted appropriately mapped conditions
-        expr = generalExpr
-        remainingExistsEliminations = numExistsEliminations
-        partialMap = dict()
-        subbedConditions = []
-        mappedVarLists = []
-        requirements = []
-        while remainingExistsEliminations>0:
-            remainingExistsEliminations -= 1
-            if not isinstance(expr, Exists):
-                raise SkolemizationFailure(None, assumptions, (
-                    'May only skolemize instance variables of ',
-                    'directly nested Exists operations')
-                )
-            lambdaExpr = expr.operand
-            assert isinstance(lambdaExpr, Lambda), (
-                    "Exists Operation lambdaExpr must be a ",
-                    "Lambda function")
-            instanceVars, expr, conditions  = (lambdaExpr.parameterVars,
-                                               lambdaExpr.body,
-                                               lambdaExpr.conditions)
-            # When substituting an iterated instance variable, we need
-            # to make sure that the expansion is complete: that there
-            # are as many elements of the expansion as the number of
-            # elements of the substitution.  For example,
-            # x_1, ..., x_n and x -> [a, b, c, d], then
-            # x_1, ..., x_n -> a, b, c, d and not a subset.
-            for parameter, parameterVar in zip(lambdaExpr.parameters,
-                                               lambdaExpr.parameterVars):
-                subbedParam = None
-                if parameterVar in skolemizeMap:
-                    subbedParam = skolemizeMap[parameterVar]
-                elif parameterVar in relabelMap:
-                    subbedParam = relabelMap[parameterVar]
-                if isinstance(parameter, Iter) and subbedParam is not None:
-                    expandedParameter = parameter.substituted(
-                            skolemizeMap, relabelMap,
-                            assumptions=assumptions,
-                            requirements=requirements)
-                    if len(expandedParameter) != len(subbedParam):
-                        raise SkolemizationFailure(
-                                None, assumptions, (
-                                ("Substitution of iterated instance " +
-                                  "variables incomplete: %d length " +
-                                 "expansion versus %d ",
-                                 "length substitution")%(
-                                    len(expandedParameter),
-                                    len(subbedParam)
-                                    )
-                                )
-                        )
-            mappedVarLists.append(instanceVars)
-            # include the mapping for the current instance variables
-            # in the partial map
-            try:
-                partialMap.update({iVar:skolemizeMap[iVar] for iVar in instanceVars})
-            except KeyError:
-                raise SkolemizationFailure(
-                        None,
-                        assumptions,
-                        ('Must specialize all of the instance ' +
-                         'variables of the Exists operations to be ' +
-                         'eliminated')
-                )
-            # make substitutions in the condition
-            subbedConditions += conditions.substituted(partialMap, relabelMap)
-                        
-        # sort the relabeling vars in order of their appearance in
-        # the original expression
-        relabelVars = []
-        visitedVars = set()
-        for var in generalExpr.orderOfAppearance(list(relabelMap.keys())):
-            if var not in visitedVars: # ensure no repeats
-                visitedVars.add(var)
-                relabelVars.append(var)
-        
-        # relabel vars always the last of the mapped variable lists
-        mappedVarLists.append(relabelVars) 
-        mappings = dict(skolemizeMap)
-        mappings.update(relabelMap) # mapping everything
-        
-        subbed_expr = expr.substituted(
-                skolemizeMap, relabelMap,
-                assumptions=assumptions, requirements=requirements
-                )
-
-        subbedExpressions = [subbed_expr, *subbedConditions]
-        
-        # Return the expression and conditions with substitutions
-        # and the information to reconstruct the specialization
-        print("Just before returning from the _skolemized_expressions method:")     # for testing; delete later
-        print("    subbed_expr = ", subbed_expr)                                    # for testing; delete later
-        print("    subbedConditions = ", subbedConditions)                          # for testing; delete later
-        print("    requirements = ", requirements)                                  # for testing; delete later
-        print("    subbedExpressions = ", subbedExpressions)                        # for testing; delete later
-        print("    mappedVarLists = ", mappedVarLists)                              # for testing; delete later
-        print("    mappings = ", mappings)                                          # for testing; delete later
-        for theSubbedExpr in subbedExpressions:
-            yield (theSubbedExpr, subbedConditions + requirements,
-                    mappedVarLists, mappings)
 
     @staticmethod
     def _checkRelabelMapping(key, sub, assumptions):
