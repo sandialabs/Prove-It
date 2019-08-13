@@ -114,14 +114,16 @@ class KnownTruth:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
 
-        print("KnownTruth.__init__ finished type-checking. expression = ", expression) # for testing; delete later
+        print("    After type-checking, expression = ", expression)             # for testing; delete later
         
         # note: these contained expressions are subject to style changes on a KnownTruth instance basis
         self.expr = expression
-        # store the assumptions as an ordered list (with the desired order for display)
-        # and an unordered set (for convenience when checking whether one set subsumes another).
+        # store the assumptions as an ordered list (with the desired
+        # order for display) and an unordered set (for convenience when
+        # checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
+        print("    assumptions = ", assumptions)                                # for testing; delete later
 
         # The meaning data is shared among KnownTruths with the same structure disregarding style
         self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id)))
@@ -149,6 +151,8 @@ class KnownTruth:
         self._exprProofs = self._meaningData._exprProofs
         
         self._style_id = self._styleData._unique_id
+
+        print("    Exiting KnownTruth.__init__")                                # for testing; delete later
         
         # The _proof can change so it must be accessed via indirection into self._meaningData
         # (see proof() method).
@@ -825,6 +829,8 @@ class KnownTruth:
         Returns the proven skolemized KnownTruth, or throws an
         exception if the proof fails.        
         '''
+
+        print("ENTERING KT.skolemize()")                                        # for testing; delete later
         
         from proveit import (
             Lambda, Literal, Operation,
@@ -835,6 +841,7 @@ class KnownTruth:
             ProofFailure, Skolemization, SkolemizationFailure,
             Specialization, SpecializationFailure
         )
+        print("    done importing")                                             # for testing; delete later
         # will be able to delete a few of those imports
         # a little later — probably the Forall and Specialization-
         # related stuff.
@@ -852,11 +859,19 @@ class KnownTruth:
                  'mapping details.')
             )
         if relabelMap is None: relabelMap = dict()
+        print("    done checking for presence of skolemizeMap")                 # for testing; delete later
 
         # Include the KnownTruth assumptions along with any provided
         # assumptions.
+        # Why do we want to include the KnownTruth assumptions?
+        # Notice that those are also the assumptions we would want
+        # to include in the eventual KnownTruths derived by
+        # skolemization -- i.e. if the initial KT was
+        # A |– Exists(x, P(x)), then we would want the derived KT
+        # A |- P(c) for Skolem constant 'c'
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptions += self.assumptions
+        print("    initial assumptions = ", assumptions)                        # for testing; delete later
 
         if not self.isUsable():
             # If this KnownTruth is not usable (i.e. we have somehow
@@ -883,15 +898,16 @@ class KnownTruth:
         # message if any skolemizeMap keys are NOT Variables,
         # Multivariables, or Operations with Variable/MultiVariable
         # operators.
+        print("    before building processedSubMap, skolemizeMap = ", skolemizeMap)      # for testing; delete later
         processedSubMap = dict()
         for key, sub in skolemizeMap.items():
             sub = singleOrCompositeExpression(sub)
-            if isinstance(key, Operation):
+            if isinstance(key, Operation): # haven't looked at ANY such possibilities yet
                 operation = key
                 subVar = operation.operator
                 sub = Lambda(operation.operands, sub)
                 processedSubMap[subVar] = sub
-            elif isinstance(key, Variable):
+            elif isinstance(key, Variable): # only looking at these possibilities right now
                 # proceed as normal, keeping the original
                 # key:sub values
                 processedSubMap[key] = sub
@@ -904,19 +920,27 @@ class KnownTruth:
                      'Variable/MultiVariable operators; ' +
                      'but "%s" is %s'%(key, str(key.__class__)))
                 )
+            print("        processedSubMap so far = ", processedSubMap)         # for testing; delete later
         # collect the remaining variables to be substituted for
         remainingSubVars = set(processedSubMap.keys())
-        print("skolemize() remainingSubVars = ", remainingSubVars)              # for testing; delete later
+        print("    after processedSubMap, skolemizeMap = ", skolemizeMap)       # for testing; delete later
+        print("    after processedSubMap, processedSubMap = ", processedSubMap) # for testing; delete later
+        print("    after processedSubMap, remainingSubVars = ", remainingSubVars) # for testing; delete later
 
 
         # Determine the number of Exists eliminations.
         # There must be at least one. If zero is desired, then relabel
         # should be called instead. The number is determined by the
         # instance variables that occur as keys in the skolemizeMap.
+        print("    Determining # of Exists eliminations ...")                   # for testing; delete later
         expr = self.expr
-        # numForallEliminations = 0
+        print("    self.expr = ", expr)                                         # for testing; delete later
         numExistsEliminations = 0
         while numExistsEliminations==0 or len(remainingSubVars) > 0:
+            # we increase the number of Exists eliminations AND
+            # decrease the number of items in the remainingSubVars list
+            # so this process stops when we run out of the remainingSubVars
+            # which is the list of variables to be skolemized
             numExistsEliminations += 1
             if not isinstance(expr, Exists):
                 raise SkolemizationFailure(
@@ -930,26 +954,42 @@ class KnownTruth:
                                                lambdaExpr.body,
                                                lambdaExpr.conditions)
 
-            print("skolemize() Checking number of Exists eliminations:")         # for testing; delete later
-            print("    skolemize() instanceVars = ", instanceVars)               # for testing; delete later
-            print("    skolemize() expr = ", expr)                               # for testing; delete later
-            print("    skolemize() conditions = ", conditions)                   # for testing; delete later
+            
+            print("    skolemize() lambdaExpr = ", lambdaExpr)                  # for testing; delete later
+            print("    skolemize() instanceVars = ", instanceVars)              # for testing; delete later
+            print("    skolemize() expr = ", expr)                              # for testing; delete later
+            print("    skolemize() conditions = ", conditions)                  # for testing; delete later
+            print("    skolemize() processedSubMap (pre) = ", processedSubMap)  # for testing; delete later
 
             for iVar in instanceVars:
+                print("    iVar = ", iVar)                                      # for testing; delete later
                 if iVar in remainingSubVars:
+                    print("        iVar is in remainingSubVars (", remainingSubVars, ")") # for testing; delete later
+                    print("        so we remove it from remainingSubVars")                # for testing; delete later
                     # remove this instance variable from the remaining
                     # substitution variables; this instance variable
                     # should already be in the processedSubMap
                     remainingSubVars.remove(iVar)
                 elif iVar not in processedSubMap:
+                    print("        iVar is NOT in processedSubMap (", processedSubMap, ")") # for testing; delete later
+                    print("        so we ADD it to processedSubMap, mapping it to itself")  # for testing; delete later
                     # default is to map instance variables to themselves
-                    processedSubMap[iVar] = iVar
+                    # BUT WE DO NOT WANT TO DEFAULT MAP ANYTHING FOR
+                    # SKOLEMIZATION :(
+                    # processedSubMap[iVar] = iVar
+                    # print("    processedSubMap is now = ", processedSubMap)     # for testing; delete later
+                    print("    hah, just kidding! processedSubMap is still = ", processedSubMap)     # for testing; delete later
+
+            print("    skolemize() processedSubMap (post) = ", processedSubMap) # for testing; delete later
 
         # Verify that all requested substitution values are actually
-        # Literals and not previously skolemized. If a substitution
-        # value is not a Literal or if a substitution value is a
-        # Literal that has previously been used as a Skolem constant,
-        # raise a SkolemizationFailure error message.
+        # Literals and not previously used to skolemize. If a
+        # substitution value is not a Literal or if a substitution
+        # value is a Literal that has previously been used as a Skolem
+        # constant, raise a SkolemizationFailure error message.
+        # NOTE: Should we also be checking for CONSTRAINED Literals
+        # here as well (i.e. Literals that have already appeared in
+        # an Axiom or Theorem)?
         for key, sub in skolemizeMap.items():
             sub = singleOrCompositeExpression(sub) # might not need this?
             if not isinstance(sub, Literal):
