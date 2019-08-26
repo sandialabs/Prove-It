@@ -297,9 +297,9 @@ class OperationOverInstances(Operation):
         _allConditions() defined above.
         Added by wdc on 6/06/2019.
         '''
-        return list(self._allConditions());
+        return list(self._allConditions())
     
-    def joinedNestings(self):
+    def _joinedNestings(self):
         '''
         Yield the nested levels of the OperationOverInstances that are
         joined together in the style.
@@ -310,6 +310,15 @@ class OperationOverInstances(Operation):
             assert isinstance(self.instanceExpr, self.__class__), "Not expecting 'instance_vars' style to be 'join_next' unless there is nesting of the same type of OperationOverInstances"
             for expr in self.instanceExpr.joinedNestings():
                 yield expr
+
+    def joinedNestings(self):
+        '''
+        Returns the nested levels of the OperationOverInstances that
+        are joined together in the style. Relies on the generator
+        function _joinedNestings() defined above. Added here by wdc
+        on 8/25/2019.
+        '''
+        return list(self._joinedNestings())
     
     def explicitInstanceVars(self):
         '''
@@ -384,7 +393,7 @@ class OperationOverInstances(Operation):
             return self.instanceExpr.explicitInstanceExpr()
         return self.instanceExpr
     
-    def instanceVarLists(self):
+    def _instanceVarLists(self):
         '''
         Yield lists of instance vars that include all of the instance variables
         (see allInstanceVars method) but grouped together according to
@@ -404,6 +413,16 @@ class OperationOverInstances(Operation):
             expr = expr.instanceExpr
         assert len(iVarGroup)==0,  "Not expecting 'instance_vars' style to be 'join_next' unless there is nesting of the same type of OperationOverInstances"
         
+    
+    def instanceVarLists(self):
+        '''
+        Returns lists of instance vars that include all of the instance
+        variables (see allInstanceVars method) but grouped together
+        according to the style joining instance variables together.
+        Relies on the generator function _instanceVarLists() defined
+        above. Added here by wdc on 8/25/2019.
+        '''
+        return list(self._instanceVarLists())
 
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
