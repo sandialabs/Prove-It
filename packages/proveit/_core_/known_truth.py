@@ -106,7 +106,7 @@ class KnownTruth:
         be done indirectly via Expression/KnownTruth derivation-step methods.
         '''
         from proveit._core_.proof import Proof
-        print("Begin Initializing KnownTruth!")                                 # for testing; delete later
+        # print("Begin Initializing KnownTruth!")                                 # for testing; delete later
         # do some type checking
         if not isinstance(expression, Expression):
             raise ValueError('The expression (expr) of a KnownTruth should be an Expression')
@@ -114,7 +114,7 @@ class KnownTruth:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
 
-        print("    After type-checking, expression = ", expression)             # for testing; delete later
+        # print("    After type-checking, expression = ", expression)             # for testing; delete later
         
         # note: these contained expressions are subject to style changes on a KnownTruth instance basis
         self.expr = expression
@@ -123,7 +123,7 @@ class KnownTruth:
         # checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
-        print("    assumptions = ", assumptions)                                # for testing; delete later
+        # print("    assumptions = ", assumptions)                                # for testing; delete later
 
         # The meaning data is shared among KnownTruths with the same structure disregarding style
         self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id)))
@@ -152,7 +152,7 @@ class KnownTruth:
         
         self._style_id = self._styleData._unique_id
 
-        print("    Exiting KnownTruth.__init__")                                # for testing; delete later
+        # print("    Exiting KnownTruth.__init__")                                # for testing; delete later
         
         # The _proof can change so it must be accessed via indirection into self._meaningData
         # (see proof() method).
@@ -841,7 +841,7 @@ class KnownTruth:
             ProofFailure, Skolemization, SkolemizationFailure,
             Specialization, SpecializationFailure
         )
-        print("    done importing")                                             # for testing; delete later
+
         # will be able to delete a few of those imports
         # a little later — probably the Forall and Specialization-
         # related stuff.
@@ -859,7 +859,7 @@ class KnownTruth:
                  'mapping details.')
             )
         if relabelMap is None: relabelMap = dict()
-        print("    done checking for presence of skolemizeMap")                 # for testing; delete later
+
 
         # Include the KnownTruth assumptions along with any provided
         # assumptions.
@@ -871,7 +871,7 @@ class KnownTruth:
         # A |- P(c) for Skolem constant 'c'
         assumptions = defaults.checkedAssumptions(assumptions)
         assumptions += self.assumptions
-        print("    initial assumptions = ", assumptions)                        # for testing; delete later
+
 
         if not self.isUsable():
             # If this KnownTruth is not usable (i.e. we have somehow
@@ -898,7 +898,7 @@ class KnownTruth:
         # message if any skolemizeMap keys are NOT Variables,
         # Multivariables, or Operations with Variable/MultiVariable
         # operators.
-        print("    before building processedSubMap, skolemizeMap = ", skolemizeMap)      # for testing; delete later
+
         processedSubMap = dict()
         for key, sub in skolemizeMap.items():
             sub = singleOrCompositeExpression(sub)
@@ -923,18 +923,14 @@ class KnownTruth:
             print("        processedSubMap so far = ", processedSubMap)         # for testing; delete later
         # collect the remaining variables to be substituted for
         remainingSubVars = set(processedSubMap.keys())
-        print("    after processedSubMap, skolemizeMap = ", skolemizeMap)       # for testing; delete later
-        print("    after processedSubMap, processedSubMap = ", processedSubMap) # for testing; delete later
-        print("    after processedSubMap, remainingSubVars = ", remainingSubVars) # for testing; delete later
 
 
         # Determine the number of Exists eliminations.
         # There must be at least one. If zero is desired, then relabel
         # should be called instead. The number is determined by the
         # instance variables that occur as keys in the skolemizeMap.
-        print("    Determining # of Exists eliminations ...")                   # for testing; delete later
         expr = self.expr
-        print("    self.expr = ", expr)                                         # for testing; delete later
+
         numExistsEliminations = 0
         while numExistsEliminations==0 or len(remainingSubVars) > 0:
             # we increase the number of Exists eliminations AND
@@ -954,33 +950,21 @@ class KnownTruth:
                                                lambdaExpr.body,
                                                lambdaExpr.conditions)
 
-            
-            print("    skolemize() lambdaExpr = ", lambdaExpr)                  # for testing; delete later
-            print("    skolemize() instanceVars = ", instanceVars)              # for testing; delete later
-            print("    skolemize() expr = ", expr)                              # for testing; delete later
-            print("    skolemize() conditions = ", conditions)                  # for testing; delete later
-            print("    skolemize() processedSubMap (pre) = ", processedSubMap)  # for testing; delete later
+
 
             for iVar in instanceVars:
-                print("    iVar = ", iVar)                                      # for testing; delete later
                 if iVar in remainingSubVars:
-                    print("        iVar is in remainingSubVars (", remainingSubVars, ")") # for testing; delete later
-                    print("        so we remove it from remainingSubVars")                # for testing; delete later
                     # remove this instance variable from the remaining
                     # substitution variables; this instance variable
                     # should already be in the processedSubMap
                     remainingSubVars.remove(iVar)
                 elif iVar not in processedSubMap:
-                    print("        iVar is NOT in processedSubMap (", processedSubMap, ")") # for testing; delete later
-                    print("        so we ADD it to processedSubMap, mapping it to itself")  # for testing; delete later
                     # default is to map instance variables to themselves
                     # BUT WE DO NOT WANT TO DEFAULT MAP ANYTHING FOR
                     # SKOLEMIZATION :(
                     # processedSubMap[iVar] = iVar
-                    # print("    processedSubMap is now = ", processedSubMap)     # for testing; delete later
-                    print("    hah, just kidding! processedSubMap is still = ", processedSubMap)     # for testing; delete later
+                    print("KT.skolemize() Hah!")
 
-            print("    skolemize() processedSubMap (post) = ", processedSubMap) # for testing; delete later
 
         # Verify that all requested substitution values are actually
         # Literals and not previously used to skolemize. If a

@@ -38,10 +38,10 @@ class Proof:
         # if not isinstance(self, Theorem) and not isinstance(self, Axiom):
         #    print("prove", provenTruth.expr)
         
-        print('provenTruth assumptions = ', provenTruth.assumptions)            # for testing; delete later
-        print('provenTruth operands = ', provenTruth.operands)                  # for testing; delete later
-        print('provenTruth expr = ', provenTruth.expr)                          # for testing; delete later
-        print('requiredTruths = ', requiredTruths)                              # for testing; delete later
+        # print('provenTruth assumptions = ', provenTruth.assumptions)            # for testing; delete later
+        # print('provenTruth operands = ', provenTruth.operands)                  # for testing; delete later
+        # print('provenTruth expr = ', provenTruth.expr)                          # for testing; delete later
+        # print('requiredTruths = ', requiredTruths)                              # for testing; delete later
         assert isinstance(provenTruth, KnownTruth)
         for requiredTruth in requiredTruths:
             assert isinstance(requiredTruth, KnownTruth)
@@ -760,13 +760,11 @@ class Skolemization(Proof):
         # obtain the KnownTruths for the substituted conditions
 
         # skolemizeMap = mappings # temporary fix; fix better later
-        print("At the beginning of Skolemization: ")                            # for testing; delete later
-        print("    skolemizeMap = ", skolemizeMap)                              # for testing; delete later
+
 
         requirementTruths = []
         requirementTruthSet = set() # avoid repeats of requirements
-        print("At beginning of Skolemization:")                                 # for testing; delete later
-        print("    requirements = ", requirements)                              # for testing; delete later
+
         # temporarily empty the requirements?
         requirements = ();
         for requirementExpr in requirements:
@@ -786,15 +784,15 @@ class Skolemization(Proof):
                     str(requirementExpr))
                 )
 
-        print("requirementTruths: ", requirementTruths)                         # for testing; delete later
+
         # remove any unnecessary assumptions
         # (but keep the order that was provided)
         assumptionsSet = generalTruth.assumptionsSet
-        print("assumptionsSet: ", assumptionsSet)                               # for testing; delete later
+
         for requirementTruth in requirementTruths:
             assumptionsSet |= requirementTruth.assumptionsSet
         assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
-        print("assumptions: ", assumptions)                                     # for testing; delete later
+
         # we have what we need; set up the Skolemization Proof
         self.generalTruth = generalTruth
         self.requirementTruths = requirementTruths
@@ -806,11 +804,10 @@ class Skolemization(Proof):
         # then skolemizedTruths = a list of KnownTruths
         # try first combining the skolemizedExpr with the requirements:
         skolemizedExpressions = [skolemizedExpr, *requirements]
-        print("skolemizedExpressions: ", skolemizedExpressions)                 # for testing; delete later
         skolemizedTruth = KnownTruth(skolemizedExpr, generalTruth.assumptions)
-        print("Skolemization.skolemizedTruth = ",
-              skolemizedTruth.assumptions, " |- ",
-              skolemizedTruth.expr)
+        # print("Skolemization.skolemizedTruth = ",
+        #       skolemizedTruth.assumptions, " |- ",
+        #       skolemizedTruth.expr)
         Proof.__init__(
                 self,
                 skolemizedTruth,
@@ -823,8 +820,6 @@ class Skolemization(Proof):
         # Mark each of the Skolem constants as Skolem constants
         # so they cannot be used as Skolem constants elsewhere
         # this might now belong in the makeSkolemizations() method below
-        print("At the end of Skolemization: ")                                  # for testing; delete later
-        print("    skolemizeMap = ", skolemizeMap)                              # for testing; delete later
         for key, sub in skolemizeMap.items():
             sub = singleOrCompositeExpression(sub) # might not need this?
             if isinstance(sub, Literal):
@@ -856,9 +851,7 @@ class Skolemization(Proof):
         Variable or substituting a bundled variable to
         another bundled variable or list of variables (bundled or not).
         '''
-        print("ENTERING _makeSkolemizations:")                                  # for testing; delete later
-        print("    skolemizeMap = ", skolemizeMap)                              # for testing; delete later
-        print("    numExistsEliminations = ", numExistsEliminations)            # for testing; delete later
+
         assumptions = list(defaults.checkedAssumptions(assumptions))
         prev_default_assumptions = defaults.assumptions
         # these assumptions will be used for deriving any side-effects
@@ -894,9 +887,6 @@ class Skolemization(Proof):
             # _skolemized_expressions, which will return the multiple
             # skolemized items (the skolemized expression, plus
             # skolemized versions of the conditions)
-            print("    Just before calling Skolemization: ")                    # for testing; delete later
-            print("    skolemizeMap = ", skolemizeMap)                          # for testing; delete later
-            print("    numExistsEliminations = ", numExistsEliminations)        # for testing; delete later
             for (skolemizedExpr, requirements, mappedVarLists, mappings) in (
                     Skolemization._skolemized_expressions(
                             generalExpr, numExistsEliminations,
@@ -1109,11 +1099,11 @@ class Skolemization(Proof):
         (subMap). 
         '''
         print("ENTERING KT._skolemized_expressions")                            # for testing; delete later
-        print("    generalExpr = ", generalExpr)                                # for testing; delete later
-        print("    numExistsEliminations = ", numExistsEliminations)            # for testing; delete later
-        print("    skolemizeMap = ", skolemizeMap)                              # for testing; delete later
-        print("    relabelMap = ", relabelMap)                                  # for testing; delete later
-        print("    assumptions = ", assumptions)                                # for testing; delete later
+        # print("    generalExpr = ", generalExpr)                                # for testing; delete later
+        # print("    numExistsEliminations = ", numExistsEliminations)            # for testing; delete later
+        # print("    skolemizeMap = ", skolemizeMap)                              # for testing; delete later
+        # print("    relabelMap = ", relabelMap)                                  # for testing; delete later
+        # print("    assumptions = ", assumptions)                                # for testing; delete later
         from proveit import Lambda, Expression, Iter
         from proveit.logic import Forall, Exists
         # check that the mappings are appropriate
@@ -1238,13 +1228,13 @@ class Skolemization(Proof):
         
         # Return the expression and conditions with substitutions
         # and the information to reconstruct the specialization
-        print("    Just before returning from the _skolemized_expressions method:") # for testing; delete later
-        print("    subbed_expr = ", subbed_expr)                                    # for testing; delete later
-        print("    subbedConditions = ", subbedConditions)                          # for testing; delete later
-        print("    requirements = ", requirements)                                  # for testing; delete later
-        print("    subbedExpressions = ", subbedExpressions)                        # for testing; delete later
-        print("    mappedVarLists = ", mappedVarLists)                              # for testing; delete later
-        print("    mappings = ", mappings)                                          # for testing; delete later
+        # print("    Just before returning from the _skolemized_expressions method:") # for testing; delete later
+        # print("    subbed_expr = ", subbed_expr)                                    # for testing; delete later
+        # print("    subbedConditions = ", subbedConditions)                          # for testing; delete later
+        # print("    requirements = ", requirements)                                  # for testing; delete later
+        # print("    subbedExpressions = ", subbedExpressions)                        # for testing; delete later
+        # print("    mappedVarLists = ", mappedVarLists)                              # for testing; delete later
+        # print("    mappings = ", mappings)                                          # for testing; delete later
         for theSubbedExpr in subbedExpressions:
             yield (theSubbedExpr, subbedConditions + requirements,
                     mappedVarLists, mappings)
