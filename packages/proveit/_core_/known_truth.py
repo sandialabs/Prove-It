@@ -803,7 +803,6 @@ class KnownTruth:
 
 
     # Introduced by wdc starting Tues 7/30/2019
-    # still cleaning up details on Sat 8/03/2019
     # May need to restrict Skolem constants from being utilized in
     # the specialize() method!
     def skolemize( self, skolemizeMap=None, relabelMap=None,
@@ -833,7 +832,7 @@ class KnownTruth:
         print("ENTERING KT.skolemize()")                                        # for testing; delete later
         
         from proveit import (
-            Lambda, Literal, Operation,
+            Function, Lambda, Literal, Operation,
             singleOrCompositeExpression, Variable 
         )
         from proveit.logic import Exists, Forall
@@ -941,8 +940,7 @@ class KnownTruth:
             if not isinstance(expr, Exists):
                 raise SkolemizationFailure(
                         None, assumptions,
-                        'May only skolemize instance variables ' +
-                        'of an Exists expression.')
+                        'May only skolemize an Exists expression.')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), (
                 "Exists Operation operand must be a Lambda function")
@@ -963,11 +961,13 @@ class KnownTruth:
                     # BUT WE DO NOT WANT TO DEFAULT MAP ANYTHING FOR
                     # SKOLEMIZATION :(
                     # processedSubMap[iVar] = iVar
-                    print("KT.skolemize() Hah!")
+                    print("KT.skolemize() Hah! iVar not in " +
+                          "processedSubMap")
 
 
         # Verify that all requested substitution values are actually
-        # Literals and not previously used to skolemize. If a
+        # Literals or Literal operators for a Function and not
+        # previously used to skolemize. If a
         # substitution value is not a Literal or if a substitution
         # value is a Literal that has previously been used as a Skolem
         # constant, raise a SkolemizationFailure error message.
@@ -976,6 +976,12 @@ class KnownTruth:
         # an Axiom or Theorem)?
         for key, sub in skolemizeMap.items():
             sub = singleOrCompositeExpression(sub) # might not need this?
+            # check if sub is actually a function rather than
+            # just a simple constant, then focus on the operator itself
+            # for example, if sub = f(x), then just grab the f
+            if isinstance(sub, Function):
+                sub = sub.operator
+            print('sub is currently: ', sub)                                    # for testing; delete later
             if not isinstance(sub, Literal):
                 raise SkolemizationFailure(
                         None,

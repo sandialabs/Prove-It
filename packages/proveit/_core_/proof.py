@@ -738,8 +738,9 @@ class HypotheticalReasoning(Proof):
 # Also incorporating recent work by WW on specialization of
 # iterated instances.
 class Skolemization(Proof):
-    def __init__(self, generalTruth, skolemizedExpr, requirements, skolemizeMap,
-                 mappedVarLists, mappings, assumptions, Failure):
+    def __init__(self, generalTruth, skolemizedExpr, requirements,
+                 skolemizeMap, mappedVarLists, mappings, assumptions,
+                 Failure):
         '''
         Create the Skolemization proof step that skolemizes the given
         general expression using the skolemization map under
@@ -755,7 +756,10 @@ class Skolemization(Proof):
         variable or list of variables (bundled or not).
         '''
 
-        from proveit import singleOrCompositeExpression, Literal
+        from proveit import (
+            Function,
+            Literal,
+            singleOrCompositeExpression)
 
         # obtain the KnownTruths for the substituted conditions
 
@@ -822,6 +826,11 @@ class Skolemization(Proof):
         # this might now belong in the makeSkolemizations() method below
         for key, sub in skolemizeMap.items():
             sub = singleOrCompositeExpression(sub) # might not need this?
+            # check if the sub is actually a Literal function instead
+            # of just a simple Literal constant; if so, grab the
+            # operator instead of the entire function
+            if isinstance(sub, Function):
+                sub = sub.operator
             if isinstance(sub, Literal):
                 # check for Literal first, because we are temporarily allowing
                 # unspec'd instance variables to be pretend-skolemized to themselves
@@ -1090,7 +1099,7 @@ class Skolemization(Proof):
                          skolemizeMap, relabelMap, assumptions):
         '''
         DESCRIPTION NEEDS WORK!
-        Return a tuple of (skolemization, conditions).  The 
+        Returns a tuple of (skolemization, conditions).  The 
         skolemization derives from the given "general" expression and
         its conditions via a skolemization inference rule (or
         relabeling as a special case). Eliminates the specified number

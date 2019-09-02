@@ -145,7 +145,7 @@ class Literal(Label):
     def isSkolemConstant(self):
         '''
         Introduced 7/31/2019 by wdc to help implement skolemization.
-        Returns False is Literal has no _skolemConstant attribute,
+        Returns False if Literal has no _skolemConstant attribute,
         which means the Literal has not served as a Skolem constant
         in a skolemization process; otherwise returns the
         True/False value of the _skolemConstant attribute.
