@@ -974,6 +974,9 @@ class KnownTruth:
         # NOTE: Should we also be checking for CONSTRAINED Literals
         # here as well (i.e. Literals that have already appeared in
         # an Axiom or Theorem)?
+        # ADD SOMETHING HERE TO CHECK IF SKOLEM CONSTANTS BEING USED
+        # MULTIPLE TIMES IN THE skolemizeMap - if so, raise an ERROR
+        tempSetOfIntendedSkolemSubs = set()
         for key, sub in skolemizeMap.items():
             sub = singleOrCompositeExpression(sub) # might not need this?
             # check if sub is actually a function rather than
@@ -997,9 +1000,21 @@ class KnownTruth:
                         assumptions,
                         ('Expecting skolemizeMap substitution ' +
                          'values to be Literals not previously ' +
-                         'used to skolemize. "%s" has already been ' +
-                         'used to skolemize.')%sub
+                         'used to skolemize. "%s" was found to have ' +
+                         'been marked as having already been used ' +
+                         'elsewhere to skolemize.')%sub
                 )
+            if sub in tempSetOfIntendedSkolemSubs:
+                raise SkolemizationFailure(
+                        None,
+                        assumptions,
+                        ('Expecting skolemizeMap substitution ' +
+                         'values to be unique. "%s" was found to ' +
+                         'appear multiple times as a requested ' +
+                         'substitution value.')%sub
+                )
+            else:
+                tempSetOfIntendedSkolemSubs.add(sub)
 
         checkedTruths = KnownTruths(
             [self._checkedTruth(truth) for truth in Skolemization._makeSkolemizations(
