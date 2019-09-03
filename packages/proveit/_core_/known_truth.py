@@ -967,15 +967,17 @@ class KnownTruth:
 
         # Verify that all requested substitution values are actually
         # Literals or Literal operators for a Function and not
-        # previously used to skolemize. If a
-        # substitution value is not a Literal or if a substitution
-        # value is a Literal that has previously been used as a Skolem
-        # constant, raise a SkolemizationFailure error message.
+        # previously used to skolemize, or previously constrained in
+        # an Axiom or Theorem, and verify that such
+        # requested substitution values do not appear more than once.
+        # If a substitution value is not a Literal or Literal operator,
+        # or if a substitution value has already been marked as having
+        # been used as a Skolem constant, or if a substitution value
+        # appears more than once in the skolemizeMap, raise a
+        # SkolemizationFailure error message.
         # NOTE: Should we also be checking for CONSTRAINED Literals
         # here as well (i.e. Literals that have already appeared in
         # an Axiom or Theorem)?
-        # ADD SOMETHING HERE TO CHECK IF SKOLEM CONSTANTS BEING USED
-        # MULTIPLE TIMES IN THE skolemizeMap - if so, raise an ERROR
         tempSetOfIntendedSkolemSubs = set()
         for key, sub in skolemizeMap.items():
             sub = singleOrCompositeExpression(sub) # might not need this?
@@ -1004,6 +1006,16 @@ class KnownTruth:
                          'been marked as having already been used ' +
                          'elsewhere to skolemize.')%sub
                 )
+            if isinstance(sub, Literal) and sub.isConstrained():
+                raise SkolemizationFailure(
+                        None,
+                        assumptions,
+                        ('Expecting skolemizeMap substitution ' +
+                         'values to be Literals not previously ' +
+                         'constrained. "%s" was found to have ' +
+                         'been previously constrained elsewhere ' +
+                         '(perhaps in an Axiom or Theorem).')%sub
+                )
             if sub in tempSetOfIntendedSkolemSubs:
                 raise SkolemizationFailure(
                         None,
@@ -1011,7 +1023,7 @@ class KnownTruth:
                         ('Expecting skolemizeMap substitution ' +
                          'values to be unique. "%s" was found to ' +
                          'appear multiple times as a requested ' +
-                         'substitution value.')%sub
+                         'skolemization value.')%sub
                 )
             else:
                 tempSetOfIntendedSkolemSubs.add(sub)
@@ -1025,18 +1037,11 @@ class KnownTruth:
                 assumptions=assumptions)]
             )
 
-        # return self._checkedTruth(
-        #     Skolemization(
-        #         self, numExistsEliminations=numExistsEliminations,
-        #         skolemizeMap=processedSubMap, relabelMap=relabelMap,
-        #         assumptions=assumptions
-        #     )
-        # )
-
+        # Multiple proofs may be generated when skolemizing an
+        # expression that includes conditions, so take some care
+        # about what we're returning
         if len(checkedTruths)==1:
             return checkedTruths[0]
-        # Multiple proofs may be generated when skolemizing an
-        # expression that includes conditions
         return checkedTruths
 
         
