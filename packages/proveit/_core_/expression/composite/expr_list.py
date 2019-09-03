@@ -327,6 +327,8 @@ class ExprList(Composite, Expression):
         Flattens nested ExprLists that arise from Embed substitutions.
         '''
         from .iteration import Iter
+        from proveit import Indexed
+        from proveit.number import Add, one
         self._checkRelabelMap(relabelMap)
         if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
@@ -340,6 +342,30 @@ class ExprList(Composite, Expression):
                     subbed_exprs.append(iter_expr)
             else:
                 subbed_exprs.append(subbed_expr)
+        if len(subbed_exprs)>1:
+            new_subbed_exprs = []
+            current = subbed_exprs[0]
+            for itNext in subbed_exprs[1:]:
+                if isinstance(current, Iter) and isinstance(itNext, Iter):
+                    if current.lambda_map == itNext.lambda_map:
+                        if Add(current.end_index, one) == itNext.start_index:
+                            current = Iter(current.lambda_map.parameter_or_parameters, current.lambda_map.body, current.start_index, itNext.end_index)
+                            new_subbed_exprs.append(new_expr)
+                elif isinstance(current, Iter) and isinstance(itNext, Indexed):
+                    if Add(current.end_index, one) == itNext.index:
+                        current = Iter(current.lambda_map.parameter_or_parameters, current.lambda_map.body, current.start_index, Add(current.end_index,one))
+                        new_subbed_exprs.append(current)
+                elif isinstance(current, Indexed) and isinstance(itNext, Iter):
+                    if Add(current.index, one) == itNext.start_index:
+                        # print("indexed and iter")
+                        current = itNext
+                        new_subbed_exprs.append(current)
+                else:
+                    new_subbed_exprs.append(current)
+                    new_subbed_exprs.append(itNext)
+                    current = itNext
+            subbed_exprs = new_subbed_exprs
+
         return ExprList(*subbed_exprs)
 
 class ExprListError(Exception):
