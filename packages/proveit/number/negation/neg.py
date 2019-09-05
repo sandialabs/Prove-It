@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex
+from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex, USE_DEFAULTS, ProofFailure
 from proveit.number.sets import Integers, Reals, Complexes
 from proveit._common_ import a, x, y
 
@@ -9,6 +9,23 @@ class Neg(Operation):
     def __init__(self,A):
         Operation.__init__(self, Neg._operator_, A)
     
+    def deduceInNumberSet(self, NumberSet, assumptions=USE_DEFAULTS):
+        '''
+        given a number set, attempt to prove that the given expression is in that
+        number set using the appropriate closure theorem
+        '''
+        from ._theorems_ import intClosure, realClosure, complexClosure
+        from proveit.logic import InSet
+        if NumberSet == Integers:
+            return intClosure.specialize({a:self.operand})
+        elif NumberSet == Reals:
+            return realClosure.specialize({a:self.operand})
+        elif NumberSet == Complexes:
+            return complexClosure.specialize({a:self.operand})
+        else:
+            raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
+    
+    """
     def _closureTheorem(self, numberSet):
         import _theorems_
         if numberSet == Complexes:
@@ -29,6 +46,7 @@ class Neg(Operation):
     def _notEqZeroTheorem(self):
         import _theorems_
         return _theorems_.negNotEqZero
+    """
     
     def asInt(self):
         '''
@@ -96,7 +114,7 @@ class Neg(Operation):
         else:
             raise Exception('Only negation distribution through a sum or subtract is implemented')
 
-    def factor(self,operand,pull="left", groupFactor=None, groupRemainder=None, assumptions=frozenset()):
+    def factor(self, theFactor, pull="left", groupFactor=None, groupRemainder=None, assumptions=USE_DEFAULTS):
         '''
         Pull out a factor from a negated expression, pulling it either to the "left" or "right".
         groupFactor and groupRemainder are not relevant but kept for compatibility with 
@@ -106,23 +124,27 @@ class Neg(Operation):
         the associative and commutation theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''
-        from .theorems import negTimesPosRev, posTimesNegRev
-        if isinstance(operand, Neg):
+        from ._theorems_ import negTimesPos, posTimesNeg, multNegOneLeft, multNegOneRight
+        if isinstance(theFactor, Neg):
             if pull == 'left':
-                thm = negTimesPosRev
+                thm = negTimesPos
             else:
-                thm = posTimesNegRev
-            operand = operand.operand
+                thm = posTimesNeg
+            theFactor = theFactor.operand
         else:
             if pull == 'left':
-                thm = posTimesNegRev
+                thm = posTimesNeg
             else:
-                thm = negTimesPosRev
-        operandFactorEqn = self.operand.factor(operand, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
-        # in this instance, the automated way is safe because there is no other operand:
-        eqn1 = operandFactorEqn.substitution(self) 
-        deduceInComplexes(operandFactorEqn.rhs.operands, assumptions)
-        eqn2 = thm.specialize({x:operandFactorEqn.rhs.operands[0], y:operandFactorEqn.rhs.operands[1]})
-        return eqn1.applyTransitivity(eqn2)
-        
-
+                thm = negTimesPos
+        if hasattr(self.operand, 'factor'):
+            operandFactorEqn = self.operand.factor(theFactor, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
+            eqn1 = operandFactorEqn.substitution(self.innerExpr().operand) 
+            new_operand = operandFactorEqn.rhs
+            eqn2 = thm.specialize({x:new_operand.operands[0], y:new_operand.operands[1]}, assumptions=assumptions).deriveReversed(assumptions)
+            return eqn1.applyTransitivity(eqn2)
+        else:
+            if self.operand != theFactor:
+                raise ValueError("%s is a factor in %s!"%(theFactor, self))     
+            if thm==negTimesPos: thm=multNegOneLeft
+            if thm==posTimesNeg: thm=multNegOneRight
+            return thm.specialize({x:self.operand}, assumptions=assumptions).deriveReversed(assumptions)
