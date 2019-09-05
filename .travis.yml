@@ -3,9 +3,9 @@ python:
         "3.6"
 # command to install dependencies
 install:
+        - pip install lxml nbformat
         - python setup.py develop
         - python setup.py install
-        - pip install lxml
         - python build.py --clean --download
 # command to run tests
 script:
