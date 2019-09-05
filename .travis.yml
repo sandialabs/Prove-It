@@ -4,8 +4,7 @@ python:
 # command to install dependencies
 install:
         - pip install lxml nbformat nbconvert IPython zmq
-        - python setup.py develop --user
-        - python setup.py install
+        - python setup.py develop
         - python build.py --clean --download
 # command to run tests
 script:
