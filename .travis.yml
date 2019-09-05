@@ -5,6 +5,7 @@ python:
 install:
         - python setup.py develop
         - python setup.py install
+        - python build.py --clean --download
 # command to run tests
 script:
         pytest
