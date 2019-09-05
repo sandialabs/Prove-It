@@ -3,6 +3,7 @@ python:
         "3.6"
 # command to install dependencies
 install:
+        - python setup.py develop
         - python setup.py install
 # command to run tests
 script:
