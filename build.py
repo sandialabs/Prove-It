@@ -349,7 +349,7 @@ len(gc.get_objects()) # used to check for memory leaks
         print("Executing", notebook_path)
         
         # read
-        with open(notebook_path) as f:
+        with open(notebook_path, encoding='utf8') as f:
             nb = nbformat.read(f, as_version=4)
         
         # execute using a KernelManager with the appropriate cwd (current working directory)
