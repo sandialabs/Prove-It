@@ -5,6 +5,7 @@ python:
 install:
         - python setup.py develop
         - python setup.py install
+        - pip install lxml
         - python build.py --clean --download
 # command to run tests
 script:
