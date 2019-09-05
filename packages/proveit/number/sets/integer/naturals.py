@@ -6,9 +6,6 @@ class NaturalsSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', context=__file__)
     
-    def membershipObject(self, element):
-        return NaturalsMembership(element)
-    
     def deduceMemberLowerBound(self, member):
         from ._theorems_ import naturalsLowerBound
         return naturalsLowerBound.specialize({n:member})  
@@ -16,9 +13,6 @@ class NaturalsSet(NumberSet):
 class NaturalsPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', context=__file__)
-    
-    def membershipObject(self, element):
-        return NaturalsPosMembership(element)
     
     def deduceMemberLowerBound(self, member):
         from ._theorems_ import naturalsPosLowerBound
@@ -35,46 +29,6 @@ class NaturalsPosSet(NumberSet):
         # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
-
-class NaturalsMembership(Membership):
-    '''
-    Defines methods that apply to membership in an enumerated set. 
-    '''
-    
-    def __init__(self, element):
-        Membership.__init__(self, element)
-
-    def conclude(self, assumptions=USE_DEFAULTS):
-        '''
-        Attempt to conclude that the element is in the set of Naturals.
-        '''   
-        element = self.element
-        if hasattr(element, 'deduceInNaturals'):
-            return element.deduceInNaturals()
-
-    def sideEffects(self, knownTruth):
-        return
-        yield
-
-class NaturalsPosMembership(Membership):
-    '''
-    Defines methods that apply to membership in an enumerated set. 
-    '''
-    
-    def __init__(self, element):
-        Membership.__init__(self, element)
-
-    def conclude(self, assumptions=USE_DEFAULTS):
-        '''
-        Attempt to conclude that the element is in the set of Naturals.
-        '''   
-        element = self.element
-        if hasattr(element, 'deduceInNaturalsPos'):
-            return element.deduceInNaturalsPos()
-
-    def sideEffects(self, knownTruth):
-        return
-        yield
 
 try:
     # Import some fundamental axioms and theorems without quantifiers.
