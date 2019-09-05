@@ -3,7 +3,7 @@ python:
         "3.6"
 # command to install dependencies
 install:
-        - pip install lxml nbformat
+        - pip install lxml nbformat nbconvert
         - python setup.py develop
         - python setup.py install
         - python build.py --clean --download
