@@ -172,6 +172,8 @@ class And(Operation):
             elif idx==1:
                 return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
+            pass # Need to grab Joaquin's ExprList len method
+            '''
             from proveit import ExprList
             from proveit.number import num
             try:
@@ -182,7 +184,7 @@ class And(Operation):
                 return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
             except ProofFailure:
                 self.deriveSomeFromAnd(idx, assumptions)
-
+            '''
     def deriveSomeFromAnd(self, idx, assumptions=USE_DEFAULTS):
         '''
         added by JML 7/8/19
