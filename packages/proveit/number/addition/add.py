@@ -594,7 +594,7 @@ class Add(Operation):
             # move on to the next value after the group
         return expr
 
-    def simplifications(self, assumptions=USE_DEFAULTS):
+    def simplification(self, assumptions=USE_DEFAULTS):
         '''
         created by JML on 7/24/19
         combine like terms
@@ -602,7 +602,13 @@ class Add(Operation):
         from proveit import Variable
         from proveit.number import zero, one, Neg, Mult
         from proveit.logic import Equals
-
+        
+        try:
+            # if it can do an straight-up evaluation, go with that.
+            return self.evaluation(assumptions)
+        except:
+            pass
+        
         expr = self
         # ungroup the expression
         n = 0
@@ -883,7 +889,18 @@ class Add(Operation):
         evaluate literals in a given expression (used for simplification)
         '''
         from proveit.logic import Equals, EvaluationError
-        from proveit.number import Numeral
+        from proveit.number import Numeral, Neg
+        
+        try:
+            # try the default first
+            return Operation.evaluation(assumptions)
+        except:
+            pass
+        
+        if len(self.operands)==2 and self.operands[1] == Neg(self.operands[0]):
+            # Handle the special case: x-x = 0
+            return self.deriveZeroFromNegSelf()
+        
         expr = self
         length = len(expr.operands)
         i = 0
@@ -1200,7 +1217,8 @@ class Add(Operation):
             # print("operand after mult change",operand)
             # print("new expr", expr)
         return Equals(self, expr).prove(assumptions)
-
+        
+    """
     def factor(self, theFactor, pull="left", groupFactor=True, assumptions=frozenset()):
         '''
         Factor out "theFactor" from this sum, pulling it either to the "left" or "right".
@@ -1239,7 +1257,7 @@ class Add(Operation):
                         if i + 1 < len(operand.operands):
                             after.extend(operand.operands[i+1:])
 
-        if pull == "left":
+        if pull == "right":
             b = coefficient
             a = after
         else:
@@ -1254,8 +1272,9 @@ class Add(Operation):
         # print("cc",theFactor)
         # print(1045)
         Equals(self, expr).prove(assumptions)
-        return distributeThroughSum.specialize({l:num(len(a)),m:num(len(b)),n:one,AA:a,BB:b,CC:[theFactor]}, assumptions=assumptions)
+        return distributeThroughSum.specialize({l:num(len(a)),m:num(len(b)),n:one,AA:a,BB:b,CC:[theFactor]}, assumptions=assumptions).deriveReversed(assumptions=assumptions)
     """
+    
     def factor(self, theFactor, pull="left", groupFactor=True, assumptions=frozenset()):
         '''
         Factor out "theFactor" from this sum, pulling it either to the "left" or "right".
@@ -1264,40 +1283,46 @@ class Add(Operation):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.
         '''
+        from proveit.logic import Equals
         from proveit.number.multiplication._theorems_ import distributeThroughSum
-        from proveit.number import num
+        from proveit.number import num, one, Mult, Neg
         expr = self
-        eq = Equation()
-        dummyVar = self.safeDummyVar()
-        yEtcSub = []
+        ySub = []
+        # factor theFactor from each term
         for i, term in enumerate(self.terms):
-            sumWithDummy = Add(*[jterm if j != i else dummyVar for j, jterm in enumerate(expr.terms)])
-            termFactorization = term.factor(theFactor, pull, groupFactor=groupFactor, groupRemainder=True, assumptions=assumptions)
-            if not isinstance(termFactorization.rhs, Multiply):
-                raise Exception('Expecting right hand size of factorization to be a product')
-            if pull == 'left':
-                # the grouped remainder on the right
-                yEtcSub.append(termFactorization.rhs.operands[-1]) 
+            if hasattr(term, 'factor'):
+                termFactorization = term.factor(theFactor, pull, groupFactor=groupFactor, groupRemainder=True, assumptions=assumptions)
+                if not isinstance(termFactorization.rhs, Mult):
+                    raise Exception('Expecting right hand size of factorization to be a product')
+                if pull == 'left':
+                    # the grouped remainder on the right
+                    ySub.append(termFactorization.rhs.operands[-1]) 
+                else:
+                    # the grouped remainder on the left
+                    ySub.append(termFactorization.rhs.operands[0])
             else:
-                # the grouped remainder on the left
-                yEtcSub.append(termFactorization.rhs.operands[0])
-            eq.update(termFactorization.substitution(sumWithDummy, dummyVar))
-            expr = eq.eqExpr.rhs
-        if not groupFactor and isinstance(theFactor, Multiply):
+                if term != theFactor:
+                    raise ValueError("Factor, %s, is not present in the term at index %d of %s!"%(theFactor, i, self))
+                factoredTerm = Mult(one, term) if pull=='right' else Mult(term, one)
+                termFactorization = factoredTerm.simplification(assumptions).deriveReversed(assumptions)
+                ySub.append(one)
+                
+            # substitute in the factorized term
+            expr = termFactorization.substitution(expr.innerExpr().terms[i], assumptions=assumptions).rhs
+            Equals(self, expr).prove(assumptions)
+        if not groupFactor and isinstance(theFactor, Mult):
             factorSub = theFactor.operands
         else:
             factorSub = [theFactor]
-        deduceInComplexes(factorSub, assumptions=assumptions)
-        deduceInComplexes(yEtcSub, assumptions=assumptions)
         if pull == 'left':
-            xEtcSub = factorSub
-            zEtcSub = []
+            xSub = factorSub
+            zSub = []
         else:
-            xEtcSub = []
-            zEtcSub = factorSub
-        eq.update(distributeThroughSumRev.specialize({l:num(len(xEtcSub)),m:num(len(yEtcSub)),n:num(len(zEtcSub)),AA:xEtcSub, BB:yEtcSub, CC:zEtcSub}, assumptions=assumptions))
-        return eq.eqExpr.checked(assumptions)
-    """
+            xSub = []
+            zSub = factorSub
+        expr = distributeThroughSum.specialize({l:num(len(xSub)),m:num(len(ySub)),n:num(len(zSub)),AA:xSub, BB:ySub, CC:zSub}, assumptions=assumptions).deriveReversed(assumptions).rhs
+        return Equals(self, expr).prove(assumptions)
+        
     def join(self, assumptions=frozenset()):
         '''
         For joining two summations (could be more sophisticated later).
@@ -1308,33 +1333,6 @@ class Add(Operation):
         return self.terms[0].join(self.terms[1], assumptions)
 
     
-    """
-    def evaluation(self, assumptions=USE_DEFAULTS):
-        '''
-        Given operands that evaluate to numbers, derive and
-        return the equality of this expression with the sum of these numbers. 
-        '''
-        from proveit.number.sets.integer._axioms_ import twoDef, threeDef, fourDef, fiveDef, sixDef, sevenDef, eightDef, nineDef # load in integer successor evaluations  
-        for i, operand in enumerate(self.operands):
-            if not isIrreducibleValue(operand):
-                # The operands are not always true/false, so try the default evaluation method
-                # which will attempt to evaluate each of the operands.
-                return Operation.evaluation(self, assumptions)
-        # TODO
-        
-        '''
-        From disjunction, just brought in as an example
-        if len(self.operands) == 2:
-            # This will automatically return orTT, orTF, orFT, or orFF
-            return Operation.evaluation(self, assumptions)
-        if trueIndex >= 0:
-            # one operand is TRUE so the whole disjunction evaluate to TRUE.
-            return disjunctionTrueEval.specialize({Amulti:self.operands[:trueIndex], Cmulti:self.operands[trueIndex+1:]}, assumptions=assumptions)
-        else:
-            # no operand is TRUE so the whole disjunction evaluate to FALSE.
-            return disjunctionFalseEval.specialize({Amulti:self.operands}, assumptions=assumptions)
-        '''
-    """
 
 
 #class Subtract(Operation):
