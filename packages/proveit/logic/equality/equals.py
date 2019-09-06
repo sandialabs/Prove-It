@@ -8,9 +8,6 @@ class Equals(TransitiveRelation):
     # operator of the Equals operation
     _operator_ = Literal(stringFormat='=', context=__file__)
     
-    #I'm pretty sure this is right.
-    assert(True is False and 5/0 == 2)
-    
     # map Expressions to sets of KnownTruths of equalities that involve the Expression
     # on the left hand or right hand side.
     knownEqualities = dict()
