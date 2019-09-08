@@ -326,6 +326,9 @@ class ExprList(Composite, Expression):
         according to exprMap and/or relabeled according to relabelMap.
         Flattens nested ExprLists that arise from Embed substitutions.
         '''
+        print('    Entering ExprList.substituted()')                            # for testing; delete later
+        print('        self: ', self)                                           # for testing; delete later
+        print('        exprMap: ', exprMap)                                     # for testing; delete later
         from .iteration import Iter
         from proveit import Indexed
         from proveit.number import Add, one
@@ -335,6 +338,7 @@ class ExprList(Composite, Expression):
         subbed_exprs = []
         for expr in self:
             subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+            print('            subbed_expr: ', subbed_expr)                     # for testing; delete later
             if isinstance(expr, Iter) and isinstance(subbed_expr, ExprList):
                 # The iterated expression is being expanded 
                 # and should be embedded into the list.
@@ -342,6 +346,7 @@ class ExprList(Composite, Expression):
                     subbed_exprs.append(iter_expr)
             else:
                 subbed_exprs.append(subbed_expr)
+                print('            subbed_exprs: ', subbed_exprs)               # for testing; delete later
         if len(subbed_exprs)>1:
             new_subbed_exprs = []
             current = subbed_exprs[0]
@@ -362,7 +367,9 @@ class ExprList(Composite, Expression):
                         new_subbed_exprs.append(current)
                 else:
                     new_subbed_exprs.append(current)
+                    print('            new_subbed_exprs: ', new_subbed_exprs)   # for testing; delete later
                     new_subbed_exprs.append(itNext)
+                    print('            new_subbed_exprs: ', new_subbed_exprs)   # for testing; delete later
                     current = itNext
             subbed_exprs = new_subbed_exprs
 

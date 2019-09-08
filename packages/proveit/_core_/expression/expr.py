@@ -521,6 +521,7 @@ class Expression(metaclass=ExprType):
         intermediate proofs will be appended to it -- these are requirements
         for the substitution to be valid.
         '''
+        print('Entering expr.substituted() method!')                            # for testing; delete later
         self._checkRelabelMap(relabelMap)
         if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
