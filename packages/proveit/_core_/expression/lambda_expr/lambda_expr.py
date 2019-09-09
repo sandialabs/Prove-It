@@ -285,8 +285,8 @@ class Lambda(Expression):
         body_assumptions = list(inner_assumptions)+list(subbedConditions)
         subbedBody = self.body.substituted(inner_expr_map, relabelMap, inner_reservations, body_assumptions, body_requirements)
         
-        for inner_requirements, requirements_assumptions in zip((condition_requirements, body_requirements), ([], subbedConditions)):
-            for requirement in inner_requirements:
+        for requirements, requirements_assumptions in zip((condition_requirements, body_requirements), ([], subbedConditions)):
+            for requirement in requirements:
                 if requirement.freeVars().isdisjoint(new_params):
                     requirements.append(requirement)
                 else:
