@@ -343,15 +343,26 @@ class Operation(Expression):
         Return this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
+        print('Entering operation.substituted()')                               # for testing; delete later
+        print('    exprMap: ', exprMap)                                         # for testing; delete later
+        print('    relabelMap: ', relabelMap)                                   # for testing; delete later
+        print('    reservedVars: ', reservedVars)                               # for testing; delete later
+        print('    assumptions: ', assumptions)                                 # for testing; delete later
+        print('    requirements: ', requirements)                               # for testing; delete later
         from proveit._core_.expression.composite.composite import compositeExpression
         from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
         self._checkRelabelMap(relabelMap)
         if len(exprMap)>0 and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)        
+            return exprMap[self]._restrictionChecked(reservedVars)
+        print('    self.operand_or_operands: ', self.operand_or_operands)       # for testing; delete later
+        print('    type(self.operand_or_operands): ', type(self.operand_or_operands))       # for testing; delete later  
         subbed_operand_or_operands = self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        print('    subbed_operand_or_operands: ', subbed_operand_or_operands)   # for testing; delete later
         subbed_operands = compositeExpression(subbed_operand_or_operands)
         subbed_operator_or_operators = self.operator_or_operators.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
+        print('    subbed_operands: ', subbed_operands)                         # for testing; delete later
+        print('    subbed_operators: ', subbed_operators)                       # for testing; delete later
         if len(subbed_operators)==1:
             subbedOperator = subbed_operators[0]
             if isinstance(subbedOperator, Lambda):
