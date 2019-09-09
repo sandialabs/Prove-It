@@ -1305,7 +1305,7 @@ class Specialization(Proof):
                              'assumptions required by generalTruth')
                     )
             generalExpr = generalTruth.expr
-
+            print('generalExpr = ', generalExpr)                                # for testing; delete later
             # perform the appropriate substitution/relabeling
             specializedExpr, requirements, mappedVarLists, mappings = (
                 Specialization._specialized_expr(
@@ -1315,7 +1315,11 @@ class Specialization(Proof):
                         relabelMap,
                         assumptions)
             )
-
+            print('AFTER _specialized_expr:')                                   # for testing; delete later
+            print('    specializedExpr = ', specializedExpr)                    # for testing; delete later
+            print('    requirements = ', requirements)                          # for testing; delete later
+            print('    mappedVarLists = ', mappedVarLists)                      # for testing; delete later
+            print('    mappings = ', mappings)                                  # for testing; delete later
             # obtain the KnownTruths for the substituted conditions
             requirementTruths = []
             requirementTruthSet = set() # avoid repeats of requirements
@@ -1334,17 +1338,21 @@ class Specialization(Proof):
                     raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = generalTruth.assumptionsSet
-
+            print('assumptionsSet = ', assumptionsSet)                          # for testing; delete later
             for requirementTruth in requirementTruths:
                 assumptionsSet |= requirementTruth.assumptionsSet
             assumptions = [assumption for assumption in assumptions if assumption in assumptionsSet]
-            
+            print('assumptions = ', assumptions)                                # for testing; delete later
             # we have what we need; set up the Specialization Proof
             self.generalTruth = generalTruth
             self.requirementTruths = requirementTruths
             self.mappedVarLists = mappedVarLists
             self.mappings = mappings
             specializedTruth = KnownTruth(specializedExpr, assumptions)
+            print("specializedTruth assumptions = ", specializedTruth.assumptions)   # for testing; delete later
+            print("specializedTruth expr = ", specializedTruth.expr)                 # for testing; delete later
+            print("generalTruth = ", generalTruth)                                   # for testing; delete later
+            print("requirementTruths = ", requirementTruths)                         # for testing; delete later
             Proof.__init__(self, specializedTruth, [generalTruth] + requirementTruths)
         finally:
             # restore the original default assumptions
@@ -1473,6 +1481,11 @@ class Specialization(Proof):
         
         # Return the expression and conditions with substitutions and
         # the information to reconstruct the specialization
+        print('[_specialized_expression]subbed_expr = ', subbed_expr)           # for testing; delete later
+        print('[_specialized_expression]subbedConditions = ', subbedConditions) # for testing; delete later
+        print('[_specialized_expression]requirements = ', requirements)         # for testing; delete later
+        print('[_specialized_expression]mappedVarLists = ', mappedVarLists)     # for testing; delete later
+        print('[_specialized_expression]mappings = ', mappings)                 # for testing; delete later
         return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
 
         # for skolemization
