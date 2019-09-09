@@ -106,9 +106,7 @@ class KnownTruth:
         be done indirectly via Expression/KnownTruth derivation-step methods.
         '''
         from proveit._core_.proof import Proof
-        print("Begin Initializing KnownTruth!")                                 # for testing; delete later
-        print("    expression: ", expression)                                   # for testing; delete later
-        print("    assumptions: ", assumptions)                                 # for testing; delete later
+        # print("Begin Initializing KnownTruth!")                                 # for testing; delete later
         # do some type checking
         if not isinstance(expression, Expression):
             raise ValueError('The expression (expr) of a KnownTruth should be an Expression')
@@ -116,7 +114,7 @@ class KnownTruth:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
 
-        print("    After type-checking, expression = ", expression)             # for testing; delete later
+        # print("    After type-checking, expression = ", expression)             # for testing; delete later
         
         # note: these contained expressions are subject to style changes on a KnownTruth instance basis
         self.expr = expression
@@ -125,7 +123,7 @@ class KnownTruth:
         # checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptionsSet = frozenset(assumptions)
-        print("    assumptions = ", assumptions)                                # for testing; delete later
+        # print("    assumptions = ", assumptions)                                # for testing; delete later
 
         # The meaning data is shared among KnownTruths with the same structure disregarding style
         self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id)))
@@ -154,7 +152,7 @@ class KnownTruth:
         
         self._style_id = self._styleData._unique_id
 
-        print("    Exiting KnownTruth.__init__")                                # for testing; delete later
+        # print("    Exiting KnownTruth.__init__")                                # for testing; delete later
         
         # The _proof can change so it must be accessed via indirection into self._meaningData
         # (see proof() method).
@@ -830,6 +828,8 @@ class KnownTruth:
         Returns the proven skolemized KnownTruth, or throws an
         exception if the proof fails.        
         '''
+
+        print("ENTERING KT.skolemize()")                                        # for testing; delete later
         
         from proveit import (
             Function, Lambda, Literal, Operation,
@@ -919,9 +919,10 @@ class KnownTruth:
                      'Variable/MultiVariable operators; ' +
                      'but "%s" is %s'%(key, str(key.__class__)))
                 )
-
+            print("        processedSubMap so far = ", processedSubMap)         # for testing; delete later
         # collect the remaining variables to be substituted for
         remainingSubVars = set(processedSubMap.keys())
+
 
         # Determine the number of Exists eliminations.
         # There must be at least one. If zero is desired, then relabel
@@ -985,6 +986,7 @@ class KnownTruth:
             # for example, if sub = f(x), then just grab the f
             if isinstance(sub, Function):
                 sub = sub.operator
+            print('sub is currently: ', sub)                                    # for testing; delete later
             if not isinstance(sub, Literal):
                 raise SkolemizationFailure(
                         None,
@@ -1026,11 +1028,6 @@ class KnownTruth:
             else:
                 tempSetOfIntendedSkolemSubs.add(sub)
 
-        print('[skolemize] Just before calling KnownTruths(): ')                # for testing; delete later
-        print('            numExistsEliminations: ', numExistsEliminations)     # for testing; delete later
-        print('            skolemizeMap: ', skolemizeMap)                       # for testing; delete later
-        print('            relabelMap: ', relabelMap)                           # for testing; delete later
-        print('            assumptions: ', assumptions)                         # for testing; delete later
         checkedTruths = KnownTruths(
             [self._checkedTruth(truth) for truth in Skolemization._makeSkolemizations(
                 self,
