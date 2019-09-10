@@ -37,8 +37,12 @@ class Literal(Label):
             context = Context(context)
         Label.__init__(self, stringFormat, latexFormat, 'Literal', (context.name,)+tuple(extraCoreInfo))
         self._setContext(context)
-        #if self._coreInfo in Literal.instances:
-        #    raise DuplicateLiteralError("Only allowed to create one Literal with the same context and string/latex formats")
+        # 9/10/19 wdc reinstated the following if to check for duplicate
+        # Literals
+        if self._coreInfo in Literal.instances:
+            raise DuplicateLiteralError(
+                "Only allowed to create one Literal with the same context " +
+                "and string/latex formats")
         Literal.instances[self._coreInfo] = self
     
     @classmethod
