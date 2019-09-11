@@ -1,4 +1,5 @@
 from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex, USE_DEFAULTS, ProofFailure
+from proveit.logic import isIrreducibleValue
 from proveit.number.sets import Integers, Reals, Complexes
 from proveit._common_ import a, x, y
 
@@ -9,6 +10,10 @@ class Neg(Operation):
     def __init__(self,A):
         Operation.__init__(self, Neg._operator_, A)
     
+    def irreducibleValue(self):
+        from proveit.number import zero
+        return isIrreducibleValue(self.operand) and self.operand != zero
+        
     def deduceInNumberSet(self, NumberSet, assumptions=USE_DEFAULTS):
         '''
         given a number set, attempt to prove that the given expression is in that
@@ -25,6 +30,23 @@ class Neg(Operation):
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
     
+    def simplification(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
+        '''
+        Derive and return this negation expression equated with a simpler form.
+        Deals with double negation specifically.
+        '''
+        from proveit.number import zero
+        from proveit.logic import Equals
+        from ._theorems_ import doubleNegation, negatedZero
+        if isinstance(self.operand, Neg):
+            # simplify double negation
+            expr = doubleNegation.specialize({x:self.operand.operand}, assumptions).rhs
+            # simplify what is inside the double-negation.
+            expr = expr.simplification(assumptions, automation, innerExpr, inPlace).rhs
+            return Equals(self, expr).prove(assumptions)
+        # otherwise, just use the default simplification
+        return Operation.simplification(self, assumptions, automation, innerExpr, inPlace)
+                
     """
     def _closureTheorem(self, numberSet):
         import _theorems_
@@ -86,9 +108,10 @@ class Neg(Operation):
     def latex(self, **kwargs):
         return maybeFencedLatex('-'+self.operand.latex(fence=True), **kwargs)
 
-    def distribute(self, assumptions=frozenset()):
+    def distribution(self, assumptions=USE_DEFAULTS):
         '''
-        Distribute negation through a sum.
+        Distribute negation through a sum, deducing and returning
+        the equality between the original and distributed forms.
         '''
         from .theorems import distributeNegThroughSum, distributeNegThroughSubtract
         from proveit.number import Add, Sub
@@ -114,7 +137,7 @@ class Neg(Operation):
         else:
             raise Exception('Only negation distribution through a sum or subtract is implemented')
 
-    def factor(self, theFactor, pull="left", groupFactor=None, groupRemainder=None, assumptions=USE_DEFAULTS):
+    def factorization(self, theFactor, pull="left", groupFactor=None, groupRemainder=None, assumptions=USE_DEFAULTS):
         '''
         Pull out a factor from a negated expression, pulling it either to the "left" or "right".
         groupFactor and groupRemainder are not relevant but kept for compatibility with 
