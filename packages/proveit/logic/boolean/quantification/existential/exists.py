@@ -49,12 +49,17 @@ class Exists(OperationOverInstances):
         '''
         Conclude and return this [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] from P(..x..) and Q(..x..) and ..x.. in S, where ..x.. is the given exampleInstance.
         '''
-        raise NotImplementedError("Need to update")
+        # raise NotImplementedError("Need to update")
         from ._theorems_ import existenceByExample
         from proveit.logic import InSet
-        if len(self.instanceVars) > 1 and (not isinstance(exampleInstance, ExprList) or (len(exampleInstance) != len(self.instanceVars))):
+        # updated following line to use allInstanceVars() instead of the the instanceVars attribute
+        # if len(self.instanceVars) > 1 and (not isinstance(exampleInstance, ExprList) or (len(exampleInstance) != len(self.instanceVars))):
+        #     raise Exception('Number in exampleInstance list must match number of instance variables in the Exists expression')
+        if len(self.allInstanceVars()) > 1 and (not isinstance(exampleInstance, ExprList) or (len(exampleInstance) != len(self.allInstanceVars()))):
             raise Exception('Number in exampleInstance list must match number of instance variables in the Exists expression')
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        print('P_op = ', P_op)                                                  # for testing; delete later
+        print('P_up_sub', P_op_sub)                                             # for testing; delete later
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         # P(..x..) where ..x.. is the given exampleInstance
         exampleMapping = {instanceVar:exampleInstanceElem for instanceVar, exampleInstanceElem in zip(self.instanceVars, exampleInstance if isinstance(exampleInstance, ExpressionList) else [exampleInstance])}
