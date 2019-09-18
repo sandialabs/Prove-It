@@ -1,6 +1,7 @@
 # Core Prove-It constructs required used to construct/verify proofs.
 
-from .expression import Expression, InnerExpr, Operation, OperationError, Function, OperationSequence, OperationOverInstances
+from .expression import Expression, InnerExpr, InnerExprMethodsObject
+from .expression import Operation, OperationError, Function, OperationSequence, OperationOverInstances
 from .expression import Lambda, LambdaError, ParameterExtractionError, Label, Variable, Literal, DuplicateLiteralError
 from .expression import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from .expression import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation

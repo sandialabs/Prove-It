@@ -1,6 +1,6 @@
 from .expr import Expression, MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, expressionDepth
 from .style_options import StyleOptions
-from .inner_expr import InnerExpr
+from .inner_expr import InnerExpr, InnerExprMethodsObject
 from .fencing import maybeFencedString, maybeFencedLatex, maybeFenced
 from .operation import Operation, OperationError, Function, OperationSequence, OperationOverInstances
 from .lambda_expr import Lambda, LambdaError, ParameterExtractionError

@@ -64,6 +64,11 @@ class InnerExpr:
                 self.parameters.extend(expr.parameters)
             expr = expr.subExpr(idx)
             self.exprHierarchy.append(expr)
+        if hasattr(expr, 'innerExprMethodsObject'):
+            # This inner expression object supports extra innerExpr methods:
+            self._innerExprMethodsObject = expr.innerExprMethodsObject(self)
+        else:
+            self._innerExprMethodsObject = None
     
     def __eq__(self, other):
         return self.innerExprPath==other.innerExprPath and self.exprHierarchy==other.exprHierarchy
@@ -78,6 +83,7 @@ class InnerExpr:
         curInnerExpr = self.exprHierarchy[-1]
         if isinstance(curInnerExpr, ExprList):
             # For an ExprList, the item key is simply the index of the sub-Expression
+            if key < 0: key = len(curInnerExpr)+key
             return InnerExpr(self.exprHierarchy[0], self.innerExprPath + (key,))
         elif isinstance(curInnerExpr, Composite):
             # For any other Composite (ExprTensor or NamedExprs), the key is the key of the Composite dictionary.
@@ -126,6 +132,11 @@ class InnerExpr:
         changed according to its 'with' method.   
         '''
         cur_inner_expr = self.exprHierarchy[-1]
+        
+        if self._innerExprMethodsObject is not None:
+            if hasattr(self._innerExprMethodsObject, attr):
+                # Use a special method specific to the inner expression object:
+                return getattr(self._innerExprMethodsObject, attr)
         
         if not hasattr(cur_inner_expr, attr):
             raise AttributeError("No attribute '%s' in '%s' or '%s'"%(attr, self.__class__, cur_inner_expr.__class__))
@@ -200,20 +211,22 @@ class InnerExpr:
         return NamedExprs(named_expr_dict)
     
     def simplification(self, assumptions=USE_DEFAULTS):
-        from proveit.logic import defaultSimplification
-        return defaultSimplification(self, assumptions=assumptions)        
+        inner = self.innerExpr.exprHierarchy[-1]
+        return inner.simplification(assumptions=assumptions).substitution(self, assumptions=assumptions)
 
     def simplify(self, assumptions=USE_DEFAULTS):
-        from proveit.logic import defaultSimplification
-        return defaultSimplification(self, inPlace=True, assumptions=assumptions)        
+        inner = self.innerExpr.exprHierarchy[-1]
+        return inner.simplification(assumptions=assumptions).subRightSideInto(self, assumptions=assumptions)
+        #from proveit.logic import defaultSimplification
+        #return defaultSimplification(self, inPlace=True, assumptions=assumptions)        
     
     def simplifyOperands(self, assumptions=USE_DEFAULTS):
         from proveit.logic import defaultSimplification
         return defaultSimplification(self, inPlace=True, operandsOnly=True, assumptions=assumptions)                
                 
     def evaluation(self, assumptions=USE_DEFAULTS):
-        from proveit.logic import defaultSimplification
-        return defaultSimplification(self, mustEvaluate=True, assumptions=assumptions)        
+        inner = self.innerExpr.exprHierarchy[-1]
+        return inner.evaluation(assumptions=assumptions).substitution(self, assumptions=assumptions)
 
     def evaluate(self, assumptions=USE_DEFAULTS):
         from proveit.logic import defaultSimplification
@@ -228,3 +241,13 @@ class InnerExpr:
 
     def __repr__(self):
         return self._expr_rep().__repr__()
+
+class InnerExprMethodsObject:
+    '''
+    Basic classs for an object that is used to extend the methods of an inner expression
+    object that are specific to the type of inner expression.  See inner_expr_mixins.py
+    modules for Mixin classes that are used in various InnerExprMethodsObject classes.
+    '''
+    def __init__(self, innerExpr):
+        self.innerExpr = innerExpr
+        self.expr = self.innerExpr.exprHierarchy[-1]
