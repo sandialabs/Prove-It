@@ -1,22 +1,38 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExprMethodsObject
 from proveit.logic import Equals, InSet
 from proveit.number.sets import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
+import proveit.number.numeral.deci
+from proveit.number.numeral.deci import DIGITS
 from proveit._common_ import a, b, c, d, l, m, n, v, w, x, y, z, vv, ww, xx, yy, zz, S, A, B, C, D, E, AA, BB, CC, DD, EE
 from proveit.abstract_algebra.inner_expr_mixins import CommutativeAndAssociativeInnerExprMixin, DistributiveInnerExprMixin
-from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, successiveEvaluation
+from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, pairwiseEvaluation
+from proveit import TransRelUpdater
 
 
 class Mult(Operation):
     # operator of the Mult operation.
     _operator_ = Literal(stringFormat='*', latexFormat=r'\cdot', context=__file__)
     
+    # Multiplying two numerals may import a theorem for the evaluation.
+    # Track which ones we have encountered already.
+    multipliedNumerals = set()
+        
     def __init__(self, *operands):
         r'''
         Multiply together any number of operands from first operand.
         '''
         Operation.__init__(self, Mult._operator_, operands)
         self.factors = operands
-
+        if len(self.factors)==2 and all(factor in DIGITS for factor in self.factors):
+            if self not in Mult.multipliedNumerals:
+                try:
+                    # for single digit addition, import the theorem that provides the evaluation
+                    Mult.multipliedNumerals.add(self)
+                    proveit.number.numeral.deci._theorems_.__getattr__('mult_%d_%d'%(self.factors[0].asInt(), self.factors[1].asInt()))
+                except:
+                    # may fail before the relevent _commons_ and _theorems_ have been generated
+                    pass # and that's okay
+    
     def innerExprMethodsObject(self, innerExpr):
         return InnerMultiplication(innerExpr)
         
@@ -89,8 +105,8 @@ class Mult(Operation):
         from proveit.logic import Equals
         from proveit.number import one
         
-        eq = Equals(self, self).prove()
         expr = self
+        eq = TransRelUpdater(self, assumptions) # for convenience updating our equation
         
         # ungroup the expression (disassociate nested multiplications).
         n = 0
@@ -101,27 +117,28 @@ class Mult(Operation):
             if isinstance(expr.operands[n], Mult):
                 # if it is grouped, ungroup it
                 # print("to ungroup")
-                eq.applyTransitivity(expr.disassociation(n, assumptions), assumptions)
+                expr = eq.update(expr.disassociation(n, assumptions))
                 # print("new expr", expr)
+            else:
+                n += 1
             length = len(expr.operands)
-            n += 1
         
-        while True:
-            try:
-                oneIdx = expr.operands.index(one)
-            except ValueError:
-                break # no more one factors
+        shift = 0
+        one_locations = [i for i, operand in enumerate(self.operands) if operand==one]
+        for idx in one_locations:
+            idx -= shift
             if len(expr.operands)==2:
-                if oneIdx==0:
+                if idx==0:
                     return multOneLeft.specialize({x:expr.operands[1]}, assumptions=assumptions)
                 else:
                     return multOneRight.specialize({x:expr.operands[0]}, assumptions=assumptions)
-            Afactors = expr.operands[:oneIdx]
-            Bfactors = expr.operands[oneIdx+1:]
+            Afactors = expr.operands[:idx]
+            Bfactors = expr.operands[idx+1:]
             simp = multOneAny.specialize({m:len(Afactors), n:len(Bfactors), AA:Afactors, BB:Bfactors}, assumptions=assumptions)
-            eq.applyTransitivity(simp, assumptions)
+            expr = eq.update(simp)
+            shift += 1
 
-        return eq
+        return eq.relation
 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
@@ -146,25 +163,32 @@ class Mult(Operation):
             raise SimplificationError("Currently only evaluating multiplication with a 0 operand.  Straightfored to implement a better way when someone can get around to it -- see the Add doReducedEvaluation method.")
         
         if len(self.operands) > 2:
-            return successiveEvaluation(self, assumptions)
+            return pairwiseEvaluation(self, assumptions)
 
         raise SimplificationError("Unable to evaluate %s"%str(self))
         
     
-    def deduceMultDef(self, expr, assumptions=USE_DEFAULTS):
+    def conversionToAddition(self, assumptions=USE_DEFAULTS):
         '''
-        created on 7/25/19 by JML.  renamed on 9/6/19 by WMW.
-        given the addition of the same thing, return the equality of the multiplication:
-        c + c + c = 3c
+        From multiplication by an integer as the first factor,
+        derive and return the equivalence of this multiplication
+        to a repeated addition; for example, 3*c = c + c + c.
         '''
         from ._axioms_ import multDef
-        from proveit.number import num, Add
-        if not isinstance(expr, Add):
-            raise ValueError("Expecting expression to be addition")
-        for operand in expr.operands:
-            if self.operands[1] != operand:
-                raise ValueError("Expecting inputs to be equal to each other.")
-        return multDef.specialize({m:self.operands[0], AA:expr.operands, x: self.operands[1]}, assumptions=assumptions)
+        from proveit.number import num
+        if hasattr(self.operands[0], 'asInt'):
+            reps = self.operands[0].asInt()
+        else:
+            raise ValueError("Cannot 'expandAsAddition' unless the first operand is a literal integer: %s"%str(self))
+
+        expr = self
+        eq = TransRelUpdater(self, assumptions) # for convenience updating our equation
+        # Group together the remaining factors if necessary:
+        if len(self.operands) > 2:
+            expr = eq.update(expr.association(1, len(self.operands)-1, assumptions))
+        xVal = self.operands[1]          
+        eq.update(multDef.specialize({m:num(reps), AA:[xVal]*reps, x:xVal}, assumptions=assumptions))
+        return eq.relation
     
     def index(self, theFactor, alsoReturnNum=False):
         '''
@@ -226,21 +250,21 @@ class Mult(Operation):
         '''
         from ._theorems_ import distributeThroughSum, distributeThroughSubtract, distributeThroughSummation
         from proveit.number.division._theorems_ import fracInProd, prodOfFracs
-        from proveit.number import Frac, Add, Subtract, Sum
-        if idx is None and len(self.factors) == 2 and all(isinstance(factor, Frac) for factor in self.factors):
+        from proveit.number import frac, Div, Add, subtract, Sum
+        if idx is None and len(self.factors) == 2 and all(isinstance(factor, Div) for factor in self.factors):
             return prodOfFracs.specialize({x:self.factors[0].numerator, y:self.factors[1].numerator, z:self.factors[0].denominator, w:self.factors[1].denominator}, assumptions=assumptions)
         operand = self.operands[idx]
         if isinstance(operand, Add):
             return distributeThroughSum.specialize({xMulti:self.operands[:idx], yMulti:self.operands[idx].operands, zMulti:self.operands[idx+1:]}, assumptions=assumptions)
-        elif isinstance(operand, Subtract):
+        elif isinstance(operand, subtract):
             return distributeThroughSubtract.specialize({wMulti:self.operands[:idx], x:self.operands[idx].operands[0], y:self.operands[idx].operands[1], zMulti:self.operands[idx+1:]}, assumptions=assumptions)
-        elif isinstance(operand, Frac):            
+        elif isinstance(operand, Div):            
             eqn = fracInProd.specialize({wMulti:self.operands[:idx], x:self.operands[idx].operands[0], y:self.operands[idx].operands[1], zMulti:self.operands[idx+1:]}, assumptions=assumptions)            
             try:
                 # see if the numerator can simplify (e.g., with a one factor)
                 numerSimplification = eqn.rhs.numerator.simplification(assumptions=assumptions)
                 dummyVar = eqn.safeDummyVar()
-                return numerSimplification.subRightSideInto(Equals(eqn.lhs, Frac(dummyVar, eqn.rhs.denominator)), dummyVar)
+                return numerSimplification.subRightSideInto(Equals(eqn.lhs, frac(dummyVar, eqn.rhs.denominator)), dummyVar)
             except:
                 return eqn
         elif isinstance(operand, Sum):
@@ -293,7 +317,7 @@ class Mult(Operation):
         from proveit.number.exponentiation._theorems_ import sumInExp, diffInExp, diffFracInExp
         from proveit.number.exponentiation._theorems_ import addOneRightInExp, addOneLeftInExp
         from proveit.number.exponentiation._theorems_ import prodOfSqrts
-        from proveit.number import Sqrt, Exp, Neg, Frac
+        from proveit.number import Sqrt, Exp, Neg, Div
         if startIdx is not None or endIdx is not None:
             dummyVar = self.safeDummyVar()
             grouped = self.group(startIdx, endIdx, assumptions=assumptions)
@@ -320,7 +344,7 @@ class Mult(Operation):
                 # equate $a^b a^{-c} = a^{b-c}$
                 thm = diffInExp
                 cSub = self.operands[1].exponent.operand
-            elif isinstance(self.operands[1].exponent, Frac) and isinstance(self.operands[1].exponent.numerator, Neg):
+            elif isinstance(self.operands[1].exponent, Div) and isinstance(self.operands[1].exponent.numerator, Neg):
                 # equate $a^b a^{-c/d} = a^{b-c/d}$
                 thm = diffFracInExp
                 cSub = self.operands[1].exponent.numerator.operand
