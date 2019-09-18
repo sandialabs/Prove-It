@@ -18,7 +18,7 @@ class Indexed(Expression):
     def __init__(self, var, index_or_indices, base=1, styles=None, requirements=tuple()):
         from .composite import compositeExpression
         if not isinstance(var, Variable):
-            raise TypeError("'var' being indexed should be a Variable")
+            raise TypeError("'var' being indexed should be a Variable, got %s"%str(var))
         self.indices = compositeExpression(index_or_indices)
         if len(self.indices) == 1:
             # has a single parameter
@@ -70,7 +70,7 @@ class Indexed(Expression):
         a Composite, the indexing should be actualized.
         '''
         from .composite import Composite, _simplifiedCoord
-        from proveit.number import num, Subtract, isLiteralInt
+        from proveit.number import num, subtract, isLiteralInt
         from .expr_list import ExprList
         from .expr_tensor import ExprTensor
         
@@ -167,7 +167,7 @@ class Indexed(Expression):
         
     """  
     def iterated(self, iterParams, startIndices, endIndices, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
-        from proveit.number import proven_sort, zero, one, num, Add, Subtract, Greater
+        from proveit.number import proven_sort, zero, one, num, Add, subtract, Greater
         
         subbed_var = self.indexed_expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         if isinstance(subbed_var, Composite):
