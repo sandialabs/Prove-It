@@ -63,18 +63,19 @@ def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumpt
     Derive a commutation equivalence on a group of multiple operands by associating them
     together first.  If 'dissassociate' is true, the group will be disassociated at end.
     '''
-    from proveit.logic import Equals
+    from proveit import TransRelUpdater
+
     if initIdx < 0: initIdx = len(expr.operands)+initIdx # use wrap-around indexing
     if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx # use wrap-around indexing
     if length==1:
         return expr.commutation(initIdx, finalIdx, assumptions=assumptions)
-    orig_expr = expr
-    expr = expr.association(initIdx, initIdx+length, assumptions=assumptions).rhs
-    expr = expr.commutation(initIdx, finalIdx, assumptions=assumptions).rhs
-    Equals(orig_expr, expr).prove(assumptions=assumptions)
+        
+    eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
+    expr = eq.update(expr.association(initIdx, initIdx+length, assumptions=assumptions))
+    expr = eq.update(expr.commutation(initIdx, finalIdx, assumptions=assumptions))
     if disassociate:
-        expr = expr.disassociation(finalIdx, assumptions=assumptions).rhs
-    return Equals(orig_expr, expr).prove(assumptions=assumptions)
+        expr = eq.update(expr.disassociation(finalIdx, assumptions=assumptions))
+    return eq.relation
     
 def groupCommute(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
     '''
@@ -86,27 +87,29 @@ def groupCommute(expr, initIdx, finalIdx, length, disassociate=True, assumptions
     if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx # use wrap-around indexing
     if length==1:
         return expr.commute(initIdx, finalIdx, assumptions=assumptions)
+
     expr = expr.associate(initIdx, length, assumptions=assumptions)
     expr = expr.commute(initIdx, finalIdx, assumptions=assumptions)
     if disassociate:
         expr = expr.disassociate(finalIdx, assumptions=assumptions)
     return expr
     
-def successiveEvaluation(expr, assumptions):
+def pairwiseEvaluation(expr, assumptions):
     '''
-    Evaluation routine applicable to associative operations.
+    Evaluation routine applicable to associative operations in which
+    operands at the beginning are paired and evaluated sequentially.
     '''
-    from proveit.logic import Equals
+    from proveit import TransRelUpdater
     # successively evaluate and replace the operation performed on
     # the first two operands
-    orig_expr = expr
+    
+    eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
+    
     if len(expr.operands)==2:
-        raise ValueError("successiveEvaluation may only be used when there are more than 2 operands")
+        raise ValueError("pairwiseEvaluation may only be used when there are more than 2 operands")
     while len(expr.operands) > 2:
-        expr = expr.association(0, length=2, assumptions=assumptions).rhs
-        Equals(orig_expr, expr).prove(assumptions=assumptions)
-        expr = expr.innerExpr().operands[0].evaluation(assumptions).rhs
-        Equals(orig_expr, expr).prove(assumptions=assumptions)
-    eq = expr.evaluation(assumptions=assumptions)
-    return Equals(orig_expr, expr).applyTransitivity(eq, assumptions=assumptions)
+        expr = eq.update(expr.association(0, length=2, assumptions=assumptions))
+        expr = eq.update(expr.innerExpr().operands[0].evaluation(assumptions))
+    eq.update(expr.evaluation(assumptions=assumptions))
+    return eq.relation
     
