@@ -368,7 +368,7 @@ len(gc.get_objects()) # used to check for memory leaks
                 print("Try restarting kernel")
                 pass
                 #execute_processor.km.restart_kernel(newport=True)
-        with open(notebook_path, 'wt') as f:
+        with open(notebook_path, 'wt', encoding='utf8') as f:
             nbformat.write(nb, f)
         return nb
 
