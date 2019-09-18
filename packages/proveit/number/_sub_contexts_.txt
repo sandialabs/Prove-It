@@ -5,6 +5,8 @@ subtraction
 negation
 ordering
 multiplication
+divides
+divisibility
 division
 modular
 exponentiation
@@ -12,3 +14,4 @@ summation
 product
 differentiation
 integration
+divisibility
