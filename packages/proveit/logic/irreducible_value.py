@@ -13,6 +13,9 @@ class IrreducibleValue:
     def __init__(self):
         pass
     
+    def irreducibleValue(self):
+        return True
+    
     def evaluation(self):
         '''
         IrreducibleValues evaluate to themselves.
@@ -35,4 +38,6 @@ class IrreducibleValue:
         raise NotImplementedError("notEqual method must be implemented by IrreducibleValue objects")
 
 def isIrreducibleValue(expr):
-    return isinstance(expr, IrreducibleValue)
+    if hasattr(expr, 'irreducibleValue'):
+        return expr.irreducibleValue()
+    return False

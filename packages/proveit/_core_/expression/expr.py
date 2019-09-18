@@ -589,35 +589,136 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.label.var import safeDummyVars
         return safeDummyVars(n, self)
             
-    def evaluation(self, assumptions=USE_DEFAULTS, automation = True):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
         '''
         If possible, return a KnownTruth of this expression equal to its
-        irreducible value.  Override for other appropriate functionality.
+        irreducible value.  Checks for an existing evaluation.  If it
+        doesn't exist, try some default strategies including a reduction,
+        attempting the Expression-class-specific "doReducedEvaluation"
+        when necessary.
+        innerExpr and inPlace are used when called by the InnerExpr
+        class (for making substitutions directly in an inner expression).
         '''
-        from proveit.logic import defaultSimplification, Equals
-        from proveit import ProofFailure
-        if not automation:
-            # Without automation, we'll just grab an arbitrary evaluation that we already know
-            evaluations = Equals.evaluations.get(self, set())
-            if len(evaluations) == 0:
-                raise ProofFailure(self, assumptions, "No existing evaluation; cannot perform 'evaluation' without automation")
-            return list(evaluations)[0]
-        return defaultSimplification(self.innerExpr(), inPlace=False, mustEvaluate=True, assumptions=assumptions)
+        from proveit.logic import Equals, defaultSimplification, SimplificationError
+        from proveit import KnownTruth, ProofFailure
+        from proveit.logic.irreducible_value import isIrreducibleValue
 
-    def simplification(self, assumptions=USE_DEFAULTS, automation = True):
+        if innerExpr is None: innerExpr = self.innerExpr()
+        try:
+            # First try the default tricks.
+            evaluation = defaultSimplification(innerExpr, inPlace=inPlace, mustEvaluate=True, assumptions=assumptions)
+        except SimplificationError as e:
+            if not automation:
+                raise e # end of the road if not allowing automation.
+            # The default failed, let's try the Expression-class specific version.
+            try:
+                evaluation = self.doReducedEvaluation(assumptions)
+            except NotImplementedError:
+                # We have nothing but the default evaluation strategy to try, and that failed.
+                raise e 
+        
+        if not isinstance(evaluation, KnownTruth) or not isinstance(evaluation.expr, Equals):
+            raise ValueError("'doReducedEvaluation' must return an KnownTruth equality")
+        if evaluation.lhs != self:
+            raise ValueError("'doReducedEvaluation' must return an KnownTruth equality with self on the left side")
+        if not isIrreducibleValue(evaluation.rhs):
+            raise ValueError("'doReducedEvaluation' must return an KnownTruth equality with an irreducible value on the right side")
+        # Note: No need to store in Equals.evaluations or Equals.simplifications; this
+        # is done automatically as a side-effect for proven equalities with irreducible
+        # right sides.
+        
+        if innerExpr is not None and innerExpr.exprHierarchy[0] != self:
+            if inPlace:
+                return evaluation.subRightSideInto(innerExpr, assumptions=assumptions)
+            else:
+                return evaluation.substitution(innerExpr, assumptions=assumptions)
+        return evaluation
+    
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
-        If possible, return a KnownTruth of this expression equal to its
-        irreducible value.  Override for other appropriate functionality.
+        Attempt to evaluate 'self', which should be a reduced
+        expression with operands already evaluated.
+        Return the evaluation as a KnownTruth equality 
+        with 'self' on the left side.
+        Must be overridden for class-specific evaluation.
+        Raise a SimplificationError if the evaluation
+        cannot be done.
         '''
-        from proveit.logic import defaultSimplification, Equals
-        from proveit import ProofFailure
-        if not automation:
-            # Without automation, we'll just grab an arbitrary simplification that we already know
-            simplifications = Equals.simplifications.get(self, set())
-            if len(simplifications) == 0:
-                raise ProofFailure(self, assumptions, "No existing simplification; cannot perform 'simplification' without automation")
-            return list(simplifications)[0]
-        return defaultSimplification(self.innerExpr(), inPlace=False, assumptions=assumptions)        
+        raise NotImplementedError("'doReducedEvaluation' not implemented for %s class"%str(self.__class__))       
+
+    def evaluated(self, assumptions=USE_DEFAULTS):
+        '''
+        Return the right side of an evaluation.
+        '''
+        return self.evaluation(assumptions=assumptions).rhs
+        
+    def simplification(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
+        '''
+        If possible, return a KnownTruth of this expression equal to a
+        canonically simplified form.  Checks for an existing simplification.
+        If it doesn't exist, try the Expression-class-specific "doReducedSimplification"
+        or use a default strategy (via reduction and known equalities) if that fails.
+        '''
+        from proveit.logic import Equals, defaultSimplification, SimplificationError
+        from proveit import KnownTruth, ProofFailure
+        
+        if innerExpr is None: innerExpr = self.innerExpr()        
+        
+        # Need to think about this and avoid infinite recursion!!!
+        try:
+            # First try the default tricks. 
+            simplification = defaultSimplification(self.innerExpr(), inPlace=False, assumptions=assumptions, automation=automation)
+        except SimplificationError as e:
+            if not automation:
+                raise e # end of the road if not allowing automation.
+            # The default did nothing, let's try the Expression-class specific versions of
+            # evaluation and simplification.
+            try:
+                # first try evaluation.  that is as simple as it gets.
+                simplification = self.doReducedEvaluation(assumptions)
+            except (NotImplementedError, SimplificationError):
+                try:
+                    simplification = self.doReducedSimplification(assumptions)
+                except (NotImplementedError, SimplificationError):
+                    # Simplification did not work.  Just use self-equality.
+                    simplification = Equals(self, self).prove()
+            
+        if not isinstance(simplification, KnownTruth) or not isinstance(simplification.expr, Equals):
+            raise ValueError("'doReducedSimplification' must return an KnownTruth equality")
+        if simplification.lhs != self:
+            raise ValueError("'doReducedSimplification' must return an KnownTruth equality with self on the left side")
+        # Remember this simplification for next time:
+        Equals.simplifications.setdefault(self, set()).add(simplification)
+        
+        topLevel = innerExpr.exprHierarchy[0]
+        if innerExpr is not None and topLevel != self:
+            if inPlace:
+                if simplification.rhs == self:
+                    return topLevel # don't know how to simplify further
+                return simplification.subRightSideInto(innerExpr, assumptions=assumptions)
+            else:
+                if simplification.rhs == self:
+                    return Equals(topLevel, topLevel).prove() # don't know how to simplify further                    
+                return simplification.substitution(innerExpr, assumptions=assumptions)        
+        return simplification
+    
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to simplify 'self', which should be a reduced
+        expression with operands already simplified.
+        Return the evaluation as a KnownTruth equality 
+        with 'self' on the left side.
+        Must be overridden for class-specific simplification.
+        Raise a SimplificationError if the simplification
+        cannot be done.
+        '''
+        raise NotImplementedError("'doReducedSimplification' not implemented for %s class"%str(self.__class__))             
+    
+    def simplified(self, assumptions=USE_DEFAULTS):
+        '''
+        Return the right side of a simplification.
+        '''
+        return self.simplification(assumptions=assumptions).rhs
     
     def orderOfAppearance(self, subExpressions):
         '''

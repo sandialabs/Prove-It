@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, ExprList, ProofFailure, maybeFencedString, USE_DEFAULTS
 from proveit.logic import Membership
 import proveit._common_
-from proveit._common_ import S, x
+from proveit._common_ import S, a, x
 
 class Exp(Operation):
     # operator of the Exp operation.
@@ -33,38 +33,46 @@ class Exp(Operation):
         elif numberSet == Complexes:
             return complex.theorems.powClosure
     
-    def simplification(self, assumptions=frozenset()):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one exponent or zero or one base,
         derive and return this exponential expression equated with a simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
+        from proveit.number import zero, one
         from .theorems import expZeroEqOne, exponentiatedZero, exponentiatedOne
         from .theorems import expOne
         if self.exponent == zero:
-            deduceInComplexes(self.base, assumptions)
-            deduceNotZero(self.base, assumptions)
             return expZeroEqOne.specialize({a:self.base})
         elif self.exponent == one:
             return expOne.specialize({a:self.base})
         elif self.base == zero:
-            deduceInComplexes(self.exponent, assumptions)
-            deduceNotZero(self.exponent, assumptions)
             return exponentiatedZero.specialize({x:self.exponent})
         elif self.base == one:
-            deduceInComplexes(self.exponent, assumptions)
             return exponentiatedOne.specialize({x:self.exponent})
         else:
             raise ValueError('Only trivial simplification is implemented (zero or one for the base or exponent)')
 
-    def simplified(self, assumptions=frozenset()):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one exponent or zero or one base,
-        derive this exponential expression equated with a simplified form
-        and return the simplified form.
+        derive and return this exponential expression equated with a simplified form.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
-        return self.simplification(assumptions).rhs
+        from proveit.number import zero, one
+        from .theorems import expZeroEqOne, exponentiatedZero, exponentiatedOne
+        from .theorems import expOne
+        if self.exponent == zero:
+            return expZeroEqOne.specialize({a:self.base})
+        elif self.exponent == one:
+            return expOne.specialize({a:self.base})
+        elif self.base == zero:
+            return exponentiatedZero.specialize({x:self.exponent})
+        elif self.base == one:
+            return exponentiatedOne.specialize({x:self.exponent})
+        else:
+            raise ValueError('Only trivial simplification is implemented (zero or one for the base or exponent)')
+                
         
     def deduceInRealsPosDirectly(self, assumptions=frozenset()):
         import real.theorems
@@ -93,9 +101,9 @@ class Exp(Operation):
         return maybeFencedString(inner_str, **kwargs)
     
     def distributeExponent(self, assumptions=frozenset()):
-        from proveit.number import Fraction
+        from proveit.number import Div
         from proveit.number.division.theorems import fracIntExpRev, fracNatPosExpRev
-        if isinstance(self.base, Fraction):
+        if isinstance(self.base, Div):
             exponent = self.exponent
             try:
                 deduceInNaturalsPos(exponent, assumptions)
