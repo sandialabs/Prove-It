@@ -409,11 +409,11 @@ class TransitiveRelation(Operation):
         def yield_left_most(item):
             items_to_process = {item}
             while len(items_to_process) > 0:
-                for item in items_to_process:
-                    if item in left_partners:
-                        items_to_process.update(left_partners[item])
-                    else:
-                        yield item # end of the line
+                item = items_to_process.pop()
+                if item in left_partners:
+                    items_to_process.update(left_partners[item])
+                else:
+                    yield item # end of the line
         
         sorted_items = []
         remaining_items = set(items) # items we have left to sort
@@ -648,4 +648,4 @@ def makeSequenceOrRelation(TransitiveSequenceClass, operators, operands):
 class TransitivityException(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
-        
+ 
