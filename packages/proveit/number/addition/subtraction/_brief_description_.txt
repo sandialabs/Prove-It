@@ -1,1 +1,1 @@
-subtracting numbers (inverse of addition)
+Subtraction is internally represented as addition of negated operands.

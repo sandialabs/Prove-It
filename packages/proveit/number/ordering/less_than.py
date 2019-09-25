@@ -99,7 +99,7 @@ class Less(LesserRelation):
         from proveit.number import Add
 
         if isinstance(self.lhs,Add):
-            return self.lhs.concludeStrictDecAdd(self.rhs, assumptions)
+            return self.lhs.deduceStrictDecAdd(self.rhs, assumptions)
         else:
             raise ValueError("expected self.lhs to be addition")
 
