@@ -156,7 +156,7 @@ class Forall(OperationOverInstances):
         from ._theorems_ import bundledEquiv
         return self._specializeUnravelingTheorem(bundledEquiv, instanceVarLists)
         
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if possible
         by calling the condition's forallEvaluation method

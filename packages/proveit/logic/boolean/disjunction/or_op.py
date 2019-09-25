@@ -1,6 +1,8 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExprMethodsObject
 from proveit._common_ import A, B, C, D, AA, BB, CC, DD, EE, i,j,k,l, m, n
 from proveit.logic.boolean.booleans import inBool
+from proveit.abstract_algebra.inner_expr_mixins import CommutativeAndAssociativeInnerExprMixin
+from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, groupCommute
 
 class Or(Operation):
     # The operator of the Or operation
@@ -108,7 +110,10 @@ class Or(Operation):
         (Z in Booleans).
         '''
         yield self.deducePartsInBool
-        
+
+    def innerExprMethodsObject(self, innerExpr):
+        return InnerDisjunction(innerExpr)
+                    
     def concludeNegation(self, assumptions):
         from ._theorems_ import falseOrFalseNegated, neitherIntro, notOrIfNotAny
         if self == falseOrFalseNegated.operand:
@@ -295,7 +300,7 @@ class Or(Operation):
         compose([leftImplConclusion, rightImplConclusion], assumptions)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -305,13 +310,13 @@ class Or(Operation):
         if len(self.operands) == 0:
             return emptyDisjunction
         try:
-            self.prove(assumptions)
+            self.prove(assumptions, automation=automation)
         except ProofFailure:
             try:
-                self.disprove(assumptions)
+                self.disprove(assumptions, automation=automation)
             except ProofFailure:
-                raise EvaluationError("Unable to evaluate disjunction.")
-        return Operation.evaluation(self, assumptions)
+                pass
+        return Operation.evaluation(self, assumptions, automation, innerExpr, inPlace)
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
@@ -399,3 +404,86 @@ class Or(Operation):
             raise ValueError("Expression must have a single operand in order to invoke unaryDisjunctionDef")
         operand = self.operands[0]
         return unaryDisjunctionDef.specialize({A:operand}, assumptions = assumptions)
+
+    def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
+        '''
+        Given Boolean operands, deduce that this expression is equal to a form in which the operand
+        at index initIdx has been moved to finalIdx.
+        For example, (A or B or ... or Y or Z) = (A or ... or Y or B or Z)
+        via initIdx = 1 and finalIdx = -2.
+        '''
+        from ._theorems_ import commutation, leftwardCommutation, rightwardCommutation
+        return apply_commutation_thm(self, initIdx, finalIdx, commutation, leftwardCommutation, rightwardCommutation, assumptions)
+
+    def groupCommutation(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
+        '''
+        Given Boolean operands, deduce that this expression is equal to a form in which the operands
+        at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
+        It will do this by performing association first.  If disassocate is True, it
+        will be disassociated afterwards.
+        '''
+        return groupCommutation(self, initIdx, finalIdx, length, disassociate, assumptions)
+    
+    def commute(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
+        '''
+        From self, derive and return a form in which the operand
+        at index initIdx has been moved to finalIdx.
+        For example, given (A or B or ... or Y or Z) derive (A or ... or Y or B or Z)
+        via initIdx = 1 and finalIdx = -2.
+        '''
+        from ._theorems_ import commute, leftwardCommute, rightwardCommute      
+        return apply_commutation_thm(self, initIdx, finalIdx, commute, leftwardCommute, rightwardCommute, assumptions)  
+    
+    def groupCommute(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
+        '''
+        Given self, deduce and return a form in which the operands
+        at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
+        It will do this by performing association first.  If disassocate is True, it
+        will be disassociated afterwards.
+        '''
+        return groupCommute(self, initIdx, finalIdx, length, disassociate, assumptions)        
+    
+    def association(self, startIdx, length, assumptions=USE_DEFAULTS):
+        '''
+        Given Boolean operands, deduce that this expression is equal to a form in which operands in the
+        range [startIdx, startIdx+length) are grouped together.
+        For example, (A or B or ... or Y or Z) = (A or B ... or (L or ... or M) or ... or Y or Z)
+        '''
+        from ._theorems_ import association
+        return apply_association_thm(self, startIdx, length, association, assumptions)
+
+    def associate(self, startIdx, length, assumptions=USE_DEFAULTS):
+        '''
+        From self, derive and return a form in which operands in the
+        range [startIdx, startIdx+length) are grouped together.
+        For example, from (A or B or ... or Y or Z) derive
+        (A or B ... or (L or ... or M) or ... or Y or Z).
+        '''
+        from ._theorems_ import associate
+        return apply_association_thm(self, startIdx, length, associate, assumptions)
+
+    def disassociation(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        Given Boolean operands, deduce that this expression is equal to a form in which the operand
+        at index idx is no longer grouped together.
+        For example, (A or B ... or (L or ... or M) or ... or Y or Z) = (A or B or ... or Y or Z)
+        '''
+        from ._theorems_ import disassociation
+        return apply_disassociation_thm(self, idx, disassociation, assumptions)
+
+    def disassociate(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        From self, derive and return a form in which the operand
+        at the given index is ungrouped.
+        For example, from (A or B ... or (L or ... or M) or ... or Y or Z)
+        derive (A or B or ... or Y or Z).
+        '''
+        from ._theorems_ import disassociate
+        return apply_disassociation_thm(self, idx, disassociate, assumptions)
+
+
+class InnerDisjunction(CommutativeAndAssociativeInnerExprMixin, InnerExprMethodsObject):
+    def __init__(self, innerExpr):
+        InnerExprMethodsObject.__init__(self, innerExpr)
+        if not isinstance(self.expr, Or):
+            raise TypeError("InnerDisjunction is expecting an Or object as the inner expression")

@@ -49,12 +49,12 @@ class Not(Operation):
         Try to automatically conclude this negation via evaluation reductions
         or double negation.
         '''
-        from proveit.logic import EvaluationError
+        from proveit.logic import SimplificationError
         # as a last resort (concludeNegation on the operand should have been
         # tried first), conclude negation via evaluating the operand as false.
         try:
             self.operand.evaluation(assumptions=assumptions)
-        except EvaluationError:
+        except SimplificationError:
             raise ProofFailure(self, assumptions, "Unable to evaluate %s"%str(self.operand))
         return self.concludeViaFalsifiedNegation(assumptions=assumptions)
     
@@ -77,7 +77,7 @@ class Not(Operation):
         if fence: outStr += ')'
         return outStr            
     
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -91,7 +91,7 @@ class Not(Operation):
         if opValue == TRUE:
             # evaluate to FALSE via falsifiedNegationIntro
             return falsifiedNegationIntro.specialize({A:self.operand}, assumptions=assumptions)
-        return Operation.evaluation(self, assumptions)
+        return Operation.evaluation(self, assumptions, automation=True, innerExpr=None, inPlace=False)
     
     def substituteInFalse(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
