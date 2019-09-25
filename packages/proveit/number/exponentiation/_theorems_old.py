@@ -1,7 +1,7 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
 from proveit.number import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
-from proveit.number import Exp, Sqrt, Add, Mult, Sub, Neg, Fraction, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
+from proveit.number import Exp, Sqrt, Add, Mult, Sub, Neg, frac, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.common import a, b, c, d, n, x, y, z, xEtc, xMulti
 from proveit.number.common import zero, one, two
 from proveit import beginTheorems, endTheorems
@@ -113,15 +113,15 @@ diffInExpRev = Forall([a,b,c],
 diffInExpRev
 
 diffFracInExp = Forall([a,b,c,d],
-                Equals(Exp(a,Sub(b,Fraction(c, d))),
-                       Mult(Exp(a,b),Exp(a,Fraction(Neg(c), d)))),
+                Equals(Exp(a,Sub(b,frac(c, d))),
+                       Mult(Exp(a,b),Exp(a,frac(Neg(c), d)))),
                 domain = Complexes, conditions=[NotEquals(a, zero), NotEquals(d, zero)])
 diffFracInExp
 
 
 diffFracInExpRev = Forall([a,b,c,d],
-                Equals(Mult(Exp(a,b),Exp(a,Fraction(Neg(c), d))),
-                       Exp(a,Sub(b,Fraction(c, d)))),
+                Equals(Mult(Exp(a,b),Exp(a,frac(Neg(c), d))),
+                       Exp(a,Sub(b,frac(c, d)))),
                 domain = Complexes, conditions=[NotEquals(a, zero), NotEquals(d, zero)])
 diffFracInExpRev
 

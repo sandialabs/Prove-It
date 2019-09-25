@@ -1,7 +1,7 @@
 from proveit import Operation
 from proveit.logic import Forall, Implies, InSet, Equals, SetOfAll
 from proveit.number import Integers, Reals, Complexes
-from proveit.number import Sum, Interval, Exp, Fraction, Sub, Add, LessThan, LessThanEquals
+from proveit.number import Sum, Interval, Exp, frac, Sub, Add, LessThan, LessThanEquals
 from proveit.common import a, b, c, f, g, k, l, m, n, x, y, fa, fx, gx, gy, xMulti, xEtc, P, R, S, PxEtc
 from proveit.number.common import zero, one, infinity
 
@@ -48,14 +48,14 @@ indexShift = Forall(f,
 indexShift
 
 infGeomSum = Forall(x,Equals(Sum(m,Exp(x,m),Interval(zero,infinity)), 
-             Fraction(one,Sub(one,x))),
+             frac(one,Sub(one,x))),
               domain=Complexes
               )
 infGeomSum
 
 finGeomSum = Forall([x,k,l],
                 Equals(Sum(m,Exp(x,m),Interval(k,l)), 
-                 Fraction(Sub(Exp(x,Add(l,one)),Exp(x,k)),Sub(x,one))),
+                 frac(Sub(Exp(x,Add(l,one)),Exp(x,k)),Sub(x,one))),
                  conditions=[InSet(k,Integers),
                   InSet(l,Integers),
                   InSet(x,Complexes),
