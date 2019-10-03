@@ -1,0 +1,2 @@
+. /home/wwitzel/Prove-It/packages/proveit
+tutorial /home/wwitzel/Prove-It/tutorial
