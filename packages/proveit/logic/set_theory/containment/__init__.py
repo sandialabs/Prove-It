@@ -1,2 +1,3 @@
-from .subset import SubsetEq, Subset, NotSubsetEq
-from .superset import SupersetEq, Superset, NotSupersetEq
+from .subset import NotSubset, NotSubsetEq, ProperSubset
+from .subset import Subset, SubsetEq, SubsetProper
+from .superset import NotSupersetEq, Superset, SupersetEq 

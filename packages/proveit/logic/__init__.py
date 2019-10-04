@@ -4,10 +4,11 @@ from .boolean import Booleans, TRUE, FALSE
 from .boolean import And, Or, Not, Implies, Iff, compose, concludeViaImplication
 from .boolean import inBool
 from .boolean import Forall, Exists, NotExists
-from .set_theory import EmptySet
-from .set_theory import InSet, NotInSet, Membership, Nonmembership
-from .set_theory import Set, SubsetEq, SupersetEq, Subset, Superset, NotSubsetEq, NotSupersetEq
-from .set_theory import Union, Intersect, Difference, SetOfAll, Disjoint, Distinct, Card
+from .set_theory import EmptySet, InSet, Membership, NotInSet, Nonmembership
+from .set_theory import NotSubset, NotSubsetEq, NotSupersetEq, ProperSubset
+from .set_theory import Set, Subset, SubsetEq, SubsetProper, Superset, SupersetEq
+from .set_theory import Card, Difference, Disjoint, Distinct, Intersect  
+from .set_theory import Union, SetOfAll
 from .equality import Equals, NotEquals
 from .equality import reduceOperands, defaultSimplification, evaluateTruth, SimplificationError
 from .irreducible_value import IrreducibleValue, isIrreducibleValue

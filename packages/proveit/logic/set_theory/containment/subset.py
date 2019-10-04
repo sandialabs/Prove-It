@@ -95,6 +95,7 @@ class Subset(SubsetRelation):
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
 
+
 class SubsetEq(SubsetRelation):
     # operator of the SubsetEq operation
     _operator_ = Literal(stringFormat='subseteq', latexFormat=r'\subseteq', context=__file__)    
@@ -200,6 +201,36 @@ class SubsetEq(SubsetRelation):
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
 
 
+class NotSubset(Operation):
+    # operator of the NotSubset operation
+    _operator_ = Literal(stringFormat='nsubset',
+                         latexFormat=r'\not\subset',
+                         context=__file__)    
+
+    def __init__(self, subset, superset):
+        Operation.__init__(self, NotSubset._operator_, (subset, superset))
+    
+    def deriveSideEffects(self, knownTruth):
+        self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
+
+    def conclude(self, assumptions):
+        return self.concludeAsFolded(assumptions)
+
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From A nsubset B, derive and return not(supset(A, B)).
+        '''
+        from ._theorems_ import unfoldNotSubset
+        return unfoldNotSubset.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
+        '''
+        Derive this folded version, A nsupset B, from the unfolded version,
+        not(A supset B).
+        '''
+        from ._theorems_ import foldNotSubset
+        return foldNotSubset.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
 class NotSubsetEq(Operation):
     # operator of the NotSubsetEq operation
     _operator_ = Literal(stringFormat='nsubseteq', latexFormat=r'\nsubseteq', context=__file__)    
@@ -227,3 +258,7 @@ class NotSubsetEq(Operation):
         '''
         from ._theorems_ import foldNotSubsetEq
         return foldNotSubsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+# Provide an alias for Subset and SubsetProper
+ProperSubset = Subset
+SubsetProper = Subset
