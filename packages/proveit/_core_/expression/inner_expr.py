@@ -3,6 +3,7 @@ from .operation import Function
 from .lambda_expr import Lambda
 from .composite import ExprList, Composite, NamedExprs, compositeExpression
 from proveit._core_.defaults import USE_DEFAULTS
+import inspect
 
 class InnerExpr:
     '''
@@ -12,29 +13,60 @@ class InnerExpr:
     the top-level.  This acts as an expression wrapper, 
     starting at the top-level expression but can "descend" to
     any sub-expression via accessing sub-expression attributes.
+    This will allow us to manipute the inner expression in the
+    context of the containing expression.  One can change the
+    style of the inner expression or replace it with an 
+    equivalent form.
     
-    For example, let "expr = [(a + b + a/d) < e]", and let
+    Equivalence methods may be registered via 
+    InnerExpr.register_equivalence_method(...).
+    Registering an equivalence method allows one to directly
+    replace the inner expression with a form that is produced
+    by calling the equivalence method.  Examples are:
+        evaluation, simplification, commutation, association, etc.
+    When registering such a method, a noun form (as above), a
+    past tense form, and an action form are to be simplied
+    (e.g., 'evaluation', 'evaluated', and 'evaluate').  Calling
+    the first version (e.g., 'evaluation') will produce a proven 
+    equality between the original top-level expression and a form 
+    in which the inner expression is replaced with its new form.
+    Calling the second version (e.g., 'evaluated') will prove
+    the equality as before but simply return the right side (the
+    new form of the top-level, with the inner expression replaced).
+    The last version (e.g., 'evaluate') is to be applied to
+    proven (or easilty provable) top-level expressions and will
+    yield the proven top-level expression (under given assumptions)
+    with the inner expression replaced by its equivalent form.
+    
+    For example, let "expr = [((a - 1) + b + (a - 1)/d) < e]", and let
     "inner_expr = expr.innterExpr().lhs.terms[2].numerator".  Then
     
     1. inner_expr.replMap() will return _x_ -> [(a + b + _x_/d) < e],
        replacing the particular innerexpr.
-       (note that the second "a" is singled out, distinct from
-       the first "a" because the subexpr object tracks the
+       (note that the second "a - 1" is singled out, distinct from
+       the first "a*1" because the subexpr object tracks the
        sub-expression by "location").
-    2. inner_expr.withStyles(somestyle='something') will return an
-       expression that is the same as expr but with a style
-       change for the second "a".  Works more generally for any
-       "with..." method.
-    3. inner_expr.simplification() or inner_expr.evaluation()
-       will return, as a KnownTruth,
-       [(a + b + a/d) < e] = [(a + b + v/d) < e]
-       where a=v is the simplification/evaluation of a
-       (v must be an irreducible value in the evaluation case).
-    4. inner_expr.simplify() or inner_expr.evaluate() only works
-       assuming expr is a KnownTruth expression.  Then it will
-       prove or return [(a + b + v/d) < e] as a KnownTruth where
-       a=v is the simplification/evaluation of a
-       (v must be an irreducible value in the evaluation case).
+    2. inner_expr.withSubtractionAt([]) will return an
+       expression that is the same but with an altered style for the
+       inner exrpession part:
+           [((a - 1) + b + (a + (-1))/d) < e]
+       The InnerExpr class looks specifically for attributes of the
+       inner expression class that start with 'with' and assumes
+       they function to alter the style.
+    3. inner_expr.commutation(0, 1) would return: 
+           |- [((a - 1) + b + (a - 1)/d) < e] = [((a - 1) + b + (-1 + a)/d) < e]
+       assuming 'a' is known to be a number.
+    4. inner_expr.commuted(0, 1) would return: 
+           [((a - 1) + b + (-1 + a)/d) < e]
+       assuming 'a' is known to be a number.  It will prove #3 along the way.
+    5. inner_expr.commute(0, 1) would return
+           |-  ((a - 1) + b + (-1 + a)/d) < e
+       assuming the original expr may be proven via automation and
+       'a' is known to be a number.
+    
+    In addition, the InnerExpr class has 'simplifyOperands' and
+    'evaluateOperands' methods for effecting 'simplify' or 'evaluate'
+    (respectively) on all of the operands of the inner expression.
     '''
     
     def __init__(self, topLevelExpr, innerExprPath=tuple()):
@@ -64,11 +96,6 @@ class InnerExpr:
                 self.parameters.extend(expr.parameters)
             expr = expr.subExpr(idx)
             self.exprHierarchy.append(expr)
-        if hasattr(expr, 'innerExprMethodsObject'):
-            # This inner expression object supports extra innerExpr methods:
-            self._innerExprMethodsObject = expr.innerExprMethodsObject(self)
-        else:
-            self._innerExprMethodsObject = None
     
     def __eq__(self, other):
         return self.innerExprPath==other.innerExprPath and self.exprHierarchy==other.exprHierarchy
@@ -127,17 +154,48 @@ class InnerExpr:
         See if the attribute is accessing a deeper inner expression of the 
         represented inner expression.  If so, return the InnerExpr with the 
         extended path to the sub-expression.
-        For methods of the inner expression that beginn as 'with', generate a method 
-        that returns a new version of the top-level expression with the inner expression
-        changed according to its 'with' method.   
+        For methods of the inner expression that beginn as 'with', generate a
+        method that returns a new version of the top-level expression with the 
+        inner expression changed according to its 'with' method.   
         '''
         cur_inner_expr = self.exprHierarchy[-1]
         
-        if self._innerExprMethodsObject is not None:
-            if hasattr(self._innerExprMethodsObject, attr):
-                # Use a special method specific to the inner expression object:
-                return getattr(self._innerExprMethodsObject, attr)
-        
+        if hasattr(cur_inner_expr.__class__, '_equiv_method_%s_'%attr):
+            equiv_method_type, equiv_method_name = \
+                getattr(cur_inner_expr.__class__, '_equiv_method_%s_'%attr)
+            equiv_method = getattr(cur_inner_expr, equiv_method_name)
+            # Find out which argument is the 'assumptions' argument:
+            try:
+                argspec = inspect.getfullargspec(equiv_method)
+                assumptions_index = argspec.args.index('assumptions')-1
+            except ValueError:
+                raise Exception("Expecting method, %s, to have 'assumptions' argument."%str(equiv_method))
+            repl_map = self.replMap()
+            def inner_equiv(*args, **kwargs):
+                if 'assumptions' in kwargs:
+                    assumptions = kwargs['assumptions']
+                elif len(args) > assumptions_index:
+                    assumptions = args[assumptions_index]
+                else:
+                    assumptions = USE_DEFAULTS
+                equivalence = equiv_method(*args, **kwargs)
+                if equiv_method_type == 'equiv':
+                    return equivalence.substitution(repl_map, assumptions)
+                elif equiv_method_type == 'rhs':
+                    return equivalence.substitution(repl_map, assumptions).rhs
+                elif equiv_method_type == 'action':
+                    return equivalence.subRightSideInto(repl_map, assumptions)
+            if equiv_method_type == 'equiv':
+                inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'."%equiv_method_name
+            elif equiv_method_type == 'rhs':
+                inner_equiv.__doc__ = "Return an equivalent form of the top-level known truth by replacing the inner expression via '%s'."%equiv_method_name                         
+            elif equiv_method_type == 'action':
+                inner_equiv.__doc__ = "Derive an equivalent form of the top-level known truth by replacing the inner expression via '%s'."%equiv_method_name             
+            else:
+                raise ValueError("Unexpected 'equivalence method' type: %s."%equiv_method_type)
+            inner_equiv.__name__ = attr
+            return inner_equiv
+                
         if not hasattr(cur_inner_expr, attr):
             raise AttributeError("No attribute '%s' in '%s' or '%s'"%(attr, self.__class__, cur_inner_expr.__class__))
         
@@ -158,7 +216,44 @@ class InnerExpr:
             return reviseInnerExpr
                 
         return getattr(cur_inner_expr, attr) # not a sub-expression, so just return the attribute for the actual Expression object of the sub-expression
+    
+    @staticmethod
+    def register_equivalence_method(expr_class, equiv_method, past_tense_name, action_name):
+        '''
+        Register a method of an expression class that is used to derive and return (as a KnownTruth)
+        the equivalence of that expression on the left side with a new form on the right side.
+        (e.g., 'simplification', 'evaluation', 'commutation', 'association').
+        In addition to the expression class and the method (as a name or function object), also
+        provide the "past-tense" form of the name for deriving the equivalence and returning
+        the right side, and provide the "action" form of the name that may be used to make
+        the replacement directly within a KnownTruth to produce a revised KnownTruth.
+        The "past-tense" version will be added automatically as a method to the given expression
+        class with an appropriate doc string.
+        '''
+        if not isinstance(equiv_method, str):
+            # can be a string or a function:
+            equiv_method = equiv_method.__name__
+        if not hasattr(expr_class, equiv_method):
+            raise Exception("Must have '%s' method defined in class '%s' in order to register it as an equivalence method in InnerExpr."%(equiv_method, str(expr_class)))
         
+        # Store information in the Expression class that will enable calling
+        # InnerExpr methods when an expression of that type
+        # is the inner expression for generating equivalences or performing
+        # in-place replacements.
+        setattr(expr_class, '_equiv_method_%s_'%equiv_method, ('equiv', equiv_method))
+        setattr(expr_class, '_equiv_method_%s_'%past_tense_name, ('rhs', equiv_method))
+        setattr(expr_class, '_equiv_method_%s_'%action_name, ('action', equiv_method))
+        
+        # Automatically create the "paste-tense" equivalence method for the
+        # expression class which returns the right side.
+        if hasattr(expr_class, past_tense_name):
+            raise Exception("Should not manually define '%s' in class '%s'.  This 'past-tense' equivalence method will be generated automatically by registering it in InnerExpr."%(past_tense_name, str(expr_class)))
+        def equiv_rhs(expr, *args, **kwargs):
+            return getattr(expr_class, equiv_method)(expr, *args, **kwargs).rhs
+        equiv_rhs.__name__ = past_tense_name
+        equiv_rhs.__doc__ = "Return an equivalent form of this expression derived via '%s'."%equiv_method
+        setattr(expr_class, past_tense_name, equiv_rhs)
+    
     def replMap(self):
         '''
         Returns the lambda function/map that would replace this particular inner
@@ -209,28 +304,10 @@ class InnerExpr:
         else:
             named_expr_dict += [(str(Function(lambda_param, self.parameters)), sub_expr) for lambda_param, sub_expr in zip(lambda_params, sub_exprs)]            
         return NamedExprs(named_expr_dict)
-    
-    def simplification(self, assumptions=USE_DEFAULTS):
-        inner = self.innerExpr.exprHierarchy[-1]
-        return inner.simplification(assumptions=assumptions).substitution(self, assumptions=assumptions)
-
-    def simplify(self, assumptions=USE_DEFAULTS):
-        inner = self.innerExpr.exprHierarchy[-1]
-        return inner.simplification(assumptions=assumptions).subRightSideInto(self, assumptions=assumptions)
-        #from proveit.logic import defaultSimplification
-        #return defaultSimplification(self, inPlace=True, assumptions=assumptions)        
-    
+        
     def simplifyOperands(self, assumptions=USE_DEFAULTS):
         from proveit.logic import defaultSimplification
         return defaultSimplification(self, inPlace=True, operandsOnly=True, assumptions=assumptions)                
-                
-    def evaluation(self, assumptions=USE_DEFAULTS):
-        inner = self.innerExpr.exprHierarchy[-1]
-        return inner.evaluation(assumptions=assumptions).substitution(self, assumptions=assumptions)
-
-    def evaluate(self, assumptions=USE_DEFAULTS):
-        from proveit.logic import defaultSimplification
-        return defaultSimplification(self, inPlace=True, mustEvaluate=True, assumptions=assumptions)        
 
     def evaluateOperands(self, assumptions=USE_DEFAULTS):
         from proveit.logic import defaultSimplification
@@ -242,12 +319,6 @@ class InnerExpr:
     def __repr__(self):
         return self._expr_rep().__repr__()
 
-class InnerExprMethodsObject:
-    '''
-    Basic classs for an object that is used to extend the methods of an inner expression
-    object that are specific to the type of inner expression.  See inner_expr_mixins.py
-    modules for Mixin classes that are used in various InnerExprMethodsObject classes.
-    '''
-    def __init__(self, innerExpr):
-        self.innerExpr = innerExpr
-        self.expr = self.innerExpr.exprHierarchy[-1]
+# Register these generic expression equivalence methods:
+InnerExpr.register_equivalence_method(Expression, 'simplification', 'simplified', 'simplify')
+InnerExpr.register_equivalence_method(Expression, 'evaluation', 'evaluated', 'evaluate')

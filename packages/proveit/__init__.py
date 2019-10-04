@@ -3,7 +3,7 @@ if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
 
 from ._core_ import defaults, USE_DEFAULTS, InvalidAssumptions, Context, ContextException
-from ._core_ import Expression, InnerExpr, InnerExprMethodsObject
+from ._core_ import Expression, InnerExpr
 from ._core_ import Operation, OperationError, Function, OperationSequence, OperationOverInstances
 from ._core_ import Lambda, LambdaError, ParameterExtractionError, Label, Variable, Literal, DuplicateLiteralError
 from ._core_ import safeDummyVar, safeDefaultOrDummyVar, expressionDepth

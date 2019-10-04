@@ -1,8 +1,7 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExprMethodsObject
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
 from proveit.logic.equality import SimplificationError
 from proveit._common_ import j,k,l,m, n, A, B, C, D, E, F, G,  AA, BB, CC, DD, EE
 from proveit.logic.boolean.booleans import inBool
-from proveit.abstract_algebra.inner_expr_mixins import CommutativeAndAssociativeInnerExprMixin
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, groupCommute
 
 class And(Operation):
@@ -144,9 +143,6 @@ class And(Operation):
         '''
         yield self.deducePartsInBool
     
-    def innerExprMethodsObject(self, innerExpr):
-        return InnerConjunction(innerExpr)
-
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
         From (A and B and ... and Z) derive [(A and B and ... and Z) in Booleans].
@@ -295,20 +291,20 @@ class And(Operation):
                 return nandIfNotRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         return nandIfNotOne.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations
         try:
-            self.prove(assumptions, automation=automation)
+            self.prove(assumptions)
         except ProofFailure:
             try:
-                self.disprove(assumptions, automation=automation)
+                self.disprove(assumptions)
             except ProofFailure:
                 pass
-        return Operation.evaluation(self, assumptions, automation, innerExpr, inPlace)
+        return Operation.evaluation(self, assumptions)
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -412,8 +408,8 @@ def compose(expressions, assumptions=USE_DEFAULTS):
         from ._theorems_ import andIfAll
         return andIfAll.specialize({m:num(len(expressions)), AA:expressions}, assumptions=assumptions)
 
-class InnerConjunction(CommutativeAndAssociativeInnerExprMixin, InnerExprMethodsObject):
-    def __init__(self, innerExpr):
-        InnerExprMethodsObject.__init__(self, innerExpr)
-        if not isinstance(self.expr, And):
-            raise TypeError("InnerConjunction is expecting an And object as the inner expression")
+# Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(And, 'commutation', 'commuted', 'commute')
+InnerExpr.register_equivalence_method(And, 'groupCommutation', 'groupCommuted', 'groupCommute')
+InnerExpr.register_equivalence_method(And, 'association', 'associated', 'associate')
+InnerExpr.register_equivalence_method(And, 'disassociation', 'disassociated', 'disassociate')

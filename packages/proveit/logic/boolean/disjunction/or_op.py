@@ -1,7 +1,6 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExprMethodsObject
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
 from proveit._common_ import A, B, C, D, AA, BB, CC, DD, EE, i,j,k,l, m, n
 from proveit.logic.boolean.booleans import inBool
-from proveit.abstract_algebra.inner_expr_mixins import CommutativeAndAssociativeInnerExprMixin
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, groupCommute
 
 class Or(Operation):
@@ -111,9 +110,6 @@ class Or(Operation):
         '''
         yield self.deducePartsInBool
 
-    def innerExprMethodsObject(self, innerExpr):
-        return InnerDisjunction(innerExpr)
-                    
     def concludeNegation(self, assumptions):
         from ._theorems_ import falseOrFalseNegated, neitherIntro, notOrIfNotAny
         if self == falseOrFalseNegated.operand:
@@ -300,7 +296,7 @@ class Or(Operation):
         compose([leftImplConclusion, rightImplConclusion], assumptions)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -310,13 +306,13 @@ class Or(Operation):
         if len(self.operands) == 0:
             return emptyDisjunction
         try:
-            self.prove(assumptions, automation=automation)
+            self.prove(assumptions)
         except ProofFailure:
             try:
-                self.disprove(assumptions, automation=automation)
+                self.disprove(assumptions)
             except ProofFailure:
                 pass
-        return Operation.evaluation(self, assumptions, automation, innerExpr, inPlace)
+        return Operation.evaluation(self, assumptions)
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
@@ -481,9 +477,8 @@ class Or(Operation):
         from ._theorems_ import disassociate
         return apply_disassociation_thm(self, idx, disassociate, assumptions)
 
-
-class InnerDisjunction(CommutativeAndAssociativeInnerExprMixin, InnerExprMethodsObject):
-    def __init__(self, innerExpr):
-        InnerExprMethodsObject.__init__(self, innerExpr)
-        if not isinstance(self.expr, Or):
-            raise TypeError("InnerDisjunction is expecting an Or object as the inner expression")
+# Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(Or, 'commutation', 'commuted', 'commute')
+InnerExpr.register_equivalence_method(Or, 'groupCommutation', 'groupCommuted', 'groupCommute')
+InnerExpr.register_equivalence_method(Or, 'association', 'associated', 'associate')
+InnerExpr.register_equivalence_method(Or, 'disassociation', 'disassociated', 'disassociate')

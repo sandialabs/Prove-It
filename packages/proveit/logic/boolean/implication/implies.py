@@ -254,13 +254,13 @@ class Implies(TransitiveRelation):
         else:
             return toContraposition.specialize({A:self.antecedent, B:self.consequent}, assumptions=assumptions)
         
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._theorems_ import impliesTT, impliesFT, impliesFF, impliesTF # load in truth-table evaluations
-        return Operation.evaluation(self, assumptions, automation, innerExpr, inPlace)
+        return Operation.evaluation(self, assumptions)
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''

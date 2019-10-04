@@ -77,7 +77,7 @@ class Not(Operation):
         if fence: outStr += ')'
         return outStr            
     
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True, innerExpr=None, inPlace=False):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -91,7 +91,7 @@ class Not(Operation):
         if opValue == TRUE:
             # evaluate to FALSE via falsifiedNegationIntro
             return falsifiedNegationIntro.specialize({A:self.operand}, assumptions=assumptions)
-        return Operation.evaluation(self, assumptions, automation=True, innerExpr=None, inPlace=False)
+        return Operation.evaluation(self, assumptions)
     
     def substituteInFalse(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
