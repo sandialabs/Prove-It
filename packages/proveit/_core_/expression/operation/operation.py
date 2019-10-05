@@ -77,7 +77,7 @@ class Operation(Expression):
         return options
 
     def withWrappingAt(self, *wrapPositions):
-        return self.withStyles(wrapPositions='(' + ','.join(str(pos) for pos in wrapPositions) + ')')
+        return self.withStyles(wrapPositions='(' + ' '.join(str(pos) for pos in wrapPositions) + ')')
     
     def withWrapBeforeOperator(self):
         if len(self.operands)!=2:
@@ -290,7 +290,7 @@ class Operation(Expression):
         '''
         Return a list of wrap positions according to the current style setting.
         '''
-        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(',') if pos_str != '']
+        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
     
     def _formatted(self, formatType, **kwargs):
         '''

@@ -229,6 +229,7 @@ class ExprList(Composite, Expression):
                     outStr = formatted_sub_expressions[0] # first operator is implicit
                 else:
                     outStr = formatted_operators[0] + formatted_sub_expressions[0] # no space after first operator
+                outStr += ' ' # space before next operator
                 outStr += ' '.join(formatted_operator + ' ' + formatted_operand for formatted_operator, formatted_operand in zip(formatted_operators[1:], formatted_sub_expressions[1:]))
             elif len(formatted_sub_expressions) == len(formatted_operators)+1:
                 # operator between each operand
