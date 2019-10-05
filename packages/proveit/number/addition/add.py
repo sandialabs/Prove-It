@@ -1,9 +1,8 @@
-from proveit import Literal, Operation, Iter, USE_DEFAULTS,StyleOptions, maybeFencedLatex, ProofFailure, InnerExprMethodsObject
-from proveit._common_ import a, b, c, l, m, n, x, y, AA, BB, CC, A, B, C, aa, cc, dd
+from proveit import Literal, Operation, Iter, USE_DEFAULTS,StyleOptions, maybeFencedLatex, ProofFailure, InnerExpr
+from proveit._common_ import a, b, c, l, m, n, x, y, AA, BB, CC, A, B, C, aa, bb, cc, dd
 from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit.number.numeral.deci import DIGITS
 import proveit.number.numeral.deci._theorems_
-from proveit.abstract_algebra.inner_expr_mixins import CommutativeAndAssociativeInnerExprMixin, DistributiveInnerExprMixin
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, pairwiseEvaluation
 from proveit import TransRelUpdater
 import bisect
@@ -27,7 +26,7 @@ class Add(Operation):
         # The default style will be to use subtraction notation (relevant where operands are negated).
         # Call 'withSubtractionAt' to alter this default.
         subtractionPositions = [k for k, operand in enumerate(operands) if Add._isNegatedOperand(operand)]
-        styles = {'subtractionPositions': ','.join(str(pos) for pos in subtractionPositions)}
+        styles = {'subtractionPositions': '(' + ' '.join(str(pos) for pos in subtractionPositions) +')'}
         Operation.__init__(self, Add._operator_, operands, styles=styles)
         self.terms = self.operands
         if len(self.terms)==2 and all(term in DIGITS for term in self.terms):
@@ -56,13 +55,13 @@ class Add(Operation):
         return options
 
     def withSubtractionAt(self, *subtractionPositions):
-        return self.withStyles(subtractionPositions='(' + ','.join(str(pos) for pos in subtractionPositions) + ')')
+        return self.withStyles(subtractionPositions='(' + ' '.join(str(pos) for pos in subtractionPositions) + ')')
 
     def subtractionPositions(self):
         '''
         Return a list of subtraction notation positions according to the current style setting.
         '''
-        return [int(pos_str) for pos_str in self.getStyle('subtractionPositions').strip('()').split(',') if pos_str != '']
+        return [int(pos_str) for pos_str in self.getStyle('subtractionPositions').strip('()').split(' ') if pos_str != '']
 
 
     def _formatted(self, formatType, **kwargs):
@@ -120,8 +119,20 @@ class Add(Operation):
             for operand in self.operands:
                 yield operand
 
-    def innerExprMethodsObject(self, innerExpr):
-        return InnerAddition(innerExpr)
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'withWrappingAt'
+        and 'withJustification' calls.
+        '''
+        call_strs = []
+        subtraction_positions = self.subtractionPositions()
+        default_subtraction_positions = [k for k, operand in enumerate(self.operands) if Add._isNegatedOperand(operand)]
+        if subtraction_positions != default_subtraction_positions:
+            call_strs.append('withSubtractionAt(' + ','.join(str(pos) for pos in subtraction_positions) + ')')
+        return call_strs    
 
     def _closureTheorem(self, numberSet):
         from ._theorems_ import addNatClosure, addRealClosure, addComplexClosure, addIntClosure
@@ -134,31 +145,6 @@ class Add(Operation):
             return addIntClosure
         elif numberSet == Naturals:
             return addNatClosure
-    """
-    def conclude(selfs, assumptions=USE_DEFAULTS):
-        '''
-        created by JML 7/17/19
-        conclude method for proof automation
-        '''
-        raise ValueError("conclude currently not implemented for add")
-    """
-    """
-    # An Add should not have side-effects because it cannot
-    # be proven.  - wmw.
-    def sideEffects(self, knownTruth):
-        '''
-        side effects for addition
-        added by JML on 9/10/19
-        '''
-        # print("sideEffects")
-        from proveit.number import zero
-        # print("deriving zero from neg self")
-        yield self.deriveZeroFromNegSelf
-        if (self.terms[0] == zero or self.terms[1] == zero) and len(self.terms) == 2:
-           # print("deducing add zero")
-            yield self.deduceAddZero
-    """
-
 
     def equalitySideEffects(self, knownTruth):
         '''
@@ -245,55 +231,6 @@ class Add(Operation):
             raise ValueError("'asMult' is only applicable on an 'Add' expression if all operands are the same: %s"%str(self))
         return multDefRev.specialize({m:num(len(self.operands)), AA:self.operands, x: self.operands[1]}, assumptions=assumptions)
     
-    """
-    def deriveExpandedMultDef(self, idx, assumptions=USE_DEFAULTS):
-        '''
-        created by JML on 7/25/19
-        given an addition where there is a group of the same values, derive the multiplication
-        a + (b + b + b) + c = a + (3 * b) + c
-        '''
-        from ._theorems_ import expandedMultDef
-        from proveit.number import num, Neg
-        expr = self
-        end = idx + 1
-        started = False
-        for i, operand in enumerate(expr.operands):
-            # loop through all the operands in the grouped idx
-            # print("operand", operand)
-            # print("expr.operands", expr.operands)
-
-            if i == idx:
-                # we have reached the indicated term
-                started = True
-            if expr.operands[idx] != operand and started:
-                # once we reach an operand that is not equal, break
-                end = i
-                break
-
-        # print("end", end)
-        # print("expr, idx", expr, idx)
-        # print("l", num(idx))
-        # print("m", num(len(expr.operands[idx:end])))
-        # print("n", num(len(expr.operands[end+1:])))
-        # print("aa", expr.operands[:idx])
-        # print("bb", expr.operands[idx:end])
-        # print("cc", expr.operands[end + 1:])
-        # print("x", expr.operands[idx])
-        return expandedMultDef.specialize({l:num(idx),m:num(len(expr.operands[idx:end])), n: num(len(expr.operands[end :])), AA:expr.operands[:idx],BB:expr.operands[idx:end],CC:expr.operands[end :], x:expr.operands[idx]}, assumptions=assumptions)
-    """
-    def deduceAddZero(self, assumptions=USE_DEFAULTS):
-        '''
-        added by JML on 7/10/19
-        Given x + 0 return x.
-        '''
-        from ._theorems_ import addZero
-        from proveit.number import zero
-        if self.terms[1] ==  zero:
-            value = 0
-        elif self.terms[0] == zero:
-            value = 1
-        return addZero.specialize({x:self.terms[value]}, assumptions=assumptions)
-    
     def cancelations(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return an equality between self and a form in which
@@ -373,6 +310,51 @@ class Add(Operation):
             update_pos = lambda p : p if p < i else (p-1 if p < j else p-2)
             spec.innerExpr().rhs.withSubtractionAt(*[update_pos(p) for p in sub_positions])
             return spec
+    
+    def zeroEliminations(self, assumptions=USE_DEFAULTS):
+        '''
+        Derive and return this Add expression equal to a form in which
+        all zero's are eliminated.
+        '''
+        from proveit.number import zero
+        
+        expr = self
+        
+        # A convenience to allow successive update to the equation via transitivities.
+        # (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        # Work in reverse order so indices don't need to be updated.
+        for rev_idx, operand in enumerate(reversed(self.operands)):
+            if operand==zero:
+                idx = len(self.operands) - rev_idx - 1
+                expr = eq.update(expr.zeroElimination(idx, assumptions))
+                if not isinstance(expr, Add):
+                    break # can't do an elimination if reduced to a single term.
+        
+        return eq.relation                
+    
+    def zeroElimination(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        Derive and return this Add expression equal to a form in which
+        a specific zero operand (at the given index) is eliminated.
+        '''
+        from proveit.number import zero, num
+        from ._theorems_ import elimZeroLeft, elimZeroRight, elimZeroAny
+        
+        if self.operands[idx] != zero:
+            raise ValueError("Operand at the index %d expected to be zero for %s"%(idx, str(self)))
+        
+        if len(self.operands)==2:
+            if idx==0:
+                return elimZeroLeft.specialize({a:self.operands[1]}, assumptions=assumptions)
+            else:
+                return elimZeroRight.specialize({a:self.operands[0]}, assumptions=assumptions)
+        aVal = self.operands[:idx]
+        bVal = self.operands[idx+1:]
+        lVal = num(len(aVal))
+        mVal = num(len(bVal))
+        return elimZeroAny.specialize({l:lVal, m:mVal, aa:aVal, bb:bVal}, assumptions=assumptions)
     
     def deduceZeroFromNegSelf(self, assumptions=USE_DEFAULTS):
         '''
@@ -508,72 +490,6 @@ class Add(Operation):
         
         return hold, order
 
-    """
-    def groupLikeTerms(self, assumptions=USE_DEFAULTS):
-        '''
-        Given an expression, group terms that are similar
-        created by JML 7/25/19
-        '''
-        from proveit.number import Mult
-        m = 0
-        expr = self
-        eq = TransRelUpdater(expr) # for convenience updating our equation
-        length = len(expr.operands)
-        while m < length:
-            # we will cycle through all values in the expression.
-            if m + 1 < length:
-                # check to see if we have reached the end
-                idx = 1
-                One = expr.operands[m]
-                if isinstance(One, Mult):
-                   One = One.operands[1]
-                # the first value of a group
-                Two = expr.operands[m + idx]
-                if isinstance(Two, Mult):
-                   Two = Two.operands[1]
-                # the last value of a group
-
-                new = False # used to check if Two has changed
-                while One == Two or (isinstance(One, Literal) and isinstance(Two, Literal)):
-                    # check to see if the current value is equal to the rest of the values
-                    # print(One, Two)
-
-                    idx += 1
-                    # print("in loop idx, m, length", idx, m, length)
-                    # increment the position of the next operand
-                    if m + idx < length:
-                        # check to see if we have reached the end
-                        Two = expr.operands[m + idx]
-                        if isinstance(Two, Mult):
-                            Two = Two.operands[1]
-                        # move on to the next operand
-                        new = True
-                        # we have moved on to another operand
-                    else:
-                        # if we have reached the end, stop the loop
-                        if not new:
-                            idx -=1
-                        break
-                if new: idx -= 1
-                # print("one, two, idx", One,Two,idx)
-                # if we incremented at least once, we need to subtract 1 because the last value was not equal
-                Two = expr.operands[m + idx]
-                if isinstance(Two, Mult):
-                    Two = Two.operands[1]
-                # redefine two to reflect the end of the group
-
-                if One == Two or (isinstance(One, Literal) and isinstance(Two, Literal)):
-                    # as long as the first and last are equal, we assume anything in between is as well because
-                    # we checked above. Derive the group from one to two
-                    # print("deriving group, expr, m , m+idx", expr, m, m+idx)
-                    expr = eq.update(expr.association(m, length=idx+1, assumptions=assumptions))
-                    length -= idx
-                    # we account for the change in length because of the grouping
-            m += 1
-            # move on to the next value after the group
-        return expr
-    """
-
     def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
         created by JML on 7/24/19. modified by WMW on 9/7/19.
@@ -597,7 +513,10 @@ class Add(Operation):
                 expr = eq.update(expr.disassociation(n, assumptions))
             length = len(expr.operands)
             n += 1
-        
+
+        # eliminate zeros where possible
+        expr = eq.update(expr.zeroEliminations(assumptions))
+                
         # perform cancelations where possible
         expr = eq.update(expr.cancelations(assumptions))
         
@@ -636,74 +555,7 @@ class Add(Operation):
             for m, key in enumerate(order):        
                 if len(hold[key]) > 1:
                     expr = eq.update(expr.association(m, length=len(hold[key]), assumptions=assumptions))
-        
-        
-        '''
-        # combine like terms
-        # cancel negated terms if it can be done
-        # j acts as a more accurate count of i
-        j = 0
-        for i, operand in enumerate(expr.operands):
-            # loop through all the operands
-            if isinstance(operand, Neg):
-                # the operand is negated
-                # print("expr, operand, j", expr, operand, j)
-                if j != len(expr.operands) - 1 and expr.operands[j + 1] == expr.operands[j].operand:
-                    # checks to make sure that there is a term after the negated term
-                    key = operand
-                    if key in hold:
-                        if len(hold[operand]) == 1:
-                            # if the negated operand is the only value in it's key, delete the key as well.
-                            del order[order.index(operand)]
-                    key = str(operand.operand)
-                    if key in hold:
-                        if len(hold[str(operand.operand)]) == 1:
-                            # if the operand that will be cancelled is the only value in it's key, delete the key as well.
-                            del order[order.index(str(operand.operand))]
-                    # print("j", j)
-                    expr = expr.association(j, length=2, assumptions=assumptions).rhs
-                    # print(702)
-                    Equals(self, expr).prove(assumptions)
-                    # print(expr)
-                    sub = expr.operands[j].deduceZeroFromNegSelf(assumptions)
-                    expr = sub.substitution(expr.innerExpr().operands[j], assumptions=assumptions).rhs
-                    # print(707)
-                    Equals(self, expr).prove(assumptions)
-                    # accounts for the change of the length of the expression after the cancellation
-                    j -=2
-                elif j != 0 and expr.operands[j - 1] == expr.operands[j].operand:
-                    # if there is not a term after the negated term, checks to make sure there is one before
-                    key = operand
-                    if key in hold:
-                        if len(hold[key]) == 1:
-                            # if the negated operand is the only value in it's key, delete the key as well.
-                            del order[order.index(operand)]
-                    key = str(operand.operand)
-                    if key in hold:
-                        if len(hold[key]) == 1:
-                            # if the operand that will be cancelled is the only value in it's key, delete the key as well.
-                            del order[order.index(str(operand.operand))]
-                    # print("j",j)
-                    expr = expr.association(j-1, length=2, assumptions=assumptions).rhs
-                    # print(725)
-                    Equals(self, expr).prove(assumptions)
-                    # print(expr)
-                    sub = expr.operands[j-1].deduceZeroFromNegSelf(assumptions)
-                    expr = sub.substitution(expr.innerExpr().operands[j-1], assumptions=assumptions).rhs
-                    # print(730)
-                    Equals(self, expr).prove(assumptions)
-                    # accounts for the change of the length of the expression after the cancellation
-                    j-=1
-            # moving on to the next term
-            j += 1
-        '''
-
-        # print("expr after group like terms", expr)
-        # rewrite the dictionary to reflect this change
-        #hold,no = expr._createDict(assumptions)
-        # print("new dict after group", hold)
-        # print("order", order)
-        
+                
         if expr==self: 
             # No grouping occurred so all operands are like terms.
             # Simplify by combining them.
@@ -719,86 +571,6 @@ class Add(Operation):
                 sub = expr.operands[0].simplification(assumptions)
                 eq.update(sub.substitution(expr.innerExpr().operands[0], assumptions))
                 return eq.relation
-        """
-        # combine like terms by multiplying
-        for key in order:
-            print(key, expr)
-            # loop through all the different types of terms
-            # print("key",key)
-            if key != "Lit" and key != "LitNeg" :
-                # for all the keys that are not literals, derive the multiplication from the addition
-                # print("hold[key][0][0]", hold[key][0][0])
-                if isinstance(expr.operands[hold[key][0][0]], Add):
-                    '''
-                    idx = hold[key][0][0]
-                    # print(idx)
-                    # print(expr.operands[idx].deriveMultDef(assumptions))
-                    sub = expr.operands[idx].deriveMultDef(assumptions)
-                    # print(expr)
-                    # print(expr.innerExpr())
-                    # print(expr.innerExpr().operands[idx])
-                    # print(sub.substitution(expr.innerExpr().operands[idx], assumptions=assumptions))
-                    expr = sub.substitution(expr.innerExpr().operands[idx], assumptions=assumptions).rhs
-                    # print("expr before equals",expr)
-                    # print(689)
-                    Equals(self, expr).prove(assumptions)
-                    # rewrite the dictionary to reflect this change
-                    hold,no = expr.createDict(assumptions)
-                    # print("new dict after mult", hold)
-                    # print("order", order)
-                    '''
-                    idx = hold[key][0][0]
-                    # print("idx",idx)
-                    # print("operand at idx", expr.operands[idx])
-                    # make sure all the operands in the key are products (multiplication)
-                    if isinstance(expr.operands[idx], Add):
-                        # if it's grouped, send it to become a multiplication
-                        sub = expr.operands[idx].createMult(assumptions)
-                        # print("sub for mult", sub)
-                        expr = sub.substitution(expr.innerExpr().operands[idx], assumptions=assumptions).lhs
-                        # print("new expr after mult", expr)
-                        # print(780)
-                        Equals(self, expr).prove(assumptions)
-                    # print("factor operand at idx", expr.operands[idx].factor(key, assumptions=assumptions))
-                    sub = expr.operands[idx].factorization(key, pull="right", assumptions=assumptions)
-                    print(expr, "factorization", sub)
-                    # print("sub", sub)
-                    # print("expr", expr)
-                    # print("expr.innerExpr()", expr.innerExpr())
-                    # print("expr.innerExpr().operands[idx]", expr.innerExpr().operands[idx])
-                    # print("the substitution", sub.substitution(expr.innerExpr().operands[idx], assumptions=assumptions))
-                    expr = sub.substitution(expr.innerExpr().operands[idx], assumptions=assumptions).rhs
-                    print("now", expr)
-                    # print("expr before equals", expr)
-                    # print(785)
-                    Equals(self, expr).prove(assumptions)
-                    # rewrite the dictionary to reflect this change
-                    # print("expr.operands[hold[key][0][0]].operands",expr.operands[hold[key][0][0]].operands)
-                    hold, no = expr._createDict(assumptions)
-                    # print("new dict after mult", hold)
-                    # print("order", order)
-            else:
-                pass
-        # print("expr after mult", expr)
-        """
-        
-        '''
-        # ungroup the expression
-        n = 0
-        length = len(expr.operands) - 1
-        while n < length:
-            # loop through all operands
-            # print("n, length", n, length)
-            if isinstance(expr.operands[n], Add):
-                # if it is grouped, ungroup it
-                # print("to ungroup")
-                expr = expr.deriveUnGroup(n, assumptions).rhs
-                # print(804)
-                # print(Equals(self, expr).prove(assumptions))
-                # print("new expr", expr)
-            length = len(expr.operands)
-            n += 1
-        '''
         
         # simplify the combined terms
         for i, operand in enumerate(expr.operands):
@@ -837,6 +609,7 @@ class Add(Operation):
         evaluate literals in a given expression (used for simplification)
         '''
         from proveit.logic import SimplificationError
+        from proveit.number import Neg
         
         expr = self
         eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
@@ -845,10 +618,25 @@ class Add(Operation):
         expr = eq.update(self.cancelations(assumptions))
         if isIrreducibleValue(expr):
             return eq.relation
+
+        # If all the operands are the same, combine via multiplication and then evaluate.
+        if all(operand==self.operands[0] for operand in self.operands):
+            expr = eq.update(self.conversionToMultiplication(assumptions))
+            eq.update(expr.evaluation(assumptions))
+            return eq.relation 
         
         if len(self.operands) > 2:
             expr = eq.update(pairwiseEvaluation(expr, assumptions))
             return eq.relation
+        
+        if len(self.operands)==2:
+            # If both operands are negated, factor out the negation.
+            if all(isinstance(operand, Neg) for operand in self.operands):
+                negated = Neg(Add(*[operand.operand for operand in self.operands]))
+                neg_distribution = negated.distribution(assumptions)
+                expr = eq.update(neg_distribution.deriveReversed())
+                eq.update(expr.evaluation(assumptions))
+                return eq.relation
 
         raise SimplificationError("Unable to evaluate %s"%str(self))
         
@@ -969,98 +757,6 @@ class Add(Operation):
             else:
                 deduceInRealsNeg(term, assumptions)
         return strictlyDecreasingAdditions.specialize({aEtc:self.terms[:upperBoundTermIndex], cEtc:self.terms[upperBoundTermIndex+1:]}).specialize({b:self.terms[upperBoundTermIndex]}).checked(assumptions)
-    
-    """
-    def createMult(self, assumptions=USE_DEFAULTS):
-        '''
-        given an expression, turn all the operands into multiplication
-        created by JML on 7/31/19
-        '''
-        from proveit.number.multiplication._theorems_ import distributeThroughSum, multOneLeft
-        from proveit.number import num, Mult, one, Neg
-        from proveit.logic import Equals
-        from proveit import Variable
-        expr = self
-        eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
-        for k, operand in enumerate(expr.operands):
-            # loop through all the operands
-            # print("expr", expr)
-            # print(operand)
-            if isinstance(operand, Neg):
-                # turn it into -1 * the factor
-                from proveit.number.negation._theorems_ import negAsMultOne
-                sub = negAsMultOne.specialize({x:operand.operand}, assumptions=assumptions)
-                # print("done with sub", sub)
-                expr = eq.update(sub.substitution(expr.innerExpr().operands[k], assumptions))
-            elif isinstance(operand, Variable):
-                # turn it into 1 * the factor
-                sub = multOneLeft.specialize({x: expr.operands[k]}, assumptions=assumptions)
-                # print("sub", sub)
-                # sub = Add(expr.operands[k]).deriveMultDef(assumptions)
-                # print(sub)
-                # print("substitution", sub.substitution(expr.innerExpr().operands[k], assumptions))
-                expr = eq.update(sub.substitution(expr.innerExpr().operands[k], assumptions))
-            # print("operand after mult change",operand)
-            # print("new expr", expr)
-        return eq.relation
-    """
-        
-    """
-    def factor(self, theFactor, pull="left", groupFactor=True, assumptions=frozenset()):
-        '''
-        Factor out "theFactor" from this sum, pulling it either to the "left" or "right".
-        If groupFactor is True and theFactor is a product, these operands are grouped
-        together as a sub-product.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complexes so that
-        the associative and commutation theorems are applicable.
-        updated by JML on 7/30/19
-        '''
-        from proveit.number.multiplication._theorems_ import distributeThroughSum, multOne
-        from proveit.number import num, Mult, one, Neg
-        from proveit.logic import Equals
-        expr = self
-        coefficient = []
-        after = []
-        numberOfFactors = 0
-
-        for operand in expr.operands:
-            if not isinstance(operand, Mult):
-                expr = expr.createMult(assumptions).rhs
-                break
-
-        for k, operand in enumerate(expr.operands):
-            # loop through all the operands
-            # print("expr", expr)
-            # print(operand)
-            if isinstance(operand, Mult):
-                # print("operand is mult")
-                for i, term in enumerate(operand.operands):
-                    # print(i, term)
-                    # loop through the operands of mult
-                    # print("operand.operands[:i}", operand.operands[:i])
-                    if term == theFactor:
-                        numberOfFactors +=1
-                        coefficient.extend(operand.operands[:i])
-                        if i + 1 < len(operand.operands):
-                            after.extend(operand.operands[i+1:])
-
-        if pull == "right":
-            b = coefficient
-            a = after
-        else:
-            b = after
-            a = coefficient
-
-        # print("l", num(len(a)))
-        # print("m", num(len(b)))
-        # print("n", one)
-        # print("aa", a)
-        # print("bb", b)
-        # print("cc",theFactor)
-        # print(1045)
-        Equals(self, expr).prove(assumptions)
-        return distributeThroughSum.specialize({l:num(len(a)),m:num(len(b)),n:one,AA:a,BB:b,CC:[theFactor]}, assumptions=assumptions).deriveReversed(assumptions=assumptions)
-    """
             
     def factorization(self, theFactor, pull="left", groupFactor=True, assumptions=USE_DEFAULTS):
         '''
@@ -1110,19 +806,6 @@ class Add(Operation):
         expr = distributeThroughSum.specialize({l:num(len(xSub)),m:num(len(ySub)),n:num(len(zSub)),AA:xSub, BB:ySub, CC:zSub}, assumptions=assumptions).deriveReversed(assumptions).rhs
         return Equals(self, expr).prove(assumptions)
     
-    """
-    # DOES NOT APPEAR TO BE USED
-    def join(self, assumptions=frozenset()):
-        '''
-        For joining two summations (could be more sophisticated later).
-        '''
-        from proveit.number import Sum
-        if len(self.terms) != 2 or not all(isinstance(term, Sum) for term in self.terms):
-            raise Exception("Sum joining currently only implemented for two summation terms.")
-        return self.terms[0].join(self.terms[1], assumptions)
-    """
-    
-
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
         Given Boolean operands, deduce that this expression is equal to a form in which the operand
@@ -1205,8 +888,13 @@ def subtract(a, b):
         return Add(a, b).withSubtractionAt(1) # this style is the default, but just to be clear.
     return Add(a, Neg(b)).withSubtractionAt(1) # this style is the default, but just to be clear.
 
-class InnerAddition(DistributiveInnerExprMixin, CommutativeAndAssociativeInnerExprMixin, InnerExprMethodsObject):
-    def __init__(self, innerExpr):
-        InnerExprMethodsObject.__init__(self, innerExpr)
-        if not isinstance(self.expr, Add):
-            raise TypeError("InnerAddition is expecting an Add object as the inner expression")
+# Register these generic expression equivalence methods:
+InnerExpr.register_equivalence_method(Add, 'commutation', 'commuted', 'commute')
+InnerExpr.register_equivalence_method(Add, 'groupCommutation', 'groupCommuted', 'groupCommute')
+InnerExpr.register_equivalence_method(Add, 'association', 'associated', 'associate')
+InnerExpr.register_equivalence_method(Add, 'disassociation', 'disassociated', 'disassociate')
+InnerExpr.register_equivalence_method(Add, 'factorization', 'factorized', 'factor')
+InnerExpr.register_equivalence_method(Add, 'cancelation', 'canceled', 'cancel')
+InnerExpr.register_equivalence_method(Add, 'cancelations', 'allCanceled', 'allCancel')
+InnerExpr.register_equivalence_method(Add, 'zeroElimination', 'eliminatedZero', 'eliminateZero')
+InnerExpr.register_equivalence_method(Add, 'zeroEliminations', 'eliminatedZeros', 'eliminateZeros')

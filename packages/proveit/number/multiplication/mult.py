@@ -1,10 +1,9 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExprMethodsObject
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
 from proveit.logic import Equals, InSet
 from proveit.number.sets import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
 from proveit._common_ import a, b, c, d, l, m, n, v, w, x, y, z, vv, ww, xx, yy, zz, S, A, B, C, D, E, AA, BB, CC, DD, EE
-from proveit.abstract_algebra.inner_expr_mixins import CommutativeAndAssociativeInnerExprMixin, DistributiveInnerExprMixin
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, pairwiseEvaluation
 from proveit import TransRelUpdater
 
@@ -33,9 +32,6 @@ class Mult(Operation):
                     # may fail before the relevent _commons_ and _theorems_ have been generated
                     pass # and that's okay
     
-    def innerExprMethodsObject(self, innerExpr):
-        return InnerMultiplication(innerExpr)
-        
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
         # edited by JML 7/20/19
         from ._theorems_ import multIntClosure, multIntClosureBin, multNatClosure, multNatClosureBin, multNatPosClosure, multNatClosureBin, multRealClosure, multRealClosureBin, multRealPosClosure, multRealPosClosureBin, multComplexClosure, multComplexClosureBin
@@ -98,56 +94,150 @@ class Mult(Operation):
     def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
         Derive and return this multiplication expression equated with a simpler form.
-        Deals with factors of one and disassociating any nested multiplications
-        (doReducedEvaluation deals with factors of 0).
+        Deals with disassociating any nested multiplications,simplifying negations, and
+        factors of one, in that order.
+        doReducedEvaluation deals with factors of 0.
         '''
-        from ._theorems_ import multOneLeft, multOneRight, multOneAny
-        from proveit.logic import Equals
-        from proveit.number import one
         
         expr = self
         eq = TransRelUpdater(self, assumptions) # for convenience updating our equation
         
-        # ungroup the expression (disassociate nested multiplications).
-        n = 0
+        # Ungroup the expression (disassociate nested multiplications).
+        idx = 0
         length = len(expr.operands) - 1
-        while n < length:
+        while idx < length:
             # loop through all operands
-            # print("n, length", n, length)
-            if isinstance(expr.operands[n], Mult):
+            if isinstance(expr.operands[idx], Mult):
                 # if it is grouped, ungroup it
-                # print("to ungroup")
-                expr = eq.update(expr.disassociation(n, assumptions))
-                # print("new expr", expr)
+                expr = eq.update(expr.disassociation(idx, assumptions))
             else:
-                n += 1
+                idx += 1
             length = len(expr.operands)
         
-        shift = 0
-        one_locations = [i for i, operand in enumerate(self.operands) if operand==one]
-        for idx in one_locations:
-            idx -= shift
-            if len(expr.operands)==2:
-                if idx==0:
-                    return multOneLeft.specialize({x:expr.operands[1]}, assumptions=assumptions)
-                else:
-                    return multOneRight.specialize({x:expr.operands[0]}, assumptions=assumptions)
-            Afactors = expr.operands[:idx]
-            Bfactors = expr.operands[idx+1:]
-            simp = multOneAny.specialize({m:len(Afactors), n:len(Bfactors), AA:Afactors, BB:Bfactors}, assumptions=assumptions)
-            expr = eq.update(simp)
-            shift += 1
+        # Simplify negations -- factor them out.
+        expr = eq.update(expr.negSimplifications(assumptions))
+        
+        if not isinstance(expr, Mult):
+            # The expression may have changed to a negation after doing
+            # negSimplification.  Start the simplification of this new
+            # expression fresh at this point.
+            eq.update(expr.simplification(assumptions))
+            return eq.relation
+
+        # Eliminate any factors of one.
+        expr = eq.update(expr.oneEliminations(assumptions))
 
         return eq.relation
+    
+    def negSimplifications(self, assumptions=USE_DEFAULTS):
+        '''
+        Equivalence method that derives a simplification in which
+        negated factors are factored out.  For example:
+            (-w)*(-x)*y*(-z) = -(w*x*y*z)
+        '''
+        from proveit.number import Neg
+        
+        expr = self
+        
+        # A convenience to allow successive update to the equation via transitivities.
+        # (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        # Work in reverse order so indices don't need to be updated.
+        for rev_idx, operand in enumerate(reversed(self.operands)):
+            if isinstance(operand, Neg):
+                idx = len(self.operands) - rev_idx - 1
+                if isinstance(expr, Mult):
+                    expr = eq.update(expr.negSimplification(idx, assumptions))
+                elif isinstance(expr, Neg):
+                    expr = eq.update(expr.innerNegMultSimplification(idx, assumptions))
+        
+        return eq.relation                
+    
+    def negSimplification(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        Equivalence method that derives a simplification in which
+        a specific negated factor, at the given index, is factored out.
+        For example:
+            w*(-x)*y*z = -(w*x*y*z)
+        '''
+        from proveit.number import Neg, num
+        from ._theorems_ import multNegLeft, multNegRight, multNegAny
+        
+        if not isinstance(self.operands[idx], Neg):
+            raise ValueError("Operand at the index %d expected to be a negation for %s"%(idx, str(self)))
+        
+        if len(self.operands)==2:
+            if idx==0:
+                return multNegLeft.specialize({x:self.operands[0].operand, y:self.operands[1]}, assumptions=assumptions)
+            else:
+                return multNegRight.specialize({x:self.operands[0], y:self.operands[1].operand}, assumptions=assumptions)
+        aVal = self.operands[:idx]
+        bVal = self.operands[idx].operand
+        cVal = self.operands[idx+1:]
+        mVal = num(len(aVal))
+        nVal = num(len(cVal))
+        return multNegAny.specialize({m:mVal, n:nVal, AA:aVal, B:bVal, CC:cVal}, assumptions=assumptions)
 
+    def oneEliminations(self, assumptions=USE_DEFAULTS):
+        '''
+        Equivalence method that derives a simplification in which
+        factors of one are eliminated.  For example:
+            x*1*y*1*z*1 = x*y*z
+        '''
+        from proveit.number import one
+        
+        expr = self
+        
+        # A convenience to allow successive update to the equation via transitivities.
+        # (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        # Work in reverse order so indices don't need to be updated.
+        for rev_idx, operand in enumerate(reversed(self.operands)):
+            if operand==one:
+                idx = len(self.operands) - rev_idx - 1
+                expr = eq.update(expr.oneElimination(idx, assumptions))
+                if not isinstance(expr, Mult):
+                    break # can't do an elimination if reduced to a single term.
+        
+        return eq.relation                
+    
+    def oneElimination(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        Equivalence method that derives a simplification in which
+        a single factor of one, at the given index, is eliminated.  
+        For example:
+            x*y*1*z = x*y*z
+        '''
+        from proveit.number import one, num
+        from ._theorems_ import elimOneLeft, elimOneRight, elimOneAny
+        
+        if self.operands[idx] != one:
+            raise ValueError("Operand at the index %d expected to be zero for %s"%(idx, str(self)))
+        
+        if len(self.operands)==2:
+            if idx==0:
+                return elimOneLeft.specialize({x:self.operands[1]}, assumptions=assumptions)
+            else:
+                return elimOneRight.specialize({x:self.operands[0]}, assumptions=assumptions)
+        aVal = self.operands[:idx]
+        bVal = self.operands[idx+1:]
+        mVal = num(len(aVal))
+        nVal = num(len(bVal))
+        return elimOneAny.specialize({m:mVal, n:nVal, AA:aVal, BB:bVal}, assumptions=assumptions)
+        
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         Derive and return this multiplication expression equated with an irreducible value.
-        Handle the trivial case of a zero factor or use the default evaluation.
+        Handle the trivial case of a zero factor or do pairwise evaluation
+        after simplifying negations and eliminating one factors.
         '''
         from ._theorems_ import multZeroLeft, multZeroRight, multZeroAny
-        from proveit.logic import SimplificationError
+        from proveit.logic import isIrreducibleValue, SimplificationError
         from proveit.number import zero
+        
+        # First check for any zero factors -- quickest way to do an evaluation.
         try:
             zeroIdx = self.operands.index(zero)
             if len(self.operands)==2:
@@ -159,14 +249,35 @@ class Mult(Operation):
             Bfactors = self.operands[zeroIdx+1:]
             return multZeroAny.specialize({m:len(Afactors), n:len(Bfactors), AA:Afactors, BB:Bfactors}, assumptions=assumptions)
         except (ValueError, ProofFailure):
-            # use the default if zero is not one of the factors:
-            raise SimplificationError("Currently only evaluating multiplication with a 0 operand.  Straightfored to implement a better way when someone can get around to it -- see the Add doReducedEvaluation method.")
+            pass # No such "luck" regarding a simple multiplication by zero.
+        
+        expr = self
+        
+        # A convenience to allow successive update to the equation via transitivities.
+        # (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        # Simplify negations -- factor them out.
+        expr = eq.update(expr.negSimplifications(assumptions))
+        
+        if not isinstance(expr, Mult):
+            # The expression may have changed to a negation after doing
+            # negSimplification.  Start the simplification of this new
+            # expression fresh at this point.
+            eq.update(expr.evaluation(assumptions))
+            return eq.relation
+
+        # Eliminate any factors of one.
+        expr = eq.update(expr.oneEliminations(assumptions))
+        
+        if isIrreducibleValue(expr):
+            return eq.relation # done
         
         if len(self.operands) > 2:
-            return pairwiseEvaluation(self, assumptions)
+            eq.update(pairwiseEvaluation(expr, assumptions))
+            return eq.relation
 
         raise SimplificationError("Unable to evaluate %s"%str(self))
-        
     
     def conversionToAddition(self, assumptions=USE_DEFAULTS):
         '''
@@ -308,7 +419,7 @@ class Mult(Operation):
                 expr = expr.rhs.group(endIdx=-numFactorOperands, assumptions=assumptions)
         return Equals(self, expr.rhs)
         
-    def combineExponents(self, startIdx=None, endIdx=None, assumptions=USE_DEFAULTS):
+    def exponentCombination(self, startIdx=None, endIdx=None, assumptions=USE_DEFAULTS):
         '''
         Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$,  $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b},
         or equates $a^c b^c$ to $(a b)^c$.
@@ -321,8 +432,8 @@ class Mult(Operation):
         if startIdx is not None or endIdx is not None:
             dummyVar = self.safeDummyVar()
             grouped = self.group(startIdx, endIdx, assumptions=assumptions)
-            innerCombineExponents = grouped.rhs.factors[startIdx].combineExponents(assumptions=assumptions)
-            combineInGroup = innerCombineExponents.substitution(Mult(*(self.factors[:startIdx] + (dummyVar,) + self.factors[endIdx:])), dummyVar)
+            innerCombination = grouped.rhs.factors[startIdx].exponentCombination(assumptions=assumptions)
+            combineInGroup = innerCombination.substitution(Mult(*(self.factors[:startIdx] + (dummyVar,) + self.factors[endIdx:])), dummyVar)
             return grouped.applyTransitivity(combineInGroup)
         if all(isinstance(factor, Sqrt) for factor in self.factors):
             # combine the square roots into one square root
@@ -408,10 +519,12 @@ class Mult(Operation):
         from ._theorems_ import disassociation
         return apply_disassociation_thm(self, idx, disassociation, assumptions)
 
+# Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(Mult, 'commutation', 'commuted', 'commute')
+InnerExpr.register_equivalence_method(Mult, 'groupCommutation', 'groupCommuted', 'groupCommute')
+InnerExpr.register_equivalence_method(Mult, 'association', 'associated', 'associate')
+InnerExpr.register_equivalence_method(Mult, 'disassociation', 'disassociated', 'disassociate')
+InnerExpr.register_equivalence_method(Mult, 'distribution', 'distributed', 'distribute')
+InnerExpr.register_equivalence_method(Mult, 'factorization', 'factorized', 'factor')
+InnerExpr.register_equivalence_method(Mult, 'exponentCombination', 'combinedExponents', 'combineExponents')
 
-
-class InnerMultiplication(DistributiveInnerExprMixin, CommutativeAndAssociativeInnerExprMixin, InnerExprMethodsObject):
-    def __init__(self, innerExpr):
-        InnerExprMethodsObject.__init__(self, innerExpr)
-        if not isinstance(self.expr, Mult):
-            raise TypeError("InnerMultiplication is expecting an Mult object as the inner expression")
