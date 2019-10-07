@@ -249,7 +249,10 @@ class Operation(Expression):
             else: 
                 kw, val = arg
                 kw_args[kw] = val 
-        return operationClass(*args, **kw_args).withStyles(**styles)
+        made_operation = operationClass(*args, **kw_args)
+        if styles is not None:
+            made_operation.withStyles(**styles)
+        return made_operation
     
     def remakeArguments(self):
         '''
@@ -387,7 +390,9 @@ class Operation(Expression):
             operator = subbed_operators[0]
             if operator in Operation.operationClassOfOperator:
                 OperationClass = Operation.operationClassOfOperator[operator]
-                return OperationClass._make(['Operation'], self.getStyles(), [operator, subbed_operand_or_operands])
+                # Don't use transfer the styles; they may not apply in the same manner
+                # in the setting of the new operation.
+                return OperationClass._make(['Operation'], styles=None, subExpressions=[operator, subbed_operand_or_operands])
         return self.__class__._make(['Operation'], self.getStyles(), [subbed_operator_or_operators, subbed_operand_or_operands])
     
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
