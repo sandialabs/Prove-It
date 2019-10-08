@@ -1,6 +1,6 @@
 from proveit.logic import Forall, Implies, InSet, NotEquals, And, Or, Booleans
 from proveit.number import Integers, Reals, RealsPos
-from proveit.number import GreaterThan, GreaterThanEquals, LessThan, LessThanEquals, Min, Max, Add, Sub, Neg, Mult, Fraction
+from proveit.number import GreaterThan, GreaterThanEquals, LessThan, LessThanEquals, Min, Max, Add, Sub, Neg, Mult, frac
 from proveit.common import a, b, c, d, x
 from proveit.number.common import zero, one
 from proveit import beginTheorems, endTheorems

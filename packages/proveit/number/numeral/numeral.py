@@ -44,10 +44,25 @@ class Numeral(Literal, IrreducibleValue):
      
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.number import Naturals, NaturalsPos
+        from proveit.logic import InSet
         if number_set==Naturals:
             return self.deduceInNaturals()
         elif number_set==NaturalsPos:
             return self.deduceInNaturalsPos()
+        else:
+            try:
+                # Do this to avoid infinite recursion -- if
+                # we already know this numeral is in NaturalsPos
+                # we should know how to prove that it is in any
+                # number set that contains the naturals.
+                InSet(self, NaturalsPos).prove(automation=False)
+            except:
+                # Try to prove that it is in the given number
+                # set after proving that the numeral is in 
+                # Naturals and NaturalsPos.
+                self.deduceInNaturals()
+                self.deduceInNaturalsPos()
+                return InSet(self, number_set).conclude(assumptions)
         
     def deduceInNaturals(self):
         if Numeral._inNaturalsStmts is None:
@@ -77,7 +92,7 @@ class Numeral(Literal, IrreducibleValue):
             Numeral._positiveStmts = {1:posnat1, 2:posnat2, 3:posnat3, 4:posnat4, 5:posnat5, 6:posnat6, 7:posnat7, 8:posnat8, 9:posnat9}
         return Numeral._positiveStmts[self.n]
 
-class NumeralSequence(Operation):
+class NumeralSequence(Operation, IrreducibleValue):
     """
     Base class of BinarySequence, DecimalSequence, and HexSequence.
     """
@@ -86,7 +101,12 @@ class NumeralSequence(Operation):
         if len(digits) <= 1:
             raise Exception('A NumeralSequence should have two or more digits.  Single digit number should be represented as the corresponding Literal.')
         self.digits = digits
-    
+
+    def evalEquality(self, other, assumptions=USE_DEFAULTS):
+        if other==self:
+            return Equals(self, self).prove()
+        pass # need axioms/theorems to prove inequality amongst different numerals
+            
     def _formatted(self, formatType, **kwargs):
         return ''.join(digit.formatted(formatType) for digit in self.digits)
 

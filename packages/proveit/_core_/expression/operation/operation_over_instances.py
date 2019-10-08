@@ -435,7 +435,7 @@ class OperationOverInstances(Operation):
             if hasMultiDomain or self.domain is not None:
                 outStr += ' in '
                 if hasMultiDomain:
-                    outStr += explicitDomains.formatted(formatType, formattedOperator='*', fence=False)
+                    outStr += explicitDomains.formatted(formatType, operatorOrOperators='*', fence=False)
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)                    
             if hasExplicitConditions:
@@ -453,7 +453,7 @@ class OperationOverInstances(Operation):
             if hasMultiDomain or self.domain is not None:
                 outStr += r' \in '
                 if hasMultiDomain:
-                    outStr += explicitDomains.formatted(formatType, formattedOperator=r'\times', fence=False)
+                    outStr += explicitDomains.formatted(formatType, operatorOrOperators=r'\times', fence=False)
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)
             if hasExplicitConditions:

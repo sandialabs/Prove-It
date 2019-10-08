@@ -3,7 +3,8 @@ if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
 
 from ._core_ import defaults, USE_DEFAULTS, InvalidAssumptions, Context, ContextException
-from ._core_ import Expression, InnerExpr, Operation, OperationError, Function, OperationSequence, OperationOverInstances
+from ._core_ import Expression, InnerExpr
+from ._core_ import Operation, OperationError, Function, OperationSequence, OperationOverInstances
 from ._core_ import Lambda, LambdaError, ParameterExtractionError, Label, Variable, Literal, DuplicateLiteralError
 from ._core_ import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from ._core_ import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation, ProofFailure
@@ -13,7 +14,7 @@ from ._core_ import KnownTruth, asExpression, asExpressions
 from ._core_ import Proof, Assumption, Axiom, Theorem, ModusPonens, HypotheticalReasoning, Specialization, Generalization
 from ._core_ import ModusPonensFailure, RelabelingFailure, SpecializationFailure, GeneralizationFailure
 from ._core_ import StyleOptions, maybeFencedString, maybeFencedLatex, maybeFenced
-from .relation import TransitiveRelation, TransitiveSequence
+from .relation import TransitiveRelation, TransitiveSequence, TransitivityException, TransRelUpdater
 
 # Implies, Forall, and InSet are core concepts that are defined outside of the core.
 #from proveit.logic import Implies, Forall, InSet

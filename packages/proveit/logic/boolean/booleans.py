@@ -19,7 +19,7 @@ class BooleanSet(Literal):
         if possible.
         updated by JML 6/28/19
         '''        
-        from proveit.logic import Forall, Equals, EvaluationError
+        from proveit.logic import Forall, Equals, SimplificationError
         from ._theorems_ import falseEqFalse, trueEqTrue 
         from ._theorems_ import forallBoolEvalTrue, forallBoolEvalFalseViaTF, forallBoolEvalFalseViaFF, forallBoolEvalFalseViaFT
         from ._common_ import TRUE, FALSE, Booleans
@@ -42,7 +42,7 @@ class BooleanSet(Literal):
             evalTrueInstance = trueInstance.evaluation(assumptions)
             evalFalseInstance = falseInstance.evaluation(assumptions)
             if not isinstance(evalTrueInstance.expr, Equals) or not isinstance(evalFalseInstance.expr, Equals):
-                raise EvaluationError('Quantified instances must produce equalities as evaluations')            
+                raise SimplificationError('Quantified instances must produce equalities as evaluations')            
             # proper evaluations for both cases (TRUE and FALSE)
             trueCaseVal = evalTrueInstance.rhs
             falseCaseVal = evalFalseInstance.rhs
@@ -61,7 +61,7 @@ class BooleanSet(Literal):
                 elif trueCaseVal == TRUE and falseCaseVal == FALSE:
                     return forallBoolEvalFalseViaTF.specialize({P_op:instanceExpr, A:instanceVar}, assumptions=assumptions).deriveConclusion(assumptions)
                 else:
-                    raise EvaluationError('Quantified instance evaluations must be TRUE or FALSE')         
+                    raise SimplificationError('Quantified instance evaluations must be TRUE or FALSE')         
     
     def unfoldForall(self, forallStmt, assumptions=USE_DEFAULTS):
         '''
@@ -84,7 +84,6 @@ class BooleanSet(Literal):
         assert(isinstance(forallStmt, Forall)), "May only apply foldAsForall method of Booleans to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain"
         assert(len(forallStmt.conditions) <= 2), "May only apply foldAsForall method of Booleans to a forall statement with the Booleans domain but no other conditions"
-        assert(not hasattr(forallStmt, 'instanceVar')), "May only apply foldAsForall method of Booleans to a forall statement with 1 instance variable"
         if(len(forallStmt.conditions)==2):
             Q_op, Q_op_sub = Operation(Q, forallStmt.instanceVar), forallStmt.conditions[1]
             P_op, P_op_sub = Operation(P, forallStmt.instanceVar), forallStmt.instanceExpr

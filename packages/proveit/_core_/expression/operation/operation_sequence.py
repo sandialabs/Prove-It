@@ -29,27 +29,3 @@ class OperationSequence(Operation):
 
     def latex(self, **kwargs):
         return self._formatted('latex', **kwargs)
-    
-    def _formatted(self, formatType, **kwargs):
-        '''
-        When there are multiple operators, the default formatting assumes there is one more operator than operands
-        and the operators should come between successive operands.
-        '''
-        from proveit import Iter
-        from proveit._core_.expression.fencing import maybeFenced
-        fence =  kwargs['fence'] if 'fence' in kwargs else False
-        subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
-        ellipses = r'\ldots' if formatType=='latex' else '...'
-        inner_str = ''
-        formatted_operators = []
-        formatted_operands = []
-        for operator in self.operators:
-            if isinstance(operator, Iter):
-                formatted_operators += [operator.first().formatted(formatType), ellipses, operator.last().formatted(formatType)]
-            else: formatted_operators.append(operator.formatted(formatType))
-        for operand in self.operands:
-            if isinstance(operand, Iter):
-                formatted_operands += [operand.first().formatted(formatType, fence=subFence), '', operand.last().formatted(formatType, fence=subFence)]
-            else: formatted_operands.append(operand.formatted(formatType, fence=subFence))
-        inner_str = ' '.join(formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in zip(formatted_operands, formatted_operators)) + ' ' + formatted_operands[-1]
-        return maybeFenced(formatType, inner_str, fence=fence)

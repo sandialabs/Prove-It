@@ -77,7 +77,7 @@ class Operation(Expression):
         return options
 
     def withWrappingAt(self, *wrapPositions):
-        return self.withStyles(wrapPositions='(' + ','.join(str(pos) for pos in wrapPositions) + ')')
+        return self.withStyles(wrapPositions='(' + ' '.join(str(pos) for pos in wrapPositions) + ')')
     
     def withWrapBeforeOperator(self):
         if len(self.operands)!=2:
@@ -249,7 +249,10 @@ class Operation(Expression):
             else: 
                 kw, val = arg
                 kw_args[kw] = val 
-        return operationClass(*args, **kw_args).withStyles(**styles)
+        made_operation = operationClass(*args, **kw_args)
+        if styles is not None:
+            made_operation.withStyles(**styles)
+        return made_operation
     
     def remakeArguments(self):
         '''
@@ -290,7 +293,7 @@ class Operation(Expression):
         '''
         Return a list of wrap positions according to the current style setting.
         '''
-        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(',') if pos_str != '']
+        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
     
     def _formatted(self, formatType, **kwargs):
         '''
@@ -298,45 +301,57 @@ class Operation(Expression):
         the operator that is obtained from self.operator.formatted(formatType).
         
         '''
-        from proveit import Iter
-        if not hasattr(self, 'operator'):
-            raise OperationError("No default formatting for a multi-operator Operation; see OperationSequence")
-        # Different formatting when there is 0 or 1 element, unless it is an Iter
-        if len(self.operands) < 2:
-            if len(self.operands) == 0 or not isinstance(self.operands[0], Iter):
-                if formatType == 'string':
-                    return '[' + self.operator.string(fence=True) +  '](' + self.operands.string(fence=False, subFence=False) + ')'
-                else:
-                    return '\left[' + self.operator.latex(fence=True) +  r'\right]\left(' + self.operands.latex(fence=False, subFence=False) + r'\right)'
-                raise ValueError("Unexpected formatType: " + str(formatType))  
-        fence =  kwargs['fence'] if 'fence' in kwargs else False
-        subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
-        formattedOperator = self.operator.formatted(formatType)
-        wrap_positions = self.wrapPositions()
-        do_wrapping = len(wrap_positions)>0
-        formatted_str = ''
-        if fence: formatted_str = '(' if formatType=='string' else  r'\left('
-        if do_wrapping and formatType=='latex': 
-            formatted_str += r'\begin{array}{%s} '%self.getStyle('justification')[0]
-        formatted_str += self.operands.formatted(formatType, fence=False, subFence=subFence, formattedOperator=formattedOperator, wrapPositions=wrap_positions)
-        if do_wrapping and formatType=='latex': 
-            formatted_str += r' \end{array}'
-        if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
-        return formatted_str
-
-    def _formatMultiOperator(self, formatType, **kwargs):
-        '''
-        When there are multiple operators, the default formatting assumes there is one more operator than operands
-        and the operators should come between successive operands.
-        '''
-        if len(self.operators)+1 != len(self.operands):
-            raise NotImplementedError("Default formatting for multiple operators only applies when there is one more operand than operators")
-        fence =  kwargs['fence'] if 'fence' in kwargs else False
-        subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
-        formatted_operators = [operator.formatted(formatType) for operator in self.operators]
-        formatted_operands = [operand.formatted(formatType, fence=subFence) for operand in self.operands]
-        inner_str = ' '.join(formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in zip(formatted_operands, formatted_operators)) + ' ' + formatted_operands[-1]
-        return maybeFenced(formatType, inner_str, fence=fence)
+        if hasattr(self, 'operator'):
+            return Operation._formattedOperation(formatType, self.operator, self.operands, self.wrapPositions(), self.getStyle('justification'), **kwargs)
+        else:
+            return Operation._formattedOperation(formatType, self.operators, self.operands, self.wrapPositions(), self.getStyle('justification'), **kwargs)
+    
+    @staticmethod
+    def _formattedOperation(formatType, operatorOrOperators, operands, wrapPositions, justification, implicitFirstOperator=False, **kwargs):
+        from proveit import Iter, ExprList, compositeExpression
+        if isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprList):
+            operator = operatorOrOperators
+            # Single operator case.
+            # Different formatting when there is 0 or 1 element, unless it is an Iter
+            if len(operands) < 2:
+                if len(operands) == 0 or not isinstance(operands[0], Iter):
+                    if formatType == 'string':
+                        return '[' + operator.string(fence=True) +  '](' + operands.string(fence=False, subFence=False) + ')'
+                    else:
+                        return '\left[' + operator.latex(fence=True) +  r'\right]\left(' + operands.latex(fence=False, subFence=False) + r'\right)'
+                    raise ValueError("Unexpected formatType: " + str(formatType))  
+            fence =  kwargs['fence'] if 'fence' in kwargs else False
+            subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
+            do_wrapping = len(wrapPositions)>0
+            formatted_str = ''
+            if fence: formatted_str = '(' if formatType=='string' else  r'\left('
+            if do_wrapping and formatType=='latex': 
+                formatted_str += r'\begin{array}{%s} '%justification[0]
+            formatted_str += operands.formatted(formatType, fence=False, subFence=subFence, operatorOrOperators=operator, wrapPositions=wrapPositions)
+            if do_wrapping and formatType=='latex': 
+                formatted_str += r' \end{array}'
+            if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
+            return formatted_str
+        else:
+            operators = operatorOrOperators
+            operands = compositeExpression(operands)
+            # Multiple operator case.
+            # Different formatting when there is 0 or 1 element, unless it is an Iter
+            if len(operands) < 2:
+                if len(operands) == 0 or not isinstance(operands[0], Iter):
+                    raise OperationError("No defaut formatting with multiple operators and zero operands")
+            fence =  kwargs['fence'] if 'fence' in kwargs else False
+            subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
+            do_wrapping = len(wrapPositions)>0
+            formatted_str = ''
+            if fence: formatted_str = '(' if formatType=='string' else  r'\left('
+            if do_wrapping and formatType=='latex': 
+                formatted_str += r'\begin{array}{%s} '%justification[0]
+            formatted_str += operands.formatted(formatType, fence=False, subFence=subFence, operatorOrOperators=operators, implicitFirstOperator=implicitFirstOperator, wrapPositions=wrapPositions)
+            if do_wrapping and formatType=='latex': 
+                formatted_str += r' \end{array}'
+            if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
+            return formatted_str            
             
     def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
@@ -375,7 +390,9 @@ class Operation(Expression):
             operator = subbed_operators[0]
             if operator in Operation.operationClassOfOperator:
                 OperationClass = Operation.operationClassOfOperator[operator]
-                return OperationClass._make(['Operation'], self.getStyles(), [operator, subbed_operand_or_operands])
+                # Don't use transfer the styles; they may not apply in the same manner
+                # in the setting of the new operation.
+                return OperationClass._make(['Operation'], styles=None, subExpressions=[operator, subbed_operand_or_operands])
         return self.__class__._make(['Operation'], self.getStyles(), [subbed_operator_or_operators, subbed_operand_or_operands])
     
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):

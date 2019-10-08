@@ -131,16 +131,20 @@ class Iter(Expression):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=False, subFence=True, formattedOperator=None, **kwargs):
+    def formatted(self, formatType, fence=False, subFence=True, operator=None, **kwargs):
         outStr = ''
-        if formattedOperator is None:
-            formattedOperator = ',' # comma is the default formatted operator
+        if operator is None:
+            formatted_operator = ',' # comma is the default formatted operator
+        elif isinstance(operator, str):
+            formatted_operator = operator
+        else:
+            formatted_operator = operator.formatted(formatType)
         formatted_sub_expressions = [subExpr.formatted(formatType, fence=subFence) for subExpr in (self.first(), self.last())]
         formatted_sub_expressions.insert(1, '\ldots' if formatType=='latex' else '...')
         # put the formatted operator between each of formattedSubExpressions
         if fence: 
             outStr += '(' if formatType=='string' else  r'\left('
-        outStr += formattedOperator.join(formatted_sub_expressions)
+        outStr += formatted_operator.join(formatted_sub_expressions)
         if fence:            
             outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
@@ -183,7 +187,7 @@ class Iter(Expression):
         breaking them up when found and returning the new
         set of ranges with no overlaps.
         '''
-        from proveit.number import Add, Subtract, one
+        from proveit.number import Add, subtract, one
         from .composite import _simplifiedCoord
         owning_range = dict() # map relative indices to the owning range; overlap occurs when ownership is contested.
         nonoverlapping_ranges = set()
@@ -207,7 +211,7 @@ class Iter(Expression):
                             if start1 < start2:
                                 # add the first range
                                 first_range = (tuple(range1[0]), tuple(range1[1]))
-                                abs_end = _simplifiedCoord(Subtract(arg_sorting_relations.operands[start2], one), assumptions=assumptions, requirements=requirements)
+                                abs_end = _simplifiedCoord(subtract(arg_sorting_relations.operands[start2], one), assumptions=assumptions, requirements=requirements)
                                 first_range[1][axis] = arg_sorting_relations.index(abs_end)
                                 rel_iter_ranges.add(first_range)
                             mid_end = min(end1, end2)
@@ -248,7 +252,7 @@ class Iter(Expression):
         raised if this fails.
         '''
         from proveit.logic import Equals
-        from proveit.number import Less, LessEq, Subtract, Add, one
+        from proveit.number import Less, LessEq, subtract, Add, one
         from .composite import _simplifiedCoord
         from proveit._core_.expression.expr import _NoExpandedIteration
         from proveit._core_.expression.label.var import safeDummyVars
@@ -288,14 +292,14 @@ class Iter(Expression):
                     # Not necesary in the 1D case.
                     # Add the coordinate simplification to argument sorting assumptions -
                     # after all, this sorting does not go directly into the requirements.
-                    start_minus_one = _simplifiedCoord(Subtract(start, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
+                    start_minus_one = _simplifiedCoord(subtract(start, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
                     end_plus_one = _simplifiedCoord(Add(end, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
                     special_points[axis].update({start_minus_one, end_plus_one})
                     # Add start-1<start and end<end+1 assumptions to ease argument sorting -
                     # after all, this sorting does not go directly into the requirements.
                     arg_sorting_assumptions.append(Less(start_minus_one, start))
                     arg_sorting_assumptions.append(Less(end, end_plus_one))
-                    arg_sorting_assumptions.append(Equals(end, Subtract(end_plus_one, one)))
+                    arg_sorting_assumptions.append(Equals(end, subtract(end_plus_one, one)))
                     # Also add start<=end to ease the argument sorting requirement even though it
                     # may not strictly be true if an empty range is possible.  In such a case, we
                     # still want things sorted this way while we don't know if the range is empty or not
@@ -367,9 +371,9 @@ class Iter(Expression):
                     # generate "safe" new parameters (the Variables are not used for anything that might conflict).
                     new_params = safeDummyVars(len(self.lambda_map.parameters), *([self] + list(range_expr_map.values()) + list(relabelMap.values())))
                     for start_idx, param, new_param, range_start, range_end in zip(self.start_indices, self.lambda_map.parameters, new_params, start_loc, end_loc):
-                        range_expr_map[param] = Add(new_param, Subtract(range_start, start_idx))
+                        range_expr_map[param] = Add(new_param, subtract(range_start, start_idx))
                         range_assumptions.append(LessEq(start_idx, new_param))
-                        range_assumptions.append(LessEq(new_param, Subtract(range_end, start_idx)))
+                        range_assumptions.append(LessEq(new_param, subtract(range_end, start_idx)))
                         #range_assumptions.append(LessEq(range_start, param))
                         #range_assumptions.append(LessEq(param, range_end))
                     #print range_expr_map, range_assumptions
@@ -381,7 +385,7 @@ class Iter(Expression):
                     new_requirements = [requirement for requirement in new_requirements if requirement.freeVars().isdisjoint(new_params)]
                     range_lambda_map = Lambda(new_params, range_lambda_body)
                     # Add the shifted sub-range iteration to the appropriate starting location.
-                    end_indices = [_simplifiedCoord(Subtract(range_end, start_idx), assumptions, new_requirements) for start_idx, range_end in zip(self.start_indices, end_loc)]
+                    end_indices = [_simplifiedCoord(subtract(range_end, start_idx), assumptions, new_requirements) for start_idx, range_end in zip(self.start_indices, end_loc)]
                     entry = Iter(range_lambda_map, self.start_indices, end_indices)
                 if self.ndims==1: lst.append(entry)
                 else: tensor[start_loc] = entry

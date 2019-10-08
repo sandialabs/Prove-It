@@ -1,7 +1,7 @@
 from proveit.common import A, B, C, D
 from proveit.expression import Variable, Literal, LATEX, STRING
 from proveit.multiExpression import Block
-from proveit.number import Exp, Fraction, Sqrt
+from proveit.number import Exp, frac, Sqrt
 from proveit.number.common import zero, one, two
 from proveit.number.numberSets import Complexes
 from proveit.linalg import TensorExp, SU
@@ -46,7 +46,7 @@ QubitSpace = Exp(Complexes, two)
 QubitRegisterSpace = lambda n : TensorExp(Exp(Complexes, two), n) 
 RegisterSU = lambda n : SU(Exp(two, n))
 
-invRoot2 = Fraction(one, Sqrt(two))
+invRoot2 = frac(one, Sqrt(two))
 
 B1 = Variable('B1')
 B2 = Variable('B2')

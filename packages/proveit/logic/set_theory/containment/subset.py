@@ -78,7 +78,6 @@ class Subset(SubsetRelation):
        # if isinstance(other,Subset) or isinstance(other,SubsetEq):
         #    other = other.deriveReversed(assumptions)
         if other.lhs == self.rhs:
-            print(other)
             if isinstance(other,Subset):
                 result = transitivitySubsetSubset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
                 return result#.checked({self})
@@ -86,7 +85,6 @@ class Subset(SubsetRelation):
                 result = transitivitySubsetSubsetEq.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
                 return result
         elif other.rhs == self.lhs:
-            print(3)
             if isinstance(other,Subset):
                 result = transitivitySubsetSubset.specialize({A:self.lhs, B:self.rhs, C:other.lhs}, assumptions=assumptions)
                 return result
@@ -184,13 +182,11 @@ class SubsetEq(SubsetRelation):
         #if isinstance(other,Subset) or isinstance(other,SubsetEq):
          #   other = other.deriveReversed(assumptions)
         if other.lhs == self.rhs:
-            print(1)
             if isinstance(other,Subset):
                 return transitivitySubsetEqSubset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
             elif isinstance(other,SubsetEq):
                 return transitivitySubsetEqSubsetEq.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
         elif other.rhs == self.lhs:
-            print(2)
             if isinstance(other,Subset):
                 return transitivitySubsetEqSubset.specialize({A:self.lhs, B:self.rhs, C:other.lhs}, assumptions=assumptions)
             elif isinstance(other,SubsetEq):

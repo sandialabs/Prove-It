@@ -49,12 +49,12 @@ class Not(Operation):
         Try to automatically conclude this negation via evaluation reductions
         or double negation.
         '''
-        from proveit.logic import EvaluationError
+        from proveit.logic import SimplificationError
         # as a last resort (concludeNegation on the operand should have been
         # tried first), conclude negation via evaluating the operand as false.
         try:
             self.operand.evaluation(assumptions=assumptions)
-        except EvaluationError:
+        except SimplificationError:
             raise ProofFailure(self, assumptions, "Unable to evaluate %s"%str(self.operand))
         return self.concludeViaFalsifiedNegation(assumptions=assumptions)
     

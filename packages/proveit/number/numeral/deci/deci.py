@@ -1,4 +1,4 @@
-from proveit import Literal, Operation
+from proveit import Literal
 from proveit.number.numeral.numeral import NumeralSequence
 from proveit.number.numeral._common_ import zero, one, two, three, four, five, six, seven, eight, nine
 DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
