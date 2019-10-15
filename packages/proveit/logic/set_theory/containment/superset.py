@@ -193,17 +193,54 @@ class SupersetEq(SupersetRelation):
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
 
+class NotSuperset(Operation):
+    # class added 10/15/19 by wdc
+    # modeled on the NotSupersetEq class
+
+    # operator of the NotSuperset operation
+    _operator_ = Literal(stringFormat='nsupset',
+                         latexFormat=r'\not\supset',
+                         context=__file__)
+
+    def __init__(self, superset, subset):
+        Operation.__init__(self, NotSuperset._operator_, (superset, subset))
+
+    def deriveSideEffects(self, knownTruth):
+        self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
+
+    def conclude(self, assumptions):
+        return self.concludeAsFolded(assumptions)
+
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From A nsupset B, derive and return not(supset(A, B)).
+        '''
+        from ._theorems_ import unfoldNotSupset
+        return unfoldNotSupset.specialize(
+                {A:self.operands[0], B:self.operands[1]},
+                assumptions=assumptions)
+
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
+        '''
+        Derive this folded version, A nsupset B, from the unfolded version,
+        not(A supset B).
+        '''
+        from ._theorems_ import foldNotSupset
+        return foldNotSupset.specialize(
+                {A:self.operands[0], B:self.operands[1]},
+                assumptions=assumptions)
+
 class NotSupersetEq(Operation):
     # operator of the NotSupersetEq operation
-    _operator_ = Literal(stringFormat='nsupseteq', latexFormat=r'\nsupseteq', context=__file__)
+    _operator_ = Literal(stringFormat='nsupseteq',
+                         latexFormat=r'\nsupseteq',
+                         context=__file__)
 
     def __init__(self, superset, subset):
         Operation.__init__(self, NotSupersetEq._operator_, (superset, subset))
 
     def deriveSideEffects(self, knownTruth):
         self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
-
-
 
     def conclude(self, assumptions):
         return self.concludeAsFolded(assumptions)
@@ -213,7 +250,9 @@ class NotSupersetEq(Operation):
         From A nsupseteq B, derive and return not(supseteq(A, B)).
         '''
         from ._theorems_ import unfoldNotSupsetEq
-        return unfoldNotSupsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return unfoldNotSupsetEq.specialize(
+                {A:self.operands[0], B:self.operands[1]},
+                assumptions=assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
@@ -221,4 +260,6 @@ class NotSupersetEq(Operation):
         not(A supset B).
         '''
         from ._theorems_ import foldNotSupsetEq
-        return foldNotSupsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+        return foldNotSupsetEq.specialize(
+                {A:self.operands[0], B:self.operands[1]},
+                assumptions=assumptions)
