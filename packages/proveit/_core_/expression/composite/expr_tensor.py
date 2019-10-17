@@ -7,15 +7,15 @@ import itertools
 from ast import literal_eval
                 
 
-class ExprTensor(Composite, Expression): 
+class ExprArray(Composite, Expression): 
     '''
-    An ExprTensor is a composite Expression representing
+    An ExprArray is a composite Expression representing
     an n-dimensional tensor.  It serves to map n-coordinate 
     "locations" to Expression elements.  The coordinates may 
     be general Expressions that are intended to represent 
     Integer numbers.
     
-    The ExprTensor stores entries in terms of "relative
+    The ExprArray stores entries in terms of "relative
     element locations".  For each axis, all relevent coordinate 
     expressions are sorted into a sorting-relation expression 
     (for example, "a < b <= c = d < e", or some such form).  
@@ -34,9 +34,9 @@ class ExprTensor(Composite, Expression):
     to any explicit conditions of the universal quantifier(s)
     being specialized).
     
-    Axioms involving an ExprTensor should properly be stated
+    Axioms involving an ExprArray should properly be stated
     by way of an implication -- the statement involving
-    the ExprTensor is the consequent that is only valid
+    the ExprArray is the consequent that is only valid
     provided the coordinate sorting relations, in the
     antecedent, is true.  Corresponding theorems can then be
     proven by showing that the coordinate sorting relations
@@ -46,7 +46,7 @@ class ExprTensor(Composite, Expression):
     
     def __init__(self, tensor, shape=None, styles=None, assumptions=USE_DEFAULTS, requirements=tuple()):
         '''
-        Create an ExprTensor either with a simple, dense tensor (list of lists ... of lists) or
+        Create an ExprArray either with a simple, dense tensor (list of lists ... of lists) or
         with a dictionary mapping coordinates (as tuples of expressions that represent integers) 
         to expr elements or Blocks.
         Providing starting and/or ending location(s) can extend the bounds of the tensor beyond
@@ -59,7 +59,7 @@ class ExprTensor(Composite, Expression):
         assumptions = defaults.checkedAssumptions(assumptions)
         requirements = []                
         if not isinstance(tensor, dict):
-            tensor = {loc:element for loc, element in ExprTensor._tensorDictFromIterables(tensor, assumptions, requirements)}
+            tensor = {loc:element for loc, element in ExprArray._tensorDictFromIterables(tensor, assumptions, requirements)}
                 
         # Map direct compositions for the end-coordinate of Iter elements
         # to their simplified forms.
@@ -70,7 +70,7 @@ class ExprTensor(Composite, Expression):
         full_tensor = dict()
         ndims = None
         if shape is not None:
-            shape = ExprTensor.locAsExprs(shape)
+            shape = ExprArray.locAsExprs(shape)
             ndims = len(shape)
         for loc, element in tensor.items():
             if isinstance(element, KnownTruth):
@@ -80,9 +80,9 @@ class ExprTensor(Composite, Expression):
                 coord_sets = [set() for _ in range(ndims)]
             elif len(coord_sets) != ndims:
                 if shape is not None:
-                    raise ValueError("length of 'shape' is inconsistent with number of dimensions for ExprTensor locations")
+                    raise ValueError("length of 'shape' is inconsistent with number of dimensions for ExprArray locations")
                 else:
-                    raise ValueError("inconsistent number of dimensions for locations of the ExprTensor")
+                    raise ValueError("inconsistent number of dimensions for locations of the ExprArray")
             for axis, coord in enumerate(list(loc)):
                 if isinstance(coord, int):
                     coord = num(coord) # convert from Python int to an Expression
@@ -98,9 +98,9 @@ class ExprTensor(Composite, Expression):
             full_tensor[tuple(loc)] = element
 
         if ndims is None:
-            raise ExprTensorError("Empty ExprTensor is not allowed")
+            raise ExprArrayError("Empty ExprArray is not allowed")
         if ndims <= 1:
-            raise ExprTensorError("ExprTensor must be 2 or more dimensions (use an ExprTuple for something 1-dimensional")
+            raise ExprArrayError("ExprArray must be 2 or more dimensions (use an ExprTuple for something 1-dimensional")
 
         # in each dimension, coord_indices will be a dictionary
         # that maps each tensor location coordinate to its relative entry index.
@@ -125,7 +125,7 @@ class ExprTensor(Composite, Expression):
             self.sortedCoordLists.append(ExprTuple(sorted_coords))
             
             # Add in coordinate expressions that explicitly indicate the difference between coordinates.
-            # These may be used in generating the latex form of the ExprTensor.
+            # These may be used in generating the latex form of the ExprArray.
             diff_relations = []
             for c1, c2 in zip(sorted_coords[:-1], sorted_coords[1:]):
                 diff = _simplifiedCoord(subtract(c2, c1), assumptions, requirements)
@@ -133,7 +133,7 @@ class ExprTensor(Composite, Expression):
                 diff_relation = Greater.sort([zero, diff], assumptions=assumptions)
                 if isinstance(diff_relation, Greater):
                     if c2 == sorted_coords[-1] and shape is not None:
-                        raise ExprTensorError("Coordinates extend beyond the specified shape in axis %d: %s after %s"%(axis, str(coord_sorting_relation.operands[-1]), str(shape[axis])))                        
+                        raise ExprArrayError("Coordinates extend beyond the specified shape in axis %d: %s after %s"%(axis, str(coord_sorting_relation.operands[-1]), str(shape[axis])))                        
                     assert tuple(diff_relation.operands) == (diff, zero), 'Inconsistent Less.sort results'
                     # diff > 0, let's compare it with one now
                     diff_relation = Greater.sort([one, diff], assumptions=assumptions)
@@ -152,7 +152,7 @@ class ExprTensor(Composite, Expression):
             rel_index_tensor[rel_index_loc] = element
                 
         sorted_keys = sorted(rel_index_tensor.keys())
-        Expression.__init__(self, ['ExprTensor', str(ndims), ';'.join(str(key) for key in sorted_keys)], self.sortedCoordLists + self.coordDiffRelationLists + [rel_index_tensor[key] for key in sorted_keys], styles=styles, requirements=requirements)
+        Expression.__init__(self, ['ExprArray', str(ndims), ';'.join(str(key) for key in sorted_keys)], self.sortedCoordLists + self.coordDiffRelationLists + [rel_index_tensor[key] for key in sorted_keys], styles=styles, requirements=requirements)
         self.ndims = ndims
         self.relIndexTensor = rel_index_tensor
         
@@ -194,7 +194,7 @@ class ExprTensor(Composite, Expression):
             for entry in tensor:
                 # simplify the coordinate before moving on
                 # (the simplified form will be equated with the original in the
-                # sorting relations of the ExprTensor).
+                # sorting relations of the ExprArray).
                 coord = _simplifiedCoord(coord, assumptions, requirements)
                 if isinstance(entry, KnownTruth):
                     entry = entry.expr # extract the Expression from the KnownTruth
@@ -209,11 +209,11 @@ class ExprTensor(Composite, Expression):
                     else:
                         coord = Add(coord, one) # shift the coordinate ahead by one
                 else:
-                    for sub_loc, entry in ExprTensor.TensorDictFromIterables(entry):
+                    for sub_loc, entry in ExprArray.TensorDictFromIterables(entry):
                         loc = (coord,)+sub_loc
                         yield loc, entry
         except TypeError:
-            raise TypeError('An ExprTensor must be a dictionary of indices to elements or a nested iterables of Expressions')
+            raise TypeError('An ExprArray must be a dictionary of indices to elements or a nested iterables of Expressions')
     
     def _makeEntryOrigins(self):
         '''
@@ -224,7 +224,7 @@ class ExprTensor(Composite, Expression):
         relative index location to the origin relative index location where
         that Iter entry is stored.
         
-        Raise an ExprTensorError if there are overlapping entries.
+        Raise an ExprArrayError if there are overlapping entries.
         '''
         from .iteration import Iter
         from proveit.number import Add, subtract, one
@@ -252,12 +252,12 @@ class ExprTensor(Composite, Expression):
                 for p in itertools.product(*[range(start, end) for start, end in zip(rel_entry_loc, rel_entry_end_corner)]):
                     p = tuple(p)
                     if p in rel_entry_origins:
-                        raise ExprTensorError("Overlapping blocks in the ExprTensor")
+                        raise ExprArrayError("Overlapping blocks in the ExprArray")
                     rel_entry_origins[p] = rel_entry_loc
             else:
                 # single-element entry.  check for overlap and add to the entry_origins dictionary
                 if rel_entry_loc in rel_entry_origins:
-                    raise ExprTensorError("Overlapping blocks in the ExprTensor")
+                    raise ExprArrayError("Overlapping blocks in the ExprArray")
                 rel_entry_origins[rel_entry_loc] = rel_entry_loc
                 
         # Return the entry_origins dictionary that we generated.
@@ -267,13 +267,13 @@ class ExprTensor(Composite, Expression):
         '''
         Return the relative entry location given the absolute tensor location.
         '''
-        return ExprTensor.relEntryLocation(loc, self.coordSortingRelations)
+        return ExprArray.relEntryLocation(loc, self.coordSortingRelations)
 
     def tensorLoc(self, rel_entry_loc):
         '''
         Return the absolute tensor location given the relative entry location.
         '''
-        return ExprTensor.tensorLocation(rel_entry_loc, self.coordSortingRelations)
+        return ExprArray.tensorLocation(rel_entry_loc, self.coordSortingRelations)
     
     @staticmethod
     def relEntryLocation(self, loc, coord_sorting_relations):
@@ -376,7 +376,7 @@ class ExprTensor(Composite, Expression):
         from .iteration import Iter
         from .composite import _simplifiedCoord
         if len(indices) != self.ndims:
-            raise ExprTensorError("The 'indices' has the wrong number of dimensions: %d instead of %d"%(len(indices), self.ndims))
+            raise ExprArrayError("The 'indices' has the wrong number of dimensions: %d instead of %d"%(len(indices), self.ndims))
         
         if requirements is None: requirements = [] # requirements won't be passed back in this case
 
@@ -392,7 +392,7 @@ class ExprTensor(Composite, Expression):
             try:
                 lower, upper = Less.insert(sorted_coords, coord, assumptions=assumptions)
             except:
-                raise ExprTensorError("Could not determine the 'indices' range within the tensor coordinates under the given assumptions")
+                raise ExprArrayError("Could not determine the 'indices' range within the tensor coordinates under the given assumptions")
             # The relationship to the lower and upper coordinate bounds are requirements for determining
             # the element being assessed.
             requirements.append(Less.sort((sorted_coords[lower], coord), reorder=False, assumptions=assumptions))
@@ -401,10 +401,10 @@ class ExprTensor(Composite, Expression):
             upper_indices.append(upper)
         
         if tuple(lower_indices) not in self.entryOrigins or tuple(upper_indices) not in self.entryOrigins:
-            raise ExprTensorError("Tensor element could not be found at %s"%str(tensor_loc))
+            raise ExprArrayError("Tensor element could not be found at %s"%str(tensor_loc))
         rel_entry_origin = self.relEntryOrigins[lower_indices]
         if self.relEntryOrigins[upper_indices] != rel_entry_origin:
-            raise ExprTensorError("Tensor element is ambiguous for %s under the given assumptions"%str(tensor_loc))
+            raise ExprArrayError("Tensor element is ambiguous for %s under the given assumptions"%str(tensor_loc))
         
         entry = self[rel_entry_origin]
         if isinstance(entry, Iter):
@@ -451,26 +451,26 @@ class ExprTensor(Composite, Expression):
     def remakeArguments(self):
         '''
         Yield the argument (key, value) pairs that could be used to 
-        recreate the ExprTensor.
+        recreate the ExprArray.
         '''
         tensor = {loc:element for loc, element in self.items()}
         yield tensor
                                     
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
-        if subClass != ExprTensor: 
+        if subClass != ExprArray: 
             MakeNotImplemented(subClass) 
         if len(coreInfo) != 3:
-            raise ValueError("Expecting ExprTensor coreInfo to contain exactly 3 items: 'ExprTensor', the number of dimensions, and the indexed locations")
-        if coreInfo[0] != 'ExprTensor':
-            raise ValueError("Expecting ExprTensor coreInfo[0] to be 'ExprTensor'")
+            raise ValueError("Expecting ExprArray coreInfo to contain exactly 3 items: 'ExprArray', the number of dimensions, and the indexed locations")
+        if coreInfo[0] != 'ExprArray':
+            raise ValueError("Expecting ExprArray coreInfo[0] to be 'ExprArray'")
         ndims = literal_eval(coreInfo[1])
         indexed_loc_strs = coreInfo[2].split(';')
         # coordinate-sorting relations in each dimension
         sorting_relations = subExpressions[:ndims]
         indexed_tensor = {literal_eval(indexed_loc_str):element for indexed_loc_str, element in zip(indexed_loc_strs, subExpressions[ndims+1:])}
-        tensor = {ExprTensor.tensorLocation(indexed_loc, sorting_relations):element for indexed_loc, element in indexed_tensor.items()}
-        return ExprTensor(tensor).withStyles(**styles)
+        tensor = {ExprArray.tensorLocation(indexed_loc, sorting_relations):element for indexed_loc, element in indexed_tensor.items()}
+        return ExprArray(tensor).withStyles(**styles)
                                                                               
     def string(self, fence=False):
         return '{' + ', '.join(loc.string(fence=True) + ':' + element.string(fence=True) for loc, element in self.items()) + '}'
@@ -489,7 +489,7 @@ class ExprTensor(Composite, Expression):
     def latex(self, fence=False):
         from proveit._core_.expression.bundle import Block
         if len(self.shape) != 2:
-            raise NotImplementedError('Only 2-dimensional ExprTensor formatting has been implemented.')
+            raise NotImplementedError('Only 2-dimensional ExprArray formatting has been implemented.')
         _, ncolumns = self.shape
         outStr = r'\xymatrix @*=<0em> @C=1em @R=.7em{' + '\n'
         current_row = -1
@@ -646,21 +646,21 @@ class ExprTensor(Composite, Expression):
         for loc, element in self.items():
             subbed_loc = loc.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
             subbed_elem = element.substituted(exprMap, relabelMap, reservedVars, assumptions=assumptions, requirements=requirements)
-            if isinstance(element, Iter) and isinstance(subbed_elem, ExprTensor):
-                # An iteration element became an ExprTensor upon substitution,
-                # so insert the elements directly into this outer ExprTensor.
+            if isinstance(element, Iter) and isinstance(subbed_elem, ExprArray):
+                # An iteration element became an ExprArray upon substitution,
+                # so insert the elements directly into this outer ExprArray.
                 for sub_loc, sub_elem in subbed_elem.items():
                     net_loc = [_simplifiedCoord(Add(main_coord, sub_coord), assumptions, requirements) for main_coord, sub_coord in zip(subbed_loc, sub_loc)]
                     tensor[net_loc] = subbed_elem
             else:
                 tensor[subbed_loc] = subbed_elem
-        expr_tensor = ExprTensor(tensor, assumptions)
+        expr_tensor = ExprArray(tensor, assumptions)
         expr_tensor_requirements = expr_tensor.getRequirements()
         for requirement in expr_tensor_requirements:
-            # check that all ExprTensor requirements satisfy restrictions
+            # check that all ExprArray requirements satisfy restrictions
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope
         
-        # pass back the new requirements that are different from the ExprTensor requirements after making substitutions.
+        # pass back the new requirements that are different from the ExprArray requirements after making substitutions.
         old_requirements = {requirement.substituted(exprMap, relabelMap, reservedVars) for requirement in self.getRequirements()}
         new_requirements = [requirement for requirement in expr_tensor_requirements if requirement not in old_requirements]
             
@@ -680,7 +680,7 @@ class ExprTensor(Composite, Expression):
         '''
         return set().union(*([expr.freeVars for expr in self.sorting_relations] + [expr.freeVars() for expr in list(self.values())]))
 
-class ExprTensorError(Exception):
+class ExprArrayError(Exception):
     def __init__(self, msg):
         self.msg = msg
     def __str__(self):

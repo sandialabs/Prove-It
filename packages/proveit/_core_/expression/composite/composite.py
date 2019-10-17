@@ -2,15 +2,15 @@
 compositeExpression.py
 
 The core of Prove-It knows about a few special types of expr classes
-that contain multiple Expressions: NamedExprs, ExprTuple, and ExprTensor.
+that contain multiple Expressions: NamedExprs, ExprTuple, and ExprArray.
 NamedExprs map identifier strings to Expressions.  An ExprTuple is a linear
-list of Expressions,  An ExprTensor is a multi-dimensional extension of
+list of Expressions,  An ExprArray is a multi-dimensional extension of
 an ExprTuple, which introduces extra complications.  It works by
 mapping indices (one for each dimension) to elements.  Indices
-of an ExprTensor may be general expressions.  The order of distinct indices
+of an ExprArray may be general expressions.  The order of distinct indices
 in each dimension must be known via axioms, theorems, or assumptions.
 
-The ExprTuple and ExprTensor composites may contain Embed 
+The ExprTuple and ExprArray composites may contain Embed 
 expressions that represent blocks of elements to be embedded 
 into their containers.  
 '''
@@ -20,7 +20,7 @@ from proveit._core_.expression.expr import Expression
 
 class Composite:
     """
-    The base class for NamedExprs, ExprTuple, and ExprTensor.
+    The base class for NamedExprs, ExprTuple, and ExprArray.
     """
     pass
 
@@ -35,19 +35,19 @@ def compositeExpression(expressions):
     '''
     from .expr_list import ExprTuple
     from .named_exprs import NamedExprs
-    from .expr_tensor import ExprTensor
+    from .expr_tensor import ExprArray
     from proveit._core_.known_truth import KnownTruth
     
     if isinstance(expressions, KnownTruth):
         expressions = expressions.expr
     
-    if isinstance(expressions, ExprTuple) or isinstance(expressions, NamedExprs) or isinstance(expressions, ExprTensor):
+    if isinstance(expressions, ExprTuple) or isinstance(expressions, NamedExprs) or isinstance(expressions, ExprArray):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
         return ExprTuple(expressions) # a single expression that we will wrap in an ExpressionLIst
     else:
         if isinstance(expressions, dict):
-            return ExprTensor(expressions)
+            return ExprArray(expressions)
         try:
             # see if we can build an expression list
             return ExprTuple(*[singleOrCompositeExpression(subExpr) for subExpr in expressions])

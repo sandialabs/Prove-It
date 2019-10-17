@@ -6,7 +6,7 @@ from proveit._core_.defaults import USE_DEFAULTS
 class Indexed(Expression):
     '''
     An Indexed Expression expresses a Variable,
-    representing an ExprTuple or ExprTensor, being indexed
+    representing an ExprTuple or ExprArray, being indexed
     to yield an element.
     
     Upon substitution, it automatically performs the indexing
@@ -64,7 +64,7 @@ class Indexed(Expression):
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
         If the indexed variable has been replaced with a Composite
-        (ExprTuple or ExprTensor), this should return the
+        (ExprTuple or ExprArray), this should return the
         indexed element.  Only a Variable should be indexed via
         a Indexed expression; once the Variable is replaced with
         a Composite, the indexing should be actualized.
@@ -72,7 +72,7 @@ class Indexed(Expression):
         from .composite import Composite, _simplifiedCoord
         from proveit.number import num, subtract, isLiteralInt
         from .expr_list import ExprTuple
-        from .expr_tensor import ExprTensor
+        from .expr_tensor import ExprArray
         
         self._checkRelabelMap(relabelMap)
         
@@ -91,7 +91,7 @@ class Indexed(Expression):
             indices = subbed_indices
             if isinstance(subbed_var, ExprTuple):
                 result = subbed_var.getElem(indices[0], base=self.base, assumptions=assumptions, requirements=new_requirements)
-            elif isinstance(subbed_var, ExprTensor):
+            elif isinstance(subbed_var, ExprArray):
                 result = subbed_var.getElem(indices, base=self.base, assumptions=assumptions, requirements=new_requirements)
         
         for requirement in new_requirements:

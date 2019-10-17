@@ -113,7 +113,7 @@ class InnerExpr:
             if key < 0: key = len(curInnerExpr)+key
             return InnerExpr(self.exprHierarchy[0], self.innerExprPath + (key,))
         elif isinstance(curInnerExpr, Composite):
-            # For any other Composite (ExprTensor or NamedExprs), the key is the key of the Composite dictionary.
+            # For any other Composite (ExprArray or NamedExprs), the key is the key of the Composite dictionary.
             # The sub-Expressions are in the order that the keys are sorted.
             sortedKeys = sorted(curInnerExpr.keys())
             return InnerExpr(self.exprHierarchy[0], self.innerExprPath + [sortedKeys.index(key)])
