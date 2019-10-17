@@ -1,5 +1,5 @@
 from .composite import Composite
-from .expr_list import ExprList
+from .expr_list import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from .iteration import Iter
@@ -100,7 +100,7 @@ class ExprTensor(Composite, Expression):
         if ndims is None:
             raise ExprTensorError("Empty ExprTensor is not allowed")
         if ndims <= 1:
-            raise ExprTensorError("ExprTensor must be 2 or more dimensions (use an ExprList for something 1-dimensional")
+            raise ExprTensorError("ExprTensor must be 2 or more dimensions (use an ExprTuple for something 1-dimensional")
 
         # in each dimension, coord_indices will be a dictionary
         # that maps each tensor location coordinate to its relative entry index.
@@ -122,7 +122,7 @@ class ExprTensor(Composite, Expression):
             if sorted_coords[0] != zero:
                 sorted_coords.insert(0, zero) # make sure the first of the sorted coordinates is zero.
             
-            self.sortedCoordLists.append(ExprList(sorted_coords))
+            self.sortedCoordLists.append(ExprTuple(sorted_coords))
             
             # Add in coordinate expressions that explicitly indicate the difference between coordinates.
             # These may be used in generating the latex form of the ExprTensor.
@@ -139,7 +139,7 @@ class ExprTensor(Composite, Expression):
                     diff_relation = Greater.sort([one, diff], assumptions=assumptions)
                 requirements.append(diff_relation)
                 diff_relations.append(diff_relation)
-            self.coordDiffRelationLists.append(ExprList(diff_relations))
+            self.coordDiffRelationLists.append(ExprTuple(diff_relations))
                 
             # map each coordinate expression to its index into the sorting_relation operands
             coord_rel_indices.append({coord:k for k, coord in enumerate(sorted_coords)})
@@ -165,7 +165,7 @@ class ExprTensor(Composite, Expression):
         self.relEntryOrigins = self._makeEntryOrigins()
         
         # the last coordinates of the sorted coordinates along each eaxis define the shape:        
-        self.shape = ExprList([sorted_coords[-1] for sorted_coords in self.sortedCoordLists])
+        self.shape = ExprTuple([sorted_coords[-1] for sorted_coords in self.sortedCoordLists])
     
     @staticmethod
     def locAsExprs(loc):

@@ -1,6 +1,6 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
-from proveit._core_.expression.composite import Composite, ExprList, singleOrCompositeExpression, compositeExpression
+from proveit._core_.expression.composite import Composite, ExprTuple, singleOrCompositeExpression, compositeExpression
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 import itertools
 
@@ -23,7 +23,7 @@ class Iter(Expression):
         parameters = compositeExpression(parameter_or_parameters)
 
         start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
-        if isinstance(start_index_or_indices, ExprList) and len(start_index_or_indices)==1:
+        if isinstance(start_index_or_indices, ExprTuple) and len(start_index_or_indices)==1:
             start_index_or_indices = start_index_or_indices[0]
         self.start_index_or_indices = start_index_or_indices
         if isinstance(start_index_or_indices, Composite):
@@ -36,7 +36,7 @@ class Iter(Expression):
             self.start_indices = compositeExpression(self.start_index_or_indices)
 
         end_index_or_indices = singleOrCompositeExpression(end_index_or_indices)
-        if isinstance(end_index_or_indices, ExprList) and len(end_index_or_indices)==1:
+        if isinstance(end_index_or_indices, ExprTuple) and len(end_index_or_indices)==1:
             end_index_or_indices = end_index_or_indices[0]
         self.end_index_or_indices = end_index_or_indices
         if isinstance(self.end_index_or_indices, Composite):
@@ -68,7 +68,7 @@ class Iter(Expression):
         if not isinstance(lambda_map, Lambda):
             raise TypeError('When creating an Iter Expression, the lambda_map argument must be a Lambda expression')
         
-        if isinstance(start_index_or_indices, ExprList) and len(start_index_or_indices)==1:
+        if isinstance(start_index_or_indices, ExprTuple) and len(start_index_or_indices)==1:
             start_index_or_indices = start_index_or_indices[0]
         self.start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
         

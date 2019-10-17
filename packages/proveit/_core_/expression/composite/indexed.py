@@ -6,7 +6,7 @@ from proveit._core_.defaults import USE_DEFAULTS
 class Indexed(Expression):
     '''
     An Indexed Expression expresses a Variable,
-    representing an ExprList or ExprTensor, being indexed
+    representing an ExprTuple or ExprTensor, being indexed
     to yield an element.
     
     Upon substitution, it automatically performs the indexing
@@ -64,14 +64,14 @@ class Indexed(Expression):
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
         If the indexed variable has been replaced with a Composite
-        (ExprList or ExprTensor), this should return the
+        (ExprTuple or ExprTensor), this should return the
         indexed element.  Only a Variable should be indexed via
         a Indexed expression; once the Variable is replaced with
         a Composite, the indexing should be actualized.
         '''
         from .composite import Composite, _simplifiedCoord
         from proveit.number import num, subtract, isLiteralInt
-        from .expr_list import ExprList
+        from .expr_list import ExprTuple
         from .expr_tensor import ExprTensor
         
         self._checkRelabelMap(relabelMap)
@@ -89,7 +89,7 @@ class Indexed(Expression):
             # because the Composite has an unexpanding Iter), 
             # default to returning the subbed Indexed.
             indices = subbed_indices
-            if isinstance(subbed_var, ExprList):
+            if isinstance(subbed_var, ExprTuple):
                 result = subbed_var.getElem(indices[0], base=self.base, assumptions=assumptions, requirements=new_requirements)
             elif isinstance(subbed_var, ExprTensor):
                 result = subbed_var.getElem(indices, base=self.base, assumptions=assumptions, requirements=new_requirements)
@@ -121,7 +121,7 @@ class Indexed(Expression):
         a composite, no range is yielded.
         '''
         from .composite import Composite, IndexingError, compositeExpression
-        from .expr_list import ExprList
+        from .expr_list import ExprTuple
         from proveit.logic import Equals
         from proveit._core_.expression.expr import _NoExpandedIteration
         
@@ -140,7 +140,7 @@ class Indexed(Expression):
                 start_indices.append(subbed_index.substituted({iterParam:startArg}))
                 end_indices.append(subbed_index.substituted({iterParam:endArg}))
             
-            if isinstance(subbed_var, ExprList):
+            if isinstance(subbed_var, ExprTuple):
                 assert len(start_indices) == len(end_indices) == 1, "Lists are 1-dimensional and should be singly-indexed"
                 entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices[0], end_indices[0], assumptions, requirements)
             else:

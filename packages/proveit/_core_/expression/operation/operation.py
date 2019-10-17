@@ -308,8 +308,8 @@ class Operation(Expression):
     
     @staticmethod
     def _formattedOperation(formatType, operatorOrOperators, operands, wrapPositions, justification, implicitFirstOperator=False, **kwargs):
-        from proveit import Iter, ExprList, compositeExpression
-        if isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprList):
+        from proveit import Iter, ExprTuple, compositeExpression
+        if isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
             operator = operatorOrOperators
             # Single operator case.
             # Different formatting when there is 0 or 1 element, unless it is an Iter

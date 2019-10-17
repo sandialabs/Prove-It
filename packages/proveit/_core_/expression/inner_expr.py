@@ -1,7 +1,7 @@
 from .expr import Expression
 from .operation import Function
 from .lambda_expr import Lambda
-from .composite import ExprList, Composite, NamedExprs, compositeExpression
+from .composite import ExprTuple, Composite, NamedExprs, compositeExpression
 from proveit._core_.defaults import USE_DEFAULTS
 import inspect
 
@@ -108,8 +108,8 @@ class InnerExpr:
         path to this item.
         '''
         curInnerExpr = self.exprHierarchy[-1]
-        if isinstance(curInnerExpr, ExprList):
-            # For an ExprList, the item key is simply the index of the sub-Expression
+        if isinstance(curInnerExpr, ExprTuple):
+            # For an ExprTuple, the item key is simply the index of the sub-Expression
             if key < 0: key = len(curInnerExpr)+key
             return InnerExpr(self.exprHierarchy[0], self.innerExprPath + (key,))
         elif isinstance(curInnerExpr, Composite):

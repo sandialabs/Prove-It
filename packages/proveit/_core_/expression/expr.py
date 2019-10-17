@@ -562,7 +562,7 @@ class Expression(metaclass=ExprType):
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         # raise _NoExpandedIteration by default.
-        # Overridden by Indexed, Operation, and ExprList.
+        # Overridden by Indexed, Operation, and ExprTuple.
         '''
         raise _NoExpandedIteration()
         

@@ -3,14 +3,14 @@ from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
 
-class ExprList(Composite, Expression):
+class ExprTuple(Composite, Expression):
     """
-    An ExprList is a composite expr composed of an ordered list of member
+    An ExprTuple is a composite expr composed of an ordered list of member
     Expressions.
     """
     def __init__(self, *expressions):
         '''
-        Initialize an ExprList from an iterable over Expression objects.
+        Initialize an ExprTuple from an iterable over Expression objects.
         '''
         from proveit._core_ import KnownTruth
         from .composite import singleOrCompositeExpression
@@ -22,28 +22,28 @@ class ExprList(Composite, Expression):
                 entry = singleOrCompositeExpression(entry)
                 assert isinstance(entry, Expression)
             except:
-                raise TypeError('ExprList must be created out of Expressions)')
+                raise TypeError('ExprTuple must be created out of Expressions)')
             entries.append(entry)
         self.entries = entries
         self._sortedCoords = []
-        Expression.__init__(self, ['ExprList'], self.entries)
+        Expression.__init__(self, ['ExprTuple'], self.entries)
         
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
-        if subClass != ExprList: 
+        if subClass != ExprTuple: 
             MakeNotImplemented(subClass)
-        if len(coreInfo) != 1 or coreInfo[0] != 'ExprList':
-            raise ValueError("Expecting ExprList coreInfo to contain exactly one item: 'ExprList'")
-        return ExprList(*subExpressions).withStyles(**styles)      
+        if len(coreInfo) != 1 or coreInfo[0] != 'ExprTuple':
+            raise ValueError("Expecting ExprTuple coreInfo to contain exactly one item: 'ExprTuple'")
+        return ExprTuple(*subExpressions).withStyles(**styles)      
 
     def remakeArguments(self):
         '''
         Yield the argument values or (name, value) pairs
-        that could be used to recreate the ExprList.
+        that could be used to recreate the ExprTuple.
         '''
         for subExpr in self.subExprIter():
             yield subExpr
-
+    
     def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         from proveit._core_.expression.expr import _NoExpandedIteration
         # Collect the iteration ranges for all of the entries.
@@ -102,7 +102,7 @@ class ExprList(Composite, Expression):
         from .composite import _simplifiedCoord
         
         if len(self)==0:
-            raise ValueError("An empty ExprList has no elements to get")
+            raise ValueError("An empty ExprTuple has no elements to get")
         
         if requirements is None:
             requirements = [] # create the requirements list, but it won't be used
@@ -119,7 +119,7 @@ class ExprList(Composite, Expression):
                         if entry_start_end_relation.operands[0] == entry.end_index:
                             if entry_start_end_relation.operator == LessEq._operator_:
                                 # We don't know if the iteration is empty.
-                                raise ExprListError("Could not determine if an Iter entry of the ExprList is empty, so we could not determine the 'index' element.")
+                                raise ExprTupleError("Could not determine if an Iter entry of the ExprTuple is empty, so we could not determine the 'index' element.")
                             # empty iteration.  skip it, but knowing it is empty is an important requirement
                             requirements.append(entry_start_end_relation) # need to know: end-of-entry < start-of-entry
                             continue
@@ -147,19 +147,19 @@ class ExprList(Composite, Expression):
                 elif index_coord_relation.operands[0] == index:
                     # 'index' is less than the 'coord' but not known to be equal to the 'coord' but also
                     # not determined to be within a previous entry.  So we simply don't know enough.
-                    raise ExprListError("Could not determine the 'index'-ed element of the ExprList")
+                    raise ExprTupleError("Could not determine the 'index'-ed element of the ExprTuple")
                 coord = _simplifiedCoord(Add(coord, one), assumptions, requirements)
         except TransitivityException:
-            raise ExprListError("Could not determine the 'index'-ed element of the ExprList.")
-        raise IndexError("Index, %s, past the range of the ExprList, %s"%(str(index), str(self)))
+            raise ExprTupleError("Could not determine the 'index'-ed element of the ExprTuple.")
+        raise IndexError("Index, %s, past the range of the ExprTuple, %s"%(str(index), str(self)))
     
     def __add__(self, other):
         '''
-        Concatenate ExprList's together via '+' just like
+        Concatenate ExprTuple's together via '+' just like
         Python lists.  Actually works with any iterable
         of Expressions as the second argument.
         '''
-        return ExprList(*(self.entries + list(other)))
+        return ExprTuple(*(self.entries + list(other)))
     
     def singular(self):
         '''
@@ -192,7 +192,7 @@ class ExprList(Composite, Expression):
         for sub_expr in self:
             if isinstance(sub_expr, Iter):
                 formatted_sub_expressions += [sub_expr.first().formatted(formatType, fence=subFence), ellipses, sub_expr.last().formatted(formatType, fence=subFence)]
-            elif isinstance(sub_expr, ExprList):
+            elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists                
                 formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=True))
             else:
@@ -209,7 +209,7 @@ class ExprList(Composite, Expression):
                 formatted_sub_expressions[wrap_position//2] = r' \\ ' + formatted_sub_expressions[wrap_position//2]
         if operatorOrOperators is None:
             operatorOrOperators = ','
-        elif isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprList):
+        elif isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
             operatorOrOperators = operatorOrOperators.formatted(formatType)
         if isinstance(operatorOrOperators, str):
             # single operator
@@ -236,7 +236,7 @@ class ExprList(Composite, Expression):
                 outStr = ' '.join(formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in zip(formatted_sub_expressions, formatted_operators))
                 outStr += ' ' + formatted_sub_expressions[-1]
             elif len(formatted_sub_expressions) != len(formatted_operators):
-                raise ValueError("May only perform ExprList formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator iterations must be in correpsondence with operand iterations.")
+                raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator iterations must be in correpsondence with operand iterations.")
         if fence:            
             outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
@@ -348,13 +348,13 @@ class ExprList(Composite, Expression):
             prev_end = entry_end
         
         if not arrived_at_end:
-            raise IndexError("ExprList index out of range")
+            raise IndexError("ExprTuple index out of range")
         
     def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
-        Flattens nested ExprLists that arise from Embed substitutions.
+        Flattens nested ExprTuples that arise from Embed substitutions.
         '''
         from .iteration import Iter
         self._checkRelabelMap(relabelMap)
@@ -363,16 +363,16 @@ class ExprList(Composite, Expression):
         subbed_exprs = []
         for expr in self:
             subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-            if isinstance(expr, Iter) and isinstance(subbed_expr, ExprList):
+            if isinstance(expr, Iter) and isinstance(subbed_expr, ExprTuple):
                 # The iterated expression is being expanded 
                 # and should be embedded into the list.
                 for iter_expr in subbed_expr:
                     subbed_exprs.append(iter_expr)
             else:
                 subbed_exprs.append(subbed_expr)
-        return ExprList(*subbed_exprs)
+        return ExprTuple(*subbed_exprs)
 
-class ExprListError(Exception):
+class ExprTupleError(Exception):
     def __init__(self, msg):
         self.msg = msg
     def __str__(self):

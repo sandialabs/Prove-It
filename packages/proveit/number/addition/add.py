@@ -419,7 +419,7 @@ class Add(Operation):
         '''
         from proveit import Variable
         from proveit.number import one, two, num, Neg, Mult, Numeral
-        from proveit import ExprList
+        from proveit import ExprTuple
         
         hold = {}
         order = []

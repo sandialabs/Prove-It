@@ -1054,7 +1054,7 @@ class ContextStorage:
         for a Literal operator.  When there are muliple items with the same name, full names 
         must be used instead of abbreviations.
         '''
-        from proveit import Operation, Expression, ExprList, NamedExprs, ExprTensor
+        from proveit import Operation, Expression, ExprTuple, NamedExprs, ExprTensor
         
         if expr in Operation.operationClassOfOperator:
             # the expression is an '_operator_' of an Operation class
@@ -1081,7 +1081,7 @@ class ContextStorage:
         if unnamedSubExprOccurences[(expr, expr._style_id)] > 1:
             return # already visited this -- no need to reprocess it
         
-        if not isSubExpr or expr.__class__ not in (ExprList, NamedExprs, ExprTensor): 
+        if not isSubExpr or expr.__class__ not in (ExprTuple, NamedExprs, ExprTensor): 
             # add expr's class to exprClass and named items (unless it is a basic Composite sub-Expression
             # in which case we'll use a python list or dictionary to represent the composite expression).
             exprClassesAndConstructors.add((expr.__class__, expr.remakeConstructor()))
@@ -1131,7 +1131,7 @@ class ContextStorage:
         return '.'.join(split_module_name)
     
     def _exprBuildingCode(self, expr, itemNames, isSubExpr=True):
-        from proveit import Expression, Composite, ExprList, NamedExprs, ExprTensor
+        from proveit import Expression, Composite, ExprTuple, NamedExprs, ExprTensor
                 
         if expr is None: return 'None' # special 'None' case
         
@@ -1174,18 +1174,18 @@ class ContextStorage:
         if len(withStyleCalls)>0: withStyleCalls = '.' + withStyleCalls
 
         if isinstance(expr, Composite):
-            if isinstance(expr, ExprList):
+            if isinstance(expr, ExprTuple):
                 compositeStr = argStr
             elif isinstance(expr, ExprTensor):
                 compositeStr = '{' + argStr.replace(' = ', ':') + '}'                
             else:
                 assert isinstance(expr, NamedExprs)
                 compositeStr = '[' + argStr.replace(' = ', ':') + ']' # list of (name, value) tuples                
-            if isSubExpr and expr.__class__ in (ExprList, NamedExprs, ExprTensor): 
+            if isSubExpr and expr.__class__ in (ExprTuple, NamedExprs, ExprTensor): 
                 # It is a sub-Expression and a standard composite class.
                 # Just pass it in as an implicit composite expression (a list or dictionary).
                 # The constructor should be equipped to handle it appropriately.
-                return '[' + compositeStr + ']' if expr.__class__==ExprList else compositeStr
+                return '[' + compositeStr + ']' if expr.__class__==ExprTuple else compositeStr
             else:
                 return get_constructor() + '(' + compositeStr + ')' + withStyleCalls
         else:

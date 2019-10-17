@@ -37,7 +37,7 @@ class Lambda(Expression):
         Each parameter must be a Variable.
         When there is a single parameter, there will be a 'parameter'
         attribute. Either way, there will be a 'parameters' attribute
-        that bundles the one or more Variables into an ExprList.
+        that bundles the one or more Variables into an ExprTuple.
         The 'body' attribute will be the lambda function body
         Expression (that may or may not be a Composite).  Zero or
         more expressions may be provided.
@@ -60,7 +60,7 @@ class Lambda(Expression):
         if not isinstance(body, Expression):
             raise TypeError('A Lambda body must be of type Expression')
         if isinstance(body, Iter):
-            raise TypeError('An Iter must be within an ExprList or ExprTensor, not directly as a Lambda body')
+            raise TypeError('An Iter must be within an ExprTuple or ExprTensor, not directly as a Lambda body')
         self.body = body
         self.conditions = compositeExpression(conditions)
         for requirement in self.body.getRequirements():
@@ -215,7 +215,7 @@ class Lambda(Expression):
         scope properly as well as parameter relabeling (or iterated parameter expansion).
         '''
         
-        from proveit import compositeExpression, Iter, ExprList
+        from proveit import compositeExpression, Iter, ExprTuple
         
         # Can't substitute the lambda parameter variables; they are in a new scope.
         inner_expr_map = {key:value for (key, value) in exprMap.items() if key not in self.parameterVarSet}
@@ -232,7 +232,7 @@ class Lambda(Expression):
             if parameterVar in relabelMap:
                 if isinstance(parameter, Iter):
                     relabeledParams = parameter.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-                    if isinstance(relabeledParams, ExprList):
+                    if isinstance(relabeledParams, ExprTuple):
                         # expanding an iteration.  For example: x_1, ..., x_n -> a, b, c, d 
                         if len(relabeledParams) != len(relabelMap[parameterVar]):
                             raise ImproperSubstitution("Relabeling of iterated parameters incomplete: %d length expansion versus %d length substitution"%(len(relabeledParams), len(relabelMap[parameterVar])))
