@@ -3,7 +3,9 @@ from proveit._common_ import x, S
 
 class NotInSet(Operation):
     # operator of the NotInSet operation
-    _operator_ = Literal(stringFormat='not-in', latexFormat=r'\notin', context=__file__)    
+    _operator_ = Literal(stringFormat='not-in',
+                         latexFormat=r'\notin',
+                         context=__file__)    
     
     def __init__(self, element, domain):
         Operation.__init__(self, NotInSet._operator_, (element, domain))
@@ -98,8 +100,8 @@ class NotInSet(Operation):
         equiv = self.nonmembershipObject.equivalence(assumptions)
         val = equiv.evaluation(assumptions).rhs
         evaluation = Equals(equiv, val).prove(assumptions=assumptions)
-        # try also to evaluate this by deducing membership or non-membership in case it 
-        # generates a shorter proof.
+        # try also to evaluate this by deducing membership or non-membership
+        # in case it generates a shorter proof.
         try:
             if evaluation.rhs == TRUE:
                 if hasattr(self, 'nonmembershipObject'):

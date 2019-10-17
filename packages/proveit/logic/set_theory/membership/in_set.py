@@ -2,9 +2,12 @@ from proveit import Literal, Operation, USE_DEFAULTS
 
 class InSet(Operation):
     # operator of the InSet operation
-    _operator_ = Literal(stringFormat='in', latexFormat=r'\in', context=__file__)    
+    _operator_ = Literal(stringFormat='in',
+                         latexFormat=r'\in',
+                         context=__file__)    
     
-    # maps elements to InSet KnownTruths.  For exmple, map x to (x in S) if (x in S) is a KnownTruth.
+    # maps elements to InSet KnownTruths.
+    # For exmple, map x to (x in S) if (x in S) is a KnownTruth.
     knownMemberships = dict()
         
     def __init__(self, element, domain):
@@ -88,7 +91,8 @@ class InSet(Operation):
                         return subsetRelation.deriveSupsersetMembership(self.element, assumptions=assumptions)
                     except ProofFailure:
                         pass # no luck, keep trying
-        # could not prove it through a subset relationship, now try to use a MembershipObject
+        # could not prove it through a subset relationship,
+        # now try to use a MembershipObject
         if hasattr(self, 'membershipObject'):
             return self.membershipObject.conclude(assumptions)
               
@@ -103,8 +107,8 @@ class InSet(Operation):
         equiv = self.membershipObject.equivalence(assumptions)
         val = equiv.evaluation(assumptions).rhs
         evaluation = Equals(equiv, val).prove(assumptions=assumptions)
-        # try also to evaluate this by deducing membership or non-membership in case it 
-        # generates a shorter proof.
+        # try also to evaluate this by deducing membership
+        # or non-membership in case it generates a shorter proof.
         try:
             if evaluation.rhs == TRUE:
                 if hasattr(self, 'membershipObject'):
