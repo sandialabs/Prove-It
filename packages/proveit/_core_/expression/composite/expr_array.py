@@ -1,5 +1,5 @@
 from .composite import Composite
-from .expr_list import ExprTuple
+from .expr_tuple import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from .iteration import Iter
@@ -654,19 +654,19 @@ class ExprArray(Composite, Expression):
                     tensor[net_loc] = subbed_elem
             else:
                 tensor[subbed_loc] = subbed_elem
-        expr_tensor = ExprArray(tensor, assumptions)
-        expr_tensor_requirements = expr_tensor.getRequirements()
-        for requirement in expr_tensor_requirements:
+        expr_array = ExprArray(tensor, assumptions)
+        expr_array_requirements = expr_array.getRequirements()
+        for requirement in expr_array_requirements:
             # check that all ExprArray requirements satisfy restrictions
             requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope
         
         # pass back the new requirements that are different from the ExprArray requirements after making substitutions.
         old_requirements = {requirement.substituted(exprMap, relabelMap, reservedVars) for requirement in self.getRequirements()}
-        new_requirements = [requirement for requirement in expr_tensor_requirements if requirement not in old_requirements]
+        new_requirements = [requirement for requirement in expr_array_requirements if requirement not in old_requirements]
             
         requirements += new_requirements
         
-        return expr_tensor
+        return expr_array
                            
     def usedVars(self):
         '''

@@ -33,9 +33,9 @@ def compositeExpression(expressions):
     A single expr or iterable over only Expressions will be wrapped 
     in an exprlist.
     '''
-    from .expr_list import ExprTuple
+    from .expr_tuple import ExprTuple
     from .named_exprs import NamedExprs
-    from .expr_tensor import ExprArray
+    from .expr_array import ExprArray
     from proveit._core_.known_truth import KnownTruth
     
     if isinstance(expressions, KnownTruth):

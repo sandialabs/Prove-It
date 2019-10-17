@@ -71,8 +71,8 @@ class Indexed(Expression):
         '''
         from .composite import Composite, _simplifiedCoord
         from proveit.number import num, subtract, isLiteralInt
-        from .expr_list import ExprTuple
-        from .expr_tensor import ExprArray
+        from .expr_tuple import ExprTuple
+        from .expr_array import ExprArray
         
         self._checkRelabelMap(relabelMap)
         
@@ -121,7 +121,7 @@ class Indexed(Expression):
         a composite, no range is yielded.
         '''
         from .composite import Composite, IndexingError, compositeExpression
-        from .expr_list import ExprTuple
+        from .expr_tuple import ExprTuple
         from proveit.logic import Equals
         from proveit._core_.expression.expr import _NoExpandedIteration
         
