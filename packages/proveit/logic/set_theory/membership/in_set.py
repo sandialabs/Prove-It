@@ -59,6 +59,15 @@ class InSet(Operation):
         from .not_in_set import NotInSet
         yield NotInSet(self.element, self.domain).concludeAsFolded(assumptions)
 
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this membership statement is in the set of
+        Booleans (i.e. membership is True or False).
+        '''
+        from ._axioms_ import membershipInBool
+        from proveit._common_ import x, S
+        return membershipInBool.specialize({x:self.element, S:self.domain})
+
     def conclude(self, assumptions):
         '''
         Attempt to conclude that the element is in the domain.
