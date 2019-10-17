@@ -152,25 +152,23 @@ class Add(Operation):
         each term.
         '''
         #print("equality side Effects on", self)
-        from proveit.number import Neg, zero
-        if isinstance(self.operands[0], Neg):
-            # print("there is a neg:", self)
-            return
-        if len(self.operands) > 1:
-            if isinstance(self.operands[1], Neg):
-                # print("there is a neg:", self)
-                return
+        from proveit.number import Neg
         addition = knownTruth.lhs
         if not isinstance(addition, Add):
             raise ValueError("Expecting lhs of knownTruth to be of an Add expression")
+        
         for term in addition.terms:
             # print("adding known equalities:", term)
             Add.knownEqualities.setdefault(term, set()).add(knownTruth)
 
         if len(addition.terms)==2:
+            # deduce the commutation form: b+a=c from a+b=c
+            yield (lambda assumptions : knownTruth.innerExpr().lhs.commute(0, 1, assumptions))
+
             # deduce the subtraction form: c-b=a from a+b=c
             # print("deducing subtraction terms:", self)
-            yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
+            if all(not isinstance(term, Neg) for term in addition.terms):
+                yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))            
         
 
     def deduceStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
