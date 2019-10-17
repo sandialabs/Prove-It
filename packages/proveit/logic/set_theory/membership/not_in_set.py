@@ -56,7 +56,11 @@ class NotInSet(Operation):
         PERHAPS MEMBERSHIP/NON-MEMBERSHIP SHOULD ALWAYS BE IN BOOLEAN, THOUGH
         ILL-DEFINED DOMAINS CAN NEVER HAVE MEMBERSHIP TO BE TRUE -- REVISIT.
         '''
-        self.domain.deduceNotInSetIsBool(self.element)
+        # self.domain.deduceNotInSetIsBool(self.element)
+        # replaced by wdc 10/16/2019
+        from ._theorems_ import notInSetInBool
+        from proveit._common_ import x, S
+        return notInSetInBool.specialize({x:self.element, S:self.domain})
         
     def unfoldNotIn(self, assumptions=USE_DEFAULTS):
         '''
