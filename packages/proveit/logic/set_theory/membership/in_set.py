@@ -67,9 +67,9 @@ class InSet(Operation):
         Deduce and return that this membership statement is in the set of
         Booleans (i.e. membership is True or False).
         '''
-        from ._axioms_ import membershipInBool
-        from proveit._common_ import x, S
-        return membershipInBool.specialize({x:self.element, S:self.domain})
+        if hasattr(self, 'membershipObject'):
+            return self.membershipObject.deduceInBool()
+        raise AttributeError
 
     def conclude(self, assumptions):
         '''
@@ -137,4 +137,7 @@ class Membership:
     
     def equivalence(self):
         raise NotImplementedError("Membership object, %s, has no 'equivalence' method implemented"%str(self.__class__))
+
+    def deduceInBool(self):
+        raise NotImplementedError("Membership object, %s, has no 'deduceInBool' method implemented"%str(self.__class__))
 
