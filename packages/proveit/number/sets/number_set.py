@@ -28,3 +28,6 @@ class NumberMembership(Membership):
             return self.element.deduceInNumberSet(self.number_set, assumptions=assumptions)
         raise ProofFailure(InSet(self.element, self.number_set), assumptions, str(self.element) + " has no 'deduceInNumberSet' method.")
 
+    def deduceInBool(self):
+        return self.number_set.deduceMembershipInBool(self.element)
+
