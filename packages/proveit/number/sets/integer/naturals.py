@@ -35,6 +35,11 @@ class NaturalsPosSet(NumberSet):
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
 
+    def deduceMembershipInBool(self, member):
+        from ._theorems_ import xInNatsPosInBool
+        from proveit._common_ import x
+        return xInNatsPosInBool.specialize({x:member})
+
 try:
     # Import some fundamental axioms and theorems without quantifiers.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.

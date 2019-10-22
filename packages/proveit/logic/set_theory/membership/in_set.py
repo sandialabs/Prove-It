@@ -124,7 +124,7 @@ class InSet(Operation):
 class Membership:
     def __init__(self, element):    
         '''
-        Base class for any 'membership object' return by a domain's
+        Base class for any 'membership object' returned by a domain's
         'membershipObject' method.
         '''
         self.element = element

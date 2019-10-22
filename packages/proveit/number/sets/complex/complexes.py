@@ -13,6 +13,11 @@ class ComplexSet(NumberSet):
     def deduceNotInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from .theorems import notInComplexesIsBool
         return notInComplexesIsBool.specialize({a:element}, assumptions)
+
+    def deduceMembershipInBool(self, member):
+        from ._theorems_ import xInComplexesInBool
+        from proveit._common_ import x
+        return xInComplexesInBool.specialize({x:member})
     
 
 try:

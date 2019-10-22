@@ -13,3 +13,8 @@ class IntegerSet(NumberSet):
     def deduceNotInSetIsBool(self, element, assumptions=USE_DEFAULTS):
         from ._theorems_ import notInIntsIsBool
         return notInIntsIsBool.specialize({a:element}, assumptions=assumptions)
+
+    def deduceMembershipInBool(self, member):
+        from ._theorems_ import xInIntsInBool
+        from proveit._common_ import x
+        return xInIntsInBool.specialize({x:member})
