@@ -131,3 +131,6 @@ class Nonmembership:
     def equivalence(self):
         raise NotImplementedError("Nonmembership object has no 'equivalence' method implemented")
 
+    def deduceInBool():
+        raise NotImplementedError("Nonmembership object has no 'deduceInBool' method implemented")
+
