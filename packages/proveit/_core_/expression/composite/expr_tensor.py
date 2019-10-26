@@ -44,7 +44,7 @@ class ExprTensor(Composite, Expression):
     or other axioms).
     '''
     
-    def __init__(self, tensor, shape=None, styles=dict(), assumptions=USE_DEFAULTS, requirements=tuple()):
+    def __init__(self, tensor, shape=None, styles=None, assumptions=USE_DEFAULTS, requirements=tuple()):
         '''
         Create an ExprTensor either with a simple, dense tensor (list of lists ... of lists) or
         with a dictionary mapping coordinates (as tuples of expressions that represent integers) 
@@ -54,7 +54,7 @@ class ExprTensor(Composite, Expression):
         '''
         from .composite import _simplifiedCoord
         from proveit._core_ import KnownTruth
-        from proveit.number import Less, Greater, zero, one, num, Add, Subtract
+        from proveit.number import Less, Greater, zero, one, num, Add, subtract
         
         assumptions = defaults.checkedAssumptions(assumptions)
         requirements = []                
@@ -91,7 +91,7 @@ class ExprTensor(Composite, Expression):
                 if isinstance(element, Iter):
                     # Add (end-start)+1 of the Iter to get to the end
                     # location of the entry along this axis. 
-                    orig_end_coord = Add(coord, Subtract(element.end_indices[axis], element.start_indices[axis]), one)
+                    orig_end_coord = Add(coord, subtract(element.end_indices[axis], element.start_indices[axis]), one)
                     end_coord = _simplifiedCoord(orig_end_coord, assumptions, requirements)
                     self.endCoordSimplifications[orig_end_coord] = end_coord
                     coord_sets[axis].add(end_coord)
@@ -128,7 +128,7 @@ class ExprTensor(Composite, Expression):
             # These may be used in generating the latex form of the ExprTensor.
             diff_relations = []
             for c1, c2 in zip(sorted_coords[:-1], sorted_coords[1:]):
-                diff = _simplifiedCoord(Subtract(c2, c1), assumptions, requirements)
+                diff = _simplifiedCoord(subtract(c2, c1), assumptions, requirements)
                 # get the relationship between the difference of successive coordinate and zero.
                 diff_relation = Greater.sort([zero, diff], assumptions=assumptions)
                 if isinstance(diff_relation, Greater):
@@ -188,7 +188,7 @@ class ExprTensor(Composite, Expression):
         '''
         from proveit._core_ import KnownTruth        
         from .composite import _simplifiedCoord
-        from proveit.number import zero, one, Add, Subtract
+        from proveit.number import zero, one, Add, subtract
         try:
             coord = zero
             for entry in tensor:
@@ -205,7 +205,7 @@ class ExprTensor(Composite, Expression):
                     yield loc, entry # yield the location and element
                     if isinstance(entry, Iter):
                         # skip the coordinate ahead over the Embed expression
-                        coord = Add(coord, Subtract(entry.end_indices[0], entry.start_indices[0]), one)
+                        coord = Add(coord, subtract(entry.end_indices[0], entry.start_indices[0]), one)
                     else:
                         coord = Add(coord, one) # shift the coordinate ahead by one
                 else:
@@ -227,7 +227,7 @@ class ExprTensor(Composite, Expression):
         Raise an ExprTensorError if there are overlapping entries.
         '''
         from .iteration import Iter
-        from proveit.number import Add, Subtract, one
+        from proveit.number import Add, subtract, one
         
         # Create the entry_origins dictionary and check for invalid
         # overlapping entries while we are at it.
@@ -240,7 +240,7 @@ class ExprTensor(Composite, Expression):
                 # corner location at the end of the Embed block:
                 end_corner = []
                 for axis, coord in enumerate(loc):
-                    end_coord = Add(coord, Subtract(entry.end_indices[axis], entry.start_indices[axis]), one)
+                    end_coord = Add(coord, subtract(entry.end_indices[axis], entry.start_indices[axis]), one)
                     end_corner.append(self.endCoordSimplifications[end_coord])
                 
                 # translate the end corner location to the corresponding relative indices
@@ -342,7 +342,7 @@ class ExprTensor(Composite, Expression):
         simply tensor_entry_loc; that is, the start and the 
         end are the same for single-element entries.
         '''
-        from proveit.number import one, Add, Subtract
+        from proveit.number import one, Add, subtract
         from .iteration import Iter
         entry = self[self.relEntryLoc(tensor_entry_loc)]
         if isinstance(entry, Iter):
@@ -350,7 +350,7 @@ class ExprTensor(Composite, Expression):
             for axis, coord in enumerate(tensor_entry_loc):
                 # Add (end-start)+1 of the Iter to get to the end
                 # location of the entry along this axis. 
-                orig_end_coord = Add(coord, Subtract(entry.end_indices[axis], entry.start_indices[axis]), one)
+                orig_end_coord = Add(coord, subtract(entry.end_indices[axis], entry.start_indices[axis]), one)
                 end_corner.append(self.endCoordSimplifications[orig_end_coord]) # use the simplified version
             return end_corner # absolute end-corner for the tensor entry
         return tensor_entry_loc # single-element entry
@@ -372,7 +372,7 @@ class ExprTensor(Composite, Expression):
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
         '''
-        from proveit.number import num, Less, Add, Subtract
+        from proveit.number import num, Less, Add, subtract
         from .iteration import Iter
         from .composite import _simplifiedCoord
         if len(indices) != self.ndims:
@@ -382,7 +382,7 @@ class ExprTensor(Composite, Expression):
 
         if base != 0: 
             # subtract off the base if it is not zero
-            indices = [Subtract(index, num(self.base)) for index in indices]
+            indices = [subtract(index, num(self.base)) for index in indices]
         tensor_loc = [_simplifiedCoord(index, assumptions, requirements) for index in indices]
 
         lower_indices = []
@@ -411,7 +411,7 @@ class ExprTensor(Composite, Expression):
             # indexing into an iteration
             entry_origin = self.tensorLoc(rel_entry_origin)
             iter_start_indices = entry.start_indices
-            iter_loc = [Add(iter_start, Subtract(coord, origin)) for iter_start, coord, origin in zip(iter_start_indices, tensor_loc, entry_origin)] 
+            iter_loc = [Add(iter_start, subtract(coord, origin)) for iter_start, coord, origin in zip(iter_start_indices, tensor_loc, entry_origin)] 
             simplified_iter_loc = [_simplifiedCoord(coord, assumptions, requirements) for coord in iter_loc]
             return entry.getInstance(simplified_iter_loc, assumptions=assumptions, requirements=requirements)
         else:
@@ -637,7 +637,7 @@ class ExprTensor(Composite, Expression):
         from .iteration import Iter
         from proveit.number import Add
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
 
         if requirements is None: requirements = [] # requirements won't be passed back in this case

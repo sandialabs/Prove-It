@@ -90,7 +90,19 @@ class Less(LesserRelation):
         from ._theorems_ import relaxLessThan
         return relaxLessThan.specialize({a:self.lhs, b:self.rhs}, assumptions=assumptions)
     """
-        
+
+    def deduceDecAdd(self, assumptions=USE_DEFAULTS):
+        '''
+        created by JML 7/17/19
+        if self.lhs is addition, deduce strictly increasing addition
+        '''
+        from proveit.number import Add
+
+        if isinstance(self.lhs,Add):
+            return self.lhs.deduceStrictDecAdd(self.rhs, assumptions)
+        else:
+            raise ValueError("expected self.lhs to be addition")
+
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this x<y expression 

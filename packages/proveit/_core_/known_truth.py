@@ -166,7 +166,7 @@ class KnownTruth:
         objIds =  re.split(";|\[|,|\]",unique_rep)
         return [objId for objId in objIds if len(objId) > 0]           
                 
-    def deriveSideEffects(self):
+    def deriveSideEffects(self, assumptions):
         '''
         Derive any side-effects that are obvious consequences arising from this truth.
         Called after the corresponding Proof is complete.
@@ -174,6 +174,11 @@ class KnownTruth:
         from .proof import ProofFailure
         if not defaults.automation:
             return # automation disabled
+        # Sort the assumptions according to hash key so that sets of assumptions
+        # are unique for determining which side-effects have been processed already.
+        sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
+        if (self.expr, sorted_assumptions) in KnownTruth.sideeffect_processed:
+            return # has already been processed
         if self not in KnownTruth.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using in_progress_to_deduce_sideeffects
             KnownTruth.in_progress_to_derive_sideeffects.add(self)
@@ -184,14 +189,14 @@ class KnownTruth:
                     try:
                         # use the default assumptions which are temporarily set to the
                         # assumptions utilized in the last derivation step.
-                        sideEffect(assumptions=defaults.assumptions)     
+                        sideEffect(assumptions=assumptions)     
                     except ProofFailure:
                         pass
                     except Exception as e:
-                        raise Exception("Side effect failure for %s: "%str(self.expr) + str(e))
+                        raise Exception("Side effect failure for %s, while running %s: "%(str(self.expr), str(sideEffect)) + str(e))
             finally:
                 KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
-            KnownTruth.sideeffect_processed.add((self, defaults.assumptions))
+            KnownTruth.sideeffect_processed.add((self.expr, sorted_assumptions))
 
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
@@ -842,8 +847,21 @@ class KnownTruth:
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
         if len(self.assumptions) > 0:
             assumptionsStr = ExprList(*self.assumptions).formatted('string', fence=False)
-            return r'{' +assumptionsStr + r'} |= ' + self.expr.string()
-        return r'|= ' + self.expr.string()
+            return r'{' +assumptionsStr + r'} |- ' + self.expr.string()
+        return r'|- ' + self.expr.string()
+
+    def latex(self, performUsabilityCheck=True):
+        '''
+        If the KnownTruth was proven under any assumptions, display the 
+        double-turnstyle notation to show that the set of assumptions proves
+        the statement/expression.  Otherwise, simply display the expression.
+        '''
+        from proveit import ExprList
+        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
+        if len(self.assumptions) > 0:
+            assumptionsLatex = ExprList(*self.assumptions).formatted('latex', fence=False)
+            return r'{' +assumptionsLatex + r'} \vdash ' + self.expr.latex()
+        return r'\vdash ' + self.expr.string()
 
     def __str__(self):
         '''

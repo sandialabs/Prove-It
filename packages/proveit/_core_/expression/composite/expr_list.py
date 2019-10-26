@@ -95,7 +95,7 @@ class ExprList(Composite, Expression):
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
         '''
-        from proveit.number import num, one, lesserSequence, Less, LessEq, Add, Subtract
+        from proveit.number import num, one, lesserSequence, Less, LessEq, Add, subtract
         from proveit.logic import Equals
         from proveit.relation import TransitivityException
         from .iteration import Iter
@@ -124,7 +124,7 @@ class ExprList(Composite, Expression):
                             requirements.append(entry_start_end_relation) # need to know: end-of-entry < start-of-entry
                             continue
                     # shift 'coord' to the end of the entry
-                    next_coord = _simplifiedCoord(Add(coord, Subtract(entry.end_index, entry.start_index)), assumptions, requirements)
+                    next_coord = _simplifiedCoord(Add(coord, subtract(entry.end_index, entry.start_index)), assumptions, requirements)
                     # check whether or not the 'index' is within this entry.
                     index_entryend_relation = Less.sort([index, next_coord], assumptions=assumptions)
                     if index_entryend_relation.operands[0] == index:
@@ -134,7 +134,7 @@ class ExprList(Composite, Expression):
                         if index==entry_origin:
                             # special case - index at the entry origin
                             return entry.getInstance(iter_start_index, assumptions=assumptions, requirements=requirements)
-                        iter_loc = Add(iter_start_index, Subtract(index, entry_origin))
+                        iter_loc = Add(iter_start_index, subtract(index, entry_origin))
                         simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, requirements)
                         return entry.getInstance(simplified_iter_loc, assumptions=assumptions, requirements=requirements)
                     coord = next_coord
@@ -169,8 +169,11 @@ class ExprList(Composite, Expression):
         from .iteration import Iter
         return len(self)==1 and not isinstance(self[0], Iter)
     
-    def index(self, entry):
-        return self.entries.index(entry)
+    def index(self, entry, start=0, stop=None):
+        if stop is None:
+            return self.entries.index(entry, start)
+        else:
+            return self.entries.index(entry, start, stop)
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -178,14 +181,12 @@ class ExprList(Composite, Expression):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=True, subFence=False, formattedOperator=None, wrapPositions=tuple()):
+    def formatted(self, formatType, fence=True, subFence=False, operatorOrOperators=None, implicitFirstOperator=False, wrapPositions=tuple()):
         from .iteration import Iter
         outStr = ''
         if len(self) == 0 and fence: 
             # for an empty list, show the parenthesis to show something.            
             return '()'
-        if formattedOperator is None:
-            formattedOperator = ',' # comma is the default formatted operator
         ellipses = r'\ldots' if formatType=='latex' else ' ... '
         formatted_sub_expressions = []
         for sub_expr in self:
@@ -206,11 +207,40 @@ class ExprList(Composite, Expression):
             else:
                 # wrap after operation (before next operand)
                 formatted_sub_expressions[wrap_position//2] = r' \\ ' + formatted_sub_expressions[wrap_position//2]
-        outStr += (' '+formattedOperator+' ').join(formatted_sub_expressions)
+        if operatorOrOperators is None:
+            operatorOrOperators = ','
+        elif isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprList):
+            operatorOrOperators = operatorOrOperators.formatted(formatType)
+        if isinstance(operatorOrOperators, str):
+            # single operator
+            formatted_operator = operatorOrOperators
+            outStr += (' '+formatted_operator+' ').join(formatted_sub_expressions)
+        else:
+            # assume all different operators
+            formatted_operators = []
+            for operator in operatorOrOperators:
+                if isinstance(operator, Iter):
+                    formatted_operators += [operator.first().formatted(formatType), '', operator.last().formatted(formatType)]
+                else:
+                    formatted_operators.append(operator.formatted(formatType))
+            if len(formatted_sub_expressions) == len(formatted_operators):
+                # operator preceeds each operand
+                if implicitFirstOperator:
+                    outStr = formatted_sub_expressions[0] # first operator is implicit
+                else:
+                    outStr = formatted_operators[0] + formatted_sub_expressions[0] # no space after first operator
+                outStr += ' ' # space before next operator
+                outStr += ' '.join(formatted_operator + ' ' + formatted_operand for formatted_operator, formatted_operand in zip(formatted_operators[1:], formatted_sub_expressions[1:]))
+            elif len(formatted_sub_expressions) == len(formatted_operators)+1:
+                # operator between each operand
+                outStr = ' '.join(formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in zip(formatted_sub_expressions, formatted_operators))
+                outStr += ' ' + formatted_sub_expressions[-1]
+            elif len(formatted_sub_expressions) != len(formatted_operators):
+                raise ValueError("May only perform ExprList formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator iterations must be in correpsondence with operand iterations.")
         if fence:            
             outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
-    
+        
     def entryRanges(self, base, start_index, end_index, assumptions, requirements):
         '''
         For each entry of the list that is fully or partially contained in the window defined
@@ -218,7 +248,7 @@ class ExprList(Composite, Expression):
         against list indices), yield the start and end of the intersection of the
         entry range and the window.
         '''
-        from proveit.number import one, num, Add, Subtract, Less
+        from proveit.number import one, num, Add, subtract, Less
         from proveit.logic import Equals
         from .iteration import Iter
         from proveit import ProofFailure
@@ -270,7 +300,7 @@ class ExprList(Composite, Expression):
             # (entry_end+1). 
             entry_end = index # unless it is an Iter:
             if isinstance(entry, Iter):
-                entry_span = Subtract(entry.end_index, entry.start_index)
+                entry_span = subtract(entry.end_index, entry.start_index)
                 entry_end =  _simplifiedCoord(Add(index, entry_span), assumptions, requirements)
             
             if index==end_index:
@@ -328,7 +358,7 @@ class ExprList(Composite, Expression):
         '''
         from .iteration import Iter
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         subbed_exprs = []
         for expr in self:

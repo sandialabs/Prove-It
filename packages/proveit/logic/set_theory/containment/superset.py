@@ -70,17 +70,16 @@ class Superset(SupersetRelation):
         and something of the form B supseteq C, B supset C, or B=C to 
         obtain A supset B as appropriate.
         '''
-        from proveit.logic import Equals
+        from proveit.logic import Equals, Subset, SubsetEq
         from ._theorems_ import transitivitySupsetSupset, transitivitySupsetSupsetEq
-        from .superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
-        if isinstance(other,Subset) or isinstance(other,SubsetEq):
-            other = other.deriveReversed(assumptions)
-        elif other.lhs == self.rhs:
+        #if isinstance(other,Subset) or isinstance(other,SubsetEq):
+         #   other = other.deriveReversed(assumptions)
+        if other.lhs == self.rhs:
             if isinstance(other,Superset):
                 result = transitivitySupsetSupset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
-                return result.checked({self})
+                return result#.checked({self})
             elif isinstance(other,SupersetEq):
                 result = transitivitySupsetSupsetEq.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
                 return result
@@ -114,20 +113,24 @@ class SupersetEq(SupersetRelation):
         '''
         from ._theorems_ import reverseSupsetEq
         return reverseSupsetEq.specialize({A:self.superset, B:self.subset}, assumptions=assumptions)
-        
+
     def conclude(self, assumptions):
         from ._theorems_ import supersetEqViaEquality
         from proveit import ProofFailure
+        from proveit.logic import Equals
         
         try:
             # first attempt a transitivity search
             return ContainmentRelation.conclude(self, assumptions)
         except ProofFailure:
             pass # transitivity search failed
-        
-        # any set is a superset of itself
-        if self.operands[0] == self.operands[1]:
-            return supersetEqViaEquality.specialize({A:self.operands[0], B:self.operands[1]})
+
+        # Any set contains itself
+        try:
+            Equals(self.operands[0], self.operands[1]).prove(assumptions, automation=False)
+            return supersetEqViaEquality.specialize({A: self.operands[0], B: self.operands[1]})
+        except ProofFailure:
+            pass
 
         # Finally, attempt to conclude A supseteq B via forall_{x in B} x in A.
         return self.concludeAsFolded(elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
@@ -194,6 +197,8 @@ class NotSupersetEq(Operation):
     
     def deriveSideEffects(self, knownTruth):
         self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
+
+
 
     def conclude(self, assumptions):
         return self.concludeAsFolded(assumptions)

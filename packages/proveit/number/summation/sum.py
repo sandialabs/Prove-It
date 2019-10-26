@@ -12,7 +12,7 @@ class Sum(OperationOverInstances):
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):
 #
-    def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple(), styles=dict()):
+    def __init__(self, indexOrIndices, summand, domain=None, domains=None, conditions=tuple()):
         r'''
         Sum summand over indices over domains.
         Arguments serve analogous roles to Forall arguments (found in basiclogic/booleans):
@@ -22,7 +22,7 @@ class Sum(OperationOverInstances):
         '''
         # nestMultiIvars=True will cause it to treat multiple instance variables as nested Sum operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True, styles=styles)
+        OperationOverInstances.__init__(self, Sum._operator_, indexOrIndices, summand, domain=domain, domains=domains, conditions=conditions, nestMultiIvars=True)
         if hasattr(self, 'instanceVar'):
             self.index = self.instanceVar
         if hasattr(self, 'instanceVars'):
@@ -79,7 +79,7 @@ class Sum(OperationOverInstances):
         else:
             return OperationOverInstances._formatted(self, formatType, fence)
 
-    def simplification(self, assumptions=frozenset()):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
         For the trivial case of summing over only one item (currently implemented just
         for a Interval where the endpoints are equal),
@@ -87,12 +87,12 @@ class Sum(OperationOverInstances):
         the single term.
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
+        from proveit.logic import SimplificationError
         from axioms import sumSingle
         if isinstance(self.domain, Interval) and self.domain.lowerBound == self.domain.upperBound:
             if len(self.instanceVars) == 1:
-                deduceInIntegers(self.domain.lowerBound, assumptions)
                 return sumSingle.specialize({Operation(f, self.instanceVars):self.summand}).specialize({a:self.domain.lowerBound})
-        raise Exception("Sum simplification only implemented for a summation over a Interval of one instance variable where the upper and lower bound is the same")
+        raise SimplificationError("Sum simplification only implemented for a summation over a Interval of one instance variable where the upper and lower bound is the same")
 
     def simplified(self, assumptions=frozenset()):
         '''

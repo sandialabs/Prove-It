@@ -86,13 +86,19 @@ class TransitiveRelation(Operation):
     def _checkedWeakRelationClass(RelationClass):
         from proveit.logic import Equals
         if RelationClass==Equals: return Equals # ("equal to" or "equal to" is just "equal to")
-        Relation = RelationClass.WeakRelationClass()
+        try:
+            Relation = RelationClass.WeakRelationClass()
+        except NotImplementedError:
+            raise NotImplementedError("The Expression class for the weak form %s (that include equality as a possibility) should be returned"%str(RelationClass))
         assert issubclass(Relation, TransitiveRelation), "WeakRelationClass() should return a sub-class of TransitiveRelation"
         return Relation
 
     @classmethod
     def _checkedStrongRelationClass(RelationClass):
-        Relation = RelationClass.StrongRelationClass()
+        try:
+            Relation = RelationClass.StrongRelationClass()
+        except NotImplementedError:
+            raise NotImplementedError("The Expression class for the strong form %s (that excludes equality as a possibility) should be returned"%str(RelationClass))            
         assert issubclass(Relation, TransitiveRelation), "StrongRelationClass() should return a sub-class of TransitiveRelation"
         return Relation
 
@@ -115,7 +121,14 @@ class TransitiveRelation(Operation):
     
     @classmethod
     def sort(RelationClass, items, reorder=True, assumptions=USE_DEFAULTS):
+        from proveit.number import isLiteralInt
         assumptions = defaults.checkedAssumptions(assumptions)
+        if all(isLiteralInt(item) for item in items):
+            # All the items are integers.  Use efficient n log(n) sorting to
+            # get them in the proper order and then use fixedTransitivitySort
+            # to efficiently prove this order.
+            items = sorted(items, key = lambda item : item.asInt())
+            reorder = False 
         if reorder:
             return RelationClass._transitivitySort(items, assumptions=assumptions)
         else:
@@ -228,7 +241,32 @@ class TransitiveRelation(Operation):
         form as can be determined) is returned; otherwise a TransitivityException is raised.
         If forceStrong is True, only the strong form of the relation is accepted. 
         '''
+        from proveit.logic import Equals
+        
         assumptions_set = set(assumptions)
+        
+        #  Check if the relation is already known directly:
+        try:
+            # Try the strong relation first.
+            StrongClass = RelationClass._checkedStrongRelationClass()
+            return StrongClass(leftItem, rightItem).prove(automation=False, assumptions=assumptions)
+        except (ProofFailure, NotImplementedError):
+            # Try the weak relation, or equality, if that is allowed.
+            if not forceStrong:
+                if leftItem==rightItem:
+                    # Items are the exact same, so they are equal.
+                    return Equals(leftItem, rightItem).prove()
+                try:                    
+                    # Maybe the equality is known.
+                    return Equals(leftItem, rightItem).prove(automation=False, assumptions=assumptions)
+                except ProofFailure:
+                    pass
+                try:
+                    # Maybe the weak relation is known.
+                    WeakClass = RelationClass._checkedWeakRelationClass()
+                    return WeakClass(leftItem, rightItem).prove(automation=False, assumptions=assumptions)
+                except (ProofFailure, NotImplementedError):
+                    pass
         
         # "Chains" map end-points to list of known true relations that get us there
         # by applying transitivity rules.
@@ -409,16 +447,23 @@ class TransitiveRelation(Operation):
         def yield_left_most(item):
             items_to_process = {item}
             while len(items_to_process) > 0:
-                for item in items_to_process:
-                    if item in left_partners:
-                        items_to_process.update(left_partners[item])
-                    else:
-                        yield item # end of the line
+                item = items_to_process.pop()
+                if item in left_partners:
+                    items_to_process.update(left_partners[item])
+                else:
+                    yield item # end of the line
         
         sorted_items = []
+        sorted_item_set = set()
         remaining_items = set(items) # items we have left to sort
         
+        # Generate relations between items via a breadth-first, meet-in-the-middle
+        # explorations of known relations for the purpose of sorting and use this
+        # information to successively identify "leftmost" items.  
         for (left_item, right_item), chain in RelationClass._generateSortingRelations(unique_items, assumptions):
+            if left_item in sorted_item_set:
+                # Does not give new information if the left item was sorted.
+                continue 
             if (left_item, right_item) in item_pair_chains:
                 # Just use the first chain of relations.
                 # If the relation is an equality between the items, that should come first.
@@ -447,7 +492,7 @@ class TransitiveRelation(Operation):
                 # add new item partnership to left_partners, and right_partners
                 left_partners.setdefault(right_item, set()).add(left_item)
                 for left_item_equiv in eq_sets[left_item]:
-                    right_partners.setdefault(left_item_equiv, set()).add(right_item)                
+                    right_partners.setdefault(left_item_equiv, set()).add(right_item)  
                 # see if we can eliminate any left-most candidates
                 eq_right_items = eq_sets[right_item]
                 if not left_most_candidates.isdisjoint(eq_right_items):
@@ -463,6 +508,7 @@ class TransitiveRelation(Operation):
                 # (with such cycles, we'll catch them eventually and raise an exception).
                 left_most = left_most_candidates.pop()
                 sorted_items.append(left_most)
+                sorted_item_set.add(left_most)
                 
                 # note that eq_sets[left_most] should not be extended later because all of the items must
                 # determine that they are either to the right of this "left-most" or equal to it before we got here.
@@ -515,13 +561,13 @@ class TransitiveRelation(Operation):
                     
                 # Note that we may end up with multiple left-most candidates in which case
                 # more links are needed.
+            
+            # Check if finished:
             if len(remaining_items)==0: break
         
-        if len(sorted_items)==0 and len(left_most_candidates)==1:
-            # special case of only one unique element
-            sorted_items.append(left_most_candidates.pop())
-        
-        if len(unique_items)>1 and len(remaining_items)>0:
+        if len(unique_items)==1:
+            sorted_items = list(unique_items)
+        elif len(remaining_items)>0:
             raise TransitivityException(None, assumptions, "Insufficient known transitive relations to sort the provided items: " + str(items))
         
         orig_order = {item:k for k, item in enumerate(items)}    
@@ -559,7 +605,9 @@ class TransitiveRelation(Operation):
         relations = []
         for item1, item2 in zip(itemsList[:-1], itemsList[1:]):
             relations.append(RelationClass._transitivitySearch(item1, item2, forceStrong=False, assumptions=assumptions))
-        return RelationClass.applyTransitivities(relations)
+        if len(relations)==1:
+            return relations[0]
+        return RelationClass.makeSequenceOrRelation(*relations)
     
     @classmethod
     def _transitivityInsert(RelationClass, orig_sequence, sequence_operators, sequence_elems, item, assumptions):
@@ -648,4 +696,4 @@ def makeSequenceOrRelation(TransitiveSequenceClass, operators, operands):
 class TransitivityException(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
-        
+ 
