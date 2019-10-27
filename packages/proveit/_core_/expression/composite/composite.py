@@ -76,7 +76,10 @@ def _simplifiedCoord(coord, assumptions, requirements):
     '''
     from proveit.logic import Equals
     #from proveit.number import Add
-    simplified_coord = coord.simplification(assumptions=assumptions).rhs
+    try:
+        simplified_coord = coord.simplification(assumptions=assumptions).rhs
+    except:
+        simplified_coord = coord # unable to simplify.  that's okay.
     if simplified_coord != coord and requirements is not None:
         requirements.append(Equals(coord, simplified_coord))
     return simplified_coord

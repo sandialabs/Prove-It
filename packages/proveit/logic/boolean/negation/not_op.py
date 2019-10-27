@@ -49,12 +49,12 @@ class Not(Operation):
         Try to automatically conclude this negation via evaluation reductions
         or double negation.
         '''
-        from proveit.logic import EvaluationError
+        from proveit.logic import SimplificationError
         # as a last resort (concludeNegation on the operand should have been
         # tried first), conclude negation via evaluating the operand as false.
         try:
             self.operand.evaluation(assumptions=assumptions)
-        except EvaluationError:
+        except SimplificationError:
             raise ProofFailure(self, assumptions, "Unable to evaluate %s"%str(self.operand))
         return self.concludeViaFalsifiedNegation(assumptions=assumptions)
     
@@ -175,7 +175,7 @@ class Not(Operation):
 
     def concludeViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
         r'''
-        Prove and return self of the from not(A) assuming A=FALSE.
+        Prove and return self of the form not(A) assuming A=FALSE.
         '''
         from ._axioms_ import negationIntro
         return negationIntro.specialize({A:self.operand}, assumptions=assumptions)                        
@@ -205,10 +205,11 @@ class Not(Operation):
                         
     def deduceDoubleNegationEquiv(self, assumptions=USE_DEFAULTS):
         '''
-        For some not(not(A), derive and return A = not(not(A)) assuming A in Booleans.
+        For some not(not(A)), derive and return A = not(not(A)) assuming A in Booleans.
         '''
         from ._theorems_ import doubleNegationEquiv
         if isinstance(self.operand, Not):
             Asub = self.operand.operand
             return doubleNegationEquiv.specialize({A:Asub}, assumptions=assumptions)
+
 

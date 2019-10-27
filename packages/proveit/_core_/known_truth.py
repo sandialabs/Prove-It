@@ -847,8 +847,21 @@ class KnownTruth:
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
         if len(self.assumptions) > 0:
             assumptionsStr = ExprList(*self.assumptions).formatted('string', fence=False)
-            return r'{' +assumptionsStr + r'} |= ' + self.expr.string()
-        return r'|= ' + self.expr.string()
+            return r'{' +assumptionsStr + r'} |- ' + self.expr.string()
+        return r'|- ' + self.expr.string()
+
+    def latex(self, performUsabilityCheck=True):
+        '''
+        If the KnownTruth was proven under any assumptions, display the 
+        double-turnstyle notation to show that the set of assumptions proves
+        the statement/expression.  Otherwise, simply display the expression.
+        '''
+        from proveit import ExprList
+        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
+        if len(self.assumptions) > 0:
+            assumptionsLatex = ExprList(*self.assumptions).formatted('latex', fence=False)
+            return r'{' +assumptionsLatex + r'} \vdash ' + self.expr.latex()
+        return r'\vdash ' + self.expr.string()
 
     def __str__(self):
         '''

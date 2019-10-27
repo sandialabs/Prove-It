@@ -1,7 +1,6 @@
 sets
 numeral
 addition
-subtraction
 negation
 ordering
 multiplication

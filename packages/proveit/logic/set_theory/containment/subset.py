@@ -71,17 +71,16 @@ class Subset(SubsetRelation):
         and something of the form B subseteq C, B subset C, or B=C to 
         obtain A subset B as appropriate.
         '''
-        from proveit.logic import Equals
+        from proveit.logic import Equals, Subset, SubsetEq
         from ._theorems_ import transitivitySubsetSubset, transitivitySubsetSubsetEq
-        from .superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
-        if isinstance(other,Subset) or isinstance(other,SubsetEq):
-            other = other.deriveReversed(assumptions)
-        elif other.lhs == self.rhs:
+       # if isinstance(other,Subset) or isinstance(other,SubsetEq):
+        #    other = other.deriveReversed(assumptions)
+        if other.lhs == self.rhs:
             if isinstance(other,Subset):
                 result = transitivitySubsetSubset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
-                return result.checked({self})
+                return result#.checked({self})
             elif isinstance(other,SubsetEq):
                 result = transitivitySubsetSubsetEq.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
                 return result
@@ -119,7 +118,7 @@ class SubsetEq(SubsetRelation):
     def conclude(self, assumptions):
         from ._theorems_ import subsetEqViaEquality
         from proveit import ProofFailure
-        from proveit.logic import SetOfAll
+        from proveit.logic import SetOfAll, Equals
         
         try:
             # first attempt a transitivity search
@@ -128,9 +127,12 @@ class SubsetEq(SubsetRelation):
             pass # transitivity search failed
         
         # Any set contains itself
-        if self.operands[0] == self.operands[1]:
-            return subsetEqViaEquality.specialize({A:self.operands[0], B:self.operands[1]})
-            
+        try:
+            Equals(self.operands[0], self.operands[1]).prove(assumptions, automation=False)
+            return subsetEqViaEquality.specialize({A: self.operands[0], B: self.operands[1]})
+        except ProofFailure:
+            pass
+
         # Check for special case of [{x | Q*(x)}_{x \in S}] \subseteq S
         if isinstance(self.subset, SetOfAll):
             from proveit.logic.set_theory.comprehension._theorems_ import comprehensionIsSubset
@@ -140,6 +142,8 @@ class SubsetEq(SubsetRelation):
                 return comprehensionIsSubset.specialize({S:setOfAll.domain, Q_op:Q_op_sub}, relabelMap={x:setOfAll.instanceVars[0]}, assumptions=assumptions)
         
         # Finally, attempt to conclude A subseteq B via forall_{x in A} x in B.
+        # Issue: Variables do not match when using safeDummyVar: _x_ to x.
+        # We need to automate this better, right now it is only practical to do concludeAsFolded manually.
         return self.concludeAsFolded(elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
         
     def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
@@ -171,14 +175,13 @@ class SubsetEq(SubsetRelation):
         and something of the form B subseteq C, B subset C, or B=C to 
         obtain A subset B or A subseteq B as appropriate.
         '''
-        from proveit.logic import Equals
+        from proveit.logic import Equals, Subset, SubsetEq
         from ._theorems_ import transitivitySubsetEqSubset, transitivitySubsetEqSubsetEq
-        from .superset import Subset, SubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
-        if isinstance(other,Subset) or isinstance(other,SubsetEq):
-            other = other.deriveReversed(assumptions)
-        elif other.lhs == self.rhs:
+        #if isinstance(other,Subset) or isinstance(other,SubsetEq):
+         #   other = other.deriveReversed(assumptions)
+        if other.lhs == self.rhs:
             if isinstance(other,Subset):
                 return transitivitySubsetEqSubset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
             elif isinstance(other,SubsetEq):
@@ -207,7 +210,7 @@ class NotSubsetEq(Operation):
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
-        From A nsupseteq B, derive and return not(supseteq(A, B)).
+        From A nsubseteq B, derive and return not(supseteq(A, B)).
         '''
         from ._theorems_ import unfoldNotSubsetEq
         return unfoldNotSubsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)

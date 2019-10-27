@@ -1,7 +1,7 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals, Iff, And, SetOfAll
 from proveit.number import Integers, Interval, Reals, RealsPos, Complexes
-from proveit.number import Abs, Mod, ModAbs, GreaterThanEquals, LessThanEquals, Add, Sub, Neg, Mult, Fraction, IntervalCO
+from proveit.number import Abs, Mod, ModAbs, GreaterThanEquals, LessThanEquals, Add, Sub, Neg, Mult, frac, IntervalCO
 from proveit.common import a, b, c, x, y, N, xEtc, xMulti
 from proveit.number.common import zero, one
 from proveit import beginTheorems, endTheorems
@@ -56,7 +56,7 @@ absProd = Forall(xEtc,
 absProd
 
 absFrac = Forall([a,b],
-                 Equals(Abs(Fraction(a,b)),Fraction(Abs(a),Abs(b))),
+                 Equals(Abs(frac(a,b)),frac(Abs(a),Abs(b))),
                  domain = Complexes)
 absFrac
 
