@@ -48,7 +48,7 @@ class Expression(metaclass=ExprType):
         Expression.contexts.clear()
         assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
                         
-    def __init__(self, coreInfo, subExpressions=tuple(), styles=dict(), requirements=tuple()):
+    def __init__(self, coreInfo, subExpressions=tuple(), styles=None, requirements=tuple()):
         '''
         Initialize an expression with the given coreInfo (information relevant at the core Expression-type
         level) which should be a list (or tuple) of strings, and a list (or tuple) of subExpressions.
@@ -58,6 +58,7 @@ class Expression(metaclass=ExprType):
         The "requirements" are expressions that must be proven to be true in order for the Expression
         to make sense.
         '''
+        if styles is None: styles = dict()
         for coreInfoElem in coreInfo:
             if not isinstance(coreInfoElem, str):
                 raise TypeError('Expecting coreInfo elements to be of string type')
@@ -66,19 +67,43 @@ class Expression(metaclass=ExprType):
                 raise TypeError('Expecting subExpression elements to be of Expression type')
                 
         # note: these contained expressions are subject to style changes on an Expression instance basis
-        self._subExpressions = subExpressions 
-
-        # The meaning data is shared among Expressions with the same structure disregarding style
-        self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id), coreInfo))
-        if not hasattr(self._meaningData, '_coreInfo'):
-            # initialize the data of self._meaningData
-            self._meaningData._coreInfo = tuple(coreInfo)
-            # combine requirements from all sub-expressions
-            requirements = sum([subExpression.getRequirements() for subExpression in subExpressions], tuple()) + requirements
-            # Expression requirements are essentially assumptions that need to be proven for the expression to
-            # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
-            # (which may not be necessary, but does not hurt).   
-            self._meaningData._requirements = defaults.checkedAssumptions(requirements)
+        self._subExpressions = tuple(subExpressions)
+        
+        # check for illegal characters in core-info or styles
+        if any(',' in info for info in coreInfo):
+            raise ValueError("coreInfo is not allowed to contain a comma.")
+        if styles is not None:
+            for style in styles.values():
+               if not {',', ':', ';'}.isdisjoint(style):
+                   raise ValueError("Styles are not allowed to contain a ',', ':', or ';'.  Just use spaces.") 
+                
+        # The 'generic' version of this expression, in which deterministic 'dummy' variables
+        # are used as Lambda parameters, determines the 'meaning' of the expression.
+        generic_sub_expressions = tuple(sub_expr._genericExpr for sub_expr in subExpressions)
+        generic_sub_expression_styles = tuple(generic_sub_expr._styleData for generic_sub_expr in generic_sub_expressions)
+        sub_expression_styles = tuple(sub_expr._styleData for sub_expr in subExpressions)
+        if hasattr(self, '_genericExpr'):
+            # The _genericExpr attribute was already set -- must be a Lambda Expression.
+            self._meaningData = self._genericExpr._meaningData            
+        elif sub_expression_styles != generic_sub_expression_styles:
+            # The 'generic' sub-expressions are different than the sub-expressions,
+            # so that propagates to this Expression's generic version.
+            self._genericExpr = self.__class__._make(coreInfo, dict(styles), generic_sub_expressions)
+            self._meaningData = self._genericExpr._meaningData
+        else:
+            # This is this 'generic' version:
+            self._genericExpr = self
+            # The meaning data is shared among Expressions with the same structure disregarding style
+            self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id), coreInfo))
+            if not hasattr(self._meaningData, '_coreInfo'):
+                # initialize the data of self._meaningData
+                self._meaningData._coreInfo = tuple(coreInfo)
+                # combine requirements from all sub-expressions
+                requirements = sum([subExpression.getRequirements() for subExpression in subExpressions], tuple()) + requirements
+                # Expression requirements are essentially assumptions that need to be proven for the expression to
+                # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
+                # (which may not be necessary, but does not hurt).   
+                self._meaningData._requirements = defaults.checkedAssumptions(requirements)
         
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
@@ -298,10 +323,16 @@ class Expression(metaclass=ExprType):
         '''
         if self != expr_with_different_style:
             raise ValueError("'withMatchingStyle' must be given an expression with the same meaning")
+        return self._withMatchingStyle(expr_with_different_style)
+    
+    def _withMatchingStyle(self, expr_with_different_style):
+        '''
+        Helper function for 'withMatchingStyle.
+        '''
         if self._style_id == expr_with_different_style._style_id:
             return # no difference in style actually; do nothing
         for my_sub_expr, other_sub_expr in zip(self.subExprIter(), expr_with_different_style.subExprIter()):
-            my_sub_expr.withMatchingStyle(other_sub_expr)
+            my_sub_expr._withMatchingStyle(other_sub_expr)
         self.withStyles(**expr_with_different_style.getStyles())
         return self
     
@@ -499,7 +530,7 @@ class Expression(metaclass=ExprType):
         for the substitution to be valid.
         '''
         self._checkRelabelMap(relabelMap)
-        if (exprMap is not None) and (self in exprMap):
+        if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         else:
             return self
@@ -566,35 +597,120 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.label.var import safeDummyVars
         return safeDummyVars(n, self)
             
-    def evaluation(self, assumptions=USE_DEFAULTS, automation = True):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         If possible, return a KnownTruth of this expression equal to its
-        irreducible value.  Override for other appropriate functionality.
+        irreducible value.  Checks for an existing evaluation.  If it
+        doesn't exist, try some default strategies including a reduction.
+        Attempt the Expression-class-specific "doReducedEvaluation"
+        when necessary.
         '''
-        from proveit.logic import defaultSimplification, Equals
-        from proveit import ProofFailure
-        if not automation:
-            # Without automation, we'll just grab an arbitrary evaluation that we already know
-            evaluations = Equals.evaluations.get(self, set())
-            if len(evaluations) == 0:
-                raise ProofFailure(self, assumptions, "No existing evaluation; cannot perform 'evaluation' without automation")
-            return list(evaluations)[0]
-        return defaultSimplification(self.innerExpr(), inPlace=False, mustEvaluate=True, assumptions=assumptions)
+        from proveit.logic import Equals, defaultSimplification, SimplificationError
+        from proveit import KnownTruth, ProofFailure
+        from proveit.logic.irreducible_value import isIrreducibleValue
 
-    def simplification(self, assumptions=USE_DEFAULTS, automation = True):
+        try:
+            # First try the default tricks. If a reduction succesfully occurs,
+            # evaluation will be called on that reduction.
+            evaluation = defaultSimplification(self.innerExpr(), mustEvaluate=True, assumptions=assumptions)
+        except SimplificationError as e:
+            # The default failed, let's try the Expression-class specific version.
+            try:
+                evaluation = self.doReducedEvaluation(assumptions)
+            except NotImplementedError:
+                # We have nothing but the default evaluation strategy to try, and that failed.
+                raise e 
+        
+        if not isinstance(evaluation, KnownTruth) or not isinstance(evaluation.expr, Equals):
+            raise ValueError("'doReducedEvaluation' must return an KnownTruth equality")
+        if evaluation.lhs != self:
+            raise ValueError("'doReducedEvaluation' must return an KnownTruth equality with self on the left side")
+        if not isIrreducibleValue(evaluation.rhs):
+            raise ValueError("'doReducedEvaluation' must return an KnownTruth equality with an irreducible value on the right side")
+        # Note: No need to store in Equals.evaluations or Equals.simplifications; this
+        # is done automatically as a side-effect for proven equalities with irreducible
+        # right sides.
+
+        return evaluation
+    
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
-        If possible, return a KnownTruth of this expression equal to its
-        irreducible value.  Override for other appropriate functionality.
+        Attempt to evaluate 'self', which should be a reduced
+        expression with operands already evaluated.
+        Return the evaluation as a KnownTruth equality 
+        with 'self' on the left side.
+        Must be overridden for class-specific evaluation.
+        Raise a SimplificationError if the evaluation
+        cannot be done.
         '''
-        from proveit.logic import defaultSimplification, Equals
-        from proveit import ProofFailure
-        if not automation:
-            # Without automation, we'll just grab an arbitrary simplification that we already know
-            simplifications = Equals.simplifications.get(self, set())
-            if len(simplifications) == 0:
-                raise ProofFailure(self, assumptions, "No existing simplification; cannot perform 'simplification' without automation")
-            return list(simplifications)[0]
-        return defaultSimplification(self.innerExpr(), inPlace=False, assumptions=assumptions)        
+        raise NotImplementedError("'doReducedEvaluation' not implemented for %s class"%str(self.__class__))       
+
+    """
+    # Generated automatically via InnerExpr.register_equivalence_method.
+    def evaluated(self, assumptions=USE_DEFAULTS):
+        '''
+        Return the right side of an evaluation.
+        '''
+        return self.evaluation(assumptions=assumptions).rhs
+   """ 
+        
+    def simplification(self, assumptions=USE_DEFAULTS):
+        '''
+        If possible, return a KnownTruth of this expression equal to a
+        canonically simplified form. Checks for an existing simplifcation.
+        If it doesn't exist, try some default strategies including a reduction.
+        Attempt the Expression-class-specific "doReducedSimplication"
+        when necessary.
+        '''
+        from proveit.logic import Equals, defaultSimplification, SimplificationError
+        from proveit import KnownTruth, ProofFailure
+        
+        try:
+            # First try the default tricks. If a reduction succesfully occurs,
+            # simplification will be called on that reduction.
+            simplification = defaultSimplification(self.innerExpr(), assumptions=assumptions)
+        except SimplificationError as e:
+            # The default did nothing, let's try the Expression-class specific versions of
+            # evaluation and simplification.
+            try:
+                # first try evaluation.  that is as simple as it gets.
+                simplification = self.doReducedEvaluation(assumptions)
+            except (NotImplementedError, SimplificationError):
+                try:
+                    simplification = self.doReducedSimplification(assumptions)
+                except (NotImplementedError, SimplificationError):
+                    # Simplification did not work.  Just use self-equality.
+                    simplification = Equals(self, self).prove()
+            
+        if not isinstance(simplification, KnownTruth) or not isinstance(simplification.expr, Equals):
+            raise ValueError("'doReducedSimplification' must return an KnownTruth equality")
+        if simplification.lhs != self:
+            raise ValueError("'doReducedSimplification' must return an KnownTruth equality with self on the left side")
+        # Remember this simplification for next time:
+        Equals.simplifications.setdefault(self, set()).add(simplification)
+             
+        return simplification
+    
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+        '''
+        Attempt to simplify 'self', which should be a reduced
+        expression with operands already simplified.
+        Return the evaluation as a KnownTruth equality 
+        with 'self' on the left side.
+        Must be overridden for class-specific simplification.
+        Raise a SimplificationError if the simplification
+        cannot be done.
+        '''
+        raise NotImplementedError("'doReducedSimplification' not implemented for %s class"%str(self.__class__))             
+    
+    """
+    # Generated automatically via InnerExpr.register_equivalence_method.
+    def simplified(self, assumptions=USE_DEFAULTS):
+        '''
+        Return the right side of a simplification.
+        '''
+        return self.simplification(assumptions=assumptions).rhs
+    """
     
     def orderOfAppearance(self, subExpressions):
         '''

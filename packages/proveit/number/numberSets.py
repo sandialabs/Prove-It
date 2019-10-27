@@ -1,9 +1,8 @@
-from proveit import Expression, Literal, Operation, Etcetera, ExpressionList
-from proveit import AssociativeOperation, OperationOverInstances
-from proveit.common import a, b, n
-from proveit.logic import Forall, Implies, InSet, Or, NotEquals
-from proveit.logic import generateSubExpressions
-
+from proveit import Expression, Literal, Operation, ExprList
+from proveit import OperationOverInstances #AssociativeOperation,
+from proveit._common_ import a, b, n
+from proveit.logic import Forall, Implies, InSet, Or, NotEquals #generateSubExpressions
+from proveit.number import Reals, Complexes, Naturals, Integers, NaturalsPos, RealsPos, RealsNeg
 pkg = __package__
 
 class NumberOp:
@@ -87,20 +86,16 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
     derive it from being in a subset in ruledOutSets.
     If successful, returns the deduced statement, otherwise raises an Exception.   
     '''
-    from proveit.number.common import ComplexesSansZero
-    import integer.theorems
-    import natural.theorems
-    import real.theorems
-    import complex.theorems
+    from proveit.number._common_ import ComplexesSansZero
+
     if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
 
-    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]    
     expr = exprOrList # just a single expression
-    
-    #print expr, numberSet
+
     try:
         return InSet(expr, numberSet).prove(assumptions)
     except:
@@ -241,7 +236,7 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             raise DeduceInNumberSetException(expr, numberSet, assumptions)    
         # Apply the closure theorem
         assert isinstance(closureThm, Forall), 'Expecting closure theorem to be a Forall expression'
-        iVars = closureThm.instanceVars
+        iVars = closureThm.instanceVar
         # Specialize the closure theorem differently for AccociativeOperation and OperationOverInstances compared with other cases
         if isinstance(expr, AssociativeOperation):
             assert len(iVars) == 1, 'Expecting one instance variable for the closure theorem of an AssociativeOperation'
@@ -250,50 +245,50 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
         elif isinstance(expr, OperationOverInstances):
             # first deduce that all of the instances are in the domain
             
-            # See if we can deduce that the instanceVars under the domain are in one of the number sets
+            # See if we can deduce that the instanceVar under the domain are in one of the number sets
             # For instance expression assumptions, remove any assumptions involving the instance variable and add assumptions 
             # that the instance variable is in the domain and add the condition assumption.
-            instanceExpr_assumptions = {assumption for assumption in assumptions if assumption.freeVars().isdisjoint(expr.instanceVars)}
-            instanceExpr_assumptions |= {In(instanceVar, expr.domain) for instanceVar in expr.instanceVars}
+            instanceExpr_assumptions = {assumption for assumption in assumptions if assumption.freeVars().isdisjoint(expr.instanceVar)}
+            instanceExpr_assumptions |= {In(instanceVar, expr.domain) for instanceVar in expr.instanceVar}
             instanceExpr_assumptions |= {condition for condition in expr.conditions}
             if hasattr(expr.domain, 'deduceMemberInNaturals'):
-                for instanceVar in expr.instanceVars:
+                for instanceVar in expr.instanceVar:
                     try:
                         expr.domain.deduceMemberInNaturals(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInNaturalsPos'):
-                for instanceVar in expr.instanceVars:
+                for instanceVar in expr.instanceVar:
                     try:
                         expr.domain.deduceMemberInNaturalsPos(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInIntegers'):
-                for instanceVar in expr.instanceVars:
+                for instanceVar in expr.instanceVar:
                     try:
                         expr.domain.deduceMemberInIntegers(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInReals'):
-                for instanceVar in expr.instanceVars:
+                for instanceVar in expr.instanceVar:
                     try:
                         expr.domain.deduceMemberInReals(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInRealsPos'):
-                for instanceVar in expr.instanceVars:
+                for instanceVar in expr.instanceVar:
                     try:
                         expr.domain.deduceMemberInRealsPos(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInRealsNeg'):
-                for instanceVar in expr.instanceVars:
+                for instanceVar in expr.instanceVar:
                     try:
                         expr.domain.deduceMemberInRealsNeg(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
                         pass
             elif hasattr(expr.domain, 'deduceMemberInComplexes'):
-                for instanceVar in expr.instanceVars:
+                for instanceVar in expr.instanceVar:
                     try:
                         expr.domain.deduceMemberInIntegers(instanceVar, assumptions=instanceExpr_assumptions)
                     except:
@@ -301,14 +296,14 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             
             # Now we need to deduce that the instance expressions are all in the number set
             instanceExprInNumberSet = deduceInNumberSet(expr.instanceExpr, numberSet, assumptions=instanceExpr_assumptions).checked(instanceExpr_assumptions)
-            instanceExprInNumberSet.generalize(expr.instanceVars, domain=expr.domain).checked(assumptions)
+            instanceExprInNumberSet.generalize(expr.instanceVar, domain=expr.domain).checked(assumptions)
             
             assert len(iVars) == 2 # instance function and domain -- conditions not implemented at this time
-            Pop, Pop_sub = Operation(iVars[0], expr.instanceVars), expr.instanceExpr
+            Pop, Pop_sub = Operation(iVars[0], expr.instanceVar), expr.instanceExpr
 
-            innerIvars = set().union(subExpr.instanceVars[0] for subExpr in generateSubExpressions(closureThm.instanceExpr, subExprClass=OperationOverInstances))
+            innerIvars = set().union(subExpr.instanceVar[0] for subExpr in generateSubExpressions(closureThm.instanceExpr, subExprClass=OperationOverInstances))
             subMap = {Pop:Pop_sub, iVars[1]:expr.domain}
-            subMap.update({innerIvar:expr.instanceVars for innerIvar in innerIvars})
+            subMap.update({innerIvar:expr.instanceVar for innerIvar in innerIvars})
             preClosureSpec = closureThm.specialize(subMap).checked()
             assert isinstance(preClosureSpec, Implies), "Expecting the OperationOverInstances closure theorem to specialize to an implication with the hypothesis being the closure forall instances"
             closureSpec = preClosureSpec.deriveConclusion()
@@ -316,7 +311,7 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
             assert len(iVars) == len(expr.operands), 'Expecting the number of instance variables for the closure theorem to be the same as the number of operands of the Expression'
             closureSpec = closureThm.specialize({iVar:operand for iVar, operand in zip(iVars, expr.operands)})
     # deduce any of the requirements for the closureThm application
-    #print closureThm
+
     _deduceRequirements(closureThm, closureSpec, assumptions)
     try:
         return In(expr, numberSet).checked(assumptions)
@@ -430,7 +425,7 @@ def deduceNotZero(exprOrList, assumptions=frozenset(), dontTryPos=False, dontTry
     if notEqZeroThm is None:
         raise DeduceNotZeroException(expr, assumptions)
     assert isinstance(notEqZeroThm, Forall), 'Expecting notEqZero theorem to be a Forall expression'
-    iVars = notEqZeroThm.instanceVars
+    iVars = notEqZeroThm.instanceVar
     # Specialize the closure theorem differently for AccociativeOperation compared with other cases
     if isinstance(expr, AssociativeOperation):
         assert len(iVars) == 1, 'Expecting one instance variables for the notEqZero theorem of an AssociativeOperation'
@@ -453,18 +448,19 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     under the given assumptions.  If successful, returns the deduced statement,
     otherwise raises an Exception.  
     '''
-    from proveit.number import GreaterThan, num
-    import real.theorems
+    from proveit.number import Greater, num
+
     if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
-    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExpressionList):
+
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprList):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deducePositive(expr, assumptions=assumptions) for expr in exprOrList]
     # A single Expression:
     expr = exprOrList
     try:
         # may be done before we started
-        return GreaterThan(expr, num(0)).checked(assumptions)
+        return Greater(expr, num(0)).checked(assumptions)
     except:
         pass # not so simple
 
@@ -489,7 +485,7 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     if positiveThm is None:
         raise DeducePositiveException(expr, assumptions)
     assert isinstance(positiveThm, Forall), 'Expecting deduce positive theorem to be a Forall expression'
-    iVars = positiveThm.instanceVars
+    iVars = positiveThm.instanceVar
     # Specialize the closure theorem differently for AccociativeOperation compared with other cases
     if isinstance(expr, AssociativeOperation):
         assert len(iVars) == 1, 'Expecting one instance variables for the positive theorem of an AssociativeOperation'
@@ -548,7 +544,7 @@ def deduceNegative(exprOrList, assumptions=frozenset(), dontTryRealsNeg=False):
     if negativeThm is None:
         raise DeduceNegativeException(expr, assumptions)
     assert isinstance(negativeThm, Forall), 'Expecting deduce negative theorem to be a Forall expression'
-    iVars = negativeThm.instanceVars
+    iVars = negativeThm.instanceVar
     # Specialize the closure theorem differently for AccociativeOperation compared with other cases
     if isinstance(expr, AssociativeOperation):
         assert len(iVars) == 1, 'Expecting one instance variables for the negative theorem of an AssociativeOperation'

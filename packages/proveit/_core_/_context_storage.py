@@ -926,7 +926,7 @@ class ContextStorage:
                 item_names[namedExprAndStyleId] = item_names[namedExprAddress[0]] + '.' + namedExprAddress[1]
                 
         # see if we need to add anything to the sys.path
-        needs_root_path = False # needs the root of this context addedS
+        needs_root_path = False # needs the root of this context added
         needs_local_path = False # needs the local path added
         # first, see if we even need to import a module with the same root as our context
         root_context = self.rootContextStorage.context
@@ -939,7 +939,7 @@ class ContextStorage:
                 break
             else:
                 module = importlib.import_module(module_name)
-                if not os.path.isabs(module.__file__):
+                if module.__package__ == '':
                     needs_local_path = True
         
         # generate the imports that we need (appending to sys.path if necessary).

@@ -1,13 +1,20 @@
-from proveit import Literal
+from proveit import Literal, USE_DEFAULTS
+from proveit.logic import IrreducibleValue, Equals
 
-class IrrationalLiteral(Literal):
+
+class IrrationalLiteral(IrreducibleValue, Literal):
     _inRealsPosStmts = None # initializes when needed
     _notZeroStmts = None # initializes when needed
     _positiveStmts = None # initializes when needed
     
     def __init__(self, stringFormat, latexFormat = None):
         Literal.__init__(self, stringFormat, latexFormat, context=__file__)
-    
+
+    def evalEquality(self, other, assumptions=USE_DEFAULTS):
+        if other==self:
+            return Equals(self, self).prove()
+        pass # need axioms/theorems to prove inequality amongst different numerals
+        
     def deduceInRealsPos(self):
         if IrrationalLiteral._inRealsPosStmts is None:
             from real.theorems import eInRealsPos, piInRealsPos

@@ -35,8 +35,11 @@ class Interval(Operation):
         from ._theorems_ import allInInterval_InInts, allInInterval_InNats, allInInterval_InNatsPos
 
     def deduceMemberInIntegers(self, member, assumptions=frozenset()):
-        from ._theorems_ import allInDiscreteInterval_InInts
-        return allInDiscreteInterval_InInts.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
+        '''
+        edited by JML 7/18/19
+        '''
+        from ._theorems_ import intervalInInts
+        return intervalInInts.specialize({a:self.lowerBound, b:self.upperBound}).specialize({n:member})
 
     def deduceMemberInNaturals(self, member, assumptions=frozenset()):
         from ._theorems_ import allInDiscreteInterval_InNats

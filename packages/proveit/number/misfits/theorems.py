@@ -16,14 +16,14 @@ beginTheorems(locals())
 # Some day these should be dealt with more appropriately.
 
 divIneqThm1 = Forall([a,b,c],
-                    LessThanEquals(Fraction(a,b),Fraction(c,b)),
+                    LessThanEquals(frac(a,b),frac(c,b)),
                     domain=Reals,
                     conditions=(LessThanEquals(a,c),GreaterThan(b,zero))
                     )
 divIneqThm1
 
 divIneqThm1strong = Forall([a,b,c],
-                    LessThan(Fraction(a,b),Fraction(c,b)),
+                    LessThan(frac(a,b),frac(c,b)),
                     domain=Reals,
                     conditions=(LessThan(a,c),GreaterThan(b,zero))
                     )
@@ -37,7 +37,7 @@ divIneqThm1cor = Forall([a,b,c],
 divIneqThm1cor
 
 divIneqThm2 = Forall([a,b,c],
-                    LessThanEquals(Fraction(a,b),Fraction(a,c)),
+                    LessThanEquals(frac(a,b),frac(a,c)),
                     domain=Reals,
                     conditions=(
                                 GreaterThanEquals(b,c),
@@ -78,8 +78,8 @@ ineqThm6a
 
 ineqThm7 = Forall([x,l],
                   LessThanEquals(
-                                Fraction(one,Exp(Sub(l,x),two)),
-                                Fraction(one,Exp(l,two))
+                                frac(one,Exp(Sub(l,x),two)),
+                                frac(one,Exp(l,two))
                                 ),
                   domain = Reals,
                   conditions = (LessThanEquals(l,zero),
@@ -91,8 +91,8 @@ ineqThm7a = Forall([x],
                    Forall([a],
                        Forall([l],
                           LessThanEquals(
-                                        Mult(a,Fraction(one,Exp(Sub(l,x),two))),
-                                        Mult(a,Fraction(one,Exp(l,two)))
+                                        Mult(a,frac(one,Exp(Sub(l,x),two))),
+                                        Mult(a,frac(one,Exp(l,two)))
                                         ),
                           domain=Integers,
                           conditions = LessThanEquals(l,zero)),
@@ -105,8 +105,8 @@ ineqThm7a
 
 ineqThm8 = Forall([x,l],
                   LessThanEquals(
-                                Fraction(one,Exp(Sub(l,x),two)),
-                                Fraction(one,Exp(Sub(l,one),two)),
+                                frac(one,Exp(Sub(l,x),two)),
+                                frac(one,Exp(Sub(l,one),two)),
                                 ),
                   domain = Reals,
                   conditions = (GreaterThan(l,zero),
@@ -118,8 +118,8 @@ ineqThm8a = Forall([x],
                 Forall([a],
                    Forall([l],
                               LessThanEquals(
-                                            Mult(a,Fraction(one,Exp(Sub(l,x),two))),
-                                            Mult(a,Fraction(one,Exp(Sub(l,one),two))),
+                                            Mult(a,frac(one,Exp(Sub(l,x),two))),
+                                            Mult(a,frac(one,Exp(Sub(l,one),two))),
                                             ),
                               domain = Integers,
                               conditions = GreaterThan(l,zero)),
@@ -133,9 +133,9 @@ ineqThm8a
 ineqThm9 = Forall(theta,LessThanEquals(Abs(Sub(one,Exp(e,Mult(i,theta)))),two),domain = Reals)
 ineqThm9
 
-ineqThm10 =  Forall([w,x,y,z],LessThanEquals(w,Fraction(x,z)),
+ineqThm10 =  Forall([w,x,y,z],LessThanEquals(w,frac(x,z)),
                     domain = Reals,
-                    conditions = (LessThanEquals(w,Fraction(x,y)),
+                    conditions = (LessThanEquals(w,frac(x,y)),
                                   GreaterThanEquals(y,z),
                                   GreaterThan(w,zero),
                                   GreaterThan(x,zero),
@@ -143,9 +143,9 @@ ineqThm10 =  Forall([w,x,y,z],LessThanEquals(w,Fraction(x,z)),
                                   GreaterThan(z,zero)))
 ineqThm10
 
-ineqThm10a =  Forall([w,x,y,z],LessThanEquals(w,Fraction(x,z)),
+ineqThm10a =  Forall([w,x,y,z],LessThanEquals(w,frac(x,z)),
                     domain = Reals,
-                    conditions = (LessThanEquals(w,Fraction(x,y)),
+                    conditions = (LessThanEquals(w,frac(x,y)),
                                   GreaterThanEquals(y,z),
                                   GreaterThanEquals(w,zero),
                                   GreaterThan(x,zero),
@@ -160,22 +160,22 @@ sumFactor_temp = Forall([a,b,c], Equals(Add(Mult(a,b), Mult(a,c)), Mult(a, Add(b
 sumFactor_temp
 
 
-simplifyQuarterTimesTwo = Equals(Mult(Fraction(one,four), two), Fraction(one,two))
+simplifyQuarterTimesTwo = Equals(Mult(frac(one,four), two), frac(one,two))
 simplifyQuarterTimesTwo
 
 
-boundedInvSqrdIntegral = Forall([a, b], LessThanEquals(Int(l, Fraction(one,Exp(l,two)), 
+boundedInvSqrdIntegral = Forall([a, b], LessThanEquals(Int(l, frac(one,Exp(l,two)), 
                                                                  IntervalCC(a, b)),
-                                                       Fraction(one, a)),
+                                                       frac(one, a)),
                                 domain=RealsPos, conditions=[LessThanEquals(a, b)])
 boundedInvSqrdIntegral   
 
 
-inverseSqrdIsEvenFunc = InSet(Lambda(l, Fraction(one, Exp(l, two))), EvenFuncs)
+inverseSqrdIsEvenFunc = InSet(Lambda(l, frac(one, Exp(l, two))), EvenFuncs)
 inverseSqrdIsEvenFunc
 
 
-inverseSqrdIsMonDecFunc = InSet(Lambda(l, Fraction(one, Exp(l, two))), MonDecFuncs)
+inverseSqrdIsMonDecFunc = InSet(Lambda(l, frac(one, Exp(l, two))), MonDecFuncs)
 inverseSqrdIsMonDecFunc
 
 twoSquared = Equals(Exp(two,two),four)
