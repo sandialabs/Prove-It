@@ -101,7 +101,7 @@ class ProperSubset(SubsetRelation):
     Intended to replace the equivalent but more ambiguously-named Subset class.
     '''   
     # operator of the Subset operation
-    _operator_ = Literal(stringFormat='subset', latexFormat=r'\subset', context=__file__)    
+    _operator_ = Literal(stringFormat='proper_subset', latexFormat=r'\subset', context=__file__)    
 
     # map left-hand-sides to Subset KnownTruths
     #   (populated in TransitivityRelation.sideEffects)
@@ -137,6 +137,7 @@ class ProperSubset(SubsetRelation):
         '''
         # update this once we have updated related theorems
         from proveit.logic import Equals, Subset, SubsetEq
+        # NEEDS UPDATED TO PROPERSUBSETS
         from ._theorems_ import transitivitySubsetSubset, transitivitySubsetSubsetEq
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
@@ -293,6 +294,36 @@ class NotSubset(Operation):
         '''
         from ._theorems_ import foldNotSubset
         return foldNotSubset.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+class NotProperSubset(Operation):
+    # operator for the NotProperSubset operation
+    _operator_ = Literal(stringFormat='not_proper_subset',
+                         latexFormat=r'\not\subset',
+                         context=__file__)    
+
+    def __init__(self, subset, superset):
+        Operation.__init__(self, NotProperSubset._operator_, (subset, superset))
+    
+    def deriveSideEffects(self, knownTruth):
+        self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
+
+    def conclude(self, assumptions):
+        return self.concludeAsFolded(assumptions)
+
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From A not_proper_subset B, derive and return not(propersubset(A, B)).
+        '''
+        from ._theorems_ import unfoldNotProperSubset
+        return unfoldNotProperSubset.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
+        '''
+        Derive this folded version, A not_proper_subset B, from the unfolded version,
+        not(A propersubset B).
+        '''
+        from ._theorems_ import foldNotProperSubset
+        return foldNotProperSubset.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
 class NotSubsetEq(Operation):
     # operator of the NotSubsetEq operation
