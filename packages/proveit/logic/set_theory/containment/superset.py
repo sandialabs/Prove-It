@@ -94,6 +94,67 @@ class Superset(SupersetRelation):
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
 
+class ProperSuperset(SupersetRelation):
+    # operator of the ProperSuperset operation
+    _operator_ = Literal(stringFormat='proper_superset', latexFormat=r'\supset', context=__file__)
+
+    # map left-hand-sides to ProperSuperset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownLeftSides = dict()
+    # map right-hand-sides to Superset KnownTruths
+    #   (populated in TransitivityRelation.deriveSideEffects)
+    knownRightSides = dict()
+
+    def __init__(self, superset, subset):
+        SupersetRelation.__init__(self, ProperSuperset._operator_,
+                                  superset, subset)
+
+    def deriveReversed(self, assumptions=USE_DEFAULTS):
+        '''
+        From A proper_superset B, derive B proper_subset A.
+        '''
+        from ._theorems_ import reverseProperSuperset
+        return reverseProperSuperset.specialize(
+                {A:self.superset, B:self.subset}, assumptions=assumptions)
+
+    def deriveRelaxed(self, assumptions=USE_DEFAULTS):
+        '''
+        From A proper_superset B, derive A supseteq B.
+        '''
+        from ._theorems_ import relaxProperSuperset
+        return relaxProperSuperset.specialize(
+                {A:self.superset, B:self.subset}, assumptions=assumptions)
+
+    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
+        '''
+        Apply a transitivity rule to derive from this A proper_superset B expression
+        and something of the form B supseteq C, B proper_supset C, or B=C to
+        obtain A proper_superset C as appropriate.
+        '''
+        from proveit.logic import Equals, Subset, SubsetEq
+        from ._theorems_ import transitivitySupsetSupset, transitivitySupsetSupsetEq
+        # NEED TO UPDATE
+        if isinstance(other, Equals):
+            return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
+        #if isinstance(other,Subset) or isinstance(other,SubsetEq):
+         #   other = other.deriveReversed(assumptions)
+        if other.lhs == self.rhs:
+            if isinstance(other,Superset):
+                result = transitivitySupsetSupset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
+                return result#.checked({self})
+            elif isinstance(other,SupersetEq):
+                result = transitivitySupsetSupsetEq.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
+                return result
+        elif other.rhs == self.lhs:
+            if isinstance(other,Superset):
+                result = transitivitySupsetSupset.specialize({A:self.lhs, B:self.rhs, C:other.lhs}, assumptions=assumptions)
+                return result
+            elif isinstance(other,SupersetEq):
+                result = transitivitySupsetSupsetEq.specialize({A:self.lhs, B:self.rhs, C:other.lhs}, assumptions=assumptions)
+                return result
+        else:
+            raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
+
 class SupersetEq(SupersetRelation):
     # operator of the SupersetEq operation
     _operator_ = Literal(stringFormat='supseteq', latexFormat=r'\supseteq', context=__file__)
@@ -263,3 +324,7 @@ class NotSupersetEq(Operation):
         return foldNotSupsetEq.specialize(
                 {A:self.operands[0], B:self.operands[1]},
                 assumptions=assumptions)
+
+# Provide aliases for ProperSuperset to augment user's ease-of-use
+SupersetProper = ProperSuperset
+StrictSuperset = ProperSuperset

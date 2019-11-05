@@ -5,8 +5,10 @@ from .boolean import And, Or, Not, Implies, Iff, compose, concludeViaImplication
 from .boolean import inBool
 from .boolean import Forall, Exists, NotExists
 from .set_theory import EmptySet, InSet, Membership, NotInSet, Nonmembership
-from .set_theory import NotProperSubset, NotSubset, NotSubsetEq, NotSuperset, NotSupersetEq, ProperSubset
-from .set_theory import Set, Subset, SubsetEq, SubsetProper, Superset, SupersetEq
+from .set_theory import NotProperSubset, NotSubset, NotSubsetEq, NotSuperset, NotSupersetEq
+from .set_theory import ProperSubset, ProperSuperset
+from .set_theory import Set, Subset, SubsetEq, SubsetProper
+from .set_theory import StrictSuperset, Superset, SupersetEq, SupersetProper
 from .set_theory import Card, Difference, Disjoint, Distinct, Intersect  
 from .set_theory import Union, SetOfAll
 from .equality import Equals, NotEquals
