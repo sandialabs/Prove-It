@@ -129,6 +129,14 @@ class Or(Operation):
         from ._theorems_ import orIfOnlyLeft
         assert len(self.operands) == 2        
         return orIfOnlyLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+    def concludeViaLeft(self, assumptions):
+        '''
+        created Thurs 11/14/2019 by wdc
+        '''
+        from ._theorems_ import orIfLeft
+        assert len(self.operands) == 2        
+        return orIfLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
     
     def concludeViaOnlyRight(self, assumptions):
         from ._theorems_ import orIfOnlyRight
@@ -393,6 +401,39 @@ class Or(Operation):
             elif index == 1:
                 return orIfRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)                
         return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
+
+    def concludeViaSome(self, subset_disjunction, assumptions=USE_DEFAULTS):
+        '''
+        From some true disjunctive subset of the operands, conclude that this
+        'or' expression is true. Similar to the concludeViaExample method
+        above.
+        created: 11/14/2019 by wdc.
+        last modified: 11/14/2019 by wdc.
+        '''
+        # Check that the subset_disjunction is an instance of OR
+        if not isinstance(subset_disjunction, Or):
+            raise TypeError(('subset_disjunction arg should be '
+                             'a disjunction (Or)'))
+        # Check that each of the operands in subset_disjunction occur as
+        # operands in self (otherwise throw a ValueError).
+        self_operands = self.operands
+        subset_operands = subset_disjunction.operands
+        unexpected_operands = list(set(subset_operands)-set(self_operands))
+        if len(unexpected_operands) != 0:
+            raise ValueError('the disjunctive subset (subset_disjunction) you '
+                             'provided contains unexpected items: {}'.
+                             format(unexpected_operands))
+        # collect the operands not present in the proffered subset
+        # in using set() we are (temporarily) assuming no repeated operands
+        # and let's assume we get a non-empty set
+        complementary_operands = list(set(self_operands) - set(subset_operands))
+        if len(complementary_operands) == 1:
+            complementary_disjunction = complementary_operands[0]
+        else:
+            complementary_disjunction = Or(*complementary_operands)
+        binary_disjunction = Or(subset_disjunction, complementary_disjunction).concludeViaLeft(assumptions)
+        return binary_disjunction
+
 
     def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
         from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
