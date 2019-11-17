@@ -406,9 +406,15 @@ class Or(Operation):
         '''
         From some true disjunctive subset of the operands, conclude that this
         'or' expression is true. Similar to the concludeViaExample method
-        above.
+        above. For example, we might have a disjunction such as
+        exampleDisj = A V B V C V D, where we know B V D is true (or we want
+        to assume B V D is true). So we would call
+        exampleDisj.concludeViaSome(B V D, assumptions=[B V D]), which will
+        return {B V D} |– A V B V C V D.
         created: 11/14/2019 by wdc.
-        last modified: 11/14/2019 by wdc.
+        last modified: 11/17/2019 by wdc
+            - adding disassociation and de-permutation of output.
+        previously modified: 11/14/2019 by wdc (creation).
         '''
         # Check that the subset_disjunction is an instance of OR
         if not isinstance(subset_disjunction, Or):
@@ -424,16 +430,72 @@ class Or(Operation):
                              'provided contains unexpected items: {}'.
                              format(unexpected_operands))
         # collect the operands not present in the proffered subset
-        # in using set() we are (temporarily) assuming no repeated operands
+        # (in using set() we are (temporarily) assuming no repeated operands)
         # and let's assume we get a non-empty set
         complementary_operands = list(set(self_operands) - set(subset_operands))
         if len(complementary_operands) == 1:
             complementary_disjunction = complementary_operands[0]
         else:
             complementary_disjunction = Or(*complementary_operands)
-        binary_disjunction = Or(subset_disjunction, complementary_disjunction).concludeViaLeft(assumptions)
-        return binary_disjunction
+        # the following produces a permutated, associated version of the
+        # original disjunction
+        binary_disjunction = (
+                Or(subset_disjunction, complementary_disjunction)
+                .concludeViaLeft(assumptions)
+        )
+        # remove the extra parentheses (not yet un-permuting)
+        permuted_disjunction = (
+            binary_disjunction.disassociate(0, assumptions)
+            .disassociate(-1, assumptions)
+        )
+        print('permutated_disjunction is: {}'.format(permuted_disjunction))    # for testing; delete later
+        # return permuted_disjunction
+        # recapture the original permutation from the permutated version
+        # right now this is just pretending
+        return self.concludeViaPermutation(permuted_disjunction, assumptions)
 
+    def concludeViaPermutation(self, permuted_disjunction, assumptions=USE_DEFAULTS):
+        '''
+        From some true but permutated version of this 'or' expression,
+        conclude that this 'or' expression is true. For example, let
+        thisOr = A V B V C V D and permOfThisOr = S |- B V A V C V D. From
+        permOfThisOr, conclude thisOr, using the following:
+        thisOr.concludeViaPermuation(permOfThisOr), which will
+        return {something?} |– A V B V C V D.
+        created: 11/17/2019 by wdc.
+        last modified: 11/17/2019 by wdc (creation).
+        '''
+        print('assumptions = {}'.format(assumptions))                          # for testing; delete later
+        # Check that the permuted_disjunction is an instance of OR
+        # perm_disj_expr = permuted_disjunction.expr
+        if not isinstance(permuted_disjunction.expr, Or):
+            raise TypeError(('permuted_disjunction arg should be '
+                             'a disjunction (Or)'))
+        # Check that each of the operands in subset_disjunction occur as
+        # operands in self (otherwise throw a ValueError).
+        self_operands = self.operands
+        perm_operands = permuted_disjunction.operands
+        print('perm_operands = {}'.format(perm_operands))                      # for testing; delete later
+        unexpected_operands = list(set(perm_operands)-set(self_operands))
+        if len(unexpected_operands) != 0:
+            raise ValueError('the permuted disjunction (permuted_disjunction) '
+                             'you provided contains unexpected items: {}'.
+                             format(unexpected_operands))
+
+        # then not clear what to do here!
+
+        # for now, generate an equivalent arbitrary permutation for testing;
+        # later we will develop this to further commute elements systematically
+        # to produce desired self
+        equiv_permuted_disjunction = permuted_disjunction.commutation(0, -1)
+        print('equiv_permuted_disjunction is: {}'
+              .format(equiv_permuted_disjunction))                             # for testing; delete later
+        return (equiv_permuted_disjunction
+                .subRightSideInto(
+                    permuted_disjunction,
+                    assumptions
+                )
+        )
 
     def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
         from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
