@@ -448,10 +448,7 @@ class Or(Operation):
             binary_disjunction.disassociate(0, assumptions)
             .disassociate(-1, assumptions)
         )
-        print('permutated_disjunction is: {}'.format(permuted_disjunction))    # for testing; delete later
-        # return permuted_disjunction
-        # recapture the original permutation from the permutated version
-        # right now this is just pretending
+
         return self.concludeViaPermutation(permuted_disjunction, assumptions)
 
     def concludeViaPermutation(self, permuted_disjunction, assumptions=USE_DEFAULTS):
@@ -465,7 +462,7 @@ class Or(Operation):
         created: 11/17/2019 by wdc.
         last modified: 11/17/2019 by wdc (creation).
         '''
-        print('assumptions = {}'.format(assumptions))                          # for testing; delete later
+        
         # Check that the permuted_disjunction is an instance of OR
         # perm_disj_expr = permuted_disjunction.expr
         if not isinstance(permuted_disjunction.expr, Or):
@@ -475,7 +472,6 @@ class Or(Operation):
         # operands in self (otherwise throw a ValueError).
         self_operands = self.operands
         perm_operands = permuted_disjunction.operands
-        print('perm_operands = {}'.format(perm_operands))                      # for testing; delete later
         unexpected_operands = list(set(perm_operands)-set(self_operands))
         if len(unexpected_operands) != 0:
             raise ValueError('the permuted disjunction (permuted_disjunction) '
@@ -483,19 +479,33 @@ class Or(Operation):
                              format(unexpected_operands))
 
         # then not clear what to do here!
+        # NOTICE we are assuming no repetition of operands and that
+        # len(perm_operands) = len(self_operands)
+
+        for i in range(len(self_operands)):
+            # each time update the operands list for the permuting version
+            perm_operands = permuted_disjunction.operands
+            temp_operand = self_operands[i]
+            j = perm_operands.index(temp_operand)
+            equiv_permuted_disjunction = (
+                permuted_disjunction.commutation(j, i)
+            )
+            permuted_disjunction = (
+                    equiv_permuted_disjunction
+                    .subRightSideInto(permuted_disjunction,assumptions)
+            )
+
+        return permuted_disjunction
 
         # for now, generate an equivalent arbitrary permutation for testing;
         # later we will develop this to further commute elements systematically
         # to produce desired self
-        equiv_permuted_disjunction = permuted_disjunction.commutation(0, -1)
-        print('equiv_permuted_disjunction is: {}'
-              .format(equiv_permuted_disjunction))                             # for testing; delete later
-        return (equiv_permuted_disjunction
-                .subRightSideInto(
-                    permuted_disjunction,
-                    assumptions
-                )
-        )
+        # equiv_permuted_disjunction = permuted_disjunction.commutation(0, -1)
+        # print('equiv_permuted_disjunction is: {}'
+        #       .format(equiv_permuted_disjunction))                             # for testing; delete later
+        # return (equiv_permuted_disjunction
+        #         .subRightSideInto(permuted_disjunction,assumptions)
+        # )
 
     def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
         from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
