@@ -4,6 +4,7 @@ from .containment import NotProperSubset, NotSubset, NotSubsetEq, ProperSubset
 from .containment import Subset, SubsetEq, SubsetProper
 from .containment import NotSuperset, NotSupersetEq, ProperSuperset
 from .containment import StrictSuperset, Superset, SupersetEq, SupersetProper
+from .equivalence import SetEquiv
 from .unification import Union
 from .intersection import Intersect
 from .subtraction import Difference

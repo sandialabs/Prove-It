@@ -457,8 +457,8 @@ class Or(Operation):
         conclude that this 'or' expression is true. For example, let
         thisOr = A V B V C V D and permOfThisOr = S |- B V A V C V D. From
         permOfThisOr, conclude thisOr, using the following:
-        thisOr.concludeViaPermuation(permOfThisOr), which will
-        return {something?} |– A V B V C V D.
+        thisOr.concludeViaPermuation(permOfThisOr, assumptions = S), which
+        will return S |– A V B V C V D.
         created: 11/17/2019 by wdc.
         last modified: 11/17/2019 by wdc (creation).
         '''
@@ -478,12 +478,11 @@ class Or(Operation):
                              'you provided contains unexpected items: {}'.
                              format(unexpected_operands))
 
-        # then not clear what to do here!
         # NOTICE we are assuming no repetition of operands and that
         # len(perm_operands) = len(self_operands)
 
         for i in range(len(self_operands)):
-            # each time update the operands list for the permuting version
+            # update the operands list each time for the permuting version
             perm_operands = permuted_disjunction.operands
             temp_operand = self_operands[i]
             j = perm_operands.index(temp_operand)
@@ -497,15 +496,6 @@ class Or(Operation):
 
         return permuted_disjunction
 
-        # for now, generate an equivalent arbitrary permutation for testing;
-        # later we will develop this to further commute elements systematically
-        # to produce desired self
-        # equiv_permuted_disjunction = permuted_disjunction.commutation(0, -1)
-        # print('equiv_permuted_disjunction is: {}'
-        #       .format(equiv_permuted_disjunction))                             # for testing; delete later
-        # return (equiv_permuted_disjunction
-        #         .subRightSideInto(permuted_disjunction,assumptions)
-        # )
 
     def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
         from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
