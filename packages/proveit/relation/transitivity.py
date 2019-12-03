@@ -18,11 +18,11 @@ The default version handles the case when the "other" relation
 is an equality (in which case, substitution may simply be performed).
 """
 
-
-from proveit import Expression, Operation, OperationSequence
-from proveit import defaults, USE_DEFAULTS, KnownTruth, ProofFailure
 import itertools
 from collections import deque
+from proveit import Expression, Operation, OperationSequence
+from proveit import defaults, USE_DEFAULTS, KnownTruth, ProofFailure
+from .sorter import TransitivitySorter
 
 class TransitiveRelation(Operation):
     r'''
@@ -71,178 +71,29 @@ class TransitiveRelation(Operation):
     def concludeViaTransitivity(self, assumptions=USE_DEFAULTS):
         from proveit.logic import Equals
         assumptions = defaults.checkedAssumptions(assumptions)
-        if self.__class__ == Equals: forceStrong = False # "strong" vs "weak" doesn't make sense when the relation is simply equality
-        else: forceStrong = (self.__class__ == self.__class__._checkedStrongRelationClass())
-        return self.__class__._transitivitySearch(self.lhs, self.rhs, forceStrong=forceStrong, assumptions=assumptions)
+        relation = self.__class__._transitivitySearch(self.lhs, self.rhs, assumptions=assumptions).expr
+        if relation.__class__ != self.__class__:
+            if self.__class__ == self.__class__._checkedWeakRelationClass():
+                if relation.__class__ == self.__class__._checkedStrongRelationClass():
+                    return relation.deriveRelaxed()
+                elif relation.__class__ == Equals:
+                    return self.concludeViaEquality()
+            msg = ("Not able to conclude the desired relation of %s"
+                    " from the proven relation of %s."
+                    %(str(self), str(relation)))
+            raise TransitivityException(self, assumptions, msg)
+        return relation
 
-    @staticmethod
-    def WeakRelationClass():
-        raise NotImplementedError("The Expression class for the weak form of the relation (that include equality as a possibility) should be returned")
-
-    @staticmethod
-    def StrongRelationClass():
-        raise NotImplementedError("The Expression class for the strong form of the relation (that excludes equality as a possibility) should be returned")
-
-    @classmethod
-    def _checkedWeakRelationClass(RelationClass):
-        from proveit.logic import Equals
-        if RelationClass==Equals: return Equals # ("equal to" or "equal to" is just "equal to")
-        try:
-            Relation = RelationClass.WeakRelationClass()
-        except NotImplementedError:
-            raise NotImplementedError("The Expression class for the weak form %s (that include equality as a possibility) should be returned"%str(RelationClass))
-        assert issubclass(Relation, TransitiveRelation), "WeakRelationClass() should return a sub-class of TransitiveRelation"
-        return Relation
-
-    @classmethod
-    def _checkedStrongRelationClass(RelationClass):
-        try:
-            Relation = RelationClass.StrongRelationClass()
-        except NotImplementedError:
-            raise NotImplementedError("The Expression class for the strong form %s (that excludes equality as a possibility) should be returned"%str(RelationClass))            
-        assert issubclass(Relation, TransitiveRelation), "StrongRelationClass() should return a sub-class of TransitiveRelation"
-        return Relation
-
-    @staticmethod
-    def SequenceClass():
-        raise NotImplementedError("The Expression class for the transitive relation sequence should be returned")
-
-    @classmethod
-    def makeSequenceOrRelation(self, *relations):
-        if len(relations)==1:
-            return relations[0] # only 1 relation
-        Sequence = self.SequenceClass()
-        assert issubclass(Sequence, TransitiveSequence), "SequenceClass() should return a sub-class TransitiveSequence"
-        operators = [relation.operator for relation in relations]
-        operands = [relation.lhs for relation in relations] + [relations[-1].rhs]
-        alt_operands = [relations[0].lhs] + [relation.rhs for relation in relations]
-        if operands != alt_operands:
-            raise TypeError("The relations do not have the expected operands in common to form a sequence")
-        return Sequence(operators, operands)
-    
-    @classmethod
-    def transitivity_sorted_items(cls, items, reorder=True, assumptions=USE_DEFAULTS):
-        '''
-        Return the given items in sorted order with respect to this 
-        TransitivityRelation class (cls) under the given assumptions
-        using known transitive relations.
-        If reorder is False, raise a TransitivityException if the
-        items are not in sorted order as provided.
-        '''
-        from proveit.number import isLiteralInt
-        assumptions = defaults.checkedAssumptions(assumptions)
-        if all(isLiteralInt(item) for item in items):
-            # All the items are integers.  Use efficient n log(n) sorting to
-            # get them in the proper order and then use fixedTransitivitySort
-            # to efficiently prove this order.
-            items = sorted(items, key = lambda item : item.asInt())
-            reorder = False 
-        if reorder:
-            return cls._transitivitySortedItems(items, assumptions=assumptions)
-        else:
-            return cls._fixedTransitivitySort(items, assumptions=assumptions).operands
-    
-    @classmethod
-    def transitivity_sort(cls, items, reorder=True, assumptions=USE_DEFAULTS):
-        '''
-        Return the proven Sequence, a known truth for an expression 
-        of type cls.SequenceClass(), representing the sorted sequence
-        according to the cls.transitivity_sorted_items method.
-        '''
-        if reorder:
-            items = cls.sorted_items(items, reorder, assumptions)
-        return cls._fixedTransitivitySort(items, assumptions=assumptions)
-    
-    @classmethod
-    def transitivity_mergesorted_items(cls, item_generators, 
-                                       yield_duplicates=False, 
-                                       assumptions=USE_DEFAULTS):
-        '''
-        Given a list of item generators, with each generator yielding
-        items in sorted order, yield every item (from all the
-        generators) in sorted order.
-        If yield_duplicates is False, don't yield duplicate items
-        (arising from the same generator or different generators).
-        '''
-        # First, sort the first item from each generator.
-        first_items = set()
-        active_generators = set(item_generators)
-        front_item_to_generators = dict()
-        for generator in item_generators:
-            try:
-                item = next(generator)
-                front_item_to_generators.setdefault(item, []).add(generator)
-                first_items.add(item)
-            except StopIteration:
-                active_generators.pop(generator)
-        
-        # Maintain the sorted items at the "front line" of
-        # each generator (first that has not been yielded yet).
-        front_sorted = cls.sort(first_items, assumptions=assumptions)
-        
-        SequenceClass = cls.SequenceClass()
-        last_item = None
-        last_operator = None
-        while len(active_generators) > 0:
-            operators = front_sorted.operators
-            operands = front_sorted.operands
-            next_item = operands.pop()
-            front_sorted = makeSequenceOrRelation(SequenceClass, 
-                                            operands, operators)
-            if not yield_duplicates and next_item != last_item:
-                # Yield this next item, non-duplicated
-                if last_operator is not None:
-                    yield last_operator
-                yield next_item
-            for generator in front_item_to_generators[next_item]:
-                # Yield the next item for each generator 
-                # that contains it.
-                yield next_item
-                item = next(generator)
-                
-                
-            last_item = next_item
-        
-    @classmethod
-    def transitivity_mergesort(cls, item_generators, 
-                               yield_duplicates=False, 
-                               assumptions=USE_DEFAULTS):
-        '''
-        Return the proven Sequence, a known truth for an expression 
-        of type cls.SequenceClass(), representing the sorted sequence
-        according to the cls.transitivity_mergesorted_items method.
-        '''
-        items = cls.transitivity_mergesorted_items(item_generators, 
-                                                   yield_duplicates,
-                                                   assumptions)
-        return cls._fixedTransitivitySort(items, assumptions=assumptions)        
-    
-    @classmethod
-    def insort_index(self, sorted_items, item, assumptions=USE_DEFAULTS):
-        assumptions = defaults.checkedAssumptions(assumptions)
-        return self.__class__._transitivityInsortIndex(self, sorted_items,
-                                                        item, assumptions)
-    
-    def insort(self, item, assumptions=USE_DEFAULTS):
-        '''
-        Return the proven Sequence, a known truth for an expression 
-        of type cls.SequenceClass(), representing the sorted sequence
-        according to the cls.transitivity_mergesorted_items method.
-        '''
-        cls = self.__class__
-        items = list(self.operands)
-        idx = cls.insort_index(items, item, assumptions)
-        items.insert(idx, item)
-        return cls._fixedTransitivitySort(items, assumptions=assumptions)
-                                
     @classmethod
     def knownRelationsFromLeft(RelationClass, expr, assumptionsSet):
         '''
         Yield (KnownTruth, right-hand-side) pairs for this
         transitive relationship (or equality) that involve the given expression on 
         the left side and are known to be true under the given assumptions.
-        The strongest known relationships should be yielded first, starting
-        with equalities (for inequalities, next is < followed by <=).
+        Equality relations will always be yielded first.
+        Strong relations will be yielded next.
+        Weak relations will only be yielded if this is a weak
+        relation class.
         '''
         from proveit.logic import Equals
         # equality relationships are strongest and should come first.
@@ -250,8 +101,15 @@ class TransitiveRelation(Operation):
             if expr != otherExpr: # exclude reflexive equations -- they don't count
                 yield (knownTruth, otherExpr)
         if RelationClass is not Equals:
+            if RelationClass is RelationClass._checkedStrongRelationClass():
+                allowed_relation_classes = \
+                    (RelationClass._checkedStrongRelationClass(),)
+            else:
+                allowed_relation_classes = \
+                    (RelationClass._checkedStrongRelationClass(), 
+                     RelationClass._checkedWeakRelationClass())
             # stronger then weaker relations
-            for Relation in (RelationClass._checkedStrongRelationClass(), RelationClass._checkedWeakRelationClass()):
+            for Relation in allowed_relation_classes:
                 for knownTruth in list(Relation.knownLeftSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
                         yield (knownTruth, knownTruth.rhs)
@@ -262,8 +120,10 @@ class TransitiveRelation(Operation):
         Yield (KnownTruth, left-hand-side) pairs for this
         transitivie relationship (or equality) that involve the given expression on 
         the right side and are known to be true under the given assumptions.
-        The strongest known relationships should be yielded first, starting
-        with equalities (for inequalities, next is < followed by <=).
+        Equality relations will always be yielded first.
+        Strong relations will be yielded next.
+        Weak relations will only be yielded if this is a weak
+        relation class.
         '''
         from proveit.logic import Equals
         # equality relationships are strongest and should come first.
@@ -271,8 +131,15 @@ class TransitiveRelation(Operation):
             if expr != otherExpr: # exclude reflexive equations -- they don't count
                 yield (knownTruth, otherExpr)
         if RelationClass is not Equals:
+            if RelationClass is RelationClass._checkedStrongRelationClass():
+                allowed_relation_classes = \
+                    (RelationClass._checkedStrongRelationClass(),)
+            else:
+                allowed_relation_classes = \
+                    (RelationClass._checkedStrongRelationClass(), 
+                     RelationClass._checkedWeakRelationClass())
             # stronger then weaker relations
-            for Relation in (RelationClass._checkedStrongRelationClass(), RelationClass._checkedWeakRelationClass()):
+            for Relation in allowed_relation_classes:
                 for knownTruth in list(Relation.knownRightSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
                         yield (knownTruth, knownTruth.lhs)
@@ -325,465 +192,284 @@ class TransitiveRelation(Operation):
         while len(chain) >= 2:
             first = chain.pop(0)
             second = chain.pop(0)
-            chain.insert(0, first.applyTransitivity(second, assumptions=assumptions))
+            new_relation = first.applyTransitivity(second, assumptions=assumptions)
+            if not isinstance(new_relation, KnownTruth):
+                raise TypeError("applyTransitivity should return a KnownTruth, not %s"%new_relation)
+            chain.insert(0, new_relation)
         return chain[0] # we are done
+
+    @staticmethod
+    def WeakRelationClass():
+        raise NotImplementedError("The Expression class for the weak form of the relation (that include equality as a possibility) should be returned")
+
+    @staticmethod
+    def StrongRelationClass():
+        raise NotImplementedError("The Expression class for the strong form of the relation (that excludes equality as a possibility) should be returned")
+
+    @classmethod
+    def _checkedWeakRelationClass(RelationClass):
+        from proveit.logic import Equals
+        if RelationClass==Equals: return Equals # ("equal to" or "equal to" is just "equal to")
+        try:
+            Relation = RelationClass.WeakRelationClass()
+        except NotImplementedError:
+            raise NotImplementedError("The Expression class for the weak form %s (that include equality as a possibility) should be returned"%str(RelationClass))
+        assert issubclass(Relation, TransitiveRelation), "WeakRelationClass() should return a sub-class of TransitiveRelation"
+        return Relation
+
+    @classmethod
+    def _checkedStrongRelationClass(RelationClass):
+        try:
+            Relation = RelationClass.StrongRelationClass()
+        except NotImplementedError:
+            raise NotImplementedError("The Expression class for the strong form %s (that excludes equality as a possibility) should be returned"%str(RelationClass))            
+        assert issubclass(Relation, TransitiveRelation), "StrongRelationClass() should return a sub-class of TransitiveRelation"
+        return Relation
+
+    @staticmethod
+    def SequenceClass():
+        raise NotImplementedError("The Expression class for the transitive relation sequence should be returned")
+
+    @classmethod
+    def makeSequenceOrRelation(self, *relations):
+        if len(relations)==1:
+            return relations[0] # only 1 relation
+        Sequence = self.SequenceClass()
+        assert issubclass(Sequence, TransitiveSequence), "SequenceClass() should return a sub-class TransitiveSequence"
+        operators = [relation.operator for relation in relations]
+        operands = [relation.lhs for relation in relations] + [relations[-1].rhs]
+        alt_operands = [relations[0].lhs] + [relation.rhs for relation in relations]
+        if operands != alt_operands:
+            raise TypeError("The relations do not have the expected operands in common to form a sequence")
+        return Sequence(operators, operands)
     
     @classmethod
-    def _transitivitySearch(RelationClass, leftItem, rightItem, forceStrong, assumptions):
+    def sorted_items(cls, items, reorder=True, assumptions=USE_DEFAULTS):
+        '''
+        Return the given items in sorted order with respect to this 
+        TransitivityRelation class (cls) under the given assumptions
+        using known transitive relations.
+        If reorder is False, raise a TransitivityException if the
+        items are not in sorted order as provided.
+        Weak relations (e.g., <=) are only considered when calling
+        this method on a weak relation class (otherwise, only
+        equality and strong relations are used in the sorting).
+        '''
+        from proveit.number import isLiteralInt
+        assumptions = defaults.checkedAssumptions(assumptions)
+        if all(isLiteralInt(item) for item in items):
+            # All the items are integers.  Use efficient n log(n) sorting to
+            # get them in the proper order and then use fixedTransitivitySort
+            # to efficiently prove this order.
+            items = sorted(items, key = lambda item : item.asInt())
+            reorder = False 
+        if reorder:
+            sorter = TransitivitySorter(cls, items, assumptions=assumptions)
+            return list(sorter)
+        else:
+            return cls._fixedTransitivitySort(items, assumptions=assumptions).operands
+    
+    @classmethod
+    def sort(cls, items, reorder=True, assumptions=USE_DEFAULTS):
+        '''
+        Return the proven Sequence, a known truth for an expression 
+        of type cls.SequenceClass(), representing the sorted sequence
+        according to the cls.sorted_items method.
+        Weak relations (e.g., <=) are only considered when calling
+        this method on a weak relation class (otherwise, only
+        equality and strong relations are used in the sorting).
+        '''
+        automation = True
+        if reorder:
+            items = cls.sorted_items(items, reorder, assumptions)
+            print("sorted", items)
+            automation = False # Direct relations already proven.
+        return cls._fixedTransitivitySort(items, assumptions=assumptions, 
+                                          automation=automation)
+    
+    @classmethod
+    def mergesorted_items(cls, item_iterators, 
+                          assumptions=USE_DEFAULTS,
+                          skip_exact_reps=False,
+                          skip_equiv_reps=False,
+                          requirements=None):
+        '''
+        Given a list of Expression item iterators, with each generator 
+        yielding items in sorted order, yield every item (from all the
+        generators) in sorted order.  If skip_exact_reps is True,
+        only yield the first of an 'item' that is repeated
+        exactly (equal Expressions).  If skip_equiv_reps is True,
+        only yield the first of an 'item' that is repeated via
+        a known equivalence.  Passes back requirements (if provided)
+        that are the specific merger relations.
+        Weak relations (e.g., <=) are only considered when calling
+        this method on a weak relation class (otherwise, only
+        equality and strong relations are used in the sorting).
+        '''
+        assumptions = defaults.checkedAssumptions(assumptions)
+        
+        # item_iterators may be actual iterators or something that
+        # can produce an iterator. Convert them all to actual iterators.
+        for k, iterator in enumerate(item_iterators):
+            try:
+                # Try to convert to an actual iterator.
+                item_iterators[k] = iter(iterator)
+            except:
+                pass # Assume it is already an actual iterator.
+                
+        # Start with the first item from each generator and track
+        # the generator(s) for each item so we no where to get the
+        # item(s) to be added after yielding the "next" sorted item.
+        first_items = []
+        front_item_to_iterators = dict()
+        for iterator in item_iterators:
+            try:
+                item = next(iterator)
+                first_items.append(item)
+                front_item_to_iterators.setdefault(item, []).append(iterator)
+            except StopIteration:
+                pass
+        
+        if requirements is None:
+            requirements = []
+        
+        # Create a TransitivitySorter.
+        sorter = TransitivitySorter(cls, first_items, assumptions=assumptions,
+                                    skip_exact_reps=skip_exact_reps,
+                                    skip_equiv_reps=skip_equiv_reps)
+        # Yield items in sorted order from the TransitivitySorter,
+        # add to the TransitivitySorter as new items become "exposed",
+        # and keep front_item_to_iterators updated.
+        prev_item = None
+        prev_iters = None
+        for next_item in sorter:
+            yield next_item # Yield the next item.
+            if next_item not in front_item_to_iterators:
+                prev_item = next_item
+                prev_iters = set()
+                continue
+            # Add newly "exposed" items and update 
+            # front_item_to_iterators.
+            iterators = front_item_to_iterators.pop(next_item)
+            if prev_item is not None and prev_iters.isdisjoint(iterators):
+                # next_item and prev_item are in different iterators,
+                # so their relationship is important for establishing
+                # the sorted order of the merger. 
+                requirement = cls._transitivitySearch(prev_item, next_item, 
+                                                      assumptions=assumptions, 
+                                                      automation=False)
+                requirements.append(requirement)
+            for iterator in iterators:
+                try:
+                    item_to_add = next(iterator)
+                    # Add "exposed" item.
+                    sorter.add(item_to_add)
+                    # Update front_item_to_iterators.
+                    front_item_to_iterators.setdefault(item_to_add, 
+                                                       []).append(iterator)
+                except StopIteration:
+                    pass # Nothing more from this generator.
+            prev_item = next_item
+            prev_iters = set(iterators)
+    
+    @classmethod
+    def mergesort(cls, item_iterators, assumptions=USE_DEFAULTS,
+                  skip_exact_reps=False, skip_equiv_reps=False,
+                  requirements=None):
+        '''
+        Return the proven Sequence, a known truth for an expression 
+        of type cls.SequenceClass(), representing the sorted sequence
+        according to the cls.mergesorted_items method.
+        Weak relations (e.g., <=) are only considered when calling
+        this method on a weak relation class (otherwise, only
+        equality and strong relations are used in the sorting).
+        '''
+        items = cls.mergesorted_items(item_iterators, assumptions,
+                                      skip_exact_reps, skip_equiv_reps,
+                                      requirements)
+        items = list(items)
+        print("merge sorted", items)
+        return cls._fixedTransitivitySort(items, assumptions=assumptions,
+                                           automation=False)        
+                                
+    
+    @classmethod
+    def _transitivitySearch(cls, leftItem, rightItem, 
+                            assumptions, automation=True):
         '''
         Performs a breadth-first, bidirectional (meet in the middle) search attempting
         to prove a relation between leftItem and rightItem according to the RelationClass
         by applying transitivity derivations.
         If successful, the approprate KnownTruth relating these items (in weak or strong
         form as can be determined) is returned; otherwise a TransitivityException is raised.
-        If forceStrong is True, only the strong form of the relation is accepted. 
         '''
         from proveit.logic import Equals
-        
-        assumptions_set = set(assumptions)
         
         #  Check if the relation is already known directly:
         if leftItem==rightItem:
             # Items are the exact same, so they are equal.
-            # But if "forceStrong" is True, that is not allowed
-            if forceStrong:
-                raise TransitivityException("Two items that are exactly the same expression cannot be proven to have a 'strong' transitive relationship: %s"%str(leftItem))
             return Equals(leftItem, rightItem).prove()
         try:
             # Try the strong relation first.
-            StrongClass = RelationClass._checkedStrongRelationClass()
-            return StrongClass(leftItem, rightItem).prove(automation=False, assumptions=assumptions)
+            StrongClass = cls._checkedStrongRelationClass()
+            relation = StrongClass(leftItem, rightItem)
+            return relation.prove(assumptions=assumptions, automation=False)
         except (ProofFailure, NotImplementedError):
-            # Try equality then the weak relation if either is allowed.
-            if not forceStrong:
-                try:                    
-                    # Maybe the equality is known.
-                    return Equals(leftItem, rightItem).prove(automation=False, assumptions=assumptions)
-                except ProofFailure:
-                    pass
+            # Try equality.
+            try:                    
+                # Maybe the equality is known.
+                relation = Equals(leftItem, rightItem)
+                return relation.prove(assumptions=assumptions,
+                                        automation=False)
+            except ProofFailure:
+                pass
+            # Try the weak relation if cls is weak.
+            if cls == cls._checkedWeakRelationClass():
                 try:
                     # Maybe the weak relation is known.
-                    WeakClass = RelationClass._checkedWeakRelationClass()
-                    return WeakClass(leftItem, rightItem).prove(automation=False, assumptions=assumptions)
+                    WeakClass = cls._checkedWeakRelationClass()
+                    relation = WeakClass(leftItem, rightItem)
+                    return relation.prove(assumptions=assumptions,
+                                            automation=False)
                 except (ProofFailure, NotImplementedError):
                     pass
+
+        if not automation:
+            relation = cls(leftItem, rightItem)
+            msg = ('No proof found via applying transitivity amongst'
+                   ' known proven relations.')
+            raise TransitivityException(relation, assumptions, msg)
         
-        # "Chains" map end-points to list of known true relations that get us there
-        # by applying transitivity rules.
-        # Left chain values will be a list of relations that can take us from
-        # relation.lhs to the left chain end-point.
-        # Right chain values will be a list of relations that can take us from
-        # relation.rhs to the right chain end-point.
-        left_chains, right_chains = {leftItem:[]}, {rightItem:[]}
-        unexplored_left, unexplored_right = dict(left_chains), dict(right_chains)
-        
-        # while there is something left to explore on both side
-        # (otherwise, we have hit a dead end on one of the sides)
-        while len(unexplored_left)>0 and len(unexplored_right)>0:
-            # choose the side with the fewest unexplored endpoints.
-            # (bias on the left since left-to-right is a common convention)
-            if len(unexplored_left) <= len(unexplored_right):
-                chains, unexplored_chains = left_chains, unexplored_left
-                extensions = lambda endpoint : RelationClass.knownRelationsFromLeft(endpoint, assumptions_set)
-                endpoints, other_endpoints = list(left_chains.keys()), list(right_chains.keys())
-            else:
-                chains, unexplored_chains = right_chains, unexplored_right
-                extensions = lambda endpoint : RelationClass.knownRelationsFromRight(endpoint, assumptions_set)
-                endpoints, other_endpoints = list(right_chains.keys()), list(left_chains.keys())
-            
-            # search for extensions to the unexplored chains and see if any make
-            # it to the other side
-            new_chains = dict()
-            for endpoint, chain in unexplored_chains.items():
-                for relation, new_endpoint in extensions(endpoint):
-                    if not isinstance(relation, KnownTruth) or not isinstance(new_endpoint, Expression):
-                        raise TypeError(str(relation.__class__) + '.knownRelationsFromLeft and ' + str(relation.__class__) \
-                                        + '.knownRelationsFromRight should yield (KnownTruth, Expression) pairs')
-                    if new_endpoint not in endpoints:
-                        # We only care about new chains with new end-points.
-                        new_chains[new_endpoint] = chain + [relation]
-                        
-                        # Do we have an end to end solution?
-                        if new_endpoint in other_endpoints:
-                            # made it to the other side. we have a solution.
-                            # Apply transitivities to generate it and return this new known truth.
-                            if chains is left_chains:
-                                # bridge the left extension with the reversed right chain
-                                full_chain = new_chains[new_endpoint] + list(reversed(right_chains[new_endpoint]))
-                            else:
-                                # bridge the left chain with the reversed right extension
-                                full_chain = left_chains[new_endpoint] + list(reversed(new_chains[new_endpoint]))
-                            # This should return a known truth for the desired relation in weak or strong form.
-                            relation = TransitiveRelation.applyTransitivities(full_chain, assumptions=assumptions)
-                            # If forceStrong is true and the proven relation is weak, continue to keep trying.
-                            if not forceStrong or relation.expr.__class__ == RelationClass._checkedStrongRelationClass():
-                                return relation
-            
-            # get the new unexplored chains and update the full set of chains with the new chains
-            unexplored_chains.clear()
-            unexplored_chains.update({endpoint:chain for endpoint,chain in new_chains.items() \
-                                    if endpoint not in chains})
-            chains.update(new_chains)
-        
-        DesiredRelationClass = RelationClass._checkedStrongRelationClass() if forceStrong else  RelationClass._checkedWeakRelationClass()
-        raise TransitivityException(DesiredRelationClass(leftItem, rightItem), assumptions, 'No proof found via applying transitivity amongst known proven relations.')
+        sorter = TransitivitySorter(cls, [leftItem, rightItem], 
+                                    assumptions=assumptions,
+                                    skip_exact_reps=False, 
+                                    skip_equiv_reps=False,
+                                    presorted_pair=True)
+        list(sorter) # should prove desired relation
+        # Return the proven relation.
+        return cls._transitivitySearch(leftItem, rightItem,
+                                        assumptions, automation=False)
     
     @classmethod
-    def _generateSortingRelations(RelationClass, items, assumptionsSet,
-                                  active_items=None):
+    def _fixedTransitivitySort(cls, items, assumptions, 
+                               automation=True):
         '''
-        Generate relations between items via a breadth-first,
-        meet-in-the-middle exploration of known relations for the 
-        purpose of sorting.  
-        Yields ((left-item, right-item), chain) nested
-        tuples where the chain is a sequence of relationships going from
-        the left item to the right item.  The chains do not extend 
-        through other items as these are redundant for the purpose of 
-        sorting the items.
-                
-        Extensions are made in a "round-robin"
-        fashion in the order that the items are provided in case
-        that is useful.  Also, active_items may be provided to
-        adaptively remove items that are no long of concern.        
-        '''
-        item_set = set(items)
-        if active_items is None:
-            active_items = item_set
-        else:
-            if active_items != item_set:
-                raise ValueError('active_items should be initialized to the full set of items')
-        
-        if len(items)==1:
-            return # no relationships when there is just one item
-    
-        # Map each item to a list of dictionaries mapping end-points to chains
-        # of relations going from the item to the end-point.
-        frontier_left_chains = {item:{item:[]} for item in items} # going left
-        frontier_right_chains = {item:{item:[]} for item in items} # going right
-        
-        left_endpoint_chains = {item:[[]] for item in items} # map left end-points to chains going from an item to the end-point
-        right_endpoint_chains = {item:[[]] for item in items} # map right end-points to chains going from an item to the end-point
-        left_reachables = {item:set([item]) for item in items} # map each item to expressions reachable from that item via generated chains going left
-        right_reachables = {item:set([item]) for item in items} # map each item to expressions reachable from that item via generated chains going right
-        
-        # while there are still end-points on the frontier
-        while len(frontier_left_chains) + len(frontier_right_chains) > 0:
-            # extend to the left or to the right
-            for frontier_chains, reachables, known_relations, same_endpoint_chains, opposite_endpoint_chains in zip((frontier_left_chains, frontier_right_chains), (left_reachables, right_reachables), (RelationClass.knownRelationsFromRight, RelationClass.knownRelationsFromLeft), (left_endpoint_chains, right_endpoint_chains), (right_endpoint_chains, left_endpoint_chains)):
-                # Extend chains originating from each item.  Go in
-                # the order that items were provided in case that is
-                # useful.
-                for item in items:
-                    if item not in active_items:
-                        frontier_chains.pop(item)
-                        continue
-                        
-                    chains = frontier_chains[item]
-                    item_reachables = reachables[item]
-                    new_frontier_chains = dict() # new chains from extending the original chains
-                    # extend from each frontier end-point
-                    for endpoint, chain in chains.items():
-                        #print 'starting chain', endpoint, list(chain), ('left' if frontier_chains is frontier_left_chains else 'right')
-                        # iterate over each known relation that extend the frontier at the end-point
-                        for relation, new_endpoint in known_relations(endpoint, assumptionsSet):
-                            if new_endpoint in item_reachables: continue
-                            if new_endpoint in frontier_chains[item]:
-                                continue # not really a new end-point; same as a known end-point (this can happen via the reflexivity of equality)
-                            if frontier_chains is frontier_left_chains:
-                                new_chain = [relation] + chain # extend chain to the left
-                            else:
-                                new_chain = chain + [relation] # extend chain to the right
-                            #print 'extended chain', list(new_chain), 'from', item, 'to', new_endpoint
-                            # see if we meet an opposing chain to connect this item with another one
-                            # (meeting in the middle if it is also a "from" item)
-                            if new_endpoint in opposite_endpoint_chains:
-                                for meeting_chain in opposite_endpoint_chains[new_endpoint]:
-                                    if frontier_chains is frontier_left_chains:
-                                        # left-going chain (new_chain) meeting with right-going chain (meeting_chain)
-                                        other_item = meeting_chain[0].operands[0] if len(meeting_chain)>0 else new_endpoint
-                                        if other_item != item:
-                                            yield (other_item, item), meeting_chain + new_chain
-                                    else:
-                                        # right-going chain (new_chain) meeting with left-going chain (meeting_chain)
-                                        other_item = meeting_chain[-1].operands[-1] if len(meeting_chain)>0 else new_endpoint
-                                        if other_item != item:
-                                            yield (item, other_item), new_chain + meeting_chain
-                            # Note, when we make it to another item, we can stop; that other item will come between
-                            # the current 'item' and anything beyond.
-                            if new_endpoint not in item_set: 
-                                # contribute to the 'same_endpoint_chains'
-                                same_endpoint_chains.setdefault(new_endpoint, []).append(new_chain)
-                                # extend the chain to a new endpoint
-                                new_frontier_chains[new_endpoint] = new_chain
-                                # a new reachable end-point:
-                                item_reachables.add(new_endpoint)
-                                #print "new frontier", new_endpoint, new_chain
-                    if len(new_frontier_chains) > 0:
-                        frontier_chains[item] = new_frontier_chains # update the frontier
-                    else:
-                        # we've exhausted all known relations -- reached the end of the frontier
-                        frontier_chains.pop(item)
-        
-    @classmethod
-    def _transitivitySortedItems(RelationClass, items, assumptions):
-        '''
-        Using the given known transitivity relations (from the left and from the right)
-        and the given assumptions, return the items in sorted order according to the transitivity
-        relations, proven as a KnownTruth.  If there is not enough information to sort
-        the items, a ProofFailure will be raised.  Also, if there are transitivity cycles 
-        between items that are not identified as equivalences, a TransitivityException is raised;
-        for example, if a <= b, b <= c, and c <= a, then a=b and b=c (or a=c) should be proven
-        before calling this sorting routine.
-        
-        For n items, the performance is O(n log n) when the only known relationships involving the
-        items are the necessary, non-redundant relationship between them.  When there are
-        extra intermediate relationships, a meet-in-the-middle search is employed (like
-        _transitivitySearch except the searches are performed in parallel).  The worst-case
-        time complexity, beyond the overhead of meet-in-the-middle searches for extra intermediate
-        relationships, is O(n^2 log n) which can occur when the n^2 relationships between the items
-        are all (or mostly) known.
-        '''
-        from proveit.logic import Equals
-        
-        # This is different than the usual sorting algorithms because there is no control
-        # over the known relationships that are provided (they don't come on demand).
-        # The efficiency will depend upon what relationships are known; it is best
-        # to have a complete but not over-complete set of relationships.
-            
-        # store relation chains between pairs of items
-        item_pair_chains = dict() # (left-item, right-item): chain
-        
-        # When there are known equivalences, this will map each item
-        # of an equivalent set to the full equivalent set.
-        eq_sets = {item:{item} for item in items}
-        
-        left_partners = dict()
-        right_partners = dict()
-        
-        unique_items = set(items)
-        left_most_candidates = set(unique_items)
-        repetitions = {item:0 for item in unique_items}
-        for item in items: repetitions[item] += 1
-        
-        def yield_left_most(item):
-            items_to_process = {item}
-            while len(items_to_process) > 0:
-                item = items_to_process.pop()
-                if item in left_partners:
-                    items_to_process.update(left_partners[item])
-                else:
-                    yield item # end of the line
-        
-        sorted_items = []
-        sorted_item_set = set()
-        remaining_items = set(items) # items we have left to sort
-        
-        # Generate relations between items via a breadth-first, meet-in-the-middle
-        # explorations of known relations for the purpose of sorting and use this
-        # information to successively identify "leftmost" items.  
-        for (left_item, right_item), chain in RelationClass._generateSortingRelations(unique_items, assumptions):
-            if left_item in sorted_item_set:
-                # Does not give new information if the left item was sorted.
-                continue 
-            if (left_item, right_item) in item_pair_chains:
-                # Just use the first chain of relations.
-                # If the relation is an equality between the items, that should come first.
-                continue 
-                                
-            # add new item partnership to item_pair_chains
-            item_pair_chains[(left_item, right_item)] = chain
-    
-            # If the left and right items are equal, record the equivalence.
-            if all(relation.operator==Equals._operator_ for relation in chain):
-                if eq_sets[left_item] != eq_sets[right_item]: 
-                    # joining two equivalent sets that were not previously known to be equivalent.
-                    eq_set = eq_sets[left_item] | eq_sets[right_item] # join equivalent sets
-                    for item in eq_set: eq_sets[item] = eq_set # make all the equivalent items point to the same equivalence set
-                    # if any of the eq_set items were eliminated from the left_most_candidates, eliminate all of them
-                    left_most_candidates_in_eq_set = eq_set.intersection(left_most_candidates)
-                    if len(left_most_candidates_in_eq_set)==2:
-                        # only keep one of the left-most candidates (an arbitrarily chosen representative)
-                        left_most_candidates.difference_update(list(eq_set)[1:])
-                    else:
-                        # one (or both) of the two equivalent sets being joined was eliminated from the left_most_candidates,
-                        # so remove all of them in this new equivalence set.
-                        assert len(left_most_candidates_in_eq_set)<=1
-                        left_most_candidates.difference_update(eq_set)
-            else:
-                # add new item partnership to left_partners, and right_partners
-                left_partners.setdefault(right_item, set()).add(left_item)
-                for left_item_equiv in eq_sets[left_item]:
-                    right_partners.setdefault(left_item_equiv, set()).add(right_item)  
-                # see if we can eliminate any left-most candidates
-                eq_right_items = eq_sets[right_item]
-                if not left_most_candidates.isdisjoint(eq_right_items):
-                    # Assume all cycles are accounted for via equivalences;
-                    # otherwise we'll catch it at some point an exception is thrown.
-                    # Remove all items equivalent to the right item from the left-most candidates
-                    # because there is something to the left of it now.
-                    left_most_candidates.difference_update(eq_right_items)
-                    if len(left_most_candidates)==0:
-                        raise TransitivityException(None, assumptions, "Transitivity cycle detected implying equalities; must prove equalities before sorting items: " + str(items))
-            while len(left_most_candidates)==1:
-                # We have one uncontested left-most candidate assuming no cycles outside of equivalence sets
-                # (with such cycles, we'll catch them eventually and raise an exception).
-                left_most = left_most_candidates.pop()
-                sorted_items.append(left_most)
-                sorted_item_set.add(left_most)
-                
-                # note that eq_sets[left_most] should not be extended later because all of the items must
-                # determine that they are either to the right of this "left-most" or equal to it before we got here.
-                remaining_items.difference_update(eq_sets[left_most]) 
-                
-                if left_most not in right_partners: 
-                    break # nothing known to be on the right of the left-most item; done or need more relations.
-                
-                # Remove links to the left-most item so we can focus on the next left-most item.
-                for right_partner in right_partners[left_most]:
-                    left_partners[right_partner].difference_update(eq_sets[left_most])
-                
-                self._update_left_most_candidates()
-                
-                # Determine the next left-most item candidates based upon
-                # what items are rightward from the one that we taken out.
-                to_process = set(right_partners[left_most])
-                already_processed = set()
-                
-                # used to make sure this is an O(n^2 log n) algorithm in the worst case
-                processing_everything = (len(to_process)==len(remaining_items))
-                num_to_process_insertions = len(to_process) # number of items being inserted into the to_process set
-                
-                while len(to_process) > 0:
-                    next_candidate = to_process.pop()
-                    if next_candidate in already_processed: 
-                        continue #  we've dealt with that one already
-                    left_most_candidates.add(next_candidate) # add as a candidate (may be temporary)
-                    eq_next_candidates = eq_sets[next_candidate]
-                    for eq_next_candidate in eq_next_candidates:
-                        # process the item(s) to the left of 'next_candidate' (or any of the equivalent items)
-                        candidate_left_partners = left_partners[eq_next_candidate] if eq_next_candidate in left_partners else []        
-                        if not processing_everything: # don't bother updating to_process if we are already processing everything
-                            num_to_process_insertions += len(candidate_left_partners)
-                            if num_to_process_insertions > len(remaining_items):
-                                # Since we're already going through the work of inserting as many items into to_process as
-                                # there are items remaining, we might as well process everything to guarantee a bound on 
-                                # the worst-case time complexity, avoiding any more insertions in the future.
-                                to_process.update(remaining_items) # some of these may already have been processed, but that's okay
-                                processing_everything = True
-                            else:
-                                # more to process for considering left candidates
-                                to_process.update(candidate_left_partners) 
-                        if len(candidate_left_partners) > 0:
-                            # remove the next_candidate (and equivalent items) as a left-most candidate 
-                            # because there are one or more items to the left of it.
-                            left_most_candidates.difference_update(eq_next_candidates)
-                    already_processed.update(eq_next_candidates)
-                
-                if len(left_most_candidates)==0:
-                    raise TransitivityException(None, assumptions, "Transitivity cycle detected implying equalities; must prove equalities before sorting items: " + str(items))
-                    
-                # Note that we may end up with multiple left-most candidates in which case
-                # more links are needed.
-            
-            # Check if finished:
-            if len(remaining_items)==0: break
-        
-        if len(unique_items)==1:
-            sorted_items = list(unique_items)
-        elif len(remaining_items)>0:
-            raise TransitivityException(None, assumptions, "Insufficient known transitive relations to sort the provided items: " + str(items))
-        
-        orig_order = {item:k for k, item in enumerate(items)}    
-        sorted_items = sum([sorted(eq_sets[item], key=lambda it:orig_order[it]) for item in sorted_items], [])
-        
-        # Apply necessary transitivities.
-        for item1, item2 in zip(sorted_items[:-1], sorted_items[1:]):
-            if (item1, item2) not in item_pair_chains:
-                # We may not have the chain for these specific items, but
-                # we should have it for something equivalent to each of the items.
-                for eq_item1, eq_item2 in itertools.product(eq_sets[item1], eq_sets[item2]):
-                    if (eq_item1, eq_item2) in item_pair_chains:
-                        # if item1 and eq_item1 are not identical expressions, prove that they are logically equal.
-                        prepend = [Equals(item1, eq_item1).prove(assumptions)] if item1 != eq_item1 else [] 
-                        # if item2 and eq_item2 are not identical expressions, prove that they are logically equal.
-                        append = [Equals(eq_item2, item2).prove(assumptions)] if item2 != eq_item2 else []
-                        # make the (item1, item2) chain by prepending/appending necessary equalities to the (eq_item1, eq_item2) chain
-                        item_pair_chains[(item1, item2)] = prepend + item_pair_chains[(eq_item1, eq_item2)] + append
-                        break # We only need one.
-            TransitiveRelation.applyTransitivities(item_pair_chains[(item1, item2)], assumptions)
-        
-        return sorted_items
-        
-        """
-        relations = []
-        for item1, item2 in zip(sorted_items[:-1], sorted_items[1:]):
-            if (item1, item2) not in item_pair_chains:
-                # If may not have the chain for these specific items, but
-                # we should have it for something equivalent to each of the items.
-                for eq_item1, eq_item2 in itertools.product(eq_sets[item1], eq_sets[item2]):
-                    if (eq_item1, eq_item2) in item_pair_chains:
-                        # if item1 and eq_item1 are not identical expressions, prove that they are logically equal.
-                        prepend = [Equals(item1, eq_item1).prove(assumptions)] if item1 != eq_item1 else [] 
-                        # if item2 and eq_item2 are not identical expressions, prove that they are logically equal.
-                        append = [Equals(eq_item2, item2).prove(assumptions)] if item2 != eq_item2 else []
-                        # make the (item1, item2) chain by prepending/appending necessary equalities to the (eq_item1, eq_item2) chain
-                        item_pair_chains[(item1, item2)] = prepend + item_pair_chains[(eq_item1, eq_item2)] + append
-            if repetitions[item1]>1:
-                relations += [Equals(item1, item1).prove()]*(repetitions[item1]-1)
-            relations.append(TransitiveRelation.applyTransitivities(item_pair_chains[(item1, item2)], assumptions))
-        last_item = sorted_items[-1]
-        if repetitions[last_item]>1:
-            relations += [Equals(last_item, last_item).prove()]*(repetitions[last_item]-1)
-        if len(relations)==1:
-            return relations[0]
-        return RelationClass.makeSequenceOrRelation(*relations)
-        """
-    
-    @classmethod
-    def _fixedTransitivitySort(RelationClass, items, assumptions):
-        '''
-        Check that the given items are in sorted order, returning the sorted
-        sequence if they are or raising a TransitivityException if they are not.
+        Check that the given items are in sorted order, returning the 
+        sorted sequence if they are or raising a TransitivityException
+        if they are not.  If automation is False, don't generate
+        new relations through transitivities; assume that we already
+        have the necessary direct relationships proven.
         '''
         items_list = list(items) # in case the items are a non-indexable iterable
         relations = []
         for item1, item2 in zip(items_list[:-1], items_list[1:]):
-            relations.append(RelationClass._transitivitySearch(item1, item2, forceStrong=False, assumptions=assumptions))
+            relations.append(cls._transitivitySearch(item1, item2, 
+                                                     assumptions=assumptions, 
+                                                     automation=automation))
         if len(relations)==1:
             return relations[0]
-        return RelationClass.makeSequenceOrRelation(*relations)
-        
-    @classmethod
-    def _transitivityInsortIndex(RelationClass, sorted_items, item, assumptions):
-        '''
-        Return the index where a new item should be inserted into
-        the given sorted sequence in order for the resulting sequence
-        to be sorted under the given assumptions.
-        '''
-        item_to_index = {k:item for k, item in enumerate(sorted_items)}
-        if item in item_to_index:
-            # Item is already contained in the sequence.  The duplicate
-            # can go there.
-            return item_to_index[item]
-        # Generate relations between any of the sorted sequence operands
-        # and the "item" to insert, using a meet in the middle strategy
-        # to find out where the item fits.
-        sorting_items = [item]+sorted_items
-        rel_gen = RelationClass._generateSortingRelations(sorting_items, assumptions)
-        max_idx = len(sorted_items)+1
-        min_idx = 0
-        for (left_item, right_item), chain in rel_gen:
-            if item == left_item:
-                # Found an upper bound.
-                max_idx = item_to_index[right_item]
-            elif item == right_item:
-                # Found a lower bound.
-                min_idx = item_to_index[left_item]+1
-            else: continue
-            if min_idx==max_idx:
-                # The lower and upper bound meet -- that's the spot.
-                return min_idx
-        raise TransitivityException(None, assumptions, "Unable to find insertion index of %s into %s"%(str(item), str(sorted_items)))
+        return cls.makeSequenceOrRelation(*relations)
+
 
 class TransitiveSequence(OperationSequence):
     '''
