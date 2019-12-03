@@ -69,13 +69,13 @@ class SetEquiv(TransitiveRelation):
         SetEquiv.knownEquivalences.setdefault(self.lhs, set()).add(knownTruth)
         SetEquiv.knownEquivalences.setdefault(self.rhs, set()).add(knownTruth)
         # not yet clear if the irreducible value check is relevant for sets
-        if isIrreducibleValue(self.rhs):
-            SetEquiv.simplifications.setdefault(self.lhs, set()).add(knownTruth)
-            SetEquiv.evaluations.setdefault(self.lhs, set()).add(knownTruth)
+        # if isIrreducibleValue(self.rhs):
+        #     SetEquiv.simplifications.setdefault(self.lhs, set()).add(knownTruth)
+        #     SetEquiv.evaluations.setdefault(self.lhs, set()).add(knownTruth)
+        if (self.lhs != self.rhs): # e.g. if we don't have A equiv A
+            # automatically derive the reversed form which is equivalent
+            yield self.deriveReversed
         # THE FOLLOWING SEEM INAPPLICABLE, because we are dealing with sets
-        # if (self.lhs != self.rhs):
-        #     # automatically derive the reversed form which is equivalent
-        #     yield self.deriveReversed
         # if self.rhs == FALSE:
         #     # derive lhs => FALSE from lhs = FALSE
         #     yield self.deriveContradiction
@@ -180,7 +180,7 @@ class SetEquiv(TransitiveRelation):
         '''
         Prove and return self of the form A equiv A.
         '''
-        from ._axioms_ import setEquivReflexivity
+        from ._theorems_ import setEquivReflexivity
         assert self.lhs == self.rhs
         print('concludeViaReflexivity() being processed.')
         return setEquivReflexivity.specialize({A:self.lhs})
@@ -198,6 +198,13 @@ class SetEquiv(TransitiveRelation):
     #     '''
     #     from .not_equals import NotEquals
     #     return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
+
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this SetEquiv statement is in the set of Booleans.
+        '''
+        from ._theorems_ import setEquivInBool
+        return setEquivInBool.specialize({A:self.lhs, B:self.rhs})
 
     
 
