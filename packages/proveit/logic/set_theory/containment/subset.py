@@ -95,6 +95,13 @@ class Subset(SubsetRelation):
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
 
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this Subset statement is in the set of Booleans.
+        '''
+        from ._theorems_ import subsetInBool
+        return subsetInBool.specialize({A:self.lhs, B:self.rhs})
+
 
 class ProperSubset(SubsetRelation):
     '''
@@ -159,6 +166,13 @@ class ProperSubset(SubsetRelation):
                 return result
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
+
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this ProperSubset statement is in the set of Booleans.
+        '''
+        from ._theorems_ import properSubsetInBool
+        return properSubsetInBool.specialize({A:self.lhs, B:self.rhs})
 
 class SubsetEq(SubsetRelation):
     # operator of the SubsetEq operation
@@ -302,6 +316,16 @@ class NotSubset(Operation):
         from ._theorems_ import foldNotSubset
         return foldNotSubset.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this NotSubset statement is in the set of
+        Booleans. NOTE that the NotSubset class has been created as an
+        Operation and thus has operands instead of lhs and rhs attributes
+        '''
+        from ._theorems_ import notSubsetInBool
+        return notSubsetInBool.specialize(
+                {A:self.operands[0],B:self.operands[1]})
+
 class NotProperSubset(Operation):
     # operator for the NotProperSubset operation
     _operator_ = Literal(stringFormat='not_proper_subset',
@@ -332,6 +356,17 @@ class NotProperSubset(Operation):
         from ._theorems_ import foldNotProperSubset
         return foldNotProperSubset.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
 
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this NotProperSubset statement is in the
+        set of Booleans. NOTE that the NotProperSubset class has been
+        created as an Operation and thus has operands instead of lhs
+        and rhs attributes.
+        '''
+        from ._theorems_ import notProperSubsetInBool
+        return notProperSubsetInBool.specialize(
+                {A:self.operands[0],B:self.operands[1]})
+
 class NotSubsetEq(Operation):
     # operator of the NotSubsetEq operation
     _operator_ = Literal(stringFormat='nsubseteq', latexFormat=r'\nsubseteq', context=__file__)    
@@ -359,6 +394,17 @@ class NotSubsetEq(Operation):
         '''
         from ._theorems_ import foldNotSubsetEq
         return foldNotSubsetEq.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this NotSubsetEq statement is in the
+        set of Booleans. NOTE that the NotSubsetEq class has been
+        created as an Operation and thus has operands instead of lhs
+        and rhs attributes.
+        '''
+        from ._theorems_ import notSubsetEqInBool
+        return notSubsetEqInBool.specialize(
+                {A:self.operands[0],B:self.operands[1]})
 
 # Provide an aliases for ProperSubset to augment user's ease-of-use
 SubsetProper = ProperSubset
