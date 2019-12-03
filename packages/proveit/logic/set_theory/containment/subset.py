@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS
+from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS, asExpression
 from proveit._common_ import A, B, C, x
 from proveit._common_ import f, S, QQ
 from .containment_relation import ContainmentRelation, ContainmentSequence, makeSequenceOrRelation
@@ -73,6 +73,7 @@ class Subset(SubsetRelation):
         '''
         from proveit.logic import Equals, Subset, SubsetEq
         from ._theorems_ import transitivitySubsetSubset, transitivitySubsetSubsetEq
+        other = asExpression(other)
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
        # if isinstance(other,Subset) or isinstance(other,SubsetEq):
@@ -80,7 +81,7 @@ class Subset(SubsetRelation):
         if other.lhs == self.rhs:
             if isinstance(other,Subset):
                 result = transitivitySubsetSubset.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
-                return result#.checked({self})
+                return result
             elif isinstance(other,SubsetEq):
                 result = transitivitySubsetSubsetEq.specialize({A:self.lhs, B:self.rhs, C:other.rhs}, assumptions=assumptions)
                 return result
@@ -177,6 +178,7 @@ class SubsetEq(SubsetRelation):
         '''
         from proveit.logic import Equals, Subset, SubsetEq
         from ._theorems_ import transitivitySubsetEqSubset, transitivitySubsetEqSubsetEq
+        other = asExpression(other)
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
         #if isinstance(other,Subset) or isinstance(other,SubsetEq):

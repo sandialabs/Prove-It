@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS
+from proveit import Literal, Operation, safeDummyVar, USE_DEFAULTS, asExpression
 from proveit._common_ import A, B, C, x
 from .containment_relation import ContainmentRelation, ContainmentSequence, makeSequenceOrRelation
 
@@ -72,6 +72,7 @@ class Superset(SupersetRelation):
         '''
         from proveit.logic import Equals, Subset, SubsetEq
         from ._theorems_ import transitivitySupsetSupset, transitivitySupsetSupsetEq
+        other = asExpression(other)
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
         #if isinstance(other,Subset) or isinstance(other,SubsetEq):
@@ -167,6 +168,7 @@ class SupersetEq(SupersetRelation):
         from proveit.logic import Equals
         from ._theorems_ import transitivitySupsetEqSupset, transitivitySupsetEqSupsetEq
         from .superset import Subset, SubsetEq
+        other = asExpression(other)
         if isinstance(other, Equals):
             return ContainmentRelation.applyTransitivity(other, assumptions) # handles this special case
         if isinstance(other,Subset) or isinstance(other,SubsetEq):
