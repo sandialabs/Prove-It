@@ -1,4 +1,5 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.expression.operation.operation import Operation
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
 from proveit._core_.expression.label import Variable
 from proveit._core_.defaults import USE_DEFAULTS
@@ -105,63 +106,170 @@ class Indexed(Expression):
             return result
         else:
             return Indexed(subbed_var, subbed_indices, base=self.base)
-
-    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+        
+    def _iterSubParamVals(self, axis, iterParam, startArg, endArg, exprMap, 
+                          relabelMap=None, reservedVars=None, 
+                          assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Consider a substitution over a containing iteration (Iter) defined 
-        via exprMap, relabelMap, etc, and index iteration defined by substituting 
-        the "iteration parameters" over the range from the "starting arguments" 
-        to the "ending arguments".
-        When the Indexed variable is substituted with a Composite, any containing
-        Iteration is to be expanded over the iteration range.  This method
-        yields disjoint sub-ranges that covers occupied portions of the full range
-        in a manner that keeps different inner iterations separate.  In particular,
-        the iteration range is broken up for the different Iter entries that
-        are contained in this Composite.  If it is not substituted with
-        a composite, no range is yielded.
+        Consider a substitution over a containing iteration (Iter) 
+        defined via exprMap, relabelMap, etc, and expand the iteration 
+        by substituting the "iteration parameter" over the 
+        range from the "starting argument" (inclusive) to the 
+        "ending argument" (exclusive).
+        When the Indexed variable is substituted with a Composite, any 
+        containing Iteration is to be expanded over the iteration range.  
+        This method returns a list of parameter values that covers
+        occupied portions of the full range in a manner that keeps 
+        different inner iterations separate.  In particular, the 
+        iteration range is broken up for the different Iter entries that 
+        are contained in this Composite.  If it is not substituted with 
+        a composite, _NoExpandedIteration is raised.
         '''
         from .composite import Composite, IndexingError, compositeExpression
         from .expr_tuple import ExprTuple
+        from .expr_array import ExprArray
         from proveit.logic import Equals
+        from proveit.number import Greater, LessEq
         from proveit._core_.expression.expr import _NoExpandedIteration
+        from .iteration import IterationError
         
-        subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-        subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        if requirements is None: requirements = [] 
+        
+        subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars, 
+                                          assumptions, requirements)
+        index = self.indices[axis]
+        subbed_index = index.substituted(exprMap, relabelMap, reservedVars, 
+                                         assumptions, requirements)
                 
         if isinstance(subbed_var, Composite):
-            # We cannot substitute in a Composite without doing an iteration over it.
-            # Only certain iterations are allowed in this manner however.
+            # We cannot substitute in a Composite without doing an 
+            # iteration over it.  Only certain iterations are allowed 
+            # in this manner however.
             
-            start_indices = []
-            end_indices = []
-            for subbed_index, iterParam, startArg, endArg in zip(subbed_indices, iterParams, startArgs, endArgs):
-                if iterParam not in subbed_index.freeVars():
-                    raise IndexingError("Iteration parameter not contained in the substituted index")
-                start_indices.append(subbed_index.substituted({iterParam:startArg}))
-                end_indices.append(subbed_index.substituted({iterParam:endArg}))
+            if iterParam not in subbed_index.freeVars():
+                raise IndexingError("Iteration parameter not contained "
+                                     "in the substituted index")
+            start_index = subbed_index.substituted({iterParam:startArg})
+            end_index = subbed_index.substituted({iterParam:endArg})
             
+            coord_requirements = []
             if isinstance(subbed_var, ExprTuple):
-                assert len(start_indices) == len(end_indices) == 1, "Lists are 1-dimensional and should be singly-indexed"
-                entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices[0], end_indices[0], assumptions, requirements)
+                coords = subbed_var.entryCoords(self.base, assumptions, 
+                                                coord_requirements)
             else:
-                entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices, end_indices, assumptions, requirements)
+                if not isinstance(subbed_var, ExprArray):
+                    subbed_var_class_str = str(subbed_var.__class__)
+                    raise TypeError("Indexed variable should only be "
+                                      "substituted with ExprTuple or "
+                                      "ExprArray, not %s"%subbed_var_class_str)
+                coords = subbed_var.entryCoords(self.base, axis, assumptions, 
+                                                coord_requirements)
+            print("indexed sub coords", self, assumptions, start_index, coords, end_index)
             
-            for (intersection_start, intersection_end) in entryRangeGenerator:
-                # We must put it terms of iter parameter values (arguments) via inverting the index_expr.
-                def coord2param(axis, coord):
-                    if subbed_indices[axis] == iterParams[axis]:
-                        return coord # direct indexing that does not need to be inverted
-                    # The indexing is not direct; for example, x_{f(p)}.
-                    # We need to invert f to obtain p from f(p)=coord and register the inversion as a requirement:
-                    # f(p) = coord.
-                    param = Equals.invert(Lambda(iterParams[axis], subbed_indices[axis]), coord, assumptions=assumptions)
-                    inversion = Equals(subbed_indices[axis].substituted({iterParams[axis]:param}), coord)
-                    requirements.append(inversion.prove(assumptions=assumptions))
-                    return param
-                param_start = tuple([coord2param(axis, i) for axis, i in enumerate(compositeExpression(intersection_start))])
-                param_end = tuple([coord2param(axis, i) for axis, i in enumerate(compositeExpression(intersection_end))])
-                yield (param_start, param_end)
-            return
+            # Merge the start index (inclusive) and end index 
+            # (exclusive) into the sorted coordinates so we can exclude 
+            # anything outside of the appropriate [start, end) range.
+            to_sort = [reversed(coords), [end_index]]
+            # We would typically expect the end-index to come at the
+            # end of the coordinates in which case it is more efficient
+            # to merge sort in reverse order so use Greater instead of
+            # Less.  Use Greater instead of GreaterEq because the end
+            # is exclusive.
+            coords_plus_end_reversed = \
+                Greater.mergesorted_items(to_sort, assumptions=assumptions,
+                                         skip_exact_reps=False,
+                                         skip_equiv_reps=False)
+            # Use LessEq because the start is inclusive and typically
+            # expected to come before the coordinates.              
+            to_sort = [[start_index], 
+                       reversed(list(coords_plus_end_reversed))]
+            coord_relations = LessEq.mergesort(to_sort, 
+                                               assumptions=assumptions,
+                                               skip_exact_reps=False,
+                                                skip_equiv_reps=False)
+            print("sorted", coord_relations)
+            coord_rel_operands = coord_relations.operands
+            coord_rel_operators = coord_relations.operators
+            start_idx = coord_rel_operands.index(start_index)
+            end_idx = coord_rel_operands.index(end_index)
+            n_rel_operators = len(coord_rel_operators)
+                        
+            # Include the start and end "end-caps" but exclude
+            # contained coordinates that are equal to either of these.
+            # Also, if the start and end are the same, ensure that
+            # they are placed at the same index (rightmost by this
+            # convention).
+            while start_idx < n_rel_operators \
+                    and coord_rel_operators[start_idx]==Equals._operator_:
+                start_idx += 1
+            while end_idx < start_idx and \
+                    coord_rel_operators[end_idx] == Equals._operator_:
+                end_idx += 1
+            while start_idx < end_idx and \
+                    coord_rel_operators[end_idx-1] == Equals._operator_:
+                end_idx -= 1
+            
+            if end_idx < start_idx:
+                raise IterationError("Iteration with essentially a "
+                                      "negative extent: [%s, %s)"
+                                      %(start_index, end_index))
+            print(coord_relations, start_idx, end_idx)
+                        
+            # Add the appropriate requirements w.r.t. starting, ending
+            # and coordinates of the expanded indexed variable.
+            if start_idx == end_idx:
+                # Emtpy range: [x, x)
+                relation = Equals(start_index, end_index)
+                requirements.append(relation.prove(assumptions))
+            elif end_idx > start_idx:
+                # Non-empty range.
+                # Check for a range out of bounds of the new composite.
+                if start_idx==0:
+                    msg = ("ExprTuple index out of range: %s not proven "
+                            "to be >= %s (the base) when assuming %s"
+                            %(str(start_index), str(self.base), 
+                              str(assumptions)))
+                    raise IndexError(msg)                
+                elif end_idx==n_rel_operators:
+                    past_end_coord = coords[-1]
+                    msg = ("ExprTuple index out of range: %s not proven "
+                           "to be <= %s (1 beyond the end) when assuming %s"
+                            %(str(end_index), str(past_end_coord), 
+                              str(assumptions)))
+                    raise IndexError(msg)
+                # Coordinate requirements are needed.
+                requirements.extend(coord_requirements)
+                # End-point requirements are needed.
+                operation_class_dict = Operation.operationClassOfOperator
+                print(coord_relations, start_idx, end_idx-1)
+                for idx in {start_idx, end_idx-1}:
+                    req_op = operation_class_dict[coord_rel_operators[idx]]
+                    operands = coord_rel_operands[idx:idx+2]
+                    assert len(operands)==2
+                    relation = req_op(*operands)
+                    requirements.append(relation.prove(assumptions))
+
+            
+            # We must put each coordinate in terms of iter parameter 
+            # values (arguments) via inverting the subbed_index.
+            def coord2param(coord):
+                if subbed_index == iterParam:
+                    # Direct indexing that does not need to be inverted:
+                    return coord 
+                # The indexing is not direct; for example, x_{f(p)}.
+                # We need to invert f to obtain p from f(p)=coord and 
+                # register the inversion as a requirement:
+                # f(p) = coord.
+                param = Equals.invert(Lambda(iterParam, subbed_index),
+                                      coord, assumptions=assumptions)
+                inversion = Equals(subbed_index.substituted({iterParam:param}), 
+                                   coord)
+                requirements.append(inversion.prove(assumptions=assumptions))
+                return param
+            
+            result = [coord2param(coord) for coord 
+                     in coord_rel_operands[start_idx:end_idx+1]] 
+            return result
         
         raise _NoExpandedIteration() # no expansionn
         

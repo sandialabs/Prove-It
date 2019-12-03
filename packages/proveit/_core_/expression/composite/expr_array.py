@@ -168,6 +168,31 @@ class ExprArray(Composite, Expression):
         self.shape = ExprTuple([sorted_coords[-1] for sorted_coords in self.sortedCoordLists])
     
     @staticmethod
+    def make_empty_entries(shape):
+        '''
+        Prepare an array as nested lists of empty (None) entries.
+        Replace the entries with Expression objects to prepare
+        an array to construct an ExprArray.
+        '''
+        if len(shape)==0: return None
+        cur_shape = shape[0]
+        reduced_shape = shape[1:]
+        return [ExprArray.make_empty_entries(reduced_shape) for _ in
+                 range(cur_shape)]
+
+    @staticmethod
+    def set_entry(entries, indices, expr):
+        '''
+        Set a particular entry of the entries array having the specified
+        indices with the given Expression entry value.
+        '''
+        idx = indices[0]
+        if len(indices)==1: 
+            entries[idx] = expr
+        else:
+            ExprArray.set_entry(entries[idx], indices[1:], expr)
+    
+    @staticmethod
     def locAsExprs(loc):
         from proveit.number import num
         loc_exprs = []
@@ -178,6 +203,10 @@ class ExprArray(Composite, Expression):
                 raise TypeError("location coordinates must be Expression objects (or 'int's to convert to Expressions)")
             loc_exprs.append(coord)
         return loc_exprs
+    
+    
+    def getCoords(self, base, axis, assumptions, requirements):
+        pass
 
     @staticmethod
     def _tensorDictFromIterables(tensor, assumptions, requirements):

@@ -5,27 +5,31 @@ from proveit._core_.defaults import USE_DEFAULTS
 
 class ExprTuple(Composite, Expression):
     """
-    An ExprTuple is a composite expr composed of an ordered list of member
-    Expressions.
+    An ExprTuple is a composite Exporession composed of an ordered list 
+    of member Expressions.
     """
     def __init__(self, *expressions):
         '''
-        Initialize an ExprTuple from an iterable over Expression objects.
+        Initialize an ExprTuple from an iterable over Expression 
+        objects.
         '''
         from proveit._core_ import KnownTruth
         from .composite import singleOrCompositeExpression
         entries = []
         for entry in expressions:
             if isinstance(entry, KnownTruth):
-                entry = entry.expr # extract the Expression from the KnownTruth
+                # Extract the Expression from the KnownTruth:
+                entry = entry.expr 
             try:
                 entry = singleOrCompositeExpression(entry)
                 assert isinstance(entry, Expression)
             except:
-                raise TypeError('ExprTuple must be created out of Expressions)')
+                raise TypeError("ExprTuple must be created out of "
+                                  "Expressions.")
             entries.append(entry)
-        self.entries = entries
-        self._sortedCoords = []
+        self.entries = tuple(entries)
+        self._lastEntryCoordInfo = None
+        self._lastQueriedEntryIndex = 0
         Expression.__init__(self, ['ExprTuple'], self.entries)
         
     @classmethod
@@ -33,7 +37,8 @@ class ExprTuple(Composite, Expression):
         if subClass != ExprTuple: 
             MakeNotImplemented(subClass)
         if len(coreInfo) != 1 or coreInfo[0] != 'ExprTuple':
-            raise ValueError("Expecting ExprTuple coreInfo to contain exactly one item: 'ExprTuple'")
+            raise ValueError("Expecting ExprTuple coreInfo to contain "
+                               "exactly one item: 'ExprTuple'")
         return ExprTuple(*subExpressions).withStyles(**styles)      
 
     def remakeArguments(self):
@@ -43,23 +48,6 @@ class ExprTuple(Composite, Expression):
         '''
         for subExpr in self.subExprIter():
             yield subExpr
-    
-    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
-        from proveit._core_.expression.expr import _NoExpandedIteration
-        # Collect the iteration ranges for all of the entries.
-        iter_ranges = set()
-        has_expansion = False
-        for entry in self.entries:
-            try:
-                for iter_range in entry._expandingIterRanges(iterParams, startArgs, endArgs, exprMap, relabelMap, reservedVars, assumptions, requirements):
-                    iter_ranges.add(iter_range)
-                has_expansion = True
-            except _NoExpandedIteration:
-                pass
-        if not has_expansion:
-            raise _NoExpandedIteration()
-        for iter_range in iter_ranges:
-            yield iter_range
                                         
     def __iter__(self):
         '''
@@ -86,20 +74,24 @@ class ExprTuple(Composite, Expression):
         '''
         return self.entries[i]
 
-    def getElem(self, index, base=1, assumptions=USE_DEFAULTS, requirements=None):
+    def getElem(self, coord, base=1, hint_idx=None,
+                assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Return the list element at the index, given
-        as an Expression, using the given assumptions as needed
-        to interpret the location expression.  Required
-        truths, proven under the given assumptions, that 
-        were used to make this interpretation will be
-        appended to the given 'requirements' (if provided).
+        Return the tuple element at the coordinate, given as an 
+        Expression, using the given assumptions as needed to interpret 
+        the location indicated by this expression.  Required truths, 
+        proven under the given assumptions, that  were used to make this
+        interpretation will be appended to the given 'requirements' 
+        (if provided).
+        If a hint_idx is provided, use it as a starting entry
+        index from which to search for the coordinate.  Otherwise,
+        use the previously queried entry as the 'hint'.
         '''
-        from proveit.number import num, one, lesserSequence, Less, LessEq, Add, subtract
-        from proveit.logic import Equals
+        from proveit.number import num, Naturals, Less, LessEq, Add, \
+                                      subtract
+        from proveit.logic import Equals, InSet
         from proveit.relation import TransitivityException
         from .iteration import Iter
-        from .composite import _simplifiedCoord
         
         if len(self)==0:
             raise ValueError("An empty ExprTuple has no elements to get")
@@ -107,51 +99,124 @@ class ExprTuple(Composite, Expression):
         if requirements is None:
             requirements = [] # create the requirements list, but it won't be used
         
-        coord = num(base)
+        nentries = len(self.entries)
+                
+        # First handle the likely case that the coordinate of the
+        # element is just the starting coordinate of an entry.
+        coord_to_idx = self.entryCoordToIndex(base, assumptions, requirements)
+        
+        if coord in coord_to_idx:
+            # Found the coordinate as the start of an entry.
+            start_idx = coord_to_idx[coord]
+            entry = self.entries[start_idx]
+            if not isinstance(entry, Iter):
+                return entry # just a normal entry
+            # If this is an iteration entry, we need to be careful.  
+            # Ostensibly, we would want to return entry.first() but we 
+            # need to be make sure it is not an empty iteration.  
+            # Instead, we'll treat it like the "hard" case starting
+            # from start_idx.
+        elif hint_idx is not None:
+            # Use the provided hint as the starting point entry
+            # index.
+            start_idx = hint_idx
+        else:
+            # We use the last queried index as the starting point
+            # to make typical use-cases more efficient.
+            start_idx = self._lastQueriedEntryIndex
+            
         try:
-            for entry in self.entries:
-                if isinstance(entry, Iter):
-                    # An Iter entry.  First, check whether it is an empty iteration.
-                    entry_start_end_relation = Less.sort([entry.start_index, entry.end_index], assumptions=assumptions)
-                    if not entry_start_end_relation.operator == Equals._operator_:
-                        # start and end are not determined to be equal (if they were, the
-                        # iteration would represent a single element).
-                        if entry_start_end_relation.operands[0] == entry.end_index:
-                            if entry_start_end_relation.operator == LessEq._operator_:
-                                # We don't know if the iteration is empty.
-                                raise ExprTupleError("Could not determine if an Iter entry of the ExprTuple is empty, so we could not determine the 'index' element.")
-                            # empty iteration.  skip it, but knowing it is empty is an important requirement
-                            requirements.append(entry_start_end_relation) # need to know: end-of-entry < start-of-entry
-                            continue
-                    # shift 'coord' to the end of the entry
-                    next_coord = _simplifiedCoord(Add(coord, subtract(entry.end_index, entry.start_index)), assumptions, requirements)
-                    # check whether or not the 'index' is within this entry.
-                    index_entryend_relation = Less.sort([index, next_coord], assumptions=assumptions)
-                    if index_entryend_relation.operands[0] == index:
-                        # 'index' within this particular entry                        
-                        iter_start_index = entry.start_index
-                        entry_origin = coord
-                        if index==entry_origin:
-                            # special case - index at the entry origin
-                            return entry.getInstance(iter_start_index, assumptions=assumptions, requirements=requirements)
-                        iter_loc = Add(iter_start_index, subtract(index, entry_origin))
-                        simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, requirements)
-                        return entry.getInstance(simplified_iter_loc, assumptions=assumptions, requirements=requirements)
-                    coord = next_coord
-                index_coord_relation = Less.sort([index, coord], assumptions=assumptions)
-                if index_coord_relation.operator == Equals._operator_:
-                    # 'index' at this particular single-element entry
-                    if index_coord_relation.lhs != index_coord_relation.rhs:
-                        requirements.append(index_coord_relation) # need to know: index == coord, if it's non-trivial
-                    return entry
-                elif index_coord_relation.operands[0] == index:
-                    # 'index' is less than the 'coord' but not known to be equal to the 'coord' but also
-                    # not determined to be within a previous entry.  So we simply don't know enough.
-                    raise ExprTupleError("Could not determine the 'index'-ed element of the ExprTuple")
-                coord = _simplifiedCoord(Add(coord, one), assumptions, requirements)
-        except TransitivityException:
-            raise ExprTupleError("Could not determine the 'index'-ed element of the ExprTuple.")
-        raise IndexError("Index, %s, past the range of the ExprTuple, %s"%(str(index), str(self)))
+            # First we need to find an entry whose starting coordinate
+            # is at or beyond our desired 'coord'.
+            coords = self.entryCoords(base, assumptions, requirements)
+
+            # Record relations between the given 'coord' and each
+            # entry coordinate in case we want to reuse it.'
+            relations = [None]*nentries
+            
+            for idx in range(start_idx, nentries+1):
+                # Check if 'coord' is less than coords[idx]
+                print("sort", coord, coords[idx], assumptions)
+                relation = LessEq.sort([coord, coords[idx]], 
+                                       assumptions=assumptions)
+                relations[idx] = relation
+                rel_first, rel_op = relation.operands[0], relation.operator
+                if rel_first==coord and rel_op==Less._operator_:
+                    break
+                elif idx==nentries:
+                    raise IndexError("Coordinate %s past the range of "
+                                       "the ExprTuple, %s"%(str(coord), 
+                                                            str(self)))
+            
+            # Now go back to an entry whose starting coordinate is less 
+            # than or equal to the desired 'coord'.
+            while idx > 0:
+                idx -= 1
+                # Check if coords[idx] is <= 'coord'.
+                if relations[idx] is not None:
+                    relation = relations[idx]
+                else:
+                    try:
+                        # Try to prove coords[idx] <= coord.
+                        relation = LessEq.sort([coords[idx]], coord, 
+                                               assumptions=assumptions,
+                                               reorder = False)
+                        relations[idx] = relation
+                    except TransitivityException:
+                        # Since we could not prove that 
+                        # coords[idx] <= coord, we must prove
+                        # coord < coords[idx] and keep going back.
+                        relation = Less(coord, coords[idx]).prove()
+                        relations[idx] = relation
+                        continue
+                
+                # The 'coord' is within this particular entry.
+                # Record the required relations that prove that.
+                self._lastQueriedEntryIndex = idx
+                requirements.append(relations[idx])
+                requirements.append(relations[idx+1])
+                
+                # And return the appropriate element within the
+                # entry.
+                entry = self.entries[idx]
+                if relations[idx].operator == Equals._operator_:
+                    # Special case -- coord at the entry origin.
+                    if isinstance(entry, Iter):
+                        return entry.first()
+                    else:
+                        return entry
+                
+                # The entry must be an iteration.
+                if not isinstance(entry, Iter):
+                    raise ExprTupleError("Invalid coordinate, %s, in "
+                                          "ExprTuple, %s."%(str(coord), 
+                                                            str(self)))
+                
+                # Make sure the coordinate is valid and not "in between"
+                # coordinates at unit intervals.
+                valid_coord = InSet(subtract(coord, coords[idx], Naturals))
+                requirements.append(valid_coord.prove())
+                
+                # Get the appropriate element within the iteration.
+                iter_start_index = entry.start_index
+                iter_loc = Add(iter_start_index, subtract(coord, coords[idx]))
+                simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, 
+                                                       requirements)
+                # Don't worry about the requirements from 'getInstance'
+                # because we already have all of the requirements we
+                # need.
+                return entry.getInstance(simplified_iter_loc, 
+                                          assumptions=assumptions)                
+        
+        except ProofFailure as e:
+            msg = ("Could not determine the element at "
+                   "%s of the ExprTuple %s under assumptions %s."
+                   %(str(coord), str(self), str(e.assumptions)))
+            raise ExprTupleError(msg)
+
+        raise IndexError("Unable to prove that "
+                           "%s > %d to be within ExprTuple %s."
+                           %(str(coord), base, str(self)))
     
     def __add__(self, other):
         '''
@@ -240,117 +305,86 @@ class ExprTuple(Composite, Expression):
         if fence:            
             outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
+    
+    def entryCoords(self, base, assumptions, requirements=None):
+        '''
+        Return the simplified expressions for the coordinates of each 
+        entry of this ExprTuple in the proper order.  For each iteration 
+        entry (Iter), subsequent coordinates will account for the extent
+        of that iteration.  The last coordinate is the length of the 
+        tuple + the base, including the extent of each iteration.
+        These simplified coordinate expressions 
+        will be remembered and reused when a query is repeated.
+        '''
         
-    def entryRanges(self, base, start_index, end_index, assumptions, requirements):
-        '''
-        For each entry of the list that is fully or partially contained in the window defined
-        via start_indices and end_indices (as Expressions that can be provably sorted
-        against list indices), yield the start and end of the intersection of the
-        entry range and the window.
-        '''
-        from proveit.number import one, num, Add, subtract, Less
-        from proveit.logic import Equals
+        from proveit.number import one, num, Add, subtract
         from .iteration import Iter
-        from proveit import ProofFailure
         
-        if requirements is None: requirements = [] # requirements won't be passed back in this case
+        if requirements is None: requirements = []
         
-        index = num(base)
-        started = False
-        prev_end = None
-
-        try:
-            start_end_relation = Less.sort([start_index, end_index]).prove(assumptions=assumptions)
-            if start_end_relation.operands[0]!=start_index:
-                # end comes before start: the range is empty.  This is the vacuous case.
-                requirements.append(start_end_relation)
-                return
-                yield
-        except:
-            # Unable to prove that the end comes before the start, so assume
-            # this will be a finite iteration (if not, the user can decide
-            # how long to wait before they realize they are missing something).
-            pass
+        # Check to see if this was the same query as last time.
+        # If so, reuse the last result.
+        if self._lastEntryCoordInfo is not None:
+            last_base, last_assumptions, last_requirements, last_coords, _ \
+                = self._lastEntryCoordInfo
+            if (last_base, last_assumptions) == (base, assumptions):
+                # Reuse the previous result, including the requirements.
+                requirements.extend(last_requirements)
+                return last_coords
         
-        end_index = _simplifiedCoord(end_index, assumptions, requirements) 
-                        
-        arrived_at_end = False
-        
-        # Iterate over the entries and track the true element index,
-        # including ranges of iterations (Iter objects).
-        for i, entry in enumerate(self):
-            if not started:
-                # We have not yet encounted an entry within the desired window,
-                # see if this entry is in the desired window.
-                if index == start_index:
-                    started = True # Now we've started
-                else:
-                    try:
-                        start_relation = Less.sort([start_index, index], reorder=False, assumptions=assumptions)
-                        requirements.append(start_relation)
-                        if start_relation.operator==Less._operator_ and prev_end is not None:
-                            # The start of the window must have occurred before this entry, 
-                            # and there was a previous entry:
-                            yield (start_index, prev_end) # Do the range for the previous entry.
-                        started = True # Now we've started
-                    except ProofFailure:
-                        pass # We have not started yet.
-            
-            # Obtain the ending index of the entry (entry_end) and the next_index
-            # (entry_end+1). 
-            entry_end = index # unless it is an Iter:
+        # Generate the coordinate list.
+        coords = []
+        new_requirements = []
+        coord = num(base)
+        for entry in self:
+            coords.append(coord)
             if isinstance(entry, Iter):
-                entry_span = subtract(entry.end_index, entry.start_index)
-                entry_end =  _simplifiedCoord(Add(index, entry_span), assumptions, requirements)
-            
-            if index==end_index:
-                arrived_at_end = True
-            else:
-                try:
-                    index_eq_end = Equals(end_index, index).prove(assumptions=assumptions, automation=False)
-                    requirements.append(index_eq_end)
-                    arrived_at_end == True
-                except ProofFailure:                    
-                    next_index = _simplifiedCoord(Add(entry_end, one), assumptions, requirements) 
-                    """
-                    # TO KEEP THINGS SIMPLE, LET'S INSIST THAT THE INDEX MUST MATCH THE END EXACTLY TO STOP
-                    # (NOT GOING BEYOND WITHOUT MATCHING).
-                    # The exception is when the range is empty which we test at the beginning.
-                                                       
-                    # See if this entry takes us to the end of the window or beyond.
-                    try:
-                        print next_index, end_index
-                        Less.sort([next_index, end_index], reorder=False, assumptions=assumptions)
-                    except ProofFailure:
-                        arrived_at_end = True # we have presumably encountered the end
-                        if entry_end != end_index:
-                            # we require a proven relation that we are at the end
-                            end_relation = Less.sort([end_index, next_index], reorder=False, assumptions=assumptions)
-                            requirements.append(end_relation)
-                    """
-            
-            if arrived_at_end:
-                if started:
-                    # Yield from the start of the entry to the end of the window:
-                    yield (index, end_index) 
-                    break
-                else:
-                    # The full window is within this entry.
-                    start_relation = Less.sort([index, start_index], reorder=False, assumptions=assumptions)
-                    requirements.append(start_relation)
-                    yield (start_index, end_index) # Yield the full window that is within a single entry.
-                    break
-            elif started:
-                # We have encountered the start but not the end.
-                yield (index, entry_end) # Yield the full range of the entry.
-            
-            index = next_index # Move on to the next entry.
-            prev_end = entry_end
+                entry_delta = subtract(entry.end_index, \
+                                       entry.start_index)
+                print("simplify", coord, '+', entry_delta)
+                coord = _simplifiedCoord(Add(coord, entry_delta), 
+                                         assumptions, new_requirements)
+                print("simplified to", coord, "under assumptions", assumptions)
+            coord = _simplifiedCoord(Add(coord, one), 
+                                     assumptions, new_requirements)
+            print("+1 simplified", coord, "under assumptions", assumptions)
+        # The last included 'coordinate' is one past the last
+        # coordinate within the tuple range.  This value minus the base
+        # is the length of the tuple,the number of elements it 
+        # conceptually contains.
+        coords.append(coord)
         
-        if not arrived_at_end:
-            raise IndexError("ExprTuple index out of range")
+        # Remember this result for next time in case the query is
+        # repeated.
+        coords_to_indices = {coord:i for i, coord in enumerate(coords)}
+        coord_info = (base, assumptions, new_requirements, \
+                      coords, coords_to_indices)
+        self._lastEntryCoordInfo = coord_info
+        requirements.extend(new_requirements)
         
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+        # Return the coordinate list.
+        return coords
+    
+    def entryCoordToIndex(self, base, assumptions, requirements=None):
+        '''
+        Return a dictionary that maps simplified expressions for the 
+        coordinates to respective integer indices of this ExprTuple.
+        For each Iter entry, subsequent coordinates will account for 
+        the extent of that Iter.  These simplified coordinate 
+        expressions will be remembered and reused when a query is repeated.
+        '''
+        self.entryCoords(base, assumptions, requirements)
+        return self._lastEntryCoordInfo[-1]
+    
+    def length(self, assumptions, requirements=None):
+        '''
+        Return the length of this tuple as an Expression.  This
+        length includes the extent of all contained iterations. 
+        '''
+        return self.entryCoords(0, assumptions, requirements)[-1]
+            
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
@@ -362,7 +396,8 @@ class ExprTuple(Composite, Expression):
             return exprMap[self]._restrictionChecked(reservedVars)
         subbed_exprs = []
         for expr in self:
-            subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+            subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars, 
+                                           assumptions, requirements)
             if isinstance(expr, Iter) and isinstance(subbed_expr, ExprTuple):
                 # The iterated expression is being expanded 
                 # and should be embedded into the list.

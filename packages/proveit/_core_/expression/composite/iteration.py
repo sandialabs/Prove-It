@@ -158,21 +158,23 @@ class Iter(Expression):
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
         '''
-        from proveit.number import Less
+        from proveit.number import LessEq
         
         if self.ndims==1:
             indices = [index_or_indices]
         else:
             indices = index_or_indices
 
-        if requirements is None: requirements = [] # requirements won't be passed back in this case
+        if requirements is None:
+            # requirements won't be passed back in this case 
+            requirements = [] 
         
         # first make sure that the indices are in the iteration range
         for index, start, end in zip(indices, self.start_indices, self.end_indices):
             for first, second in ((start, index), (index, end)):
                 relation = None
                 try:
-                    relation = Less.sort([first, second], reorder=False, assumptions=assumptions)
+                    relation = LessEq.sort([first, second], reorder=False, assumptions=assumptions)
                 except:
                     raise IterationError("Indices not provably within the iteration range: %s <= %s"%(first, second)) 
                 requirements.append(relation)
@@ -180,67 +182,8 @@ class Iter(Expression):
         # map to the desired instance
         return self.lambda_map.mapped(*indices)
     
-    def _makeNonoverlappingRangeSet(self, rel_iter_ranges, arg_sorting_relations, assumptions, requirements):
-        '''
-        Helper method for substituted.
-        Check for overlapping relative iteration ranges, 
-        breaking them up when found and returning the new
-        set of ranges with no overlaps.
-        '''
-        from proveit.number import Add, subtract, one
-        from .composite import _simplifiedCoord
-        owning_range = dict() # map relative indices to the owning range; overlap occurs when ownership is contested.
-        nonoverlapping_ranges = set()
-        while len(rel_iter_ranges) > 0:
-            rel_iter_range = rel_iter_ranges.pop()
-            for p in itertools.product(*[range(start, end) for start, end in zip(*rel_iter_range)]):
-                p = tuple(p)
-                # Check for contested ownership
-                if p in owning_range and owning_range[p] in nonoverlapping_ranges:
-                    # Split along the first axis that differs,
-                    # adding the split ranges back in.  If there are still 
-                    # distinct overlapping ranges after that split, there may be
-                    # further splits along different axes.
-                    range1, range2 = rel_iter_range, owning_range[p]
-                    for axis, (start1, end1, start2, end2) in enumerate(zip(*(range1 + range2))):
-                        if start1 != start2 or end1 != end2:
-                            # (re)assign range1 to have the earliest start.
-                            if start1 > start2:
-                                range1, range2 = range2, range1
-                                start1, end1, start2, end2 = start2, end2, start1, end1
-                            if start1 < start2:
-                                # add the first range
-                                first_range = (tuple(range1[0]), tuple(range1[1]))
-                                abs_end = _simplifiedCoord(subtract(arg_sorting_relations.operands[start2], one), assumptions=assumptions, requirements=requirements)
-                                first_range[1][axis] = arg_sorting_relations.index(abs_end)
-                                rel_iter_ranges.add(first_range)
-                            mid_end = min(end1, end2)
-                            if start2 < min(end1, end2):
-                                # add the middle ranges (one from each of the originals
-                                # where the overlap occurs. 
-                                for orig_range in (range1, range2):
-                                    mid_range = (tuple(orig_range[0]), tuple(orig_range[1]))
-                                    mid_range[1][axis] = end
-                                    rel_iter_ranges.add(mid_range)
-                            end = max(end1, end2)
-                            if mid_end < end:
-                                # add the last range
-                                last_range = (tuple(range2[0]), tuple(range2[1]))
-                                abs_start = _simplifiedCoord(Add(arg_sorting_relations.operands[mid_end], one), assumptions=assumptions, requirements=requirements) 
-                                first_range[0][axis] = arg_sorting_relations.index(abs_start)
-                                rel_iter_ranges.add(last_range)
-                            break
-                    # remove/exclude the obsolete originals
-                    nonoverlapping_ranges.discard(owning_range[p])
-                    rel_iter_range = None
-                    break
-                else:
-                    owning_range[p] = rel_iter_range
-            if rel_iter_range is not None:
-                nonoverlapping_ranges.add(rel_iter_range)
-        return nonoverlapping_ranges
-                
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
@@ -251,8 +194,9 @@ class Iter(Expression):
         an outer iteration should be expanded.  An exception is
         raised if this fails.
         '''
+        from proveit import ProofFailure, ExprArray
         from proveit.logic import Equals
-        from proveit.number import Less, LessEq, subtract, Add, one
+        from proveit.number import LessEq, subtract, Add, one, subtract
         from .composite import _simplifiedCoord
         from proveit._core_.expression.expr import _NoExpandedIteration
         from proveit._core_.expression.label.var import safeDummyVars
@@ -261,153 +205,203 @@ class Iter(Expression):
         if relabelMap is None: relabelMap = dict()
         
         assumptions = defaults.checkedAssumptions(assumptions)
-        arg_sorting_assumptions = list(assumptions)
-        
         new_requirements = []
-        
-        # Collect the iteration ranges from Indexed sub-Expressions
-        # whose variable is being replaced with a Composite (list or tensor).
-        # If there are not any, we won't expand the iteration at this point.
-        # While we are at it, get all of the end points of the
-        # ranges along each axis (as well as end points +/-1 that may be
-        # needed if there are overlaps): 'special_points'.
-        iter_ranges = set()
         iter_params = self.lambda_map.parameters
-        special_points = [set() for _ in range(len(iter_params))]
-        subbed_start = self.start_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-        subbed_end = self.end_indices.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-        try:
-            # Need to handle the change in scope within the lambda expression
-            new_params, inner_expr_map, inner_assumptions, inner_reservations = self.lambda_map._innerScopeSub(exprMap, relabelMap, reservedVars, assumptions, requirements)
-            # We won't use 'new_params'.  They aren't relavent after an expansion.
-            # If there is not expansion, we will break out of the try block.
-            
-            for iter_range in self.lambda_map.body._expandingIterRanges(iter_params, subbed_start, subbed_end, inner_expr_map, relabelMap, inner_reservations, inner_assumptions, new_requirements):
-                iter_ranges.add(iter_range)
-                for axis, (start, end) in enumerate(zip(*iter_range)):
-                    special_points[axis].add(start)
-                    special_points[axis].add(end)
-                    # Preemptively include start-1 and end+1 in case it is required for splitting up overlapping ranges
-                    # (we won't add simplification requirements until we find we actually need them.)
-                    # Not necesary in the 1D case.
-                    # Add the coordinate simplification to argument sorting assumptions -
-                    # after all, this sorting does not go directly into the requirements.
-                    start_minus_one = _simplifiedCoord(subtract(start, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
-                    end_plus_one = _simplifiedCoord(Add(end, one), assumptions=assumptions, requirements=arg_sorting_assumptions)
-                    special_points[axis].update({start_minus_one, end_plus_one})
-                    # Add start-1<start and end<end+1 assumptions to ease argument sorting -
-                    # after all, this sorting does not go directly into the requirements.
-                    arg_sorting_assumptions.append(Less(start_minus_one, start))
-                    arg_sorting_assumptions.append(Less(end, end_plus_one))
-                    arg_sorting_assumptions.append(Equals(end, subtract(end_plus_one, one)))
-                    # Also add start<=end to ease the argument sorting requirement even though it
-                    # may not strictly be true if an empty range is possible.  In such a case, we
-                    # still want things sorted this way while we don't know if the range is empty or not
-                    # and it does not go directly into the requirements.
-                    arg_sorting_assumptions.append(LessEq(start, end))
-            
-            # add the assumptions for applying ordering transitivity rules used to
-            # sort special points (these relations may or may not need to be added as actual requirements;
-            # in this initial processing, we want everything to go through even if some of these theorems are
-            # not "usable" in this context).
+        iter_body = self.lambda_map.body
+        subbed_start = self.start_indices.substituted(exprMap, relabelMap, 
+                           reservedVars, assumptions, new_requirements)
+        subbed_end = self.end_indices.substituted(exprMap, relabelMap, 
+                         reservedVars, assumptions, new_requirements)
+        
+        print("iteration substituted", self, subbed_start, subbed_end)
+        
+        # Need to handle the change in scope within the lambda 
+        # expression.  We won't use 'new_params'.  They aren't relavent 
+        # after an expansion, this won't be used.
+        new_params, inner_expr_map, inner_assumptions, inner_reservations \
+            = self.lambda_map._innerScopeSub(exprMap, relabelMap, 
+                  reservedVars, assumptions, new_requirements)
+        
+        # Get sorted substitution parameter values demarcating how
+        # the entry array must be split up for each axis.
+        sub_param_vals = [None]*self.ndims
+        do_expansion = False
+        for axis in range(self.ndims):
+            # Convert from the inclusive end to the exclusive end.
+            excl_end = Add(subbed_end[axis], one)
+            excl_end = _simplifiedCoord(excl_end, assumptions, requirements)
+            print(self, subbed_start[axis], excl_end, inner_expr_map)
             try:
-                from proveit.logic.equality._theorems_ import subLeftSideInto, subRightSideInto, equalsReversal
-                from proveit.number.ordering._theorems_ import transitivityLessLess, transitivityLessEqLess, transitivityLessLessEq, transitivityLessEqLessEq
-                from proveit.number.addition.subtraction._theorems_ import subtractFromAdd, addFromSubtract
-                arg_sorting_assumptions.extend([subLeftSideInto.expr, subRightSideInto.expr, equalsReversal.expr])
-                arg_sorting_assumptions.extend([transitivityLessLess.expr, transitivityLessEqLess.expr, transitivityLessLessEq.expr, transitivityLessEqLessEq.expr])
-                arg_sorting_assumptions.extend([subtractFromAdd.expr, addFromSubtract.expr])
-            except:
-                pass # skip this if the theorems have not be defined yet 
-            
+                sub_param_vals[axis] = \
+                    iter_body._iterSubParamVals(axis, iter_params[axis], 
+                                                subbed_start[axis], excl_end,
+                                                inner_expr_map, relabelMap,
+                                                inner_reservations, 
+                                                inner_assumptions,
+                                                new_requirements)
+                do_expansion = True
+            except _NoExpandedIteration:
+                pass
+        
+        if do_expansion:
             # There are Indexed sub-Expressions whose variable is
             # being replaced with a Composite, so let us
             # expand the iteration for all of the relevant
             # iteration ranges.
             # Sort the argument value ranges.
+            
+            # We must have "substition parameter values" along each
+            # axis:
+            if None in sub_param_vals:
+                raise IterationError("Must expand all axes or none of the "
+                                      "axes, when substituting %s"%str(self))
 
-            arg_sorting_relations = []
-            for axis in range(self.ndims):
-                if len(special_points[axis])==0:
-                    arg_sorting_relation = None
-                else:
-                    arg_sorting_relation = Less.sort(special_points[axis], assumptions=arg_sorting_assumptions)
-                arg_sorting_relations.append(arg_sorting_relation)
-                        
-            # Put the iteration ranges in terms of indices of the sorting relation operands
-            # (relative indices w.r.t. the sorting relation order).
-            rel_iter_ranges = set()
-            for iter_range in iter_ranges:
-                range_start, range_end = iter_range
-                rel_range_start = tuple([arg_sorting_relation.operands.index(arg) for arg, arg_sorting_relation in zip(range_start, arg_sorting_relations)])
-                rel_range_end = tuple([arg_sorting_relation.operands.index(arg) for arg, arg_sorting_relation in zip(range_end, arg_sorting_relations)])
-                rel_iter_ranges.add((rel_range_start, rel_range_end))
-            
-            rel_iter_ranges = sorted(self._makeNonoverlappingRangeSet(rel_iter_ranges, arg_sorting_relations, assumptions, new_requirements))
-            
-            #print arg_sorting_relations
-            # Generate the expanded list/tensor to replace the iterations.
-            if self.ndims==1: lst = []
-            else: tensor = dict()            
-            for rel_iter_range in rel_iter_ranges:
-                #print rel_iter_range
-                # get the starting location of this iteration range
-                start_loc = tuple(arg_sorting_relation.operands[idx] for arg_sorting_relation, idx in zip(arg_sorting_relations, rel_iter_range[0]))
-                if rel_iter_range[0] == rel_iter_range[1]:
-                    # single element entry (starting and ending location the same)
+            # Generate the expanded tuple/array as the substition
+            # of 'self'.  Note that sub_param_vals goes to the end 
+            # indices of the iteration +1 in each axis.
+            shape =  [len(sub_param_vals[axis])-1 
+                      for axis in range(self.ndims)]
+            entries = ExprArray.make_empty_entries(shape)
+            indices_by_axis = [range(extent) for extent in shape]
+            # Iterate over each of the new entries, obtaining indices
+            # into sub_param_vals for the start parameters of the entry.
+            for entry_start_indices in itertools.product(*indices_by_axis):
+                entry_start_vals = []
+                entry_end_vals = []
+                singular_entry_reqs=[]
+                iter_entry_reqs=[]
+                is_singular_entry = True
+                for axis, idx in enumerate(entry_start_indices):
+                    # Note that empty ranges will be skipped because
+                    # equivalent parameter values should be skipped in
+                    # the sub_param_vals.
+                    axis_vals = sub_param_vals[axis]
+                    entry_start_val = sub_param_vals[axis][idx]
+                    entry_start_vals.append(entry_start_val)
+                    next_val = axis_vals[idx+1]
+                    entry_end_val = subtract(next_val, one)
+                    entry_end_val = _simplifiedCoord(entry_end_val,
+                                                     assumptions, 
+                                                     iter_entry_reqs)
+                    entry_end_vals.append(entry_end_val)
+                    simplified_start_plus_one = \
+                      _simplifiedCoord(Add(entry_start_val, one),
+                                             assumptions, singular_entry_reqs)
+                    if simplified_start_plus_one == next_val:
+                        continue # singular entry along this axis
+                    # Without using automation, see if we know that
+                    # entry_start_val+1 = next_val (singular entry
+                    # along this axis)
+                    eq = Equals(simplified_start_plus_one, next_val)
+                    try:
+                        eq.prove(assumptions, automation=False)
+                    except ProofFailure:
+                        # Not a singular entry along this axis, so
+                        # it is not a singular entry.  We must do an
+                        # iteration for this entry.
+                        is_singular_entry = False
+                        break
+                
+                if is_singular_entry:                    
+                    # Single element entry.
+
+                    # Add relevant requirements.
+                    requirements.extend(singular_entry_reqs)
+                    
+                    # Generate the entry by making appropriate
+                    # parameter substitutions for the iteration body.
                     entry_inner_expr_map = dict(inner_expr_map)
-                    entry_inner_expr_map.update({param:arg for param, arg in zip(self.lambda_map.parameters, start_loc)})
-                    for param in self.lambda_map.parameters: relabelMap.pop(param, None)
-                    entry = self.lambda_map.body.substituted(entry_inner_expr_map, relabelMap, inner_reservations, inner_assumptions, new_requirements)
+                    entry_inner_expr_map.update({param:arg for param, arg in 
+                                                 zip(iter_params, 
+                                                     entry_start_vals)})
+                    for param in iter_params: relabelMap.pop(param, None)
+                    entry = iter_body.substituted(entry_inner_expr_map, 
+                                relabelMap, inner_reservations, 
+                                inner_assumptions, new_requirements)
                 else:
-                    # iterate over a sub-range
-                    end_loc = tuple(arg_sorting_relation.operands[idx] for arg_sorting_relation, idx in zip(arg_sorting_relations, rel_iter_range[1]))
-                    # Shift the iteration parameter so that the iteration will have the same start-indices
-                    # for this sub-range (like shifting a viewing window, moving the origin to the start of the sub-range).
-                    # Include assumptions that the lambda_map parameters are in the shifted start_loc to end_loc range.
+                    # Iteration entry.
+                    # Shift the iteration parameter so that the 
+                    # iteration will have the same start-indices
+                    # for this sub-range (like shifting a viewing 
+                    # window, moving the origin to the start of the 
+                    # sub-range).
+                    
+                    # Add relevant requirements.
+                    requirements.extend(iter_entry_reqs)
+                                        
+                    # Generate "safe" new parameters (the Variables are
+                    # not used for anything that might conflict).
+                    # Avoid using free variables from these expressions:
+                    unsafe_var_exprs = [self]
+                    unsafe_var_exprs.extend(exprMap.values())
+                    unsafe_var_exprs.extend(relabelMap.values())
+                    unsafe_var_exprs.extend(entry_start_vals)
+                    unsafe_var_exprs.extend(entry_end_vals)
+                    new_params = safeDummyVars(len(iter_params), 
+                                               unsafe_var_exprs)
+                    
+                    # Make the appropriate substitution mapping
+                    # and add appropriate assumptions for the iteration
+                    # parameter(s).
                     range_expr_map = dict(inner_expr_map)
                     range_assumptions = []
-                    #print start_loc, end_loc, range_expr_map, range_assumptions, self.lambda_map
-                    # generate "safe" new parameters (the Variables are not used for anything that might conflict).
-                    new_params = safeDummyVars(len(self.lambda_map.parameters), *([self] + list(range_expr_map.values()) + list(relabelMap.values())))
-                    for start_idx, param, new_param, range_start, range_end in zip(self.start_indices, self.lambda_map.parameters, new_params, start_loc, end_loc):
-                        range_expr_map[param] = Add(new_param, subtract(range_start, start_idx))
-                        range_assumptions.append(LessEq(start_idx, new_param))
-                        range_assumptions.append(LessEq(new_param, subtract(range_end, start_idx)))
-                        #range_assumptions.append(LessEq(range_start, param))
-                        #range_assumptions.append(LessEq(param, range_end))
-                    #print range_expr_map, range_assumptions
-                    # We don't need to use inner reservations.  The fact that our "new parameters" are "safe" alleviates the need to reserve anything extra.
-                    range_lambda_body = self.lambda_map.body.substituted(range_expr_map, relabelMap, reservedVars, inner_assumptions+range_assumptions, new_requirements)
-                    # Any requirements that involve the new parameters are a direct consequent of the iteration range and are
-                    # not external requirements:
-                    #   (PERHAPS THES REQUIREMENTS
-                    new_requirements = [requirement for requirement in new_requirements if requirement.freeVars().isdisjoint(new_params)]
+                    for start_idx, param, new_param, range_start, range_end \
+                            in zip(self.start_indices, iter_params, new_params, 
+                                   entry_start_vals, entry_end_vals):
+                        range_expr_map[param] = Add(new_param, 
+                                                    subtract(range_start, 
+                                                             start_idx))
+                        # Include assumptions that the parameters are 
+                        # in the proper range.
+                        assumption = LessEq(start_idx, new_param)
+                        range_assumptions.append(assumption)
+                        assumption = LessEq(new_param,
+                                            subtract(range_end, start_idx))
+                        range_assumptions.append(assumption)
+                    
+                    # Perform the substitution.
+                    # The fact that our "new parameters" are "safe" 
+                    # alleviates the need to reserve anything extra.
+                    range_lambda_body = iter_body.substituted(range_expr_map, 
+                        relabelMap, reservedVars, 
+                        inner_assumptions+range_assumptions, new_requirements)
+                    # Any requirements that involve the new parameters 
+                    # are a direct consequence of the iteration range 
+                    # and are not external requirements:
+                    new_requirements = \
+                        [requirement for requirement in new_requirements 
+                         if requirement.freeVars().isdisjoint(new_params)]
                     range_lambda_map = Lambda(new_params, range_lambda_body)
-                    # Add the shifted sub-range iteration to the appropriate starting location.
-                    end_indices = [_simplifiedCoord(subtract(range_end, start_idx), assumptions, new_requirements) for start_idx, range_end in zip(self.start_indices, end_loc)]
-                    entry = Iter(range_lambda_map, self.start_indices, end_indices)
-                if self.ndims==1: lst.append(entry)
-                else: tensor[start_loc] = entry
-
-            if self.ndims==1:
-                subbed_self = compositeExpression(lst)
-            else:
-                subbed_self = compositeExpression(tensor)
-
-        except _NoExpandedIteration:
+                    # Obtain the appropriate end indices.
+                    end_indices = \
+                        [_simplifiedCoord(subtract(range_end, start_idx), 
+                                          assumptions, new_requirements) 
+                         for start_idx, range_end in zip(self.start_indices, 
+                                                          entry_end_vals)]
+                    entry = Iter(range_lambda_map, self.start_indices, 
+                                 end_indices)
+                # Set this entry in the entries array.
+                ExprArray.set_entry(entries, entry_start_indices, entry)
+            subbed_self = compositeExpression(entries)                                                
+        else:
             # No Indexed sub-Expressions whose variable is 
             # replaced with a Composite, so let us not expand the
             # iteration.  Just do an ordinary substitution.
-            subbed_map = self.lambda_map.substituted(exprMap, relabelMap, reservedVars, assumptions, new_requirements)
-            subbed_self = Iter(subbed_map.parameters, subbed_map.body, subbed_start, subbed_end)
+            new_requirements = [] # Fresh new requirements.
+            subbed_map = self.lambda_map.substituted(exprMap, relabelMap, 
+                                reservedVars, assumptions, new_requirements)
+            subbed_self = Iter(subbed_map.parameters, subbed_map.body, 
+                               subbed_start, subbed_end)
         
         for requirement in new_requirements:
-            requirement._restrictionChecked(reservedVars) # make sure requirements don't use reserved variable in a nested scope        
+            # Make sure requirements don't use reserved variable in a 
+            # nested scope.
+            requirement._restrictionChecked(reservedVars)      
         if requirements is not None:
             requirements += new_requirements # append new requirements
         
         return subbed_self
+
 
 def varIter(var, start, end):
     from proveit import safeDummyVar

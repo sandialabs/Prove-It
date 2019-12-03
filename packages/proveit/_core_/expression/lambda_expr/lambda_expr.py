@@ -275,15 +275,19 @@ class Lambda(Expression):
         
         new_params, inner_expr_map, inner_assumptions, inner_reservations = self._innerScopeSub(exprMap, relabelMap, reservedVars, assumptions, requirements)
         
-        # conditions with substitutions:
-        condition_requirements = []
-        condition_assumptions = inner_assumptions
-        subbedConditions = self.conditions.substituted(inner_expr_map, relabelMap, inner_reservations, condition_assumptions, condition_requirements)
-        # The lambda body with the substitutions.  Add the conditions, with substitutions, as assumptions
-        # since they must be satisfied for the mapping to be well-defined.
-        body_requirements = []
-        body_assumptions = list(inner_assumptions)+list(subbedConditions)
-        subbedBody = self.body.substituted(inner_expr_map, relabelMap, inner_reservations, body_assumptions, body_requirements)
+        try:
+            # conditions with substitutions:
+            condition_requirements = []
+            condition_assumptions = inner_assumptions
+            subbedConditions = self.conditions.substituted(inner_expr_map, relabelMap, inner_reservations, condition_assumptions, condition_requirements)
+            # The lambda body with the substitutions.  Add the conditions, with substitutions, as assumptions
+            # since they must be satisfied for the mapping to be well-defined.
+            body_requirements = []
+            body_assumptions = list(inner_assumptions)+list(subbedConditions)
+            subbedBody = self.body.substituted(inner_expr_map, relabelMap, inner_reservations, body_assumptions, body_requirements)
+        except ScopingViolation as e:
+            raise ScopingViolation("Scoping violation while substituting"
+                                    "%s.  %s"%(str(self), e.msg))
         
         for requirements, requirements_assumptions in zip((condition_requirements, body_requirements), ([], subbedConditions)):
             for requirement in requirements:
@@ -308,39 +312,30 @@ class Lambda(Expression):
             raise ImproperSubstitution(e.args[0])            
         return newLambda
 
-    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
-        from proveit import Variable, compositeExpression
-        # Can't substitute the lambda parameter variables; they are in a new scope.
-        innerExprMap = {key:value for (key, value) in exprMap.items() if key not in self.parameterVarSet}
-        # Can't use assumptions involving lambda parameter variables
-        innerAssumptions = [assumption for assumption in assumptions if self.parameterVarSet.isdisjoint(assumption.freeVars())]
-        # Handle relabeling and variable reservations consistent with relabeling.
-        innerReservations = dict() if reservedVars is None else dict(reservedVars)
-        for parameterVar in self.parameterVars:
-            # Note that lambda parameters introduce a new scope and don't need to,
-            # themselves, be restriction checked.  But they generate new inner restrictions
-            # that disallow any substitution from a variable that isn't in the new scope
-            # to a variable that is in the new scope. 
-            # For example, we can relabel y to z in (x, y) -> f(x, y), but not f to x. 
-            if parameterVar in relabelMap:
-                relabeledParams = compositeExpression(relabelMap[parameterVar])
-                for relabeledParam in relabeledParams:
-                    if not isinstance(relabeledParam, Variable):
-                        raise ImproperSubstitution('May only relabel a Variable to another Variable or list of Variables')
-                    innerReservations[relabeledParam] = parameterVar
-            else:
-                # Not relabeled
-                innerReservations[parameterVar] = parameterVar
+    def _iterSubParamVals(self, axis, iterParam, startArg, endArg, exprMap, 
+                          relabelMap=None, reservedVars=None, 
+                          assumptions=USE_DEFAULTS, requirements=None):
+        '''
+        Consider a substitution over a containing iteration (Iter) 
+        defined via exprMap, relabelMap, etc, and expand the iteration 
+        by substituting the "iteration parameter" over the 
+        range from the "starting argument" (inclusive) to the 
+        "ending argument" (exclusive).
         
-        # collect the iter ranges from the body and all conditions
-        iter_ranges = set()
-        for iter_range in self.body.expandingIterRanges(iterParams, startArgs, endArgs, innerExprMap, relabelMap, innerReservations, innerAssumptions, requirements):
-            iter_ranges.add(iter_range)
-        for iter_range in self.conditions.expandingIterRanges(iterParams, startArgs, endArgs, innerExprMap, relabelMap, innerReservations, innerAssumptions, requirements):
-            iter_ranges.add(iter_range)
-        for iter_range in iter_ranges:
-            yield iter_range
-    
+        This deviates from the default it its need to impose
+        scoping limitations -- lambda parameters are in a new scope.
+        '''
+        new_params, inner_expr_map, inner_assumptions, inner_reservations \
+            = self._innerScopeSub(exprMap, relabelMap, reservedVars, 
+                                  assumptions, requirements)
+        # Use the default version but with arguments adapted for
+        # the inner scope:
+        # (Is this doing the right thing w.r.t. the parameters sub-expression???)
+        return Expression._iterSubParamVals(self, axis, iterParam, startArg,
+                                             endArg, inner_expr_map,
+                                             relabelMap, inner_reservations,
+                                             inner_assumptions, requirements)
+        
     def compose(self, lambda2):
         '''
         Given some x -> f(x) for self (lambda1) and y -> g(y) for lambda2,
