@@ -5,8 +5,8 @@ from proveit._core_.proof import Generalization
 class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall', context=__file__)
-    
-    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, 
+
+    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None,
                  conditions = tuple(), _lambda_map=None):
         '''
         Create a Forall expression:
@@ -15,20 +15,20 @@ class Forall(OperationOverInstances):
         given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
         may be singular or plural (iterable).
         '''
-        # nestMultiIvars=True will cause it to treat multiple instance 
+        # nestMultiIvars=True will cause it to treat multiple instance
         # variables as nested Forall operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars, 
-                                        instanceExpr, domain, domains, conditions, 
+        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars,
+                                        instanceExpr, domain, domains, conditions,
                                         nestMultiIvars=True, _lambda_map=_lambda_map)
-        
+
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically for this forall operation.
         '''
         if self.hasDomain() and hasattr(self.domain, 'unfoldForall'):
             yield self.unfold # derive an unfolded version (dependent upon the domain)
-        
+
     def conclude(self, assumptions):
         '''
         If the domain has a 'foldForall' method, attempt to conclude this Forall statement
@@ -67,27 +67,27 @@ class Forall(OperationOverInstances):
                 raise ProofFailure(self, assumptions, "Unable to conclude automatically; both the 'foldAsForall' method on the domain and automated generalization failed.")
             else:
                 raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method and automated generalization failed.")
-    
+
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
         From this forall statement, derive an "unfolded" version dependent upon the domain of the forall,
         calling unfoldForall on the condition.
         For example, from forall_{A in BOOLEANS} P(A), derives P(TRUE) and P(FALSE).
-        '''    
+        '''
         assert self.hasDomain(), "Cannot unfold a forall statement with no domain"
         return self.domain.unfoldForall(self, assumptions)
-    
+
     """
     def equateWithUnfolded(self):
         pass
     """
-        
+
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
         '''
         Conclude this forall statement from an "unfolded" version dependent upon the domain of the forall,
         calling foldAsForall on the condition.
         For example, conclude forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
-        '''    
+        '''
         from proveit import KnownTruth
         assert self.hasDomain(), "Cannot fold a forall statement with no domain"
         #assert len(self.instanceVars)==1, "Cannot fold a forall statement with more than 1 instance variable (not implemented beyond this)"
@@ -95,7 +95,7 @@ class Forall(OperationOverInstances):
         return self.domain.foldAsForall(self, assumptions)
         #print(truth)
         #return truth.generalize(self.instanceVar, conditions=self.conditions)
-    
+
     def deriveBundled(self, assumptions=USE_DEFAULTS):
         '''
         From a nested forall statement, derive the bundled forall statement.  For example,
@@ -117,7 +117,7 @@ class Forall(OperationOverInstances):
         and then call specialize on the KnownTruth.
         '''
         return self.prove(assumptions).specialize(specializeMap, relabelMap, assumptions=assumptions)
-        
+
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if possible
@@ -138,8 +138,22 @@ class Forall(OperationOverInstances):
         Attempt to deduce, then return, that this forall expression is in the set of BOOLEANS,
         as all forall expressions are (they are taken to be false when not true).
         '''
-        raise NotImplementedError("Need to update")
+        # raise NotImplementedError("Need to update") # temporarily commented out 12/03/2019 by wdc
         from ._axioms_ import forallInBool
-        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
-        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
+        print('self.allInstanceVars = %s'%str(self.allInstanceVars()))
+        # changing the following 3 lines to use allInstanceVars instead of instanceVars
+        # P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
+        # Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
+        # return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
+        P_op, P_op_sub = Operation(P, self.allInstanceVars), self.instanceExpr
+        Q_op, Q_op_sub = Operation(Qmulti, self.allInstanceVars), self.conditions
+        return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.allInstanceVars, S:self.domain})
+
+    def unraveled(self):
+        remainingConditions = self.conditions
+        expr = self.instanceExpr
+        for ivar in reversed(self.instanceVars):
+            localConditions = [conditions for conditions in remainingConditions if ivar in conditions.freeVars()]
+            expr = Forall(ivar, expr, conditions=localConditions)
+            remainingConditions = [conditions for conditions in remainingConditions if conditions not in localConditions]
+        return expr

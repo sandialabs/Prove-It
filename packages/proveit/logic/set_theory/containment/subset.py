@@ -264,6 +264,13 @@ class SubsetEq(SubsetRelation):
         else:
             raise ValueError("Cannot perform transitivity with %s and %s!"%(self, other))
 
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this SubsetEq statement is in the set of Booleans.
+        '''
+        from ._theorems_ import subsetEqInBool
+        return subsetEqInBool.specialize({A:self.lhs, B:self.rhs})
+
 
 class NotSubset(Operation):
     # operator of the NotSubset operation
