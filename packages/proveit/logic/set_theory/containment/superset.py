@@ -291,6 +291,42 @@ class NotSuperset(Operation):
                 {A:self.operands[0], B:self.operands[1]},
                 assumptions=assumptions)
 
+class NotProperSuperset(Operation):
+
+    # operator of the NotProperSuperset operation
+    _operator_ = Literal(stringFormat='nsupset',
+                         latexFormat=r'\not\supset',
+                         context=__file__)    
+
+    def __init__(self, superset, subset):
+        Operation.__init__(self, NotProperSuperset._operator_,
+                           (superset, subset))
+    
+    def deriveSideEffects(self, knownTruth):
+        self.unfold(knownTruth.assumptions) # unfold as an automatic side-effect
+
+    def conclude(self, assumptions):
+        return self.concludeAsFolded(assumptions)
+        
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From A npropersupset B, derive and return not(propersupset(A, B)).
+        '''
+        from ._theorems_ import unfoldNotProperSupset
+        return unfoldNotProperSupset.specialize(
+                {A:self.operands[0], B:self.operands[1]},
+                assumptions=assumptions)
+
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
+        '''
+        Derive this folded version, A npropersupset B, from the unfolded version,
+        not(A propersupset B).
+        '''
+        from ._theorems_ import foldNotProperSupset
+        return foldNotProperSupset.specialize(
+                {A:self.operands[0], B:self.operands[1]},
+                assumptions=assumptions)
+
 class NotSupersetEq(Operation):
     # operator of the NotSupersetEq operation
     _operator_ = Literal(stringFormat='nsupseteq',
