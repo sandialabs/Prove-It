@@ -1,7 +1,7 @@
 from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda, ParameterExtractionError
 from proveit import TransitiveRelation, TransitivityException
-from proveit.logic.irreducible_value import IrreducibleValue, isIrreducibleValue
+from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit._common_ import A, B, P, Q, f, x, y, z
 
 class Equals(TransitiveRelation):
@@ -34,6 +34,9 @@ class Equals(TransitiveRelation):
 
     def __init__(self, a, b):
         TransitiveRelation.__init__(self, Equals._operator_, a, b)
+        '''
+        # May be better not to be proactive but we need to see if this
+        # breaks anything.
         if self not in Equals.initializing:
             Equals.initializing.add(self)
             try:
@@ -42,6 +45,7 @@ class Equals(TransitiveRelation):
                 # may fail before the relevent _axioms_ have been generated
                 pass # and that's okay            
             Equals.initializing.remove(self)
+        '''
     
     def sideEffects(self, knownTruth):
         '''
@@ -538,6 +542,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
     '''
     from proveit.logic import TRUE, FALSE
     from proveit.logic.boolean._axioms_ import trueAxiom
+    from proveit import TransRelUpdater
     topLevel = innerExpr.exprHierarchy[0]
     inner = innerExpr.exprHierarchy[-1]
     if operandsOnly:
@@ -550,8 +555,8 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
         if inPlace:
             return innerEquivalence.subRightSideInto(innerExpr, assumptions=assumptions)
         return innerEquivalence.substitution(innerExpr, assumptions=assumptions)
-    if isinstance(inner, IrreducibleValue):
-        return innerSimplification(IrreducibleValue.evaluation(inner))
+    if isIrreducibleValue(inner):
+        return Equals(inner, inner).prove()
     assumptionsSet = set(defaults.checkedAssumptions(assumptions))
     # see if the expression is already known to be true as a special case
     try:
@@ -647,11 +652,15 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
         # via transitivity, go from the original expression to the reduced expression 
         # (simplified inner operands) and then the final simplification (simplified inner
         # expression).
-        simplification = Equals(topLevel, reducedSimplification.rhs).concludeViaTransitivity(assumptions)
+        eq = TransRelUpdater(topLevel, assumptions)
+        reduced_top_level = reducedInnerExpr.exprHierarchy[0]
+        eq.update(Equals(topLevel, reduced_top_level).prove(assumptions))
+        eq.update(Equals(reduced_top_level, reducedSimplification.rhs).prove(assumptions))
+        simplification = eq.relation
     if not inPlace and topLevel==inner:
         # store direct simplifications in the simplifications dictionary for next time
         Equals.simplifications.setdefault(topLevel, set()).add(simplification)
-        if isinstance(value, IrreducibleValue):
+        if isIrreducibleValue(value):
             # also store it in the evaluations dictionary for next time
             # since it evaluated to an irreducible value.
             Equals.evaluations.setdefault(topLevel, set()).add(simplification)
