@@ -7,6 +7,16 @@ class NumberSet(Literal):
     
     def membershipObject(self, element):
         return NumberMembership(element, self)
+    
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects for when the given member is in this number
+        set.  The default is to have no side-effects, but this
+        can be adapted for the various NumberSet classes.
+        '''
+        return
+        yield
+        
 
 class NumberMembership(Membership):
     def __init__(self, element, number_set):
@@ -15,10 +25,23 @@ class NumberMembership(Membership):
 
     def sideEffects(self, knownTruth):
         '''
-        TODO
+        Yield side-effects for when the represented membership,
+        that self.element is in self.number_set, is proven.
         '''
-        return
-        yield
+        number_set, element = self.number_set, self.element
+        if not isinstance(knownTruth.expr, InSet):
+            raise ValueError("Expecting the knownTruth of a NumberMembership "
+                               "sideEffects call to be for an InSet expression.")
+        if knownTruth.element != self.element:
+            raise ValueError("NumberMembership.sideEffects called with a "
+                               "knownTruth that is inconsistent w.r.t. the "
+                               "element.")
+        if knownTruth.domain != self.number_set:
+            raise ValueError("NumberMembership.sideEffects called with a "
+                               "knownTruth that is inconsistent w.r.t. the "
+                               "domain.")
+        for side_effect in number_set.membershipSideEffects(knownTruth):
+            yield side_effect
         
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
