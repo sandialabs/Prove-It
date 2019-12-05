@@ -1,4 +1,4 @@
-from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
+from proveit import defaults, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda, ParameterExtractionError
 from proveit import TransitiveRelation, TransitivityException
 from proveit.logic.irreducible_value import IrreducibleValue, isIrreducibleValue
@@ -13,7 +13,10 @@ class SetEquiv(TransitiveRelation):
     The class was initially established using the class Equals as an
     archetype.
     created: 11/19/2019 by wdc
-    last modified: 11/19/2019 by wdc (creation)
+    last modified: 11/20/2019 - 12/02/2019 by wdc, adding/updating
+                   methods for concludeViaReflexivity, deriveReversed,
+                   and deduceInBool.
+    previously modified: 11/19/2019 by wdc (creation)
     '''
     # operator for the SetEquiv relation
     _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong', context=__file__)        
@@ -72,7 +75,7 @@ class SetEquiv(TransitiveRelation):
         # if isIrreducibleValue(self.rhs):
         #     SetEquiv.simplifications.setdefault(self.lhs, set()).add(knownTruth)
         #     SetEquiv.evaluations.setdefault(self.lhs, set()).add(knownTruth)
-        if (self.lhs != self.rhs): # e.g. if we don't have A equiv A
+        if (self.lhs != self.rhs): # e.g. if we don't have SetEquiv(A, A)
             # automatically derive the reversed form which is equivalent
             yield self.deriveReversed
         # THE FOLLOWING SEEM INAPPLICABLE, because we are dealing with sets
