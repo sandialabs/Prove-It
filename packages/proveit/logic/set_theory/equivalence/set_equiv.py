@@ -97,8 +97,8 @@ class SetEquiv(TransitiveRelation):
         Side-effect derivations to attempt automatically for a
         negated equivalence. IN PROGRESS     
         '''
-        # from proveit.logic.boolean._common_ import FALSE
-        # yield self.deduceNotEquals # A != B from not(A=B)
+        from proveit.logic.boolean._common_ import FALSE
+        yield self.deduceNotEquiv # A not_equiv B from not(A equiv B)
 
     # def conclude(self, assumptions):
     #     '''
@@ -190,17 +190,22 @@ class SetEquiv(TransitiveRelation):
 
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
-        From A set_equiv B derive B set_equiv A.  This derivation is an automatic side-effect.
+        From A set_equiv B derive B set_equiv A.
+        This derivation is an automatic side-effect.
         '''
         from ._theorems_ import setEquivReversal
-        return setEquivReversal.specialize({A:self.lhs, B:self.rhs}, assumptions=assumptions)
+        return setEquivReversal.specialize(
+                {A:self.lhs, B:self.rhs}, assumptions=assumptions)
 
-    # def deduceNotEquals(self, assumptions=USE_DEFAULTS):
-    #     r'''
-    #     Deduce x != y assuming not(x = y), where self is x=y.
-    #     '''
-    #     from .not_equals import NotEquals
-    #     return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
+    def deduceNotEquiv(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce A not_equiv B assuming not(A equiv B),
+        where self is (A equiv B).
+        '''
+        from .set_not_equiv import SetNotEquiv
+        # from .not_equals import NotEquals
+        return SetNotEquiv(self.lhs, self.rhs).concludeAsFolded(assumptions)
+        # return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''

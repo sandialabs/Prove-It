@@ -26,17 +26,17 @@ class SetNotEquiv(Operation):
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
             
-    # def sideEffects(self, knownTruth):
-    #     '''
-    #     Side-effect derivations to attempt automatically for
-    #     this NotEquals operation.
-    #     '''
-    #     from proveit.logic.boolean._common_ import FALSE
-    #     # automatically derive the reversed form which is equivalent
-    #     yield self.deriveReversed # y != x from x != y
-    #     if self.rhs==FALSE:
-    #         yield self.deriveViaDoubleNegation # A from A != False and A in Booleans
-    #     yield self.unfold # Not(x=y) from x != y
+    def sideEffects(self, knownTruth):
+        '''
+        Side-effect derivations to attempt automatically for
+        this SetNotEquiv operation.
+        '''
+        from proveit.logic.boolean._common_ import FALSE
+        # automatically derive the reversed form which is equivalent
+        yield self.deriveReversed # B not_equiv A from A not_equiv B
+        # if self.rhs==FALSE:
+        #     yield self.deriveViaDoubleNegation # A from A != False and A in Booleans
+        # yield self.unfold # Not(x=y) from x != y
     
     # def conclude(self, assumptions):
     #     from proveit.logic import FALSE
@@ -62,11 +62,16 @@ class SetNotEquiv(Operation):
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
         From A not_equiv B derive B not_equiv A.
+        Derived automatically as a side-effect in sideEffects() method.
         '''
         from ._theorems_ import setNotEquivReversal
         return setNotEquivReversal.specialize({A:self.lhs, B:self.rhs},
                                               assumptions=assumptions)
         
+
+    # Later consider a form of double negation like
+    # Not(SetNotEquiv(A, B)) giving SetEquiv(A, B)
+    # Useful or not?
     # def deriveViaDoubleNegation(self, assumptions=USE_DEFAULTS):
     #     '''
     #     From A != FALSE, derive and return A assuming inBool(A).
@@ -92,26 +97,29 @@ class SetNotEquiv(Operation):
     #     if self.rhs == FALSE:
     #         return notEqualsFalse.specialize({A:self.lhs}, assumptions=assumptions)
 
-    # def definition(self):
-    #     '''
-    #     Return (x != y) = Not(x=y) where self represents (x != y).
-    #     '''
-    #     from ._axioms_ import notEqualsDef
-    #     return notEqualsDef.specialize({x:self.lhs, y:self.rhs})
+    def definition(self):
+        '''
+        Return (A not_equiv B) = Not(A equiv B) where self represents
+        (A not_equiv B).
+        '''
+        from ._axioms_ import setNotEquivDef
+        return setNotEquivDef.specialize({A:self.lhs, B:self.rhs})
 
-    # def unfold(self, assumptions=USE_DEFAULTS):
-    #     '''
-    #     From (x != y), derive and return Not(x=y).
-    #     '''
-    #     from ._theorems_ import unfoldNotEquals
-    #     return unfoldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From (A not_equiv B) derive and return Not(A equiv B).
+        '''
+        from ._theorems_ import unfoldSetNotEquiv
+        return unfoldSetNotEquiv.specialize(
+            {A:self.lhs, B:self.rhs}, assumptions=assumptions)
     
-    # def concludeAsFolded(self, assumptions=USE_DEFAULTS):
-    #     '''
-    #     Conclude (x != y) from Not(x = y).
-    #     '''
-    #     from ._theorems_ import foldNotEquals
-    #     return foldNotEquals.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+    def concludeAsFolded(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude (A not_equiv B) from Not(A equiv B).
+        '''
+        from ._theorems_ import foldSetNotEquiv
+        return foldSetNotEquiv.specialize(
+                {A:self.lhs, B:self.rhs}, assumptions=assumptions)
         
     # def evaluation(self, assumptions=USE_DEFAULTS):
     #     '''
@@ -124,17 +132,21 @@ class SetNotEquiv(Operation):
     #     unfoldedEvaluation = definitionEquality.rhs.evaluation(assumptions)        
     #     return Equals(self, unfoldedEvaluation.rhs).prove(assumptions)
 
-    # def deriveContradiction(self, assumptions=USE_DEFAULTS):
-    #     r'''
-    #     From x != y, and assuming x = y, derive and return FALSE.
-    #     '''
-    #     from ._theorems_ import notEqualsContradiction
-    #     return notEqualsContradiction.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
+    def deriveContradiction(self, assumptions=USE_DEFAULTS):
+        '''
+        From A not_equiv B, and assuming (A equiv B),
+        derive and return FALSE.
+        '''
+        from ._theorems_ import setNotEquivContradiction
+        return setNotEquivContradiction.specialize(
+                {A:self.lhs, B:self.rhs}, assumptions=assumptions)
     
     # def affirmViaContradiction(self, conclusion, assumptions=USE_DEFAULTS):
     #     '''
-    #     From x != y, derive the conclusion provided that the negated conclusion
-    #     implies x != y and x = y, and the conclusion is a Boolean.
+    #     From A not_equiv B, derive the conclusion, provided that
+    #     the negated conclusion implies ((A not_equiv B) AND
+    #     (A equiv B)), and the conclusion is a Boolean.
+    #     Still being considered here.
     #     '''
     #     from proveit.logic.boolean.implication import affirmViaContradiction
     #     return affirmViaContradiction(self, conclusion, assumptions)
@@ -147,9 +159,10 @@ class SetNotEquiv(Operation):
     #     from proveit.logic.boolean.implication import denyViaContradiction
     #     return denyViaContradiction(self, conclusion, assumptions)
                         
-    # def deduceInBool(self, assumptions=USE_DEFAULTS):
-    #     '''
-    #     Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
-    #     '''
-    #     from ._theorems_ import notEqualsInBool
-    #     return notEqualsInBool.specialize({x:self.lhs, y:self.rhs})
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce and return that this 'not equiv' statement is in
+        the set of BOOLEANS.
+        '''
+        from ._theorems_ import setNotEquivInBool
+        return setNotEquivInBool.specialize({A:self.lhs, B:self.rhs})
