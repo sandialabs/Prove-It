@@ -554,8 +554,8 @@ class Add(Operation):
         # separate the types of operands in a dictionary
         hold, order = expr._createDict(assumptions)
         
-        # Have the basic numbers come at the beginning or the end.
-        if order[0] != one and one in hold:
+        # Have the basic numbers come at the end.
+        if order[-1] != one and one in hold:
             order.pop(order.index(one))
             order.append(one)
         
@@ -638,14 +638,14 @@ class Add(Operation):
         # print("last equals!")
         return eq.relation
     
-    def _singleDigitBinaryEval(self):
+    def _integerBinaryEval(self):
         '''
         Evaluate the sum of possibly negated single digit numbers.
         '''
-        from proveit.number import Neg
+        from proveit.number import Neg, isLiteralInt, num
         abs_terms = [term.operand if isinstance(term, Neg) else term for term in self.terms]
-        if len(abs_terms)!=2 or not all(abs_term in DIGITS for abs_term in abs_terms):
-            raise ValueError("_singleDigitBinaryEval only applicable for binary addition of (possibly negated) single digit numbers")
+        if len(abs_terms)!=2 or not all(isLiteralInt(abs_term) for abs_term in abs_terms):
+            raise ValueError("_integerBinaryEval only applicable for binary addition of integers")
         a, b = self.terms
         a, b = a.asInt(), b.asInt()
         if a<0 and b<0:
@@ -666,6 +666,9 @@ class Add(Operation):
             else:
                 a, b = b-a, a
         assert a>=0 and b>=0
+        print(a, b)
+        if not all(term in DIGITS for term in (num(a), num(b))):
+            raise NotImplementedError("Currently, _integerBinaryEval only works for single digit addition and related subtractions: %d, %d"%(a, b))
         if (a, b) not in Add.addedNumerals:
             try:
                 # for single digit addition, import the theorem that provides the evaluation
@@ -675,19 +678,31 @@ class Add(Operation):
             except:
                 # may fail before the relevent _commons_ and _theorems_ have been generated
                 pass # and that's okay
-        return self.evaluation() # should have an evaluation now.
-
+        # Should have an evaluation now.
+        if self not in Equals.evaluations:
+            raise Exception("Should have an evaluation for %s now.  Why not?  "
+                              "Perhaps we were not able to prove that the involved numbers "
+                              "are in the Complexes set."%self)
+        return self.evaluation() 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         created by JML on 7/31/19. modified by WMW on 9/7/19.
         evaluate literals in a given expression (used for simplification)
         '''
         from proveit.logic import SimplificationError
-        from proveit.number import Neg
+        from proveit.number import Neg, isLiteralInt
 
         abs_terms = [term.operand if isinstance(term, Neg) else term for term in self.terms]
-        if len(abs_terms)==2 and all(abs_term in DIGITS for abs_term in abs_terms):
-            return self._singleDigitBinaryEval()
+        if len(abs_terms)==2 and all(isLiteralInt(abs_term) for abs_term in abs_terms):
+            # Change the default assumptions will not be necessary after we handle multiple
+            # digits properly.  But for now, we need to assume things like "10 in Naturals"
+            # and derive side effects under such assumptions.
+            from proveit import defaults
+            prev_default_assumptions = list(defaults.assumptions)
+            defaults.assumptions = assumptions
+            evaluation = self._integerBinaryEval()
+            defaults.assumptions = prev_default_assumptions # revert back
+            return evaluation
         #assert not isinstance(self.operands[0], Add)
                 
         expr = self
