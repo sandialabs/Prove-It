@@ -87,6 +87,7 @@ class ExprTuple(Composite, Expression):
         index from which to search for the coordinate.  Otherwise,
         use the previously queried entry as the 'hint'.
         '''
+        from .composite import _generateCoordOrderAssumptions
         from proveit.number import num, Naturals, Less, LessEq, Add, \
                                       subtract
         from proveit.logic import Equals, InSet
@@ -129,16 +130,18 @@ class ExprTuple(Composite, Expression):
             # First we need to find an entry whose starting coordinate
             # is at or beyond our desired 'coord'.
             coords = self.entryCoords(base, assumptions, requirements)
+            coord_order_assumptions = list(_generateCoordOrderAssumptions(coords))
+            extended_assumptions = assumptions + coord_order_assumptions
 
             # Record relations between the given 'coord' and each
             # entry coordinate in case we want to reuse it.'
-            relations = [None]*nentries
+            relations = [None]*(nentries+1)
             
             for idx in range(start_idx, nentries+1):
                 # Check if 'coord' is less than coords[idx]
                 print("sort", coord, coords[idx], assumptions)
                 relation = LessEq.sort([coord, coords[idx]], 
-                                       assumptions=assumptions)
+                                       assumptions=extended_assumptions)
                 relations[idx] = relation
                 rel_first, rel_op = relation.operands[0], relation.operator
                 if rel_first==coord and rel_op==Less._operator_:
@@ -159,14 +162,14 @@ class ExprTuple(Composite, Expression):
                     try:
                         # Try to prove coords[idx] <= coord.
                         relation = LessEq.sort([coords[idx]], coord, 
-                                               assumptions=assumptions,
+                                               assumptions=extended_assumptions,
                                                reorder = False)
                         relations[idx] = relation
                     except TransitivityException:
                         # Since we could not prove that 
                         # coords[idx] <= coord, we must prove
                         # coord < coords[idx] and keep going back.
-                        relation = Less(coord, coords[idx]).prove()
+                        relation = Less(coord, coords[idx]).prove(extended_assumptions)
                         relations[idx] = relation
                         continue
                 
@@ -194,19 +197,18 @@ class ExprTuple(Composite, Expression):
                 
                 # Make sure the coordinate is valid and not "in between"
                 # coordinates at unit intervals.
-                valid_coord = InSet(subtract(coord, coords[idx], Naturals))
-                requirements.append(valid_coord.prove())
+                valid_coord = InSet(subtract(coord, coords[idx]), Naturals)
+                requirements.append(valid_coord.prove(assumptions))
                 
                 # Get the appropriate element within the iteration.
                 iter_start_index = entry.start_index
                 iter_loc = Add(iter_start_index, subtract(coord, coords[idx]))
                 simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, 
                                                        requirements)
-                # Don't worry about the requirements from 'getInstance'
-                # because we already have all of the requirements we
-                # need.
-                return entry.getInstance(simplified_iter_loc, 
-                                          assumptions=assumptions)                
+                # Does the same as 'entry.getInstance' but without checking
+                # requirements; we don't need to worry about these requirements
+                # because we already satisfied the requirements that we need.
+                return entry.lambda_map.mapped(simplified_iter_loc)
         
         except ProofFailure as e:
             msg = ("Could not determine the element at "
@@ -315,9 +317,12 @@ class ExprTuple(Composite, Expression):
         tuple + the base, including the extent of each iteration.
         These simplified coordinate expressions 
         will be remembered and reused when a query is repeated.
+        Requirements include simplifications of coordinates and
+        ensuring that iterations have a length that is a natural
+        number (could be an empty entry -- zero lenth).
         '''
-        
-        from proveit.number import one, num, Add, subtract
+        from proveit.logic import InSet
+        from proveit.number import one, num, Add, subtract, Naturals
         from .iteration import Iter
         
         if requirements is None: requirements = []
@@ -341,12 +346,18 @@ class ExprTuple(Composite, Expression):
             if isinstance(entry, Iter):
                 entry_delta = subtract(entry.end_index, \
                                        entry.start_index)
-                print("simplify", coord, '+', entry_delta)
-                coord = _simplifiedCoord(Add(coord, entry_delta), 
+                # Add one, to get to the start of the next entry, and simplify.
+                entry_span = _simplifiedCoord(Add(entry_delta, one), assumptions, requirements)
+                # From one entry to the next should be a natural number (could be
+                # an empty entry).
+                print("simplified entry span", entry_span)
+                requirements.append(InSet(entry_span, Naturals).prove(assumptions))
+                coord = _simplifiedCoord(Add(coord, entry_span), 
                                          assumptions, new_requirements)
                 print("simplified to", coord, "under assumptions", assumptions)
-            coord = _simplifiedCoord(Add(coord, one), 
-                                     assumptions, new_requirements)
+            else:
+                coord = _simplifiedCoord(Add(coord, one), 
+                                        assumptions, new_requirements)
             print("+1 simplified", coord, "under assumptions", assumptions)
         # The last included 'coordinate' is one past the last
         # coordinate within the tuple range.  This value minus the base

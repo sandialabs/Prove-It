@@ -83,6 +83,19 @@ class TransitiveRelation(Operation):
                     %(str(self), str(relation)))
             raise TransitivityException(self, assumptions, msg)
         return relation
+    
+    @classmethod
+    def _acceptableRelationClasses(cls):
+        '''
+        Return just the strong relation class if cls is strong; otherwise
+        return the strong and the wek classes.
+        '''
+        if cls is cls._checkedStrongRelationClass():
+            return (cls._checkedStrongRelationClass(),)
+        else:
+            return (cls._checkedStrongRelationClass(), 
+                     cls._checkedWeakRelationClass())
+        
 
     @classmethod
     def knownRelationsFromLeft(RelationClass, expr, assumptionsSet):
@@ -101,15 +114,9 @@ class TransitiveRelation(Operation):
             if expr != otherExpr: # exclude reflexive equations -- they don't count
                 yield (knownTruth, otherExpr)
         if RelationClass is not Equals:
-            if RelationClass is RelationClass._checkedStrongRelationClass():
-                allowed_relation_classes = \
-                    (RelationClass._checkedStrongRelationClass(),)
-            else:
-                allowed_relation_classes = \
-                    (RelationClass._checkedStrongRelationClass(), 
-                     RelationClass._checkedWeakRelationClass())
+            acceptable_relation_classes = RelationClass._acceptableRelationClasses()
             # stronger then weaker relations
-            for Relation in allowed_relation_classes:
+            for Relation in acceptable_relation_classes:
                 for knownTruth in list(Relation.knownLeftSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
                         yield (knownTruth, knownTruth.rhs)
@@ -131,15 +138,9 @@ class TransitiveRelation(Operation):
             if expr != otherExpr: # exclude reflexive equations -- they don't count
                 yield (knownTruth, otherExpr)
         if RelationClass is not Equals:
-            if RelationClass is RelationClass._checkedStrongRelationClass():
-                allowed_relation_classes = \
-                    (RelationClass._checkedStrongRelationClass(),)
-            else:
-                allowed_relation_classes = \
-                    (RelationClass._checkedStrongRelationClass(), 
-                     RelationClass._checkedWeakRelationClass())
+            acceptable_relation_classes = RelationClass._acceptableRelationClasses()
             # stronger then weaker relations
-            for Relation in allowed_relation_classes:
+            for Relation in acceptable_relation_classes:
                 for knownTruth in list(Relation.knownRightSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
                         yield (knownTruth, knownTruth.lhs)

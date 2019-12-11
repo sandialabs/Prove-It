@@ -576,22 +576,27 @@ class Expression(metaclass=ExprType):
         '''                
         from proveit.number import LessEq       
         from proveit._core_.expression.expr import _NoExpandedIteration
+        from proveit._core_.expression.composite.composite import _generateCoordOrderAssumptions
         # Collect the iteration substitution parameter values for all 
         # of the operators and operands and merge them together.
         val_lists = []
+        extended_assumptions = list(assumptions)
         for sub_expr in self._subExpressions:
             try:
                 vals = sub_expr._iterSubParamVals(axis, iterParam, startArg, 
                                                   endArg, exprMap, relabelMap, 
                                                   reservedVars, assumptions, 
                                                   requirements)
+                extended_assumptions.extend(_generateCoordOrderAssumptions(vals))
                 val_lists.append(vals)
             except _NoExpandedIteration:
                 pass
         if len(val_lists) == 0:
             raise _NoExpandedIteration()
-        return LessEq.mergesort(val_lists, assumptions=assumptions,
-                                 skip_exact_reps=True, requirements=requirements)
+        param_vals = LessEq.mergesorted_items(val_lists, assumptions=extended_assumptions,
+                                              skip_exact_reps=True, skip_equiv_reps=True,
+                                              requirements=requirements)
+        return list(param_vals)
         
     def _validateRelabelMap(self, relabelMap):
         if len(relabelMap) != len(set(relabelMap.values())):

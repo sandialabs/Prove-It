@@ -84,6 +84,11 @@ def _simplifiedCoord(coord, assumptions, requirements):
         requirements.append(Equals(coord, simplified_coord))
     return simplified_coord
 
+def _generateCoordOrderAssumptions(coords):
+    from proveit.number import LessEq
+    for prev_coord, next_coord in zip(coords[:-1], coords[1:]):
+        yield LessEq(prev_coord, next_coord)
+
 class IndexingError(Exception):
     def __init__(self, msg):
         self.msg = msg

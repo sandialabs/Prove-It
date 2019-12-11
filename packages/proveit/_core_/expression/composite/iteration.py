@@ -194,9 +194,10 @@ class Iter(Expression):
         an outer iteration should be expanded.  An exception is
         raised if this fails.
         '''
+        from .composite import _generateCoordOrderAssumptions
         from proveit import ProofFailure, ExprArray
-        from proveit.logic import Equals
-        from proveit.number import LessEq, subtract, Add, one, subtract
+        from proveit.logic import Equals, InSet
+        from proveit.number import Less, LessEq, subtract, Add, one, subtract, Naturals
         from .composite import _simplifiedCoord
         from proveit._core_.expression.expr import _NoExpandedIteration
         from proveit._core_.expression.label.var import safeDummyVars
@@ -208,6 +209,7 @@ class Iter(Expression):
         new_requirements = []
         iter_params = self.lambda_map.parameters
         iter_body = self.lambda_map.body
+        ndims = self.ndims
         subbed_start = self.start_indices.substituted(exprMap, relabelMap, 
                            reservedVars, assumptions, new_requirements)
         subbed_end = self.end_indices.substituted(exprMap, relabelMap, 
@@ -224,9 +226,9 @@ class Iter(Expression):
         
         # Get sorted substitution parameter values demarcating how
         # the entry array must be split up for each axis.
-        sub_param_vals = [None]*self.ndims
+        sub_param_vals = [None]*ndims
         do_expansion = False
-        for axis in range(self.ndims):
+        for axis in range(ndims):
             # Convert from the inclusive end to the exclusive end.
             excl_end = Add(subbed_end[axis], one)
             excl_end = _simplifiedCoord(excl_end, assumptions, requirements)
@@ -260,25 +262,39 @@ class Iter(Expression):
             # of 'self'.  Note that sub_param_vals goes to the end 
             # indices of the iteration +1 in each axis.
             shape =  [len(sub_param_vals[axis])-1 
-                      for axis in range(self.ndims)]
+                      for axis in range(ndims)]
             entries = ExprArray.make_empty_entries(shape)
             indices_by_axis = [range(extent) for extent in shape]
+            print('shape', shape, 'indices_by_axis', indices_by_axis, 'sub_param_vals', sub_param_vals)
+            
+            extended_inner_assumptions = list(inner_assumptions)
+            for axis_vals in sub_param_vals:
+                extended_inner_assumptions.extend(_generateCoordOrderAssumptions(axis_vals))
+            
+            # Maintain lists of parameter values that come before each given entry.
+            prev_param_vals = [[] for axis in range(ndims)]
+            
             # Iterate over each of the new entries, obtaining indices
             # into sub_param_vals for the start parameters of the entry.
             for entry_start_indices in itertools.product(*indices_by_axis):
                 entry_start_vals = []
+                next_entry_start_vals = []
                 entry_end_vals = []
                 singular_entry_reqs=[]
                 iter_entry_reqs=[]
                 is_singular_entry = True
+                
                 for axis, idx in enumerate(entry_start_indices):
                     # Note that empty ranges will be skipped because
                     # equivalent parameter values should be skipped in
                     # the sub_param_vals.
                     axis_vals = sub_param_vals[axis]
+                    
                     entry_start_val = sub_param_vals[axis][idx]
+                    prev_param_vals[axis].append(entry_start_val)
                     entry_start_vals.append(entry_start_val)
                     next_val = axis_vals[idx+1]
+                    next_entry_start_vals.append(next_val)
                     entry_end_val = subtract(next_val, one)
                     entry_end_val = _simplifiedCoord(entry_end_val,
                                                      assumptions, 
@@ -317,7 +333,7 @@ class Iter(Expression):
                     for param in iter_params: relabelMap.pop(param, None)
                     entry = iter_body.substituted(entry_inner_expr_map, 
                                 relabelMap, inner_reservations, 
-                                inner_assumptions, new_requirements)
+                                extended_inner_assumptions, new_requirements)
                 else:
                     # Iteration entry.
                     # Shift the iteration parameter so that the 
@@ -328,7 +344,61 @@ class Iter(Expression):
                     
                     # Add relevant requirements.
                     requirements.extend(iter_entry_reqs)
+
+                    # Generate "safe" new parameters (the Variables are
+                    # not used for anything that might conflict).
+                    # Avoid using free variables from these expressions:
+                    unsafe_var_exprs = [self]
+                    unsafe_var_exprs.extend(exprMap.values())
+                    unsafe_var_exprs.extend(relabelMap.values())
+                    unsafe_var_exprs.extend(entry_start_vals)
+                    unsafe_var_exprs.extend(entry_end_vals)
+                    new_params = safeDummyVars(ndims, *unsafe_var_exprs)
                                         
+                    # Make assumptions that places the parameter(s) in the
+                    # appropriate range and at an integral coordinate position.
+                    # Note, it is possible that this actually represents an
+                    # empty range and that these assumptions are contradictory;
+                    # but this still suits our purposes regardless.
+                    range_expr_map = dict(inner_expr_map)
+                    range_assumptions = []
+                    for param, new_param, range_start, next_range_start, prev_params \
+                            in zip(iter_params, new_params, entry_start_vals, 
+                                   next_entry_start_vals, prev_param_vals):
+                        range_expr_map[param] = new_param
+                        assumption = LessEq(range_start, new_param)
+                        range_assumptions.append(assumption)
+                        # Do InSet naturals for all previous range starts
+                        for prev_param_val in prev_params:
+                            assumption = InSet(subtract(new_param, prev_param_val), Naturals)
+                            range_assumptions.append(assumption)
+                        assumption = Less(new_param, next_range_start)
+                        range_assumptions.append(assumption)
+
+                    # Perform the substitution.
+                    # The fact that our "new parameters" are "safe" 
+                    # alleviates the need to reserve anything extra.
+                    range_lambda_body = iter_body.substituted(range_expr_map, 
+                        relabelMap, reservedVars, 
+                        extended_inner_assumptions+range_assumptions, new_requirements)
+                    # Any requirements that involve the new parameters 
+                    # are a direct consequence of the iteration range 
+                    # and are not external requirements:
+                    new_requirements = \
+                        [requirement for requirement in new_requirements 
+                         if requirement.freeVars().isdisjoint(new_params)]
+                    entry = Iter(new_params, range_lambda_body, entry_start_vals, entry_end_vals)
+                # Set this entry in the entries array.
+                ExprArray.set_entry(entries, entry_start_indices, entry)
+                                                                                
+                '''      
+                    # Iteration entry.
+                    # Shift the iteration parameter so that the 
+                    # iteration will have the same start-indices
+                    # for this sub-range (like shifting a viewing 
+                    # window, moving the origin to the start of the 
+                    # sub-range).
+
                     # Generate "safe" new parameters (the Variables are
                     # not used for anything that might conflict).
                     # Avoid using free variables from these expressions:
@@ -338,7 +408,7 @@ class Iter(Expression):
                     unsafe_var_exprs.extend(entry_start_vals)
                     unsafe_var_exprs.extend(entry_end_vals)
                     new_params = safeDummyVars(len(iter_params), 
-                                               unsafe_var_exprs)
+                                               *unsafe_var_exprs)
                     
                     # Make the appropriate substitution mapping
                     # and add appropriate assumptions for the iteration
@@ -346,17 +416,20 @@ class Iter(Expression):
                     range_expr_map = dict(inner_expr_map)
                     range_assumptions = []
                     for start_idx, param, new_param, range_start, range_end \
-                            in zip(self.start_indices, iter_params, new_params, 
+                            in zip(subbed_start, iter_params, new_params, 
                                    entry_start_vals, entry_end_vals):
-                        range_expr_map[param] = Add(new_param, 
-                                                    subtract(range_start, 
-                                                             start_idx))
+                        shifted_param = Add(new_param, subtract(range_start, start_idx))
+                        shifted_param = _simplifiedCoord(shifted_param, assumptions,
+                                                         requirements)
+                        range_expr_map[param] = shifted_param
                         # Include assumptions that the parameters are 
                         # in the proper range.
                         assumption = LessEq(start_idx, new_param)
                         range_assumptions.append(assumption)
-                        assumption = LessEq(new_param,
-                                            subtract(range_end, start_idx))
+                        assumption = InSet(subtract(new_param, start_idx), Naturals)
+                        #assumption = LessEq(new_param,
+                        #                    subtract(range_end, start_idx))
+                        assumption = LessEq(new_param, range_end)
                         range_assumptions.append(assumption)
                     
                     # Perform the substitution.
@@ -376,12 +449,12 @@ class Iter(Expression):
                     end_indices = \
                         [_simplifiedCoord(subtract(range_end, start_idx), 
                                           assumptions, new_requirements) 
-                         for start_idx, range_end in zip(self.start_indices, 
+                         for start_idx, range_end in zip(subbed_start, 
                                                           entry_end_vals)]
-                    entry = Iter(range_lambda_map, self.start_indices, 
-                                 end_indices)
+                    entry = Iter(range_lambda_map, subbed_start, end_indices)
                 # Set this entry in the entries array.
                 ExprArray.set_entry(entries, entry_start_indices, entry)
+                '''
             subbed_self = compositeExpression(entries)                                                
         else:
             # No Indexed sub-Expressions whose variable is 

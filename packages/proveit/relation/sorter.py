@@ -94,6 +94,9 @@ class TransitivitySorter:
 
         self.prev_reported = None
         
+        # Flag to track whether there is anything new to process.
+        self.more_to_process = True
+        
         self._generator = self._generate_next_items()
     
     def add(self, item):
@@ -102,6 +105,7 @@ class TransitivitySorter:
         items that have thus far been "generated" in sorted order.
         '''
         print("add item", item)
+        self.more_to_process = True # something new to process
         if item in self.remaining_items:
             # Not a new item.  Just a repetition.
             self.repetitions[item] += 1
@@ -161,87 +165,92 @@ class TransitivitySorter:
         # item is yielded and removed as a left partner of other items.
         left_most_candidates = self.left_most_candidates
         
-        for (left_item, right_item), chain in self._generate_relations():
-            if left_item not in self.remaining_items:
-                # Does not give new information 
-                continue # if the left item was sorted already.
-            if (left_item, right_item) in item_pair_chains:
-                # Just use the first chain of relations between a pair
-                # of items.  If the relation is an equality between the 
-                # items, that should come first.
-                continue 
-                                
-            # Add new item partnership to item_pair_chains.
-            item_pair_chains[(left_item, right_item)] = chain
-    
-            # If the left and right items are equal,
-            # record the equivalence.
-            if all(relation.operator==Equals._operator_ 
-                   for relation in chain):
-                # Equal relation goes both ways:
-                #item_pair_chains[(right_item, left_item)] = chain
-                if eq_sets[left_item] != eq_sets[right_item]: 
-                    print("join eq sets", left_item, right_item, eq_sets[left_item], eq_sets[right_item])
-                    # Joining two equivalent sets that were not 
-                    # previously known to be equivalent.
-                    eq_set = eq_sets[left_item] | eq_sets[right_item]
-                    eq_set_lst = list(eq_set)
-                    # Make all the equivalent items point to the same 
-                    # equivalence set:
-                    for item in eq_set: eq_sets[item] = eq_set
-                    rep = eq_set_lst[0] # an arbitrary representative.
-                    for item in eq_set: eq_set_rep[item] = rep
-                    # If either of the equivalence sets being joined
-                    # were eliminated from left_most_candidates,
-                    # eliminate all of them.
-                    left_most_candidates_in_eq_set = \
-                        eq_set.intersection(left_most_candidates)
-                    if len(left_most_candidates_in_eq_set)==2:
-                        # Only keep one of the left-most candidates 
-                        # (an arbitrarily chosen representative):
-                        extraneous = eq_set_lst[1:]
-                        left_most_candidates.difference_update(extraneous)
-                    else:
-                        # One (or both) of the two equivalence sets 
-                        # being joined was eliminated from the 
-                        # left_most_candidates, so remove all of them 
-                        # in this new equivalence set.
-                        assert len(left_most_candidates_in_eq_set)<=1
-                        left_most_candidates.difference_update(eq_set)
-            else:
-                # Use equivalence set representatives for pair:
-                left_item = eq_set_rep[left_item]
-                right_item = eq_set_rep[right_item]
-                # Add new item partnership to left_partners, and 
-                # right_partners:
-                left_partners.setdefault(right_item, set()).add(left_item)
-                right_partners.setdefault(left_item, set()).add(right_item)  
-                # See if we can eliminate a left-most candidate:
-                if right_item in left_most_candidates:
-                    # Remove the right item from the left-most 
-                    # candidates because there is something to the left 
-                    # of it now.
-                    left_most_candidates.remove(right_item)
-                    # Assume all cycles are accounted for via 
-                    # equivalences; otherwise we'll catch it at some 
-                    # point and raise the exception below.
-                    if len(left_most_candidates)==0:
-                        msg = ("Transitivity cycle detected implying"
-                               "equalities indirectly; must prove equalities"
-                               "before sorting items: " + str(remaining_items))
-                        raise TransitivityException(None, assumptions, msg)
+        while self.more_to_process:
+            for (left_item, right_item), chain in self._generate_relations():
+                if left_item not in self.remaining_items:
+                    # Does not give new information 
+                    continue # if the left item was sorted already.
+                if (left_item, right_item) in item_pair_chains:
+                    # Just use the first chain of relations between a pair
+                    # of items.  If the relation is an equality between the 
+                    # items, that should come first.
+                    continue 
+                                    
+                # Add new item partnership to item_pair_chains.
+                print("add new partnership:", left_item, right_item)
+                item_pair_chains[(left_item, right_item)] = chain
+        
+                # If the left and right items are equal,
+                # record the equivalence.
+                if all(relation.operator==Equals._operator_ for relation in chain):
+                    # Equal relation goes both ways:
+                    #item_pair_chains[(right_item, left_item)] = chain
+                    if eq_sets[left_item] != eq_sets[right_item]: 
+                        print("join eq sets", left_item, right_item, eq_sets[left_item], eq_sets[right_item])
+                        # Joining two equivalent sets that were not 
+                        # previously known to be equivalent.
+                        eq_set = eq_sets[left_item] | eq_sets[right_item]
+                        eq_set_lst = list(eq_set)
+                        # Make all the equivalent items point to the same 
+                        # equivalence set:
+                        for item in eq_set: eq_sets[item] = eq_set
+                        rep = eq_set_lst[0] # an arbitrary representative.
+                        for item in eq_set: eq_set_rep[item] = rep
+                        # If either of the equivalence sets being joined
+                        # were eliminated from left_most_candidates,
+                        # eliminate all of them.
+                        left_most_candidates_in_eq_set = \
+                            eq_set.intersection(left_most_candidates)
+                        if len(left_most_candidates_in_eq_set)==2:
+                            # Only keep one of the left-most candidates 
+                            # (an arbitrarily chosen representative):
+                            extraneous = eq_set_lst[1:]
+                            left_most_candidates.difference_update(extraneous)
+                        else:
+                            # One (or both) of the two equivalence sets 
+                            # being joined was eliminated from the 
+                            # left_most_candidates, so remove all of them 
+                            # in this new equivalence set.
+                            assert len(left_most_candidates_in_eq_set)<=1
+                            left_most_candidates.difference_update(eq_set)
+                else:
+                    # Use equivalence set representatives for pair:
+                    left_item = eq_set_rep[left_item]
+                    right_item = eq_set_rep[right_item]
+                    # Add new item partnership to left_partners, and 
+                    # right_partners:
+                    left_partners.setdefault(right_item, set()).add(left_item)
+                    right_partners.setdefault(left_item, set()).add(right_item)  
+                    # See if we can eliminate a left-most candidate:
+                    if right_item in left_most_candidates:
+                        # Remove the right item from the left-most 
+                        # candidates because there is something to the left 
+                        # of it now.
+                        left_most_candidates.remove(right_item)
+                        # Assume all cycles are accounted for via 
+                        # equivalences; otherwise we'll catch it at some 
+                        # point and raise the exception below.
+                        if len(left_most_candidates)==0:
+                            msg = ("Transitivity cycle detected implying"
+                                "equalities indirectly; must prove equalities"
+                                "before sorting items: " + str(remaining_items))
+                            raise TransitivityException(None, assumptions, msg)
+                
+                print("left candidates", left_most_candidates)
+                for next_item in self._report_ready_items():
+                    yield next_item
+                
+                # Check if finished:
+                if len(remaining_items)==0: break
             
-            print("left candidates", left_most_candidates)
+            # Nothing else to process unless something new is added after we report
+            # items below.
+            self.more_to_process = False
+            
+            # Any stragglers?
+            print("straggler left candidates", left_most_candidates)
             for next_item in self._report_ready_items():
                 yield next_item
-            
-            # Check if finished:
-            if len(remaining_items)==0: break
-        
-        # Any stragglers?
-        print("left candidates", left_most_candidates)
-        for next_item in self._report_ready_items():
-            yield next_item
         
         if len(remaining_items) > 0:
             msg = ("Insufficient known transitive relations to sort"
@@ -265,20 +274,22 @@ class TransitivitySorter:
             # cycles, we'll catch them eventually and raise an
             # exception).
             left_most = left_most_candidates.pop()
-            print("report left candidates", left_most)
-            
-            # If we have already reported an item, we must prove the
-            # direct relationship between the next "left_most"
-            # item and the previous one.
-            if self.prev_reported is not None:
-                self._prove_direct_relationship_if_known(self.prev_reported, 
-                                                         left_most)
+            print("report left candidates", left_most, eq_sets[left_most])
+
+            left_most_equiv = eq_sets[left_most]
             
             # Report "left_most" as the next item the appropriate
             # number of times (depending upon whether equivalences
             # and repetitions should be skipped).
-            for next_item in eq_sets[left_most]:
+            for next_item in left_most_equiv:
+                # If we have already reported an item, we must prove the
+                # direct relationship between the next item and the previous one.
+                if self.prev_reported is not None:
+                    print("prove direct relationship", self.prev_reported, "with", next_item)
+                    self._prove_direct_relationship_if_known(self.prev_reported, 
+                                                            next_item)
                 yield next_item
+                self.prev_reported = next_item
                 if not self.skip_exact_repetitions:
                     # Yield exact repetitions (if there are any).
                     for _ in range(self.repetitions[next_item]-1):
@@ -287,14 +298,12 @@ class TransitivitySorter:
                     # Just report one representative of
                     # an equivalence set.
                     break 
-            
-            self.prev_reported = left_most
-            
+                        
             # Note that eq_sets[left_most] should not be extended 
             # later because all of the items must determine that 
             # they are either to the right of this "left-most" or 
             # equal to it before we got here.
-            elim_items = eq_sets[left_most] # to eliminate.
+            elim_items = left_most_equiv # to eliminate.
             remaining_items.difference_update(elim_items) 
             
             # Remove links to the left-most item so we can focus on 
@@ -528,14 +537,31 @@ class TransitivitySorter:
         '''
         from proveit.logic import Equals
         item_pair_chains = self.item_pair_chains
+        relation_class = self.relation_class
         assumptions = self.assumptions
         eq_sets = self.eq_sets
+        print("before chains", item_pair_chains)
         if (item1, item2) not in item_pair_chains:
             # We may not have the chain for these specific items, but
             # we should have it for something equivalent to each of the 
-            # items.
+            # items (unless item2 was added after item1 and only presumed
+            # to come later w.r.t. the transitive relation).
             for eq_item1, eq_item2 in itertools.product(eq_sets[item1],
                                                          eq_sets[item2]):
+                
+                if (eq_item1, eq_item2) not in item_pair_chains:
+                    # Maybe the relationship is known even though it isn't
+                    # in item_pair_chains.  This can be a useful check in cases
+                    # of merge sorting where some of the relationships are presumed.
+                    for relation_class in self.relation_class._acceptableRelationClasses():
+                        try:
+                            relation = relation_class(eq_item1, eq_item2).prove(assumptions, 
+                                                                                automation=False)
+                            item_pair_chains[(eq_item1, eq_item2)] = [relation]
+                            break # We got all we need
+                        except:
+                            pass
+                                                                      
                 if (eq_item1, eq_item2) in item_pair_chains:
                     # If item1, eq_item1 are not identical expressions,
                     # prove that they are logically equal.
@@ -557,7 +583,10 @@ class TransitivitySorter:
                              + append)
                     item_pair_chains[(item1, item2)] = chain
                     break # We only need one.
+        
+        print("after chains", item_pair_chains)
         if (item1, item2) in item_pair_chains:
             chain = item_pair_chains[(item1, item2)]
+            print("prove direct relationship via", chain)
             self.relation_class.applyTransitivities(chain, assumptions)
 

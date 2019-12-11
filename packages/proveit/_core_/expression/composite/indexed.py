@@ -125,11 +125,11 @@ class Indexed(Expression):
         are contained in this Composite.  If it is not substituted with 
         a composite, _NoExpandedIteration is raised.
         '''
-        from .composite import Composite, IndexingError, compositeExpression
+        from .composite import Composite, IndexingError, _generateCoordOrderAssumptions
         from .expr_tuple import ExprTuple
         from .expr_array import ExprArray
         from proveit.logic import Equals
-        from proveit.number import Greater, LessEq
+        from proveit.number import GreaterEq, LessEq
         from proveit._core_.expression.expr import _NoExpandedIteration
         from .iteration import IterationError
         
@@ -164,29 +164,29 @@ class Indexed(Expression):
                                       "ExprArray, not %s"%subbed_var_class_str)
                 coords = subbed_var.entryCoords(self.base, axis, assumptions, 
                                                 coord_requirements)
+            coord_order_assumptions = list(_generateCoordOrderAssumptions(coords))
             print("indexed sub coords", self, assumptions, start_index, coords, end_index)
+            extended_assumptions = assumptions + coord_order_assumptions
             
             # Merge the start index (inclusive) and end index 
             # (exclusive) into the sorted coordinates so we can exclude 
             # anything outside of the appropriate [start, end) range.
             to_sort = [reversed(coords), [end_index]]
-            # We would typically expect the end-index to come at the
+            # We would typically expect the end-index to come near the
             # end of the coordinates in which case it is more efficient
             # to merge sort in reverse order so use Greater instead of
-            # Less.  Use Greater instead of GreaterEq because the end
-            # is exclusive.
+            # Less.
             coords_plus_end_reversed = \
-                Greater.mergesorted_items(to_sort, assumptions=assumptions,
-                                         skip_exact_reps=False,
-                                         skip_equiv_reps=False)
+                GreaterEq.mergesort(to_sort, assumptions=extended_assumptions,
+                                    skip_exact_reps=False,
+                                    skip_equiv_reps=False)
             # Use LessEq because the start is inclusive and typically
-            # expected to come before the coordinates.              
-            to_sort = [[start_index], 
-                       reversed(list(coords_plus_end_reversed))]
+            # expected to come before the coordinates.
+            to_sort = [[start_index], reversed(coords_plus_end_reversed.operands)]
             coord_relations = LessEq.mergesort(to_sort, 
-                                               assumptions=assumptions,
+                                               assumptions=extended_assumptions,
                                                skip_exact_reps=False,
-                                                skip_equiv_reps=False)
+                                               skip_equiv_reps=False)
             print("sorted", coord_relations)
             coord_rel_operands = coord_relations.operands
             coord_rel_operators = coord_relations.operators
@@ -214,9 +214,10 @@ class Indexed(Expression):
                                       "negative extent: [%s, %s)"
                                       %(start_index, end_index))
             print(coord_relations, start_idx, end_idx)
-                        
-            # Add the appropriate requirements w.r.t. starting, ending
-            # and coordinates of the expanded indexed variable.
+            
+            # We need to add requirements that establish the positions of
+            # the start and end indices relative to the coordinates of the
+            # expanded indexed variable.
             if start_idx == end_idx:
                 # Emtpy range: [x, x)
                 relation = Equals(start_index, end_index)
@@ -241,14 +242,24 @@ class Indexed(Expression):
                 requirements.extend(coord_requirements)
                 # End-point requirements are needed.
                 operation_class_dict = Operation.operationClassOfOperator
+                mid_indices = []
+                # If the start_idx is in between coordinates, include the relation
+                # on both sides as requirements.
+                if coord_rel_operators[start_idx-1] != Equals._operator_:
+                    mid_indices.append(start_idx)
+                # If the end_idx is in between coordinates, include the relation
+                # on both sides as requirements.
+                if coord_rel_operators[end_idx] != Equals._operator_:
+                    # No need to repeat it if it is there already.
+                    if end_idx-1 not in mid_indices: 
+                        mid_indices.append(end_idx-1)
                 print(coord_relations, start_idx, end_idx-1)
-                for idx in {start_idx, end_idx-1}:
+                for idx in [start_idx-1] + mid_indices + [end_idx]:
                     req_op = operation_class_dict[coord_rel_operators[idx]]
                     operands = coord_rel_operands[idx:idx+2]
                     assert len(operands)==2
                     relation = req_op(*operands)
                     requirements.append(relation.prove(assumptions))
-
             
             # We must put each coordinate in terms of iter parameter 
             # values (arguments) via inverting the subbed_index.
