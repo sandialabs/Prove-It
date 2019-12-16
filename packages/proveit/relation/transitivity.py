@@ -283,7 +283,7 @@ class TransitiveRelation(Operation):
         automation = True
         if reorder:
             items = cls.sorted_items(items, reorder, assumptions)
-            print("sorted", items)
+            #print("sorted", items)
             automation = False # Direct relations already proven.
         return cls._fixedTransitivitySort(items, assumptions=assumptions, 
                                           automation=automation)
@@ -389,7 +389,7 @@ class TransitiveRelation(Operation):
                                       skip_exact_reps, skip_equiv_reps,
                                       requirements)
         items = list(items)
-        print("merge sorted", items)
+        #print("merge sorted", items)
         return cls._fixedTransitivitySort(items, assumptions=assumptions,
                                            automation=False)        
                                 

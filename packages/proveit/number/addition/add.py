@@ -666,7 +666,7 @@ class Add(Operation):
             else:
                 a, b = b-a, a
         assert a>=0 and b>=0
-        print(a, b)
+        #print(a, b)
         if not all(term in DIGITS for term in (num(a), num(b))):
             raise NotImplementedError("Currently, _integerBinaryEval only works for single digit addition and related subtractions: %d, %d"%(a, b))
         if (a, b) not in Add.addedNumerals:
@@ -674,7 +674,7 @@ class Add(Operation):
                 # for single digit addition, import the theorem that provides the evaluation
                 Add.addedNumerals.add((a, b))
                 theorem = proveit.number.numeral.deci._theorems_.__getattr__('add_%d_%d'%(a, b))
-                print(theorem)
+                #print(theorem)
             except:
                 # may fail before the relevent _commons_ and _theorems_ have been generated
                 pass # and that's okay

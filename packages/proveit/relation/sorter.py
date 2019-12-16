@@ -26,7 +26,7 @@ class TransitivitySorter:
         sorter solely to confirm and prove that two given items
         were provided in sorted order.
         '''
-        print("sorting items", items)
+        #print("sorting items", items)
     
         self.assumptions = defaults.checkedAssumptions(assumptions)
         self.assumptions_set = set(self.assumptions)
@@ -104,7 +104,7 @@ class TransitivitySorter:
         Add a new item to be sorted.  It must be "beyond" any of the
         items that have thus far been "generated" in sorted order.
         '''
-        print("add item", item)
+        #print("add item", item)
         self.more_to_process = True # something new to process
         if item in self.remaining_items:
             # Not a new item.  Just a repetition.
@@ -177,7 +177,7 @@ class TransitivitySorter:
                     continue 
                                     
                 # Add new item partnership to item_pair_chains.
-                print("add new partnership:", left_item, right_item)
+                #print("add new partnership:", left_item, right_item)
                 item_pair_chains[(left_item, right_item)] = chain
         
                 # If the left and right items are equal,
@@ -186,7 +186,7 @@ class TransitivitySorter:
                     # Equal relation goes both ways:
                     #item_pair_chains[(right_item, left_item)] = chain
                     if eq_sets[left_item] != eq_sets[right_item]: 
-                        print("join eq sets", left_item, right_item, eq_sets[left_item], eq_sets[right_item])
+                        #print("join eq sets", left_item, right_item, eq_sets[left_item], eq_sets[right_item])
                         # Joining two equivalent sets that were not 
                         # previously known to be equivalent.
                         eq_set = eq_sets[left_item] | eq_sets[right_item]
@@ -236,7 +236,7 @@ class TransitivitySorter:
                                 "before sorting items: " + str(remaining_items))
                             raise TransitivityException(None, assumptions, msg)
                 
-                print("left candidates", left_most_candidates)
+                #print("left candidates", left_most_candidates)
                 for next_item in self._report_ready_items():
                     yield next_item
                 
@@ -248,7 +248,7 @@ class TransitivitySorter:
             self.more_to_process = False
             
             # Any stragglers?
-            print("straggler left candidates", left_most_candidates)
+            #print("straggler left candidates", left_most_candidates)
             for next_item in self._report_ready_items():
                 yield next_item
         
@@ -274,7 +274,7 @@ class TransitivitySorter:
             # cycles, we'll catch them eventually and raise an
             # exception).
             left_most = left_most_candidates.pop()
-            print("report left candidates", left_most, eq_sets[left_most])
+            #print("report left candidates", left_most, eq_sets[left_most])
 
             left_most_equiv = eq_sets[left_most]
             
@@ -285,7 +285,7 @@ class TransitivitySorter:
                 # If we have already reported an item, we must prove the
                 # direct relationship between the next item and the previous one.
                 if self.prev_reported is not None:
-                    print("prove direct relationship", self.prev_reported, "with", next_item)
+                    #print("prove direct relationship", self.prev_reported, "with", next_item)
                     self._prove_direct_relationship_if_known(self.prev_reported, 
                                                             next_item)
                 yield next_item
@@ -310,7 +310,7 @@ class TransitivitySorter:
             # the next left-most item.
             right_of_elim = set().union(*[right_partners.get(el_it, set()) 
                                             for el_it in elim_items])
-            print("right_of_elim", right_of_elim)
+            #print("right_of_elim", right_of_elim)
             for right_partner in right_of_elim:
                 # Is there anything remaining to the left of this right
                 # partner?
@@ -321,7 +321,7 @@ class TransitivitySorter:
                     # each right partner.
                     left_of_rp.difference_update(elim_items)
                     left_of_right_partner.update(left_of_rp)
-                print("right_partner", right_partner, left_of_right_partner)
+                #print("right_partner", right_partner, left_of_right_partner)
                 if len(left_of_right_partner)==0:
                     # A new left-most candidate emerges when its 
                     # last left partnership is removed.
@@ -487,7 +487,7 @@ class TransitivitySorter:
                                 else:
                                     other_item = new_endpoint
                                 left_item, right_item = other_item, item
-                                print("left-meeting-right", meeting_chain, new_endpoint, new_chain)
+                                #print("left-meeting-right", meeting_chain, new_endpoint, new_chain)
                                 chain = meeting_chain + new_chain
                             else:
                                 assert (frontier_chains is 
@@ -500,7 +500,7 @@ class TransitivitySorter:
                                 else:
                                     other_item = new_endpoint
                                 left_item, right_item = item, other_item
-                                print("right-meeting-left", new_chain, new_endpoint, meeting_chain)
+                                #print("right-meeting-left", new_chain, new_endpoint, meeting_chain)
                                 chain = new_chain + meeting_chain
                             if other_item in self.remaining_items: 
                                 # Remember chains that are still
@@ -508,7 +508,7 @@ class TransitivitySorter:
                                 updated_meeting_chains.append(meeting_chain)
                                 if left_item != right_item:
                                     # A new relation to yield.
-                                    print("relation", (left_item, right_item))
+                                    #print("relation", (left_item, right_item))
                                     yield ((left_item, right_item), chain)
                         # Remove chains that are obsolete -- going to
                         # items that are no longer "remaining":
@@ -540,7 +540,7 @@ class TransitivitySorter:
         relation_class = self.relation_class
         assumptions = self.assumptions
         eq_sets = self.eq_sets
-        print("before chains", item_pair_chains)
+        #print("before chains", item_pair_chains)
         if (item1, item2) not in item_pair_chains:
             # We may not have the chain for these specific items, but
             # we should have it for something equivalent to each of the 
@@ -584,9 +584,9 @@ class TransitivitySorter:
                     item_pair_chains[(item1, item2)] = chain
                     break # We only need one.
         
-        print("after chains", item_pair_chains)
+        #print("after chains", item_pair_chains)
         if (item1, item2) in item_pair_chains:
             chain = item_pair_chains[(item1, item2)]
-            print("prove direct relationship via", chain)
+            #print("prove direct relationship via", chain)
             self.relation_class.applyTransitivities(chain, assumptions)
 
