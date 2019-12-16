@@ -563,11 +563,10 @@ class Expression(metaclass=ExprType):
                           relabelMap=None, reservedVars=None, 
                           assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Consider a substitution over a containing iteration (Iter) 
-        defined via exprMap, relabelMap, etc, and expand the iteration 
-        by substituting the "iteration parameter" over the 
-        range from the "starting argument" (inclusive) to the 
-        "ending argument" (exclusive).
+        Consider a substitution over a containing iteration (Iter) defined via exprMap, 
+        relabelMap, etc, and expand the iteration by substituting the 
+        "iteration parameter" over the range from the "starting argument" to the 
+        "ending argument" (both inclusive).
         
         This default version merge-sorts the results from all
         sub-expressions or raises a _NoExpandedIteration exception\
@@ -581,6 +580,7 @@ class Expression(metaclass=ExprType):
         # of the operators and operands and merge them together.
         val_lists = []
         extended_assumptions = list(assumptions)
+        if requirements is None: requirements = []
         for sub_expr in self._subExpressions:
             try:
                 vals = sub_expr._iterSubParamVals(axis, iterParam, startArg, 
@@ -593,9 +593,11 @@ class Expression(metaclass=ExprType):
                 pass
         if len(val_lists) == 0:
             raise _NoExpandedIteration()
+        
+        # We won't add the requirements for the sorting here.  Instead, we will make
+        # sure differences are in naturals numbers at the Iter.substitution level.
         param_vals = LessEq.mergesorted_items(val_lists, assumptions=extended_assumptions,
-                                              skip_exact_reps=True, skip_equiv_reps=True,
-                                              requirements=requirements)
+                                              skip_exact_reps=True, skip_equiv_reps=True)
         return list(param_vals)
         
     def _validateRelabelMap(self, relabelMap):

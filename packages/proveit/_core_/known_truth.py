@@ -174,6 +174,7 @@ class KnownTruth:
         from .proof import ProofFailure
         if not defaults.automation:
             return # automation disabled
+        #print("proven", self)
         # Sort the assumptions according to hash key so that sets of assumptions
         # are unique for determining which side-effects have been processed already.
         sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
@@ -184,6 +185,7 @@ class KnownTruth:
             KnownTruth.in_progress_to_derive_sideeffects.add(self)
             try:
                 for sideEffect in self.expr.sideEffects(self):
+                    #print(self, "side-effect", sideEffect)
                     # Attempt each side-effect derivation, specific to the
                     # type of Expression.
                     try:

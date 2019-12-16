@@ -215,7 +215,7 @@ class Iter(Expression):
         subbed_end = self.end_indices.substituted(exprMap, relabelMap, 
                          reservedVars, assumptions, new_requirements)
         
-        print("iteration substituted", self, subbed_start, subbed_end)
+        #print("iteration substituted", self, subbed_start, subbed_end)
         
         # Need to handle the change in scope within the lambda 
         # expression.  We won't use 'new_params'.  They aren't relavent 
@@ -229,19 +229,31 @@ class Iter(Expression):
         sub_param_vals = [None]*ndims
         do_expansion = False
         for axis in range(ndims):
-            # Convert from the inclusive end to the exclusive end.
-            excl_end = Add(subbed_end[axis], one)
-            excl_end = _simplifiedCoord(excl_end, assumptions, requirements)
-            print(self, subbed_start[axis], excl_end, inner_expr_map)
             try:
-                sub_param_vals[axis] = \
+                param_vals = \
                     iter_body._iterSubParamVals(axis, iter_params[axis], 
-                                                subbed_start[axis], excl_end,
+                                                subbed_start[axis], subbed_end[axis],
                                                 inner_expr_map, relabelMap,
                                                 inner_reservations, 
                                                 inner_assumptions,
                                                 new_requirements)
+                sub_param_vals[axis] = param_vals
+                assert param_vals[0] == subbed_start[axis]
+                assert param_vals[-1] == subbed_end[axis]
+                for left, right in zip(param_vals[:-1], param_vals[1:]):
+                    try:
+                        Equals(Add(left, one), right).prove(assumptions, automation=False)
+                        # Simple case with succession.
+                    except:
+                        # Not the simple case; perform the positive integrality check.
+                        requirement = InSet(subtract(right, left), Naturals)
+                        new_requirements.append(requirement.prove(assumptions))
                 do_expansion = True
+            except EmptyIterException:
+                # Indexing over a negative or empty range.  The only way this
+                # should be allowed is if subbed_end+1=subbed_start.
+                Equals(Add(subbed_end, one), subbed_start).prove(assumptions)
+                sub_param_vals[axis] = []
             except _NoExpandedIteration:
                 pass
         
@@ -265,10 +277,13 @@ class Iter(Expression):
                       for axis in range(ndims)]
             entries = ExprArray.make_empty_entries(shape)
             indices_by_axis = [range(extent) for extent in shape]
-            print('shape', shape, 'indices_by_axis', indices_by_axis, 'sub_param_vals', sub_param_vals)
+            #print('shape', shape, 'indices_by_axis', indices_by_axis, 'sub_param_vals', sub_param_vals)
             
             extended_inner_assumptions = list(inner_assumptions)
             for axis_vals in sub_param_vals:
+                # Generate requirements that differences between successive parameter 
+                # values must be natural numbers. 
+                #for 
                 extended_inner_assumptions.extend(_generateCoordOrderAssumptions(axis_vals))
             
             # Maintain lists of parameter values that come before each given entry.
@@ -488,3 +503,8 @@ class IterationError(Exception):
     def __str__(self):
         return self.msg
 
+
+class EmptyIterException(Exception):
+    def __init__(self):
+        pass
+ 

@@ -139,7 +139,7 @@ class ExprTuple(Composite, Expression):
             
             for idx in range(start_idx, nentries+1):
                 # Check if 'coord' is less than coords[idx]
-                print("sort", coord, coords[idx], assumptions)
+                #print("sort", coord, coords[idx], assumptions)
                 relation = LessEq.sort([coord, coords[idx]], 
                                        assumptions=extended_assumptions)
                 relations[idx] = relation
@@ -308,18 +308,17 @@ class ExprTuple(Composite, Expression):
             outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
     
-    def entryCoords(self, base, assumptions, requirements=None):
+    def entryCoords(self, base, assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Return the simplified expressions for the coordinates of each 
-        entry of this ExprTuple in the proper order.  For each iteration 
-        entry (Iter), subsequent coordinates will account for the extent
-        of that iteration.  The last coordinate is the length of the 
-        tuple + the base, including the extent of each iteration.
-        These simplified coordinate expressions 
+        Return the simplified expressions for the starting coordinate of each 
+        entry of this ExprTuple in the proper order as well as one extra coordinate
+        at the end that is the last coordinate.  Using a base of 1, the last coordinate
+        is the length of this ExprTuple (and may be zero).
+        Entries may be singular or iterations.  Simplified coordinate expressions 
         will be remembered and reused when a query is repeated.
         Requirements include simplifications of coordinates and
         ensuring that iterations have a length that is a natural
-        number (could be an empty entry -- zero lenth).
+        number (could be an empty entry -- zero length).
         '''
         from proveit.logic import InSet
         from proveit.number import one, num, Add, subtract, Naturals
@@ -340,30 +339,31 @@ class ExprTuple(Composite, Expression):
         # Generate the coordinate list.
         coords = []
         new_requirements = []
+        nentries = len(self)
         coord = num(base)
-        for entry in self:
+        for k, entry in enumerate(self):
             coords.append(coord)
             if isinstance(entry, Iter):
-                entry_delta = subtract(entry.end_index, \
-                                       entry.start_index)
+                entry_delta = _simplifiedCoord(subtract(entry.end_index, entry.start_index),
+                                               assumptions, requirements)
                 # Add one, to get to the start of the next entry, and simplify.
                 entry_span = _simplifiedCoord(Add(entry_delta, one), assumptions, requirements)
                 # From one entry to the next should be a natural number (could be
                 # an empty entry).
-                print("simplified entry span", entry_span)
+                #print("simplified entry span", entry_span)
                 requirements.append(InSet(entry_span, Naturals).prove(assumptions))
-                coord = _simplifiedCoord(Add(coord, entry_span), 
-                                         assumptions, new_requirements)
-                print("simplified to", coord, "under assumptions", assumptions)
-            else:
+                if k==nentries-1:
+                    # The last coordinate is special when there is an iteration
+                    # as the last entry.
+                    last_coord =_simplifiedCoord(Add(coord, entry_delta), 
+                                                 assumptions, new_requirements) 
+                    coords.append(last_coord)
+                else:
+                    coord = _simplifiedCoord(Add(coord, entry_span), 
+                                            assumptions, new_requirements)
+            elif k < nentries-1:
                 coord = _simplifiedCoord(Add(coord, one), 
                                         assumptions, new_requirements)
-            print("+1 simplified", coord, "under assumptions", assumptions)
-        # The last included 'coordinate' is one past the last
-        # coordinate within the tuple range.  This value minus the base
-        # is the length of the tuple,the number of elements it 
-        # conceptually contains.
-        coords.append(coord)
         
         # Remember this result for next time in case the query is
         # repeated.
@@ -392,7 +392,7 @@ class ExprTuple(Composite, Expression):
         Return the length of this tuple as an Expression.  This
         length includes the extent of all contained iterations. 
         '''
-        return self.entryCoords(0, assumptions, requirements)[-1]
+        return self.entryCoords(1, assumptions, requirements)[-1]
             
     def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
                     assumptions=USE_DEFAULTS, requirements=None):

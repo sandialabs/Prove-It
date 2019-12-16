@@ -1,7 +1,9 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.operation.operation import Operation
+from proveit._core_.expression.composite.iteration import EmptyIterException
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
 from proveit._core_.expression.label import Variable
+from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
 
 class Indexed(Expression):
@@ -111,25 +113,28 @@ class Indexed(Expression):
                           relabelMap=None, reservedVars=None, 
                           assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Consider a substitution over a containing iteration (Iter) 
-        defined via exprMap, relabelMap, etc, and expand the iteration 
-        by substituting the "iteration parameter" over the 
-        range from the "starting argument" (inclusive) to the 
-        "ending argument" (exclusive).
-        When the Indexed variable is substituted with a Composite, any 
-        containing Iteration is to be expanded over the iteration range.  
-        This method returns a list of parameter values that covers
-        occupied portions of the full range in a manner that keeps 
-        different inner iterations separate.  In particular, the 
-        iteration range is broken up for the different Iter entries that 
-        are contained in this Composite.  If it is not substituted with 
-        a composite, _NoExpandedIteration is raised.
+        Consider a substitution over a containing iteration (Iter) defined via exprMap, 
+        relabelMap, etc, and expand the iteration by substituting the 
+        "iteration parameter" over the range from the "starting argument" to the 
+        "ending argument" (both inclusive).
+        When the Indexed variable is substituted with a Composite, any containing 
+        Iteration is to be expanded over the iteration range.  This method returns a list
+        of parameter values that covers occupied portions of the full range in a manner 
+        that keeps different inner iterations separate.  In particular, the iteration 
+        range is broken up for the different Iter entries that are contained in this 
+        Composite.  If it is not substituted with a composite, _NoExpandedIteration is
+        raised.
+        Requirements that are passed back ensure that substituted composites are
+        valid (with iterations that have natural number extents), that the 
+        start and end indices are within range and at integer positions,
+        and also includes equalities for employed simplifications or inversions
+        (translating from index coordinates to parameters).
         '''
         from .composite import Composite, IndexingError, _generateCoordOrderAssumptions
         from .expr_tuple import ExprTuple
         from .expr_array import ExprArray
         from proveit.logic import Equals
-        from proveit.number import GreaterEq, LessEq
+        from proveit.number import GreaterEq, LessEq, Add, one, InSet, subtract, Naturals
         from proveit._core_.expression.expr import _NoExpandedIteration
         from .iteration import IterationError
         
@@ -152,10 +157,9 @@ class Indexed(Expression):
             start_index = subbed_index.substituted({iterParam:startArg})
             end_index = subbed_index.substituted({iterParam:endArg})
             
-            coord_requirements = []
             if isinstance(subbed_var, ExprTuple):
                 coords = subbed_var.entryCoords(self.base, assumptions, 
-                                                coord_requirements)
+                                                requirements)
             else:
                 if not isinstance(subbed_var, ExprArray):
                     subbed_var_class_str = str(subbed_var.__class__)
@@ -163,9 +167,10 @@ class Indexed(Expression):
                                       "substituted with ExprTuple or "
                                       "ExprArray, not %s"%subbed_var_class_str)
                 coords = subbed_var.entryCoords(self.base, axis, assumptions, 
-                                                coord_requirements)
+                                                requirements)
+            assert coords[0]==self.base
             coord_order_assumptions = list(_generateCoordOrderAssumptions(coords))
-            print("indexed sub coords", self, assumptions, start_index, coords, end_index)
+            #print("indexed sub coords", self, assumptions, start_index, coords, end_index)
             extended_assumptions = assumptions + coord_order_assumptions
             
             # Merge the start index (inclusive) and end index 
@@ -187,13 +192,21 @@ class Indexed(Expression):
                                                assumptions=extended_assumptions,
                                                skip_exact_reps=False,
                                                skip_equiv_reps=False)
-            print("sorted", coord_relations)
-            coord_rel_operands = coord_relations.operands
+            #print("sorted", coord_relations)
+            coord_rel_operands = list(coord_relations.operands) # copy, we may modify it.
             coord_rel_operators = coord_relations.operators
+            
+            # start_index and end_index are expressions indexing into the conceptual
+            # tuple or array.  start_idx and end_idx are corresponding integer
+            # indexes into coordinate relations of the entries.
             start_idx = coord_rel_operands.index(start_index)
             end_idx = coord_rel_operands.index(end_index)
             n_rel_operators = len(coord_rel_operators)
                         
+            def swap_positions(lst, pos1, pos2): 
+                lst[pos1], lst[pos2] = lst[pos2], lst[pos1] 
+                return lst
+    
             # Include the start and end "end-caps" but exclude
             # contained coordinates that are equal to either of these.
             # Also, if the start and end are the same, ensure that
@@ -201,69 +214,60 @@ class Indexed(Expression):
             # convention).
             while start_idx < n_rel_operators \
                     and coord_rel_operators[start_idx]==Equals._operator_:
+                # Swao the start index to the right with something equivalent.
+                swap_positions(coord_rel_operands, start_idx, start_idx+1)
                 start_idx += 1
             while end_idx < start_idx and \
                     coord_rel_operators[end_idx] == Equals._operator_:
+                # Swap the end index to the right with something equivalent.
+                swap_positions(coord_rel_operands, end_idx, end_idx+1)
                 end_idx += 1
             while start_idx < end_idx and \
                     coord_rel_operators[end_idx-1] == Equals._operator_:
+                # Swap the end index to the left with something equivalent.
+                swap_positions(coord_rel_operands, end_idx-1, end_idx)
                 end_idx -= 1
             
+            assert coord_rel_operands[start_idx]==start_index
+            assert coord_rel_operands[end_idx]==end_idx
+
             if end_idx < start_idx:
-                raise IterationError("Iteration with essentially a "
-                                      "negative extent: [%s, %s)"
-                                      %(start_index, end_index))
-            print(coord_relations, start_idx, end_idx)
+                # Empty range (if valid at all).  Handle this
+                # at the Iter.substituted level.
+                raise EmptyIterException()
+                        
+            # Check for a range out of bounds of the new composite.
+            if start_idx==0:
+                msg = ("ExprTuple index out of range: %s not proven "
+                        "to be >= %s (the base) when assuming %s"
+                        %(str(start_index), str(coords[0]), 
+                            str(assumptions)))
+                raise IndexError(msg)                
+            elif end_idx==n_rel_operators:
+                msg = ("ExprTuple index out of range: %s not proven "
+                        "to be <= %s when assuming %s"
+                        %(str(end_index), str(coords[-1]), 
+                            str(assumptions)))
+                raise IndexError(msg)
             
-            # We need to add requirements that establish the positions of
-            # the start and end indices relative to the coordinates of the
-            # expanded indexed variable.
-            if start_idx == end_idx:
-                # Emtpy range: [x, x)
-                relation = Equals(start_index, end_index)
-                requirements.append(relation.prove(assumptions))
-            elif end_idx > start_idx:
-                # Non-empty range.
-                # Check for a range out of bounds of the new composite.
-                if start_idx==0:
-                    msg = ("ExprTuple index out of range: %s not proven "
-                            "to be >= %s (the base) when assuming %s"
-                            %(str(start_index), str(self.base), 
-                              str(assumptions)))
-                    raise IndexError(msg)                
-                elif end_idx==n_rel_operators:
-                    past_end_coord = coords[-1]
-                    msg = ("ExprTuple index out of range: %s not proven "
-                           "to be <= %s (1 beyond the end) when assuming %s"
-                            %(str(end_index), str(past_end_coord), 
-                              str(assumptions)))
-                    raise IndexError(msg)
-                # Coordinate requirements are needed.
-                requirements.extend(coord_requirements)
-                # End-point requirements are needed.
-                operation_class_dict = Operation.operationClassOfOperator
-                mid_indices = []
-                # If the start_idx is in between coordinates, include the relation
-                # on both sides as requirements.
-                if coord_rel_operators[start_idx-1] != Equals._operator_:
-                    mid_indices.append(start_idx)
-                # If the end_idx is in between coordinates, include the relation
-                # on both sides as requirements.
-                if coord_rel_operators[end_idx] != Equals._operator_:
-                    # No need to repeat it if it is there already.
-                    if end_idx-1 not in mid_indices: 
-                        mid_indices.append(end_idx-1)
-                print(coord_relations, start_idx, end_idx-1)
-                for idx in [start_idx-1] + mid_indices + [end_idx]:
-                    req_op = operation_class_dict[coord_rel_operators[idx]]
-                    operands = coord_rel_operands[idx:idx+2]
-                    assert len(operands)==2
-                    relation = req_op(*operands)
-                    requirements.append(relation.prove(assumptions))
+            # End-point requirements are needed.
+            operation_class_dict = Operation.operationClassOfOperator
+            #print(coord_relations, start_idx, end_idx-1)
+            for idx in [start_idx-1] + [end_idx]:
+                req_op = operation_class_dict[coord_rel_operators[idx]]
+                operands = coord_rel_operands[idx:idx+2]
+                assert len(operands)==2
+                if req_op == Equals:
+                    requirement = Equals(*operands)
+                else:
+                    requirement = InSet(subtract(*operands), Naturals)
+                requirements.append(requirement.prove(assumptions))
             
             # We must put each coordinate in terms of iter parameter 
             # values (arguments) via inverting the subbed_index.
             def coord2param(coord):
+                if coord==start_index: return startArg # Special known inversion.
+                if coord==end_index: return endArg # Special known inversion.
                 if subbed_index == iterParam:
                     # Direct indexing that does not need to be inverted:
                     return coord 
