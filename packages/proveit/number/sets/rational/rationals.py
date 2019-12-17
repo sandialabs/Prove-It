@@ -78,9 +78,12 @@ class RationalsNonNegSet(NumberSet):
         from proveit._common_ import x
         return xInRationalsNonNegInBool.specialize({x:member})
 
-# try:
-#     # Import some fundamental axioms and theorems without quantifiers.
-#     # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-#     from ._theorems_ import natsPosInNats, natsInInts, natsPosInInts
-# except:
-#     pass
+try:
+    # Import some fundamental axioms and theorems without quantifiers.
+    # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+    from ._theorems_ import (rationalsInReals,
+                             rationalsPosInRationals,
+                             rationalsNegInRationals, 
+                             rationalsNonNegInRationals)
+except:
+    pass

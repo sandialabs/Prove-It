@@ -4,9 +4,9 @@ from proveit._common_ import x, y, f, P, Q, QQ, S, yy
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
-    _operator_ = Literal(stringFormat='Set', context=__file__)    
+    _operator_ = Literal(stringFormat='Set', context=__file__)
     _init_argname_mapping_ = {'instanceElement':'instanceExpr'}
-    
+
     def __init__(self, instanceVarOrVars, instanceElement, domain=None,
                  domains=None, conditions=tuple(), _lambda_map=None):
         '''
@@ -34,37 +34,33 @@ class SetOfAll(OperationOverInstances):
         else:
             assert False, ("Expecting either 'instanceVar' or 'instanceVars' "
                            "to be set")
-            
+
     def _formatted(self, formatType, fence=False, **kwargs):
         outStr = ''
         explicit_conditions = ExprTuple(*self.explicitConditions())
         inner_fence = (len(explicit_conditions) > 0)
-        formatted_instance_var = self.instanceVar.formatted(formatType)
-        formatted_instance_element = self.instanceElement.formatted(
-                formatType, fence=inner_fence)
-        formatted_domain = self.domain.formatted(formatType, fence=True)
+        formatted_instance_element = self.instanceElement.formatted(formatType, fence=inner_fence)
+        domain_conditions = ExprList(*self.domainConditions())
         if formatType == 'latex': outStr += r"\left\{"
         else: outStr += "{"
         outStr += formatted_instance_element
         if len(explicit_conditions) > 0:
             formatted_conditions = explicit_conditions.formatted(
-                    formatType, fence=False) 
+                    formatType, fence=False)
             if formatType == 'latex': outStr += r'~|~'
             else: outStr += ' s.t. ' # such that
             outStr += formatted_conditions
         if formatType == 'latex': outStr += r"\right\}"
         else: outStr += "}"
-        outStr += '_{' + formatted_instance_var
-        if self.domain is not None:
-            if formatType == 'latex': outStr += r' \in '
-            else: outStr += ' in '
-            outStr += formatted_domain
+        outStr += '_{'
+        outStr += domain_conditions.formatted(formatType,
+                                              operatorOrOperators=',')
         outStr += '}'
         return outStr
-    
+
     """
     # The below must be updated
-    
+
     def unfoldMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From (x in {y | Q(y)})_{y in S}, derive and return [(x in S) and Q(x)], where x is meant as the given element.
@@ -84,11 +80,11 @@ class SetOfAll(OperationOverInstances):
         else:
             f_op, f_sub = Operation(f, self.instanceVars), self.instanceElement
             return unfoldComprehension.specialize({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {yMulti:self.instanceVars}).deriveConclusion(assumptions)
-    
+
     def deduceMembership(self, element, assumptions=USE_DEFAULTS):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
-        '''   
+        '''
         from ._theorems_ import foldComprehension, foldBasicComprehension
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         if len(self.instanceVars) == 1 and self.instanceElement == self.instanceVars[0] and len(self.conditions) == 1:
