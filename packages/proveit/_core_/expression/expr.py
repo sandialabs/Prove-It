@@ -278,13 +278,14 @@ class Expression(metaclass=ExprType):
         Iterator over the sub-expressions of this expression.
         '''
         return iter(self._subExpressions)
-    
+        
     def numSubExpr(self):
         '''
         Return the number of sub-expressions of this expression.
         '''
         return len(self._subExpressions)
-    
+
+
     def innerExpr(self):
         '''
         Return an InnerExpr object to wrap the expression and
@@ -294,7 +295,7 @@ class Expression(metaclass=ExprType):
         '''
         from .inner_expr import InnerExpr
         return InnerExpr(self)
-    
+        
     def styleOptions(self):
         '''
         Return a StyleOptions object that indicates the possible

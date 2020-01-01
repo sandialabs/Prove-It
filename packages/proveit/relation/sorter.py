@@ -31,6 +31,9 @@ class TransitivitySorter:
         self.assumptions = defaults.checkedAssumptions(assumptions)
         self.assumptions_set = set(self.assumptions)
         self.relation_class = relation_class
+        self.strong_relation_class = \
+            relation_class._checkedStrongRelationClass()
+        self.is_weak_relation = (relation_class != self.strong_relation_class)
         self.skip_exact_repetitions = skip_exact_reps
         self.skip_equiv_repetitions = skip_equiv_reps
         
@@ -274,7 +277,6 @@ class TransitivitySorter:
             # cycles, we'll catch them eventually and raise an
             # exception).
             left_most = left_most_candidates.pop()
-            #print("report left candidates", left_most, eq_sets[left_most])
 
             left_most_equiv = eq_sets[left_most]
             
@@ -283,9 +285,9 @@ class TransitivitySorter:
             # and repetitions should be skipped).
             for next_item in left_most_equiv:
                 # If we have already reported an item, we must prove the
-                # direct relationship between the next item and the previous one.
+                # direct relationship between the next item and the 
+                # previous one.
                 if self.prev_reported is not None:
-                    #print("prove direct relationship", self.prev_reported, "with", next_item)
                     self._prove_direct_relationship_if_known(self.prev_reported, 
                                                             next_item)
                 yield next_item
@@ -474,6 +476,7 @@ class TransitivitySorter:
                                                 
                     # See if we meet an opposing chain to connect this 
                     # item with another one (meeting in the "middle").
+                    has_yielded_a_chain = False
                     if new_endpoint in opposite_endpoint_chains:
                         meeting_chains = opposite_endpoint_chains[new_endpoint]
                         # Include all but the obsolete "meeting_chains":
@@ -507,20 +510,43 @@ class TransitivitySorter:
                                 # relevent; forget what is obsolete.
                                 updated_meeting_chains.append(meeting_chain)
                                 if left_item != right_item:
-                                    # A new relation to yield.
-                                    #print("relation", (left_item, right_item))
-                                    yield ((left_item, right_item), chain)
+                                    # A new relation to yield, as long
+                                    # as the chain has the proper 
+                                    # "strength" (if the relation is
+                                    # strong, it must have at list one
+                                    # strong link).
+                                    if self.is_weak_relation \
+                                            or self._is_strong_chain(chain):
+                                        has_yielded_a_chain = True
+                                        yield ((left_item, right_item), chain)
                         # Remove chains that are obsolete -- going to
                         # items that are no longer "remaining":
                         opposite_endpoint_chains[new_endpoint] = \
                             updated_meeting_chains
                     
-                    # Note: when we make it to another item, we can 
-                    # stop; that other item will come between
-                    # the current 'item' and anything beyond.
-                    if new_endpoint not in self.remaining_items:
-                        # Not making it to another item; we can move on.
-                        # Contribute to the 'same_endpoint_chains':
+                    # Is it redundant to continue the chain starting
+                    # from 'item' going to 'new_endpoint'?  It is
+                    # if their was a proper chain to 'new_endpoint'
+                    # (not weak when we need a strong relation),
+                    # the 'new_endpoint' is one of the remaining items
+                    # also being tracked, but not if 'item' is
+                    # equivalent to 'new_endpoint' and the 
+                    # representative of the equivalence set.
+                    redundant_endpoint = True
+                    if not has_yielded_a_chain: 
+                        # Not a proper chain from item to new_endpoint.
+                        redundant_endpoint = False # Not redudant.
+                    elif new_endpoint not in self.remaining_items:
+                        # The new_endpoint is not tracked on its own.
+                        redundant_endpoint = False # Not redundant.
+                    elif eq_set_rep.get(new_endpoint, None)==item:
+                        # The item is the representative of the
+                        # equivalent set that includes the new endpoint.
+                        redundant_endpoint = False # Not redundant.
+                                        
+                    # Unless it is redundant, we need to continue
+                    # tracking this frontier from the 'item'.              
+                    if not redundant_endpoint:
                         lst=same_endpoint_chains.setdefault(new_endpoint, [])
                         lst.append(new_chain)
                         # Extend the chain to a new endpoint:
@@ -528,6 +554,16 @@ class TransitivitySorter:
                         # A new reachable end-point:
                         reachables[item].add(new_endpoint)
     
+    def _is_strong_chain(self, chain):
+        '''
+        Return true iff there exists a strong relation within the
+        given chain.
+        '''
+        for relation in chain:
+            if relation.expr.__class__ == self.strong_relation_class:
+                return True
+        return False
+        
     def _prove_direct_relationship_if_known(self, item1, item2):
         '''
         Apply necessary transitivities to prove a direct relationship
@@ -540,7 +576,6 @@ class TransitivitySorter:
         relation_class = self.relation_class
         assumptions = self.assumptions
         eq_sets = self.eq_sets
-        #print("before chains", item_pair_chains)
         if (item1, item2) not in item_pair_chains:
             # We may not have the chain for these specific items, but
             # we should have it for something equivalent to each of the 
@@ -553,7 +588,7 @@ class TransitivitySorter:
                     # Maybe the relationship is known even though it isn't
                     # in item_pair_chains.  This can be a useful check in cases
                     # of merge sorting where some of the relationships are presumed.
-                    for relation_class in self.relation_class._acceptableRelationClasses():
+                    for relation_class in self.relation_class._RelationClasses():
                         try:
                             relation = relation_class(eq_item1, eq_item2).prove(assumptions, 
                                                                                 automation=False)

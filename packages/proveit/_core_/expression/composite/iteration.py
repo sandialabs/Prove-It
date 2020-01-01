@@ -6,14 +6,24 @@ import itertools
 
 class Iter(Expression):
     '''
-    An Iter Expression represents an iteration of
-    Expressions to be inserted into a containing
-    composite Expression.
+    An Iter Expression represents an iteration of  Expressions to be 
+    inserted into a containing composite Expression.
     
-    Upon substitution, it automatically expands to
-    a list (tensor) if the difference between the end 
-    index (indices) and start index (indices)
-    is (are) a known integer(s).
+    Upon substitution, it automatically expands to if it contains an 
+    Indexed expression whose variable is substituted with a tuple or 
+    array.  To ensure such an expansion is unambiguous and sensibly 
+    defined, Iter expressions must only contain Indexed variables with
+    indices that are 'simple' functions of an iteration (the parameter 
+    itself or a sum of terms with one term as the parameter).
+    For example
+    a_1*b_1 + ... + a_n*b_n
+    when substituted with 
+    a:(x_1, ..., x_j, y_1, ..., y_k)
+    b:(z_1, ..., z_k, x_1, ..., x_j)
+    under the assumption that j<k will be transformed into
+    x_1*z_1 + ... + x_j*z_j +
+    y_1*z_{j+1} + ... + y_{k-j}*z_{j+(k-j)} +
+    y_{k-j+1}*x_1 + ... + y_{k-j+j}*x_j
     '''
 
     def __init__(self, parameter_or_parameters, body, start_index_or_indices, end_index_or_indices, styles=None, requirements=tuple()):
@@ -62,6 +72,7 @@ class Iter(Expression):
         lambda_map = Lambda(parameters, body, conditions=conditions)
         Expression.__init__(self, ['Iter'], [lambda_map], styles=styles, requirements=requirements)
         self.lambda_map = lambda_map
+        self._checkIndexedRestriction(body)
     
     """
     def __init__(self, lambda_map, start_index_or_indices, end_index_or_indices, styles=None, requirements=tuple()):
@@ -82,6 +93,52 @@ class Iter(Expression):
         Expression.__init__(self, ['Iter'], [lambda_map, self.start_index_or_indices, self.end_index_or_indices], styles=styles, requirements=requirements)
         self.lambda_map = lambda_map
     """
+    
+    def _checkIndexedRestriction(self, subExpr):
+        '''
+        An iteration is restricted to not contain any Indexed variable
+        that is a complicated function of the iteration parameter.
+        Specifically, for each parameter, the index of an Indexed 
+        variable may  be a function solely of that parameter or that 
+        parameter added with terms that don't contain the parameter.
+        For example, you can have x_1, ..., x_n and you can have
+        x_{1+k}, ..., x_{n+k} or x_{k+1}, ..., x_{k+n} but not
+        x_{1^2}, ..., x_{n^2} or x_{2*1}, ..., x_{2*n}.
+        '''
+        from .indexed import Indexed
+        from proveit.number import Add
+        if isinstance(subExpr, Indexed):
+            for index in subExpr.indices:
+                for parameter in self.lambda_map.parameters:
+                    if index==parameter:
+                        # It is fine for the index to simply be the
+                        # parameter.  That is a simple case.
+                        continue
+                    if isinstance(index, Add):
+                        terms_to_check = list(index.operands)
+                        if parameter in terms_to_check:
+                            # Remove first occurrence of the parameter.
+                            terms_to_check.remove(parameter)
+                        for term in terms_to_check:
+                            if parameter in term.freeVars():
+                                # Invalid because the parameter occurs
+                                # either in multiple terms of the index
+                                # or in a non-trivial form (not simply
+                                # as itself).
+                                raise InvalidIterationError(index,
+                                                             parameter)
+                        # Valid: the parameter occurs solely as a term 
+                        # of the index. 
+                        continue # Move on to the next check.
+                    if parameter in index.freeVars():
+                        # The parameter occurs in the index in a form
+                        # that is not valid:
+                        raise InvalidIterationError(index, parameter)
+                
+        # Recursively check sub expressions of the sub expression.
+        for sub_sub_expr in subExpr.subExprIter():
+            self._checkIndexedRestriction(sub_sub_expr)
+            
     
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
@@ -224,12 +281,25 @@ class Iter(Expression):
             = self.lambda_map._innerScopeSub(exprMap, relabelMap, 
                   reservedVars, assumptions, new_requirements)
         
-        # Get sorted substitution parameter values demarcating how
-        # the entry array must be split up for each axis.
-        sub_param_vals = [None]*ndims
+        # Get sorted substitution parameter start and end
+        # values demarcating how the entry array must be split up for 
+        # each axis.
+        all_entry_starts = [None]*ndims
+        all_entry_ends = [None]*ndims
         do_expansion = False
         for axis in range(ndims):
             try:
+                empty_eq = Equals(Add(subbed_end[axis], one), 
+                                  subbed_start[axis])
+                try:
+                    # Check if this is an empty iteration which
+                    # happens when end+1=start.
+                    empty_eq.prove(assumptions, automation=False)
+                    all_entry_starts[axis] = all_entry_ends[axis] = []
+                    do_expansion = True
+                    continue
+                except ProofFailure:
+                    pass
                 param_vals = \
                     iter_body._iterSubParamVals(axis, iter_params[axis], 
                                                 subbed_start[axis], subbed_end[axis],
@@ -237,23 +307,57 @@ class Iter(Expression):
                                                 inner_reservations, 
                                                 inner_assumptions,
                                                 new_requirements)
-                sub_param_vals[axis] = param_vals
                 assert param_vals[0] == subbed_start[axis]
                 assert param_vals[-1] == subbed_end[axis]
+                # Populate the entry starts and ends using the
+                # param_vals which indicate that start of each contained
+                # entry plus the end of this iteration.
+                all_entry_starts[axis] = []
+                all_entry_ends[axis] = []
                 for left, right in zip(param_vals[:-1], param_vals[1:]):
+                    all_entry_starts[axis].append(left)
                     try:
-                        Equals(Add(left, one), right).prove(assumptions, automation=False)
-                        # Simple case with succession.
+                        eq = Equals(Add(left, one), right)
+                        eq.prove(assumptions, automation=False)
+                        new_requirements.append(eq.prove(assumptions,
+                                                         automation=False))
+                        # Simple single-entry case: the start and end
+                        # are the same.
+                        entry_end = left
                     except:
                         # Not the simple case; perform the positive integrality check.
                         requirement = InSet(subtract(right, left), Naturals)
                         new_requirements.append(requirement.prove(assumptions))
+                        if right==subbed_end[axis]:
+                            # This last entry is the inclusive end
+                            # rather than past the end, so it is an
+                            # exception.
+                            entry_end = right
+                        else:
+                            # Subtract one from the start of the next
+                            # entyr to get the end of this entry.
+                            entry_end = subtract(right, one)
+                            entry_end = _simplifiedCoord(entry_end, assumptions,
+                                                        requirements)
+                    all_entry_ends[axis].append(entry_end)
+
+                # See if we should add the end value as an extra 
+                # singular entry.
+                if len(param_vals)==1 or \
+                        all_entry_starts[axis][-1]==all_entry_ends[axis][-1]:
+                    # Add the end value as a singular entry -- it is
+                    # either the only entry or comes after another
+                    # singular entry.
+                    end_val = subbed_end[axis]
+                    all_entry_starts[axis].append(end_val)
+                    all_entry_ends[axis].append(end_val)
                 do_expansion = True
             except EmptyIterException:
                 # Indexing over a negative or empty range.  The only way this
                 # should be allowed is if subbed_end+1=subbed_start.
-                Equals(Add(subbed_end, one), subbed_start).prove(assumptions)
-                sub_param_vals[axis] = []
+                Equals(Add(subbed_end[axis], one), subbed_start[axis]).prove(assumptions)
+                all_entry_starts[axis] = all_entry_ends[axis] = []
+                do_expansion = True
             except _NoExpandedIteration:
                 pass
         
@@ -266,85 +370,58 @@ class Iter(Expression):
             
             # We must have "substition parameter values" along each
             # axis:
-            if None in sub_param_vals:
+            if None in all_entry_starts or None in all_entry_ends:
                 raise IterationError("Must expand all axes or none of the "
                                       "axes, when substituting %s"%str(self))
 
             # Generate the expanded tuple/array as the substition
-            # of 'self'.  Note that sub_param_vals goes to the end 
-            # indices of the iteration +1 in each axis.
-            shape =  [len(sub_param_vals[axis])-1 
+            # of 'self'.
+            shape =  [len(all_entry_starts[axis]) 
                       for axis in range(ndims)]
             entries = ExprArray.make_empty_entries(shape)
             indices_by_axis = [range(extent) for extent in shape]
             #print('shape', shape, 'indices_by_axis', indices_by_axis, 'sub_param_vals', sub_param_vals)
             
             extended_inner_assumptions = list(inner_assumptions)
-            for axis_vals in sub_param_vals:
-                # Generate requirements that differences between successive parameter 
-                # values must be natural numbers. 
-                #for 
-                extended_inner_assumptions.extend(_generateCoordOrderAssumptions(axis_vals))
+            for axis_starts in all_entry_starts:
+                # Generate assumptions that order the
+                # successive entry start parameter values
+                # must be natural numbers. (This is a requirement for
+                # iteration instances and is a simple fact of
+                # succession for single entries.)
+                extended_inner_assumptions.extend(_generateCoordOrderAssumptions(axis_starts))
             
             # Maintain lists of parameter values that come before each given entry.
-            prev_param_vals = [[] for axis in range(ndims)]
+            #prev_param_vals = [[] for axis in range(ndims)]
             
             # Iterate over each of the new entries, obtaining indices
             # into sub_param_vals for the start parameters of the entry.
-            for entry_start_indices in itertools.product(*indices_by_axis):
-                entry_start_vals = []
-                next_entry_start_vals = []
-                entry_end_vals = []
-                singular_entry_reqs=[]
-                iter_entry_reqs=[]
-                is_singular_entry = True
+            for entry_indices in itertools.product(*indices_by_axis):
+                entry_starts = [axis_starts[i] for axis_starts, i in \
+                                zip(all_entry_starts, entry_indices)]
+                entry_ends = [axis_ends[i] for axis_ends, i in \
+                                zip(all_entry_ends, entry_indices)]
                 
-                for axis, idx in enumerate(entry_start_indices):
+                is_singular_entry = True                
+                for entry_start, entry_end in zip(entry_starts, entry_ends):
                     # Note that empty ranges will be skipped because
                     # equivalent parameter values should be skipped in
-                    # the sub_param_vals.
-                    axis_vals = sub_param_vals[axis]
-                    
-                    entry_start_val = sub_param_vals[axis][idx]
-                    prev_param_vals[axis].append(entry_start_val)
-                    entry_start_vals.append(entry_start_val)
-                    next_val = axis_vals[idx+1]
-                    next_entry_start_vals.append(next_val)
-                    entry_end_val = subtract(next_val, one)
-                    entry_end_val = _simplifiedCoord(entry_end_val,
-                                                     assumptions, 
-                                                     iter_entry_reqs)
-                    entry_end_vals.append(entry_end_val)
-                    simplified_start_plus_one = \
-                      _simplifiedCoord(Add(entry_start_val, one),
-                                             assumptions, singular_entry_reqs)
-                    if simplified_start_plus_one == next_val:
-                        continue # singular entry along this axis
-                    # Without using automation, see if we know that
-                    # entry_start_val+1 = next_val (singular entry
-                    # along this axis)
-                    eq = Equals(simplified_start_plus_one, next_val)
-                    try:
-                        eq.prove(assumptions, automation=False)
-                    except ProofFailure:
+                    # the param_vals above.
+                    if entry_start != entry_end:
                         # Not a singular entry along this axis, so
                         # it is not a singular entry.  We must do an
                         # iteration for this entry.
                         is_singular_entry = False
-                        break
                 
                 if is_singular_entry:                    
                     # Single element entry.
-
-                    # Add relevant requirements.
-                    requirements.extend(singular_entry_reqs)
-                    
+                                        
                     # Generate the entry by making appropriate
                     # parameter substitutions for the iteration body.
                     entry_inner_expr_map = dict(inner_expr_map)
                     entry_inner_expr_map.update({param:arg for param, arg in 
                                                  zip(iter_params, 
-                                                     entry_start_vals)})
+                                                     entry_starts)})
                     for param in iter_params: relabelMap.pop(param, None)
                     entry = iter_body.substituted(entry_inner_expr_map, 
                                 relabelMap, inner_reservations, 
@@ -357,17 +434,14 @@ class Iter(Expression):
                     # window, moving the origin to the start of the 
                     # sub-range).
                     
-                    # Add relevant requirements.
-                    requirements.extend(iter_entry_reqs)
-
                     # Generate "safe" new parameters (the Variables are
                     # not used for anything that might conflict).
                     # Avoid using free variables from these expressions:
                     unsafe_var_exprs = [self]
                     unsafe_var_exprs.extend(exprMap.values())
                     unsafe_var_exprs.extend(relabelMap.values())
-                    unsafe_var_exprs.extend(entry_start_vals)
-                    unsafe_var_exprs.extend(entry_end_vals)
+                    unsafe_var_exprs.extend(entry_starts)
+                    unsafe_var_exprs.extend(entry_ends)
                     new_params = safeDummyVars(ndims, *unsafe_var_exprs)
                                         
                     # Make assumptions that places the parameter(s) in the
@@ -377,17 +451,22 @@ class Iter(Expression):
                     # but this still suits our purposes regardless.
                     range_expr_map = dict(inner_expr_map)
                     range_assumptions = []
-                    for param, new_param, range_start, next_range_start, prev_params \
-                            in zip(iter_params, new_params, entry_start_vals, 
-                                   next_entry_start_vals, prev_param_vals):
+                    for axis, (param, new_param, entry_start, entry_end) \
+                            in enumerate(zip(iter_params, new_params, 
+                                             entry_starts, entry_ends)):
                         range_expr_map[param] = new_param
-                        assumption = LessEq(range_start, new_param)
+                        assumption = LessEq(entry_start, new_param)
                         range_assumptions.append(assumption)
-                        # Do InSet naturals for all previous range starts
-                        for prev_param_val in prev_params:
-                            assumption = InSet(subtract(new_param, prev_param_val), Naturals)
+                        # Assume differences with each of the previous
+                        # range starts are natural numbers as should be
+                        # the case given requirements that have been 
+                        # met.
+                        prev_starts = entry_starts[axis][:entry_indices[axis]+1]
+                        for prev_start in prev_starts:
+                            assumption = InSet(subtract(new_param, prev_start), 
+                                               Naturals)
                             range_assumptions.append(assumption)
-                        assumption = Less(new_param, next_range_start)
+                        assumption = LessEq(new_param, entry_end)
                         range_assumptions.append(assumption)
 
                     # Perform the substitution.
@@ -402,9 +481,9 @@ class Iter(Expression):
                     new_requirements = \
                         [requirement for requirement in new_requirements 
                          if requirement.freeVars().isdisjoint(new_params)]
-                    entry = Iter(new_params, range_lambda_body, entry_start_vals, entry_end_vals)
+                    entry = Iter(new_params, range_lambda_body, entry_starts, entry_ends)
                 # Set this entry in the entries array.
-                ExprArray.set_entry(entries, entry_start_indices, entry)
+                ExprArray.set_entry(entries, entry_indices, entry)
                                                                                 
                 '''      
                     # Iteration entry.
@@ -503,6 +582,14 @@ class IterationError(Exception):
     def __str__(self):
         return self.msg
 
+class InvalidIterationError(IterationError):
+    def __init__(self, index, parameter):
+        msg = ("Iterations must only contain Indexed variables with "
+               "indices that are 'simple' functions of an iteration " 
+               "(the parameter itself or a sum of terms with one term "
+               "as the parameter), not %s with %s as a parameter."
+               %(index, parameter))
+        IterationError.__init__(self, msg) 
 
 class EmptyIterException(Exception):
     def __init__(self):

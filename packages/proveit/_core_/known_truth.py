@@ -737,7 +737,7 @@ class KnownTruth:
             elif isinstance(key, Variable):
                 processedSubMap[key] = sub
             else:
-                raise SpecializationFailure(None, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
+                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
         remainingSubVars = set(processedSubMap.keys())
         
         # Determine the number of Forall eliminations.  There must be at least
@@ -749,7 +749,7 @@ class KnownTruth:
         while numForallEliminations==0 or len(remainingSubVars) > 0:
             numForallEliminations += 1
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation operand must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions

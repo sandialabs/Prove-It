@@ -77,7 +77,7 @@ class TransitiveRelation(Operation):
                 if relation.__class__ == self.__class__._checkedStrongRelationClass():
                     return relation.deriveRelaxed()
                 elif relation.__class__ == Equals:
-                    return self.concludeViaEquality()
+                    return self.concludeViaEquality(assumptions)
             msg = ("Not able to conclude the desired relation of %s"
                     " from the proven relation of %s."
                     %(str(self), str(relation)))
@@ -85,17 +85,12 @@ class TransitiveRelation(Operation):
         return relation
     
     @classmethod
-    def _acceptableRelationClasses(cls):
+    def _RelationClasses(cls):
         '''
-        Return just the strong relation class if cls is strong; otherwise
-        return the strong and the wek classes.
+        Return the strong and weak relation classes.
         '''
-        if cls is cls._checkedStrongRelationClass():
-            return (cls._checkedStrongRelationClass(),)
-        else:
-            return (cls._checkedStrongRelationClass(), 
-                     cls._checkedWeakRelationClass())
-        
+        return (cls._checkedStrongRelationClass(), 
+                    cls._checkedWeakRelationClass())
 
     @classmethod
     def knownRelationsFromLeft(RelationClass, expr, assumptionsSet):
@@ -114,9 +109,9 @@ class TransitiveRelation(Operation):
             if expr != otherExpr: # exclude reflexive equations -- they don't count
                 yield (knownTruth, otherExpr)
         if RelationClass is not Equals:
-            acceptable_relation_classes = RelationClass._acceptableRelationClasses()
+            relation_classes = RelationClass._RelationClasses()
             # stronger then weaker relations
-            for Relation in acceptable_relation_classes:
+            for Relation in relation_classes:
                 for knownTruth in list(Relation.knownLeftSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
                         yield (knownTruth, knownTruth.rhs)
@@ -138,9 +133,9 @@ class TransitiveRelation(Operation):
             if expr != otherExpr: # exclude reflexive equations -- they don't count
                 yield (knownTruth, otherExpr)
         if RelationClass is not Equals:
-            acceptable_relation_classes = RelationClass._acceptableRelationClasses()
+            relation_classes = RelationClass._RelationClasses()
             # stronger then weaker relations
-            for Relation in acceptable_relation_classes:
+            for Relation in relation_classes:
                 for knownTruth in list(Relation.knownRightSides.get(expr, [])):
                     if knownTruth.isSufficient(assumptionsSet):
                         yield (knownTruth, knownTruth.lhs)
@@ -281,6 +276,7 @@ class TransitiveRelation(Operation):
         equality and strong relations are used in the sorting).
         '''
         automation = True
+        assumptions = defaults.checkedAssumptions(assumptions)
         if reorder:
             items = cls.sorted_items(items, reorder, assumptions)
             #print("sorted", items)
@@ -385,6 +381,7 @@ class TransitiveRelation(Operation):
         this method on a weak relation class (otherwise, only
         equality and strong relations are used in the sorting).
         '''
+        assumptions = defaults.checkedAssumptions(assumptions)
         items = cls.mergesorted_items(item_iterators, assumptions,
                                       skip_exact_reps, skip_equiv_reps,
                                       requirements)
@@ -392,7 +389,101 @@ class TransitiveRelation(Operation):
         #print("merge sorted", items)
         return cls._fixedTransitivitySort(items, assumptions=assumptions,
                                            automation=False)        
-                                
+    
+    @classmethod
+    def insertion_point(cls, sorted_items, item_to_insert, 
+                        equiv_group_pos='any',
+                        assumptions=USE_DEFAULTS, requirements=None):
+        '''
+        Return the position to insert the "item to insert" into the 
+        sorted items to maintain the sorted order (according to
+        the TransitivityRelation class cls).  The sorted_items should
+        be provably sorted, with relations between consecutive items
+        that are KnownTruths.  
+        
+        If equiv_group_pos is 'first', the insertion point will be one
+        that would place he "item to insert" prior to any equivalent 
+        items; if equiv_group_pos is 'last', the insertion point will be
+        one that would place the "item to insert" after any equivalent
+        items.  If it is 'first&last', both insertion points are
+        returned as a tuple pair (first, last).
+        The default of equiv_group_pos='any' will result in
+        an arbitrary position relative to equivalent items.
+        ''' 
+        from proveit.logic import Equals
+        assumptions = defaults.checkedAssumptions(assumptions)
+        if item_to_insert in sorted_items:
+            point = sorted_items.index(item_to_insert)
+        else:
+            item_iterators = [sorted_items, [item_to_insert]]
+            # Don't skip equivalent or exact representations because
+            # we don't want the insertion point index to be thrown
+            # off and we need to make sure the 'item_to_insert' is 
+            # included:
+            skip_exact_reps = skip_equiv_reps = False
+            # And don't skip exact representations
+            for k, item in enumerate(cls.mergesorted_items(item_iterators,
+                                                            assumptions,
+                                                            skip_exact_reps,
+                                                            skip_equiv_reps,
+                                                            requirements)):
+                if item==item_to_insert:
+                    point = k
+        
+        # If equiv_group_pos is 'first' or 'last', we need to make sure
+        # we get the insertion point in the right spot with respect to
+        # equivalent items.
+        
+        orig_point = point
+        equiv_item = item_to_insert
+        if equiv_group_pos=='first' or equiv_group_pos=='first&last':
+            while point>1:
+                prev_point = point-1
+                if item_to_insert==sorted_items[prev_point]:
+                    point -= 1
+                    continue
+                item1, item2 = sorted_items[prev_point], equiv_item
+                try:
+                    relation = \
+                        cls._transitivitySearch(item1, item2, assumptions,
+                                                automation=False)
+                except ProofFailure:
+                    msg = ("Unknown %s relationship between %s and %s"
+                            %(cls, item1, item2))
+                    raise TransitivityException(None, assumptions, msg)
+                if isinstance(relation, Equals):
+                    equiv_item = sorted_items[prev_point]
+                    point -= 1
+                else:
+                    break
+            first = point
+                
+        if equiv_group_pos=='last' or equiv_group_pos=='first&last':
+            point = orig_point
+            while point<len(sorted_items):
+                if item_to_insert==sorted_items[point]:
+                    point += 1
+                    continue
+                item1, item2 = equiv_item, sorted_items[point]
+                try:
+                    relation = \
+                        cls._transitivitySearch(item1, item2, assumptions,
+                                                automation=False)
+                except ProofFailure:
+                    msg = ("Unknown %s relationship between %s and %s"
+                            %(cls, item1, item2))
+                    raise TransitivityException(None, assumptions, msg)
+                if isinstance(relation, Equals):
+                    equiv_item = sorted_items[point]
+                    point += 1
+                else:
+                    break
+            last = point
+        
+        if equiv_group_pos=='first&last':
+            return (first, last)
+        return point
+                
     
     @classmethod
     def _transitivitySearch(cls, leftItem, rightItem, 
