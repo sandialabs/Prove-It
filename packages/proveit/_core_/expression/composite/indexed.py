@@ -109,21 +109,25 @@ class Indexed(Expression):
         else:
             return Indexed(subbed_var, subbed_indices, base=self.base)
         
-    def _iterSubParamVals(self, axis, iterParam, startArg, endArg, exprMap, 
-                          relabelMap=None, reservedVars=None, 
+    def _iterSubParamVals(self, axis, iterParam, startArg, endArg, 
+                          exprMap, relabelMap=None, reservedVars=None, 
                           assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Consider a substitution over a containing iteration (Iter) defined via exprMap, 
-        relabelMap, etc, and expand the iteration by substituting the 
-        "iteration parameter" over the range from the "starting argument" to the 
-        "ending argument" (both inclusive).
-        When the Indexed variable is substituted with a Composite, any containing 
-        Iteration is to be expanded over the iteration range.  This method returns a list
-        of parameter values that covers occupied portions of the full range in a manner 
-        that keeps different inner iterations separate.  In particular, the iteration 
-        range is broken up for the different Iter entries that are contained in this 
-        Composite.  If it is not substituted with a composite, _NoExpandedIteration is
-        raised.
+        Consider a substitution over a containing iteration (Iter) 
+        defined via exprMap, relabelMap, etc, and expand the iteration 
+        by substituting the "iteration parameter" over the range from 
+        the "starting argument" to the "ending argument" 
+        (both inclusive as provided).
+        
+        When the Indexed variable is substituted with a Composite, any 
+        containing Iteration is to be expanded over the iteration range.
+        This method returns a list of parameter values that covers 
+        occupied portions of the full range in a manner that keeps 
+        different inner iterations separate.  In particular, the 
+        iteration range is broken up for the different Iter entries that
+        are contained in this Composite.  If it is not substituted with 
+        a composite, _NoExpandedIteration is raised.
+        
         Requirements that are passed back ensure that substituted composites are
         valid (with iterations that have natural number extents), that the 
         start and end indices are within range and at integer positions,
@@ -135,9 +139,10 @@ class Indexed(Expression):
         from .expr_tuple import ExprTuple
         from .expr_array import ExprArray
         from proveit.logic import Equals, InSet
-        from proveit.number import GreaterEq, LessEq, Add, num, subtract, Naturals
+        from proveit.number import GreaterEq, LessEq, Add, one, num, \
+                                      subtract, Naturals
         from proveit._core_.expression.expr import _NoExpandedIteration
-        from .iteration import InvalidIterationError
+        from .iteration import Iter, InvalidIterationError
         
         if requirements is None: requirements = [] 
         
@@ -198,39 +203,59 @@ class Indexed(Expression):
                     
         # Find where the start index and end index belongs
         # relative to the entry coordinates.
-        
-        # We would typically expect the end-index to come near the
-        # end of the coordinates in which case it is more efficient
-        # to merge sort in reverse order so use Greater instead of
-        # Less.  We'll extract both the first and last insertion
-        # points w.r.t. equivalent coordinates; the first insertion
-        # point will tell us whether the endpoint is within within
-        # the range of the composite coordinates.  The last 
-        # insertion point will be used to determine the actual
-        # cutoff -- we don't need to report back multiple
-        # equivalent parameter values at the end.
-        end_pos_from_end_firstlast = \
-            GreaterEq.insertion_point(list(reversed(coords)), end_index, 
-                                        equiv_group_pos = 'first&last',
-                                        assumptions=extended_assumptions)
-        # Use LessEq because the start is inclusive and typically
-        # expected to come before the coordinates.
-        # Use the last insertion point for the start so we are not
+
+        # The start is inclusive and is typically expected to 
+        # toward the beginning of the coordinates.
+        # Use the "last" insertion point for the start so we are not
         # including multiple equivalent parameter values at the 
         # start.
-        start_pos_from_start = \
+        start_pos = \
             LessEq.insertion_point(coords, start_index, 
                                     equiv_group_pos = 'last',
                                     assumptions=extended_assumptions)
-                    
+        
+        # The end position splits into two cases.  In the simple case,
+        # it lands at a singular entry as the last entry.  Otherwise,
+        # we need to add one to the endArg to ensure we get past any
+        # iterations that may or may not be empty and find the
+        # insertion point.
+        end_pos = None
+        if end_index in coords:
+            # Might be the simple case of a singular entry as the last
+            # entry.
+            end_pos = coords.index(end_index)
+            end_coord = coords[end_pos]
+            if isinstance(end_coord, Iter):
+                # Not the simple case -- an iteration rather than
+                end_pos = None # a singular entry.
+        if end_pos is None:
+            # Not the simple case.  We need to add one to the endArg
+            # to ensure we get past any iterations that may or may not
+            # be empty.
+            endArg = _simplifiedCoord(Add(endArg, one), assumptions,
+                                      requirements)
+            end_index = subbed_index.substituted({iterParam:endArg})
+            # We would typically expect the end-index to come near the
+            # end of the coordinates in which case it is more efficient
+            # to search for the insertion point in reverse order, so use
+            # Greater instead of Less.  
+            # Use the "last" insertion point for the start so we are not
+            # including multiple equivalent parameter values at the 
+            # end.
+            end_pos_from_end = \
+                GreaterEq.insertion_point(list(reversed(coords)), end_index, 
+                                          equiv_group_pos = 'last',
+                                          assumptions=extended_assumptions)
+            end_pos = len(coords)-end_pos_from_end
+            
         # Check for a range out of bounds of the new composite.
-        if start_pos_from_start==0:
+        if start_pos==0:
             msg = ("ExprTuple index out of range: %s not proven "
                     "to be >= %s (the base) when assuming %s"
                     %(str(start_index), str(coords[0]), 
                         str(assumptions)))
             raise IndexError(msg)                
-        if end_pos_from_end_firstlast[0]==0:
+        if end_pos==len(coords)-1:
             msg = ("ExprTuple index out of range: %s not proven "
                     "to be < %s when assuming %s"
                     %(str(end_index), str(coords[-1]), 
@@ -238,26 +263,21 @@ class Indexed(Expression):
             raise IndexError(msg)
         
         # Check to see if the range is empty.
-        if len(coords)-end_pos_from_end_firstlast[0] \
-                < start_pos_from_start:
+        if end_pos < start_pos:
             # Empty range (if valid at all).  Handle this
             # at the Iter.substituted level.
             raise EmptyIterException()
         
-        # Get the position of the last relevant coordinate:
-        end_pos_from_end = end_pos_from_end_firstlast[1]
-        end_pos_from_start = len(coords)-end_pos_from_end
-        
         # Include coordinate simplification requirements up to
         # the last used coordinate.
         coord_simp_req_map = {eq.rhs:eq for eq in coord_simp_requirements}
-        for coord in coords[:end_pos_from_start+1]:
+        for coord in coords[:end_pos+1]:
             if coord in coord_simp_req_map:
                 requirements.append(coord_simp_req_map[coord])
         
         # End-point requirements may be needed.
-        for coord_and_endpoint in [(coords[start_pos_from_start-1], start_index), 
-                                        (end_index, coords[end_pos_from_start])]:
+        for coord_and_endpoint in [(coords[start_pos-1], start_index), 
+                                        (end_index, coords[end_pos])]:
             if coord_and_endpoint[0]==coord_and_endpoint[1]:
                 # When the endpoint index is the same as the
                 # coordinate, we don't need to add a requirement.
@@ -291,7 +311,7 @@ class Indexed(Expression):
             return param
         
         coord_params = [coord2param(coord) for coord 
-                        in coords[start_pos_from_start:end_pos_from_start]] 
+                        in coords[start_pos:end_pos]] 
         
         # If the start and end are the same expression or known to
         # be equal, just return [startArg].
