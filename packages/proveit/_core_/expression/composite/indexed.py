@@ -206,13 +206,24 @@ class Indexed(Expression):
 
         # The start is inclusive and is typically expected to 
         # toward the beginning of the coordinates.
-        # Use the "last" insertion point for the start so we are not
-        # including multiple equivalent parameter values at the 
-        # start.
-        start_pos = \
+        # We'll get the first and the last insertion points w.r.t.
+        # all coordinates equivalent to start_index.
+        # The "first" insertion point may help determine if we have
+        # an empty range case.  Otherwise, we use the "last"
+        # insertion point so we are not including multiple equivalent 
+        # parameter values at the start.
+        start_pos_firstlast = \
             LessEq.insertion_point(coords, start_index, 
-                                    equiv_group_pos = 'last',
+                                    equiv_group_pos = 'first&last',
                                     assumptions=extended_assumptions)
+        # Check the start for an out of bounds error.
+        start_pos = start_pos_firstlast[1]
+        if start_pos==0:
+            msg = ("ExprTuple index out of range: %s not proven "
+                    "to be >= %s (the base) when assuming %s"
+                    %(str(start_index), str(coords[0]), 
+                        str(assumptions)))
+            raise IndexError(msg)
         
         # The end position splits into two cases.  In the simple case,
         # it lands at a singular entry as the last entry.  Otherwise,
@@ -228,6 +239,19 @@ class Indexed(Expression):
             if isinstance(end_coord, Iter):
                 # Not the simple case -- an iteration rather than
                 end_pos = None # a singular entry.
+            else:
+                # Check the end for an out of bounds error.
+                if end_pos==len(coords)-1:
+                    msg = ("ExprTuple index out of range: %s not proven "
+                            "to be < %s when assuming %s"
+                            %(str(end_index), str(coords[-1]), 
+                                str(assumptions)))
+                    raise IndexError(msg)
+                if start_pos_firstlast[0]>end_pos:
+                    # Empty range (if valid at all).  Handle this
+                    # at the Iter.substituted level.
+                    raise EmptyIterException()
+                
         if end_pos is None:
             # Not the simple case.  We need to add one to the endArg
             # to ensure we get past any iterations that may or may not
@@ -246,28 +270,22 @@ class Indexed(Expression):
                 GreaterEq.insertion_point(list(reversed(coords)), end_index, 
                                           equiv_group_pos = 'last',
                                           assumptions=extended_assumptions)
+            # Check the end for an out of bounds error.
+            if end_pos_from_end==0:
+                msg = ("ExprTuple index out of range: %s not proven "
+                        "to be <= %s when assuming %s"
+                        %(str(end_index), str(coords[-1]), 
+                            str(assumptions)))
+                raise IndexError(msg)
             end_pos = len(coords)-end_pos_from_end
-            
-        # Check for a range out of bounds of the new composite.
-        if start_pos==0:
-            msg = ("ExprTuple index out of range: %s not proven "
-                    "to be >= %s (the base) when assuming %s"
-                    %(str(start_index), str(coords[0]), 
-                        str(assumptions)))
-            raise IndexError(msg)                
-        if end_pos==len(coords)-1:
-            msg = ("ExprTuple index out of range: %s not proven "
-                    "to be < %s when assuming %s"
-                    %(str(end_index), str(coords[-1]), 
-                        str(assumptions)))
-            raise IndexError(msg)
-        
-        # Check to see if the range is empty.
-        if end_pos < start_pos:
-            # Empty range (if valid at all).  Handle this
-            # at the Iter.substituted level.
-            raise EmptyIterException()
-        
+            # Check to see if the range is empty.
+            # Note: when start_pos==end_pos is the case when both
+            # are within the same entry.
+            if start_pos > end_pos:
+                # Empty range (if valid at all).  Handle this
+                # at the Iter.substituted level.
+                raise EmptyIterException()
+                
         # Include coordinate simplification requirements up to
         # the last used coordinate.
         coord_simp_req_map = {eq.rhs:eq for eq in coord_simp_requirements}

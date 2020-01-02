@@ -302,13 +302,19 @@ class Iter(Expression):
                     pass
                 param_vals = \
                     iter_body._iterSubParamVals(axis, iter_params[axis], 
-                                                subbed_start[axis], subbed_end[axis],
+                                                subbed_start[axis], 
+                                                subbed_end[axis],
                                                 inner_expr_map, relabelMap,
                                                 inner_reservations, 
                                                 inner_assumptions,
                                                 new_requirements)
                 assert param_vals[0] == subbed_start[axis]
-                assert param_vals[-1] == subbed_end[axis]
+                if param_vals[-1] != subbed_end[axis]:
+                    # The last of the param_vals should either be
+                    # subbed_end[axis] or known to be 
+                    # subbed_end[axis]+1.  Let's double-check.
+                    eq = Equals(Add(subbed_end[axis], one), param_vals[-1])
+                    eq.prove(assumptions, automation=False)
                 # Populate the entry starts and ends using the
                 # param_vals which indicate that start of each contained
                 # entry plus the end of this iteration.
@@ -340,14 +346,10 @@ class Iter(Expression):
                             entry_end = _simplifiedCoord(entry_end, assumptions,
                                                         requirements)
                     all_entry_ends[axis].append(entry_end)
-
                 # See if we should add the end value as an extra 
-                # singular entry.
-                if len(param_vals)==1 or \
-                        all_entry_starts[axis][-1]==all_entry_ends[axis][-1]:
-                    # Add the end value as a singular entry -- it is
-                    # either the only entry or comes after another
-                    # singular entry.
+                # singular entry.  If param_vals[-1] is at the inclusive
+                # end, then we have a singular final entry.
+                if param_vals[-1] == subbed_end[axis]:
                     end_val = subbed_end[axis]
                     all_entry_starts[axis].append(end_val)
                     all_entry_ends[axis].append(end_val)
