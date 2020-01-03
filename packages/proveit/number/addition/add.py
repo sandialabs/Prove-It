@@ -916,8 +916,7 @@ class Add(Operation):
                 ySub.append(one)
                 
             # substitute in the factorized term
-            expr = termFactorization.substitution(expr.innerExpr().terms[i], assumptions=assumptions).rhs
-            Equals(self, expr).prove(assumptions)
+            return termFactorization.substitution(expr.innerExpr().terms[i], assumptions=assumptions)
         if not groupFactor and isinstance(theFactor, Mult):
             factorSub = theFactor.operands
         else:
@@ -928,8 +927,7 @@ class Add(Operation):
         else:
             xSub = []
             zSub = factorSub
-        expr = distributeThroughSum.specialize({l:num(len(xSub)),m:num(len(ySub)),n:num(len(zSub)),AA:xSub, BB:ySub, CC:zSub}, assumptions=assumptions).deriveReversed(assumptions).rhs
-        return Equals(self, expr).prove(assumptions)
+        return distributeThroughSum.specialize({l:num(len(xSub)),m:num(len(ySub)),n:num(len(zSub)),AA:xSub, BB:ySub, CC:zSub}, assumptions=assumptions).deriveReversed(assumptions)
     
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
