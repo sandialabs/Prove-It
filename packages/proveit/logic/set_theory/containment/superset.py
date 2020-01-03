@@ -116,25 +116,28 @@ class SupersetEq(SupersetRelation):
         return reverseSupsetEq.specialize({A:self.superset, B:self.subset}, assumptions=assumptions)
 
     def conclude(self, assumptions):
-        from ._theorems_ import supersetEqViaEquality
         from proveit import ProofFailure
         from proveit.logic import Equals
         
+        # Any set contains itself
         try:
-            # first attempt a transitivity search
+            Equals(*self.operands).prove(assumptions, automation=False)
+            return self.concludeViaEquality(assumptions)
+        except ProofFailure:
+            pass
+        
+        try:
+            # Attempt a transitivity search
             return ContainmentRelation.conclude(self, assumptions)
         except ProofFailure:
             pass # transitivity search failed
 
-        # Any set contains itself
-        try:
-            Equals(self.operands[0], self.operands[1]).prove(assumptions, automation=False)
-            return supersetEqViaEquality.specialize({A: self.operands[0], B: self.operands[1]})
-        except ProofFailure:
-            pass
-
         # Finally, attempt to conclude A supseteq B via forall_{x in B} x in A.
         return self.concludeAsFolded(elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
+
+    def concludeViaEquality(self, assumptions):
+        from ._theorems_ import supersetEqViaEquality
+        return supersetEqViaEquality.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)        
 
     def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''

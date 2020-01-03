@@ -117,23 +117,22 @@ class SubsetEq(SubsetRelation):
         return reverseSubsetEq.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
         
     def conclude(self, assumptions):
-        from ._theorems_ import subsetEqViaEquality
         from proveit import ProofFailure
         from proveit.logic import SetOfAll, Equals
-        
+
+        # Any set contains itself
         try:
-            # first attempt a transitivity search
+            Equals(*self.operands).prove(assumptions, automation=False)
+            return self.concludeViaEquality(assumptions)
+        except ProofFailure:
+            pass
+                
+        try:
+            # Attempt a transitivity search
             return ContainmentRelation.conclude(self, assumptions)
         except ProofFailure:
             pass # transitivity search failed
         
-        # Any set contains itself
-        try:
-            Equals(self.operands[0], self.operands[1]).prove(assumptions, automation=False)
-            return subsetEqViaEquality.specialize({A: self.operands[0], B: self.operands[1]})
-        except ProofFailure:
-            pass
-
         # Check for special case of [{x | Q*(x)}_{x \in S}] \subseteq S
         if isinstance(self.subset, SetOfAll):
             from proveit.logic.set_theory.comprehension._theorems_ import comprehensionIsSubset
@@ -146,7 +145,11 @@ class SubsetEq(SubsetRelation):
         # Issue: Variables do not match when using safeDummyVar: _x_ to x.
         # We need to automate this better, right now it is only practical to do concludeAsFolded manually.
         return self.concludeAsFolded(elemInstanceVar=safeDummyVar(self), assumptions=assumptions)
-        
+    
+    def concludeViaEquality(self, assumptions):
+        from ._theorems_ import subsetEqViaEquality
+        return subsetEqViaEquality.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)        
+    
     def unfold(self, elemInstanceVar=x, assumptions=USE_DEFAULTS):
         '''
         From A subseteq B, derive and return (forall_{x in A} x in B).
