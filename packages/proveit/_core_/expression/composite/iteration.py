@@ -134,7 +134,6 @@ class Iter(Expression):
                         # The parameter occurs in the index in a form
                         # that is not valid:
                         raise InvalidIterationError(index, parameter)
-                
         # Recursively check sub expressions of the sub expression.
         for sub_sub_expr in subExpr.subExprIter():
             self._checkIndexedRestriction(sub_sub_expr)
@@ -254,7 +253,8 @@ class Iter(Expression):
         from .composite import _generateCoordOrderAssumptions
         from proveit import ProofFailure, ExprArray
         from proveit.logic import Equals, InSet
-        from proveit.number import Less, LessEq, subtract, Add, one, subtract, Naturals
+        from proveit.number import Less, LessEq, dist_add, \
+            zero, one, dist_subtract, Naturals, Integers
         from .composite import _simplifiedCoord
         from proveit._core_.expression.expr import _NoExpandedIteration
         from proveit._core_.expression.label.var import safeDummyVars
@@ -289,7 +289,7 @@ class Iter(Expression):
         do_expansion = False
         for axis in range(ndims):
             try:
-                empty_eq = Equals(Add(subbed_end[axis], one), 
+                empty_eq = Equals(dist_add(subbed_end[axis], one), 
                                   subbed_start[axis])
                 try:
                     # Check if this is an empty iteration which
@@ -313,7 +313,7 @@ class Iter(Expression):
                     # The last of the param_vals should either be
                     # subbed_end[axis] or known to be 
                     # subbed_end[axis]+1.  Let's double-check.
-                    eq = Equals(Add(subbed_end[axis], one), param_vals[-1])
+                    eq = Equals(dist_add(subbed_end[axis], one), param_vals[-1])
                     eq.prove(assumptions, automation=False)
                 # Populate the entry starts and ends using the
                 # param_vals which indicate that start of each contained
@@ -323,7 +323,7 @@ class Iter(Expression):
                 for left, right in zip(param_vals[:-1], param_vals[1:]):
                     all_entry_starts[axis].append(left)
                     try:
-                        eq = Equals(Add(left, one), right)
+                        eq = Equals(dist_add(left, one), right)
                         eq.prove(assumptions, automation=False)
                         new_requirements.append(eq.prove(assumptions,
                                                          automation=False))
@@ -331,9 +331,18 @@ class Iter(Expression):
                         # are the same.
                         entry_end = left
                     except:
-                        # Not the simple case; perform the positive integrality check.
-                        requirement = InSet(subtract(right, left), Naturals)
-                        new_requirements.append(requirement.prove(assumptions))
+                        # Not the simple case; perform the positive 
+                        # integrality check.
+                        requirement = InSet(dist_subtract(right, left), 
+                                            Naturals)
+                        # Knowing the simplification may help prove the 
+                        # requirement.
+                        _simplifiedCoord(requirement, assumptions, [])
+                        try:
+                            new_requirements.append(requirement.prove(assumptions))
+                        except ProofFailure as e:
+                            raise IterationError("Failed to prove requirement "
+                                                  "%s:\n%s"%(requirement, e))
                         if right==subbed_end[axis]:
                             # This last entry is the inclusive end
                             # rather than past the end, so it is an
@@ -342,7 +351,7 @@ class Iter(Expression):
                         else:
                             # Subtract one from the start of the next
                             # entyr to get the end of this entry.
-                            entry_end = subtract(right, one)
+                            entry_end = dist_subtract(right, one)
                             entry_end = _simplifiedCoord(entry_end, assumptions,
                                                         requirements)
                     all_entry_ends[axis].append(entry_end)
@@ -353,11 +362,16 @@ class Iter(Expression):
                     end_val = subbed_end[axis]
                     all_entry_starts[axis].append(end_val)
                     all_entry_ends[axis].append(end_val)
+                else:
+                    # Otherwise, the last param_val will be one after
+                    # the inclusive end which we will want to use below
+                    # when building the last iteration entry.
+                    all_entry_starts[axis].append(param_vals[-1])           
                 do_expansion = True
             except EmptyIterException:
                 # Indexing over a negative or empty range.  The only way this
                 # should be allowed is if subbed_end+1=subbed_start.
-                Equals(Add(subbed_end[axis], one), subbed_start[axis]).prove(assumptions)
+                Equals(dist_add(subbed_end[axis], one), subbed_start[axis]).prove(assumptions)
                 all_entry_starts[axis] = all_entry_ends[axis] = []
                 do_expansion = True
             except _NoExpandedIteration:
@@ -378,7 +392,7 @@ class Iter(Expression):
 
             # Generate the expanded tuple/array as the substition
             # of 'self'.
-            shape =  [len(all_entry_starts[axis]) 
+            shape =  [len(all_entry_ends[axis]) 
                       for axis in range(ndims)]
             entries = ExprArray.make_empty_entries(shape)
             indices_by_axis = [range(extent) for extent in shape]
@@ -403,7 +417,7 @@ class Iter(Expression):
                                 zip(all_entry_starts, entry_indices)]
                 entry_ends = [axis_ends[i] for axis_ends, i in \
                                 zip(all_entry_ends, entry_indices)]
-                
+                                
                 is_singular_entry = True                
                 for entry_start, entry_end in zip(entry_starts, entry_ends):
                     # Note that empty ranges will be skipped because
@@ -451,25 +465,47 @@ class Iter(Expression):
                     # Note, it is possible that this actually represents an
                     # empty range and that these assumptions are contradictory;
                     # but this still suits our purposes regardless.
+                    # Also, we will choose to shift the parameter so it
+                    # starts at the start index of the iteration.
                     range_expr_map = dict(inner_expr_map)
                     range_assumptions = []
+                    shifted_entry_ends = []
                     for axis, (param, new_param, entry_start, entry_end) \
                             in enumerate(zip(iter_params, new_params, 
                                              entry_starts, entry_ends)):
-                        range_expr_map[param] = new_param
-                        assumption = LessEq(entry_start, new_param)
+                        start_idx = self.start_indices[axis]
+                        shift = dist_subtract(entry_start, start_idx)
+                        shift = _simplifiedCoord(shift, assumptions,
+                                                 new_requirements)
+                        if shift != zero:
+                            shifted_param = dist_add(new_param, shift)
+                        else:
+                            shifted_param = new_param
+                        range_expr_map[param] = shifted_param
+                        shifted_end = dist_subtract(entry_end, shift)
+                        shifted_end = _simplifiedCoord(shifted_end, 
+                                                       assumptions,
+                                                       new_requirements)
+                        shifted_entry_ends.append(shifted_end)
+                        assumption = InSet(new_param, Integers)
+                        range_assumptions.append(assumption)
+                        assumption = LessEq(entry_start, shifted_param)
                         range_assumptions.append(assumption)
                         # Assume differences with each of the previous
                         # range starts are natural numbers as should be
                         # the case given requirements that have been 
                         # met.
-                        prev_starts = entry_starts[axis][:entry_indices[axis]+1]
+                        next_index = entry_indices[axis]+1
+                        prev_starts = all_entry_starts[axis][:next_index]
                         for prev_start in prev_starts:
-                            assumption = InSet(subtract(new_param, prev_start), 
+                            assumption = InSet(dist_subtract(shifted_param, 
+                                                             prev_start), 
                                                Naturals)
                             range_assumptions.append(assumption)
-                        assumption = LessEq(new_param, entry_end)
+                        next_start = all_entry_starts[axis][next_index]
+                        assumption = Less(shifted_param, next_start)
                         range_assumptions.append(assumption)
+
 
                     # Perform the substitution.
                     # The fact that our "new parameters" are "safe" 
@@ -483,7 +519,8 @@ class Iter(Expression):
                     new_requirements = \
                         [requirement for requirement in new_requirements 
                          if requirement.freeVars().isdisjoint(new_params)]
-                    entry = Iter(new_params, range_lambda_body, entry_starts, entry_ends)
+                    entry = Iter(new_params, range_lambda_body, self.start_indices, 
+                                 shifted_entry_ends)
                 # Set this entry in the entries array.
                 ExprArray.set_entry(entries, entry_indices, entry)
                                                                                 
@@ -551,7 +588,7 @@ class Iter(Expression):
                 # Set this entry in the entries array.
                 ExprArray.set_entry(entries, entry_start_indices, entry)
                 '''
-            subbed_self = compositeExpression(entries)                                                
+            subbed_self = compositeExpression(entries)     
         else:
             # No Indexed sub-Expressions whose variable is 
             # replaced with a Composite, so let us not expand the

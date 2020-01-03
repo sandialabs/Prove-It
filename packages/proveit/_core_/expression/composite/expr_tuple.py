@@ -51,10 +51,11 @@ class ExprTuple(Composite, Expression):
             # See if this entry should be joined with the previous
             # entry.
             if isinstance(prev_entry, Iter) and isinstance(entry, Iter):
-                from proveit.number import Add, subtract, one
+                from proveit.number import dist_add, dist_subtract, one
                 if prev_entry.lambda_map==entry.lambda_map:
-                    prev_end_successor = Add(prev_entry.end_index, one)
-                    next_start_predecessor = subtract(entry.start_index, one)
+                    prev_end_successor = dist_add(prev_entry.end_index, one)
+                    next_start_predecessor = dist_subtract(entry.start_index, 
+                                                           one)
                     if entry.start_index == prev_end_successor:
                         # Join the entries of the form
                         # (a_i, ..., a_n, a_{n+1}, ..., a_m).
@@ -135,8 +136,8 @@ class ExprTuple(Composite, Expression):
         '''
         from .composite import _generateCoordOrderAssumptions, \
             _simplifiedCoord
-        from proveit.number import num, Naturals, Less, LessEq, Add, \
-                                      subtract
+        from proveit.number import num, Naturals, Less, LessEq, \
+            dist_add, Neg, dist_subtract
         from proveit.logic import Equals, InSet
         from proveit.relation import TransitivityException
         from .iteration import Iter
@@ -159,6 +160,7 @@ class ExprTuple(Composite, Expression):
             start_idx = coord_to_idx[coord]
             entry = self.entries[start_idx]
             if not isinstance(entry, Iter):
+                self._lastQueriedEntryIndex = start_idx
                 return entry # just a normal entry
             # If this is an iteration entry, we need to be careful.  
             # Ostensibly, we would want to return entry.first() but we 
@@ -210,23 +212,20 @@ class ExprTuple(Composite, Expression):
             # than or equal to the desired 'coord'.
             while idx > 0:
                 idx -= 1
-                # Check if coords[idx] is <= 'coord'.
-                if relations[idx] is not None:
-                    relation = relations[idx]
-                else:
-                    try:
-                        # Try to prove coords[idx] <= coord.
-                        relation = LessEq.sort([coords[idx], coord], 
-                                               assumptions=extended_assumptions,
-                                               reorder = False)
-                        relations[idx] = relation
-                    except TransitivityException:
-                        # Since we could not prove that 
-                        # coords[idx] <= coord, we must prove
-                        # coord < coords[idx] and keep going back.
-                        relation = Less(coord, coords[idx]).prove(extended_assumptions)
-                        relations[idx] = relation
-                        continue
+                try:
+                    # Try to prove coords[idx] <= coord.
+                    relation = LessEq.sort([coords[idx], coord], 
+                                            assumptions=extended_assumptions,
+                                            reorder = False)
+                    relations[idx] = relation
+                    break
+                except TransitivityException:
+                    # Since we could not prove that 
+                    # coords[idx] <= coord, we must prove
+                    # coord < coords[idx] and keep going back.
+                    relation = Less(coord, coords[idx]).prove(extended_assumptions)
+                    relations[idx] = relation
+                    continue
             
             # We have the right index.  Include coordinate 
             # simplifications up to that point as requirements.
@@ -259,12 +258,13 @@ class ExprTuple(Composite, Expression):
             
             # Make sure the coordinate is valid and not "in between"
             # coordinates at unit intervals.
-            valid_coord = InSet(subtract(coord, coords[idx]), Naturals)
+            valid_coord = InSet(dist_subtract(coord, coords[idx]), Naturals)
             requirements.append(valid_coord.prove(assumptions))
             
             # Get the appropriate element within the iteration.
             iter_start_index = entry.start_index
-            iter_loc = Add(iter_start_index, subtract(coord, coords[idx]))
+            iter_loc = dist_add(iter_start_index, 
+                                dist_subtract(coord, coords[idx]))
             simplified_iter_loc = _simplifiedCoord(iter_loc, assumptions, 
                                                     requirements)
             # Does the same as 'entry.getInstance' but without checking
@@ -388,7 +388,8 @@ class ExprTuple(Composite, Expression):
         equations for each coordinate.
         '''
         from proveit.logic import InSet
-        from proveit.number import one, num, Add, subtract, Naturals
+        from proveit.number import one, num, Naturals, \
+            dist_add, dist_subtract
         from .iteration import Iter
         
         if entry_span_requirements is None: entry_span_requirements = []
@@ -414,18 +415,20 @@ class ExprTuple(Composite, Expression):
         for k, entry in enumerate(self):
             coords.append(coord)
             if isinstance(entry, Iter):
-                entry_delta = _simplifiedCoord(subtract(entry.end_index, entry.start_index),
+                entry_delta = _simplifiedCoord(dist_subtract(entry.end_index, 
+                                                             entry.start_index),
                                                assumptions, new_span_requirements)
                 # Add one, to get to the start of the next entry, and simplify.
-                entry_span = _simplifiedCoord(Add(entry_delta, one), assumptions, new_span_requirements)
+                entry_span = _simplifiedCoord(dist_add(entry_delta, one), 
+                                              assumptions, new_span_requirements)
                 # From one entry to the next should be a natural number (could be
                 # an empty entry).
                 #print("simplified entry span", entry_span)
                 new_span_requirements.append(InSet(entry_span, Naturals).prove(assumptions))
-                coord = _simplifiedCoord(Add(coord, entry_span), 
+                coord = _simplifiedCoord(dist_add(coord, entry_span), 
                                         assumptions, new_simp_requirements)
             else:
-                coord = _simplifiedCoord(Add(coord, one), 
+                coord = _simplifiedCoord(dist_add(coord, one), 
                                          assumptions, new_simp_requirements)
         # The last included 'coordinate' is one past the last
         # coordinate within the tuple range.  This value minus the base

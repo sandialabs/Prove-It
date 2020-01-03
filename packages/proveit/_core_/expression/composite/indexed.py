@@ -73,7 +73,6 @@ class Indexed(Expression):
         a Composite, the indexing should be actualized.
         '''
         from .composite import Composite
-        from proveit.number import num, subtract, isLiteralInt
         from .expr_tuple import ExprTuple
         from .expr_array import ExprArray
         
@@ -140,7 +139,7 @@ class Indexed(Expression):
         from .expr_array import ExprArray
         from proveit.logic import Equals, InSet
         from proveit.number import GreaterEq, LessEq, Add, one, num, \
-                                      subtract, Naturals
+                                      dist_add, dist_subtract, Naturals
         from proveit._core_.expression.expr import _NoExpandedIteration
         from .iteration import Iter, InvalidIterationError
         
@@ -162,6 +161,8 @@ class Indexed(Expression):
         # in this manner however.
 
         if subbed_index != iterParam:
+            # The index isn't simply the parameter.  It has a shift.
+            # find the shift.
             if not isinstance(subbed_index, Add):
                 raise InvalidIterationError(subbed_index, iterParam)
             shift_terms = [term for term in subbed_index.operands
@@ -169,7 +170,7 @@ class Indexed(Expression):
             if len(shift_terms)==1:
                 shift = shift_terms[0] # shift by a single term
             else:
-                shift = Add(*shift_terms) # shift by multple terms
+                shift = dist_add(*shift_terms) # shift by multple terms
         
         start_index = subbed_index.substituted({iterParam:startArg})
         end_index = subbed_index.substituted({iterParam:endArg})
@@ -256,7 +257,7 @@ class Indexed(Expression):
             # Not the simple case.  We need to add one to the endArg
             # to ensure we get past any iterations that may or may not
             # be empty.
-            endArg = _simplifiedCoord(Add(endArg, one), assumptions,
+            endArg = _simplifiedCoord(dist_add(endArg, one), assumptions,
                                       requirements)
             end_index = subbed_index.substituted({iterParam:endArg})
             # We would typically expect the end-index to come near the
@@ -273,7 +274,7 @@ class Indexed(Expression):
             # Check the end for an out of bounds error.
             if end_pos_from_end==0:
                 msg = ("ExprTuple index out of range: %s not proven "
-                        "to be <= %s when assuming %s"
+                        "to be <= %s when assuming %s."
                         %(str(end_index), str(coords[-1]), 
                             str(assumptions)))
                 raise IndexError(msg)
@@ -311,8 +312,12 @@ class Indexed(Expression):
                 # between the coordinate and endpoint
                 # is in the set of natural numbers (integral and
                 # in the correct order).
-                requirement = InSet(subtract(*reversed(coord_and_endpoint)), 
-                                    Naturals)
+                requirement = \
+                    InSet(dist_subtract(*reversed(coord_and_endpoint)), 
+                          Naturals)
+                # Knowing the simplification may help prove the 
+                # requirement.
+                _simplifiedCoord(requirement, assumptions, [])
                 requirements.append(requirement.prove(assumptions))
                                     
         # We must put each coordinate in terms of iter parameter 
@@ -324,7 +329,7 @@ class Indexed(Expression):
             # We must subtract by the 'shift' that the index
             # adds to the parameter in order to invert from
             # the coordinate back to the corresponding parameter:
-            param = subtract(coord, shift)
+            param = dist_subtract(coord, shift)
             param = _simplifiedCoord(param, assumptions, requirements)
             return param
         
