@@ -1,5 +1,5 @@
-from proveit import Literal, ProofFailure, USE_DEFAULTS
-from proveit.logic import InSet, Membership
+from proveit import Literal, ProofFailure, defaults, USE_DEFAULTS
+from proveit.logic import Equals, InSet, Membership
 
 class NumberSet(Literal):
     def __init__(self, string, latex, context):
@@ -49,22 +49,38 @@ class NumberMembership(Membership):
         the given assumptions.
         '''
         element = self.element
+        
+        # See if the element is known to be equal with something
+        # that is known to be in the number set.
+        assumptions_set = set(defaults.checkedAssumptions(assumptions))
+        for eq, equiv_elem in Equals.knownRelationsFromLeft(element, 
+                                                             assumptions_set):
+            try:
+                equiv_elem_in_set = InSet(equiv_elem, self.number_set)
+                equiv_elem_in_set.prove(assumptions, automation=False)
+                return eq.subLeftSideInto(equiv_elem_in_set, assumptions)
+            except ProofFailure:
+                pass
+        
+        '''
+        # Maybe let's not simplify first.  If
         # See if we can simplify the element first.
         if hasattr(element, 'simplification'):
             simplification = element.simplification(assumptions=assumptions)
             element = simplification.rhs
+            if element != self.element:
+                # Prove membersip for the simplified element
+                elem_in_set = InSet(element, self.number_set).prove(assumptions)
+                # Substitute into the original.
+                return simplification.subLeftSideInto(elem_in_set, assumptions)
+        '''
+        
+        # Try the 'deduceInNumberSet' method.
         if hasattr(element, 'deduceInNumberSet'):
-            elem_in_set = element.deduceInNumberSet(self.number_set, 
-                                                    assumptions=assumptions)
-            if elem_in_set is not None:
-                if element != self.element:
-                    # We have deduced that the simplified form is in the 
-                    # number set.  Substitute in the original.
-                    assert simplification is not None
-                    return simplification.subLeftSideInto(elem_in_set, assumptions)
-                else:
-                    return elem_in_set # This is what we want.
-        msg = str(self.element) + " has no 'deduceInNumberSet' method."
-        raise ProofFailure(InSet(self.element, self.number_set), 
-                            assumptions, msg)
+            return element.deduceInNumberSet(self.number_set, 
+                                              assumptions=assumptions)
+        else:
+            msg = str(element) + " has no 'deduceInNumberSet' method."
+            raise ProofFailure(InSet(self.element, self.number_set), 
+                                assumptions, msg)
 

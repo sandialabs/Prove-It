@@ -62,7 +62,34 @@ class Less(LesserRelation):
         See if second number is at bigger than first.
         '''
         OrderingRelation.__init__(self, Less._operator_,lhs,rhs)
-                    
+    
+    def conclude(self, assumptions):
+        # See if the right side is the left side plus something 
+        # positive added to it.
+        from proveit.number import Add
+        if isinstance(self.rhs, Add):
+            if self.lhs in self.rhs.terms:
+                return self.concludeViaIncrease(assumptions)
+    
+    def concludeViaIncrease(self, assumptions):
+        from proveit.number import Add, one
+        from proveit.number.ordering._theorems_ import lessThanSuccessor, lessThanAnIncrease
+        bad_form_msg = ("Not the right form for "
+                        "'Less.concludeViaIncrease': %s"%self)
+        if not isinstance(self.rhs, Add):
+            raise ValueError(bad_form_msg)
+        if not self.lhs in self.rhs.terms:
+            raise ValueError(bad_form_msg)
+        if self.lhs != self.rhs.terms[0] or len(self.rhs.terms)!=2:
+            # rearrange
+            raise NotImplementedError("ToDo: rearrange")
+        if self.rhs.terms[1]==one:
+            return lessThanSuccessor.specialize({a:self.lhs}, 
+                                                 assumptions=assumptions)
+        return lessThanAnIncrease.specialize({a:self.lhs, b:self.rhs.terms[1]}, 
+                                              assumptions=assumptions)
+                
+    
     def reversed(self):
         '''
         Returns the reversed inequality Expression.

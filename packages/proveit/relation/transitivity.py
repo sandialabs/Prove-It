@@ -451,7 +451,7 @@ class TransitiveRelation(Operation):
                     msg = ("Unknown %s relationship between %s and %s"
                             %(cls, item1, item2))
                     raise TransitivityException(None, assumptions, msg)
-                if isinstance(relation, Equals):
+                if isinstance(relation.expr, Equals):
                     equiv_item = sorted_items[prev_point]
                     point -= 1
                 else:
@@ -473,7 +473,7 @@ class TransitiveRelation(Operation):
                     msg = ("Unknown %s relationship between %s and %s"
                             %(cls, item1, item2))
                     raise TransitivityException(None, assumptions, msg)
-                if isinstance(relation, Equals):
+                if isinstance(relation.expr, Equals):
                     equiv_item = sorted_items[point]
                     point += 1
                 else:
