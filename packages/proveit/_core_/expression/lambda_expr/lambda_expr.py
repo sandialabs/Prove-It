@@ -287,7 +287,7 @@ class Lambda(Expression):
             subbedBody = self.body.substituted(inner_expr_map, relabelMap, inner_reservations, body_assumptions, body_requirements)
         except ScopingViolation as e:
             raise ScopingViolation("Scoping violation while substituting"
-                                    "%s.  %s"%(str(self), e.msg))
+                                    "%s.  %s"%(str(self), e.message))
         
         for requirements, requirements_assumptions in zip((condition_requirements, body_requirements), ([], subbedConditions)):
             for requirement in requirements:
