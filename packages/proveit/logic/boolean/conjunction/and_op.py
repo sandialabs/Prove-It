@@ -173,14 +173,14 @@ class And(Operation):
             elif idx==1:
                 return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            pass # Need to grab Joaquin's ExprList len method
+            pass # Need to grab Joaquin's ExprTuple len method
             '''
-            from proveit import ExprList
+            from proveit import ExprTuple
             from proveit.number import num
             try:
                 mVal, nVal = num(idx), num(len(self.operands)-idx-1)
                 print(mVal,nVal)
-                mVal, nVal = ExprList(*self.operands[:idx]).len(), ExprList(*self.operands[idx + 1:]).len()
+                mVal, nVal = ExprTuple(*self.operands[:idx]).len(), ExprTuple(*self.operands[idx + 1:]).len()
                 print(mVal, nVal)
                 return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
             except ProofFailure:
@@ -191,11 +191,11 @@ class And(Operation):
         added by JML 7/8/19
         From (A and ... and B and ... C) derive any one index even if it is an iteration. 
         '''
-        from proveit import ExprList
+        from proveit import ExprTuple
         from proveit.logic.boolean.conjunction._theorems_ import someFromAnd
-        lVal = ExprList(*self.operands[:idx]).len()
-        mVal = ExprList(self.operands[idx]).len()
-        nVal = ExprList(*self.operands[idx + 1:]).len()
+        lVal = ExprTuple(*self.operands[:idx]).len()
+        mVal = ExprTuple(self.operands[idx]).len()
+        nVal = ExprTuple(*self.operands[idx + 1:]).len()
         return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:self.operands[:idx], BB:self.operands[idx], CC:self.operands[idx + 1:]}, assumptions = assumptions)
 
     def deriveLeft(self, assumptions=USE_DEFAULTS):

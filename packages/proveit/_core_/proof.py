@@ -707,12 +707,16 @@ class Specialization(Proof):
         assumptions = list(defaults.checkedAssumptions(assumptions))
         prev_default_assumptions = defaults.assumptions
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        def raiseFailure(msg):
+            if numForallEliminations>0:
+                raise SpecializationFailure(generalTruth, specializeMap, relabelMap, assumptions, msg)
+            else:
+                raise RelabelingFailure(generalTruth, assumptions, msg)
         try:
             if relabelMap is None: relabelMap = dict()
             if specializeMap is None: specializeMap = dict()
-            Failure = SpecializationFailure if numForallEliminations>0 else RelabelingFailure
             if not isinstance(generalTruth, KnownTruth):
-                raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
+                raiseFailure('May only specialize/relabel a KnownTruth')
             if generalTruth.proof() is None:
                 raise UnusableProof(KnownTruth.theoremBeingProven, generalTruth)
             if not generalTruth.assumptionsSet.issubset(assumptions):
@@ -720,7 +724,7 @@ class Specialization(Proof):
                     # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
                     _appendExtraAssumptions(assumptions, generalTruth)
                 else:
-                    raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
+                    raiseFailure('Assumptions do not include the assumptions required by generalTruth')
             generalExpr = generalTruth.expr
             # perform the appropriate substitution/relabeling
             specializedExpr, requirements, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
@@ -737,7 +741,7 @@ class Specialization(Proof):
                         requirementTruthSet.add(requirementTruth)
                         _appendExtraAssumptions(assumptions, requirementTruth)
                 except ProofFailure:
-                    raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
+                    raiseFailure('Unmet specialization requirement: ' + str(requirementExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = generalTruth.assumptionsSet
             for requirementTruth in requirementTruths:
@@ -808,19 +812,19 @@ class Specialization(Proof):
         from proveit.logic import Forall
         # check that the mappings are appropriate
         for key, sub in list(relabelMap.items()):
-            Specialization._checkRelabelMapping(key, sub, assumptions)
+            Specialization._checkRelabelMapping(generalExpr, key, sub, assumptions)
             if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
         for assumption in assumptions:
             if assumption == WILDCARD_ASSUMPTIONS: continue # ignore the wildcard for this purpose
             vars_in_violation = assumption.freeVars() & set(relabelMap.keys())
             if len(vars_in_violation) != 0:
-                raise RelabelingFailure(None, assumptions, 'Attempting to relabel variable(s) that are free in the assumptions: ' + str(vars_in_violation))
+                raise RelabelingFailure(generalExpr, assumptions, 'Attempting to relabel variable(s) that are free in the assumptions: ' + str(vars_in_violation))
         
         for key, sub in specializeMap.items():
             if not isinstance(sub, Expression):
                 raise TypeError("Expecting specialization substitutions to be 'Expression' objects")
             if key in relabelMap:
-                raise SpecializationFailure(None, assumptions, 'Attempting to specialize and relabel the same variable: %s'%str(key))
+                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'Attempting to specialize and relabel the same variable: %s'%str(key))
         
         # Eliminate the desired number of Forall operations and extracted appropriately mapped conditions
         expr = generalExpr
@@ -832,7 +836,7 @@ class Specialization(Proof):
         while remainingForallEliminations>0:
             remainingForallEliminations -= 1
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
@@ -848,13 +852,13 @@ class Specialization(Proof):
                 if isinstance(parameter, Iter) and subbedParam is not None:
                     expandedParameter = parameter.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
                     if len(expandedParameter) != len(subbedParam):
-                        raise SpecializationFailure(None, assumptions, "Substitution of iterated instance variables incomplete: %d length expansion versus %d length substitution"%(len(expandedParameter), len(subbedParam)))
+                        raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, "Substitution of %s incomplete: %s expanding into %s"%(parameter, subbedParam, expandedParameter))
             mappedVarLists.append(instanceVars)
             # include the mapping for the current instance variables in the partial map
             try:
                 partialMap.update({iVar:specializeMap[iVar] for iVar in instanceVars})
             except KeyError:
-                raise SpecializationFailure(None, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
+                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
             # make substitutions in the condition
             subbedConditions += conditions.substituted(partialMap, relabelMap)
                         
@@ -876,13 +880,13 @@ class Specialization(Proof):
         return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
 
     @staticmethod
-    def _checkRelabelMapping(key, sub, assumptions):
+    def _checkRelabelMapping(generalExpr, key, sub, assumptions):
         from proveit import Variable
         if isinstance(key, Variable):
             if not isinstance(sub, Variable):
-                raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
+                raise RelabelingFailure(generalExpr, assumptions, 'May only relabel a Variable to a Variable, not %s to %s'%(key, sub))
         else:
-            raise RelabelingFailure(None, assumptions, "May only relabel a Variable")                       
+            raise RelabelingFailure(generalExpr, assumptions, "May only relabel a Variable, not %s"%key)                       
 
 class Generalization(Proof):
     def __init__(self, instanceTruth, newForallVarLists, newConditions=tuple()):
@@ -981,12 +985,16 @@ class ModusPonensFailure(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 class SpecializationFailure(ProofFailure):
-    def __init__(self, expr, assumptions, message):
-        ProofFailure.__init__(self, expr, assumptions, message)
+    def __init__(self, general_expr, specialize_map, relabel_map, assumptions, message):
+        message = message + " when specializing %s with %s"%(general_expr, specialize_map)
+        if len(relabel_map)>0:
+            message += " and %s"%relabel_map
+        ProofFailure.__init__(self, None, assumptions, message)
 
 class RelabelingFailure(ProofFailure):
-    def __init__(self, expr, assumptions, message):
-        ProofFailure.__init__(self, expr, assumptions, message)
+    def __init__(self, general_expr, assumptions, message):
+        message = message + " when relabeling %s"%general_expr
+        ProofFailure.__init__(self, None, assumptions, message)
     
 class GeneralizationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
