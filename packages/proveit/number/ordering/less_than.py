@@ -70,6 +70,7 @@ class Less(LesserRelation):
         if isinstance(self.rhs, Add):
             if self.lhs in self.rhs.terms:
                 return self.concludeViaIncrease(assumptions)
+        return LesserRelation.conclude(self, assumptions)
     
     def concludeViaIncrease(self, assumptions):
         from proveit.number import Add, one
