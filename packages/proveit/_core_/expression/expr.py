@@ -10,6 +10,7 @@ import sys
 import re
 import os
 import urllib.request, urllib.parse, urllib.error
+from base64 import encodebytes
 
 class ExprType(type):
     '''
@@ -818,7 +819,8 @@ class Expression(metaclass=ExprType):
         if self._styleData.png_url is not None:
             expr_notebook_rel_url = context.expressionNotebook(self, unofficialNameKindContext)
             html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
-            html += '<img src="' + self._styleData.png_url + r'" style="display:inline;vertical-align:middle;" />'
+            encoded_png = encodebytes(self._styleData.png).decode("utf-8") 
+            html += '<img src="data:image/png;base64,' + encoded_png + r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
         # record as a "displayed" (style-specific) expression
         Expression.displayed_expression_styles.add((self._style_id, self)) 
