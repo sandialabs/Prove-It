@@ -305,42 +305,6 @@ len(gc.get_objects()) # used to check for memory leaks
         #print('num gc objects', cell['outputs'][0]['data']['text/plain'])    
         return nb, resources
 
-    def run_cell(self, cell, cell_index=0):
-        from nbconvert.preprocessors.execute import CellExecutionComplete
-        parent_msg_id = self.kc.execute(cell.source, store_history=False)
-        self.log.debug("Executing cell:\n%s", cell.source)
-        exec_reply = self._wait_for_reply(parent_msg_id, cell)
-
-        cell.outputs = []
-        self.clear_before_next_output = False
-
-        while True:
-            try:
-                # We've already waited for execute_reply, so all output
-                # should already be waiting. However, on slow networks, like
-                # in certain CI systems, waiting < 1 second might miss messages.
-                # So long as the kernel sends a status:idle message when it
-                # finishes, we won't actually have to wait this long, anyway.
-                msg = self.kc.iopub_channel.get_msg(timeout=self.iopub_timeout)
-            except Empty:
-                self.log.warning("Timeout waiting for IOPub output")
-                if self.raise_on_iopub_timeout:
-                    raise RuntimeError("Timeout waiting for IOPub output")
-                else:
-                    break
-            if msg['parent_header'].get('msg_id') != parent_msg_id:
-                # not an output from our execution
-                continue
-
-            # Will raise CellExecutionComplete when completed
-            try:
-                self.process_message(msg, cell, cell_index)
-            except CellExecutionComplete:
-                break
-
-        # Return cell.outputs still for backwards compatability
-        return exec_reply, cell.outputs
-
     def executeNotebook(self, notebook_path):
         '''
         Read, execute, and write out the notebook at the given path.
@@ -622,6 +586,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
         theorem2notebook = dict() # map theorem to its proof notebook
         name2theorem = dict() # map theorem name to the theorem
         proof_notebooks = []
+        print("Preparing to execute proof notebooks.")
         for context_path in context_paths:
             context = Context(context_path)
             for theorem_name in context.theoremNames():

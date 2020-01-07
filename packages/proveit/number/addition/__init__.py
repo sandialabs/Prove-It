@@ -1,1 +1,1 @@
-from .add import Add, subtract
+from .add import Add, subtract, dist_subtract, dist_add

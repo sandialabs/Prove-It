@@ -18,7 +18,7 @@ inductionLemma = Forall(n, Forall(S, Implies(And(InSet(zero, S), Forall(x, InSet
 
 induction = Forall(P, Implies(And(Pzero, Forall(m, P_mAddOne, domain=Naturals, conditions=[Pm])), Forall(n, Pn, Naturals)))
 
-zeroLenExprList = Equals(Len(), zero)
+zeroLenExprTuple = Equals(Len(), zero)
 
 multiVarInduction = Forall(P, Implies(Forall((xMulti, y), Implies(PxEtc, Operation(P, [xEtc, y]))), Forall(xMulti, PxEtc)))
 

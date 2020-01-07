@@ -1,4 +1,4 @@
-from proveit import Expression, Literal, OperationOverInstances, defaults, USE_DEFAULTS, ExprList, Operation, ProofFailure
+from proveit import Expression, Literal, OperationOverInstances, defaults, USE_DEFAULTS, ExprTuple, Operation, ProofFailure
 from proveit._common_ import P, Q, R, S, xx, yy, QQ, RR
 from proveit._core_.proof import Generalization
 
@@ -101,7 +101,7 @@ class Forall(OperationOverInstances):
         from ._theorems_ import bundling
         assert isinstance(self.instanceExpr, Forall), "Can only bundle nested forall statements"
         innerForall = self.instanceExpr
-        composedInstanceVars = ExprList([self.instanceVars, innerForall.instanceVars])
+        composedInstanceVars = ExprTuple([self.instanceVars, innerForall.instanceVars])
         P_op, P_op_sub = Operation(P, composedInstanceVars), innerForall.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         R_op, R_op_sub = Operation(Rmulti, innerForall.instanceVars), innerForall.conditions
@@ -120,7 +120,7 @@ class Forall(OperationOverInstances):
         if len(instanceVarLists) == 1:
             raise ValueError("instanceVarLists should be a list of 2 or more Variable lists")
         if len(instanceVarLists) > 2:
-            return self.deriveUnraveled(ExprList(instanceVarLists[:-1]), instanceVarLists[-1]).deriveUnraveled(*instanceVarLists[:-1]).checked({self})
+            return self.deriveUnraveled(ExprTuple(instanceVarLists[:-1]), instanceVarLists[-1]).deriveUnraveled(*instanceVarLists[:-1]).checked({self})
         outerVars, innerVars = instanceVarLists
         outerVarSet, innerVarSet = set(outerVars), set(innerVars)
         assert innerVarSet | outerVarSet == set(self.instanceVars), "outerVars and innterVars must combine to the full set of instance variables"
