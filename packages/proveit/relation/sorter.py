@@ -366,9 +366,6 @@ class TransitivitySorter:
             # by the id of the corresponding frontier_chains.
             dir_id = id(frontier_chains)
             chains = frontier_chains[item]
-            if len(chains)==0:
-                # Already exhausted this frontier.
-                return None, None # No more relations.
             try:
                 item_reachables = reachables[item]
             except KeyError as e:
@@ -525,14 +522,17 @@ class TransitivitySorter:
                             updated_meeting_chains
                     
                     # Is it redundant to continue the chain starting
-                    # from 'item' going to 'new_endpoint'?  It is
-                    # if their was a proper chain to 'new_endpoint'
-                    # (not weak when we need a strong relation),
-                    # the 'new_endpoint' is one of the remaining items
-                    # also being tracked, but not if 'item' is
-                    # equivalent to 'new_endpoint' and the 
-                    # representative of the equivalence set.
-                    redundant_endpoint = True
+                    # from 'item' going to 'new_endpoint'?  It may
+                    # be redundant if 'new_endpoint' is one of the
+                    # remaining items also being tracked such that
+                    # we'll get what we need from 'new_endpoint'
+                    # directly, but only if there was a proper
+                    # chain going to 'new_endpoint' (not weak when
+                    # we need a strong relation) and not if 'item' is
+                    # the representative of an equivalence set that
+                    # includes 'new_endpoint'.
+                    # Start guilty until proven innocent:
+                    redundant_endpoint = True 
                     if not has_yielded_a_chain: 
                         # Not a proper chain from item to new_endpoint.
                         redundant_endpoint = False # Not redudant.
@@ -579,20 +579,21 @@ class TransitivitySorter:
         if (item1, item2) not in item_pair_chains:
             # We may not have the chain for these specific items, but
             # we should have it for something equivalent to each of the 
-            # items (unless item2 was added after item1 and only presumed
-            # to come later w.r.t. the transitive relation).
+            # items (unless item2 was added after item1 and only 
+            # presumed to come later w.r.t. the transitive relation).
             for eq_item1, eq_item2 in itertools.product(eq_sets[item1],
                                                          eq_sets[item2]):
                 
                 if (eq_item1, eq_item2) not in item_pair_chains:
-                    # Maybe the relationship is known even though it isn't
-                    # in item_pair_chains.  This can be a useful check in cases
-                    # of merge sorting where some of the relationships are presumed.
-                    for relation_class in self.relation_class._RelationClasses():
+                    # Maybe the relationship is known even though it 
+                    # isn't in item_pair_chains.  This can be a useful 
+                    # check in cases of merge sorting where some of the 
+                    # relationships are presumed.
+                    for rel_class in self.relation_class._RelationClasses():
                         try:
-                            relation = relation_class(eq_item1, eq_item2).prove(assumptions, 
-                                                                                automation=False)
-                            item_pair_chains[(eq_item1, eq_item2)] = [relation]
+                            rel = rel_class(eq_item1, eq_item2)
+                            rel.prove(assumptions, automation=False)
+                            item_pair_chains[(eq_item1, eq_item2)] = [rel]
                             break # We got all we need
                         except:
                             pass
