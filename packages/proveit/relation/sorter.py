@@ -589,10 +589,10 @@ class TransitivitySorter:
                     # isn't in item_pair_chains.  This can be a useful 
                     # check in cases of merge sorting where some of the 
                     # relationships are presumed.
-                    for rel_class in self.relation_class._RelationClasses():
+                    for rel_class in relation_class._RelationClasses():
                         try:
                             rel = rel_class(eq_item1, eq_item2)
-                            rel.prove(assumptions, automation=False)
+                            rel = rel.prove(assumptions, automation=False)
                             item_pair_chains[(eq_item1, eq_item2)] = [rel]
                             break # We got all we need
                         except:
