@@ -329,19 +329,20 @@ class Context:
             name = name + '.expr'
         return kind, self._storage._specialExprModules[kind], name
     
-    def proofNotebook(self, theoremName, expr):
+    def thmProofNotebook(self, theoremName, expr):
         '''
-        Return the path of the proof notebook for a theorem with the given
-        name and expression, creating it if it does not already exist.
+        Return the path of the proof notebook for a theorem with the 
+        given name and expression, creating it if it does not already 
+        exist.
         '''
-        return self._storage.proofNotebook(theoremName, expr)
+        return self._storage.thmProofNotebook(theoremName, expr)
 
-    def stashExtraneousProofNotebooks(self):
+    def stashExtraneousThmProofNotebooks(self):
         '''
         For any proof notebooks for theorem names not included in the context, 
         stash them or remove them if they are generic notebooks.
         '''
-        self._storage.stashExtraneousProofNotebooks(self.theoremNames())
+        self._storage.stashExtraneousThmProofNotebooks(self.theoremNames())
                 
     def expressionNotebook(self, expr, unofficialNameKindContext=None):
         '''

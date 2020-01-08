@@ -1191,7 +1191,7 @@ class ContextStorage:
         else:
             return get_constructor() + '(' + argStr + ')' + withStyleCalls
     
-    def proofNotebook(self, theorem_name, expr):
+    def thmProofNotebook(self, theorem_name, expr):
         '''
         Return the relative url to the proof notebook, creating it if it does not
         already exist.
@@ -1222,13 +1222,13 @@ class ContextStorage:
         if not os.path.isdir(proofs_path):
             # make the directory for the _proofs_
             os.makedirs(proofs_path)            
-        nb = self._generateGenericProofNotebook(theorem_name)
+        nb = self._generateGenericThmProofNotebook(theorem_name)
         # write the proof file
         with open(filename, 'w') as proof_notebook:
             proof_notebook.write(nb)
         return relurl(filename) # return the new proof file
     
-    def _generateGenericProofNotebook(self, theorem_name):
+    def _generateGenericThmProofNotebook(self, theorem_name):
         '''
         Given a theorem name and hash directory, generate the generic start
         of a proof notebook using the template.
@@ -1254,7 +1254,7 @@ class ContextStorage:
             if match is None: return None
             return match.groups()[0]
             
-    def stashExtraneousProofNotebooks(self, theorem_names):
+    def stashExtraneousThmProofNotebooks(self, theorem_names):
         '''
         For any proof notebooks for theorem names not included in the given 
         theorem_names, stash them or remove them if they are generic notebooks.
@@ -1282,7 +1282,7 @@ class ContextStorage:
             # its info, building the generic version, and comparing.
             theorem_name = self._proofNotebookTheoremName(filename)
             if theorem_name is not None:
-                generic_version = self._generateGenericProofNotebook(theorem_name)        
+                generic_version = self._generateGenericThmProofNotebook(theorem_name)        
                 with open(filename, 'r') as notebook:
                     if generic_version == notebook.read():
                         remove_file = True # just remove it, it is generic

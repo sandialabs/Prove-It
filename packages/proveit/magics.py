@@ -399,7 +399,7 @@ class ProveItMagicCommands:
         if expr._style_id != stored_expr._style_id:
             raise ProveItMagicFailure("The built '%s' style does not match that of the stored Expression"%expr_name)
         print("Passed sanity check: built '%s' is the same as the stored Expression."%expr_name)
-                                
+    
     def proving(self, theorem_name, presumptions, justRecordPresumingInfo=False):
         self.context = Context('..') # the context should be up a directory from the _proofs_ directory
         sys.path.append('..')
@@ -464,7 +464,7 @@ class ProveItMagicCommands:
         self.context.clean()
         if kind=='theorems':
             # stash proof notebooks that are not active theorems.
-            self.context.stashExtraneousProofNotebooks()            
+            self.context.stashExtraneousThmProofNotebooks()            
         self.kind = None
         
     def display_dependencies(self, name, known_truth):
@@ -698,7 +698,7 @@ class Assignments:
             rightSideStr = str(rightSide)
         if proveItMagic.kind == 'theorems':
             assert expr is not None, "Expecting an expression for the theorem"
-            proof_notebook_relurl = proveItMagic.context.proofNotebook(name, expr)
+            proof_notebook_relurl = proveItMagic.context.thmProofNotebook(name, expr)
             lhs_html = '<a class="ProveItLink" href="%s">%s</a>'%(proof_notebook_relurl, lhs_html)
         html = '<strong id="%s">%s:</strong> %s<br>'%(name, lhs_html, rightSideStr)
         if self.beginningProof:

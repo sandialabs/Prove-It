@@ -591,7 +591,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
             context = Context(context_path)
             for theorem_name in context.theoremNames():
                 theorem = context.getTheorem(theorem_name)
-                proof_notebook_name = context.proofNotebook(theorem_name, theorem.provenTruth.expr)
+                proof_notebook_name = context.thmProofNotebook(theorem_name, theorem.provenTruth.expr)
                 proof_notebook_theorems[proof_notebook_name] = theorem
                 theorem2notebook[theorem] = proof_notebook_name
                 name2theorem[str(theorem)] = theorem
