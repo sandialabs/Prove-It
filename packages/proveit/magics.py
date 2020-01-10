@@ -386,7 +386,7 @@ class ProveItMagicCommands:
         elif KnownTruth.theoremBeingProven is not None:
             kind = '_proof_' + KnownTruth.theoremBeingProven.name
         # clean unreferenced expressions:
-        self.context.referenceDisplayedExpressions(kind, clear=True)
+        self.context.referenceHyperlinkedObjects(kind, clear=True)
         self.context.clean()
         self.kind = None
                 
@@ -400,6 +400,11 @@ class ProveItMagicCommands:
             raise ProveItMagicFailure("The built '%s' style does not match that of the stored Expression"%expr_name)
         print("Passed sanity check: built '%s' is the same as the stored Expression."%expr_name)
     
+    def show_proof(self):
+        _, hash_id = os.path.split(os.path.abspath('.'))
+        context = Context()
+        return context.getShowProof(hash_id)
+    
     def proving(self, theorem_name, presumptions, justRecordPresumingInfo=False):
         self.context = Context('..') # the context should be up a directory from the _proofs_ directory
         sys.path.append('..')
@@ -411,7 +416,7 @@ class ProveItMagicCommands:
     def qed(self):
         proof = KnownTruth.theoremBeingProven.provenTruth._qed()
         proof._repr_html_() # generate expressions that should be referenced
-        self.context.referenceDisplayedExpressions('_proof_' + KnownTruth.theoremBeingProven.name)
+        self.context.referenceHyperlinkedObjects('_proof_' + KnownTruth.theoremBeingProven.name)
         # clean unreferenced expressions:
         self.context.clean()
         return proof
@@ -459,7 +464,7 @@ class ProveItMagicCommands:
         self.ranFinish = True       
 
         # reference any expressions that were displayed:
-        self.context.referenceDisplayedExpressions(kind)
+        self.context.referenceHyperlinkedObjects(kind)
         # clean unreferenced expressions:
         self.context.clean()
         if kind=='theorems':
@@ -593,7 +598,11 @@ class ProveItMagic(Magics, ProveItMagicCommands):
                 # actually a KnownTruth; convert to an Expression
                 expr = expr.expr
         ProveItMagicCommands.check_expr(self, expr_name, expr)
-                                
+    
+    @line_magic
+    def show_proof(self, line):
+        return ProveItMagicCommands.show_proof(self)        
+                                                 
     @line_magic
     def proving(self, line):        
         theorem_name, presuming_str = str(line.strip()).split(' ', 1)
