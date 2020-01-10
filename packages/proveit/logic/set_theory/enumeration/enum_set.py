@@ -2,7 +2,9 @@ from proveit import Literal, Operation, ExprTuple
 
 class Set(Operation):
     '''
-    Defines a set with only one item.
+    Defines an enumerated set (i.e. a set with explicitly-listed
+    elements). For example, one could use Set(one, two, three) to
+    produce the enumerated set {1, 2, 3}.
     '''
     
     # operator of the Set operation
