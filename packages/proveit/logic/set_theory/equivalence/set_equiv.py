@@ -209,7 +209,8 @@ class SetEquiv(TransitiveRelation):
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce and return that this SetEquiv statement is in the set of Booleans.
+        Deduce and return that this SetEquiv statement is in the set
+        of Booleans.
         '''
         from ._theorems_ import setEquivInBool
         return setEquivInBool.specialize({A:self.lhs, B:self.rhs})
