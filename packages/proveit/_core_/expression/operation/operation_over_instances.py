@@ -253,6 +253,7 @@ class OperationOverInstances(Operation):
             return OperationOverInstances.explicitInstanceExpr(self)
         elif argName=='domain' or argName=='domains':
             # return the proper single domain or list of domains
+            if self.domain is None: return None
             domains = OperationOverInstances.explicitDomains(self)
             if domains == [self.domain]*len(domains):
                 return self.domain if argName=='domain' else None
@@ -437,27 +438,6 @@ class OperationOverInstances(Operation):
                 return domains
         return [] # No explicitly displayed domains
 
-    def domainConditions(self):
-        '''
-        Return the domain conditions of all instance variables that
-        areg joined together at this level according to the style.
-        '''
-        from proveit.logic import InSet
-        if hasattr(self, 'domains'):
-            assert len(self.conditions) > len(self.domains), 'expecting a condition for each domain'
-            for instanceVar, condition, domain in zip(self.instanceVars, self.conditions, self.domains):
-                assert condition == InSet(instanceVar, domain)
-            return self.conditions[:len(self.domains)]
-        else:
-            explicit_domains = self.explicitDomains()
-            if len(explicit_domains)==0:
-                return [] # no explicit domains
-            domain_conditions = []
-            for expr in self.joinedNestings():
-                assert expr.conditions[0] == InSet(expr.instanceVar, expr.domain)
-                domain_conditions.append(expr.conditions[0])
-            return domain_conditions
-
     def explicitConditions(self):
         '''
         Return the conditions that are to be shown explicitly in the formatting
@@ -468,8 +448,8 @@ class OperationOverInstances(Operation):
         from proveit.logic import InSet
         if hasattr(self, 'domains'):
             assert len(self.conditions) > len(self.domains), 'expecting a condition for each domain'
-            for instanceVar, condition, domain in zip(self.instanceVars, self.conditions, self.domains):
-                assert condition == InSet(instanceVar, domain)
+            for condition, domain in zip(self.conditions, self.domains):
+                assert condition == InSet(self.instanceVar, domain)
             return self.conditions[len(self.domains):] # skip the domains
         else:
             explicit_domains = self.explicitDomains()
@@ -518,7 +498,7 @@ class OperationOverInstances(Operation):
                                         # -- no nestMultiIvars
             else:
                 iVarGroup.append(expr.instanceVar)
-                iVarStyle = expr.getStyle('instance_vars', '')
+                iVarStyle = expr.getStyle('instance_vars')
                 if iVarStyle != 'join_next':
                     yield iVarGroup # this group is done
                     iVarGroup = [] # start next group
@@ -567,10 +547,9 @@ class OperationOverInstances(Operation):
             if hasExplicitIvars:
                 if hasMultiDomain: outStr += domain_conditions.formatted(formatType, operatorOrOperators=',')
                 else: outStr += formattedVars
-            if hasMultiDomain and self.domain is not None:
+            if hasMultiDomain or self.domain is not None:
                 outStr += ' in '
                 if hasMultiDomain:
-                    # print("Has ")
                     outStr += explicitDomains.formatted(formatType, operatorOrOperators='*', fence=False)
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)
@@ -586,9 +565,12 @@ class OperationOverInstances(Operation):
             if hasExplicitIvars:
                 if hasMultiDomain: outStr += domain_conditions.formatted(formatType,  operatorOrOperators=',')
                 else: outStr += formattedVars
-            if not hasMultiDomain and self.domain is not None:
+            if hasMultiDomain or self.domain is not None:
                 outStr += r' \in '
-                outStr += self.domain.formatted(formatType, fence=False)
+                if hasMultiDomain:
+                    outStr += explicitDomains.formatted(formatType, operatorOrOperators=r'\times', fence=False)
+                else:
+                    outStr += self.domain.formatted(formatType, fence=False)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += "~|~"
                 outStr += explicitConditions.formatted(formatType, fence=False)
