@@ -567,9 +567,10 @@ class OperationOverInstances(Operation):
             if hasExplicitIvars:
                 if hasMultiDomain: outStr += domain_conditions.formatted(formatType, operatorOrOperators=',')
                 else: outStr += formattedVars
-            if not hasMultiDomain and self.domain is not None:
+            if hasMultiDomain and self.domain is not None:
                 outStr += ' in '
                 if hasMultiDomain:
+                    # print("Has ")
                     outStr += explicitDomains.formatted(formatType, operatorOrOperators='*', fence=False)
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)
