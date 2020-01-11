@@ -872,7 +872,7 @@ class ContextStorage:
         if not needs_rewriting and os.path.isfile(filename):
             return relurl(filename) # return the existing expression notebook file
         elif os.path.isfile(filename):
-            special_name = expr_address[-1].split('.')[0] # strip of ".expr"
+            special_name = expr_address[-1].split('.')[0] # strip off ".expr"
             # Store the original version as orig_expr.ipynb.  It will be
             # resurrected if the expression is no longer "special" but still used.
             orig_notebook_filename = os.path.join(self.pv_it_dir, hash_directory, 'orig_expr.ipynb')
