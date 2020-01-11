@@ -447,9 +447,14 @@ class OperationOverInstances(Operation):
         '''
         from proveit.logic import InSet
         if hasattr(self, 'domains'):
+            print("The domains are {}.".format(self.domains))                   # for testing; delete later
+            print("The conditions are {}.".format(self.conditions))             # for testing; delete later
+            print("The instanceVars are {}.".format(self.instanceVars))         # for testing; delete later
             assert len(self.conditions) > len(self.domains), 'expecting a condition for each domain'
-            for condition, domain in zip(self.conditions, self.domains):
-                assert condition == InSet(self.instanceVar, domain)
+            # for loop modified by wdc to include instanceVar instance of instanceVars
+            # (previously used instanceVar without definition)
+            for condition, domain, instanceVar in zip(self.conditions, self.domains, self.instanceVars):
+                assert condition == InSet(instanceVar, domain)
             return self.conditions[len(self.domains):] # skip the domains
         else:
             explicit_domains = self.explicitDomains()
