@@ -308,8 +308,8 @@ class Operation(Expression):
     
     @staticmethod
     def _formattedOperation(formatType, operatorOrOperators, operands, wrapPositions, justification, implicitFirstOperator=False, **kwargs):
-        from proveit import Iter, ExprList, compositeExpression
-        if isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprList):
+        from proveit import Iter, ExprTuple, compositeExpression
+        if isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
             operator = operatorOrOperators
             # Single operator case.
             # Different formatting when there is 0 or 1 element, unless it is an Iter
@@ -394,28 +394,7 @@ class Operation(Expression):
                 # in the setting of the new operation.
                 return OperationClass._make(['Operation'], styles=None, subExpressions=[operator, subbed_operand_or_operands])
         return self.__class__._make(['Operation'], self.getStyles(), [subbed_operator_or_operators, subbed_operand_or_operands])
-    
-    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
-        from proveit._core_.expression.expr import _NoExpandedIteration
-        # Collect the iteration ranges for all of the operators and operands.
-        iter_ranges = set()
-        has_expansion = False
-        try:
-            for iter_range in self.operator_or_operators._expandingIterRanges(iterParams, startArgs, endArgs, exprMap, relabelMap, reservedVars, assumptions, requirements):
-                iter_ranges.add(iter_range)
-            has_expansion = True
-        except _NoExpandedIteration:
-            pass
-        try:
-            for iter_range in self.operand_or_operands._expandingIterRanges(iterParams, startArgs, endArgs, exprMap, relabelMap, reservedVars, assumptions, requirements):
-                iter_ranges.add(iter_range)
-            has_expansion = True
-        except _NoExpandedIteration:
-            pass
-        if not has_expansion:
-            raise _NoExpandedIteration()
-        for iter_range in iter_ranges:
-            yield iter_range            
+
     
 class OperationError(Exception):
     def __init__(self, message):

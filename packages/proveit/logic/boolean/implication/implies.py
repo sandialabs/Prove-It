@@ -42,7 +42,7 @@ class Implies(TransitiveRelation):
         from proveit.logic.boolean._common_ import FALSE
         for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
             yield sideEffect
-        yield self.deriveConsequent # B given A=>B and A
+        #yield self.deriveConsequent # B given A=>B and A
         if self.consequent == FALSE:
             yield self.deriveViaContradiction # Not(A) given A=>FALSE or A given Not(A)=>FALSE
 

@@ -93,7 +93,7 @@ class ExpressionInfo:
         return repr(self)
     
     def _repr_html_(self):
-        from .composite import ExprList, ExprTensor, NamedExprs, Indexed, Iter
+        from .composite import ExprTuple, ExprArray, NamedExprs, Indexed, Iter
         from .operation import Operation
         from .lambda_expr import Lambda
         from .label import Variable, Literal
@@ -153,7 +153,7 @@ class ExpressionInfo:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr]
             html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
-            if self.show_details and expr.__class__ not in (Variable, Literal, Operation, Lambda, Indexed, NamedExprs, ExprList, ExprTensor, Indexed, Iter):
+            if self.show_details and expr.__class__ not in (Variable, Literal, Operation, Lambda, Indexed, NamedExprs, ExprTuple, ExprArray, Indexed, Iter):
                 # not a core expression so show the actual class when showing the details
                 html += '<tr><td colspan=4 style="text-align:left"><strong>class:</strong> %s</td></tr>\n'%expr._class_path()
             if self.show_details and isinstance(expr, Literal):
