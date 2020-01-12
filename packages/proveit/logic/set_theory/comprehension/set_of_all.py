@@ -1,4 +1,4 @@
-from proveit import Literal, OperationOverInstances, Operation, ExprList, singleOrCompositeExpression, USE_DEFAULTS
+from proveit import Literal, OperationOverInstances, Operation, ExprTuple, singleOrCompositeExpression, USE_DEFAULTS
 from proveit._common_ import x, y, f, P, Q, QQ, S, yy
 
 class SetOfAll(OperationOverInstances):
@@ -27,7 +27,7 @@ class SetOfAll(OperationOverInstances):
             
     def _formatted(self, formatType, fence=False, **kwargs):
         outStr = ''
-        explicit_conditions = ExprList(self.explicitConditions())
+        explicit_conditions = ExprTuple(self.explicitConditions())
         inner_fence = (len(explicit_conditions) > 0)
         formatted_instance_var = self.instanceVar.formatted(formatType)
         formatted_instance_element = self.instanceElement.formatted(formatType, fence=inner_fence)

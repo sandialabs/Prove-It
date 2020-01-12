@@ -586,6 +586,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
         theorem2notebook = dict() # map theorem to its proof notebook
         name2theorem = dict() # map theorem name to the theorem
         proof_notebooks = []
+        print("Preparing to execute proof notebooks.")
         for context_path in context_paths:
             context = Context(context_path)
             for theorem_name in context.theoremNames():
