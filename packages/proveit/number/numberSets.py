@@ -1,4 +1,4 @@
-from proveit import Expression, Literal, Operation, ExprList
+from proveit import Expression, Literal, Operation, ExprTuple
 from proveit import OperationOverInstances #AssociativeOperation,
 from proveit._common_ import a, b, n
 from proveit.logic import Forall, Implies, InSet, Or, NotEquals #generateSubExpressions
@@ -91,7 +91,7 @@ def deduceInNumberSet(exprOrList, numberSet, assumptions=frozenset(), ruledOutSe
     if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
 
-    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprList):
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprTuple):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deduceInNumberSet(expr, numberSet=numberSet, assumptions=assumptions) for expr in exprOrList]    
     expr = exprOrList # just a single expression
@@ -453,7 +453,7 @@ def deducePositive(exprOrList, assumptions=frozenset(), dontTryRealsPos=False):
     if not isinstance(assumptions, set) and not isinstance(assumptions, frozenset):
         raise Exception('assumptions should be a set')
 
-    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprList):
+    if not isinstance(exprOrList, Expression) or isinstance(exprOrList, ExprTuple):
         # If it isn't an Expression, assume it's iterable and deduce each
         return [deducePositive(expr, assumptions=assumptions) for expr in exprOrList]
     # A single Expression:

@@ -55,14 +55,18 @@ class Numeral(Literal, IrreducibleValue):
                 # we already know this numeral is in NaturalsPos
                 # we should know how to prove that it is in any
                 # number set that contains the naturals.
-                InSet(self, NaturalsPos).prove(automation=False)
+                if self.n > 0:
+                    InSet(self, NaturalsPos).prove(automation=False)
+                else:
+                    InSet(self, Naturals).prove(automation=False)
             except:
                 # Try to prove that it is in the given number
                 # set after proving that the numeral is in 
                 # Naturals and NaturalsPos.
                 self.deduceInNaturals()
-                self.deduceInNaturalsPos()
-                return InSet(self, number_set).conclude(assumptions)
+                if self.n > 0:
+                    self.deduceInNaturalsPos()
+            return InSet(self, number_set).conclude(assumptions)
         
     def deduceInNaturals(self):
         if Numeral._inNaturalsStmts is None:

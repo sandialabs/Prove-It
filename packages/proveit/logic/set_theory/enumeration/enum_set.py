@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, ExprList
+from proveit import Literal, Operation, ExprTuple
 
 class Set(Operation):
     '''
