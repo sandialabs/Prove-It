@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, ExprList, ProofFailure, maybeFencedString, USE_DEFAULTS
+from proveit import Literal, Operation, ExprTuple, ProofFailure, maybeFencedString, USE_DEFAULTS
 from proveit.logic import Membership
 import proveit._common_
 from proveit._common_ import S, a, x
@@ -184,7 +184,7 @@ class ExpSetMembership(Membership):
         element = self.element
         domain = self.domain
         elem_in_set = InSet(element, domain)
-        if not isinstance(element, ExprList):
+        if not isinstance(element, ExprTuple):
             raise ProofFailure(elem_in_set, assumptions, "Can only automatically deduce membership in exponentiated sets for an element that is a list")
         exponent_eval = domain.exponent.evaluation(assumptions=assumptions)
         exponent = exponent_eval.rhs

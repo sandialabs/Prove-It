@@ -174,6 +174,7 @@ class KnownTruth:
         from .proof import ProofFailure
         if not defaults.automation:
             return # automation disabled
+        #print("proven", self)
         # Sort the assumptions according to hash key so that sets of assumptions
         # are unique for determining which side-effects have been processed already.
         sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
@@ -184,6 +185,7 @@ class KnownTruth:
             KnownTruth.in_progress_to_derive_sideeffects.add(self)
             try:
                 for sideEffect in self.expr.sideEffects(self):
+                    #print(self, "side-effect", sideEffect)
                     # Attempt each side-effect derivation, specific to the
                     # type of Expression.
                     try:
@@ -735,7 +737,7 @@ class KnownTruth:
             elif isinstance(key, Variable):
                 processedSubMap[key] = sub
             else:
-                raise SpecializationFailure(None, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
+                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
         remainingSubVars = set(processedSubMap.keys())
         
         # Determine the number of Forall eliminations.  There must be at least
@@ -747,7 +749,7 @@ class KnownTruth:
         while numForallEliminations==0 or len(remainingSubVars) > 0:
             numForallEliminations += 1
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation operand must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
@@ -843,10 +845,10 @@ class KnownTruth:
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
-        from proveit import ExprList
+        from proveit import ExprTuple
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
         if len(self.assumptions) > 0:
-            assumptionsStr = ExprList(*self.assumptions).formatted('string', fence=False)
+            assumptionsStr = ExprTuple(*self.assumptions).formatted('string', fence=False)
             return r'{' +assumptionsStr + r'} |- ' + self.expr.string()
         return r'|- ' + self.expr.string()
 
@@ -856,10 +858,10 @@ class KnownTruth:
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
-        from proveit import ExprList
+        from proveit import ExprTuple
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
         if len(self.assumptions) > 0:
-            assumptionsLatex = ExprList(*self.assumptions).formatted('latex', fence=False)
+            assumptionsLatex = ExprTuple(*self.assumptions).formatted('latex', fence=False)
             return r'{' +assumptionsLatex + r'} \vdash ' + self.expr.latex()
         return r'\vdash ' + self.expr.string()
 

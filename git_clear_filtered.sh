@@ -7,7 +7,11 @@ echo ""
 
 for file in `git ls-files --modified`
 do
-    diffresult=`git diff "$file"`
+    # Piping the git diff command through sed is necessary
+    # when nbdime is installed and configured for git.  In
+    # that case "git diff ..." reports the alternate command
+    # it is running as the first line.
+    diffresult=`git diff "$file" | sed "s/^diff --git .*$//g"`
     if [ "$diffresult" == "" ]
     then
         echo "git add $file"

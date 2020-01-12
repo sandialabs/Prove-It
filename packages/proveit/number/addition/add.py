@@ -1,5 +1,6 @@
-from proveit import Literal, Operation, Iter, USE_DEFAULTS,StyleOptions, maybeFencedLatex, ProofFailure, InnerExpr
+from proveit import KnownTruth, Literal, Operation, Iter, USE_DEFAULTS,StyleOptions, maybeFencedLatex, ProofFailure, InnerExpr
 from proveit._common_ import a, b, c, l, m, n, x, y, AA, BB, CC, A, B, C, aa, bb, cc, dd
+from proveit.logic import Equals
 from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit.number.numeral.deci import DIGITS
 import proveit.number.numeral.deci._theorems_
@@ -23,22 +24,13 @@ class Add(Operation):
         r'''
         Add together any number of operands.
         '''
+        from proveit.number import Neg
         # The default style will be to use subtraction notation (relevant where operands are negated).
         # Call 'withSubtractionAt' to alter this default.
         subtractionPositions = [k for k, operand in enumerate(operands) if Add._isNegatedOperand(operand)]
         styles = {'subtractionPositions': '(' + ' '.join(str(pos) for pos in subtractionPositions) +')'}
         Operation.__init__(self, Add._operator_, operands, styles=styles)
         self.terms = self.operands
-        if len(self.terms)==2 and all(term in DIGITS for term in self.terms):
-            if self not in Add.addedNumerals:
-                try:
-                    # for single digit addition, import the theorem that provides the evaluation
-                    Add.addedNumerals.add(self)
-                    proveit.number.numeral.deci._theorems_.__getattr__('add_%d_%d'%(self.terms[0].asInt(), self.terms[1].asInt()))
-                except:
-                    # may fail before the relevent _commons_ and _theorems_ have been generated
-                    pass # and that's okay
-        #assert not isinstance(self.operands[0], Add)
     
     @staticmethod
     def _isNegatedOperand(operand):
@@ -151,27 +143,33 @@ class Add(Operation):
         Record the knownTruth in Add.knownEqualities, associated for
         each term.
         '''
-        #print("equality side Effects on", self)
-        from proveit.number import Neg, zero
-        if isinstance(self.operands[0], Neg):
-            # print("there is a neg:", self)
-            return
-        if len(self.operands) > 1:
-            if isinstance(self.operands[1], Neg):
-                # print("there is a neg:", self)
-                return
+        from proveit.number import Neg
+        if not isinstance(knownTruth, KnownTruth):
+            raise ValueError("Expecting 'knownTruth' to be a KnownTruth.")
+        if not isinstance(knownTruth.expr, Equals):
+            raise ValueError("Expecting the knownTruth to be an equality.")
         addition = knownTruth.lhs
         if not isinstance(addition, Add):
-            raise ValueError("Expecting lhs of knownTruth to be of an Add expression")
-        for term in addition.terms:
-            # print("adding known equalities:", term)
-            Add.knownEqualities.setdefault(term, set()).add(knownTruth)
-
-        if len(addition.terms)==2:
-            # deduce the subtraction form: c-b=a from a+b=c
-            # print("deducing subtraction terms:", self)
-            yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))
+            raise ValueError("Expecting lhs of knownTruth to be of an Add expression.")
         
+        if isIrreducibleValue(knownTruth.rhs):
+            for term in addition.terms:
+                # print("adding known equalities:", term)
+                Add.knownEqualities.setdefault(term, set()).add(knownTruth)
+            
+            if len(addition.terms)==2:
+                # deduce the commutation form: b+a=c from a+b=c
+                if addition.terms[0] != addition.terms[1]:
+                    yield (lambda assumptions : knownTruth.innerExpr().lhs.commute(0, 1, assumptions))
+    
+                if all(not isinstance(term, Neg) for term in addition.terms):
+                    # From a+b=c
+                    # deduce the negations form: -a-b=-c
+                    #      the subtraction form: c-b=a
+                    #      and the reversed subtraction form: b-c = -a
+                    yield (lambda assumptions : self.deduceNegation(knownTruth.rhs, assumptions))            
+                    yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))            
+                    yield (lambda assumptions : self.deduceReversedSubtraction(knownTruth.rhs, assumptions))            
 
     def deduceStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
         '''
@@ -206,19 +204,36 @@ class Add(Operation):
         # print(nVal)
         return strictlyDecreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx +1:]}, assumptions=assumptions)
 
-
+    def deduceNegation(self, rhs, assumptions=USE_DEFAULTS):
+        '''
+        From (a + b) = rhs, derive and return -(a-b) = -rhs
+        '''
+        from proveit.number.addition.subtraction._theorems_ import negatedAdd
+        if len(self.terms) != 2:
+            raise Exception("deduceNegation implemented only when there are two and only two added terms")
+        deduction = negatedAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
+        return deduction
+        
     def deduceSubtraction(self, rhs, assumptions=USE_DEFAULTS):
         '''
         From (a + b) = rhs, derive and return rhs - b = a.
         '''
-        # print(self)
         from proveit.number.addition.subtraction._theorems_ import subtractFromAdd
         if len(self.terms) != 2:
             raise Exception("deduceSubtraction implemented only when there are two and only two added terms")
         deduction = subtractFromAdd.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
-        # print("deduction", deduction)
         return deduction
 
+    def deduceReversedSubtraction(self, rhs, assumptions=USE_DEFAULTS):
+        '''
+        From (a + b) = rhs, derive and return b - rhs = -a.
+        '''
+        from proveit.number.addition.subtraction._theorems_ import subtractFromAddReversed
+        if len(self.terms) != 2:
+            raise Exception("subtractFromAddReversed implemented only when there are two and only two added terms")
+        deduction = subtractFromAddReversed.specialize({a:self.terms[0], b:self.terms[1], c:rhs}, assumptions=assumptions)
+        return deduction
+    
     def conversionToMultiplication(self, assumptions=USE_DEFAULTS):
         '''
         From the addition of the same values, derive and return
@@ -278,16 +293,20 @@ class Add(Operation):
         operands are canceled.
         '''
         from .subtraction._theorems_ import addCancelBasic, addCancelReverse, addCancelGeneral, addCancelGeneralRev
+        from .subtraction._theorems_ import addCancelTriple_12, addCancelTriple_13, addCancelTriple_23
+        from .subtraction._theorems_ import addCancelTriple_21, addCancelTriple_31, addCancelTriple_32
         from proveit.number import num, Neg
         if i > j:
             return self.cancelation(j, i, assumptions) # choose i to be less than j
             
         if Neg(self.operands[i]) == self.operands[j]:
             basic_thm = addCancelBasic
+            triple_thms = (addCancelTriple_12, addCancelTriple_13, addCancelTriple_23)
             general_thm = addCancelGeneral
             canceled_op = self.operands[i]
         elif self.operands[i] == Neg(self.operands[j]):
             basic_thm = addCancelReverse
+            triple_thms = (addCancelTriple_21, addCancelTriple_31, addCancelTriple_32)
             general_thm = addCancelGeneralRev
             canceled_op = self.operands[j]
         else:
@@ -295,6 +314,12 @@ class Add(Operation):
         
         if len(self.operands)==2:
             return basic_thm.specialize({a:canceled_op}, assumptions=assumptions)
+        elif len(self.operands)==3:
+            # k is the 3rd index, completing i and j in the set {0,1,2}.
+            k = {0,1,2}.difference([i, j]).pop()
+            thm = triple_thms[2-k]
+            return thm.specialize({a:canceled_op, b:self.operands[k]}, 
+                                   assumptions=assumptions)
         else:
             aSub = self.operands[:i]
             bSub = canceled_op
@@ -421,7 +446,7 @@ class Add(Operation):
         '''
         from proveit import Variable
         from proveit.number import one, two, num, Neg, Mult, Numeral
-        from proveit import ExprList
+        from proveit import ExprTuple
         
         hold = {}
         order = []
@@ -502,7 +527,7 @@ class Add(Operation):
         expr = self
         eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
         
-        # ungroup the expression (disassociate nested multiplications).
+        # ungroup the expression (disassociate nested additions).
         n = 0
         length = len(expr.operands) - 1
         while n < length:
@@ -516,15 +541,26 @@ class Add(Operation):
 
         # eliminate zeros where possible
         expr = eq.update(expr.zeroEliminations(assumptions))
+        if not isinstance(expr, Add):
+            # eliminated all but one term
+            return eq.relation
                 
         # perform cancelations where possible
         expr = eq.update(expr.cancelations(assumptions))
+        if not isinstance(expr, Add):
+            # canceled all but one term
+            return eq.relation
         
         # separate the types of operands in a dictionary
         hold, order = expr._createDict(assumptions)
         
+        # Have the basic numbers come at the end.
+        if order[-1] != one and one in hold:
+            order.pop(order.index(one))
+            order.append(one)
+        
         if len(order) > 0:
-            # Reorder the terms so like terms.
+            # Reorder the terms so like terms are adjacent.
             pos = 0
             # The indices keep moving as we reorder, so keep on top of this.
             old2new = {k:k for k in range(len(expr.operands))}
@@ -556,9 +592,8 @@ class Add(Operation):
                 if len(hold[key]) > 1:
                     expr = eq.update(expr.association(m, length=len(hold[key]), assumptions=assumptions))
                 
-        if expr==self: 
-            # No grouping occurred so all operands are like terms.
-            # Simplify by combining them.
+        if expr==self and len(order)==1:
+            # All operands are like terms.  Simplify by combining them.
             
             # If all the operands are the same, combine via multiplication.
             if all(operand==self.operands[0] for operand in self.operands):
@@ -602,15 +637,74 @@ class Add(Operation):
         # print("expr after evaluation", expr)
         # print("last equals!")
         return eq.relation
-
+    
+    def _integerBinaryEval(self):
+        '''
+        Evaluate the sum of possibly negated single digit numbers.
+        '''
+        from proveit.number import Neg, isLiteralInt, num
+        abs_terms = [term.operand if isinstance(term, Neg) else term for term in self.terms]
+        if len(abs_terms)!=2 or not all(isLiteralInt(abs_term) for abs_term in abs_terms):
+            raise ValueError("_integerBinaryEval only applicable for binary addition of integers")
+        a, b = self.terms
+        a, b = a.asInt(), b.asInt()
+        if a<0 and b<0:
+            # evaluate -a-b via a+b
+            a, b = -a, -b
+        if a<0:
+            # evaluate -a+b via (a-b)+b or (b-a)+a
+            a=-a
+            if a>b:
+                a, b = a-b, b
+            else:
+                a, b = b-a, a
+        elif b<0:
+            # evaluate a-b via (a-b)+b or (b-a)+a
+            b=-b
+            if a>b: 
+                a, b = a-b, b
+            else:
+                a, b = b-a, a
+        assert a>=0 and b>=0
+        #print(a, b)
+        if not all(term in DIGITS for term in (num(a), num(b))):
+            raise NotImplementedError("Currently, _integerBinaryEval only works for single digit addition and related subtractions: %d, %d"%(a, b))
+        if (a, b) not in Add.addedNumerals:
+            try:
+                # for single digit addition, import the theorem that provides the evaluation
+                Add.addedNumerals.add((a, b))
+                theorem = proveit.number.numeral.deci._theorems_.__getattr__('add_%d_%d'%(a, b))
+                #print(theorem)
+            except:
+                # may fail before the relevent _commons_ and _theorems_ have been generated
+                pass # and that's okay
+        # Should have an evaluation now.
+        if self not in Equals.evaluations:
+            raise Exception("Should have an evaluation for %s now.  Why not?  "
+                              "Perhaps we were not able to prove that the involved numbers "
+                              "are in the Complexes set."%self)
+        return self.evaluation() 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         created by JML on 7/31/19. modified by WMW on 9/7/19.
         evaluate literals in a given expression (used for simplification)
         '''
         from proveit.logic import SimplificationError
-        from proveit.number import Neg
-        
+        from proveit.number import Neg, isLiteralInt
+
+        abs_terms = [term.operand if isinstance(term, Neg) else term for term in self.terms]
+        if len(abs_terms)==2 and all(isLiteralInt(abs_term) for abs_term in abs_terms):
+            # Change the default assumptions will not be necessary after we handle multiple
+            # digits properly.  But for now, we need to assume things like "10 in Naturals"
+            # and derive side effects under such assumptions.
+            from proveit import defaults
+            prev_default_assumptions = list(defaults.assumptions)
+            defaults.assumptions = assumptions
+            evaluation = self._integerBinaryEval()
+            defaults.assumptions = prev_default_assumptions # revert back
+            return evaluation
+        #assert not isinstance(self.operands[0], Add)
+                
         expr = self
         eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
         
@@ -618,14 +712,17 @@ class Add(Operation):
         expr = eq.update(self.cancelations(assumptions))
         if isIrreducibleValue(expr):
             return eq.relation
+        
+        if not isinstance(expr, Add):
+            raise SimplificationError("%s simplified to %s which is not irreducible"%(self, expr)) 
 
         # If all the operands are the same, combine via multiplication and then evaluate.
-        if all(operand==self.operands[0] for operand in self.operands):
+        if all(operand==expr.operands[0] for operand in expr.operands):
             expr = eq.update(self.conversionToMultiplication(assumptions))
             eq.update(expr.evaluation(assumptions))
             return eq.relation 
         
-        if len(self.operands) > 2:
+        if len(expr.operands) > 2:
             expr = eq.update(pairwiseEvaluation(expr, assumptions))
             return eq.relation
         
@@ -690,7 +787,7 @@ class Add(Operation):
         # need to have one of the elements positive for the sum to be positive
         raise DeduceInNumberSetException(self, NaturalsPos, assumptions)
 
-    def deduceInNumberSet(self, NumberSet,assumptions=USE_DEFAULTS):
+    def deduceInNumberSet(self, number_set,assumptions=USE_DEFAULTS):
         '''
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
@@ -698,15 +795,16 @@ class Add(Operation):
 
         from proveit.number.addition._theorems_ import addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure, addNatPosClosure, addRealClosureBin, addRealClosure, addComplexClosureBin, addComplexClosure
         from proveit.number import num, Greater, Integers, Naturals, Reals, Complexes, NaturalsPos, zero
-        if NumberSet == Integers:
+        from proveit.logic import InSet
+        if number_set == Integers:
             if len(self.operands) == 2:
                 return addIntClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addIntClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
-        if NumberSet == Naturals:
+        if number_set == Naturals:
             if len(self.operands) == 2:
                 return addNatClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addNatClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
-        if NumberSet == NaturalsPos:
+        if number_set == NaturalsPos:
             val = -1
             for i, operand in enumerate(self.operands):
                 try:
@@ -720,16 +818,43 @@ class Add(Operation):
                 raise ValueError("Expecting at least one value to be greater than zero")
             # print(len(self.operands))
             return addNatPosClosure.specialize({m: num(val), n:num(len(self.operands) - val - 1), AA:self.operands[:val], B: self.operands[val], CC: self.operands[val + 1:]}, assumptions=assumptions)
-        if NumberSet == Reals:
+        if number_set == Reals:
             if len(self.operands) == 2:
                 return addRealClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addRealClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
-        if NumberSet == Complexes:
+        if number_set == Complexes:
             if len(self.operands) == 2:
                 return addComplexClosureBin.specialize({a:self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addComplexClosure.specialize({m:num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+        msg = "'deduceInNumberSet' not implemented for the %s set"%str(number_set)
+        raise ProofFailure(InSet(self, number_set), assumptions, msg)
+    
+    def deduceDifferenceInNaturals(self, assumptions=USE_DEFAULTS):
+        from proveit.number import Neg
+        from proveit.number.sets.integer._theorems_ import differenceInNaturals
+        if len(self.terms) != 2:
+            raise ValueError("deduceDifferenceInNaturals only applicable "
+                               "when there are two terms, got %s"%self)
+        if not isinstance(self.terms[1], Neg):
+            raise ValueError("deduceDifferenceInNaturals only applicable "
+                               "for a subtraction, got %s"%self)
+        thm = differenceInNaturals
+        return thm.specialize({a:self.terms[0], b:self.terms[1].operand},
+                               assumptions=assumptions)
+        
 
-
+    def deduceDifferenceInNaturalsPos(self, assumptions=USE_DEFAULTS):
+        from proveit.number import Neg
+        from proveit.number.sets.integer._theorems_ import differenceInNaturalsPos
+        if len(self.terms) != 2:
+            raise ValueError("deduceDifferenceInNaturalsPos only applicable "
+                               "when there are two terms, got %s"%self)
+        if not isinstance(self.terms[1], Neg):
+            raise ValueError("deduceDifferenceInNaturalsPos only applicable "
+                               "for a subtraction, got %s"%self)
+        thm = differenceInNaturalsPos
+        return thm.specialize({a:self.terms[0], b:self.terms[1].operand},
+                               assumptions=assumptions)
     def deduceStrictIncrease(self, lowerBoundTermIndex, assumptions=frozenset()):
         '''
         Deducing that all other terms are in RealsPos, deduce an return
@@ -791,8 +916,7 @@ class Add(Operation):
                 ySub.append(one)
                 
             # substitute in the factorized term
-            expr = termFactorization.substitution(expr.innerExpr().terms[i], assumptions=assumptions).rhs
-            Equals(self, expr).prove(assumptions)
+            return termFactorization.substitution(expr.innerExpr().terms[i], assumptions=assumptions)
         if not groupFactor and isinstance(theFactor, Mult):
             factorSub = theFactor.operands
         else:
@@ -803,8 +927,7 @@ class Add(Operation):
         else:
             xSub = []
             zSub = factorSub
-        expr = distributeThroughSum.specialize({l:num(len(xSub)),m:num(len(ySub)),n:num(len(zSub)),AA:xSub, BB:ySub, CC:zSub}, assumptions=assumptions).deriveReversed(assumptions).rhs
-        return Equals(self, expr).prove(assumptions)
+        return distributeThroughSum.specialize({l:num(len(xSub)),m:num(len(ySub)),n:num(len(zSub)),AA:xSub, BB:ySub, CC:zSub}, assumptions=assumptions).deriveReversed(assumptions)
     
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
@@ -882,11 +1005,57 @@ class Add(Operation):
         return eq
 
 def subtract(a, b):
+    '''
+    Return the a-b expression (which is internally a+(-b)).
+    '''
     from proveit.number import Neg
     if isinstance(b, Iter):
-        b = Iter(b.lambda_map.parameter_or_parameters, Neg(b.lambda_map.body), b.start_index_or_indices, b.end_index_or_indices, b.getStyles())
-        return Add(a, b).withSubtractionAt(1) # this style is the default, but just to be clear.
-    return Add(a, Neg(b)).withSubtractionAt(1) # this style is the default, but just to be clear.
+        b = Iter(b.lambda_map.parameter_or_parameters, 
+                 Neg(b.lambda_map.body), b.start_index_or_indices, 
+                 b.end_index_or_indices, b.getStyles())
+        # The default style will use subtractions where appropriate.
+        return Add(a, b)
+    return Add(a, Neg(b))
+
+def dist_subtract(a, b):
+    '''
+    Returns the distributed a-b expression.  That is, if a or b are
+    Add expressions, combine all of the terms into a single Add 
+    expression (not nested).  For example, with
+    a:x-y, b:c+d-e+g, it would return x-y-c-d+e-g.
+    '''
+    from proveit.number import Neg
+    if isinstance(b, Add):
+        bterms = [term.operand if isinstance(term, Neg) else Neg(term) \
+                  for term in b.terms]
+    elif isinstance(b, Iter):
+        bterms = [Iter(b.lambda_map.parameter_or_parameters, 
+                       Neg(b.lambda_map.body), b.start_index_or_indices,
+                       b.end_index_or_indices, b.getStyles())]
+    else:
+        bterms = [Neg(b)]
+    if isinstance(a, Add):
+        aterms = a.terms
+    else:
+        aterms = [a]
+    # The default style will use subtractions where appropriate.
+    return Add(*(aterms+bterms)) 
+
+def dist_add(*terms):
+    '''
+    Returns the distributed sum of expression.  That is, if any of
+    the terms are Add expressions, expand them.  For example,
+    dist_add(x-y, c+d-e+g) would return x-y+c+d-e+g.
+    '''
+    from proveit.number import Neg
+    expanded_terms = []
+    for term in terms:
+        if isinstance(term, Add):
+            expanded_terms.extend(term.terms)
+        else:
+            expanded_terms.append(term)
+    return Add(*expanded_terms) 
+
 
 # Register these generic expression equivalence methods:
 InnerExpr.register_equivalence_method(Add, 'commutation', 'commuted', 'commute')

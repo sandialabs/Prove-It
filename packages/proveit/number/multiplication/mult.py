@@ -76,7 +76,8 @@ class Mult(Operation):
             else:
                 thm = multComplexClosure
         else:
-            raise ProofFailure(InSet(self, numberSet), assumptions, "'deduceInNumberSet' not implemented for the %s set"%str(numberSet))
+            msg = "'deduceInNumberSet' not implemented for the %s set"%str(numberSet)
+            raise ProofFailure(InSet(self, numberSet), assumptions, msg)
         from proveit._common_ import AA
         # print("thm", thm)
         # print("self in deduce in number set", self)
