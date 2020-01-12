@@ -454,6 +454,8 @@ class Axioms(ModuleType):
         return sorted(list(self.__dict__.keys()) + self._context.axiomNames())
 
     def __getattr__(self, name):
+        if name[0:2]=='__': 
+            raise AttributeError # don't handle internal Python attributes
         try:
             axiom_truth = self._context.getAxiom(name).provenTruth
         except KeyError:
@@ -482,6 +484,8 @@ class Theorems(ModuleType):
         return sorted(list(self.__dict__.keys()) + self._context.theoremNames())
                 
     def __getattr__(self, name):
+        if name[0:2]=='__': 
+            raise AttributeError # don't handle internal Python attributes
         try:
             theorem_truth = self._context.getTheorem(name).provenTruth
         except KeyError:
@@ -517,6 +521,9 @@ class CommonExpressions(ModuleType):
 
     def __getattr__(self, name):
         from proveit import Label
+        if name[0:2]=='__': 
+            raise AttributeError # don't handle internal Python attributes
+        
         # Is the current directory a "context" directory?
         in_context = os.path.isfile('_context_.ipynb')
         

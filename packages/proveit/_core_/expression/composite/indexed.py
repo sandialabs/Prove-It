@@ -1,12 +1,15 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.expression.operation.operation import Operation
+from proveit._core_.expression.composite.iteration import EmptyIterException
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
 from proveit._core_.expression.label import Variable
+from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
 
 class Indexed(Expression):
     '''
     An Indexed Expression expresses a Variable,
-    representing an ExprList or ExprTensor, being indexed
+    representing an ExprTuple or ExprArray, being indexed
     to yield an element.
     
     Upon substitution, it automatically performs the indexing
@@ -18,7 +21,7 @@ class Indexed(Expression):
     def __init__(self, var, index_or_indices, base=1, styles=None, requirements=tuple()):
         from .composite import compositeExpression
         if not isinstance(var, Variable):
-            raise TypeError("'var' being indexed should be a Variable")
+            raise TypeError("'var' being indexed should be a Variable, got %s"%str(var))
         self.indices = compositeExpression(index_or_indices)
         if len(self.indices) == 1:
             # has a single parameter
@@ -64,15 +67,14 @@ class Indexed(Expression):
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
         If the indexed variable has been replaced with a Composite
-        (ExprList or ExprTensor), this should return the
+        (ExprTuple or ExprArray), this should return the
         indexed element.  Only a Variable should be indexed via
         a Indexed expression; once the Variable is replaced with
         a Composite, the indexing should be actualized.
         '''
-        from .composite import Composite, _simplifiedCoord
-        from proveit.number import num, Subtract, isLiteralInt
-        from .expr_list import ExprList
-        from .expr_tensor import ExprTensor
+        from .composite import Composite
+        from .expr_tuple import ExprTuple
+        from .expr_array import ExprArray
         
         self._checkRelabelMap(relabelMap)
         
@@ -89,9 +91,9 @@ class Indexed(Expression):
             # because the Composite has an unexpanding Iter), 
             # default to returning the subbed Indexed.
             indices = subbed_indices
-            if isinstance(subbed_var, ExprList):
+            if isinstance(subbed_var, ExprTuple):
                 result = subbed_var.getElem(indices[0], base=self.base, assumptions=assumptions, requirements=new_requirements)
-            elif isinstance(subbed_var, ExprTensor):
+            elif isinstance(subbed_var, ExprArray):
                 result = subbed_var.getElem(indices, base=self.base, assumptions=assumptions, requirements=new_requirements)
         
         for requirement in new_requirements:
@@ -105,69 +107,253 @@ class Indexed(Expression):
             return result
         else:
             return Indexed(subbed_var, subbed_indices, base=self.base)
-
-    def _expandingIterRanges(self, iterParams, startArgs, endArgs, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
+        
+    def _iterSubParamVals(self, axis, iterParam, startArg, endArg, 
+                          exprMap, relabelMap=None, reservedVars=None, 
+                          assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Consider a substitution over a containing iteration (Iter) defined 
-        via exprMap, relabelMap, etc, and index iteration defined by substituting 
-        the "iteration parameters" over the range from the "starting arguments" 
-        to the "ending arguments".
-        When the Indexed variable is substituted with a Composite, any containing
-        Iteration is to be expanded over the iteration range.  This method
-        yields disjoint sub-ranges that covers occupied portions of the full range
-        in a manner that keeps different inner iterations separate.  In particular,
-        the iteration range is broken up for the different Iter entries that
-        are contained in this Composite.  If it is not substituted with
-        a composite, no range is yielded.
+        Consider a substitution over a containing iteration (Iter) 
+        defined via exprMap, relabelMap, etc, and expand the iteration 
+        by substituting the "iteration parameter" over the range from 
+        the "starting argument" to the "ending argument" 
+        (both inclusive as provided).
+        
+        When the Indexed variable is substituted with a Composite, any 
+        containing Iteration is to be expanded over the iteration range.
+        This method returns a list of parameter values that covers 
+        occupied portions of the full range in a manner that keeps 
+        different inner iterations separate.  In particular, the 
+        iteration range is broken up for the different Iter entries that
+        are contained in this Composite.  If it is not substituted with 
+        a composite, _NoExpandedIteration is raised.
+        
+        Requirements that are passed back ensure that substituted composites are
+        valid (with iterations that have natural number extents), that the 
+        start and end indices are within range and at integer positions,
+        and also includes equalities for employed simplifications or inversions
+        (translating from index coordinates to parameters).
         '''
-        from .composite import Composite, IndexingError, compositeExpression
-        from .expr_list import ExprList
-        from proveit.logic import Equals
+        from .composite import Composite, IndexingError, _simplifiedCoord, \
+                                  _generateCoordOrderAssumptions
+        from .expr_tuple import ExprTuple
+        from .expr_array import ExprArray
+        from proveit.logic import Equals, InSet
+        from proveit.number import GreaterEq, LessEq, Add, one, num, \
+                                      dist_add, dist_subtract, Naturals
         from proveit._core_.expression.expr import _NoExpandedIteration
+        from .iteration import Iter, InvalidIterationError
         
-        subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-        subbed_indices = self.indices.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
-                
-        if isinstance(subbed_var, Composite):
-            # We cannot substitute in a Composite without doing an iteration over it.
-            # Only certain iterations are allowed in this manner however.
-            
-            start_indices = []
-            end_indices = []
-            for subbed_index, iterParam, startArg, endArg in zip(subbed_indices, iterParams, startArgs, endArgs):
-                if iterParam not in subbed_index.freeVars():
-                    raise IndexingError("Iteration parameter not contained in the substituted index")
-                start_indices.append(subbed_index.substituted({iterParam:startArg}))
-                end_indices.append(subbed_index.substituted({iterParam:endArg}))
-            
-            if isinstance(subbed_var, ExprList):
-                assert len(start_indices) == len(end_indices) == 1, "Lists are 1-dimensional and should be singly-indexed"
-                entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices[0], end_indices[0], assumptions, requirements)
+        if requirements is None: requirements = [] 
+        
+        subbed_var = self.var.substituted(exprMap, relabelMap, reservedVars, 
+                                          assumptions, requirements)
+        index = self.indices[axis]
+        subbed_index = index.substituted(exprMap, relabelMap, reservedVars, 
+                                         assumptions, requirements)
+        
+        if not isinstance(subbed_var, Composite) or \
+                iterParam not in subbed_index.freeVars():
+            # No expansion for this parameter here:
+            raise _NoExpandedIteration() # no expansionn
+
+        # We cannot substitute in a Composite without doing an 
+        # iteration over it.  Only certain iterations are allowed 
+        # in this manner however.
+
+        if subbed_index != iterParam:
+            # The index isn't simply the parameter.  It has a shift.
+            # find the shift.
+            if not isinstance(subbed_index, Add):
+                raise InvalidIterationError(subbed_index, iterParam)
+            shift_terms = [term for term in subbed_index.operands
+                            if term != iterParam]
+            if len(shift_terms)==1:
+                shift = shift_terms[0] # shift by a single term
             else:
-                entryRangeGenerator = subbed_var.entryRanges(self.base, start_indices, end_indices, assumptions, requirements)
-            
-            for (intersection_start, intersection_end) in entryRangeGenerator:
-                # We must put it terms of iter parameter values (arguments) via inverting the index_expr.
-                def coord2param(axis, coord):
-                    if subbed_indices[axis] == iterParams[axis]:
-                        return coord # direct indexing that does not need to be inverted
-                    # The indexing is not direct; for example, x_{f(p)}.
-                    # We need to invert f to obtain p from f(p)=coord and register the inversion as a requirement:
-                    # f(p) = coord.
-                    param = Equals.invert(Lambda(iterParams[axis], subbed_indices[axis]), coord, assumptions=assumptions)
-                    inversion = Equals(subbed_indices[axis].substituted({iterParams[axis]:param}), coord)
-                    requirements.append(inversion.prove(assumptions=assumptions))
-                    return param
-                param_start = tuple([coord2param(axis, i) for axis, i in enumerate(compositeExpression(intersection_start))])
-                param_end = tuple([coord2param(axis, i) for axis, i in enumerate(compositeExpression(intersection_end))])
-                yield (param_start, param_end)
-            return
+                shift = dist_add(*shift_terms) # shift by multple terms
         
-        raise _NoExpandedIteration() # no expansionn
+        start_index = subbed_index.substituted({iterParam:startArg})
+        end_index = subbed_index.substituted({iterParam:endArg})
+        entry_span_requirements = []
+        coord_simp_requirements = []
+        
+        if isinstance(subbed_var, ExprTuple):
+            coords = subbed_var.entryCoords(self.base, assumptions, 
+                                            entry_span_requirements,
+                                            coord_simp_requirements)
+        else:
+            if not isinstance(subbed_var, ExprArray):
+                subbed_var_class_str = str(subbed_var.__class__)
+                raise TypeError("Indexed variable should only be "
+                                    "substituted with ExprTuple or "
+                                    "ExprArray, not %s"%subbed_var_class_str)
+            coords = subbed_var.entryCoords(self.base, axis, assumptions, 
+                                            entry_span_requirements,
+                                            coord_simp_requirements)
+        assert coords[0]==num(self.base)
+        coord_order_assumptions = list(_generateCoordOrderAssumptions(coords))
+        #print("indexed sub coords", self, assumptions, start_index, coords, end_index)
+        extended_assumptions = assumptions + coord_order_assumptions
+        
+        # We will include all of the "entry span" requirements
+        # ensuring that the ExprTuple or ExprArray is valid
+        # (the length of iterations is a natural number).
+        # We will only include coordinate simplification
+        # requirements up to the last needed coordinate.
+        requirements.extend(entry_span_requirements)
+                    
+        # Find where the start index and end index belongs
+        # relative to the entry coordinates.
+
+        # The start is inclusive and is typically expected to 
+        # toward the beginning of the coordinates.
+        # We'll get the first and the last insertion points w.r.t.
+        # all coordinates equivalent to start_index.
+        # The "first" insertion point may help determine if we have
+        # an empty range case.  Otherwise, we use the "last"
+        # insertion point so we are not including multiple equivalent 
+        # parameter values at the start.
+        start_pos_firstlast = \
+            LessEq.insertion_point(coords, start_index, 
+                                    equiv_group_pos = 'first&last',
+                                    assumptions=extended_assumptions)
+        # Check the start for an out of bounds error.
+        start_pos = start_pos_firstlast[1]
+        if start_pos==0:
+            msg = ("ExprTuple index out of range: %s not proven "
+                    "to be >= %s (the base) when assuming %s"
+                    %(str(start_index), str(coords[0]), 
+                        str(assumptions)))
+            raise IndexError(msg)
+        
+        # The end position splits into two cases.  In the simple case,
+        # it lands at a singular entry as the last entry.  Otherwise,
+        # we need to add one to the endArg to ensure we get past any
+        # iterations that may or may not be empty and find the
+        # insertion point.
+        end_pos = None
+        if end_index in coords:
+            # Might be the simple case of a singular entry as the last
+            # entry.
+            end_pos = coords.index(end_index)
+            end_coord = coords[end_pos]
+            if isinstance(end_coord, Iter):
+                # Not the simple case -- an iteration rather than
+                end_pos = None # a singular entry.
+            else:
+                # Check the end for an out of bounds error.
+                if end_pos==len(coords)-1:
+                    msg = ("ExprTuple index out of range: %s not proven "
+                            "to be < %s when assuming %s"
+                            %(str(end_index), str(coords[-1]), 
+                                str(assumptions)))
+                    raise IndexError(msg)
+                if start_pos_firstlast[0]>end_pos:
+                    # Empty range (if valid at all).  Handle this
+                    # at the Iter.substituted level.
+                    raise EmptyIterException()
+                
+        if end_pos is None:
+            # Not the simple case.  We need to add one to the endArg
+            # to ensure we get past any iterations that may or may not
+            # be empty.
+            endArg = _simplifiedCoord(dist_add(endArg, one), assumptions,
+                                      requirements)
+            end_index = subbed_index.substituted({iterParam:endArg})
+            # We would typically expect the end-index to come near the
+            # end of the coordinates in which case it is more efficient
+            # to search for the insertion point in reverse order, so use
+            # Greater instead of Less.  
+            # Use the "last" insertion point for the start so we are not
+            # including multiple equivalent parameter values at the 
+            # end.
+            end_pos_from_end = \
+                GreaterEq.insertion_point(list(reversed(coords)), end_index, 
+                                          equiv_group_pos = 'last',
+                                          assumptions=extended_assumptions)
+            # Check the end for an out of bounds error.
+            if end_pos_from_end==0:
+                msg = ("ExprTuple index out of range: %s not proven "
+                        "to be <= %s when assuming %s."
+                        %(str(end_index), str(coords[-1]), 
+                            str(assumptions)))
+                raise IndexError(msg)
+            end_pos = len(coords)-end_pos_from_end
+            # Check to see if the range is empty.
+            # Note: when start_pos==end_pos is the case when both
+            # are within the same entry.
+            if start_pos > end_pos:
+                # Empty range (if valid at all).  Handle this
+                # at the Iter.substituted level.
+                raise EmptyIterException()
+                
+        # Include coordinate simplification requirements up to
+        # the last used coordinate.
+        coord_simp_req_map = {eq.rhs:eq for eq in coord_simp_requirements}
+        for coord in coords[:end_pos+1]:
+            if coord in coord_simp_req_map:
+                requirements.append(coord_simp_req_map[coord])
+        
+        # End-point requirements may be needed.
+        for coord_and_endpoint in [(coords[start_pos-1], start_index), 
+                                        (end_index, coords[end_pos])]:
+            if coord_and_endpoint[0]==coord_and_endpoint[1]:
+                # When the endpoint index is the same as the
+                # coordinate, we don't need to add a requirement.
+                continue
+            try:
+                # See if we simply need to prove an equality between
+                # the endpoint index and the coordinate.
+                eq = Equals(*coord_and_endpoint)
+                eq.prove(assumptions, automation=False)
+                requirements.append(eq)
+            except ProofFailure:
+                # Otherwise, we must prove that the difference
+                # between the coordinate and endpoint
+                # is in the set of natural numbers (integral and
+                # in the correct order).
+                requirement = \
+                    InSet(dist_subtract(*reversed(coord_and_endpoint)), 
+                          Naturals)
+                # Knowing the simplification may help prove the 
+                # requirement.
+                _simplifiedCoord(requirement, assumptions, [])
+                requirements.append(requirement.prove(assumptions))
+                                    
+        # We must put each coordinate in terms of iter parameter 
+        # values (arguments) via inverting the subbed_index.
+        def coord2param(coord):
+            if subbed_index == iterParam:
+                # Direct indexing that does not need to be inverted:
+                return coord 
+            # We must subtract by the 'shift' that the index
+            # adds to the parameter in order to invert from
+            # the coordinate back to the corresponding parameter:
+            param = dist_subtract(coord, shift)
+            param = _simplifiedCoord(param, assumptions, requirements)
+            return param
+        
+        coord_params = [coord2param(coord) for coord 
+                        in coords[start_pos:end_pos]] 
+        
+        # If the start and end are the same expression or known to
+        # be equal, just return [startArg].
+        if startArg==endArg:
+            return [startArg]
+        try:
+            eq = Equals(startArg, endArg)
+            requirement = eq.prove(assumptions, automation=False)
+            requirements.append(requirement)
+            return [startArg]
+        except ProofFailure:
+            # Return the start, end, and coordinates at the
+            # start of entries in between.
+            return [startArg] + coord_params + [endArg]
+        
         
     """  
     def iterated(self, iterParams, startIndices, endIndices, exprMap, relabelMap = None, reservedVars = None, assumptions=USE_DEFAULTS, requirements=None):
-        from proveit.number import proven_sort, zero, one, num, Add, Subtract, Greater
+        from proveit.number import proven_sort, zero, one, num, Add, subtract, Greater
         
         subbed_var = self.indexed_expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         if isinstance(subbed_var, Composite):

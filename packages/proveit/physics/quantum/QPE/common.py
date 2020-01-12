@@ -1,5 +1,5 @@
 from proveit.expression import Literal, STRING, LATEX
-from proveit.number import Exp, Abs, Add, Sub, Neg, Mult, Fraction, Interval
+from proveit.number import Exp, Abs, Add, Sub, Neg, Mult, frac, Interval
 from proveit.number.common import one, two
 from proveit.common import k, l, eps
 from proveit.physics.quantum.QPE.phaseEstOps import SubIndexed

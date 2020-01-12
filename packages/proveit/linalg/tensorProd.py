@@ -79,7 +79,7 @@ class TensorExp(Operation):
         elif formatType == STRING:
             return formattedBase + '^{otimes ' + formattedExp + '}'
 
-    def simplification(self, assumptions=frozenset()):
+    def doReducedSimplification(self, assumptions=frozenset()):
         '''
         For the trivial cases of a one exponent, derive and return this tensor-exponentiated
         expression equated with a simplified form.
@@ -91,13 +91,5 @@ class TensorExp(Operation):
             return tensorExpOne.specialize({x:self.base})
             raise ValueError('Only trivial simplification is implemented (tensor exponent of one)')
 
-    def simplified(self, assumptions=frozenset()):
-        '''
-        For trivial cases, a zero or one exponent or zero or one base,
-        derive this exponential expression equated with a simplified form
-        and return the simplified form.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
-        '''
-        return self.simplification(assumptions).rhs
     
 TENSOR_EXP = Literal(pkg, 'TENSOR_EXP', {STRING: r'^otimes', LATEX: r'^{\otimes}'}, operationMaker = lambda operands : TensorExp(*operands))

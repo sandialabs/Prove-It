@@ -1,0 +1,1 @@
+Subtraction is internally represented as addition of negated operands.

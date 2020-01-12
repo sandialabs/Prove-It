@@ -1,7 +1,7 @@
 from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda, ParameterExtractionError
-from proveit import TransitiveRelation
-from proveit.logic.irreducible_value import IrreducibleValue, isIrreducibleValue
+from proveit import TransitiveRelation, TransitivityException
+from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit._common_ import A, B, P, Q, f, x, y, z
 
 class Equals(TransitiveRelation):
@@ -14,7 +14,7 @@ class Equals(TransitiveRelation):
 
     # Map Expressions to a subset of knownEqualities that are 
     # deemed to effect simplifications of the inner expression
-    # on te right hand side according to some canonical method 
+    # on the right hand side according to some canonical method 
     # of simplication determined by each operation.
     simplifications = dict()
 
@@ -34,6 +34,9 @@ class Equals(TransitiveRelation):
 
     def __init__(self, a, b):
         TransitiveRelation.__init__(self, Equals._operator_, a, b)
+        '''
+        # May be better not to be proactive but we need to see if this
+        # breaks anything.
         if self not in Equals.initializing:
             Equals.initializing.add(self)
             try:
@@ -42,6 +45,7 @@ class Equals(TransitiveRelation):
                 # may fail before the relevent _axioms_ have been generated
                 pass # and that's okay            
             Equals.initializing.remove(self)
+        '''
     
     def sideEffects(self, knownTruth):
         '''
@@ -100,19 +104,19 @@ class Equals(TransitiveRelation):
                 pass
         if isIrreducibleValue(self.rhs):
             try:
-                evaluation = self.lhs.evaluation()
+                evaluation = self.lhs.evaluation(assumptions)
                 if evaluation.rhs != self.rhs:
                     raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation
-            except EvaluationError as e:
+            except SimplificationError as e:
                 raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
         elif isIrreducibleValue(self.lhs):
             try:
-                evaluation = self.rhs.evaluation()
+                evaluation = self.rhs.evaluation(assumptions)
                 if evaluation.rhs != self.lhs:
                     raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation.deriveReversed()
-            except EvaluationError as e:
+            except SimplificationError as e:
                 raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
@@ -139,6 +143,12 @@ class Equals(TransitiveRelation):
         return TransitiveRelation.conclude(self, assumptions)
                 
     @staticmethod
+    def WeakRelationClass():
+        return Equals # = is the strong and weak form of equality,
+    @staticmethod
+    def StrongRelationClass():
+        return Equals # = is the strong and weak form of equality,
+    
     def knownRelationsFromLeft(expr, assumptionsSet):
         '''
         For each KnownTruth that is an Equals involving the given expression on
@@ -215,7 +225,7 @@ class Equals(TransitiveRelation):
         elif self.lhs == otherEquality.rhs:
             return equalsTransitivity.specialize({x:self.rhs, y:self.lhs, z:otherEquality.lhs}, assumptions=assumptions)
         else:
-            raise TransitivityException(self, otherEquality)
+            raise TransitivityException(self, assumptions, 'Transitivity cannot be applied unless there is something in common in the equalities: %s vs %s'%(str(self), str(other)))
         
     def deriveViaBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
@@ -457,38 +467,60 @@ class Equals(TransitiveRelation):
 def reduceOperands(innerExpr, inPlace=True, mustEvaluate=False, assumptions=USE_DEFAULTS):
     '''
     Attempt to return an InnerExpr object that is provably equivalent to
-    the given innerExpr but with simplified operands at the inner-expression
-    level. 
+    the given innerExpr but with simplified operands at the 
+    inner-expression level. 
     If inPlace is True, the top-level expression must be a KnownTruth
     and the simplified KnownTruth is derived instead of an equivalence
     relation.
     If mustEvaluate is True, the simplified
     operands must be irreducible values (see isIrreducibleValue).
     '''
-    # Any of the operands that can be simplified must be replaced with their evaluation
+    # Any of the operands that can be simplified must be replaced with 
+    # their simplification.
     from proveit import InnerExpr
-    assert isinstance(innerExpr, InnerExpr), "Expecting 'innerExpr' to be of type 'InnerExpr'"
+    assert isinstance(innerExpr, InnerExpr), \
+        "Expecting 'innerExpr' to be of type 'InnerExpr'"
     inner = innerExpr.exprHierarchy[-1]
+    substitutions = []
     while True:
         allReduced = True
         for operand in inner.operands:
-            if not mustEvaluate or not isIrreducibleValue(operand):
-                # the operand is not an irreducible value so it must be evaluated
-                operandEval = operand.evaluation(assumptions=assumptions) if mustEvaluate else operand.simplification(assumptions=assumptions)
+            if not isIrreducibleValue(operand):
+                # The operand isn't already irreducible, so try to
+                # simplify it.
+                if mustEvaluate:
+                    operandEval = operand.evaluation(assumptions=assumptions)
+                else:
+                    operandEval = operand.simplification(assumptions=assumptions)
                 if mustEvaluate and not isIrreducibleValue(operandEval.rhs):
-                    raise EvaluationError('Evaluations expected to be irreducible values')
+                    msg = 'Evaluations expected to be irreducible values'
+                    raise SimplificationError(msg)
                 if operandEval.lhs != operandEval.rhs:
-                    # compose map to replace all instances of the operand within the inner expression
-                    lambdaMap = innerExpr.replMap().compose(Lambda.globalRepl(inner, operand))
+                    # Compose map to replace all instances of the 
+                    # operand within the inner expression.
+                    global_repl = Lambda.globalRepl(inner, operand)
+                    lambdaMap = innerExpr.replMap().compose(global_repl)
                     # substitute in the evaluated value
                     if inPlace:
-                        innerExpr = InnerExpr(operandEval.subRightSideInto(lambdaMap), innerExpr.innerExprPath)
+                        subbed = operandEval.subRightSideInto(lambdaMap)
+                        innerExpr = InnerExpr(subbed, innerExpr.innerExprPath)
                     else:
-                        innerExpr = InnerExpr(operandEval.substitution(lambdaMap).rhs, innerExpr.innerExprPath)
+                        sub = operandEval.substitution(lambdaMap)
+                        innerExpr = InnerExpr(sub.rhs, innerExpr.innerExprPath)
+                        substitutions.append(sub)
                     allReduced = False
-                    break # start over (there may have been multiple substitutions)
-        if allReduced: return innerExpr
+                    # Start over since there may have been multiple 
+                    # substitutions:
+                    break
+        if allReduced: break # done!
         inner = innerExpr.exprHierarchy[-1]
+    
+    if not inPlace and len(substitutions)>1:
+        # When there have been multiple substitutions, apply
+        # transtivity over the chain of substitutions to equate the
+        # end-points.
+        Equals.applyTransitivities(substitutions, assumptions)
+    return innerExpr
 
 """
 def concludeViaReduction(expr, assumptions):
@@ -516,44 +548,62 @@ def concludeViaReduction(expr, assumptions):
     return knownTruth
 """
             
-def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operandsOnly=False, assumptions=USE_DEFAULTS, automation=True):
+def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
+                          operandsOnly=False, assumptions=USE_DEFAULTS, 
+                          automation=True):
     '''
-    Default attempt to simplify the given inner expression under the given assumptions.
-    If successful, returns a KnownTruth (using a subset of the given assumptions)
-    that expresses an equality between the expression (on the left) and one with 
-    a simplified form for the "inner" part (in some canonical sense determined by 
-    the Operation).
+    Default attempt to simplify the given inner expression under the 
+    given assumptions.  If successful, returns a KnownTruth (using a 
+    subset of the given assumptions) that expresses an equality between 
+    the expression (on the left) and one with a simplified form for the 
+    "inner" part (in some canonical sense determined by the Operation).
     If inPlace is True, the top-level expression must be a KnownTruth
     and the simplified KnownTruth is derived instead of an equivalence
     relation.
-    If mustEvaluate=True, the simplified form must be an irreducible value
-    (see isIrreducibleValue).  Specifically, this method checks to see if an
-    appropriate simplification/evaluation has already been proven.  If not, but
-    if it is an Operation, call the simplification/evaluation method on
-    all operands, make these substitions, then call simplification/evaluation on the
-    expression with operands substituted for simplified forms.  It also treats, 
-    as a special case, evaluating the expression to be true if it is in the set
-    of assumptions [also see KnownTruth.evaluation and evaluateTruth].
-    If operandsOnlTrue, only simplify the operands of the inner expression.
+    If mustEvaluate=True, the simplified form must be an irreducible 
+    value (see isIrreducibleValue).  Specifically, this method checks to
+    see if an appropriate simplification/evaluation has already been 
+    proven.  If not, but if it is an Operation, call the 
+    simplification/evaluation method on all operands, make these 
+    substitions, then call simplification/evaluation on the expression 
+    with operands substituted for simplified forms.  It also treats, 
+    as a special case, evaluating the expression to be true if it is in 
+    the set of assumptions [also see KnownTruth.evaluation and 
+    evaluateTruth].  If operandsOnlTrue, only simplify the operands of 
+    the inner expression.
     '''
     from proveit.logic import TRUE, FALSE
     from proveit.logic.boolean._axioms_ import trueAxiom
     topLevel = innerExpr.exprHierarchy[0]
     inner = innerExpr.exprHierarchy[-1]
     if operandsOnly:
-        # just do the reduction of the operands at the level below the "inner expression"
-        reducedInnerExpr = reduceOperands(innerExpr, inPlace, mustEvaluate, assumptions) # OR DO WE WANT TO REDUCE AT THE INNER LEVEL??
+        # Just do the reduction of the operands at the level below the 
+        # "inner expression"
+        reducedInnerExpr = reduceOperands(innerExpr, inPlace, mustEvaluate, 
+                                          assumptions)
         if inPlace:
-            return reducedInnerExpr.exprHierarchy[0].prove(assumptions) # should have already been proven within 'reduceOperands' called above.
-        return Equals(topLevel, reducedInnerExpr.exprHierarchy[0]).prove(assumptions) # should have already been proven within 'reduceOperands' called above.
+            try:
+                return reducedInnerExpr.exprHierarchy[0].prove(assumptions, 
+                                                                automation=False)
+            except:
+                assert False
+        try:
+            eq = Equals(topLevel, reducedInnerExpr.exprHierarchy[0])
+            return eq.prove(assumptions, automation=False)
+        except:
+            assert False
     def innerSimplification(innerEquivalence):
         if inPlace:
-            return innerEquivalence.subRightSideInto(innerExpr, assumptions=assumptions)
-        return innerEquivalence.substitution(innerExpr, assumptions=assumptions)
-    if isinstance(inner, IrreducibleValue):
-        IrreducibleValue.evaluation(inner)
+            return innerEquivalence.subRightSideInto(innerExpr, 
+                                                      assumptions=assumptions)
+        return innerEquivalence.substitution(innerExpr, 
+                                              assumptions=assumptions)
+    if isIrreducibleValue(inner):
+        return Equals(inner, inner).prove()
     assumptionsSet = set(defaults.checkedAssumptions(assumptions))
-    # see if the expression is already known to be true as a special case
+    
+    # See if the expression is already known to be true as a special
+    # case.
     try:
         inner.prove(assumptionsSet, automation=False)
         trueEval = evaluateTruth(inner, assumptionsSet) # A=TRUE given A
@@ -563,64 +613,92 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
         return innerSimplification(trueEval)
     except:
         pass
-    # see if the negation of the expression is already known to be true as a special case
+    # See if the negation of the expression is already known to be true 
+    # as a special case.
     try:
         inner.disprove(assumptionsSet, automation=False)
         falseEval = evaluateFalsehood(inner, assumptionsSet) # A=FALSE given Not(A)
         return innerSimplification(falseEval)
     except:
         pass
-    # See if the expression already has a proven evaluation
-    if inner in Equals.evaluations or (not mustEvaluate and inner in Equals.simplifications):
-        simplifications = Equals.evaluations[inner] if mustEvaluate else Equals.simplifications[inner]
+
+    # See if the expression already has a proven simplification
+    if inner in Equals.evaluations or (not mustEvaluate and 
+                                        inner in Equals.simplifications):
+        if mustEvaluate:
+            simplifications = Equals.evaluations[inner] 
+        else:
+            simplifications = Equals.simplifications[inner]
         candidates = []
         for knownTruth in simplifications:
             if knownTruth.isSufficient(assumptionsSet):
-                candidates.append(knownTruth) # found existing evaluation suitable for the assumptions
+                # Found existing evaluation suitable for the assumptions
+                candidates.append(knownTruth) 
         if len(candidates) >= 1:
-            # return the "best" candidate with respect to fewest number of steps
-            evaluation = min(candidates, key=lambda knownTruth: knownTruth.proof().numSteps())
-            return innerSimplification(evaluation)
-            
+            # Return the "best" candidate with respect to fewest number
+            # of steps.
+            min_key = lambda knownTruth: knownTruth.proof().numSteps()
+            simplification = min(candidates, key=min_key)
+            return innerSimplification(simplification)
+
     if not automation:
-        raise EvaluationError('Unknown evaluation (without automation): ' + str(inner))
-    # See if the expression is equal to something that has an evaluation or is 
-    # already known to be true.
+        msg = 'Unknown evaluation (without automation): ' + str(inner)
+        raise SimplificationError(msg)
+                
+    # See if the expression is equal to something that has an evaluation
+    # or is already known to be true.
     if inner in Equals.knownEqualities:
-        for knownTruth in Equals.knownEqualities[inner]:
+        for knownEq in Equals.knownEqualities[inner]:
             try:
-                if knownTruth.isSufficient(assumptionsSet):
-                    if inPlace: # should first substitute in the known equivalence then simplify that
-                        if inner == knownTruth.lhs:
-                            knownTruth.subRightSideInto(innerExpr, assumptions)
-                        elif inner == knownTruth.rhs:
-                            knownTruth.subLeftSideInto(innerExpr, assumptions)
-                    equivSimp = defaultSimplification(knownTruth.otherSide(inner).innerExpr(), inPlace=inPlace, mustEvaluate=mustEvaluate, assumptions=assumptions, automation=False)
-                    if inPlace: return equivSimp # returns KnownTruth with simplification
-                    innerEquiv = Equals(inner, equivSimp.rhs).concludeViaTransitivity(assumptions=assumptions) 
+                if knownEq.isSufficient(assumptionsSet):
+                    if inPlace: 
+                        # Should first substitute in the known 
+                        # equivalence then simplify that.
+                        if inner == knownEq.lhs:
+                            knownEq.subRightSideInto(innerExpr, assumptions)
+                        elif inner == knownEq.rhs:
+                            knownEq.subLeftSideInto(innerExpr, assumptions)
+                    # Use mustEvaluate=True.  Simply being equal to 
+                    # something simplified isn't necessarily the 
+                    # appropriate simplification for "inner" itself.
+                    alt_inner = knownEq.otherSide(inner).innerExpr()
+                    equivSimp = \
+                        defaultSimplification(alt_inner,  inPlace=inPlace, 
+                                            mustEvaluate=True, 
+                                            assumptions=assumptions, 
+                                            automation=False)
+                    if inPlace:
+                        # Returns KnownTruth with simplification:
+                        return equivSimp 
+                    innerEquiv = knownEq.applyTransitivity(equivSimp, 
+                                                           assumptions)
                     if inner == topLevel: return innerEquiv
-                    return innerEquiv.substitution(innerExpr, assumptions=assumptions)
-            except EvaluationError:
+                    return innerEquiv.substitution(innerExpr, 
+                                                    assumptions=assumptions)
+            except SimplificationError:
                 pass     
     # try to simplify via reduction
     if not isinstance(inner, Operation):
         if mustEvaluate:
-            raise EvaluationError('Unknown evaluation: ' + str(inner))
+            raise SimplificationError('Unknown evaluation: ' + str(inner))
         else:
             # don't know how to simplify, so keep it the same
             return innerSimplification(Equals(inner, inner).prove())
-    reducedInnerExpr = reduceOperands(innerExpr, inPlace, mustEvaluate, assumptions) # OR DO WE WANT TO REDUCE AT THE INNER LEVEL??
+    reducedInnerExpr = reduceOperands(innerExpr, inPlace, mustEvaluate, 
+                                      assumptions)
     if reducedInnerExpr == innerExpr:
         if mustEvaluate:
-            # since it wasn't irreducible to begin with, it must change in order to evaluate
-            raise EvaluationError('Unable to evaluate: ' + str(inner))
-        elif inPlace:
-            return topLevel # don't know how to simplify further
+            # Since it wasn't irreducible to begin with, it must change 
+            # in order to evaluate.
+            raise SimplificationError('Unable to evaluate: ' + str(inner))
         else:
-            return Equals(topLevel, topLevel).prove() # don't know how to simplify further
+            raise SimplificationError('Unable to simplify: ' + str(inner))
     # evaluate/simplify the reduced inner expression
     inner = reducedInnerExpr.exprHierarchy[-1]
-    innerEquiv = inner.evaluation() if mustEvaluate else inner.simplification()
+    if mustEvaluate:
+        innerEquiv = inner.evaluation(assumptions)
+    else:
+        innerEquiv = inner.simplification(assumptions)
     value = innerEquiv.rhs
     if value == TRUE:
         # Attempt to evaluate via proving the expression;
@@ -642,18 +720,24 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False, operands
     if inPlace:
         simplification = reducedSimplification
     else:
-        # via transitivity, go from the original expression to the reduced expression 
-        # (simplified inner operands) and then the final simplification (simplified inner
-        # expression).
-        simplification = Equals(topLevel, reducedSimplification.rhs).concludeViaTransitivity(assumptions)
+        # Via transitivity, go from the original expression to the 
+        # reduced expression (simplified inner operands) and then the 
+        # final simplification (simplified inner expression).
+        reduced_top_level = reducedInnerExpr.exprHierarchy[0]
+        eq1 = Equals(topLevel, reduced_top_level)
+        eq1.prove(assumptions, automation=False)
+        eq2 = Equals(reduced_top_level, reducedSimplification.rhs)
+        eq2.prove(assumptions, automation=False)
+        simplification = eq1.applyTransitivity(eq2, assumptions)
     if not inPlace and topLevel==inner:
-        # store direct simplifications in the simplifications dictionary for next time
+        # Store direct simplifications in the simplifications dictionary
+        # for next time.
         Equals.simplifications.setdefault(topLevel, set()).add(simplification)
-        if isinstance(value, IrreducibleValue):
+        if isIrreducibleValue(value):
             # also store it in the evaluations dictionary for next time
             # since it evaluated to an irreducible value.
             Equals.evaluations.setdefault(topLevel, set()).add(simplification)
-    return simplification  
+    return simplification
 
 def evaluateTruth(expr, assumptions):
     '''
@@ -673,7 +757,7 @@ def evaluateFalsehood(expr, assumptions):
     from proveit.logic import FALSE
     return Equals(expr, FALSE).prove(assumptions)
 
-class EvaluationError(Exception):
+class SimplificationError(Exception):
     def __init__(self, message):
         self.message = message
     def __str__(self):
@@ -684,11 +768,3 @@ class InversionError(Exception):
         self.message = message
     def __str__(self):
         return self.message
-
-class TransitivityException:
-    def __init__(self, expr1, expr2):
-        self.expr1 = expr1
-        self.expr2 = expr2
-    
-    def __str__(self):
-        return 'Transitivity cannot be applied unless there is something in common in the equalities'

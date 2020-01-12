@@ -1,6 +1,8 @@
 """Prove-It: general theorem prover in python"""
 
 from setuptools import setup, find_packages
+from nbstripout.install import install_nbstripout
+import sys
 
 with open("packages/proveit/_version.py") as f:
     code = compile(f.read(), "packages/proveit/_version.py", 'exec')
@@ -39,7 +41,7 @@ theorem dependencies are stored a kind of database (filesystem based).  This
 database is used to prevent circular logic.
 """
 
-setup(name='Prove-It',
+dist = setup(name='Prove-It',
       version=__version__,
       description='General theorem prover in python.',
       long_description=descriptionTxt,
@@ -52,3 +54,7 @@ setup(name='Prove-It',
       platforms = ["any"],      
       classifiers = [_f for _f in classifiers.split("\n") if _f],
      )
+
+if "develop" in sys.argv:
+    print("\nConfiguring git locally to filter jupyter notebook 'output' so only 'input' changes will be tracked.")
+    install_nbstripout(['git', 'config'])
