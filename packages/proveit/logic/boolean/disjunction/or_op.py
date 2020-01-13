@@ -511,17 +511,36 @@ class Or(Operation):
         For example, (A or B or ... or Y or Z) = (A or ... or Y or B or Z)
         via initIdx = 1 and finalIdx = -2.
         '''
-        from ._theorems_ import commutation, leftwardCommutation, rightwardCommutation
-        return apply_commutation_thm(self, initIdx, finalIdx, commutation, leftwardCommutation, rightwardCommutation, assumptions)
+        from ._theorems_ import (commutation, leftwardCommutation,
+                                 rightwardCommutation)
+        return apply_commutation_thm(self, initIdx, finalIdx, commutation,
+                                     leftwardCommutation, rightwardCommutation,
+                                     assumptions)
 
-    def groupCommutation(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
+    def groupCommutation(self, initIdx, finalIdx, length, disassociate=True,
+                         assumptions=USE_DEFAULTS):
         '''
-        Given Boolean operands, deduce that this expression is equal to a form in which the operands
-        at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
-        It will do this by performing association first.  If disassocate is True, it
-        will be disassociated afterwards.
+        Given Boolean operands, deduce that this expression is equal
+        to a form in which the operands at indices
+        [initIdx, initIdx+length) have been moved to
+        [finalIdx, finalIdx+length). It will do this by performing
+        association first. If disassociate is True, it will be
+        disassociated afterward. For example, the call
+        Or(A,B,C,D).groupCommutation(0, 1, length=2,
+                                 assumptions=inBool(A,B,C,D))
+        will conceptually follow the steps:
+        (1) associates 2 elements (i.e. length = 2) starting at index 0
+            to obtain (A V B) V C V D
+        (2) removes the element to be commuted to obtain C V D
+        (3) inserts the element to be commuted at the desire index 1 to
+            obtain C V (A V B) V D
+        (4) then disassociates to obtain C V A V B V D
+        (5) eventually producing the output:
+            {A in Bool, ..., D in Bool} |-
+            (A V B V C V D) = (C V A V B V D)
         '''
-        return groupCommutation(self, initIdx, finalIdx, length, disassociate, assumptions)
+        return groupCommutation(self, initIdx, finalIdx, length, disassociate,
+                                assumptions)
     
     def commute(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
