@@ -83,21 +83,17 @@ class InSet(Operation):
         if hasattr(self, 'membershipObject'):
             return self.membershipObject.conclude(assumptions)
               
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to form evaluation of whether (element in domain) is
         TRUE or FALSE.  If the domain has a 'membershipObject' method,
         attempt to use the 'equivalence' method from the object it generates.
         '''
         from proveit.logic import Equals, TRUE, NotInSet
-        evaluation = None
-        try: # try an 'equivalence' method (via the membership object)
-            equiv = self.membershipObject.equivalence(assumptions)
-            val = equiv.evaluation(assumptions).rhs
-            evaluation = Equals(equiv, val).prove(assumptions=assumptions)
-        except:
-            # try the default evaluation method if necessary
-            evaluation = Operation.evaluation(self, assumptions)
+        # try an 'equivalence' method (via the membership object)
+        equiv = self.membershipObject.equivalence(assumptions)
+        val = equiv.evaluation(assumptions).rhs
+        evaluation = Equals(equiv, val).prove(assumptions=assumptions)
         # try also to evaluate this by deducing membership or non-membership in case it 
         # generates a shorter proof.
         try:

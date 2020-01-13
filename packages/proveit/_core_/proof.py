@@ -119,7 +119,7 @@ class Proof:
             # Raise an UnusableProof exception when an attempt is made 
             # to use an "unusable" theorem directly or indirectly.
             raise UnusableProof(KnownTruth.theoremBeingProven, self._meaningData._unusableProof)
-        if provenTruth.proof() is self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
+        if provenTruth.proof()==self and self.isUsable(): # don't bother with side effects if this proof was born obsolete or unusable
             # May derive any side-effects that are obvious consequences arising from this truth
             # (if it has not already been processed):
             provenTruth.deriveSideEffects(defaults.assumptions)
@@ -172,16 +172,49 @@ class Proof:
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
         '''
-        Given a unique representation string, returns the list of representations
-        of Prove-It objects that are referenced.
+        Given a unique representation string, returns the list of 
+        representations of Prove-It objects that are referenced.
         '''
         # Skip the step type (and axiom/theorem name if it is either of those types)
         # which is in the beginning and followed by a ':'
         remaining = unique_rep.split(':', 1)[-1]
-        # Everything else coming between the punctuation, ';', ':', ',', '{', '}', '[', ']', is a represented object.
+        # Everything else coming between the punctuation, 
+        # ';', ':', ',', '{', '}', '[', ']', is a represented object.
         objIds = re.split("\{|\[|,|:|;|\]|\}",remaining) 
         return [objId for objId in objIds if len(objId) > 0]  
-                        
+
+    @staticmethod
+    def _showProof(context, proof_id, unique_rep):
+        '''
+        Given a unique representation string, returns a _ShowProof
+        object that mocks up a stored proof for the purposes of
+        displaying it.
+        '''
+        # Skip the step type (and axiom/theorem name if it is either of 
+        # those types) which is in the beginning and followed by a ':'
+        if unique_rep[:6] != 'Proof:':
+            raise ValueError("Invalid 'unique_rep' for Proof: %s"%unique_rep)
+        step_info, remaining = unique_rep[6:].split(':', 1)
+        # extract groups each wrapped in braces, either '{..}' or '[..]' 
+        group_strs = []
+        while len(remaining) > 0:
+            if remaining[0]==';': 
+                remaining=remaining[1:]
+            start_brace = remaining[0]
+            if start_brace not in ('{', '['):
+                raise ValueError("Invalid starting brace of 'unique_rep': %s"%remaining[0])
+            end_brace = '}' if start_brace=='{' else ']'
+            remaining=remaining[1:]
+            group_str, remaining = remaining.split(end_brace, 1)
+            group_strs.append(group_str)
+        # The id's of each group come between the punctuation:
+        # ';', ':', ','.
+        groups = []
+        for group_str in group_strs:
+            objIds = re.split(",|:|;",group_str) 
+            groups.append([objId for objId in objIds if len(objId) > 0])
+        return _ShowProof(context, proof_id, step_info, groups)
+                                                    
     def isUsable(self):
         '''
         Returns True iff this Proof is usable.  A Proof may be unusable
@@ -255,6 +288,15 @@ class Proof:
     
     def assumptions(self):
         return self.provenTruth.assumptions
+    
+    def getLink(self):
+        '''
+        Return the link to the proof notebook.  It the Proof is a
+        Theorem or Axiom, this is overridden to return the link to
+        the theorem/axiom definition.
+        '''
+        context = Context()
+        return context.proofNotebook(self)
 
     def __setattr__(self, attr, value):
         '''
@@ -294,9 +336,9 @@ class Proof:
             html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
             html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
-            if isinstance(proof, Specialization):
+            if proof.stepType()=='specialization':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
-            if isinstance(proof, Axiom) or isinstance(proof, Theorem):
+            if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
@@ -313,16 +355,17 @@ class Proof:
             out_str += proof.stepType() + '\t' + requiredProofNums + '\t'
             out_str += proof.provenTruth.string(performUsabilityCheck=False)
             out_str += '\n'
-            if isinstance(proof, Specialization):
+            if proof.stepType()=='specialization':
                 out_str += '\t' + proof._mapping('str') + '\n'
-            if isinstance(proof, Axiom) or isinstance(proof, Theorem):
+            if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
         return out_str
 
 class Assumption(Proof):
-    allAssumptions = dict() # map expression and the to assumption object
+    allAssumptions = dict() # map expression and to the assumption object
      
     def __init__(self, expr, assumptions=None):
+        assert expr not in Assumption.allAssumptions, "Do not create an Assumption object directly; use Assumption.makeAssumption instead."
         assumptions = defaults.checkedAssumptions(assumptions)
         if expr not in assumptions:
             # an Assumption proof must assume itself; that's what it does.
@@ -334,7 +377,7 @@ class Assumption(Proof):
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
-        Assumption.allAssumptions[(expr, assumptions)] = self
+        Assumption.allAssumptions[expr] = self
     
     @staticmethod
     def makeAssumption(expr, assumptions):
@@ -343,9 +386,8 @@ class Assumption(Proof):
         already exist.  assumptions must already be 'checked' and in
         tuple form.
         '''
-        key = (expr, assumptions)
-        if key in Assumption.allAssumptions:
-            preexisting = Assumption.allAssumptions[key]
+        if expr in Assumption.allAssumptions:
+            preexisting = Assumption.allAssumptions[expr]
             # The Assumption object exists already, but it's
             # side-effects may not have been derived yet under the 
             # given assumptions.
@@ -707,12 +749,16 @@ class Specialization(Proof):
         assumptions = list(defaults.checkedAssumptions(assumptions))
         prev_default_assumptions = defaults.assumptions
         defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        def raiseFailure(msg):
+            if numForallEliminations>0:
+                raise SpecializationFailure(generalTruth, specializeMap, relabelMap, assumptions, msg)
+            else:
+                raise RelabelingFailure(generalTruth, assumptions, msg)
         try:
             if relabelMap is None: relabelMap = dict()
             if specializeMap is None: specializeMap = dict()
-            Failure = SpecializationFailure if numForallEliminations>0 else RelabelingFailure
             if not isinstance(generalTruth, KnownTruth):
-                raise Failure(None, [], 'May only specialize/relabel a KnownTruth')
+                raiseFailure('May only specialize/relabel a KnownTruth')
             if generalTruth.proof() is None:
                 raise UnusableProof(KnownTruth.theoremBeingProven, generalTruth)
             if not generalTruth.assumptionsSet.issubset(assumptions):
@@ -720,7 +766,7 @@ class Specialization(Proof):
                     # if WILDCARD_ASSUMPTIONS is included, add any extra assumptions that are needed
                     _appendExtraAssumptions(assumptions, generalTruth)
                 else:
-                    raise Failure(None, [], 'Assumptions do not include the assumptions required by generalTruth')
+                    raiseFailure('Assumptions do not include the assumptions required by generalTruth')
             generalExpr = generalTruth.expr
             # perform the appropriate substitution/relabeling
             specializedExpr, requirements, mappedVarLists, mappings = Specialization._specialized_expr(generalExpr, numForallEliminations, specializeMap, relabelMap, assumptions)
@@ -737,7 +783,7 @@ class Specialization(Proof):
                         requirementTruthSet.add(requirementTruth)
                         _appendExtraAssumptions(assumptions, requirementTruth)
                 except ProofFailure:
-                    raise Failure(specializedExpr, assumptions, 'Unmet specialization requirement: ' + str(requirementExpr))
+                    raiseFailure('Unmet specialization requirement: ' + str(requirementExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
             assumptionsSet = generalTruth.assumptionsSet
             for requirementTruth in requirementTruths:
@@ -808,19 +854,19 @@ class Specialization(Proof):
         from proveit.logic import Forall
         # check that the mappings are appropriate
         for key, sub in list(relabelMap.items()):
-            Specialization._checkRelabelMapping(key, sub, assumptions)
+            Specialization._checkRelabelMapping(generalExpr, key, sub, assumptions)
             if key==sub: relabelMap.pop(key) # no need to relabel if it is unchanged
         for assumption in assumptions:
             if assumption == WILDCARD_ASSUMPTIONS: continue # ignore the wildcard for this purpose
             vars_in_violation = assumption.freeVars() & set(relabelMap.keys())
             if len(vars_in_violation) != 0:
-                raise RelabelingFailure(None, assumptions, 'Attempting to relabel variable(s) that are free in the assumptions: ' + str(vars_in_violation))
+                raise RelabelingFailure(generalExpr, assumptions, 'Attempting to relabel variable(s) that are free in the assumptions: ' + str(vars_in_violation))
         
         for key, sub in specializeMap.items():
             if not isinstance(sub, Expression):
                 raise TypeError("Expecting specialization substitutions to be 'Expression' objects")
             if key in relabelMap:
-                raise SpecializationFailure(None, assumptions, 'Attempting to specialize and relabel the same variable: %s'%str(key))
+                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'Attempting to specialize and relabel the same variable: %s'%str(key))
         
         # Eliminate the desired number of Forall operations and extracted appropriately mapped conditions
         expr = generalExpr
@@ -832,7 +878,7 @@ class Specialization(Proof):
         while remainingForallEliminations>0:
             remainingForallEliminations -= 1
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation lambdaExpr must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
@@ -848,13 +894,13 @@ class Specialization(Proof):
                 if isinstance(parameter, Iter) and subbedParam is not None:
                     expandedParameter = parameter.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
                     if len(expandedParameter) != len(subbedParam):
-                        raise SpecializationFailure(None, assumptions, "Substitution of iterated instance variables incomplete: %d length expansion versus %d length substitution"%(len(expandedParameter), len(subbedParam)))
+                        raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, "Substitution of %s incomplete: %s expanding into %s"%(parameter, subbedParam, expandedParameter))
             mappedVarLists.append(instanceVars)
             # include the mapping for the current instance variables in the partial map
             try:
                 partialMap.update({iVar:specializeMap[iVar] for iVar in instanceVars})
             except KeyError:
-                raise SpecializationFailure(None, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
+                raise SpecializationFailure(generalExpr, specializeMap, relabelMap, assumptions, 'Must specialize all of the instance variables of the Forall operations to be eliminated')
             # make substitutions in the condition
             subbedConditions += conditions.substituted(partialMap, relabelMap)
                         
@@ -876,13 +922,13 @@ class Specialization(Proof):
         return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings
 
     @staticmethod
-    def _checkRelabelMapping(key, sub, assumptions):
+    def _checkRelabelMapping(generalExpr, key, sub, assumptions):
         from proveit import Variable
         if isinstance(key, Variable):
             if not isinstance(sub, Variable):
-                raise RelabelingFailure(None, assumptions, 'May only relabel a Variable to a Variable.')
+                raise RelabelingFailure(generalExpr, assumptions, 'May only relabel a Variable to a Variable, not %s to %s'%(key, sub))
         else:
-            raise RelabelingFailure(None, assumptions, "May only relabel a Variable")                       
+            raise RelabelingFailure(generalExpr, assumptions, "May only relabel a Variable, not %s"%key)                       
 
 class Generalization(Proof):
     def __init__(self, instanceTruth, newForallVarLists, newConditions=tuple()):
@@ -960,6 +1006,70 @@ class Generalization(Proof):
             expr = expr.instanceExpr # take it another nested level if necessary
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
 
+class _ShowProof:
+    '''
+    A mocked-up quasi-Proof object just for the purposes of showing a
+    stored proof.
+    '''
+    def __init__(self, context, proof_id, stepInfo, refObjIdGroups):
+        self._style_id = proof_id
+        if '_' in stepInfo:
+            # Must be an axiom or theorem with the format
+            # axiom_context.name or theorem_context.name
+            self.step_type_str, full_name = stepInfo.split('_', 1)
+            assert self.step_type_str in ('axiom', 'theorem')
+            full_name_segments = full_name.split('.')
+            context_name = '.'.join(full_name_segments[:-1])
+            self.context =  Context.getContext(context_name)
+            self.name = full_name_segments[-1]
+        else:
+            self.context = context
+            self.step_type_str = stepInfo
+        if self.step_type_str=='specialization':
+            # Extract the mapping information.
+            self.mappedVarLists = []
+            self.mappings = dict()
+            # All but the last two groups must correspond to 
+            # mapping information.
+            for group in refObjIdGroups[:-2]:
+                var_mapping_pairs = [(context.getStoredExpr(group[i]), 
+                                      context.getStoredExpr(group[i+1])) \
+                                     for i in range(0, len(group), 2)]
+                mapping = dict(var_mapping_pairs)
+                self.mappings.update(mapping)
+                self.mappedVarLists.append(mapping.keys())
+        self.provenTruth = context.getStoredKnownTruth(refObjIdGroups[-2][0])
+        self.provenTruth._meaningData._proof = self
+        self.requiredProofs = \
+            [context.getShowProof(obj_id) for obj_id in refObjIdGroups[-1]]
+    
+    def _repr_html_(self):
+        return Proof._repr_html_(self)
+    
+    def stepType(self):
+        return self.step_type_str
+    
+    def getLink(self):
+        from ._context_storage import StoredAxiom, StoredTheorem
+        if self.step_type_str=='axiom':
+            return StoredAxiom(self.context, self.name).getDefLink()
+        elif self.step_type_str=='theorem':
+            return StoredTheorem(self.context, self.name).getProofLink()
+        else:
+            return self.context.proofNotebook(self)
+            
+    def _single_mapping(self, *args):
+        return Specialization._single_mapping(self, *args)
+
+    def _mapping(self, *args):
+        return Specialization._mapping(self, *args)
+    
+    def enumeratedProofSteps(self):
+        return Proof.enumeratedProofSteps(self)
+    
+    def isUsable(self):
+        return True
+
 class ProofFailure(Exception):
     def __init__(self, expr, assumptions, message):
         self.expr = expr
@@ -981,12 +1091,16 @@ class ModusPonensFailure(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 class SpecializationFailure(ProofFailure):
-    def __init__(self, expr, assumptions, message):
-        ProofFailure.__init__(self, expr, assumptions, message)
+    def __init__(self, general_expr, specialize_map, relabel_map, assumptions, message):
+        message = message + " when specializing %s with %s"%(general_expr, specialize_map)
+        if len(relabel_map)>0:
+            message += " and %s"%relabel_map
+        ProofFailure.__init__(self, None, assumptions, message)
 
 class RelabelingFailure(ProofFailure):
-    def __init__(self, expr, assumptions, message):
-        ProofFailure.__init__(self, expr, assumptions, message)
+    def __init__(self, general_expr, assumptions, message):
+        message = message + " when relabeling %s"%general_expr
+        ProofFailure.__init__(self, None, assumptions, message)
     
 class GeneralizationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):

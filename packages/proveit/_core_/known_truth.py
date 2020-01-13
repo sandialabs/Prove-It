@@ -78,7 +78,12 @@ class KnownTruth:
     presumingTheoremNamess = None # set of full names of presumed theorems when in use
     presumingPrefixes = None # set of context names or full theorem names when in use.
     qedInProgress = False # set to true when "%qed" is in progress
-
+    
+    # Set of (style-id, Proof) tuples of hyperlinked Proofs for
+    # KnownTruths that are displayed.  We need to add reference counts
+    # to these.
+    hyperlinked_proof_styles = set()
+    
     # KnownTruths for which deriveSideEffects is in progress, tracked to prevent infinite
     # recursion when deducing side effects after something is proven.
     in_progress_to_derive_sideeffects = set() 
@@ -96,6 +101,7 @@ class KnownTruth:
         KnownTruth.presumingTheorems = None
         KnownTruth.presumingPrefixes = None
         KnownTruth.qedInProgress = False
+        KnownTruth.hyperlinked_proof_styles.clear()
         _ExprProofs.all_expr_proofs.clear()
         assert len(KnownTruth.in_progress_to_derive_sideeffects)==0, "Unexpected remnant 'in_progress_to_derive_sideeffects' items (should have been temporary)"
 
@@ -174,6 +180,7 @@ class KnownTruth:
         from .proof import ProofFailure
         if not defaults.automation:
             return # automation disabled
+        #print("proven", self)
         # Sort the assumptions according to hash key so that sets of assumptions
         # are unique for determining which side-effects have been processed already.
         sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
@@ -184,6 +191,7 @@ class KnownTruth:
             KnownTruth.in_progress_to_derive_sideeffects.add(self)
             try:
                 for sideEffect in self.expr.sideEffects(self):
+                    #print(self, "side-effect", sideEffect)
                     # Attempt each side-effect derivation, specific to the
                     # type of Expression.
                     try:
@@ -735,7 +743,7 @@ class KnownTruth:
             elif isinstance(key, Variable):
                 processedSubMap[key] = sub
             else:
-                raise SpecializationFailure(None, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
+                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
         remainingSubVars = set(processedSubMap.keys())
         
         # Determine the number of Forall eliminations.  There must be at least
@@ -747,7 +755,7 @@ class KnownTruth:
         while numForallEliminations==0 or len(remainingSubVars) > 0:
             numForallEliminations += 1
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(None, assumptions, 'May only specialize instance variables of directly nested Forall operations')
+                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation operand must be a Lambda function"
             instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
@@ -843,12 +851,25 @@ class KnownTruth:
         double-turnstyle notation to show that the set of assumptions proves
         the statement/expression.  Otherwise, simply display the expression.
         '''
-        from proveit import ExprList
+        from proveit import ExprTuple
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
         if len(self.assumptions) > 0:
-            assumptionsStr = ExprList(*self.assumptions).formatted('string', fence=False)
-            return r'{' +assumptionsStr + r'} |= ' + self.expr.string()
-        return r'|= ' + self.expr.string()
+            assumptionsStr = ExprTuple(*self.assumptions).formatted('string', fence=False)
+            return r'{' +assumptionsStr + r'} |- ' + self.expr.string()
+        return r'|- ' + self.expr.string()
+
+    def latex(self, performUsabilityCheck=True):
+        '''
+        If the KnownTruth was proven under any assumptions, display the 
+        double-turnstyle notation to show that the set of assumptions proves
+        the statement/expression.  Otherwise, simply display the expression.
+        '''
+        from proveit import ExprTuple
+        if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
+        if len(self.assumptions) > 0:
+            assumptionsLatex = ExprTuple(*self.assumptions).formatted('latex', fence=False)
+            return r'{' +assumptionsLatex + r'} \vdash ' + self.expr.latex()
+        return r'\vdash ' + self.expr.string()
 
     def __str__(self):
         '''
@@ -874,10 +895,20 @@ class KnownTruth:
         from proveit.logic import Set
         if not self.isUsable(): self.raiseUnusableProof()
         html = ''
+        proof = self.proof()
         html += '<span style="font-size:20px;">'
         if len(self.assumptions) > 0:
             html += Set(*self.assumptions)._repr_html_()
-        html += ' &#x22A2;&nbsp;' # turnstile symbol
+        html += ' '
+        if proof is not None:
+            # link to the proof
+            html += '<a href="%s" style="text-decoration: none">'%proof.getLink()
+            # Record as a proof of a "displayed" (style-specific) 
+            # KnownTruth.
+            KnownTruth.hyperlinked_proof_styles.add((proof._style_id, proof)) 
+        html += '&#x22A2;&nbsp;' # turnstile symbol
+        if proof is not None:
+            html += '</a>'
         html += self.expr._repr_html_()
         html += '</span>'
         return html

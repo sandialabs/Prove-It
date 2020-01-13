@@ -1,14 +1,66 @@
-from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex
+from proveit import Literal, Operation, maybeFencedString, maybeFencedLatex, InnerExpr, USE_DEFAULTS, ProofFailure
+from proveit.logic import isIrreducibleValue
 from proveit.number.sets import Integers, Reals, Complexes
-from proveit._common_ import a, x, y
+from proveit._common_ import a, b, m, n, x, y, xx, AA, B, CC
 
 class Neg(Operation):
     # operator of the Neg operation.
-    _operator_ = Literal(stringFormat='Neg', context=__file__)
+    _operator_ = Literal(stringFormat='-', context=__file__)
     
     def __init__(self,A):
         Operation.__init__(self, Neg._operator_, A)
     
+    def irreducibleValue(self):
+        from proveit.number import zero
+        return isIrreducibleValue(self.operand) and self.operand != zero
+        
+    def deduceInNumberSet(self, NumberSet, assumptions=USE_DEFAULTS):
+        '''
+        given a number set, attempt to prove that the given expression is in that
+        number set using the appropriate closure theorem
+        '''
+        from ._theorems_ import intClosure, realClosure, complexClosure
+        from proveit.logic import InSet
+        if NumberSet == Integers:
+            return intClosure.specialize({a:self.operand})
+        elif NumberSet == Reals:
+            return realClosure.specialize({a:self.operand})
+        elif NumberSet == Complexes:
+            return complexClosure.specialize({a:self.operand})
+        else:
+            raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
+    
+    def simplification(self, assumptions=USE_DEFAULTS):
+        '''
+        Derive and return this negation expression equated with a simpler form.
+        Deals with double negation specifically.
+        '''
+        from proveit.number import zero
+        from proveit.logic import Equals
+        from ._theorems_ import doubleNegation
+        from proveit.relation import TransRelUpdater
+        
+        # Handle double negation:
+        if isinstance(self.operand, Neg):
+            expr = self
+            eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
+            
+            # simplify double negation
+            expr = eq.update(self.doubleNegSimplification(assumptions))
+            # simplify what is inside the double-negation.
+            expr = eq.update(expr.simplification(assumptions))
+            return eq.relation
+        
+        # otherwise, just use the default simplification
+        return Operation.simplification(self, assumptions)
+    
+    def doubleNegSimplification(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import doubleNegation
+        assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)
+        return doubleNegation.specialize({x:self.operand.operand}, assumptions)
+        
+    
+    """
     def _closureTheorem(self, numberSet):
         import _theorems_
         if numberSet == Complexes:
@@ -29,6 +81,7 @@ class Neg(Operation):
     def _notEqZeroTheorem(self):
         import _theorems_
         return _theorems_.negNotEqZero
+    """
     
     def asInt(self):
         '''
@@ -36,7 +89,7 @@ class Neg(Operation):
         only works if the operand is a literal int.
         '''
         return -self.operand.asInt()    
-    
+    """
     def simplification(self, assumptions=frozenset()):
         '''
         For trivial cases, double negation or negating zero,
@@ -44,12 +97,14 @@ class Neg(Operation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         from ._theorems_ import negNeg, negZero
-        
+        from proveit.number import zero
+        from proveit.logic import Equals
         if isinstance(self.operand, Neg):
             deduceInComplexes(self.operand.operand, assumptions)
             return negNeg.specialize({a:self.operand.operand}).checked(assumptions)
         elif self.operand == zero:
             return negZero
+        return Equals(self, self)
         raise ValueError('Only trivial simplification is implemented (double negation or negating zero)')
         
     def simplified(self, assumptions=frozenset()):
@@ -59,42 +114,48 @@ class Neg(Operation):
         Assumptions may be necessary to deduce necessary conditions for the simplification.
         '''
         return self.simplification(assumptions).rhs
-    
+    """
     def string(self, **kwargs):
         return maybeFencedString('-'+self.operand.string(fence=True), **kwargs)
 
     def latex(self, **kwargs):
         return maybeFencedLatex('-'+self.operand.latex(fence=True), **kwargs)
 
-    def distribute(self, assumptions=frozenset()):
+    def distribution(self, assumptions=USE_DEFAULTS):
         '''
-        Distribute negation through a sum.
+        Distribute negation through a sum, deducing and returning
+        the equality between the original and distributed forms.
         '''
-        from .theorems import distributeNegThroughSum, distributeNegThroughSubtract
-        from proveit.number import Add, Sub
+        from ._theorems_ import distributeNegThroughBinarySum
+        from ._theorems_ import distributeNegThroughSubtract, distributeNegThroughSum
+        from proveit.number import Add, num
+        from proveit.relation import TransRelUpdater
+        expr = self
+        eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
+        
         if isinstance(self.operand, Add):
-            deduceInComplexes(self.operand.operands, assumptions)
-            # distribute the negation over the sum
-            eqn = Equation(distributeNegThroughSum.specialize({xEtc:self.operand.operands}))
-            # try to simplify each term
-            expr = eqn.eqExpr.rhs
-            dummyVar = self.safeDummyVar()
-            negatedTerms = [term for term in expr.operands]
-            for k, negatedTerm in enumerate(negatedTerms):
-                try:
-                    negTermSimplification = negatedTerm.simplification(assumptions)
-                    eqn.update(negTermSimplification.substitution(Add(*(expr.terms[:k] + [dummyVar] + expr.terms[k+1:])), dummyVar)).checked(assumptions)
-                    expr = eqn.eqExpr.rhs
-                except:
-                    pass # skip over                     
-            return eqn.eqExpr.checked(assumptions)
-        elif isinstance(self.operand, Sub):
-            deduceInComplexes(self.operand.operands, assumptions)
-            return distributeNegThroughSubtract.specialize({x:self.operand.operands[0], y:self.operand.operands[1]}).checked(assumptions)
+            # Distribute negation through a sum.
+            add_expr = self.operand
+            if len(add_expr.operands)==2:
+                # special case of 2 operands
+                if isinstance(add_expr.operands[1], Neg):
+                    expr = eq.update(distributeNegThroughSubtract.specialize({a:add_expr.operands[0], b:add_expr.operands[1].operand}, assumptions=assumptions))
+                else:                    
+                    expr = eq.update(distributeNegThroughBinarySum.specialize({a:add_expr.operands[0], b:add_expr.operands[1]}, assumptions=assumptions))
+            else:
+                # distribute the negation over the sum
+                expr = eq.update(distributeNegThroughSum.specialize({n:num(len(add_expr.operands)), xx:add_expr.operands}), assumptions=assumptions)
+            assert isinstance(expr, Add), "distributeNeg theorems are expected to yield an Add expression"
+            # check for double negation
+            for k, operand in enumerate(expr.operands):
+                assert isinstance(operand, Neg), "Each term from distributeNegThroughSum is expected to be negated"
+                if isinstance(operand.operand, Neg):
+                    expr = eq.update(expr.innerExpr().operands[k].doubleNegSimplification())
+            return eq.relation
         else:
             raise Exception('Only negation distribution through a sum or subtract is implemented')
 
-    def factor(self,operand,pull="left", groupFactor=None, groupRemainder=None, assumptions=frozenset()):
+    def factorization(self, theFactor, pull="left", groupFactor=None, groupRemainder=None, assumptions=USE_DEFAULTS):
         '''
         Pull out a factor from a negated expression, pulling it either to the "left" or "right".
         groupFactor and groupRemainder are not relevant but kept for compatibility with 
@@ -104,23 +165,62 @@ class Neg(Operation):
         the associative and commutation theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''
-        from .theorems import negTimesPosRev, posTimesNegRev
-        if isinstance(operand, Neg):
+        from ._theorems_ import negTimesPos, posTimesNeg, multNegOneLeft, multNegOneRight
+        if isinstance(theFactor, Neg):
             if pull == 'left':
-                thm = negTimesPosRev
+                thm = negTimesPos
             else:
-                thm = posTimesNegRev
-            operand = operand.operand
+                thm = posTimesNeg
+            theFactor = theFactor.operand
         else:
             if pull == 'left':
-                thm = posTimesNegRev
+                thm = posTimesNeg
             else:
-                thm = negTimesPosRev
-        operandFactorEqn = self.operand.factor(operand, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
-        # in this instance, the automated way is safe because there is no other operand:
-        eqn1 = operandFactorEqn.substitution(self) 
-        deduceInComplexes(operandFactorEqn.rhs.operands, assumptions)
-        eqn2 = thm.specialize({x:operandFactorEqn.rhs.operands[0], y:operandFactorEqn.rhs.operands[1]})
-        return eqn1.applyTransitivity(eqn2)
+                thm = negTimesPos
+        if hasattr(self.operand, 'factor'):
+            operandFactorEqn = self.operand.factor(theFactor, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
+            eqn1 = operandFactorEqn.substitution(self.innerExpr().operand) 
+            new_operand = operandFactorEqn.rhs
+            eqn2 = thm.specialize({x:new_operand.operands[0], y:new_operand.operands[1]}, assumptions=assumptions).deriveReversed(assumptions)
+            return eqn1.applyTransitivity(eqn2)
+        else:
+            if self.operand != theFactor:
+                raise ValueError("%s is a factor in %s!"%(theFactor, self))     
+            if thm==negTimesPos: thm=multNegOneLeft
+            if thm==posTimesNeg: thm=multNegOneRight
+            return thm.specialize({x:self.operand}, assumptions=assumptions).deriveReversed(assumptions)
+
+    def innerNegMultSimplification(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        Equivalence method to derive a simplification when negating
+        a multiplication with a negated factor.  For example,
+        -(a*b*(-c)*d) = a*b*c*d.
+        See Mult.negSimplification where this may be used indirectly.
+        '''
+        from proveit.number import Mult, num
+        from ._theorems_ import multNegLeftDouble, multNegRightDouble, multNegAnyDouble
         
+        mult_expr = self.operand
+        if not isinstance(mult_expr, Mult):
+            raise ValueError("Operand expected to be a Mult expression for %s"%(idx, str(self)))            
+        if not isinstance(mult_expr.operands[idx], Neg):
+            raise ValueError("Operand at the index %d expected to be a negation for %s"%(idx, str(mult_expr)))
+        
+        if len(mult_expr.operands)==2:
+            if idx==0:
+                return multNegLeftDouble.specialize({a:mult_expr.operands[1]}, assumptions=assumptions)
+            else:
+                return multNegRightDouble.specialize({a:mult_expr.operands[0]}, assumptions=assumptions)
+        aVal = mult_expr.operands[:idx]
+        bVal = mult_expr.operands[idx]
+        cVal = mult_expr.operands[idx+1:]
+        mVal = num(len(aVal))
+        nVal = num(len(cVal))
+        return multNegAnyDouble.specialize({m:mVal, n:nVal, AA:aVal, B:bVal, CC:cVal}, assumptions=assumptions)
+
+# Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(Neg, 'doubleNegSimplification', 'doubleNegSimplified', 'doubleNegSimplify')
+InnerExpr.register_equivalence_method(Neg, 'distribution', 'distributed', 'distribute')
+InnerExpr.register_equivalence_method(Neg, 'factorization', 'factorized', 'factor')
+InnerExpr.register_equivalence_method(Neg, 'innerNegMultSimplification', 'innerNegMultSimplified', 'innerNegMultSimplify')
 

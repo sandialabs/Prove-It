@@ -8,6 +8,11 @@ _theorems_.py
 *~stashed~*.ipynb
 *.html
 *.tar.gz
+*.aux
+*.log
+*.pdf
+*.zip
+_mode_.txt
 notebook.css
 doc/api
 doc/doctrees

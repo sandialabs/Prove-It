@@ -23,11 +23,11 @@ class Div(Operation):
             kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
             return maybeFencedLatex(r'\frac{'+self.numerator.latex()+'}{'+self.denominator.latex()+'}', **kwargs)
         else:
-            return Operation.latex(**kwargs) # normal division
+            return Operation.latex(self,**kwargs) # normal division
     
     def remakeConstructor(self):
         if self.getStyle('division') == 'fraction':
-            return 'Frac' # use a different constructor if using the fraction style
+            return 'frac' # use a different constructor if using the fraction style
         return Operation.remakeConstructor(self)
 
     def _closureTheorem(self, numberSet):
@@ -55,7 +55,7 @@ class Div(Operation):
                     return fracIntExp.specialize({n:exponent}).specialize({a:self.numerator.base, b:self.denominator.base})
         raise Exception('Unable to combine exponents of this fraction')
         
-    def cancel(self,operand, pull="left", assumptions=frozenset()):
+    def cancellation(self, operand, pull="left", assumptions=frozenset()):
         from proveit.number import Mult
         if self.numerator == self.denominator == operand:
             # x/x = 1
@@ -64,15 +64,15 @@ class Div(Operation):
         
         if not isinstance(self.numerator,Mult):
             from ._theorems_ import fracCancelNumerLeft
-            newEq0 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
+            newEq0 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(frac(self.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             newEq1 = fracCancelNumerLeft.specialize({x:operand,y:newEq0.rhs.denominator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
             
         assert isinstance(self.numerator,Mult)
         if isinstance(self.denominator,Mult):
             from ._theorems_ import fracCancelLeft
-            newEq0 = self.numerator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
-            newEq1 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
+            newEq0 = self.numerator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(frac(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
+            newEq1 = self.denominator.factor(operand, pull = pull, groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(frac(newEq0.rhs.numerator,safeDummyVar(self)),safeDummyVar(self)).checked(assumptions)
             newEq2 = fracCancelLeft.specialize({x:operand,y:newEq1.rhs.numerator.operands[1],z:newEq1.rhs.denominator.operands[1]})
             return newEq0.applyTransitivity(newEq1).applyTransitivity(newEq2)
 #            newFracIntermediate = self.numerator.factor(operand).proven().subRightSideInto(self)
@@ -82,14 +82,14 @@ class Div(Operation):
 #            return fracCancel1.specialize({x:operand,Etcetera(y):numRemainingOps,Etcetera(z):denomRemainingOps})
         else:
             from ._theorems_ import fracCancelDenomLeft
-            newEq0 = self.numerator.factor(operand,pull=pull,groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(Fraction(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
+            newEq0 = self.numerator.factor(operand,pull=pull,groupFactor = True, groupRemainder = True, assumptions=assumptions).substitution(frac(safeDummyVar(self),self.denominator),safeDummyVar(self)).checked(assumptions)
             newEq1 = fracCancelDenomLeft.specialize({x:operand,y:newEq0.rhs.numerator.operands[1]})
             return newEq0.applyTransitivity(newEq1)
 #            newFrac = self.numerator.factor(operand).proven().subRightSideInto(self)
 #            numRemainingOps = newFrac.numerator.operands[1:]
 #            return fracCancel2.specialize({x:operand,Etcetera(y):numRemainingOps})
 
-    def distribute(self, assumptions=frozenset()):
+    def distribution(self, assumptions=frozenset()):
         r'''
         Distribute the denominator through the numerate.  
         Returns the equality that equates self to this new version.
@@ -100,12 +100,12 @@ class Div(Operation):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.            
         '''
-        from proveit.number import Add, Subtract, Sum
-        from ._theorems_ import distributeFractionThroughSum, distributeFractionThroughSubtract, distributeFractionThroughSummation
+        from proveit.number import Add, subtract, Sum
+        from ._theorems_ import distributefracThroughSum, distributefracThroughSubtract, distributefracThroughSummation
         if isinstance(self.numerator, Add):
-            return distributeFractionThroughSum.specialize({xEtc:self.numerator.operands, y:self.denominator})
-        elif isinstance(self.numerator, Subtract):
-            return distributeFractionThroughSubtract.specialize({x:self.numerator.operands[0], y:self.numerator.operands[1], z:self.denominator})
+            return distributefracThroughSum.specialize({xEtc:self.numerator.operands, y:self.denominator})
+        elif isinstance(self.numerator, subtract):
+            return distributefracThroughSubtract.specialize({x:self.numerator.operands[0], y:self.numerator.operands[1], z:self.denominator})
         elif isinstance(self.numerator, Sum):
             # Should deduce in Complexes, but distributeThroughSummation doesn't have a domain restriction right now
             # because this is a little tricky.   To do.
@@ -114,7 +114,7 @@ class Div(Operation):
             Pop, Pop_sub = Operation(P, self.numerator.indices), self.numerator.summand
             S_sub = self.numerator.domain
             dummyVar = safeDummyVar(self)            
-            spec1 = distributeFractionThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, z:dummyVar})
+            spec1 = distributefracThroughSummation.specialize({Pop:Pop_sub, S:S_sub, yEtc:yEtcSub, z:dummyVar})
             return spec1.deriveConclusion().specialize({dummyVar:self.denominator})
         else:
             raise Exception("Unsupported operand type to distribute over: " + self.numerator.__class__)
@@ -134,16 +134,16 @@ class Div(Operation):
         from proveit.number import Mult, num
         dummyVar = safeDummyVar(self)
         eqns = []
-        if isinstance(theFactor, Frac):
+        if isinstance(theFactor, frac):
             # factor the operand denominator out of self's denominator
             denomFactorEqn = self.denominator.factor(theFactor.denominator, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
             factoredDenom = denomFactorEqn.rhs
-            eqns.append(denomFactorEqn.substitution(Frac(self.numerator, dummyVar), dummyVar))
+            eqns.append(denomFactorEqn.substitution(frac(self.numerator, dummyVar), dummyVar))
             if theFactor.numerator != num(1) and self.numerator != num(1):
                 # factor the operand numerator out of self's numerator
                 numerFactorEqn = self.numerator.factor(theFactor.numerator, pull, groupFactor=True, groupRemainder=True, assumptions=assumptions)
                 factoredNumer = numerFactorEqn.rhs
-                eqns.append(numerFactorEqn.substitution(Frac(dummyVar, factoredDenom), dummyVar))
+                eqns.append(numerFactorEqn.substitution(frac(dummyVar, factoredDenom), dummyVar))
                 # factor the two fractions
                 eqns.append(prodOfFracsRev.specialize({x:factoredNumer.operands[0], y:factoredNumer.operands[1], 
                                                     z:factoredDenom.operands[0], w:factoredDenom.operands[1]}))
@@ -158,7 +158,7 @@ class Div(Operation):
         else:
             numerFactorEqn = self.numerator.factor(theFactor, pull, groupFactor=False, groupRemainder=True, assumptions=assumptions)
             factoredNumer = numerFactorEqn.rhs
-            eqns.append(numerFactorEqn.substitution(Frac(dummyVar, self.denominator), dummyVar))
+            eqns.append(numerFactorEqn.substitution(frac(dummyVar, self.denominator), dummyVar))
             # factor the numerator factor from the fraction
             if pull == 'left':
                 wEtcSub = factoredNumer.operands[:-1]
@@ -178,5 +178,5 @@ class Div(Operation):
         return Equals(eqns[0].lhs, eqns[-1].rhs).prove(assumptions)
     """
 
-def Frac(numer, denom):
+def frac(numer, denom):
     return Div(numer, denom).withStyles(division='fraction')

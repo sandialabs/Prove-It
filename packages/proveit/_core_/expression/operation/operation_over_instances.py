@@ -1,6 +1,6 @@
 from proveit._core_.expression import Expression
 from proveit._core_.expression.lambda_expr import Lambda
-from proveit._core_.expression.composite import ExprList, singleOrCompositeExpression, compositeExpression
+from proveit._core_.expression.composite import ExprTuple, singleOrCompositeExpression, compositeExpression
 from .operation import Operation
 
 class OperationOverInstances(Operation):
@@ -18,7 +18,7 @@ class OperationOverInstances(Operation):
     '''
     _init_argname_mapping_ = {'instanceVarOrVars':'instanceVarOrVars', 'instanceExpr':'instanceExpr', 'domain':'domain', 'domains':'domains', 'conditions':'conditions'}
     
-    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=dict()):
+    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=None):
         '''
         Create an Operation for the given operator that is applied over instances of the 
         given instance Variable(s), instanceVarOrVars, for the given instance Expression, 
@@ -50,6 +50,8 @@ class OperationOverInstances(Operation):
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         instanceVars = compositeExpression(instanceVarOrVars)
+        
+        if styles is None: styles=dict()
         
         if len(instanceVars)==0:
             raise ValueError("Expecting at least one instance variable when constructing an OperationOverInstances")
@@ -84,7 +86,7 @@ class OperationOverInstances(Operation):
         else:
             domain = domains = None
             nondomain_conditions = conditions
-                
+        
         if len(instanceVars) > 1:
             if nestMultiIvars:
                 # "inner" instance variable are all but the first one.
@@ -112,7 +114,7 @@ class OperationOverInstances(Operation):
                 
                 # the instance expression at this level should be the OperationOverInstances at the next level.
                 innerOperand = self._createOperand(inner_instance_vars, instanceExpr, conditions=inner_conditions)
-                instanceExpr = self.__class__._make(['Operation'], styles, [operator, innerOperand])
+                instanceExpr = self.__class__._make(['Operation'], dict(styles), [operator, innerOperand])
                 styles['instance_vars'] = 'join_next' # combine instance variables in the style
                 instanceVarOrVars = instanceVar = instanceVars[0]
             else:
@@ -149,7 +151,7 @@ class OperationOverInstances(Operation):
                 if all(domain==domains[0] for domain in domains):
                     self.domain_or_domains = self.domain = domains[0] # all the same domain
                 else:
-                    self.domain_or_domains = self.domains = ExprList(*domains)
+                    self.domain_or_domains = self.domains = ExprTuple(*domains)
         """
     
     def hasDomain(self):
@@ -210,7 +212,7 @@ class OperationOverInstances(Operation):
             if domains == [self.domain]*len(domains):
                 return self.domain if argName=='domain' else None
             elif not None in domains:
-                return ExprList(*domains) if argName=='domains' else None
+                return ExprTuple(*domains) if argName=='domains' else None
             return None
         elif argName=='conditions':
             # return the joined conditions excluding domain conditions
@@ -416,12 +418,12 @@ class OperationOverInstances(Operation):
         '''
         # override this default as desired
         explicitIvars = list(self.explicitInstanceVars()) # the (joined) instance vars to show explicitly
-        explicitConditions = ExprList(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
-        explicitDomains = ExprList(*self.explicitDomains()) # the (joined) domains
+        explicitConditions = ExprTuple(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
+        explicitDomains = ExprTuple(*self.explicitDomains()) # the (joined) domains
         explicitInstanceExpr = self.explicitInstanceExpr() # left over after joining instnace vars according to the style
         hasExplicitIvars = (len(explicitIvars) > 0)
         hasExplicitConditions = (len(explicitConditions) > 0)
-        hasMultiDomain = (len(explicitDomains)>1 and explicitDomains != ExprList(*[self.domain]*len(explicitDomains)))
+        hasMultiDomain = (len(explicitDomains)>1 and explicitDomains != ExprTuple(*[self.domain]*len(explicitDomains)))
         outStr = ''
         formattedVars = ', '.join([var.formatted(formatType, abbrev=True) for var in explicitIvars])
         if formatType == 'string':
@@ -433,7 +435,7 @@ class OperationOverInstances(Operation):
             if hasMultiDomain or self.domain is not None:
                 outStr += ' in '
                 if hasMultiDomain:
-                    outStr += explicitDomains.formatted(formatType, formattedOperator='*', fence=False)
+                    outStr += explicitDomains.formatted(formatType, operatorOrOperators='*', fence=False)
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)                    
             if hasExplicitConditions:
@@ -451,7 +453,7 @@ class OperationOverInstances(Operation):
             if hasMultiDomain or self.domain is not None:
                 outStr += r' \in '
                 if hasMultiDomain:
-                    outStr += explicitDomains.formatted(formatType, formattedOperator=r'\times', fence=False)
+                    outStr += explicitDomains.formatted(formatType, operatorOrOperators=r'\times', fence=False)
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)
             if hasExplicitConditions:

@@ -1,11 +1,17 @@
-from proveit import Literal
+from proveit import Literal, USE_DEFAULTS
+from proveit.logic import IrreducibleValue, Equals
 
-class ImaginaryLiteral(Literal):
+class ImaginaryLiteral(IrreducibleValue, Literal):
     _inComplexesStmts = None # initializes when needed
 
     def __init__(self):
         Literal.__init__(self, 'i', context=__file__)
-    
+
+    def evalEquality(self, other, assumptions=USE_DEFAULTS):
+        if other==self:
+            return Equals(self, self).prove()
+        pass # need axioms/theorems to prove inequality amongst different numerals
+        
     def deduceInComplexes(self):
         if ComplexLiteral._inComplexesStmts is None:
             from complex.theorems import iInComplexes

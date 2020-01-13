@@ -1,11 +1,12 @@
 # Core Prove-It constructs required used to construct/verify proofs.
 
-from .expression import Expression, InnerExpr, Operation, OperationError, Function, OperationSequence, OperationOverInstances
+from .expression import Expression, InnerExpr
+from .expression import Operation, OperationError, Function, OperationSequence, OperationOverInstances
 from .expression import Lambda, LambdaError, ParameterExtractionError, Label, Variable, Literal, DuplicateLiteralError
 from .expression import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from .expression import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation
 from .expression import Composite, compositeExpression, singleOrCompositeExpression
-from .expression import ExprList, ExprListError, ExprTensor, NamedExprs, Indexed, IndexedError, Iter, varIter
+from .expression import ExprTuple, ExprTupleError, ExprArray, NamedExprs, Indexed, IndexedError, Iter, varIter
 from .expression import StyleOptions, maybeFencedString, maybeFencedLatex, maybeFenced
 from .known_truth import KnownTruth, asExpression, asExpressions
 from .defaults import defaults, USE_DEFAULTS, InvalidAssumptions

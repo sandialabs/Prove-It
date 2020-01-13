@@ -32,7 +32,7 @@ class ScalarProd(BinaryOperation):
         self.scalar = operands[0]
         self.scaled = operands[1]
 
-    def simplification(self):
+    def doReducedSimplification(self):
         '''
         For the trivial case a nested scalar product, derive and return this scalar product
         expression equated with a simplified form.
@@ -41,6 +41,7 @@ class ScalarProd(BinaryOperation):
         if isinstance(self.scaled, ScalarProd):
             eq = Equation()
             expr = self
+            '''
             try:
                 # try to simplify it more with recursion
                 innerSimpl = self.scaled.simplication()
@@ -49,18 +50,11 @@ class ScalarProd(BinaryOperation):
                 expr = eq.eqExpr.rhs
             except:
                 pass
+            '''
             eq.update(doublyScaledAsSinglyScaled.specialize({x:expr.scaled.scaled}).specialize({alpha:expr.scalar, beta:expr.scaled.scalar}))
             return eq.eqExpr
         else:
             raise ValueError('Only trivial simplification is implemented (nested scalar products)')
-
-    def simplified(self):
-        '''
-        For the trivial case a nested scalar product, derive this scalar product
-        expression equated with a simplified form, and return the simplified form.
-        and return the simplified form.
-        '''
-        return self.simplification().rhs
 
     def factor(self, scalar):
         '''
