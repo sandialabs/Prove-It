@@ -856,6 +856,7 @@ class ContextStorage:
         # re-written (if we did not know it was a special expression before).
         try:
             expr_address = self.context.specialExprAddress(expr)
+            special_name = expr_address[-1].split('.')[0] # strip off ".expr"
         except KeyError:
             expr_address = None
         needs_rewriting = False
@@ -864,7 +865,7 @@ class ContextStorage:
             if not os.path.isfile(special_expr_name_filename):
                 needs_rewriting = True
                 with open(special_expr_name_filename, 'w') as nameFile:
-                    nameFile.write(expr_address[-1])
+                    nameFile.write(special_name)
                 special_expr_kind_filename = os.path.join(self.pv_it_dir, hash_directory, 'kind.txt')
                 with open(special_expr_kind_filename, 'w') as kindFile:
                     kindFile.write(expr_address[0])                
@@ -872,7 +873,6 @@ class ContextStorage:
         if not needs_rewriting and os.path.isfile(filename):
             return relurl(filename) # return the existing expression notebook file
         elif os.path.isfile(filename):
-            special_name = expr_address[-1].split('.')[0] # strip off ".expr"
             # Store the original version as orig_expr.ipynb.  It will be
             # resurrected if the expression is no longer "special" but still used.
             orig_notebook_filename = os.path.join(self.pv_it_dir, hash_directory, 'orig_expr.ipynb')
@@ -914,10 +914,12 @@ class ContextStorage:
                 item_names[expr_class] = module_name+'.'+constructor
         for namedExprAndStyleId, namedExprAddress in named_subexpr_addresses.items():
             if isinstance(namedExprAddress[0], str):
-                # Must be a special expression (axiom, theorem, or common expression)
-                module_name = namedExprAddress[0]
+                # Must be a special expression (axiom, theorem, 
+                module_name = namedExprAddress[0] # or common expression)
                 item_names[namedExprAndStyleId] = itemName = namedExprAddress[-1]
-                objName = itemName.split('.')[0] # split of '.expr' part if it is a Theorem or Axiom KnownTruth
+                 # Split off '.expr' part if it is a Theorem or Axiom 
+                 # KnownTruth
+                objName = itemName.split('.')[0]
                 module_name = self._moduleAbbreviatedName(module_name, objName)
                 is_unique = (len(named_items[itemName]) == 1)
                 from_imports.setdefault(module_name, []).append(objName)
