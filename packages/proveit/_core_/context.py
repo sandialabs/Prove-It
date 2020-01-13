@@ -263,7 +263,7 @@ class Context:
         '''
         return self._storage.cyclicallyReferencedCommonExprContext()
         
-    def referenceDisplayedExpressions(self, name, clear=False):
+    def referenceHyperlinkedObjects(self, name, clear=False):
         '''
         Reference displayed expressions, recorded under the given name
         in the __pv_it directory.  If the same name is reused,
@@ -272,7 +272,7 @@ class Context:
         If clear is True, remove all of the references and the
         file that stores these references.
         '''
-        self._storage.referenceDisplayedExpressions(name, clear)
+        self._storage.referenceHyperlinkedObjects(name, clear)
                             
     def getAxiom(self, name):
         '''
@@ -329,19 +329,29 @@ class Context:
             name = name + '.expr'
         return kind, self._storage._specialExprModules[kind], name
     
-    def proofNotebook(self, theoremName, expr):
+    def proofNotebook(self, proof):
         '''
-        Return the path of the proof notebook for a theorem with the given
-        name and expression, creating it if it does not already exist.
+        Return the "basic" proof notebook corresponding to the given 
+        proof_id.  Note, this is different than a "theorem" proof
+        notebook which generates the proof.  This just shows the
+        proof as Prove-It stores it.
         '''
-        return self._storage.proofNotebook(theoremName, expr)
+        return self._storage.proofNotebook(proof)    
+    
+    def thmProofNotebook(self, theoremName, expr):
+        '''
+        Return the path of the proof notebook for a theorem with the 
+        given name and expression, creating it if it does not already 
+        exist.
+        '''
+        return self._storage.thmProofNotebook(theoremName, expr)
 
-    def stashExtraneousProofNotebooks(self):
+    def stashExtraneousThmProofNotebooks(self):
         '''
         For any proof notebooks for theorem names not included in the context, 
         stash them or remove them if they are generic notebooks.
         '''
-        self._storage.stashExtraneousProofNotebooks(self.theoremNames())
+        self._storage.stashExtraneousThmProofNotebooks(self.theoremNames())
                 
     def expressionNotebook(self, expr, unofficialNameKindContext=None):
         '''
@@ -385,10 +395,22 @@ class Context:
     
     def getStoredExpr(self, expr_id):
         '''
-        Return the stored Expression with the given id (hash string) along
-        with the relative url to its png.
+        Return the stored Expression with the given id (hash string).
         '''
         return self._storage.makeExpression(expr_id)
+    
+    def getStoredKnownTruth(self, truth_id):
+        '''
+        Return the stored KnownTruth with the given id (hash string).
+        '''
+        return self._storage.makeKnownTruth(truth_id)
+    
+    def getShowProof(self, proof_id):
+        '''
+        Return the _ShowProof representing the proof with the 
+        given id (hash string) for display purposes.
+        '''
+        return self._storage.makeShowProof(proof_id)
     
     def _stored_png(self, expr, latex, configLatexToolFn):
         '''
@@ -417,7 +439,7 @@ class Context:
         self._setTheorems([], dict())
         self._setAxioms([], dict())
         self._setCommonExpressions([], dict())
-        self._storage.clearDisplayedExpressionReferences()
+        self._storage.clearHyperlinkedObjectReferences()
         self.clean()
         
     def clearAll(self):
