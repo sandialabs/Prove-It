@@ -28,14 +28,21 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm, right
     else:
         thm = leftwardThm
         l, m, n, A, B, C, D = thm.allInstanceVars()
-        Asub, Bsub, Csub, Dsub = expr.operands[:finalIdx], expr.operands[finalIdx:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:]        
+        Asub, Bsub, Csub, Dsub = expr.operands[:finalIdx], expr.operands[finalIdx:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:]
         lSub, mSub, nSub = num(len(Asub)), num(len(Bsub)), num(len(Dsub))
-    return thm.specialize({l:lSub, m:mSub, n:nSub, A:Asub, B:Bsub, C:Csub, D:Dsub}, assumptions=assumptions) 
+    return thm.specialize({l:lSub, m:mSub, n:nSub, A:Asub, B:Bsub, C:Csub, D:Dsub}, assumptions=assumptions)
 
 def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS):
     from proveit.logic import Equals
     from proveit.number import num
-    beg, end = startIdx, startIdx+length
+    print("entering apply_association_thm")                                     # for testing; delete later
+    print("    expr = {}".format(expr))                                         # for testing; delete later
+    print("    expr.operands = {}".format(expr.operands))                       # for testing; delete later
+    print("    length = {}".format(length))                                     # for testing; delete later
+    beg, end = startIdx, startIdx+length  # temp modification by wdc on 1/13/2020.
+    # beg, end = startIdx, startIdx+length-1
+    print("    beg = {}".format(beg))                                           # for testing; delete later
+    print("    end = {}".format(end))                                           # for testing; delete later
     if beg < 0: beg = len(expr.operands)+beg # use wrap-around indexing
     if not length >= 2:
         raise IndexError ("The 'length' must be 2 or more when applying association.")
@@ -57,11 +64,23 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     l, m, n, AA, BB, CC = thm.allInstanceVars()
     length = len(expr.operands[idx].operands)
     return thm.specialize({l:num(idx), m:num(length), n: num(len(expr.operands) - idx - 1), AA:expr.operands[:idx], BB:expr.operands[idx].operands, CC:expr.operands[idx+1:]}, assumptions=assumptions)
-            
+
 def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
     '''
-    Derive a commutation equivalence on a group of multiple operands by associating them
-    together first.  If 'dissassociate' is true, the group will be disassociated at end.
+    Derive a commutation equivalence on a group of multiple operands by
+    associating them together first.  If 'dissassociate' is true, the
+    group will be disassociated at end. For example, the following call:
+    Or(A,B,C,D).groupCommutation(0, 1, length=2,
+                                 assumptions=inBool(A,B,C,D))
+    essentially goes through the following steps:
+    (1) associates 2 elements (i.e. length = 2) starting at index 0 to
+        obtain (A V B) V C V D
+    (2) removes the element to be commuted to obtain C V D
+    (2) inserts the element to be commuted at the desire index to
+        obtain C V (A V B) V D
+    (3) then disassociates to obtain C V A V B V D
+    (4) eventually producing the output:
+    {A in Bool, ..., D in Bool} |- (A V B V C V D) = (C V A V B V D)
     '''
     from proveit import TransRelUpdater
 
@@ -69,18 +88,19 @@ def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumpt
     if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx # use wrap-around indexing
     if length==1:
         return expr.commutation(initIdx, finalIdx, assumptions=assumptions)
-        
+
     eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
-    expr = eq.update(expr.association(initIdx, length, assumptions=assumptions))
+    expr = eq.update(expr.association(initIdx, initIdx+length, assumptions=assumptions)) # modified 1/13/2020 by wdc
+    # expr = eq.update(expr.association(initIdx, length, assumptions=assumptions))
     expr = eq.update(expr.commutation(initIdx, finalIdx, assumptions=assumptions))
     if disassociate:
         expr = eq.update(expr.disassociation(finalIdx, assumptions=assumptions))
     return eq.relation
-    
+
 def groupCommute(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
     '''
-    Derive a commuted form of the given expr expression on a group of multiple 
-    operands by associating them together first.  
+    Derive a commuted form of the given expr expression on a group of multiple
+    operands by associating them together first.
     If 'dissassociate' is true, the group will be disassociated at end.
     '''
     if initIdx < 0: initIdx = len(expr.operands)+initIdx # use wrap-around indexing
@@ -93,7 +113,7 @@ def groupCommute(expr, initIdx, finalIdx, length, disassociate=True, assumptions
     if disassociate:
         expr = expr.disassociate(finalIdx, assumptions=assumptions)
     return expr
-    
+
 def pairwiseEvaluation(expr, assumptions):
     '''
     Evaluation routine applicable to associative operations in which
@@ -102,9 +122,9 @@ def pairwiseEvaluation(expr, assumptions):
     from proveit import TransRelUpdater
     # successively evaluate and replace the operation performed on
     # the first two operands
-    
+
     eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
-    
+
     if len(expr.operands)==2:
         raise ValueError("pairwiseEvaluation may only be used when there are more than 2 operands")
     while len(expr.operands) > 2:
@@ -112,4 +132,3 @@ def pairwiseEvaluation(expr, assumptions):
         expr = eq.update(expr.innerExpr().operands[0].evaluation(assumptions))
     eq.update(expr.evaluation(assumptions=assumptions))
     return eq.relation
-    
