@@ -190,9 +190,9 @@ class OperationOverInstances(Operation):
     
     def extractMyInitArgValue(self, argName):
         '''
-        Return the most proper initialization value for the initialization argument
-        of the given name in order to reconstruct this Expression in its
-        current style.
+        Return the most proper initialization value for the
+        initialization argument of the given name in order to
+        reconstruct this Expression in its current style.
         '''
         init_argname_mapping = self.__class__._init_argname_mapping_
         argName = init_argname_mapping.get(argName, argName)
@@ -200,7 +200,8 @@ class OperationOverInstances(Operation):
             return self.operator # simply the operator
         elif argName=='instanceVarOrVars':
             # return the joined instance variables according to style.
-            return singleOrCompositeExpression(OperationOverInstances.explicitInstanceVars(self))
+            return singleOrCompositeExpression(
+                OperationOverInstances.explicitInstanceVars(self))
         elif argName=='instanceExpr':
             # return the inner instance expression after joining the
             # instance variables according to the style
@@ -216,7 +217,8 @@ class OperationOverInstances(Operation):
             return None
         elif argName=='conditions':
             # return the joined conditions excluding domain conditions
-            return singleOrCompositeExpression(OperationOverInstances.explicitConditions(self))
+            return singleOrCompositeExpression(
+                OperationOverInstances.explicitConditions(self))
         
     def _allInstanceVars(self):
         '''
@@ -224,8 +226,9 @@ class OperationOverInstances(Operation):
         and any instance variables of nested OperationOVerInstances
         of the same type.
         Modified by wdc on 6/06/2019, modifying generator fxn name
-        from allInstanceVars() to _allInstanceVars() and adding a separate
-        non-generator version of the allInstanceVars() fxn below.
+        from allInstanceVars() to _allInstanceVars() and adding a
+        separate non-generator version of the allInstanceVars() fxn
+        below.
         '''
         if hasattr(self, 'instanceVars'):
             for ivar in self.instanceVars:
@@ -297,9 +300,9 @@ class OperationOverInstances(Operation):
         _allConditions() defined above.
         Added by wdc on 6/06/2019.
         '''
-        return list(self._allConditions());
+        return list(self._allConditions())
     
-    def joinedNestings(self):
+    def _joinedNestings(self):
         '''
         Yield the nested levels of the OperationOverInstances that are
         joined together in the style.
@@ -307,18 +310,30 @@ class OperationOverInstances(Operation):
         yield self
         iVarStyle = self.getStyle('instance_vars')
         if iVarStyle == 'join_next':
-            assert isinstance(self.instanceExpr, self.__class__), "Not expecting 'instance_vars' style to be 'join_next' unless there is nesting of the same type of OperationOverInstances"
+            assert isinstance(self.instanceExpr, self.__class__), (
+                "Not expecting 'instance_vars' style to be " +
+                "'join_next' unless there is nesting of the same " +
+                "type of OperationOverInstances")
             for expr in self.instanceExpr.joinedNestings():
                 yield expr
+
+    def joinedNestings(self):
+        '''
+        Returns the nested levels of the OperationOverInstances that
+        are joined together in the style. Relies on the generator
+        function _joinedNestings() defined above. Added here by wdc
+        on 8/25/2019.
+        '''
+        return list(self._joinedNestings())
     
     def explicitInstanceVars(self):
         '''
         Return the instance variables that are to be shown explicitly 
-        in the formatting (as opposed to being made implicit via conditions)
-        joined together at this level according to the style.
-        By default, this includes all of the instance variables that
-        are to be joined but this may be overridden to exclude implicit
-        instance variables.
+        in the formatting (as opposed to being made implicit via
+        conditions) joined together at this level according to the
+        style. By default, this includes all of the instance variables
+        that are to be joined but this may be overridden to exclude
+        implicit instance variables.
         '''
         if hasattr(self, 'instanceVars'):
             return self.instanceVars
@@ -376,25 +391,26 @@ class OperationOverInstances(Operation):
         
     def explicitInstanceExpr(self):
         '''
-        Return the instance expression after joining instance variables according
-        to the style.
+        Return the instance expression after joining instance variables
+        according to the style.
         '''
         iVarStyle = self.getStyle('instance_vars')
         if iVarStyle == 'join_next':
             return self.instanceExpr.explicitInstanceExpr()
         return self.instanceExpr
     
-    def instanceVarLists(self):
+    def _instanceVarLists(self):
         '''
-        Yield lists of instance vars that include all of the instance variables
-        (see allInstanceVars method) but grouped together according to
-        the style joining instance variables together.
+        Yield lists of instance vars that include all of the instance
+        variables (see allInstanceVars method) but grouped together
+        according to the style joining instance variables together.
         '''
         iVarGroup = []
         expr = self
         while isinstance(expr, self.__class__):
             if hasattr(expr, 'instanceVars'):
-                yield expr.instanceVars # grouped together intrinsically -- no nestMultiIvars
+                yield expr.instanceVars # grouped together intrinsically
+                                        # -- no nestMultiIvars
             else:
                 iVarGroup.append(expr.instanceVar)
                 iVarStyle = expr.getStyle('instance_vars')
@@ -402,8 +418,21 @@ class OperationOverInstances(Operation):
                     yield iVarGroup # this group is done
                     iVarGroup = [] # start next group
             expr = expr.instanceExpr
-        assert len(iVarGroup)==0,  "Not expecting 'instance_vars' style to be 'join_next' unless there is nesting of the same type of OperationOverInstances"
+        assert len(iVarGroup)==0, (
+            "Not expecting 'instance_vars' style to be " +
+            "'join_next' unless there is nesting of the same type " +
+            "of OperationOverInstances")
         
+    
+    def instanceVarLists(self):
+        '''
+        Returns lists of instance vars that include all of the instance
+        variables (see allInstanceVars method) but grouped together
+        according to the style joining instance variables together.
+        Relies on the generator function _instanceVarLists() defined
+        above. Added here by wdc on 8/25/2019.
+        '''
+        return list(self._instanceVarLists())
 
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
