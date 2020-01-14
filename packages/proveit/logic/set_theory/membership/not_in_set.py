@@ -3,7 +3,9 @@ from proveit._common_ import x, S
 
 class NotInSet(Operation):
     # operator of the NotInSet operation
-    _operator_ = Literal(stringFormat='not-in', latexFormat=r'\notin', context=__file__)    
+    _operator_ = Literal(stringFormat='not-in',
+                         latexFormat=r'\notin',
+                         context=__file__)    
     
     def __init__(self, element, domain):
         Operation.__init__(self, NotInSet._operator_, (element, domain))
@@ -50,13 +52,16 @@ class NotInSet(Operation):
             for sideEffect in self.nonmembershipObject.sideEffects(knownTruth):
                 yield sideEffect
         
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this 'not in' statement is in the set of BOOLEANS.
-        PERHAPS MEMBERSHIP/NON-MEMBERSHIP SHOULD ALWAYS BE IN BOOLEAN, THOUGH
-        ILL-DEFINED DOMAINS CAN NEVER HAVE MEMBERSHIP TO BE TRUE -- REVISIT.
         '''
-        self.domain.deduceNotInSetIsBool(self.element)
+        # self.domain.deduceNotInSetIsBool(self.element)
+        # replaced by wdc 10/16/2019
+        from ._theorems_ import notInSetInBool
+        from proveit._common_ import x, S
+        return notInSetInBool.specialize({x:self.element, S:self.domain},
+                                         assumptions=assumptions)
         
     def unfoldNotIn(self, assumptions=USE_DEFAULTS):
         '''
@@ -94,8 +99,8 @@ class NotInSet(Operation):
         equiv = self.nonmembershipObject.equivalence(assumptions)
         val = equiv.evaluation(assumptions).rhs
         evaluation = Equals(equiv, val).prove(assumptions=assumptions)
-        # try also to evaluate this by deducing membership or non-membership in case it 
-        # generates a shorter proof.
+        # try also to evaluate this by deducing membership or non-membership
+        # in case it generates a shorter proof.
         try:
             if evaluation.rhs == TRUE:
                 if hasattr(self, 'nonmembershipObject'):
@@ -122,6 +127,9 @@ class Nonmembership:
     def conclude(self, assumptions):
         raise NotImplementedError("Nonmembership object has no 'conclude' method implemented")
     
-    def equivalence(self):
+    def equivalence(self, assumptions=USE_DEFAULTS):
         raise NotImplementedError("Nonmembership object has no 'equivalence' method implemented")
+
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        raise NotImplementedError("Nonmembership object has no 'deduceInBool' method implemented")
 

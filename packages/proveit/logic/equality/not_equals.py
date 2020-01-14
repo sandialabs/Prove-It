@@ -132,7 +132,7 @@ class NotEquals(Operation):
         from proveit.logic.boolean.implication import denyViaContradiction
         return denyViaContradiction(self, conclusion, assumptions)
                         
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this 'not equals' statement is in the set of BOOLEANS.
         '''

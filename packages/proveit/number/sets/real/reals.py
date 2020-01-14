@@ -2,11 +2,16 @@ from proveit import USE_DEFAULTS, maybeFencedString
 from proveit._common_ import a
 from proveit.number.sets.number_set import NumberSet
 
-class RealsSet(NumberSet):
+class RealSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
+
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import xInRealsInBool
+        from proveit._common_ import x
+        return xInRealsInBool.specialize({x:member}, assumptions=assumptions)
     
-class RealsPosSet(NumberSet):
+class RealPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
     
@@ -25,8 +30,13 @@ class RealsPosSet(NumberSet):
         # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
+
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import xInRealsPosInBool
+        from proveit._common_ import x
+        return xInRealsPosInBool.specialize({x:member}, assumptions=assumptions)
             
-class RealsNegSet(NumberSet):
+class RealNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
     
@@ -45,6 +55,11 @@ class RealsNegSet(NumberSet):
         # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
+
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import xInRealsNegInBool
+        from proveit._common_ import x
+        return xInRealsNegInBool.specialize({x:member}, assumptions=assumptions)
 
 try:
     # Import some fundamental axioms and theorems without quantifiers.

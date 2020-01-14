@@ -84,3 +84,7 @@ class NumberMembership(Membership):
             raise ProofFailure(InSet(self.element, self.number_set), 
                                 assumptions, msg)
 
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        return self.number_set.deduceMembershipInBool(self.element,
+                                                      assumptions=assumptions)
+
