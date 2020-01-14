@@ -35,14 +35,7 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm, right
 def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS):
     from proveit.logic import Equals
     from proveit.number import num
-    print("entering apply_association_thm")                                     # for testing; delete later
-    print("    expr = {}".format(expr))                                         # for testing; delete later
-    print("    expr.operands = {}".format(expr.operands))                       # for testing; delete later
-    print("    length = {}".format(length))                                     # for testing; delete later
-    beg, end = startIdx, startIdx+length  # temp modification by wdc on 1/13/2020.
-    # beg, end = startIdx, startIdx+length-1
-    print("    beg = {}".format(beg))                                           # for testing; delete later
-    print("    end = {}".format(end))                                           # for testing; delete later
+    beg, end = startIdx, startIdx+length
     if beg < 0: beg = len(expr.operands)+beg # use wrap-around indexing
     if not length >= 2:
         raise IndexError ("The 'length' must be 2 or more when applying association.")

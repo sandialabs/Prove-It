@@ -26,5 +26,19 @@ class Set(Operation):
         return '{' + self.elements.string(fence=False) + '}'
     
     def latex(self, **kwargs):
-        return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'        
+        return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
+
+    def permutation(self, initIdx=None, finalIdx=None,
+                    assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this Set expression is set-equivalent to a form
+        in which the element at index initIdx has been moved to
+        finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
+        initIdx = 1 and finalIdx = -2.
+        '''
+        from ._theorems_ import (permutation, leftwardPermutation,
+                                 rightwardPermutation)
+        return apply_permutation_thm(self, initIdx, finalIdx, permutation,
+                                     leftwardPermutation, rightwardPermutation,
+                                     assumptions)       
 
