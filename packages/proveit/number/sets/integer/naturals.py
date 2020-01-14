@@ -18,10 +18,10 @@ class NaturalsSet(NumberSet):
         member = knownTruth.element
         yield lambda assumptions : self.deduceMemberLowerBound(member, assumptions)
 
-    def deduceMembershipInBool(self, member):
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInNatsInBool
         from proveit._common_ import x
-        return xInNatsInBool.specialize({x:member})
+        return xInNatsInBool.specialize({x:member}, assumptions=assumptions)
 
 
 class NaturalsPosSet(NumberSet):
@@ -52,10 +52,10 @@ class NaturalsPosSet(NumberSet):
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
         return maybeFencedString(inner_str, **kwargs)
 
-    def deduceMembershipInBool(self, member):
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInNatsPosInBool
         from proveit._common_ import x
-        return xInNatsPosInBool.specialize({x:member})
+        return xInNatsPosInBool.specialize({x:member}, assumptions=assumptions)
 
 try:
     # Import some fundamental axioms and theorems without quantifiers.

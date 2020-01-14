@@ -6,10 +6,10 @@ class RealsSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
 
-    def deduceMembershipInBool(self, member):
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsInBool
         from proveit._common_ import x
-        return xInRealsInBool.specialize({x:member})
+        return xInRealsInBool.specialize({x:member}, assumptions=assumptions)
     
 class RealsPosSet(NumberSet):
     def __init__(self):
@@ -31,10 +31,10 @@ class RealsPosSet(NumberSet):
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
 
-    def deduceMembershipInBool(self, member):
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsPosInBool
         from proveit._common_ import x
-        return xInRealsPosInBool.specialize({x:member})
+        return xInRealsPosInBool.specialize({x:member}, assumptions=assumptions)
             
 class RealsNegSet(NumberSet):
     def __init__(self):
@@ -56,10 +56,10 @@ class RealsNegSet(NumberSet):
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
 
-    def deduceMembershipInBool(self, member):
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInRealsNegInBool
         from proveit._common_ import x
-        return xInRealsNegInBool.specialize({x:member})
+        return xInRealsNegInBool.specialize({x:member}, assumptions=assumptions)
 
 try:
     # Import some fundamental axioms and theorems without quantifiers.

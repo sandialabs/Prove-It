@@ -14,7 +14,7 @@ class IntegerSet(NumberSet):
         from ._theorems_ import notInIntsIsBool
         return notInIntsIsBool.specialize({a:element}, assumptions=assumptions)
 
-    def deduceMembershipInBool(self, member):
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInIntsInBool
         from proveit._common_ import x
-        return xInIntsInBool.specialize({x:member})
+        return xInIntsInBool.specialize({x:member}, assumptions=assumptions)

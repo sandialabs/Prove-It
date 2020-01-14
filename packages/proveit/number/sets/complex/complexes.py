@@ -14,10 +14,10 @@ class ComplexSet(NumberSet):
         from .theorems import notInComplexesIsBool
         return notInComplexesIsBool.specialize({a:element}, assumptions)
 
-    def deduceMembershipInBool(self, member):
+    def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import xInComplexesInBool
         from proveit._common_ import x
-        return xInComplexesInBool.specialize({x:member})
+        return xInComplexesInBool.specialize({x:member}, assumptions=assumptions)
     
 
 try:

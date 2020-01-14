@@ -135,9 +135,9 @@ class Membership:
     def conclude(self, assumptions):
         raise NotImplementedError("Membership object, %s, has no 'conclude' method implemented"%str(self.__class__))
     
-    def equivalence(self):
+    def equivalence(self, assumptions=USE_DEFAULTS):
         raise NotImplementedError("Membership object, %s, has no 'equivalence' method implemented"%str(self.__class__))
 
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         raise NotImplementedError("Membership object, %s, has no 'deduceInBool' method implemented"%str(self.__class__))
 
