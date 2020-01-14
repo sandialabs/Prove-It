@@ -289,8 +289,8 @@ class Lambda(Expression):
             raise ScopingViolation("Scoping violation while substituting"
                                     "%s.  %s"%(str(self), e.message))
         
-        for requirements, requirements_assumptions in zip((condition_requirements, body_requirements), ([], subbedConditions)):
-            for requirement in requirements:
+        for inner_requirements, requirements_assumptions in zip((condition_requirements, body_requirements), ([], subbedConditions)):
+            for requirement in inner_requirements:
                 if requirement.freeVars().isdisjoint(new_params):
                     requirements.append(requirement)
                 else:
