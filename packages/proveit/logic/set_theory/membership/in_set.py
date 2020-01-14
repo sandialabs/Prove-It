@@ -68,7 +68,7 @@ class InSet(Operation):
         Booleans (i.e. membership is True or False).
         '''
         if hasattr(self, 'membershipObject'):
-            return self.membershipObject.deduceInBool()
+            return self.membershipObject.deduceInBool(assumptions)
         raise AttributeError
 
     def conclude(self, assumptions):
