@@ -52,17 +52,16 @@ class NotInSet(Operation):
             for sideEffect in self.nonmembershipObject.sideEffects(knownTruth):
                 yield sideEffect
         
-    def deduceInBool(self):
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Deduce and return that this 'not in' statement is in the set of BOOLEANS.
-        PERHAPS MEMBERSHIP/NON-MEMBERSHIP SHOULD ALWAYS BE IN BOOLEAN, THOUGH
-        ILL-DEFINED DOMAINS CAN NEVER HAVE MEMBERSHIP TO BE TRUE -- REVISIT.
         '''
         # self.domain.deduceNotInSetIsBool(self.element)
         # replaced by wdc 10/16/2019
         from ._theorems_ import notInSetInBool
         from proveit._common_ import x, S
-        return notInSetInBool.specialize({x:self.element, S:self.domain})
+        return notInSetInBool.specialize({x:self.element, S:self.domain},
+                                         assumptions=assumptions)
         
     def unfoldNotIn(self, assumptions=USE_DEFAULTS):
         '''
@@ -128,9 +127,9 @@ class Nonmembership:
     def conclude(self, assumptions):
         raise NotImplementedError("Nonmembership object has no 'conclude' method implemented")
     
-    def equivalence(self):
+    def equivalence(self, assumptions=USE_DEFAULTS):
         raise NotImplementedError("Nonmembership object has no 'equivalence' method implemented")
 
-    def deduceInBool():
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
         raise NotImplementedError("Nonmembership object has no 'deduceInBool' method implemented")
 
