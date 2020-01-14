@@ -110,7 +110,7 @@ class SetEquiv(TransitiveRelation):
         from proveit.logic import TRUE, FALSE, Implies, Iff
         if self.lhs==self.rhs:
             # Trivial A = A
-            return self.concludeViaReflexivity()
+            return self.concludeViaReflexivity(assumptions=assumptions)
     #     if self.lhs or self.rhs in (TRUE, FALSE):
     #         try:
     #             # Try to conclude as TRUE or FALSE.
@@ -186,7 +186,7 @@ class SetEquiv(TransitiveRelation):
         from ._theorems_ import setEquivReflexivity
         assert self.lhs == self.rhs
         print('concludeViaReflexivity() being processed.')
-        return setEquivReflexivity.specialize({A:self.lhs})
+        return setEquivReflexivity.specialize({A:self.lhs}, assumptions=assumptions)
 
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
@@ -213,7 +213,7 @@ class SetEquiv(TransitiveRelation):
         of Booleans.
         '''
         from ._theorems_ import setEquivInBool
-        return setEquivInBool.specialize({A:self.lhs, B:self.rhs})
+        return setEquivInBool.specialize({A:self.lhs, B:self.rhs}, assumptions=assumptions)
 
     
 
