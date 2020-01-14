@@ -71,7 +71,7 @@ def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumpt
         return expr.commutation(initIdx, finalIdx, assumptions=assumptions)
         
     eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
-    expr = eq.update(expr.association(initIdx, initIdx+length, assumptions=assumptions))
+    expr = eq.update(expr.association(initIdx, length, assumptions=assumptions))
     expr = eq.update(expr.commutation(initIdx, finalIdx, assumptions=assumptions))
     if disassociate:
         expr = eq.update(expr.disassociation(finalIdx, assumptions=assumptions))

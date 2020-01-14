@@ -172,16 +172,49 @@ class Proof:
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
         '''
-        Given a unique representation string, returns the list of representations
-        of Prove-It objects that are referenced.
+        Given a unique representation string, returns the list of 
+        representations of Prove-It objects that are referenced.
         '''
         # Skip the step type (and axiom/theorem name if it is either of those types)
         # which is in the beginning and followed by a ':'
         remaining = unique_rep.split(':', 1)[-1]
-        # Everything else coming between the punctuation, ';', ':', ',', '{', '}', '[', ']', is a represented object.
+        # Everything else coming between the punctuation, 
+        # ';', ':', ',', '{', '}', '[', ']', is a represented object.
         objIds = re.split("\{|\[|,|:|;|\]|\}",remaining) 
         return [objId for objId in objIds if len(objId) > 0]  
-                        
+
+    @staticmethod
+    def _showProof(context, proof_id, unique_rep):
+        '''
+        Given a unique representation string, returns a _ShowProof
+        object that mocks up a stored proof for the purposes of
+        displaying it.
+        '''
+        # Skip the step type (and axiom/theorem name if it is either of 
+        # those types) which is in the beginning and followed by a ':'
+        if unique_rep[:6] != 'Proof:':
+            raise ValueError("Invalid 'unique_rep' for Proof: %s"%unique_rep)
+        step_info, remaining = unique_rep[6:].split(':', 1)
+        # extract groups each wrapped in braces, either '{..}' or '[..]' 
+        group_strs = []
+        while len(remaining) > 0:
+            if remaining[0]==';': 
+                remaining=remaining[1:]
+            start_brace = remaining[0]
+            if start_brace not in ('{', '['):
+                raise ValueError("Invalid starting brace of 'unique_rep': %s"%remaining[0])
+            end_brace = '}' if start_brace=='{' else ']'
+            remaining=remaining[1:]
+            group_str, remaining = remaining.split(end_brace, 1)
+            group_strs.append(group_str)
+        # The id's of each group come between the punctuation:
+        # ';', ':', ','.
+        groups = []
+        for group_str in group_strs:
+            objIds = re.split(",|:|;",group_str) 
+            groups.append([objId for objId in objIds if len(objId) > 0])
+        return _ShowProof(context, proof_id, step_info, groups)
+                                                    
     def isUsable(self):
         '''
         Returns True iff this Proof is usable.  A Proof may be unusable
@@ -255,6 +288,15 @@ class Proof:
     
     def assumptions(self):
         return self.provenTruth.assumptions
+    
+    def getLink(self):
+        '''
+        Return the link to the proof notebook.  It the Proof is a
+        Theorem or Axiom, this is overridden to return the link to
+        the theorem/axiom definition.
+        '''
+        context = Context()
+        return context.proofNotebook(self)
 
     def __setattr__(self, attr, value):
         '''
@@ -294,9 +336,9 @@ class Proof:
             html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
             html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
-            if isinstance(proof, Specialization):
+            if proof.stepType()=='specialization':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
-            if isinstance(proof, Axiom) or isinstance(proof, Theorem):
+            if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
@@ -313,9 +355,9 @@ class Proof:
             out_str += proof.stepType() + '\t' + requiredProofNums + '\t'
             out_str += proof.provenTruth.string(performUsabilityCheck=False)
             out_str += '\n'
-            if isinstance(proof, Specialization):
+            if proof.stepType()=='specialization':
                 out_str += '\t' + proof._mapping('str') + '\n'
-            if isinstance(proof, Axiom) or isinstance(proof, Theorem):
+            if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
         return out_str
 
@@ -963,6 +1005,70 @@ class Generalization(Proof):
             if not isinstance(expr, Forall): break
             expr = expr.instanceExpr # take it another nested level if necessary
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)
+
+class _ShowProof:
+    '''
+    A mocked-up quasi-Proof object just for the purposes of showing a
+    stored proof.
+    '''
+    def __init__(self, context, proof_id, stepInfo, refObjIdGroups):
+        self._style_id = proof_id
+        if '_' in stepInfo:
+            # Must be an axiom or theorem with the format
+            # axiom_context.name or theorem_context.name
+            self.step_type_str, full_name = stepInfo.split('_', 1)
+            assert self.step_type_str in ('axiom', 'theorem')
+            full_name_segments = full_name.split('.')
+            context_name = '.'.join(full_name_segments[:-1])
+            self.context =  Context.getContext(context_name)
+            self.name = full_name_segments[-1]
+        else:
+            self.context = context
+            self.step_type_str = stepInfo
+        if self.step_type_str=='specialization':
+            # Extract the mapping information.
+            self.mappedVarLists = []
+            self.mappings = dict()
+            # All but the last two groups must correspond to 
+            # mapping information.
+            for group in refObjIdGroups[:-2]:
+                var_mapping_pairs = [(context.getStoredExpr(group[i]), 
+                                      context.getStoredExpr(group[i+1])) \
+                                     for i in range(0, len(group), 2)]
+                mapping = dict(var_mapping_pairs)
+                self.mappings.update(mapping)
+                self.mappedVarLists.append(mapping.keys())
+        self.provenTruth = context.getStoredKnownTruth(refObjIdGroups[-2][0])
+        self.provenTruth._meaningData._proof = self
+        self.requiredProofs = \
+            [context.getShowProof(obj_id) for obj_id in refObjIdGroups[-1]]
+    
+    def _repr_html_(self):
+        return Proof._repr_html_(self)
+    
+    def stepType(self):
+        return self.step_type_str
+    
+    def getLink(self):
+        from ._context_storage import StoredAxiom, StoredTheorem
+        if self.step_type_str=='axiom':
+            return StoredAxiom(self.context, self.name).getDefLink()
+        elif self.step_type_str=='theorem':
+            return StoredTheorem(self.context, self.name).getProofLink()
+        else:
+            return self.context.proofNotebook(self)
+            
+    def _single_mapping(self, *args):
+        return Specialization._single_mapping(self, *args)
+
+    def _mapping(self, *args):
+        return Specialization._mapping(self, *args)
+    
+    def enumeratedProofSteps(self):
+        return Proof.enumeratedProofSteps(self)
+    
+    def isUsable(self):
+        return True
 
 class ProofFailure(Exception):
     def __init__(self, expr, assumptions, message):
