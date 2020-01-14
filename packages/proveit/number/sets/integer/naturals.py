@@ -3,7 +3,7 @@ from proveit.logic import Membership
 from proveit.number.sets.number_set import NumberSet
 from proveit._common_ import n
 
-class NaturalsSet(NumberSet):
+class NaturalSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Naturals', r'\mathbb{N}', context=__file__)
 
@@ -24,7 +24,7 @@ class NaturalsSet(NumberSet):
         return xInNatsInBool.specialize({x:member}, assumptions=assumptions)
 
 
-class NaturalsPosSet(NumberSet):
+class NaturalPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'NaturalsPos', r'\mathbb{N}^+', context=__file__)
 

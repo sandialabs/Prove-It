@@ -2,7 +2,7 @@ from proveit import USE_DEFAULTS, maybeFencedString
 from proveit._common_ import a
 from proveit.number.sets.number_set import NumberSet
 
-class RealsSet(NumberSet):
+class RealSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'Reals',r'\mathbb{R}', context=__file__)
 
@@ -11,7 +11,7 @@ class RealsSet(NumberSet):
         from proveit._common_ import x
         return xInRealsInBool.specialize({x:member}, assumptions=assumptions)
     
-class RealsPosSet(NumberSet):
+class RealPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
     
@@ -36,7 +36,7 @@ class RealsPosSet(NumberSet):
         from proveit._common_ import x
         return xInRealsPosInBool.specialize({x:member}, assumptions=assumptions)
             
-class RealsNegSet(NumberSet):
+class RealNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
     
