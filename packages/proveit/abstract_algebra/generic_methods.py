@@ -58,6 +58,61 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     length = len(expr.operands[idx].operands)
     return thm.specialize({l:num(idx), m:num(length), n: num(len(expr.operands) - idx - 1), AA:expr.operands[:idx], BB:expr.operands[idx].operands, CC:expr.operands[idx+1:]}, assumptions=assumptions)
 
+def apply_permutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
+                          rightwardThm, assumptions=USE_DEFAULTS):
+    '''
+    UNDER CONSTRUCTION
+    '''
+    from proveit.logic import SetEquiv
+    # Some initial print statements for testing
+    print("Entering apply_permutation_thm.")
+    print("    initIdx = {}".format(initIdx))
+    print("    finalIdx = {}".format(finalIdx))
+    print("    assumptions = {}".format(assumptions))
+
+    # check validity of supplied indices in terms of defaults
+    if initIdx is None or finalIdx is None:
+        if len(expr.operands) != 2:
+            raise IndexError("You may use default 'initIdx' or "
+                             "'finalIdx' values when applying "
+                             "permutation only if your set or "
+                             "set-like object contains exactly 2 "
+                             "elements.")
+        if initIdx is not finalIdx:
+            raise IndexError("When applying permutation, you must "
+                             "either supply both 'initIdx' and "
+                             "'finalIdx' or supply neither (allowed "
+                             "when there are only 2 elements)")
+        initIdx, finalIdx = 0, 1  # defaults when there are 2 elements
+
+    # acknowledge any wrap-around indexing; transform for simplicity
+    if initIdx < 0: initIdx = len(expr.operands)+initIdx
+    if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx
+
+    # check validity of supplied index values
+    if initIdx >= len(expr.operands):
+        raise IndexError("'initIdx' = {0} is out of range. Should "
+                         "have 0 ≤ initIdx ≤ {1}.".
+                         format(initIdx, len(expr.operands) - 1))
+    if finalIdx >= len(expr.operands):
+        raise IndexError("'finalIdx' = {0} is out of range. Should "
+                         "have 0 ≤ finalIdx ≤ {1}.".
+                         format(finalIdx, len(expr.operands) - 1))
+
+    # trivial permutation
+    if initIdx==finalIdx:
+        return SetEquiv(expr, expr).prove()
+
+    # Set or set-like object with cardinality = 2
+    if len(expr.operands)==2 and set([initIdx, finalIdx]) == {0, 1}:
+        A, B = binaryThm.allInstanceVars()
+        return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
+                                    assumptions=assumptions)
+
+    
+
+    return expr
+
 def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
     '''
     Derive a commutation equivalence on a group of multiple operands by

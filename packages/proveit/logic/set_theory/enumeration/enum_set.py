@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, ExprTuple
+from proveit import Literal, Operation, ExprTuple, USE_DEFAULTS
+from proveit.abstract_algebra.generic_methods import apply_permutation_thm
 
 class Set(Operation):
     '''
@@ -31,10 +32,10 @@ class Set(Operation):
     def permutation(self, initIdx=None, finalIdx=None,
                     assumptions=USE_DEFAULTS):
         '''
-        Deduce that this Set expression is set-equivalent to a form
+        Deduce that this Set expression is set-equivalent to a Set
         in which the element at index initIdx has been moved to
         finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
-        initIdx = 1 and finalIdx = -2.
+        initIdx = 1 (i.e. 'b') and finalIdx = -2.
         '''
         from ._theorems_ import (permutation, leftwardPermutation,
                                  rightwardPermutation)

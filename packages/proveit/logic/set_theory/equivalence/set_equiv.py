@@ -100,17 +100,17 @@ class SetEquiv(TransitiveRelation):
         from proveit.logic.boolean._common_ import FALSE
         yield self.deduceNotEquiv # A not_equiv B from not(A equiv B)
 
-    # def conclude(self, assumptions):
-    #     '''
-    #     Attempt to conclude the equivalence in various ways:
-    #     simple reflexivity (x equiv x), via an evaluation (if one side
-    #     is an irreducible), or via transitivity.
-    #     IN PROGRESS. NOT YET CLEAR how this applies to the SetEquiv
-    #     '''
-    #     from proveit.logic import TRUE, FALSE, Implies, Iff
-    #     if self.lhs==self.rhs:
-    #         # Trivial x=x
-    #         return self.concludeViaReflexivity()
+    def conclude(self, assumptions):
+        '''
+        Attempt to conclude the equivalence in various ways:
+        simple reflexivity (A equiv A), via an evaluation (if one side
+        is an irreducible), or via transitivity.
+        IN PROGRESS. NOT YET CLEAR how this applies to the SetEquiv
+        '''
+        from proveit.logic import TRUE, FALSE, Implies, Iff
+        if self.lhs==self.rhs:
+            # Trivial A = A
+            return self.concludeViaReflexivity()
     #     if self.lhs or self.rhs in (TRUE, FALSE):
     #         try:
     #             # Try to conclude as TRUE or FALSE.
