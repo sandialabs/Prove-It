@@ -108,7 +108,15 @@ def apply_permutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
         A, B = binaryThm.allInstanceVars()
         return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
                                     assumptions=assumptions)
-
+    
+    # 
+    if initIdx < finalIdx:
+        thm = rightwardThm
+        print("rightwardThm = ".format(thm))
+        print("rightwardThm.allInstanceVars() = ".format(thm.allInstanceVars()))
+        # l, m, n, A, B, C, D = rightwardThm.allInstanceVars()
+        # Asub, Bsub, Csub, Dsub = expr.operands[:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:finalIdx+1], expr.operands[finalIdx+1:]
+        # lSub, mSub, nSub = num(len(Asub)), num(len(Csub)), num(len(Dsub))
     
 
     return expr
