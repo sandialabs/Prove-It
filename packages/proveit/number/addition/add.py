@@ -119,7 +119,7 @@ class Add(Operation):
         Operation class is to include appropriate 'withWrappingAt'
         and 'withJustification' calls.
         '''
-        call_strs = []
+        call_strs = Operation.remakeWithStyleCalls(self)
         subtraction_positions = self.subtractionPositions()
         default_subtraction_positions = [k for k, operand in enumerate(self.operands) if Add._isNegatedOperand(operand)]
         if subtraction_positions != default_subtraction_positions:
