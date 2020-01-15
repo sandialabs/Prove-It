@@ -1,3 +1,4 @@
+import proveit
 from proveit import USE_DEFAULTS, maybeFencedString
 from proveit._common_ import a
 from proveit.number.sets.number_set import NumberSet
@@ -61,9 +62,7 @@ class RealNegSet(NumberSet):
         from proveit._common_ import x
         return xInRealsNegInBool.specialize({x:member}, assumptions=assumptions)
 
-try:
-    # Import some fundamental axioms and theorems without quantifiers.
-    # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+if proveit.defaults.automation:
+    # Import some fundamental theorems without quantifiers that are
+    # imported when automation is used.
     from ._theorems_ import realsPosInReals, realsNegInReals, intsInReals, natsInReals, natsPosInReals
-except:
-    pass
