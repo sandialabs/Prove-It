@@ -38,7 +38,7 @@ LaTeXTool.clear_instance()
 lt = LaTeXTool.instance()
 lt.use_breqn = False
 
-default_paths = ['packages/proveit']#, 'tutorial']#, 'tutorial/socks_demo']
+default_paths = ['packages/proveit', 'tutorial']#, 'tutorial/socks_demo']
 
 def findContextPaths(path):
     if os.path.isfile(os.path.join(path, '_context_.ipynb')):
@@ -305,42 +305,6 @@ len(gc.get_objects()) # used to check for memory leaks
         #print('num gc objects', cell['outputs'][0]['data']['text/plain'])    
         return nb, resources
 
-    def run_cell(self, cell, cell_index=0):
-        from nbconvert.preprocessors.execute import CellExecutionComplete
-        parent_msg_id = self.kc.execute(cell.source, store_history=False)
-        self.log.debug("Executing cell:\n%s", cell.source)
-        exec_reply = self._wait_for_reply(parent_msg_id, cell)
-
-        cell.outputs = []
-        self.clear_before_next_output = False
-
-        while True:
-            try:
-                # We've already waited for execute_reply, so all output
-                # should already be waiting. However, on slow networks, like
-                # in certain CI systems, waiting < 1 second might miss messages.
-                # So long as the kernel sends a status:idle message when it
-                # finishes, we won't actually have to wait this long, anyway.
-                msg = self.kc.iopub_channel.get_msg(timeout=self.iopub_timeout)
-            except Empty:
-                self.log.warning("Timeout waiting for IOPub output")
-                if self.raise_on_iopub_timeout:
-                    raise RuntimeError("Timeout waiting for IOPub output")
-                else:
-                    break
-            if msg['parent_header'].get('msg_id') != parent_msg_id:
-                # not an output from our execution
-                continue
-
-            # Will raise CellExecutionComplete when completed
-            try:
-                self.process_message(msg, cell, cell_index)
-            except CellExecutionComplete:
-                break
-
-        # Return cell.outputs still for backwards compatability
-        return exec_reply, cell.outputs
-
     def executeNotebook(self, notebook_path):
         '''
         Read, execute, and write out the notebook at the given path.
@@ -349,7 +313,7 @@ len(gc.get_objects()) # used to check for memory leaks
         print("Executing", notebook_path)
         
         # read
-        with open(notebook_path) as f:
+        with open(notebook_path, encoding='utf8') as f:
             nb = nbformat.read(f, as_version=4)
         
         # execute using a KernelManager with the appropriate cwd (current working directory)
@@ -368,7 +332,7 @@ len(gc.get_objects()) # used to check for memory leaks
                 print("Try restarting kernel")
                 pass
                 #execute_processor.km.restart_kernel(newport=True)
-        with open(notebook_path, 'wt') as f:
+        with open(notebook_path, 'wt', encoding='utf8') as f:
             nbformat.write(nb, f)
         return nb
 
@@ -498,7 +462,7 @@ def recordPresumingInfo(theorem, proof_notebook_path):
     finally:
         os.chdir(__owd)
     
-def build(execute_processor, context_paths, all_paths, no_execute=False, just_execute_proofs=False, just_execute_demos=False, just_execute_expression_nbs=False):
+def build(execute_processor, context_paths, all_paths, no_execute=False, just_execute_essentials=False, just_execute_proofs=False, just_execute_demos=False, just_execute_expression_nbs=False):
     '''
     Build all Context-related notebooks (_common_, _axioms_,
     _theorems_, and proof notebooks for the theorems)
@@ -510,13 +474,14 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
     information).
     '''
     if not just_execute_proofs and not just_execute_demos and not just_execute_expression_nbs:
-        # Generate html pages from index.ipynb and brief_guide.ipynb in the packages folder:
-        if no_execute:
-            exportToHTML('index.ipynb')
-            exportToHTML('brief_guide.ipynb')
-        else:
-            executeAndExportNotebook(execute_processor, 'index.ipynb')
-            executeAndExportNotebook(execute_processor, 'brief_guide.ipynb')
+        if not just_execute_essentials:
+            # Generate html pages from index.ipynb and guide.ipynb in the packages folder:
+            if no_execute:
+                exportToHTML('index.ipynb')
+                exportToHTML('guide.ipynb')
+            else:
+                executeAndExportNotebook(execute_processor, 'index.ipynb')
+                executeAndExportNotebook(execute_processor, 'guide.ipynb')
         
         # Make sure there is a _common_.py, _axioms_.py, and _theorems_.py
         # in each context directory.
@@ -615,24 +580,25 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_axioms_.ipynb'))
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_theorems_.ipynb'))    
     
-    if not just_execute_expression_nbs and not just_execute_demos:
+    if not just_execute_essentials and not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the contexts.
         proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
         theorem2notebook = dict() # map theorem to its proof notebook
         name2theorem = dict() # map theorem name to the theorem
-        proof_notebooks = []
+        theorem_proof_notebooks = []
+        print("Preparing to execute proof notebooks.")
         for context_path in context_paths:
             context = Context(context_path)
             for theorem_name in context.theoremNames():
                 theorem = context.getTheorem(theorem_name)
-                proof_notebook_name = context.proofNotebook(theorem_name, theorem.provenTruth.expr)
+                proof_notebook_name = context.thmProofNotebook(theorem_name, theorem.provenTruth.expr)
                 proof_notebook_theorems[proof_notebook_name] = theorem
                 theorem2notebook[theorem] = proof_notebook_name
                 name2theorem[str(theorem)] = theorem
-                proof_notebooks.append(proof_notebook_name)
+                theorem_proof_notebooks.append(proof_notebook_name)
         
         if no_execute:
-            for proof_notebook in proof_notebooks:
+            for proof_notebook in theorem_proof_notebooks:
                 #if not os.path.isfile(proof_notebook[-5:] + '.html'): # temporary
                 exportToHTML(proof_notebook)
         else:
@@ -640,29 +606,29 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
             # of the proof notebooks in the _proofs_ folder.  Do this before executing
             # any of the proof notebooks to account for dependencies properly
             # (avoiding circular dependencies as intended).
-            for proof_notebook in proof_notebooks:
+            for proof_notebook in theorem_proof_notebooks:
                 recordPresumingInfo(proof_notebook_theorems[proof_notebook], proof_notebook)
                 
             # Next, execute all of the proof notebooks twice
             # to ensure there are no circular logic violations.
-            for proof_notebook in proof_notebooks:
+            for proof_notebook in theorem_proof_notebooks:
                 execute_processor.executeNotebook(proof_notebook)
-            for proof_notebook in proof_notebooks:
+            for proof_notebook in theorem_proof_notebooks:
                 executeAndExportNotebook(execute_processor, proof_notebook)
             
-    if not just_execute_expression_nbs and not just_execute_proofs:
+    if not just_execute_essentials and not just_execute_expression_nbs and not just_execute_proofs:
         # Next, run any other notebooks within path/context directories
         # (e.g., with tests and demonstrations).
         for path in all_paths:
             for sub in os.listdir(path):
                 full_path = os.path.join(path, sub)
                 if os.path.isfile(full_path) and os.path.splitext(full_path)[1] == '.ipynb':
-                    if sub == '_demonstrations_.ipynb': #or sub[0] != '_': # temporarily exclude other notebooks
+                    if sub == '_demonstrations_.ipynb' or sub[0] != '_':
                         executeAndExportNotebook(execute_processor, full_path, no_execute=no_execute)
                         
-    if not just_execute_proofs and not just_execute_demos:
-        # Lastly, run expr.ipynb and dependencies.ipynb within the hash directories
-        # of the __pv_it folders for each context.
+    if not just_execute_essentials and not just_execute_proofs and not just_execute_demos:
+        # Lastly, run expr.ipynb, proof.ipynb, and dependencies.ipynb within 
+        # the hash directories of the __pv_it folders for each context.
         # May require multiple passes (showing expression info may generate
         # expr.ipynb notebooks for sub-expressions).
         executed_hash_paths = set()  # hash paths whose notebooks have been executed
@@ -687,6 +653,17 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                                         # execute the expr.ipynb notebook
                                         executeAndExportNotebook(execute_processor, expr_notebook)
                                         executed_hash_paths.add(hash_path) # done
+                            proof_html = os.path.join(hash_path, 'proof.html')
+                            proof_notebook = os.path.join(hash_path, 'proof.ipynb')
+                            if os.path.isfile(proof_notebook):
+                                if no_execute:
+                                    exportToHTML(proof_notebook)
+                                else:
+                                    # if proof_html doesn't exist or is older than proof_notebook, generate it
+                                    if not os.path.isfile(proof_html) or os.path.getmtime(expr_html) < os.path.getmtime(expr_notebook):
+                                        # execute the expr.ipynb notebook
+                                        executeAndExportNotebook(execute_processor, proof_notebook)
+                                        executed_hash_paths.add(hash_path) # done
                             # always execute the dependencies notebook for now to be safes
                             dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
                             if os.path.isfile(dependencies_notebook):
@@ -707,7 +684,10 @@ if __name__ == '__main__':
                         help='remove all of the autogenerated __pv_it directories')    
     parser.add_argument('--download', dest='download', action='store_const',
                         const=True, default=False,
-                        help='download and extract the tarball of __pv_it directories from http://pyproveit.org')    
+                        help='download and extract the tarball of __pv_it directories from http://pyproveit.org')   
+    parser.add_argument('--justessential', dest='just_execute_essentials', action='store_const',
+                        const=True, default=False,
+                        help='only execute _common_, _axioms_ and _theorems_ notebooks')       
     parser.add_argument('--justproofs', dest='just_execute_proofs', action='store_const',
                         const=True, default=False,
                         help='only execute proofs')   
@@ -759,7 +739,7 @@ if __name__ == '__main__':
                 if os.path.isfile(commons_filename):
                     os.remove(commons_filename) 
         with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
-            build(execute_processor, context_paths, all_paths, args.noexecute, args.just_execute_proofs, args.just_execute_demos, args.just_execute_expression_nbs)
+            build(execute_processor, context_paths, all_paths, args.noexecute, args.just_execute_essentials, args.just_execute_proofs, args.just_execute_demos, args.just_execute_expression_nbs)
     
     if args.download:
         '''
