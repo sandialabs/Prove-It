@@ -902,7 +902,7 @@ class KnownTruth:
         html += ' '
         if proof is not None:
             # link to the proof
-            html += '<a href="%s" style="text-decoration: none">'%proof.getLink()
+            html += '<a class="ProveItLink" href="%s" style="text-decoration: none">'%proof.getLink()
             # Record as a proof of a "displayed" (style-specific) 
             # KnownTruth.
             KnownTruth.hyperlinked_proof_styles.add((proof._style_id, proof)) 
