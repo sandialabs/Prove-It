@@ -34,6 +34,8 @@ class TransitivitySorter:
         self.strong_relation_class = \
             relation_class._checkedStrongRelationClass()
         self.is_weak_relation = (relation_class != self.strong_relation_class)
+        self.equiv_class = relation_class.EquivalenceClass()
+        self.is_equiv_relation = (self.equiv_class==self.relation_class)
         self.skip_exact_repetitions = skip_exact_reps
         self.skip_equiv_repetitions = skip_equiv_reps
         
@@ -53,7 +55,8 @@ class TransitivitySorter:
             self.item_orig_idx.setdefault(item, k) # do not overwrite.
 
         # When there are known equivalences, this will map each item
-        # of an equivalence set to the full equivalence set:
+        # of an equivalence set to the full equivalence set
+        # (not used when the relation_class is the equivalence relation):
         self.eq_sets = {item:{item} for item in items}
         # Representative for each equvalence set:
         self.eq_set_rep = {item:item for item in items}
@@ -183,9 +186,12 @@ class TransitivitySorter:
                 #print("add new partnership:", left_item, right_item)
                 item_pair_chains[(left_item, right_item)] = chain
         
-                # If the left and right items are equal,
-                # record the equivalence.
-                if all(relation.operator==Equals._operator_ for relation in chain):
+                # If the left and right items are equivalent,
+                # record the equivalence (unless the relation_class
+                # is the equivalence relation itself).
+                if not self.is_equiv_relation and \
+                        all(relation.operator==self.equiv_class._operator_ \
+                            for relation in chain):
                     # Equal relation goes both ways:
                     #item_pair_chains[(right_item, left_item)] = chain
                     if eq_sets[left_item] != eq_sets[right_item]: 

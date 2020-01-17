@@ -3,9 +3,10 @@ A TransitiveRelation is a generic base class for binary
 relationships that are transitive.  Less than and greater than
 relationships are examples (so are subset and superset relationships).
 For example, transitivity in the "less than" context means that 
-a<b and b<c implies that a<c.  Equality (proveit.logic.Equals) is
-special kind of TransitiveRelation that is alsy symmetric; that is,
-y=x if x=y.  proveit.logic.Equals is a TransitiveRelation, but
+a<b and b<c implies that a<c.  The "equivalence class" 
+(proveit.logic.Equals by default) is special kind of TransitiveRelation 
+that is also symmetric; that is, y=x if x=y.  
+proveit.logic.Equals is a TransitiveRelation, but
 overloads the default methods.  The TransitiveRelation class
 provides convenient automation capabilities for performing
 a transitive search to conclude a new relation from known relations
@@ -77,6 +78,8 @@ class TransitiveRelation(Operation):
                 if relation.__class__ == self.__class__._checkedStrongRelationClass():
                     return relation.deriveRelaxed()
                 elif relation.__class__ == Equals:
+                    # Derive a weaker relation via the strong relation 
+                    # of equality:
                     return self.concludeViaEquality(assumptions)
             msg = ("Not able to conclude the desired relation of %s"
                     " from the proven relation of %s."
@@ -103,12 +106,13 @@ class TransitiveRelation(Operation):
         Weak relations will only be yielded if this is a weak
         relation class.
         '''
-        from proveit.logic import Equals
-        # equality relationships are strongest and should come first.
-        for (knownTruth, otherExpr) in Equals.knownRelationsFromLeft(expr, assumptionsSet):
+        equiv_class = RelationClass.EquivalenceClass()
+        # equivalence relationships are strongest and should come first.
+        equiv_left_relations = equiv_class.knownRelationsFromLeft(expr, assumptionsSet)
+        for (knownTruth, otherExpr) in equiv_left_relations:
             if expr != otherExpr: # exclude reflexive equations -- they don't count
                 yield (knownTruth, otherExpr)
-        if RelationClass is not Equals:
+        if RelationClass is not equiv_class:
             relation_classes = RelationClass._RelationClasses()
             # stronger then weaker relations
             for Relation in relation_classes:
@@ -127,12 +131,13 @@ class TransitiveRelation(Operation):
         Weak relations will only be yielded if this is a weak
         relation class.
         '''
-        from proveit.logic import Equals
-        # equality relationships are strongest and should come first.
-        for (knownTruth, otherExpr) in Equals.knownRelationsFromRight(expr, assumptionsSet):
+        equiv_class = RelationClass.EquivalenceClass()
+        # equivalence relationships are strongest and should come first.
+        equiv_right_relations = equiv_class.knownRelationsFromRight(expr, assumptionsSet)
+        for (knownTruth, otherExpr) in equiv_right_relations:
             if expr != otherExpr: # exclude reflexive equations -- they don't count
                 yield (knownTruth, otherExpr)
-        if RelationClass is not Equals:
+        if RelationClass is not equiv_class:
             relation_classes = RelationClass._RelationClasses()
             # stronger then weaker relations
             for Relation in relation_classes:
@@ -148,10 +153,10 @@ class TransitiveRelation(Operation):
         relations.  This default version handles the case where
         'other' is an equality (as in the above example.
         '''
-        from proveit.logic import Equals
+        equiv_class = self.EquivalenceClass()
         #print 'apply transitivity', self, other
         assumptions = defaults.checkedAssumptions(assumptions)        
-        if isinstance(other,Equals):
+        if isinstance(other,equiv_class):
             if other.lhs in (self.lhs, self.rhs):
                 subrule = other.subRightSideInto
                 commonExpr = other.lhs
@@ -195,6 +200,11 @@ class TransitiveRelation(Operation):
         return chain[0] # we are done
 
     @staticmethod
+    def EquivalenceClass():
+        from proveit.logic import Equals
+        return Equals
+    
+    @staticmethod
     def WeakRelationClass():
         raise NotImplementedError("The Expression class for the weak form of the relation (that include equality as a possibility) should be returned")
 
@@ -204,8 +214,8 @@ class TransitiveRelation(Operation):
 
     @classmethod
     def _checkedWeakRelationClass(RelationClass):
-        from proveit.logic import Equals
-        if RelationClass==Equals: return Equals # ("equal to" or "equal to" is just "equal to")
+        equiv_class = RelationClass.EquivalenceClass()
+        if RelationClass==equiv_class: return equiv_class # ("equal to" or "equal to" is just "equal to")
         try:
             Relation = RelationClass.WeakRelationClass()
         except NotImplementedError:
@@ -410,7 +420,7 @@ class TransitiveRelation(Operation):
         The default of equiv_group_pos='any' will result in
         an arbitrary position relative to equivalent items.
         ''' 
-        from proveit.logic import Equals
+        equiv_class = cls.EquivalenceClass()
         assumptions = defaults.checkedAssumptions(assumptions)
         if item_to_insert in sorted_items:
             point = sorted_items.index(item_to_insert)
@@ -451,7 +461,7 @@ class TransitiveRelation(Operation):
                     msg = ("Unknown %s relationship between %s and %s"
                             %(cls, item1, item2))
                     raise TransitivityException(None, assumptions, msg)
-                if isinstance(relation.expr, Equals):
+                if isinstance(relation.expr, equiv_class):
                     equiv_item = sorted_items[prev_point]
                     point -= 1
                 else:
@@ -473,7 +483,7 @@ class TransitiveRelation(Operation):
                     msg = ("Unknown %s relationship between %s and %s"
                             %(cls, item1, item2))
                     raise TransitivityException(None, assumptions, msg)
-                if isinstance(relation.expr, Equals):
+                if isinstance(relation.expr, equiv_class):
                     equiv_item = sorted_items[point]
                     point += 1
                 else:
@@ -495,12 +505,12 @@ class TransitiveRelation(Operation):
         If successful, the approprate KnownTruth relating these items (in weak or strong
         form as can be determined) is returned; otherwise a TransitivityException is raised.
         '''
-        from proveit.logic import Equals
+        equiv_class = cls.EquivalenceClass()
         
         #  Check if the relation is already known directly:
         if leftItem==rightItem:
             # Items are the exact same, so they are equal.
-            return Equals(leftItem, rightItem).prove()
+            return equiv_class(leftItem, rightItem).prove()
         try:
             # Try the strong relation first.
             StrongClass = cls._checkedStrongRelationClass()
@@ -510,7 +520,7 @@ class TransitiveRelation(Operation):
             # Try equality.
             try:                    
                 # Maybe the equality is known.
-                relation = Equals(leftItem, rightItem)
+                relation = equiv_class(leftItem, rightItem)
                 return relation.prove(assumptions=assumptions,
                                         automation=False)
             except ProofFailure:
@@ -572,14 +582,16 @@ class TransitiveSequence(OperationSequence):
     '''
     
     def __init__(self, operators, operands, doMinSizeCheck=True):
-        from proveit.logic import Equals
         if doMinSizeCheck and len(operators) < 2:
             raise ValueError("Do not use a TransitiveSequence for fewer than two relationship (it is unnecessary)")
         if len(operators)+1 != len(operands):
             raise ValueError("There must be one more operand than operator in a TransitiveSequence")
-        Relation = self.__class__.RelationClass()
-        assert issubclass(Relation, TransitiveRelation), "The Relation class of a TransitiveSequence should be a TransitiveRelation"
-        relation_operators = (Relation.WeakRelationClass()._operator_, Relation.StrongRelationClass()._operator_, Equals._operator_)
+        relation_class = self.__class__.RelationClass()
+        assert issubclass(relation_class, TransitiveRelation), "The Relation class of a TransitiveSequence should be a TransitiveRelation"
+        equiv_class = relation_class.EquivalenceClass()
+        relation_operators = (relation_class.WeakRelationClass()._operator_, 
+                              relation_class.StrongRelationClass()._operator_, 
+                              equiv_class._operator_)
         for operator in operators:
             if operator not in relation_operators:
                 raise TypeError("Operators of TransitiveSequence should be %s, %s, or %s"%tuple(str(relation_operator) for relation_operator in relation_operators))
