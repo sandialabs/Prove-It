@@ -58,7 +58,9 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
         l, m, n, A, B, C, D = thm.allInstanceVars()
         Asub, Bsub, Csub, Dsub = expr.operands[:finalIdx], expr.operands[finalIdx:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:]
         lSub, mSub, nSub = num(len(Asub)), num(len(Bsub)), num(len(Dsub))
-    return thm.specialize({l:lSub, m:mSub, n:nSub, A:Asub, B:Bsub, C:Csub, D:Dsub}, assumptions=assumptions)
+    return thm.specialize(
+        {l:lSub, m:mSub, n:nSub, A:Asub, B:Bsub, C:Csub, D:Dsub},
+        assumptions=assumptions)
 
 def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS):
     from proveit.logic import Equals
@@ -216,3 +218,56 @@ def pairwiseEvaluation(expr, assumptions):
         expr = eq.update(expr.innerExpr().operands[0].evaluation(assumptions))
     eq.update(expr.evaluation(assumptions=assumptions))
     return eq.relation
+
+def generic_permutation(expr, new_order=None, cycles=None,
+                        assumptions=USE_DEFAULTS):
+    '''
+    '''
+    # check validity of default param usage: should have new_order
+    # OR cycles, but not both
+    if new_order is None and cycles is None:
+        raise ValueError("Need to specify either a new ordering in "
+                         "the form of new_order = list OR "
+                         "cycles = list of tuples.")
+    if not new_order is None and not cycles is None:
+        raise ValueError("Need to specify EITHER new_order OR cycles, "
+                         "but not both.")
+
+    # check validity of provided index values: indices i need to
+    # be 0 ≤ i ≤ n-1, and be complete 0, 1, 2, …, n-1
+    if not new_order is None:
+        exprLength = len(expr.operands)
+        expectedIndices = set(range(0, exprLength))
+        givenIndices = set(new_order)
+        print("expectedIndices = {}".format(expectedIndices))
+        print("givenIndices = {}".format(givenIndices))
+        unexpectedIndices = list(givenIndices - expectedIndices)
+        print("unexpectedIndices = {}".format(unexpectedIndices))
+        if len(new_order) > exprLength:
+            raise ValueError("new_order specification contains too "
+                             "many items, listing {2} indices when "
+                             "it should list {0} indices from 0 to {1}".
+                             format(exprLength, exprLength -1,
+                                    len(new_order)))
+        if len(unexpectedIndices) != 0:
+            raise IndexError("Index or indices out of bounds: {0}. "
+                             "new_order should be a list of indices "
+                             "i such that 0 ≤ i ≤ {1}.".
+                             format(unexpectedIndices, exprLength -1))
+        missingIndices = list(expectedIndices - givenIndices)
+        if len(missingIndices) != 0:
+            raise ValueError("new_order specification is missing "
+                             "indices: {}.".format(missingIndices))
+    if not cycles is None:
+        exprLength = len(expr.operands)
+        for cycle in cycles:
+            for i in cycle:
+                if i >= exprLength:
+                    raise IndexError(
+                            "Index {0} out-of-bounds. cycles should "
+                            "contain only indices i such "
+                            "that 0 ≤ i ≤ {1}".
+                            format(i, exprLength-1))
+
+    return expr
+

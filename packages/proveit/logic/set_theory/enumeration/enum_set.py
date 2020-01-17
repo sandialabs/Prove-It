@@ -1,6 +1,7 @@
 from proveit import Literal, Operation, ExprTuple, USE_DEFAULTS
 from proveit.abstract_algebra.generic_methods import apply_permutation_thm
-from proveit.abstract_algebra.generic_methods import apply_commutation_thm
+from proveit.abstract_algebra.generic_methods import (
+        apply_commutation_thm, generic_permutation)
 
 class Set(Operation):
     '''
@@ -36,11 +37,46 @@ class Set(Operation):
         Deduce that this Set expression is set-equivalent to a Set
         in which the element at index initIdx has been moved to
         finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
-        initIdx = 1 (i.e. 'b') and finalIdx = -2.
+        initIdx = 1 (i.e. 'b') and finalIdx = -2. In traditional
+        cycle notation, this corresponds to an index-based cycle
+        (initIdx, initIdx+1, … finalIdx) where
+        0 ≤ initIdx ≤ finalIdx ≤ n - 1 for a set of size n.
+        TO BE REPLACED WITH ALTERNATELY-NAMED
+        permutationSingleCycle BELOW.
         '''
         from ._theorems_ import (permutation, leftwardPermutation,
                                  rightwardPermutation)
         return apply_commutation_thm(self, initIdx, finalIdx, permutation,
                                      leftwardPermutation, rightwardPermutation,
-                                     assumptions)       
+                                     assumptions)
+
+    def permutationSingleCycle(self, initIdx=None, finalIdx=None,
+                    assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this Set expression is set-equivalent to a Set
+        in which the element at index initIdx has been moved to
+        finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
+        initIdx = 1 (i.e. 'b') and finalIdx = -2. In traditional
+        cycle notation, this corresponds to an index-based cycle
+        (initIdx, initIdx+1, … finalIdx) where
+        0 ≤ initIdx ≤ finalIdx ≤ n - 1 for a set of size n.
+        '''
+        from ._theorems_ import (permutation, leftwardPermutation,
+                                 rightwardPermutation)
+        return apply_commutation_thm(self, initIdx, finalIdx, permutation,
+                                     leftwardPermutation, rightwardPermutation,
+                                     assumptions)
+
+    def permutationGeneral(self, new_order=None, cycles=None,
+                    assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this Set expression is set-equivalent to a Set
+        in which the elements at indices 0, 1, …, n-1 have been
+        reordered as specified EITHER by the new_order list OR by the
+        cycles list parameter. For example,
+        {a, b, c, d}.permutationGeneral(new_order=[0, 2, 3, 1]) and
+        {a, b, c, d}.permutationGeneral(cycles=[(1, 2, 3)]) would both
+        give the output |- {a, b, c, d} = {a, c, d, b}.
+        '''
+        return generic_permutation(self, new_order, cycles, assumptions)
 
