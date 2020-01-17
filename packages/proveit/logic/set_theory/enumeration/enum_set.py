@@ -1,5 +1,6 @@
 from proveit import Literal, Operation, ExprTuple, USE_DEFAULTS
 from proveit.abstract_algebra.generic_methods import apply_permutation_thm
+from proveit.abstract_algebra.generic_methods import apply_commutation_thm
 
 class Set(Operation):
     '''
@@ -39,7 +40,7 @@ class Set(Operation):
         '''
         from ._theorems_ import (permutation, leftwardPermutation,
                                  rightwardPermutation)
-        return apply_permutation_thm(self, initIdx, finalIdx, permutation,
+        return apply_commutation_thm(self, initIdx, finalIdx, permutation,
                                      leftwardPermutation, rightwardPermutation,
                                      assumptions)       
 

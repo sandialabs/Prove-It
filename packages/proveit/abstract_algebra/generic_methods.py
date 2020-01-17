@@ -1,29 +1,57 @@
 from proveit import USE_DEFAULTS, singleOrCompositeExpression
 
-def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm, rightwardThm, assumptions=USE_DEFAULTS):
+def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
+                          rightwardThm, assumptions=USE_DEFAULTS):
+
     from proveit.logic import Equals
     from proveit.number import num
+
+    # check validity of default usage of indices
     if initIdx is None or finalIdx is None:
         if len(expr.operands) != 2:
-            raise IndexError("May only use default 'initIdx' or 'finalIdx' when there are only 2 operands when applying commutation.")
+            raise IndexError("You may use default 'initIdx' or "
+                             "'finalIdx' values when applying "
+                             "commutation only if your set or "
+                             "set-like object contains exactly 2 "
+                             "elements.")
         if initIdx is not finalIdx:
-            raise IndexError("Must supply both 'initIdx' and 'finalIdx' or supply neither (allowed when there are only 2 operands) when applying commutation.")
+            raise IndexError("When applying commutation, you must "
+                             "either supply both 'initIdx' and "
+                             "'finalIdx' or supply neither (allowed "
+                             "when there are only 2 elements)")
         initIdx, finalIdx = 0, 1 # defaults when there are 2 operands
-    if initIdx < 0: initIdx = len(expr.operands)+initIdx # use wrap-around indexing
-    if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx # use wrap-around indexing
+
+    # transform any wrap-around indexing for simplicity
+    if initIdx < 0: initIdx = len(expr.operands)+initIdx
+    if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx
+
+    # check validity of supplied index values
+    if initIdx >= len(expr.operands):
+        raise IndexError("'initIdx' = {0} is out of range. Should "
+                         "have 0 ≤ initIdx ≤ {1}.".
+                         format(initIdx, len(expr.operands) - 1))
+    if finalIdx >= len(expr.operands):
+        raise IndexError("'finalIdx' = {0} is out of range. Should "
+                         "have 0 ≤ finalIdx ≤ {1}.".
+                         format(finalIdx, len(expr.operands) - 1))
+
+    # trivial commutation (i.e. non-commutation)
+    if initIdx==finalIdx:
+        return Equals(expr, expr).prove()
+
+    # number of operands or elements = 2
     if len(expr.operands)==2 and set([initIdx, finalIdx]) == {0, 1}:
         A, B = binaryThm.allInstanceVars()
-        return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]}, assumptions=assumptions)
-    if initIdx >= len(expr.operands):
-        raise IndexError("'initIdx' out of range")
-    if finalIdx >= len(expr.operands):
-        raise IndexError("'finalIdx' out of range")
-    if initIdx==finalIdx:
-        return Equals(expr, expr).prove() # trivial non-commutation
+        return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
+                                    assumptions=assumptions)
+
+    # number of operands is ≥ 3
     if initIdx < finalIdx:
         thm = rightwardThm
-        l, m, n, A, B, C, D = rightwardThm.allInstanceVars()
-        Asub, Bsub, Csub, Dsub = expr.operands[:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:finalIdx+1], expr.operands[finalIdx+1:]
+        l, m, n, A, B, C, D = thm.allInstanceVars()
+        Asub, Bsub, Csub, Dsub = (
+            expr.operands[:initIdx], expr.operands[initIdx],
+            expr.operands[initIdx+1:finalIdx+1], expr.operands[finalIdx+1:])
         lSub, mSub, nSub = num(len(Asub)), num(len(Csub)), num(len(Dsub))
     else:
         thm = leftwardThm
