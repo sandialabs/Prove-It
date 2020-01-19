@@ -3,7 +3,7 @@ from proveit import USE_DEFAULTS, singleOrCompositeExpression
 def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
                           rightwardThm, assumptions=USE_DEFAULTS):
 
-    from proveit.logic import Equals
+    from proveit.logic import Equals, Set, SetEquiv
     from proveit.number import num
 
     # check validity of default usage of indices
@@ -36,7 +36,10 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
                          format(finalIdx, len(expr.operands) - 1))
 
     # trivial commutation (i.e. non-commutation)
+    # but we need to distinguish SetEquiv from Equals
     if initIdx==finalIdx:
+        if isinstance(expr, Set):
+            return SetEquiv(expr, expr).prove()
         return Equals(expr, expr).prove()
 
     # number of operands or elements = 2
@@ -223,8 +226,8 @@ def generic_permutation(expr, new_order=None, cycles=None,
                         assumptions=USE_DEFAULTS):
     '''
     '''
-    # check validity of default param usage: should have new_order
-    # OR cycles, but not both
+    # check validity of default param usage: should have new_order list
+    # OR list of cycles, but not both
     if new_order is None and cycles is None:
         raise ValueError("Need to specify either a new ordering in "
                          "the form of new_order = list OR "
@@ -233,41 +236,118 @@ def generic_permutation(expr, new_order=None, cycles=None,
         raise ValueError("Need to specify EITHER new_order OR cycles, "
                          "but not both.")
 
-    # check validity of provided index values: indices i need to
-    # be 0 ≤ i ≤ n-1, and be complete 0, 1, 2, …, n-1
-    if not new_order is None:
-        exprLength = len(expr.operands)
-        expectedIndices = set(range(0, exprLength))
-        givenIndices = set(new_order)
-        print("expectedIndices = {}".format(expectedIndices))
-        print("givenIndices = {}".format(givenIndices))
-        unexpectedIndices = list(givenIndices - expectedIndices)
-        print("unexpectedIndices = {}".format(unexpectedIndices))
-        if len(new_order) > exprLength:
+    # check validity of provided index values: 
+    # (1) each index i needs to be 0 ≤ i ≤ n-1;
+    # (2) set of indices provided in new_order needs to be complete,
+    #     i.e. consisting of ints 0, 1, 2, …, n-1 (but we allow cycle
+    #     notation to omit length-1 cycles)
+    # (3) cannot have repeated indices
+    expected_number_of_indices = len(expr.operands)
+    expected_indices_set = set(range(0, expected_number_of_indices))
+    # might be able to condense some of new_order and cycles together
+    # later, but somewhat challening if we allow cycles to omit
+    # length-1 cycles
+    if new_order:
+        given_indices_list = new_order
+        given_indices_set = set(new_order)
+        print("expected_indices_set = {}".format(expected_indices_set))         # for testing; delete later
+        print("given_indices_set = {}".format(given_indices_set))               # for testing; delete later
+        if len(given_indices_list) > expected_number_of_indices:
             raise ValueError("new_order specification contains too "
                              "many items, listing {2} indices when "
                              "it should list {0} indices from 0 to {1}".
-                             format(exprLength, exprLength -1,
+                             format(expected_number_of_indices,
+                                    expected_number_of_indices - 1,
                                     len(new_order)))
-        if len(unexpectedIndices) != 0:
+        unexpected_indices_set = given_indices_set - expected_indices_set
+        print("unexpected_indices_set = {}".format(unexpected_indices_set))     # for testing; delete later
+        if len(unexpected_indices_set) != 0:
             raise IndexError("Index or indices out of bounds: {0}. "
                              "new_order should be a list of indices "
                              "i such that 0 ≤ i ≤ {1}.".
-                             format(unexpectedIndices, exprLength -1))
-        missingIndices = list(expectedIndices - givenIndices)
-        if len(missingIndices) != 0:
+                             format(unexpected_indices_set,
+                                    expected_number_of_indices - 1))
+        missing_indices_set = expected_indices_set - given_indices_set
+        if len(missing_indices_set) != 0:
             raise ValueError("new_order specification is missing "
-                             "indices: {}.".format(missingIndices))
-    if not cycles is None:
-        exprLength = len(expr.operands)
+                             "indices: {}.".format(missing_indices_set))
+
+    if cycles:
+        # collect the indices from the cycles
+        given_indices_list = []
         for cycle in cycles:
             for i in cycle:
-                if i >= exprLength:
-                    raise IndexError(
-                            "Index {0} out-of-bounds. cycles should "
-                            "contain only indices i such "
-                            "that 0 ≤ i ≤ {1}".
-                            format(i, exprLength-1))
+                given_indices_list.append(i)
+        given_indices_set = set(given_indices_list)
+        print("given_indices_list from cycles  = {}".format(given_indices_list)) # for testing; delete later
+        if len(given_indices_list) > expected_number_of_indices:
+            raise ValueError("cycles specification contains too "
+                             "many items, providing {0} indices when "
+                             "it should provide no more than {1} "
+                             "indices with values from 0 to {2}".
+                             format(len(given_indices_list),
+                                    expected_number_of_indices,
+                                    expected_number_of_indices - 1))
+        unexpected_indices_set = given_indices_set - expected_indices_set
+        print("unexpected_indices_set = {}".format(unexpected_indices_set))     # for testing; delete later
+        if len(unexpected_indices_set) != 0:
+            raise IndexError("Index or indices out of bounds: {0}. "
+                             "cycles should only contain indices "
+                             "i such that 0 ≤ i ≤ {1}.".
+                             format(unexpected_indices_set,
+                                    expected_number_of_indices - 1))
+        # for cycles, we allow user to omit length-1 cycles
+        # so we do NOT need to check for missing indices
 
-    return expr
+    # if user-supplied args check out, then we continue
+    from proveit import TransRelUpdater
+
+    # assuming just new_order for now
+    current_order = list(range(0, expected_number_of_indices))
+    print("current_order initially set to: {}".format(current_order))           # for testing; delete later
+    desired_order = new_order # will need to adapt this later to cycles
+    print("desired_order set to: {}".format(desired_order))                     # for testing; delete later
+    print("zip(current_order, desired_order) = {}".format(list(enumerate(zip(current_order, desired_order)))))
+    temp_order_diff_info = next( (idx, x, y) for idx, (x, y) in enumerate(zip(current_order, desired_order)) if x != y)
+    print("temp_order_diff_info = {}".format(temp_order_diff_info))
+    initIdx = temp_order_diff_info[2]
+    finalIdx = temp_order_diff_info[0]
+
+    eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
+    print("eq.relation = {}".format(eq.relation))
+
+    while current_order != desired_order:
+        print("Entering the while loop, with ")                                 # for testing; delete later
+        print("    current_order = {}".format(current_order))                   # for testing; delete later
+        print("    desired_order = {}".format(desired_order))                   # for testing; delete later
+        # find 1st location where the lists differ and the desired
+        # index value there
+        temp_order_diff_info = next(
+                (idx, x, y) for idx, (x, y) in enumerate(
+                zip(current_order, desired_order)) if x != y)
+        initIdx = temp_order_diff_info[2]
+        finalIdx = temp_order_diff_info[0]
+        expr = eq.update(expr.permutationSimple(
+                initIdx, finalIdx, assumptions=assumptions))
+        print("expr = {}".format(expr))                                         # for testing; delete later
+        print("eq.relation = {}".format(eq.relation))                           # for testing; delete later
+        current_order.remove(initIdx)
+        current_order.insert(finalIdx, initIdx)
+        print("current_order is now = {}".format(current_order))                # for testing; delete later
+
+    # temp from groupCommutation():
+    # eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
+    # expr = eq.update(expr.association(initIdx, length, assumptions=assumptions))
+    # expr = eq.update(expr.commutation(initIdx, finalIdx, assumptions=assumptions))
+    # if disassociate:
+    #     expr = eq.update(expr.disassociation(finalIdx, assumptions=assumptions))
+    # return eq.relation
+
+
+    # while current_order != desired_order:
+    #     # find 1st location where the lists differ
+    #     tempLocation = next( (idx, x, y) for idx, (x, y) in enumerate(zip(current_order, desired_order)) if x != y)
+
+
+    return eq.relation
 

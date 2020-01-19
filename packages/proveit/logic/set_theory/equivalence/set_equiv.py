@@ -1,8 +1,8 @@
-from proveit import defaults, USE_DEFAULTS, ProofFailure
+from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
 from proveit import Literal, Operation, Lambda, ParameterExtractionError
 from proveit import TransitiveRelation, TransitivityException
 from proveit.logic.irreducible_value import IrreducibleValue, isIrreducibleValue
-from proveit._common_ import A, B, P, Q, X, f, x, y, z
+from proveit._common_ import A, B, C, P, Q, X, f, x, y, z
 
 class SetEquiv(TransitiveRelation):
     '''
@@ -206,6 +206,52 @@ class SetEquiv(TransitiveRelation):
         # from .not_equals import NotEquals
         return SetNotEquiv(self.lhs, self.rhs).concludeAsFolded(assumptions)
         # return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
+
+    def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
+        '''
+        From A set_equiv B (self) and B set_equiv C (other) derive and
+        return A set_equiv C.
+        If "other" is not a SetEquiv, reverse roles and call
+        'applyTransitivity' from the "other" side.
+        This method initially based on the applyTransitivity method
+        from Equals class. 
+        '''
+        from ._theorems_ import setEquivTransitivity
+        other = asExpression(other)
+        print("Entering applyTransitivity")                                     # for testing; delete later
+        print("    self = {}".format(self))                                     # for testing; delete later
+        print("    other = {}".format(other))                                   # for testing; delete later
+        if not isinstance(other, SetEquiv):
+            # If the other relation is not "SetEquiv",
+            # call from the "other" side.
+            print("inside the first if inside applyTransitivity")               # for testing; delete later
+            return other.applyTransitivity(self, assumptions)
+        otherSetEquiv = other
+        # We can assume that B set_equiv A will be a KnownTruth if
+        # A set_equiv B is a KnownTruth because it is derived as a
+        # side-effect.
+        if self.rhs == otherSetEquiv.lhs:
+            return setEquivTransitivity.specialize(
+                    {A:self.lhs, B:self.rhs, C:otherEquiv.rhs},
+                    assumptions=assumptions)
+        elif self.rhs == otherSetEquiv.rhs:
+            return setEquivTransitivity.specialize(
+                {A:self.lhs, B:self.rhs, C:otherSetEquiv.lhs},
+                assumptions=assumptions)
+        elif self.lhs == otherSetEquiv.lhs:
+            return setEquivTransitivity.specialize(
+                {A:self.rhs, B:self.lhs, C:otherSetEquiv.rhs},
+                assumptions=assumptions)
+        elif self.lhs == otherSetEquiv.rhs:
+            return setEquivTransitivity.specialize(
+                {A:self.rhs, B:self.lhs, C:otherSetEquiv.lhs},
+                assumptions=assumptions)
+        else:
+            raise TransitivityException(
+                    self, assumptions,
+                    'Transitivity cannot be applied unless there is '
+                    'something in common in the set equivalences: '
+                    '%s vs %s'%(str(self), str(other)))
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''

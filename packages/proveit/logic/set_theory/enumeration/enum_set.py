@@ -50,7 +50,7 @@ class Set(Operation):
                                      leftwardPermutation, rightwardPermutation,
                                      assumptions)
 
-    def permutationSingleCycle(self, initIdx=None, finalIdx=None,
+    def permutationSimple(self, initIdx=None, finalIdx=None,
                     assumptions=USE_DEFAULTS):
         '''
         Deduce that this Set expression is set-equivalent to a Set
