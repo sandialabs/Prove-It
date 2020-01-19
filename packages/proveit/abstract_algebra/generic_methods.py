@@ -245,7 +245,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
     expected_number_of_indices = len(expr.operands)
     expected_indices_set = set(range(0, expected_number_of_indices))
     # might be able to condense some of new_order and cycles together
-    # later, but somewhat challening if we allow cycles to omit
+    # later, but somewhat challenging if we allow cycles to omit
     # length-1 cycles
     if new_order:
         given_indices_list = new_order
@@ -307,15 +307,17 @@ def generic_permutation(expr, new_order=None, cycles=None,
     print("current_order initially set to: {}".format(current_order))           # for testing; delete later
     desired_order = new_order # will need to adapt this later to cycles
     print("desired_order set to: {}".format(desired_order))                     # for testing; delete later
-    print("zip(current_order, desired_order) = {}".format(list(enumerate(zip(current_order, desired_order)))))
-    temp_order_diff_info = next( (idx, x, y) for idx, (x, y) in enumerate(zip(current_order, desired_order)) if x != y)
-    print("temp_order_diff_info = {}".format(temp_order_diff_info))
-    initIdx = temp_order_diff_info[2]
-    finalIdx = temp_order_diff_info[0]
+
+    # trivial permutation?
+    # check first whether permutation is even necessary
+    # trivial permutation
+    # if current_order == desired_order:
+    #     return SetEquiv(expr, expr).prove()
 
     eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
     print("eq.relation = {}".format(eq.relation))
 
+    
     while current_order != desired_order:
         print("Entering the while loop, with ")                                 # for testing; delete later
         print("    current_order = {}".format(current_order))                   # for testing; delete later
@@ -325,15 +327,18 @@ def generic_permutation(expr, new_order=None, cycles=None,
         temp_order_diff_info = next(
                 (idx, x, y) for idx, (x, y) in enumerate(
                 zip(current_order, desired_order)) if x != y)
-        initIdx = temp_order_diff_info[2]
+        initIdx = current_order.index(temp_order_diff_info[2])
         finalIdx = temp_order_diff_info[0]
+        print("    initIdx = {}".format(initIdx))                               # for testing; delete later
+        print("    finalIdx = {}".format(finalIdx))                             # for testing; delete later
         expr = eq.update(expr.permutationSimple(
                 initIdx, finalIdx, assumptions=assumptions))
-        print("expr = {}".format(expr))                                         # for testing; delete later
-        print("eq.relation = {}".format(eq.relation))                           # for testing; delete later
-        current_order.remove(initIdx)
-        current_order.insert(finalIdx, initIdx)
-        print("current_order is now = {}".format(current_order))                # for testing; delete later
+        print("    expr = {}".format(expr))                                     # for testing; delete later
+        print("    eq.relation = {}".format(eq.relation))                       # for testing; delete later
+        current_order.remove(temp_order_diff_info[2])
+        current_order.insert(finalIdx, temp_order_diff_info[2])
+        print("    current_order is now = {}".format(current_order))            # for testing; delete later
+        print("=============================")                                  # for testing; delete later
 
     # temp from groupCommutation():
     # eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
