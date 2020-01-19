@@ -232,7 +232,7 @@ class SetEquiv(TransitiveRelation):
         # side-effect.
         if self.rhs == otherSetEquiv.lhs:
             return setEquivTransitivity.specialize(
-                    {A:self.lhs, B:self.rhs, C:otherEquiv.rhs},
+                    {A:self.lhs, B:self.rhs, C:otherSetEquiv.rhs},
                     assumptions=assumptions)
         elif self.rhs == otherSetEquiv.rhs:
             return setEquivTransitivity.specialize(

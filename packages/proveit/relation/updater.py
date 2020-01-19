@@ -13,11 +13,16 @@ class TransRelUpdater:
         expression and forming the trivial relation of
         expr=expr.  By providing 'assumptions', they
         can be used as default assumptions when applying
-        updates.
+        updates. Modified 1/19/2020 by wdc to allow use
+        with Set class and SetEquiv relation.
         '''
-        from proveit.logic import Equals
+        from proveit.logic import Equals, Set, SetEquiv
         self.expr = expr
-        self.relation = Equals(expr, expr).prove()
+        print("init TransRelUpdater, expr = {}".format(expr))                   # for testing; delete later
+        if isinstance(expr, Set):
+            self.relation = SetEquiv(expr, expr).prove()
+        else:
+            self.relation = Equals(expr, expr).prove()
         self.assumptions = assumptions
     
     def update(self, relation, assumptions=None):
