@@ -1,5 +1,6 @@
 from proveit import USE_DEFAULTS, singleOrCompositeExpression
 
+
 def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
                           rightwardThm, assumptions=USE_DEFAULTS):
 
@@ -71,9 +72,11 @@ def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS)
     beg, end = startIdx, startIdx+length
     if beg < 0: beg = len(expr.operands)+beg # use wrap-around indexing
     if not length >= 2:
-        raise IndexError ("The 'length' must be 2 or more when applying association.")
+        raise IndexError ("The 'length' must be 2 or more when "
+                          "applying association.")
     if end > len(expr.operands):
-        raise IndexError("'startIdx+length' out of bounds: %d > %d."%(end, len(expr.operands)))
+        raise IndexError("'startIdx+length' out of bounds: %d > %d."%(
+                         end, len(expr.operands)))
     if beg==0 and end==len(expr.operands):
         # association over the entire range is trivial:
         return Equals(expr, expr).prove() # simply the self equality
@@ -86,7 +89,9 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     if idx >= len(expr.operands):
         raise IndexError("'idx' out of range for disassociation")
     if not isinstance(expr.operands[idx], expr.__class__):
-        raise ValueError("Expecting %d index of %s to be grouped (i.e., a nested expression of the same type)"%(idx, str(expr)))
+        raise ValueError("Expecting %d index of %s to be grouped (i.e., a "
+                         "nested expression of the same type)"
+                         %(idx, str(expr)))
     l, m, n, AA, BB, CC = thm.allInstanceVars()
     length = len(expr.operands[idx].operands)
     return thm.specialize({l:num(idx), m:num(length), n: num(len(expr.operands) - idx - 1), AA:expr.operands[:idx], BB:expr.operands[idx].operands, CC:expr.operands[idx+1:]}, assumptions=assumptions)
@@ -250,8 +255,6 @@ def generic_permutation(expr, new_order=None, cycles=None,
     if new_order:
         given_indices_list = new_order
         given_indices_set = set(new_order)
-        print("expected_indices_set = {}".format(expected_indices_set))         # for testing; delete later
-        print("given_indices_set = {}".format(given_indices_set))               # for testing; delete later
         if len(given_indices_list) > expected_number_of_indices:
             raise ValueError("new_order specification contains too "
                              "many items, listing {2} indices when "
@@ -260,7 +263,6 @@ def generic_permutation(expr, new_order=None, cycles=None,
                                     expected_number_of_indices - 1,
                                     len(new_order)))
         unexpected_indices_set = given_indices_set - expected_indices_set
-        print("unexpected_indices_set = {}".format(unexpected_indices_set))     # for testing; delete later
         if len(unexpected_indices_set) != 0:
             raise IndexError("Index or indices out of bounds: {0}. "
                              "new_order should be a list of indices "
@@ -279,7 +281,6 @@ def generic_permutation(expr, new_order=None, cycles=None,
             for i in cycle:
                 given_indices_list.append(i)
         given_indices_set = set(given_indices_list)
-        print("given_indices_list from cycles  = {}".format(given_indices_list)) # for testing; delete later
         if len(given_indices_list) > expected_number_of_indices:
             raise ValueError("cycles specification contains too "
                              "many items, providing {0} indices when "
@@ -289,79 +290,58 @@ def generic_permutation(expr, new_order=None, cycles=None,
                                     expected_number_of_indices,
                                     expected_number_of_indices - 1))
         unexpected_indices_set = given_indices_set - expected_indices_set
-        print("unexpected_indices_set = {}".format(unexpected_indices_set))     # for testing; delete later
         if len(unexpected_indices_set) != 0:
             raise IndexError("Index or indices out of bounds: {0}. "
                              "cycles should only contain indices "
                              "i such that 0 ≤ i ≤ {1}.".
                              format(unexpected_indices_set,
                                     expected_number_of_indices - 1))
-        # for cycles, we allow user to omit length-1 cycles
-        # so we do NOT need to check for missing indices
-        # once cycles have passed all the tests,
+        # For cycles, we allow user to omit length-1 cycles
+        # so we do NOT need to check for missing indices.
+        # Instead, once cycles have passed all the tests,
         # convert to new_order list
         new_order = list(range(0, expected_number_of_indices))
         for cycle in cycles:
             tempCycleLength = len(cycle)
             for i in range(0, tempCycleLength):
                 new_order[cycle[i]] = cycle[(i + 1)%tempCycleLength]
-        print("new_order from cycles = {}".format(new_order))                   # for testing; delete later
+        # quick check for duplicates in new_order (can't check it 
+        # earlier because there might be legitimate duplicates during
+        # the cycles-to-new_order construction process):
+        if len(new_order) != len(set(new_order)):
+            raise IndexError("Index or indices duplicated in cycles "
+                             "specification. cycles should contain "
+                             "only a single instance of any specific "
+                             "index value.")
 
 
-    # if user-supplied args check out, then we continue
+    # if user-supplied args check out, then we can continue,
+    # regardless of whether user has supplied new_order or cycles
     from proveit import TransRelUpdater
 
-    # assuming just new_order for now
     current_order = list(range(0, expected_number_of_indices))
-    print("current_order initially set to: {}".format(current_order))           # for testing; delete later
-    desired_order = new_order # will need to adapt this later to cycles; notice this isn't a deep copy
-    print("desired_order set to: {}".format(desired_order))                     # for testing; delete later
+    desired_order = new_order # notice this isn't a deep copy
 
-    # trivial permutation?
-    # check first whether permutation is even necessary
-    # trivial permutation
-    # if current_order == desired_order:
-    #     return SetEquiv(expr, expr).prove()
+    # No need to explicitly check for a trivial (non)-permutation;
+    # the eq.relation will hold this for us
 
-    eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
-    print("eq.relation = {}".format(eq.relation))
+    # for convenience while updating our equation
+    eq = TransRelUpdater(expr, assumptions)
 
-    
     while current_order != desired_order:
-        print("Entering the while loop, with ")                                 # for testing; delete later
-        print("    current_order = {}".format(current_order))                   # for testing; delete later
-        print("    desired_order = {}".format(desired_order))                   # for testing; delete later
+
         # find 1st location where the lists differ and the desired
-        # index value there
+        # index value there, using set comprehension
         temp_order_diff_info = next(
                 (idx, x, y) for idx, (x, y) in enumerate(
                 zip(current_order, desired_order)) if x != y)
         initIdx = current_order.index(temp_order_diff_info[2])
         finalIdx = temp_order_diff_info[0]
-        print("    initIdx = {}".format(initIdx))                               # for testing; delete later
-        print("    finalIdx = {}".format(finalIdx))                             # for testing; delete later
         expr = eq.update(expr.permutationSimple(
                 initIdx, finalIdx, assumptions=assumptions))
-        print("    expr = {}".format(expr))                                     # for testing; delete later
-        print("    eq.relation = {}".format(eq.relation))                       # for testing; delete later
+        # update current_order to reflect step-wise change
         current_order.remove(temp_order_diff_info[2])
         current_order.insert(finalIdx, temp_order_diff_info[2])
-        print("    current_order is now = {}".format(current_order))            # for testing; delete later
-        print("=============================")                                  # for testing; delete later
-
-    # temp from groupCommutation():
-    # eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
-    # expr = eq.update(expr.association(initIdx, length, assumptions=assumptions))
-    # expr = eq.update(expr.commutation(initIdx, finalIdx, assumptions=assumptions))
-    # if disassociate:
-    #     expr = eq.update(expr.disassociation(finalIdx, assumptions=assumptions))
-    # return eq.relation
-
-
-    # while current_order != desired_order:
-    #     # find 1st location where the lists differ
-    #     tempLocation = next( (idx, x, y) for idx, (x, y) in enumerate(zip(current_order, desired_order)) if x != y)
-
 
     return eq.relation
 

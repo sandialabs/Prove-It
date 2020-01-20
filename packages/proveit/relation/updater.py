@@ -18,7 +18,6 @@ class TransRelUpdater:
         '''
         from proveit.logic import Equals, Set, SetEquiv
         self.expr = expr
-        print("init TransRelUpdater, expr = {}".format(expr))                   # for testing; delete later
         if isinstance(expr, Set):
             self.relation = SetEquiv(expr, expr).prove()
         else:

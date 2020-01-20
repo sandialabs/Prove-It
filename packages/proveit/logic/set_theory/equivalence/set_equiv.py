@@ -185,8 +185,8 @@ class SetEquiv(TransitiveRelation):
         '''
         from ._theorems_ import setEquivReflexivity
         assert self.lhs == self.rhs
-        print('concludeViaReflexivity() being processed.')
-        return setEquivReflexivity.specialize({A:self.lhs}, assumptions=assumptions)
+        return setEquivReflexivity.specialize(
+                {A:self.lhs}, assumptions=assumptions)
 
     def deriveReversed(self, assumptions=USE_DEFAULTS):
         '''
@@ -218,13 +218,9 @@ class SetEquiv(TransitiveRelation):
         '''
         from ._theorems_ import setEquivTransitivity
         other = asExpression(other)
-        print("Entering applyTransitivity")                                     # for testing; delete later
-        print("    self = {}".format(self))                                     # for testing; delete later
-        print("    other = {}".format(other))                                   # for testing; delete later
         if not isinstance(other, SetEquiv):
             # If the other relation is not "SetEquiv",
             # call from the "other" side.
-            print("inside the first if inside applyTransitivity")               # for testing; delete later
             return other.applyTransitivity(self, assumptions)
         otherSetEquiv = other
         # We can assume that B set_equiv A will be a KnownTruth if
