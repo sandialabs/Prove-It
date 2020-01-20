@@ -23,7 +23,7 @@ class ContextStorage:
     should be committed to the repository (unlike the __pv_it directory
     which can all be re-generated).
     '''
-    
+
     def __init__(self, context, name, directory, rootDirectory):
         from .context import Context, ContextException
         if not isinstance(context, Context):
@@ -1460,7 +1460,8 @@ class ContextStorage:
         with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
             # extract the unique representation from the pv_it file
             unique_rep = f.read()
-        self._proveItObjects[proof_id] = (context, hash_directory)           
+        proof_id = context.name + '.' + hash_directory # full storage id
+        self._proveItObjects[proof_id] = (context, hash_directory)   
         return Proof._showProof(context, proof_id, unique_rep)
         
     def recordCommonExprDependencies(self):

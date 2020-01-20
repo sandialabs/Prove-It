@@ -213,6 +213,8 @@ class Proof:
         for group_str in group_strs:
             objIds = re.split(",|:|;",group_str) 
             groups.append([objId for objId in objIds if len(objId) > 0])
+        if proof_id in _ShowProof.show_proof_by_id:
+            return _ShowProof.show_proof_by_id[proof_id]
         return _ShowProof(context, proof_id, step_info, groups)
                                                     
     def isUsable(self):
@@ -1011,6 +1013,10 @@ class _ShowProof:
     A mocked-up quasi-Proof object just for the purposes of showing a
     stored proof.
     '''
+    
+    # Map proof_id's to _ShowProof objects that have been created.
+    show_proof_by_id = dict()
+    
     def __init__(self, context, proof_id, stepInfo, refObjIdGroups):
         self._style_id = proof_id
         if '_' in stepInfo:
@@ -1042,6 +1048,7 @@ class _ShowProof:
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
             [context.getShowProof(obj_id) for obj_id in refObjIdGroups[-1]]
+        _ShowProof.show_proof_by_id[proof_id] = self
     
     def _repr_html_(self):
         return Proof._repr_html_(self)
