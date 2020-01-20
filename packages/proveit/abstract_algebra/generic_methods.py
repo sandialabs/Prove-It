@@ -298,6 +298,15 @@ def generic_permutation(expr, new_order=None, cycles=None,
                                     expected_number_of_indices - 1))
         # for cycles, we allow user to omit length-1 cycles
         # so we do NOT need to check for missing indices
+        # once cycles have passed all the tests,
+        # convert to new_order list
+        new_order = list(range(0, expected_number_of_indices))
+        for cycle in cycles:
+            tempCycleLength = len(cycle)
+            for i in range(0, tempCycleLength):
+                new_order[cycle[i]] = cycle[(i + 1)%tempCycleLength]
+        print("new_order from cycles = {}".format(new_order))                   # for testing; delete later
+
 
     # if user-supplied args check out, then we continue
     from proveit import TransRelUpdater
@@ -305,7 +314,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
     # assuming just new_order for now
     current_order = list(range(0, expected_number_of_indices))
     print("current_order initially set to: {}".format(current_order))           # for testing; delete later
-    desired_order = new_order # will need to adapt this later to cycles
+    desired_order = new_order # will need to adapt this later to cycles; notice this isn't a deep copy
     print("desired_order set to: {}".format(desired_order))                     # for testing; delete later
 
     # trivial permutation?
