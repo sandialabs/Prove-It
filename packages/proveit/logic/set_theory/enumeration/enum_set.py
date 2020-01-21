@@ -93,18 +93,17 @@ class Set(Operation):
         from ._theorems_ import subsetEqOfSuperset
         from proveit._common_ import m, n, aa, bb
         from proveit.number import num
+        # from proveit.logic.equality import sub
 
         # omitting checking of arguments for now
         # assume subset_indices are correct
         full_indices_list = list(range(0, len(self.operands)))
-        print("full_indices_list = {}".format(full_indices_list))               # for testing; delete later
 
         # construct the complement of the subset indices
         # avoiding using sets to preserve order just in case
         remaining_indices = list(full_indices_list) # clone
         for elem in subset_indices:
             remaining_indices.remove(elem)
-        print("remaining_indices = {}".format(remaining_indices))               # for testing; delete later
 
         new_order = subset_indices + remaining_indices
         # find superset permutation needed for thm application
@@ -113,19 +112,17 @@ class Set(Operation):
         desired_subset_list = []
         for elem in subset_indices:
             desired_subset_list.append(self.operands[elem])
-        print("desired_subset_list = {}".format(desired_subset_list))           # for testing; delete later
         # construct the desired complement list of elems
         desired_complement_list = []
         for elem in remaining_indices:
             desired_complement_list.append(self.operands[elem])
-        print("desired_subset_list = {}".format(desired_complement_list))       # for testing; delete later
         # borrowed the following organization from apply_commutation_thm
         m, n, a, b = subsetEqOfSuperset.allInstanceVars()
         a_sub, b_sub = (desired_subset_list, desired_complement_list)
         m_sub, n_sub = num(len(a_sub)), num(len(b_sub))
-        print("specializations = {}".format((a_sub, b_sub, m_sub, n_sub)))      # for testing; delete later
-        return subsetEqOfSuperset.specialize(
+        subset_of_permuted_superset = subsetEqOfSuperset.specialize(
                 {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
                 assumptions=assumptions)
+        return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
 
 

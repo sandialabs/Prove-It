@@ -153,9 +153,9 @@ class SetEquiv(TransitiveRelation):
     #     if hasattr(self.rhs, 'concludeEquality'):
     #         return self.rhs.concludeEquality(assumptions)
     #     """
-    #     # Use a breadth-first search approach to find the shortest
-    #     # path to get from one end-point to the other.
-    #     return TransitiveRelation.conclude(self, assumptions)
+        # Use a breadth-first search approach to find the shortest
+        # path to get from one end-point to the other.
+        return TransitiveRelation.conclude(self, assumptions)
 
     # @staticmethod
     # def knownRelationsFromLeft(expr, assumptionsSet):
@@ -251,7 +251,9 @@ class SetEquiv(TransitiveRelation):
 
     def subLeftSideInto(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
-        From x = y, and given P(y), derive P(x) assuming P(y).  
+        From A equiv B, and given P(B), derive P(A) assuming P(B).
+        UNDER CONSTRUCTION, adapted from Equals class. Not yet clear
+        how the rest of this descriptive commentary applies:  
         P(x) is provided via lambdaMap as a Lambda expression or an 
         object that returns a Lambda expression when calling lambdaMap()
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
@@ -259,27 +261,17 @@ class SetEquiv(TransitiveRelation):
         which to perform a global replacement of self.rhs.
         '''
         from ._theorems_ import subLeftSideInto
-        # from ._theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
-        # from proveit.logic import TRUE, FALSE
+        from proveit.logic import Equals
         Plambda = Equals._lambdaExpr(lambdaMap, self.rhs)
-        # try:
-        #     # try some alternative proofs that may be shorter, if they are usable
-        #     if self.rhs == TRUE: # substituteTruth may provide a shorter proof options
-        #         substituteTruth.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)
-        #     elif self.lhs == TRUE: # substituteInTrue may provide a shorter proof options
-        #         substituteInTrue.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)            
-        #     elif self.rhs == FALSE: # substituteFalsehood may provide a shorter proof options
-        #         substituteFalsehood.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)            
-        #     elif self.lhs == FALSE: # substituteInFalse may provide a shorter proof options
-        #         substituteInFalse.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)           
-        # except:
-        #     pass 
+
         return subLeftSideInto.specialize(
                 {A:self.lhs, B:self.rhs, P:Plambda}, assumptions=assumptions)
 
     def subRightSideInto(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
-        From x = y, and given P(x), derive P(y) assuming P(x).  
+        From A equiv B, and given P(A), derive P(B) assuming P(A).
+        UNDER CONSTRUCTION, adapted from Equals class. Not yet clear
+        how the rest of this descriptive commentary applies:  
         P(x) is provided via lambdaMap as a Lambda expression or an 
         object that returns a Lambda expression when calling lambdaMap()
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
@@ -287,22 +279,9 @@ class SetEquiv(TransitiveRelation):
         which to perform a global replacement of self.lhs.
         '''
         from ._theorems_ import subRightSideInto
-        # from ._theorems_ import substituteTruth, substituteInTrue, substituteFalsehood, substituteInFalse
-        # from proveit.logic import TRUE, FALSE
         from proveit.logic import Equals
         Plambda = Equals._lambdaExpr(lambdaMap, self.lhs)
-        # try:
-        #     # try some alternative proofs that may be shorter, if they are usable
-        #     if self.lhs == TRUE: # substituteTruth may provide a shorter proof options
-        #         substituteTruth.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)
-        #     elif self.rhs == TRUE: # substituteInTrue may provide a shorter proof options
-        #         substituteInTrue.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)            
-        #     elif self.lhs == FALSE: # substituteFalsehood may provide a shorter proof options
-        #         substituteFalsehood.specialize({x:self.rhs, P:Plambda}, assumptions=assumptions)            
-        #     elif self.rhs == FALSE: # substituteInFalse may provide a shorter proof options
-        #         substituteInFalse.specialize({x:self.lhs, P:Plambda}, assumptions=assumptions)            
-        # except:
-        #     pass
+        print("Plambda = {}".format(Plambda))                                   # for testing; delete later
         return subRightSideInto.specialize(
                 {A:self.lhs, B:self.rhs, P:Plambda}, assumptions=assumptions)
 
