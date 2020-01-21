@@ -330,11 +330,13 @@ def generic_permutation(expr, new_order=None, cycles=None,
 
     while current_order != desired_order:
 
-        # find 1st location where the lists differ and the desired
-        # index value there, using set comprehension
+        # Use set comprehension find 1st index where the current_order
+        # and desired_order lists differ and the desired_order value
+        # at that location
         temp_order_diff_info = next(
                 (idx, x, y) for idx, (x, y) in enumerate(
                 zip(current_order, desired_order)) if x != y)
+        # extract the init and final indices for the permutation
         initIdx = current_order.index(temp_order_diff_info[2])
         finalIdx = temp_order_diff_info[0]
         expr = eq.update(expr.permutationSimple(
