@@ -97,31 +97,9 @@ class Set(Operation):
         from proveit._common_ import m, n, aa, bb
         from proveit.number import num
 
-        # check validity of provided subset_indices: 
-        # (1) each index i needs to be 0 ≤ i ≤ n-1;
-        # (2) cannot have repeated indices
-        # can eventually move this code portion to separate method
-        # later also allow negative indices to be used
-        allowed_indices_set = set(range(0, len(self.operands)))
-        subset_indices_set =  set(subset_indices)
-        unexpected_indices_set = subset_indices_set - allowed_indices_set
-        if len(unexpected_indices_set) != 0:
-            raise IndexError("Index or indices out of bounds: {0}. "
-                             "subset_indices should be a list of indices "
-                             "i such that 0 ≤ i ≤ {1}.".
-                             format(unexpected_indices_set,
-                                    len(self.operands) - 1))
-        if len(subset_indices) > len(subset_indices_set):
-            # we have repeated indices, so let's find them for feedback
-            repeated_indices_set = set()
-            for elem in subset_indices_set:
-                if subset_indices.count(elem) > 1:
-                    repeated_indices_set.add(elem)
-
-            raise ValueError("The subset_indices specification contains "
-                             "repeated indices, with repeated index or indices: "
-                             "{}. Each index value should appear at most "
-                             "1 time.".format(repeated_indices_set))
+        # check validity of provided subset_indices:
+        valid_indices_list = list(range(0, len(self.operands)))
+        self._check_subset_indices(valid_indices_list, subset_indices)
 
         full_indices_list = list(range(0, len(self.operands)))
 
@@ -149,6 +127,7 @@ class Set(Operation):
         subset_of_permuted_superset = subsetEqOfSuperset.specialize(
                 {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
                 assumptions=assumptions)
+
         return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
 
 
@@ -168,39 +147,10 @@ class Set(Operation):
         from proveit._common_ import m, n, aa, bb
         from proveit.number import num
 
-        # check validity of provided subset_indices: 
-        # (1) each index i needs to be 0 ≤ i ≤ n-1;
-        # (2) cannot have repeated indices
-        # can eventually move this code portion to separate method
-        # later also allow negative indices to be used
-        allowed_indices_set = set(range(0, len(self.operands)))
-        subset_indices_set =  set(subset_indices)
-        unexpected_indices_set = subset_indices_set - allowed_indices_set
-        if len(unexpected_indices_set) != 0:
-            raise IndexError("Index or indices out of bounds: {0}. "
-                             "subset_indices should be a list of indices "
-                             "i such that 0 ≤ i ≤ {1}.".
-                             format(unexpected_indices_set,
-                                    len(self.operands) - 1))
-
-        if len(subset_indices) > len(subset_indices_set):
-            # we have repeated indices, so let's find them for feedback
-            repeated_indices_set = set()
-            for elem in subset_indices_set:
-                if subset_indices.count(elem) > 1:
-                    repeated_indices_set.add(elem)
-            raise ValueError("The subset_indices specification contains "
-                             "repeated indices, with repeated index or "
-                             "indices: {}. Each index value should appear at "
-                             "most 1 time.".format(repeated_indices_set))
-
-        # if we made it this far, then finally confirm that we are
-        # dealing with a proper subset and not an improper subset
-        if len(subset_indices) == len(allowed_indices_set):
-            raise ValueError("The subset_indices specification is not "
-                             "compatible with a proper subset (too many "
-                             "elements). Perhaps you want the "
-                             "deduceEnumSubsetEq() method instead?")
+        # check validity of provided subset_indices:
+        valid_indices_list = list(range(0, len(self.operands)))
+        self._check_subset_indices(valid_indices_list, subset_indices,
+                                   proper_subset = True)
 
         full_indices_list = list(range(0, len(self.operands)))
 
@@ -228,6 +178,52 @@ class Set(Operation):
         subset_of_permuted_superset = properSubsetOfSuperset.specialize(
                 {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
                 assumptions=assumptions)
+
         return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
+
+    # ----------------- #
+    # Utility Functions #
+    # ----------------- #
+
+    def _check_subset_indices(self, valid_indices_list, subset_indices_list,
+                              proper_subset = False):
+        '''
+        Checks if indices in subset_indices_list form a valid subset of
+        the valid_indices_list, which requires that the indices in
+        subset_indices_list have multiplicity <= 1 and values i such
+        that i is an element of valid_indices_list. If proper_subset
+        flag set to True, the subset_indices_list must have strictly
+        fewer elements than valid_indices_list.
+        LATER: allow negative indices?
+        '''
+
+        valid_indices_set = set(valid_indices_list)
+        # allowed_indices_set = set(range(0, len(self.operands)))
+        subset_indices_set =  set(subset_indices_list)
+        unexpected_indices_set = subset_indices_set - valid_indices_set
+        if len(unexpected_indices_set) != 0:
+            raise IndexError("Index or indices out of bounds: {0}. "
+                             "subset indices i should satisfy "
+                             "0 ≤ i ≤ {1}.".
+                             format(unexpected_indices_set,
+                                    len(valid_indices_set) - 1))
+        if len(subset_indices_list) > len(subset_indices_set):
+            # we have repeated indices, so let's find them to use in
+            # feedback/error message
+            repeated_indices_set = set()
+            for elem in subset_indices_set:
+                if subset_indices_list.count(elem) > 1:
+                    repeated_indices_set.add(elem)
+            raise ValueError("The subset_indices specification contains "
+                             "repeated indices, with repeated index or "
+                             "indices: {}. Each index value should appear at "
+                             "most 1 time.".format(repeated_indices_set))
+        # if we made it this far and proper_subset = True,
+        # confirm that the subset indices are compatible with a proper
+        # subset instead of an improper subset
+        if proper_subset and len(subset_indices_set) == len(valid_indices_set):
+            raise ValueError("The subset indices are not compatible with a "
+                             "proper subset (too many elements).")
+
 
 
