@@ -89,6 +89,8 @@ class Set(Operation):
         For example,
         {a, b, c, d}.deduceEnumSubset(subset_indices=[1, 3]) returns
         |– {b, d} subsetEq {a, b, c, d}.
+        This approach assumes we are not dealing with multisets
+        (or "bags").
         '''
 
         from ._theorems_ import subsetEqOfSuperset
@@ -121,8 +123,6 @@ class Set(Operation):
                              "{}. Each index value should appear at most "
                              "1 time.".format(repeated_indices_set))
 
-        # omitting checking of arguments for now
-        # assume subset_indices are correct
         full_indices_list = list(range(0, len(self.operands)))
 
         # construct the complement of the subset indices
@@ -147,6 +147,85 @@ class Set(Operation):
         a_sub, b_sub = (desired_subset_list, desired_complement_list)
         m_sub, n_sub = num(len(a_sub)), num(len(b_sub))
         subset_of_permuted_superset = subsetEqOfSuperset.specialize(
+                {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
+                assumptions=assumptions)
+        return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
+
+
+    def deduceEnumProperSubset(self, subset_indices=None,
+                         assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this Set expression has as a proper subset the
+        set specified by the indices in subset_indices list.
+        For example,
+        {a, b, c, d}.deduceEnumSubset(subset_indices=[1, 3]) returns
+        |– {b, d} subset {a, b, c, d}.
+        This approach assumes we are not dealing with multisets
+        (or "bags").
+        '''
+
+        from ._theorems_ import properSubsetOfSuperset
+        from proveit._common_ import m, n, aa, bb
+        from proveit.number import num
+
+        # check validity of provided subset_indices: 
+        # (1) each index i needs to be 0 ≤ i ≤ n-1;
+        # (2) cannot have repeated indices
+        # can eventually move this code portion to separate method
+        # later also allow negative indices to be used
+        allowed_indices_set = set(range(0, len(self.operands)))
+        subset_indices_set =  set(subset_indices)
+        unexpected_indices_set = subset_indices_set - allowed_indices_set
+        if len(unexpected_indices_set) != 0:
+            raise IndexError("Index or indices out of bounds: {0}. "
+                             "subset_indices should be a list of indices "
+                             "i such that 0 ≤ i ≤ {1}.".
+                             format(unexpected_indices_set,
+                                    len(self.operands) - 1))
+
+        if len(subset_indices) > len(subset_indices_set):
+            # we have repeated indices, so let's find them for feedback
+            repeated_indices_set = set()
+            for elem in subset_indices_set:
+                if subset_indices.count(elem) > 1:
+                    repeated_indices_set.add(elem)
+            raise ValueError("The subset_indices specification contains "
+                             "repeated indices, with repeated index or "
+                             "indices: {}. Each index value should appear at "
+                             "most 1 time.".format(repeated_indices_set))
+
+        # if we made it this far, then finally confirm that we are
+        # dealing with a proper subset and not an improper subset
+        if len(subset_indices) == len(allowed_indices_set):
+            raise ValueError("The subset_indices specification is not "
+                             "compatible with a proper subset (too many "
+                             "elements). Perhaps you want the "
+                             "deduceEnumSubsetEq() method instead?")
+
+        full_indices_list = list(range(0, len(self.operands)))
+
+        # construct the complement of the subset indices
+        # avoiding using sets to preserve order just in case
+        remaining_indices = list(full_indices_list) # clone
+        for elem in subset_indices:
+            remaining_indices.remove(elem)
+
+        new_order = subset_indices + remaining_indices
+        # find superset permutation needed for thm application
+        supersetPermRelation = generic_permutation(self, new_order, assumptions)
+        # construct the desired list of subset elems
+        desired_subset_list = []
+        for elem in subset_indices:
+            desired_subset_list.append(self.operands[elem])
+        # construct the desired complement list of elems
+        desired_complement_list = []
+        for elem in remaining_indices:
+            desired_complement_list.append(self.operands[elem])
+        # borrowed the following organization from apply_commutation_thm
+        m, n, a, b = properSubsetOfSuperset.allInstanceVars()
+        a_sub, b_sub = (desired_subset_list, desired_complement_list)
+        m_sub, n_sub = num(len(a_sub)), num(len(b_sub))
+        subset_of_permuted_superset = properSubsetOfSuperset.specialize(
                 {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
                 assumptions=assumptions)
         return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
