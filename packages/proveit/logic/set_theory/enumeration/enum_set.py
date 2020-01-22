@@ -77,23 +77,49 @@ class Set(Operation):
         cycles list parameter. For example,
         {a, b, c, d}.permutationGeneral(new_order=[0, 2, 3, 1]) and
         {a, b, c, d}.permutationGeneral(cycles=[(1, 2, 3)]) would both
-        give the output |- {a, b, c, d} = {a, c, d, b}.
+        return |- {a, b, c, d} = {a, c, d, b}.
         '''
         return generic_permutation(self, new_order, cycles, assumptions)
 
     def deduceEnumSubsetEq(self, subset_indices=None,
                          assumptions=USE_DEFAULTS):
         '''
-        Deduce that this Set expression has as a subset the subset
-        specified by the indices in subset_indices. For example,
-        {a, b, c, d}.deduceEnumSubset(subset_indices=[1, 3]) would
-        return |– {b, d} subsetEq {a, b, c, d}
+        Deduce that this Set expression has as an improper subset the
+        set specified by the indices in subset_indices list.
+        For example,
+        {a, b, c, d}.deduceEnumSubset(subset_indices=[1, 3]) returns
+        |– {b, d} subsetEq {a, b, c, d}.
         '''
 
         from ._theorems_ import subsetEqOfSuperset
         from proveit._common_ import m, n, aa, bb
         from proveit.number import num
-        # from proveit.logic.equality import sub
+
+        # check validity of provided subset_indices: 
+        # (1) each index i needs to be 0 ≤ i ≤ n-1;
+        # (2) cannot have repeated indices
+        # can eventually move this code portion to separate method
+        # later also allow negative indices to be used
+        allowed_indices_set = set(range(0, len(self.operands)))
+        subset_indices_set =  set(subset_indices)
+        unexpected_indices_set = subset_indices_set - allowed_indices_set
+        if len(unexpected_indices_set) != 0:
+            raise IndexError("Index or indices out of bounds: {0}. "
+                             "subset_indices should be a list of indices "
+                             "i such that 0 ≤ i ≤ {1}.".
+                             format(unexpected_indices_set,
+                                    len(self.operands) - 1))
+        if len(subset_indices) > len(subset_indices_set):
+            # we have repeated indices, so let's find them for feedback
+            repeated_indices_set = set()
+            for elem in subset_indices_set:
+                if subset_indices.count(elem) > 1:
+                    repeated_indices_set.add(elem)
+
+            raise ValueError("The subset_indices specification contains "
+                             "repeated indices, with repeated index or indices: "
+                             "{}. Each index value should appear at most "
+                             "1 time.".format(repeated_indices_set))
 
         # omitting checking of arguments for now
         # assume subset_indices are correct

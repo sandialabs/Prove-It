@@ -281,7 +281,6 @@ class SetEquiv(TransitiveRelation):
         from ._theorems_ import subRightSideInto
         from proveit.logic import Equals
         Plambda = Equals._lambdaExpr(lambdaMap, self.lhs)
-        print("Plambda = {}".format(Plambda))                                   # for testing; delete later
         return subRightSideInto.specialize(
                 {A:self.lhs, B:self.rhs, P:Plambda}, assumptions=assumptions)
 
