@@ -159,7 +159,7 @@ class Set(Operation):
                              "specifying the list of indices (subset_indices) "
                              "OR an actual subset (in the form of an "
                              "enumerated set using Set()).")
-        if not subset_indices is None and not subset is None:
+        if subset_indices is not None and subset is not None:
             raise ValueError("Need to specify the desired subset by "
                              "specifying the list of indices (subset_indices) "
                              "OR an actual subset, but NOT both.")
@@ -182,11 +182,11 @@ class Set(Operation):
         # if we make it this far and we have a subset provided
         # convert to indices to make use of previously-established
         # machinery
+        subset_indices_list = []
         if subset is not None:
             superset_list = list(self.operands)
             superset_remaining_list = list(self.operands)
             subset_list = list(subset.operands)
-            subset_indices_list = []
             for elem in subset_list:
                 if elem in superset_remaining_list:
                     superset_remaining_list.remove(elem)
@@ -199,8 +199,11 @@ class Set(Operation):
                                      "appear in superset {1} with sufficient "
                                      "multiplicity.".
                                      format(elem, superset_list))
-            print("subset_indices_list = {}".format(subset_indices_list))       # for testing; delete later
 
+        if subset is not None:
+            # use the generated subset indices
+            subset_indices = list(subset_indices_list)
+            # else use the user-provided indices
 
         # check validity of provided subset_indices:
         valid_indices_list = list(range(0, len(self.operands)))
@@ -232,8 +235,8 @@ class Set(Operation):
         subset_of_permuted_superset = subsetEqOfSuperset.specialize(
                 {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
                 assumptions=assumptions)
-
-        return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
+        
+        return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset.innerExpr().rhs)
 
 
     def deduceEnumProperSubset(self, subset_indices=None,
