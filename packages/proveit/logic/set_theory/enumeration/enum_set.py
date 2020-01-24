@@ -151,7 +151,6 @@ class Set(Operation):
         from proveit.number import num
         from proveit.logic import Set
 
-
         # check that user has specified subset_indices OR subset
         # but NOT both
         if subset_indices is None and subset is None:
@@ -167,7 +166,6 @@ class Set(Operation):
         # if subset has been specified, check that:
         # (1) it is a valid Set()
         # (2) has a valid cardinality
-        # (3) then convert to an list of indices
         if subset is not None and not isinstance(subset, Set):
             raise ValueError("Specified subset {} does not appear to be a "
                              "valid Set object.".format(subset))
@@ -179,9 +177,9 @@ class Set(Operation):
                              format(subset, len(subset.operands),
                                 self.operands, len(self.operands)))
 
-        # if we make it this far and we have a subset provided
-        # convert to indices to make use of previously-established
-        # machinery
+        # if we make it this far and we have a subset provided,
+        # convert to the subset to indices to make use of
+        # index-based machinery
         subset_indices_list = []
         if subset is not None:
             superset_list = list(self.operands)
@@ -201,7 +199,7 @@ class Set(Operation):
                                      format(elem, superset_list))
 
         if subset is not None:
-            # use the generated subset indices
+            # use the Set-based generated subset indices
             subset_indices = list(subset_indices_list)
             # else use the user-provided indices
 
@@ -228,7 +226,7 @@ class Set(Operation):
         desired_complement_list = []
         for elem in remaining_indices:
             desired_complement_list.append(self.operands[elem])
-        # borrowed the following organization from apply_commutation_thm
+        # organize info for theorem specialization
         m, n, a, b = subsetEqOfSuperset.allInstanceVars()
         a_sub, b_sub = (desired_subset_list, desired_complement_list)
         m_sub, n_sub = num(len(a_sub)), num(len(b_sub))
@@ -236,14 +234,16 @@ class Set(Operation):
                 {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
                 assumptions=assumptions)
         
-        return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset.innerExpr().rhs)
+        return supersetPermRelation.subLeftSideInto(
+                subset_of_permuted_superset.innerExpr().rhs
+                )
 
 
     def deduceEnumProperSubset(self, subset_indices=None,
-                         assumptions=USE_DEFAULTS):
+                               assumptions=USE_DEFAULTS):
         '''
         Deduce that this Set expression has as a proper subset the
-        set specified by the indices in subset_indices list.
+        set specified by the indices in the subset_indices list.
         For example,
         {a, b, c, d}.deduceEnumSubset(subset_indices=[1, 3]) returns
         |– {b, d} subset {a, b, c, d}.
