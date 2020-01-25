@@ -1,4 +1,4 @@
-from proveit.expression import Operation, Literal, LATEX
+from proveit import Operation, Literal, LATEX
 
 pkg = __package__
 
