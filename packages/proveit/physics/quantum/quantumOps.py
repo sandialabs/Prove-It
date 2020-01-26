@@ -47,24 +47,39 @@ class Ket(Operation):
                     + self.label.formatted(formatType, fence=False)
                     + u'\u232A')
 
-# class RegisterBra(Operation):
-#     def __init__(self, label, size):
-#         Operation.__init__(self, REGISTER_BRA, [label, size])
-#         self.label = label
-#         self.size = size # size of the register
+
+class RegisterBra(Operation):
+    '''
+    Class to represent a Dirac bra vector that acknowledges the
+    size of the register. Intended params are not quite clear ...
+    '''
+    # the literal operator of the RegisterBra operation
+    _operator_ = Literal(stringFormat='REGISTER_BRA', context=__file__)
+
+    def __init__(self, label, size):
+        Operation.__init__(self, RegisterBra._operator_, (label, size))
+        self.label = self.operands[0]  # value
+        self.size = self.operands[1]   # size of the register
     
-#     def _config_latex_tool(self, lt):
-#         Operation._config_latex_tool(self, lt)
-#         if not 'mathtools' in lt.packages:
-#             lt.packages.append('mathtools')
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        # Expression._config_latex_tool(self, lt)
+        if not 'mathtools' in lt.packages:
+            lt.packages.append('mathtools')
                 
-#     def formatted(self, formatType, fence=False):
-#         formattedLabel = self.label.formatted(formatType, fence=False)
-#         formattedSize = self.size.formatted(formatType, fence=False)
-#         if formatType == LATEX:
-#             return r'\prescript{}{' + formattedSize + r'}\langle ' + formattedLabel + r' \rvert'
-#         else:
-#             return '{' + formattedSize + '}_<'+formattedLabel+'|'
+    def _formatted(self, formatType, fence=False):
+        formattedLabel = self.label.formatted(formatType, fence=False)
+        formattedSize = self.size.formatted(formatType, fence=False)
+        if formatType == 'latex':
+            # can't seem to get the \prescript latex to work, so
+            # temporarily removing it ot push things through -- perhaps
+            # mathtools not loading?
+            # return (r'\prescript{}{' + formattedSize + r'}\langle '
+            #         + formattedLabel + r' \rvert')
+            return (r'\{' + formattedSize + r'\}\langle '
+                    + formattedLabel + r' \rvert')
+        else:
+            return '{' + formattedSize + '}_'+u'\u2329'+formattedLabel+'|'
 
 # REGISTER_BRA = Literal(pkg, 'REGISTER_BRA', operationMaker = lambda operands : RegisterBra(*operands))
 
