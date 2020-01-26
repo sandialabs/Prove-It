@@ -1,4 +1,5 @@
 from proveit import Literal, Operation
+from proveit.number.numberSets import NumberOp
 # from proveit.basiclogic.genericOps import BinaryOperation
 # from proveit.number.numberSets import NumberOp, Integers
 
@@ -60,7 +61,7 @@ class Pfail(Operation):
     defined as the measured theta_m being within epsilon of the true
     theta (phase).
     '''
-    # the literal operator of the Psuccess operation
+    # the literal operator of the Pfail operation
     _operator_ = Literal(stringFormat='Pfail',
                          latexFormat = r'P_{\rm fail}', context=__file__)
 
@@ -71,8 +72,9 @@ class Pfail(Operation):
         Operation.__init__(self, Pfail._operator_, eps)
         
 
-# THE ModAdd CLASS WILL NEED TO STAY AS-IS FOR A WHILE AS WE UPDATE
-# OTHER ASPECTS OF THE QPE CONTEXT -- wdc, 1/26/2020
+# Comment from wdc on Sun 1/26/2020
+# This is the original ModAdd() operation class.
+# See below for attempts to update to current Prove-It.
 # class ModAdd(BinaryOperation, NumberOp):
 #     '''
 #     Addition module 2^t
@@ -86,6 +88,27 @@ class Pfail(Operation):
 #             return modAddClosure
     
 # MOD_ADD = Literal(pkg, 'MOD_ADD', {LATEX:r'\oplus'}, operationMaker = lambda operands : ModAdd(*operands))
+
+class ModAdd(Operation, NumberOp):
+    '''
+    Addition module 2^t
+    Generated/updated from original above by wdc, beginning 1/26/2020.
+    This depends on the modAdClosure thm in the quantum/QPE context,
+    BUT that theorem ipynb also requires items from this phaseEstOps.py
+    file, in particular requiring this same ModAdd operation class.
+    '''
+    # the literal operator of the ModAdd operation class
+    _operator_ = Literal('MOD_ADD', latexFormat = r'\oplus',
+                         context=__file__)
+
+    def __init__(self, a, b):
+        Operation.__init__(self, ModAdd._operator_, (a, b))
+
+    def _closureTheorem(self, numberSet):
+        from .theorems import modAddClosure
+        if numberSet == Integers:
+            return modAddClosure
+
 
 class SubIndexed(Operation):
     '''
