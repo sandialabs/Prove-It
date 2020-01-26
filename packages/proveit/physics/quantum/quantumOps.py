@@ -58,8 +58,8 @@ class RegisterBra(Operation):
 
     def __init__(self, label, size):
         Operation.__init__(self, RegisterBra._operator_, (label, size))
-        self.label = self.operands[0]  # value
-        self.size = self.operands[1]   # size of the register
+        self.label = self.operands[0]   # value
+        self.size  = self.operands[1]   # size of the register
     
     def _config_latex_tool(self, lt):
         Operation._config_latex_tool(self, lt)
@@ -81,25 +81,32 @@ class RegisterBra(Operation):
         else:
             return '{' + formattedSize + '}_'+u'\u2329'+formattedLabel+'|'
 
-# REGISTER_BRA = Literal(pkg, 'REGISTER_BRA', operationMaker = lambda operands : RegisterBra(*operands))
 
-# class RegisterKet(Operation):
-#     def __init__(self, label, size):
-#         Operation.__init__(self, REGISTER_KET, [label, size])
-#         self.label = label
-#         self.size = size # size of the register
+class RegisterKet(Operation):
+    '''
+    Class to represent a Dirac ket vector that acknowledges the
+    size of the register on which it is defined.
+    '''
+    # the literal operator of the RegisterBra operation
+    _operator_ = Literal(stringFormat='REGISTER_KET', context=__file__)
+
+    def __init__(self, label, size):
+        Operation.__init__(self, RegisterKet._operator_, (label, size))
+        self.label = self.operands[0]   # value for the ket
+        self.size  = self.operands[1]   # size of the register
     
-#     def formatted(self, formatType, fence=False, no_lvert=False):
-#         formattedLabel = self.label.formatted(formatType, fence=False)
-#         formattedSize = self.size.formatted(formatType, fence=False)
-#         leftStr = r'\lvert ' if formatType == LATEX else '|'
-#         if no_lvert: leftStr = ''
-#         if formatType == LATEX:
-#             return leftStr + formattedLabel + r' \rangle_{' + formattedSize + '}'
-#         else:
-#             return leftStr + formattedLabel + '>_{' + formattedSize + '}'
+    def _formatted(self, formatType, fence=False, no_lvert=False):
+        formattedLabel = self.label.formatted(formatType, fence=False)
+        formattedSize = self.size.formatted(formatType, fence=False)
+        leftStr = r'\lvert ' if formatType == 'latex' else '|'
+        if no_lvert: leftStr = ''
+        if formatType == 'latex':
+            return (leftStr + formattedLabel + r' \rangle_{'
+                    + formattedSize + '}')
+        else:
+            return (leftStr + formattedLabel + u'\u232A' + '_{'
+                    + formattedSize + '}')
 
-# REGISTER_KET = Literal(pkg, 'REGISTER_KET', operationMaker = lambda operands : RegisterKet(*operands))
     
 # class Meas(Operation):
 #     def __init__(self, ket):
