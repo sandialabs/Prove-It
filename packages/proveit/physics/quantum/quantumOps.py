@@ -1,13 +1,13 @@
 from proveit import Operation, Literal
 
-pkg = __package__
+pkg = __package__ # delete this later; will no longer be needed
 
 class Bra(Operation):
     '''
-    Class to represent a Dirac bra vector of the form ⟨0| or ⟨1|
+    Class to represent a Dirac bra vector of the form ⟨0| or ⟨1|.
     '''
     # the literal operator of the Bra operation
-    _operator_ = Literal(stringFormat='Bra', context=__file__)
+    _operator_ = Literal(stringFormat='BRA', context=__file__)
 
     def __init__(self, label):
         Operation.__init__(self, Bra._operator_, label)
@@ -15,41 +15,37 @@ class Bra(Operation):
     
     def _formatted(self, formatType, fence=False):
         if formatType == 'latex':
-            return (r'\langle ' + 
+            return (r'\langle '
+                    + self.label.formatted(formatType, fence=False)
+                    + r' \rvert')
+        else: # using the unicode \u2329 for the left angle bracket
+            return (u'\u2329'
+                    + self.label.formatted(formatType, fence=False)
+                    + '|')
+
+
+class Ket(Operation):
+    '''
+    Class to represent a Dirac ket vector of the form |0⟩ or |1⟩.
+    '''
+    # the literal operator of the Ket operation
+    _operator_ = Literal(stringFormat='KET', context=__file__)
+
+    def __init__(self, label):
+        Operation.__init__(self, Ket._operator_, label)
+        self.label = self.operands[0]
+    
+    def _formatted(self, formatType, fence=False, no_lvert=False):
+        leftStr = r'\lvert ' if formatType == 'latex' else '|'
+        if no_lvert: leftStr = ''
+        if formatType == 'latex':
+            return (leftStr +
                     self.label.formatted(formatType, fence=False) +
-                    r' \rvert')
-        else:
-            return '<'+self.label.formatted(formatType, fence=False)+'|'
-
-    # def __init__(self, label, index):
-    #     Operation.__init__(self, SubIndexed._operator_, (label, index))
-    #     self.label = self.operands[0]
-    #     self.index = self.operands[1]
-    
-    # def _formatted(self, formatType, fence=False):
-    #     formattedLabel = self.label.formatted(formatType, fence=True)
-    #     formattedIndex = self.index.formatted(formatType, fence=False)
-    #     return formattedLabel + '_{' + formattedIndex + '}'
-
-# BRA = Literal(pkg, 'BRA', operationMaker = lambda operands : Bra(*operands))
-
-# class Ket(Operation):
-#     '''
-#     |0⟩
-#     '''
-#     def __init__(self, label):
-#         Operation.__init__(self, KET, label)
-#         self.label = label
-    
-#     def formatted(self, formatType, fence=False, no_lvert=False):
-#         leftStr = r'\lvert ' if formatType == LATEX else '|'
-#         if no_lvert: leftStr = ''
-#         if formatType == LATEX:
-#             return leftStr + self.label.formatted(formatType, fence=False) + r' \rangle'
-#         else:
-#             return leftStr+self.label.formatted(formatType, fence=False)+'>'
-
-# KET = Literal(pkg, 'KET', operationMaker = lambda operands : Ket(*operands))
+                    r' \rangle')
+        else: # using the unicode \u232A for the right angle bracket
+            return (leftStr
+                    + self.label.formatted(formatType, fence=False)
+                    + u'\u232A')
 
 # class RegisterBra(Operation):
 #     def __init__(self, label, size):
