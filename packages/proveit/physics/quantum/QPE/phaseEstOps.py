@@ -2,46 +2,57 @@ from proveit import Literal, Operation
 # from proveit.basiclogic.genericOps import BinaryOperation
 # from proveit.number.numberSets import NumberOp, Integers
 
-pkg = __package__
+pkg = __package__ # delete later?
 
-# class QPE(Operation):
-#     '''
-#     Represents the quantum circuit for the quantum phase estimation algorithm.
-#     '''
-#     def __init__(self, U, t):
-#         '''
-#         Phase estimator circuit for Unitary U and t register qubits.
-#         '''
-#         Operation.__init__(self, QUANTUM_PHASE_ESTIMATION, (U, t))
-        
-# QUANTUM_PHASE_ESTIMATION  = Literal(pkg, 'QPE', {LATEX:r'{\rm QPE}'}, operationMaker = lambda operands : QPE(*operands))
+class QPE(Operation):
+    '''
+    Represents the quantum circuit for the quantum phase estimation
+    algorithm. 
+    '''
+    # the literal operator of the QPE operation
+    _operator_ = Literal(stringFormat='QPE', latexFormat = r'{\rm QPE\;}',
+                         context=__file__)
 
-# class PhaseEst(Operation):
-#     '''
-#     Represents the quantum circuit for estimating the phase.  The
-#     quantum phase estimation algorithm consists of a PHASE_ESTIMATOR
-#     followed by quantum fourier transform.
-#     '''
-#     def __init__(self, U, t):
-#         '''
-#         Phase estimator circuit for Unitary U and t register qubits.
-#         '''
-#         Operation.__init__(self, PHASE_ESTIMATION, (U, t))
-        
-# PHASE_ESTIMATION  = Literal(pkg, 'PHASE_EST', {LATEX:r'{\rm PHASE_EST}'}, operationMaker = lambda operands : PhaseEst(*operands))
+    def __init__(self, U, t):
+        '''
+        Phase estimator circuit for Unitary U and t register qubits.
+        '''
+        Operation.__init__(self, QPE._operator_, (U, t))
 
-# class Psuccess(Operation):
-#     '''
-#     Probability of success for a given epsilon where success is defined
-#     as the measured theta_m being with epsilon of the true theta (phase).
-#     '''
-#     def __init__(self, eps):
-#         '''
-#         P_success(eps)
-#         '''
-#         Operation.__init__(self, P_SUCCESS, eps)
+
+class PhaseEst(Operation):
+    '''
+    Represents the quantum circuit for estimating the phase.  The
+    quantum phase estimation algorithm consists of a PHASE_ESTIMATOR
+    followed by quantum fourier transform.
+    '''
+    # the literal operator of the PhaseEst operation
+    _operator_ = Literal(stringFormat='PHASE_EST',
+                         latexFormat = r'{\rm PHASE\_EST\;}', context=__file__)
+
+    def __init__(self, U, t):
+        '''
+        Phase estimator circuit for Unitary U and t register qubits.
+        '''
+        Operation.__init__(self, PhaseEst._operator_, (U, t))
         
-# P_SUCCESS = Literal(pkg, 'Psuccess', {LATEX:r'P_{\rm success}'}, operationMaker = lambda operands : Psuccess(*operands))
+
+class Psuccess(Operation):
+    '''
+    Probability of success for a given epsilon where success is
+    defined as the measured theta_m being with epsilon of the true
+    theta (phase).
+    '''
+    # the literal operator of the Psuccess operation
+    _operator_ = Literal(stringFormat='Psuccess',
+                         latexFormat = r'P_{\rm success}', context=__file__)
+
+    def __init__(self, eps):
+        '''
+        P_success(eps)
+        '''
+        Operation.__init__(self, Psuccess._operator_, eps)
+        
 
 # class Pfail(Operation):
 #     '''
@@ -56,6 +67,8 @@ pkg = __package__
         
 # P_FAIL = Literal(pkg, 'Pfail', {LATEX:r'P_{\rm fail}'}, operationMaker = lambda operands : Pfail(*operands))
 
+# THE ModAdd CLASS WILL NEED TO STAY AS-IS FOR A WHILE AS WE UPDATE
+# OTHER ASPECTS OF THE QPE CONTEXT -- wdc, 1/26/2020
 # class ModAdd(BinaryOperation, NumberOp):
 #     '''
 #     Addition module 2^t
@@ -69,25 +82,6 @@ pkg = __package__
 #             return modAddClosure
     
 # MOD_ADD = Literal(pkg, 'MOD_ADD', {LATEX:r'\oplus'}, operationMaker = lambda operands : ModAdd(*operands))
-
-# class SubIndexed(Operation):
-#     '''
-#     Subscript indexing of a label
-#     '''
-#     def __init__(self, label, index):
-#         '''
-#         \alpha_l
-#         '''
-#         Operation.__init__(self, SUB_INDEXED, [label, index])
-#         self.label = label
-#         self.index = index
-    
-#     def formatted(self, formatType, fence=False):
-#         formattedLabel = self.label.formatted(formatType, fence=True)
-#         formattedIndex = self.index.formatted(formatType, fence=False)
-#         return formattedLabel + '_{' + formattedIndex + '}'
-
-# SUB_INDEXED = Literal(pkg, 'SUB_INDEXED', operationMaker = lambda operands : SubIndexed(*operands))
 
 class SubIndexed(Operation):
     '''
@@ -107,6 +101,3 @@ class SubIndexed(Operation):
         formattedLabel = self.label.formatted(formatType, fence=True)
         formattedIndex = self.index.formatted(formatType, fence=False)
         return formattedLabel + '_{' + formattedIndex + '}'
-
-# SUB_INDEXED = Literal(pkg, 'SUB_INDEXED', operationMaker = lambda operands : SubIndexed(*operands))
-

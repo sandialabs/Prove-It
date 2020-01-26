@@ -72,7 +72,7 @@ class RegisterBra(Operation):
         formattedSize = self.size.formatted(formatType, fence=False)
         if formatType == 'latex':
             # can't seem to get the \prescript latex to work, so
-            # temporarily removing it ot push things through -- perhaps
+            # temporarily removing it to push things through -- perhaps
             # mathtools not loading?
             # return (r'\prescript{}{' + formattedSize + r'}\langle '
             #         + formattedLabel + r' \rvert')
