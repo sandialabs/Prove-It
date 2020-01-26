@@ -54,18 +54,22 @@ class Psuccess(Operation):
         Operation.__init__(self, Psuccess._operator_, eps)
         
 
-# class Pfail(Operation):
-#     '''
-#     Probability of failure for a given epsilon where success is defined
-#     as the measured theta_m being with epsilon of the true theta (phase).
-#     '''
-#     def __init__(self, eps):
-#         '''
-#         P_fail(eps)
-#         '''
-#         Operation.__init__(self, P_FAIL, eps)
+class Pfail(Operation):
+    '''
+    Probability of failure for a given epsilon where success is
+    defined as the measured theta_m being within epsilon of the true
+    theta (phase).
+    '''
+    # the literal operator of the Psuccess operation
+    _operator_ = Literal(stringFormat='Pfail',
+                         latexFormat = r'P_{\rm fail}', context=__file__)
+
+    def __init__(self, eps):
+        '''
+        P_fail(eps)
+        '''
+        Operation.__init__(self, Pfail._operator_, eps)
         
-# P_FAIL = Literal(pkg, 'Pfail', {LATEX:r'P_{\rm fail}'}, operationMaker = lambda operands : Pfail(*operands))
 
 # THE ModAdd CLASS WILL NEED TO STAY AS-IS FOR A WHILE AS WE UPDATE
 # OTHER ASPECTS OF THE QPE CONTEXT -- wdc, 1/26/2020

@@ -1,2 +1,2 @@
-# from .phaseEstOps import PhaseEst, QPE
-from .phaseEstOps import PhaseEst, Psuccess, QPE
+# still to be updated: the ModAdd class
+from .phaseEstOps import Pfail, PhaseEst, Psuccess, QPE, SubIndexed
