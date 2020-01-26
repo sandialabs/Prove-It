@@ -87,7 +87,7 @@ class RegisterKet(Operation):
     Class to represent a Dirac ket vector that acknowledges the
     size of the register on which it is defined.
     '''
-    # the literal operator of the RegisterBra operation
+    # the literal operator of the RegisterKet operation
     _operator_ = Literal(stringFormat='REGISTER_KET', context=__file__)
 
     def __init__(self, label, size):
@@ -108,10 +108,14 @@ class RegisterKet(Operation):
                     + formattedSize + '}')
 
     
-# class Meas(Operation):
-#     def __init__(self, ket):
-#         Operation.__init__(self, MEAS, ket)
-#         self.ket = ket
-    
-# MEAS = Literal(pkg, 'MEAS', {LATEX: r'{\cal M}'}, operationMaker = lambda operands : Meas(*operands))
+class Meas(Operation):
+    '''
+    Class to represent the making of a measurement on a ket |𝜑⟩
+    '''
+    # the literal operator of the Meas operation
+    _operator_ = Literal(stringFormat='MEAS', latexFormat=r'{\cal M}',
+                         context=__file__)
 
+    def __init__(self, ket):
+        Operation.__init__(self, Meas._operator_, ket)
+        self.ket = ket
