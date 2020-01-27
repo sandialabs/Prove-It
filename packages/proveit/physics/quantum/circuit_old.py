@@ -1,12 +1,10 @@
 import sys
-from proveit import Lambda, Literal, Operation
-# not clear yet what to substitute for ExpressionTensor -- perhaps ExprArray
-# and Block is not being used in the active code
-# from proveit.multiExpression import ExpressionTensor, Block
-from proveit.logic import Forall, Equals, InSet
+from proveit import Literal, Operation, Lambda
+from proveit.multiExpression import ExpressionTensor, Block
+from proveit.logic import Forall, InSet, Equals
 #from proveit.computer_science.regular_expressions import KleeneRepetition
 
-pkg = __package__ # can probably delete later
+pkg = __package__
 
 # quantum circuit gate literals
 
@@ -60,53 +58,42 @@ def _defineTheorems():
 class Input(Operation):
     '''
     Represents an input state entering from the left of the circuit
-    Updated 1/26/2020 by wdc
     '''
-    # the literal operator of the Input operation class
-    _operator_ = Literal('INPUT', context=__file__)
     
     def __init__(self, state):
         '''
-        Create an INPUT operation with the given input state.
-        '''
-        print("Entering Input.__init__, _operator_ = {}".format(Input._operator_))  # for testing; delete later
-        Operation.__init__(self, Input._operator_, state)
+        Create a INPUT operation with the given input state.
+        '''    
+        Operation.__init__(self, INPUT, state)
         self.state = state
 
     def formatted(self, formatType, fence=False):
-        print("Entering Input._formatted")                                      # for testing; delete later
         formattedState = self.state.formatted(formatType, fence=False)
-        print("  formattedState = {}".format(formattedState))                   # for testing; delete later
-        print("  formatType = {}".format(formatType))                           # for testing; delete later
-        if formatType == 'latex':
-            print("  formatType = latex")                                       # for testing; delete later
+        if formatType == LATEX:
             return r'\lstick{' + formattedState + r'}' 
-        else:
-            print("  formatType is ≠ latex")                                    # for testing; delete later
-            print("  self = {}".format(self))                                   # for testing; delete later
-            return Operation._formatted(self, formatType, fence)
+        else: return Operation.formatted(self, formatType, fence)
 
-# INPUT = Literal(pkg, 'INPUT', operationMaker = lambda operands : Input(*operands)) # An input state (entering the left of the circuit)
+INPUT = Literal(pkg, 'INPUT', operationMaker = lambda operands : Input(*operands)) # An input state (entering the left of the circuit)
 
-# class Output(Operation):
-#     '''
-#     Represents an input state entering from the left of the circuit
-#     '''
+class Output(Operation):
+    '''
+    Represents an input state entering from the left of the circuit
+    '''
     
-#     def __init__(self, state):
-#         '''
-#         Create a INPUT operation with the given input state.
-#         '''    
-#         Operation.__init__(self, OUTPUT, state)
-#         self.state = state
+    def __init__(self, state):
+        '''
+        Create a INPUT operation with the given input state.
+        '''    
+        Operation.__init__(self, OUTPUT, state)
+        self.state = state
     
-#     def formatted(self, formatType, fence=False):
-#         formattedState = self.state.formatted(formatType, fence=False)
-#         if formatType == LATEX:
-#             return r'\rstick{' + formattedState + r'} \qw' 
-#         else: return Operation.formatted(self, formatType, fence)
+    def formatted(self, formatType, fence=False):
+        formattedState = self.state.formatted(formatType, fence=False)
+        if formatType == LATEX:
+            return r'\rstick{' + formattedState + r'} \qw' 
+        else: return Operation.formatted(self, formatType, fence)
 
-# OUTPUT = Literal(pkg, 'OUTPUT', operationMaker = lambda operands : Output(*operands)) # An output state (exiting the right of the circuit)
+OUTPUT = Literal(pkg, 'OUTPUT', operationMaker = lambda operands : Output(*operands)) # An output state (exiting the right of the circuit)
 
 class Gate(Operation):
     '''
@@ -122,246 +109,246 @@ class Gate(Operation):
         Operation.__init__(self, Gate._operator_, gate_operation)
         self.gate_operation = self.operands[0]
     
-    def formatted(self, formatType, fence=False):
+    def _formatted(self, formatType, fence=False):
         formattedGateOperation = (
                 self.gate_operation.formatted(formatType, fence=False))
         if formatType == 'latex':
             return r'\gate{' + formattedGateOperation + r'}' 
-        else: return Operation._formatted(self, formatType, fence)
+        else: return Operation.formatted(self, formatType, fence)
 
 # GATE = Literal(pkg, 'GATE', operationMaker = lambda operands : Gate(*operands))
 
-# class Target(Operation):
-#     '''
-#     Represents the target of a control.
-#     '''
+class Target(Operation):
+    '''
+    Represents the target of a control.
+    '''
     
-#     def __init__(self, target_gate):
-#         '''
-#         Create a Target operation with the given target_gate as the type
-#         of the gate for the target (e.g., X for CNOT and Z for Controlled-Z).
-#         '''    
-#         Operation.__init__(self, TARGET, target_gate)
-#         self.target_gate = target_gate
+    def __init__(self, target_gate):
+        '''
+        Create a Target operation with the given target_gate as the type
+        of the gate for the target (e.g., X for CNOT and Z for Controlled-Z).
+        '''    
+        Operation.__init__(self, TARGET, target_gate)
+        self.target_gate = target_gate
 
-#     def formatted(self, formatType, fence=False):
-#         formattedGateOperation = self.target_gate.formatted(formatType, fence=False)
-#         if formatType == LATEX:
-#             return r'\gate{' + formattedGateOperation + r'}' 
-#         else: return Operation.formatted(self, formatType, fence)
+    def formatted(self, formatType, fence=False):
+        formattedGateOperation = self.target_gate.formatted(formatType, fence=False)
+        if formatType == LATEX:
+            return r'\gate{' + formattedGateOperation + r'}' 
+        else: return Operation.formatted(self, formatType, fence)
 
-# TARGET = Literal(pkg, 'TARGET', {STRING:'TARGET', LATEX:r'\targ'}, lambda operands : Target(*operands))
+TARGET = Literal(pkg, 'TARGET', {STRING:'TARGET', LATEX:r'\targ'}, lambda operands : Target(*operands))
 
-# class MultiWire(Operation):
-#     '''
-#     Marks a "wire" as a bundle with a number of individual wires.
-#     '''
+class MultiWire(Operation):
+    '''
+    Marks a "wire" as a bundle with a number of individual wires.
+    '''
     
-#     def __init__(self, number):
-#         '''
-#         Create a multi-wire.
-#         '''    
-#         Operation.__init__(self, MULTI_WIRE, number)
-#         self.number = number
+    def __init__(self, number):
+        '''
+        Create a multi-wire.
+        '''    
+        Operation.__init__(self, MULTI_WIRE, number)
+        self.number = number
     
-#     def formatted(self, formatType, fence=False):
-#         formattedNumber = self.number.formatted(formatType, fence=False)
-#         if formatType == LATEX:
-#             return r'/^{' + formattedNumber + r'} \qw' 
-#         else: return Operation.formatted(self, formatType, fence)
+    def formatted(self, formatType, fence=False):
+        formattedNumber = self.number.formatted(formatType, fence=False)
+        if formatType == LATEX:
+            return r'/^{' + formattedNumber + r'} \qw' 
+        else: return Operation.formatted(self, formatType, fence)
 
-# MULTI_WIRE = Literal(pkg, 'MULTI_WIRE', operationMaker = lambda operands : MultiWire(*operands))
+MULTI_WIRE = Literal(pkg, 'MULTI_WIRE', operationMaker = lambda operands : MultiWire(*operands))
 
-# class Circuit(Operation):
-#     '''
-#     Represents a quantum circuit as a 2-D ExpressionTensor.
-#     '''
-#     def __init__(self, tensor, shape=None):
-#         '''
-#         Create a Circuit either with a dense tensor (list of lists ... of lists) or
-#         with a dictionary mapping pairs of indices to Expression elements or blocks,
-#         composing an ExpressionTensor.
-#         '''
-#         from .common import PASS
-#         if not isinstance(tensor, dict):
-#             # remove identity gates -- these are implicit
-#             tensor, _ = ExpressionTensor.TensorDictFromIterables(tensor)
-#         fixed_shape = (shape is not None)
-#         if not fixed_shape:
-#             shape = (0, 0)
-#         for idx in list(tensor.keys()):
-#             if len(idx) != 2:
-#                 raise ValueError('Circuit operand must be a 2-D ExpressionTensor')
-#             if not fixed_shape:
-#                 shape = (max(shape[0], idx[0]+1), max(shape[1], idx[1]+1))
-#             if tensor[idx] == PASS:
-#                 tensor.pop(idx)
-#         self.tensor = ExpressionTensor(tensor, shape)
-#         self.shape = self.tensor.shape
-#         Operation.__init__(self, CIRCUIT, [self.tensor])
-#         if len(self.shape) != 2:
-#             raise ValueError('Circuit operand must be a 2-D ExpressionTensor')
-#         # For each row of each nested sub-tensor (including the top level), 
-#         # determine which sub-tensor, if there are any, has the deepest nesting.
-#         # This will impact how we iterate over nested rows to flatten the display of a nested tensors. 
-#         tensor = self.tensor
-#         self.deepestNestedTensorAlongRow = dict() # map nested tensor (including self) to a list that indicates the deepest nested tensor per row     
-#         def determineDeepestNestedTensors(tensor):            
-#             '''
-#             Determine and set the deepest nested tensor along each row of tensor,
-#             applying this recursively for sub-tensors, and return the depth of this tensor.
-#             '''
-#             maxDepth = 1
-#             self.deepestNestedTensorAlongRow[tensor] = deepestNestedTensorAlongRow = []
-#             for row in range(tensor.shape[0]):
-#                 deepestNestedTensor = None
-#                 maxDepthAlongRow = 1
-#                 for col in range(tensor.shape[1]):
-#                     if (row, col) in tensor:
-#                         cell = tensor[row, col]
-#                         if isinstance(cell, ExpressionTensor):
-#                             subDepth = determineDeepestNestedTensors(cell)
-#                             maxDepthAlongRow = max(maxDepthAlongRow, subDepth + 1)
-#                             if deepestNestedTensor is None or subDepth > maxDepthAlongRow:
-#                                 deepestNestedTensor = cell
-#                 maxDepth = max(maxDepth, maxDepthAlongRow + 1)
-#                 deepestNestedTensorAlongRow.append(deepestNestedTensor)
-#             return maxDepth
-#         determineDeepestNestedTensors(self.tensor)
-#         #print "deepestNestedTensors", self.deepestNestedTensorAlongRow
+class Circuit(Operation):
+    '''
+    Represents a quantum circuit as a 2-D ExpressionTensor.
+    '''
+    def __init__(self, tensor, shape=None):
+        '''
+        Create a Circuit either with a dense tensor (list of lists ... of lists) or
+        with a dictionary mapping pairs of indices to Expression elements or blocks,
+        composing an ExpressionTensor.
+        '''
+        from .common import PASS
+        if not isinstance(tensor, dict):
+            # remove identity gates -- these are implicit
+            tensor, _ = ExpressionTensor.TensorDictFromIterables(tensor)
+        fixed_shape = (shape is not None)
+        if not fixed_shape:
+            shape = (0, 0)
+        for idx in list(tensor.keys()):
+            if len(idx) != 2:
+                raise ValueError('Circuit operand must be a 2-D ExpressionTensor')
+            if not fixed_shape:
+                shape = (max(shape[0], idx[0]+1), max(shape[1], idx[1]+1))
+            if tensor[idx] == PASS:
+                tensor.pop(idx)
+        self.tensor = ExpressionTensor(tensor, shape)
+        self.shape = self.tensor.shape
+        Operation.__init__(self, CIRCUIT, [self.tensor])
+        if len(self.shape) != 2:
+            raise ValueError('Circuit operand must be a 2-D ExpressionTensor')
+        # For each row of each nested sub-tensor (including the top level), 
+        # determine which sub-tensor, if there are any, has the deepest nesting.
+        # This will impact how we iterate over nested rows to flatten the display of a nested tensors. 
+        tensor = self.tensor
+        self.deepestNestedTensorAlongRow = dict() # map nested tensor (including self) to a list that indicates the deepest nested tensor per row     
+        def determineDeepestNestedTensors(tensor):            
+            '''
+            Determine and set the deepest nested tensor along each row of tensor,
+            applying this recursively for sub-tensors, and return the depth of this tensor.
+            '''
+            maxDepth = 1
+            self.deepestNestedTensorAlongRow[tensor] = deepestNestedTensorAlongRow = []
+            for row in range(tensor.shape[0]):
+                deepestNestedTensor = None
+                maxDepthAlongRow = 1
+                for col in range(tensor.shape[1]):
+                    if (row, col) in tensor:
+                        cell = tensor[row, col]
+                        if isinstance(cell, ExpressionTensor):
+                            subDepth = determineDeepestNestedTensors(cell)
+                            maxDepthAlongRow = max(maxDepthAlongRow, subDepth + 1)
+                            if deepestNestedTensor is None or subDepth > maxDepthAlongRow:
+                                deepestNestedTensor = cell
+                maxDepth = max(maxDepth, maxDepthAlongRow + 1)
+                deepestNestedTensorAlongRow.append(deepestNestedTensor)
+            return maxDepth
+        determineDeepestNestedTensors(self.tensor)
+        #print "deepestNestedTensors", self.deepestNestedTensorAlongRow
     
-#     #def substituted(self, exprMap, operationMap=None, relabelMap=None, reservedVars=None):
-#     #    return Circuit(ExpressionTensor.substituted(self, exprMap, operationMap=operationMap, relabelMap=relabelMap, reservedVars=reservedVars))
+    #def substituted(self, exprMap, operationMap=None, relabelMap=None, reservedVars=None):
+    #    return Circuit(ExpressionTensor.substituted(self, exprMap, operationMap=operationMap, relabelMap=relabelMap, reservedVars=reservedVars))
         
-#     def _config_latex_tool(self, lt):
-#         Operation._config_latex_tool(self, lt)
-#         if not 'qcircuit' in lt.packages:
-#             lt.packages.append('qcircuit')
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        if not 'qcircuit' in lt.packages:
+            lt.packages.append('qcircuit')
         
-#     def generateNestedRowIndices(self):
-#         '''
-#         Generate nested row indices in order from top of the circuit to the bottom.
-#         Each nested row index is a list with elements corresponding to each nesting level.
-#         '''
-#         for rowIndices in self._generateNestedRowIndices(self.tensor):
-#             yield rowIndices
+    def generateNestedRowIndices(self):
+        '''
+        Generate nested row indices in order from top of the circuit to the bottom.
+        Each nested row index is a list with elements corresponding to each nesting level.
+        '''
+        for rowIndices in self._generateNestedRowIndices(self.tensor):
+            yield rowIndices
 
-#     def _generateNestedRowIndices(self, circuitTensor):
-#         '''
-#         Generate nested row indices in order from top to bottom for a particular nested sub-tensor.
-#         Each nested row index is a list with elements corresponding to each nesting level.
-#         '''
-#         for curLevelRow, deepestTensorAlongRow in enumerate(self.deepestNestedTensorAlongRow[circuitTensor]):
-#             if deepestTensorAlongRow is None: 
-#                 yield [curLevelRow]
-#             else:
-#                 for subNestedRow in self._generateNestedRowIndices(deepestTensorAlongRow):
-#                     yield [curLevelRow] + subNestedRow
+    def _generateNestedRowIndices(self, circuitTensor):
+        '''
+        Generate nested row indices in order from top to bottom for a particular nested sub-tensor.
+        Each nested row index is a list with elements corresponding to each nesting level.
+        '''
+        for curLevelRow, deepestTensorAlongRow in enumerate(self.deepestNestedTensorAlongRow[circuitTensor]):
+            if deepestTensorAlongRow is None: 
+                yield [curLevelRow]
+            else:
+                for subNestedRow in self._generateNestedRowIndices(deepestTensorAlongRow):
+                    yield [curLevelRow] + subNestedRow
 
-#     def generateCircuitElementsAlongRow(self, nestedRowIdx):
-#         '''
-#         Generate the circuit elements, as (level, circuit, row, column) tuples, along a particular
-#         nested row (as generated by generateNestedRowIndices).
-#         '''
-#         for circuitElem in Circuit._GenerateCircuitElementsAlongRow(self.tensor, nestedRowIdx, 0):
-#             yield circuitElem
+    def generateCircuitElementsAlongRow(self, nestedRowIdx):
+        '''
+        Generate the circuit elements, as (level, circuit, row, column) tuples, along a particular
+        nested row (as generated by generateNestedRowIndices).
+        '''
+        for circuitElem in Circuit._GenerateCircuitElementsAlongRow(self.tensor, nestedRowIdx, 0):
+            yield circuitElem
     
-#     @staticmethod
-#     def _GenerateCircuitElementsAlongRow(circuitTensor, nestedRowIdx, level):
-#         '''
-#         Generate the circuit elements, as (level, circuit, row, column) tuples, along a particular
-#         nested row (as generated by generateNestedRowIndices) at a particular nesting level.
-#         '''
-#         from .common import WIRE_UP, WIRE_DN
-#         row = nestedRowIdx[level]
-#         for column in range(circuitTensor.shape[1]):
-#             if (row, column) in circuitTensor:
-#                 cell = circuitTensor[row, column]
-#                 if isinstance(cell, ExpressionTensor):
-#                     # nested Tensor
-#                     for circuitElem in Circuit._GenerateCircuitElementsAlongRow(cell, nestedRowIdx, level+1):
-#                         yield circuitElem
-#                 if isinstance(cell, Output) or cell == WIRE_UP or cell == WIRE_DN:
-#                     yield level, circuitTensor, row, column
-#                     break # nothing after the output or when the wire goes up/down (won't work if starting a new wire -- needs work)
-#             yield level, circuitTensor, row, column
+    @staticmethod
+    def _GenerateCircuitElementsAlongRow(circuitTensor, nestedRowIdx, level):
+        '''
+        Generate the circuit elements, as (level, circuit, row, column) tuples, along a particular
+        nested row (as generated by generateNestedRowIndices) at a particular nesting level.
+        '''
+        from .common import WIRE_UP, WIRE_DN
+        row = nestedRowIdx[level]
+        for column in range(circuitTensor.shape[1]):
+            if (row, column) in circuitTensor:
+                cell = circuitTensor[row, column]
+                if isinstance(cell, ExpressionTensor):
+                    # nested Tensor
+                    for circuitElem in Circuit._GenerateCircuitElementsAlongRow(cell, nestedRowIdx, level+1):
+                        yield circuitElem
+                if isinstance(cell, Output) or cell == WIRE_UP or cell == WIRE_DN:
+                    yield level, circuitTensor, row, column
+                    break # nothing after the output or when the wire goes up/down (won't work if starting a new wire -- needs work)
+            yield level, circuitTensor, row, column
 
-#     def numberOfNestedRows(self, circuitTensor, row):
-#         '''
-#         Returns the number of rows, including nested rows, spanned by a given row of a circuitTensor
-#         (which may be a nested tensor).
-#         '''
-#         deepestTensorAlongRow = self.deepestNestedTensorAlongRow[circuitTensor][row]
-#         if deepestTensorAlongRow is None: return 1
-#         return sum(self.numberOfNestedRows(deepestTensorAlongRow, subRow) for subRow in range(deepestTensorAlongRow.shape[0]))
+    def numberOfNestedRows(self, circuitTensor, row):
+        '''
+        Returns the number of rows, including nested rows, spanned by a given row of a circuitTensor
+        (which may be a nested tensor).
+        '''
+        deepestTensorAlongRow = self.deepestNestedTensorAlongRow[circuitTensor][row]
+        if deepestTensorAlongRow is None: return 1
+        return sum(self.numberOfNestedRows(deepestTensorAlongRow, subRow) for subRow in range(deepestTensorAlongRow.shape[0]))
     
-#     @staticmethod
-#     def _NearestTarget(circuitTensor, row, column, direction):
-#         '''
-#         Report the vertical distance between (row, column) and
-#         the nearest Target in the given direction (direction < 0 for up
-#         and direction > 0 for down).  Raise an exception if there is
-#         anything in between (row, column) and the Target.
-#         '''
-#         r = row + direction
-#         while not (r, column) in circuitTensor:
-#             r += direction
-#             if r < 0 or r >= circuitTensor.shape[1]:
-#                 raise QuantumCircuitException('Control with no target at (%d, %d)'%(row, column))                
-#         #if not isinstance(self.operands[r, column], Target):
-#         #    raise QuantumCircuitException('There must be no non-identity gate between a control and target')
-#         return r - row
+    @staticmethod
+    def _NearestTarget(circuitTensor, row, column, direction):
+        '''
+        Report the vertical distance between (row, column) and
+        the nearest Target in the given direction (direction < 0 for up
+        and direction > 0 for down).  Raise an exception if there is
+        anything in between (row, column) and the Target.
+        '''
+        r = row + direction
+        while not (r, column) in circuitTensor:
+            r += direction
+            if r < 0 or r >= circuitTensor.shape[1]:
+                raise QuantumCircuitException('Control with no target at (%d, %d)'%(row, column))                
+        #if not isinstance(self.operands[r, column], Target):
+        #    raise QuantumCircuitException('There must be no non-identity gate between a control and target')
+        return r - row
                     
-#     def formatted(self, formatType, fence=False):
-#         return ''.join(self.formatter(formatType, fence))
+    def formatted(self, formatType, fence=False):
+        return ''.join(self.formatter(formatType, fence))
     
-#     def formatter(self, formatType, fence=False):
-#         from .common import CTRL_UP, CTRL_DN, CTRL_UPDN, WIRE_UP, WIRE_DN, WIRE_LINK
-#         if formatType == LATEX:
-#             if fence: yield r'\left[' + '\n'
-#             yield r'\begin{array}{cc}' + '\n'
-#             yield r'\Qcircuit @C=1em @R=.7em {' # + '\n'
-#             for nestedRowIdx in self.generateNestedRowIndices():
-#                 #print "nestedRowIdx", nestedRowIdx
-#                 if sum(nestedRowIdx) > 0: yield r' \\ ' # previous row has ended
-#                 for level, circuitTensor, row, column in self.generateCircuitElementsAlongRow(nestedRowIdx):
-#                     if not (row, column) in circuitTensor:
-#                         yield r' & \qw' # identity gate is a quantum wire
-#                     else:
-#                         elem = circuitTensor[row, column]
-#                         if level < len(nestedRowIdx)-1:
-#                             # we have a multigate
-#                             if sum(nestedRowIdx[level:]) == 0:
-#                                 # we are at the top of the multigate
-#                                 numMultiGateRows = self.numberOfNestedRows(circuitTensor, row)
-#                                 yield r' & \multigate{' + str(numMultiGateRows-1) + '}{' + elem.formatted(formatType, False) + '}'
-#                             else:
-#                                 # below the top of the multigate, use ghost
-#                                 yield r' & \ghost{' + elem.formatted(formatType, False) + '}'
-#                         elif elem == WIRE_LINK:
-#                             yield r' & \qw' # junction, but the instruction here just needs to continue the horizontal wire
-#                         elif elem == CTRL_UP:
-#                             yield r' & \ctrl{' + str(Circuit._NearestTarget(circuitTensor, row, column, -1)) + '}'
-#                         elif elem == CTRL_DN:
-#                             yield r' & \ctrl{' + str(Circuit._NearestTarget(circuitTensor, row, column, 1)) + '}'
-#                         elif elem == WIRE_UP:
-#                             yield r' & \qwx[' + str(Circuit._NearestTarget(circuitTensor, row, column, -1)) + '] \qw'
-#                         elif elem == WIRE_DN:
-#                             yield r' & \qwx[' + str(Circuit._NearestTarget(circuitTensor, row, column, 1)) + '] \qw'
-#                         elif elem == CTRL_UPDN:
-#                             yield r' & \ctrl{' + str(Circuit._NearestTarget(circuitTensor, row, column, -1)) + '}'
-#                             yield r' \qwx[' + str(Circuit._NearestTarget(circuitTensor, row, column, 1)) + ']'
-#                         elif elem == TARGET:
-#                             yield r' & ' + elem.formatted(formatType, False)
-#                         else:
-#                             yield r' & ' + elem.formatted(formatType, False)
-#             yield '} & ~ \n'
-#             yield r'\end{array}'
-#             if fence: yield '\n' + r'\right]'
-#         else:
-#             yield Operation.formatted(self, formatType, fence)
+    def formatter(self, formatType, fence=False):
+        from .common import CTRL_UP, CTRL_DN, CTRL_UPDN, WIRE_UP, WIRE_DN, WIRE_LINK
+        if formatType == LATEX:
+            if fence: yield r'\left[' + '\n'
+            yield r'\begin{array}{cc}' + '\n'
+            yield r'\Qcircuit @C=1em @R=.7em {' # + '\n'
+            for nestedRowIdx in self.generateNestedRowIndices():
+                #print "nestedRowIdx", nestedRowIdx
+                if sum(nestedRowIdx) > 0: yield r' \\ ' # previous row has ended
+                for level, circuitTensor, row, column in self.generateCircuitElementsAlongRow(nestedRowIdx):
+                    if not (row, column) in circuitTensor:
+                        yield r' & \qw' # identity gate is a quantum wire
+                    else:
+                        elem = circuitTensor[row, column]
+                        if level < len(nestedRowIdx)-1:
+                            # we have a multigate
+                            if sum(nestedRowIdx[level:]) == 0:
+                                # we are at the top of the multigate
+                                numMultiGateRows = self.numberOfNestedRows(circuitTensor, row)
+                                yield r' & \multigate{' + str(numMultiGateRows-1) + '}{' + elem.formatted(formatType, False) + '}'
+                            else:
+                                # below the top of the multigate, use ghost
+                                yield r' & \ghost{' + elem.formatted(formatType, False) + '}'
+                        elif elem == WIRE_LINK:
+                            yield r' & \qw' # junction, but the instruction here just needs to continue the horizontal wire
+                        elif elem == CTRL_UP:
+                            yield r' & \ctrl{' + str(Circuit._NearestTarget(circuitTensor, row, column, -1)) + '}'
+                        elif elem == CTRL_DN:
+                            yield r' & \ctrl{' + str(Circuit._NearestTarget(circuitTensor, row, column, 1)) + '}'
+                        elif elem == WIRE_UP:
+                            yield r' & \qwx[' + str(Circuit._NearestTarget(circuitTensor, row, column, -1)) + '] \qw'
+                        elif elem == WIRE_DN:
+                            yield r' & \qwx[' + str(Circuit._NearestTarget(circuitTensor, row, column, 1)) + '] \qw'
+                        elif elem == CTRL_UPDN:
+                            yield r' & \ctrl{' + str(Circuit._NearestTarget(circuitTensor, row, column, -1)) + '}'
+                            yield r' \qwx[' + str(Circuit._NearestTarget(circuitTensor, row, column, 1)) + ']'
+                        elif elem == TARGET:
+                            yield r' & ' + elem.formatted(formatType, False)
+                        else:
+                            yield r' & ' + elem.formatted(formatType, False)
+            yield '} & ~ \n'
+            yield r'\end{array}'
+            if fence: yield '\n' + r'\right]'
+        else:
+            yield Operation.formatted(self, formatType, fence)
     
-# CIRCUIT = Literal(pkg, 'CIRCUIT', operationMaker = lambda operands : Circuit(operands[0]))
+CIRCUIT = Literal(pkg, 'CIRCUIT', operationMaker = lambda operands : Circuit(operands[0]))
 
 """                
 class ForallWithImplicitIdentities(Forall):
@@ -440,11 +427,11 @@ class ForallWithImplicitIdentities(Forall):
         return Forall.specialize(self, subMap)
 """
 
-# class QuantumCircuitException():
-#     def __init__(self, msg):
-#         self.msg = msg
-#     def __str__(self):
-#         return self.msg
+class QuantumCircuitException():
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg
     
 """ 
 class Gates(Operation):
