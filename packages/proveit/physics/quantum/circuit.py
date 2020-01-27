@@ -59,52 +59,48 @@ def _defineTheorems():
             
 class Input(Operation):
     '''
-    Represents an input state entering from the left of the circuit
-    Updated 1/26/2020 by wdc
+    Represents an input state entering from the left-hand side of a
+    circuit. Updated 1/26/2020 by wdc
     '''
     # the literal operator of the Input operation class
     _operator_ = Literal('INPUT', context=__file__)
     
     def __init__(self, state):
         '''
-        Create an INPUT operation with the given input state.
+        Create an INPUT operation (for entering the left-hand side
+        of a circuit) with the given input state.
         '''
-        print("Entering Input.__init__, _operator_ = {}".format(Input._operator_))  # for testing; delete later
         Operation.__init__(self, Input._operator_, state)
         self.state = state
 
     def formatted(self, formatType, fence=False):
-        print("Entering Input._formatted")                                      # for testing; delete later
         formattedState = self.state.formatted(formatType, fence=False)
-        print("  formattedState = {}".format(formattedState))                   # for testing; delete later
-        print("  formatType = {}".format(formatType))                           # for testing; delete later
         if formatType == 'latex':
-            print("  formatType = latex")                                       # for testing; delete later
             return r'\lstick{' + formattedState + r'}' 
         else:
-            print("  formatType is ≠ latex")                                    # for testing; delete later
-            print("  self = {}".format(self))                                   # for testing; delete later
             return Operation._formatted(self, formatType, fence)
 
-# INPUT = Literal(pkg, 'INPUT', operationMaker = lambda operands : Input(*operands)) # An input state (entering the left of the circuit)
 
-# class Output(Operation):
-#     '''
-#     Represents an input state entering from the left of the circuit
-#     '''
+class Output(Operation):
+    '''
+    Represents an output state exiting from the right-hand side of
+    a circuit. Updated 1/26/2020 by wdc
+    '''
+    # the literal operator of the Output operation class
+    _operator_ = Literal('OUTPUT', context=__file__)
     
-#     def __init__(self, state):
-#         '''
-#         Create a INPUT operation with the given input state.
-#         '''    
-#         Operation.__init__(self, OUTPUT, state)
-#         self.state = state
+    def __init__(self, state):
+        '''
+        Create a INPUT operation with the given input state.
+        '''    
+        Operation.__init__(self, Output._operator_, state)
+        self.state = state
     
-#     def formatted(self, formatType, fence=False):
-#         formattedState = self.state.formatted(formatType, fence=False)
-#         if formatType == LATEX:
-#             return r'\rstick{' + formattedState + r'} \qw' 
-#         else: return Operation.formatted(self, formatType, fence)
+    def formatted(self, formatType, fence=False):
+        formattedState = self.state.formatted(formatType, fence=False)
+        if formatType == 'latex':
+            return r'\rstick{' + formattedState + r'} \qw' 
+        else: return Operation._formatted(self, formatType, fence)
 
 # OUTPUT = Literal(pkg, 'OUTPUT', operationMaker = lambda operands : Output(*operands)) # An output state (exiting the right of the circuit)
 
