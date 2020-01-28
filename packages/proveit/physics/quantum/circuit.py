@@ -78,7 +78,7 @@ class Input(Operation):
         if formatType == 'latex':
             return r'\lstick{' + formattedState + r'}' 
         else:
-            return Operation._formatted(self, formatType, fence)
+            return Operation.formatted(self, formatType, fence)
 
 
 class Output(Operation):
@@ -100,13 +100,13 @@ class Output(Operation):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
             return r'\rstick{' + formattedState + r'} \qw' 
-        else: return Operation._formatted(self, formatType, fence)
+        else: return Operation.formatted(self, formatType, fence)
 
-# OUTPUT = Literal(pkg, 'OUTPUT', operationMaker = lambda operands : Output(*operands)) # An output state (exiting the right of the circuit)
 
 class Gate(Operation):
     '''
     Represents a gate in a quantum circuit.
+    Updated 1/26/2020 by wdc.
     '''
     # the literal operator of the Gate operation class
     _operator_ = Literal('GATE', context=__file__)
@@ -119,32 +119,37 @@ class Gate(Operation):
         self.gate_operation = self.operands[0]
     
     def formatted(self, formatType, fence=False):
+        print("Entering Gate.formatted.")                                       # for testing; delete later
+        print("  formatType = {}".format(formatType))                           # for testing; delete later
         formattedGateOperation = (
                 self.gate_operation.formatted(formatType, fence=False))
         if formatType == 'latex':
             return r'\gate{' + formattedGateOperation + r'}' 
-        else: return Operation._formatted(self, formatType, fence)
+        else: return Operation.formatted(self, formatType, fence)
 
-# GATE = Literal(pkg, 'GATE', operationMaker = lambda operands : Gate(*operands))
 
-# class Target(Operation):
-#     '''
-#     Represents the target of a control.
-#     '''
+class Target(Operation):
+    '''
+    Represents the target of a control.
+    Updated 1/26/2020 by wdc.
+    '''
+    # the literal operator of the Target operation class
+    _operator_ = Literal('TARGET', latexFormat=r'\targ',  context=__file__)
     
-#     def __init__(self, target_gate):
-#         '''
-#         Create a Target operation with the given target_gate as the type
-#         of the gate for the target (e.g., X for CNOT and Z for Controlled-Z).
-#         '''    
-#         Operation.__init__(self, TARGET, target_gate)
-#         self.target_gate = target_gate
+    def __init__(self, target_gate):
+        '''
+        Create a Target operation with the given target_gate as the type
+        of the gate for the target (e.g., X for CNOT and Z for Controlled-Z).
+        '''    
+        Operation.__init__(self, Target._operator_, target_gate)
+        self.target_gate = target_gate
 
-#     def formatted(self, formatType, fence=False):
-#         formattedGateOperation = self.target_gate.formatted(formatType, fence=False)
-#         if formatType == LATEX:
-#             return r'\gate{' + formattedGateOperation + r'}' 
-#         else: return Operation.formatted(self, formatType, fence)
+    def formatted(self, formatType, fence=False):
+        print("Entering Target.formatted().")                                   # for testing; delete later
+        formattedGateOperation = self.target_gate.formatted(formatType, fence=False)
+        if formatType == 'latex':
+            return r'\gate{' + formattedGateOperation + r'}' 
+        else: return Operation.formatted(self, formatType, fence)
 
 # TARGET = Literal(pkg, 'TARGET', {STRING:'TARGET', LATEX:r'\targ'}, lambda operands : Target(*operands))
 

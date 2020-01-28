@@ -1,3 +1,3 @@
 from .quantumOps import Bra, Ket, RegisterBra, RegisterKet, Meas
-from .circuit    import Gate, Input, Output
-# from .circuit import Circuit, Target, MultiWire
+from .circuit    import Gate, Input, Output, Target
+# from .circuit import Circuit, MultiWire
