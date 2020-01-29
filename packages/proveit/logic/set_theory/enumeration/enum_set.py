@@ -54,6 +54,8 @@ class Set(Operation):
     def permutationSimple(self, initIdx=None, finalIdx=None,
                           assumptions=USE_DEFAULTS):
         '''
+        change to permutationMove (using move as the verb)
+        and use a permutationSwap for the extra one (use swap for the verb)
         Deduce that this Set expression is set-equivalent to a Set
         in which the element at index initIdx has been moved to
         finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
@@ -71,6 +73,7 @@ class Set(Operation):
     def permutationGeneral(self, new_order=None, cycles=None,
                            assumptions=USE_DEFAULTS):
         '''
+        PERHAPS CALL THIS ONE just permutation
         Deduce that this Set expression is set-equivalent to a Set
         in which the elements at indices 0, 1, …, n-1 have been
         reordered as specified EITHER by the new_order list OR by the
@@ -91,6 +94,8 @@ class Set(Operation):
         |– {b, d} subsetEq {a, b, c, d}.
         This approach assumes we are not dealing with multisets
         (or "bags"), but often works with multisets anyway.
+        See the new and improved version of this method below,
+        which accepts a Set() for the subset param.
         '''
 
         from ._theorems_ import subsetEqOfSuperset
@@ -140,10 +145,8 @@ class Set(Operation):
         {a, b, c, d}.deduceEnumSubsetEq(subset_indices=[1, 3]) and
         {a, b, c, d}.deduceEnumSubsetEq(subset=Set(b, d))
         return |– {b, d} subsetEq {a, b, c, d}.
-        This approach assumes we are not dealing with multisets
-        (or "bags"). BUT it might still work with multisets!
-        This alt version is temporary to develop param input allowing
-        the specification of a subset itself rather than just indices.
+        This approach interprets the subset input param as a possible
+        multiset and then treat it as such!
         '''
 
         from ._theorems_ import subsetEqOfSuperset
