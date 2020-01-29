@@ -330,9 +330,31 @@ class Proof:
 
     def _repr_html_(self):
         proofSteps = self.enumeratedProofSteps()
+        # TODO, HYPERLINK REQUIREMENTS TO PROOF STEPS
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
         html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
+        first_requirements = None
         for k, proof in enumerate(proofSteps):
+            # Show first requirements up at the top even if we need to
+            # simply reference a later step.  (We'll only bother with this
+            # in the html version).
+            if k == 0:
+                first_requirements = iter(proof.requiredProofs)
+            else:
+                while first_requirements is not None:
+                    try:
+                        req = next(first_requirements)
+                        if req == proof:
+                            break
+                        # Just reference a later step (no step number, just
+                        # a requirement that is a later step and show the
+                        # KnownTruth here).
+                        html += '<tr><td></td><td></td><td>%s</td>'%proofNumMap[req]
+                        html += '<td>%s</td>'%req.provenTruth._repr_html_()
+                        html += '</tr>\n'
+                    except StopIteration:
+                        # Done with the first requirements:
+                        first_requirements = None 
             html += '<tr><td>%d</td>'%k
             requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
             html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
