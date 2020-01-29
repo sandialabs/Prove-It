@@ -81,7 +81,7 @@ class Set(Operation):
         '''
         return generic_permutation(self, new_order, cycles, assumptions)
 
-    def deduceEnumSubsetEq(self, subset_indices=None,
+    def deduceEnumSubsetEqOld(self, subset_indices=None,
                          assumptions=USE_DEFAULTS):
         '''
         Deduce that this Set expression has as an improper subset the
@@ -130,12 +130,12 @@ class Set(Operation):
 
         return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
 
-    def deduceEnumSubsetEqAlt(self, subset_indices=None, subset=None,
+    def deduceEnumSubsetEq(self, subset_indices=None, subset=None,
                          assumptions=USE_DEFAULTS):
         '''
         Deduce that this Set expression has as an improper subset the
         set specified by either the indices in subset_indices list or
-        the Set() specified by subset.
+        the Set() specified by subset (but not both).
         For example, both
         {a, b, c, d}.deduceEnumSubsetEq(subset_indices=[1, 3]) and
         {a, b, c, d}.deduceEnumSubsetEq(subset=Set(b, d))
@@ -178,8 +178,8 @@ class Set(Operation):
                                 self.operands, len(self.operands)))
 
         # if we make it this far and we have a subset provided,
-        # convert to the subset to indices to make use of
-        # index-based machinery
+        # convert the provided subset to indices of the superset to
+        # make use of index-based machinery
         subset_indices_list = []
         if subset is not None:
             superset_list = list(self.operands)

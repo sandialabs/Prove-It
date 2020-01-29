@@ -19,10 +19,11 @@ class SetEquiv(TransitiveRelation):
     previously modified: 11/19/2019 by wdc (creation)
     '''
     # operator for the SetEquiv relation
-    _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong', context=__file__)        
+    _operator_ = Literal(stringFormat='equiv', latexFormat=r'\cong',
+                         context=__file__)        
     
-    # map Expressions to sets of KnownTruths of set equivlances that involve the Expression
-    # on the left hand or right hand side.
+    # map Expressions to sets of KnownTruths of set equivalences that
+    # involve the Expression on the left hand or right hand side.
     # knownEqualities = dict()
     knownEquivalences = dict()
 
@@ -59,12 +60,12 @@ class SetEquiv(TransitiveRelation):
 
     def sideEffects(self, knownTruth):
         '''
-        Record the knownTruth in SetEquiv.knownEquivalences, associated from
-        the left hand side and the right hand side.  This information may
-        be useful for concluding new equivalences via transitivity. 
-        If the right hand side is an "irreducible value" (see 
-        isIrreducibleValue), also record it in SetEquiv.evaluations for use
-        when the evaluation method is called.   Some side-effects
+        Record the knownTruth in SetEquiv.knownEquivalences, associated
+        from the left hand side and the right hand side.  This
+        information may be useful for concluding new equivalences via
+        transitivity. If the right hand side is an "irreducible value"
+        (see isIrreducibleValue), also record it in SetEquiv.evaluations
+        for use when the evaluation method is called. Some side-effects
         derivations are also attempted depending upon the form of
         this equivalence.
         '''
@@ -203,9 +204,7 @@ class SetEquiv(TransitiveRelation):
         where self is (A equiv B).
         '''
         from .set_not_equiv import SetNotEquiv
-        # from .not_equals import NotEquals
         return SetNotEquiv(self.lhs, self.rhs).concludeAsFolded(assumptions)
-        # return NotEquals(self.lhs, self.rhs).concludeAsFolded(assumptions)
 
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
@@ -252,12 +251,11 @@ class SetEquiv(TransitiveRelation):
     def subLeftSideInto(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
         From A equiv B, and given P(B), derive P(A) assuming P(B).
-        UNDER CONSTRUCTION, adapted from Equals class. Not yet clear
-        how the rest of this descriptive commentary applies:  
+        UNDER CONSTRUCTION, adapted from Equals class. 
         P(x) is provided via lambdaMap as a Lambda expression or an 
         object that returns a Lambda expression when calling lambdaMap()
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
-        particular), or, if neither of those, an expression to upon
+        particular), or, if neither of those, an expression upon
         which to perform a global replacement of self.rhs.
         '''
         from ._theorems_ import subLeftSideInto
@@ -270,8 +268,7 @@ class SetEquiv(TransitiveRelation):
     def subRightSideInto(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
         From A equiv B, and given P(A), derive P(B) assuming P(A).
-        UNDER CONSTRUCTION, adapted from Equals class. Not yet clear
-        how the rest of this descriptive commentary applies:  
+        UNDER CONSTRUCTION, adapted from Equals class. 
         P(x) is provided via lambdaMap as a Lambda expression or an 
         object that returns a Lambda expression when calling lambdaMap()
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
@@ -286,11 +283,12 @@ class SetEquiv(TransitiveRelation):
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce and return that this SetEquiv statement is in the set
+        Deduce and return that this SetEquiv claim is in the set
         of Booleans.
         '''
         from ._theorems_ import setEquivInBool
-        return setEquivInBool.specialize({A:self.lhs, B:self.rhs}, assumptions=assumptions)
+        return setEquivInBool.specialize({A:self.lhs, B:self.rhs},
+                                         assumptions=assumptions)
 
     
 
