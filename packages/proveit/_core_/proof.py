@@ -334,6 +334,7 @@ class Proof:
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
         html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
         first_requirements = None
+        proof_id = hex(self._style_id)
         for k, proof in enumerate(proofSteps):
             # Show first requirements up at the top even if we need to
             # simply reference a later step.  (We'll only bother with this
@@ -355,8 +356,10 @@ class Proof:
                     except StopIteration:
                         # Done with the first requirements:
                         first_requirements = None 
-            html += '<tr><td>%d</td>'%k
-            requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
+            html += '<tr><td><a name="%s_step%d">%d</a></td>'%(proof_id,k,k)
+            def reqLink(n):
+                return '<a href="#%s_step%d">%d</a>'%(proof_id, n, n)
+            requiredProofNums = ', '.join(reqLink(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
             html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
             html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
