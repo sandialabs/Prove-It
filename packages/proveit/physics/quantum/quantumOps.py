@@ -23,6 +23,8 @@ class Bra(Operation):
                     + self.label.formatted(formatType, fence=False)
                     + '|')
 
+    # could instead use string() or latex() method instead
+
 
 class Ket(Operation):
     '''

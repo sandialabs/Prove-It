@@ -117,15 +117,26 @@ class Gate(Operation):
         '''    
         Operation.__init__(self, Gate._operator_, gate_operation)
         self.gate_operation = self.operands[0]
-    
-    def formatted(self, formatType, fence=False):
+
+    # look here more carefully later, some changes during the project meeting
+    def formatted(self, formatType, **kwargs):
         print("Entering Gate.formatted.")                                       # for testing; delete later
         print("  formatType = {}".format(formatType))                           # for testing; delete later
         formattedGateOperation = (
                 self.gate_operation.formatted(formatType, fence=False))
         if formatType == 'latex':
             return r'\gate{' + formattedGateOperation + r'}' 
-        else: return Operation.formatted(self, formatType, fence)
+        else: return Operation._formatted(self, formatType)
+
+    # original below
+    # def formatted(self, formatType, fence=false):
+    #     print("Entering Gate.formatted.")                                       # for testing; delete later
+    #     print("  formatType = {}".format(formatType))                           # for testing; delete later
+    #     formattedGateOperation = (
+    #             self.gate_operation.formatted(formatType, fence=False))
+    #     if formatType == 'latex':
+    #         return r'\gate{' + formattedGateOperation + r'}' 
+    #     else: return Operation._formatted(self, formatType, fence)
 
 
 class Target(Operation):
