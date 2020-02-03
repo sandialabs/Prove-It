@@ -948,7 +948,7 @@ class ContextStorage:
         for a Literal operator.  When there are muliple items with the same name, full names 
         must be used instead of abbreviations.
         '''
-        from proveit import Operation, Expression, ExprList, NamedExprs, ExprTensor
+        from proveit import Operation, Expression, ExprTuple, NamedExprs, ExprArray
         
         if expr in Operation.operationClassOfOperator:
             # the expression is an '_operator_' of an Operation class
@@ -975,7 +975,7 @@ class ContextStorage:
         if unnamedSubExprOccurences[expr] > 1:
             return # already visited this -- no need to reprocess it
         
-        if not isSubExpr or expr.__class__ not in (ExprList, NamedExprs, ExprTensor): 
+        if not isSubExpr or expr.__class__ not in (ExprTuple, NamedExprs, ExprArray): 
             # add expr's class to exprClass and named items (unless it is a basic Composite sub-Expression
             # in which case we'll use a python list or dictionary to represent the composite expression).
             exprClassesAndConstructors.add((expr.__class__, expr.remakeConstructor()))
@@ -1025,7 +1025,7 @@ class ContextStorage:
         return '.'.join(split_module_name)
     
     def _exprBuildingCode(self, expr, itemNames, isSubExpr=True):
-        from proveit import Expression, Composite, ExprList, NamedExprs, ExprTensor
+        from proveit import Expression, Composite, ExprTuple, NamedExprs, ExprArray
                 
         if expr is None: return 'None' # special 'None' case
         
@@ -1068,24 +1068,24 @@ class ContextStorage:
         if len(withStyleCalls)>0: withStyleCalls = '.' + withStyleCalls
 
         if isinstance(expr, Composite):
-            if isinstance(expr, ExprList):
+            if isinstance(expr, ExprTuple):
                 compositeStr = argStr
-            elif isinstance(expr, ExprTensor):
+            elif isinstance(expr, ExprArray):
                 compositeStr = '{' + argStr.replace(' = ', ':') + '}'                
             else:
                 assert isinstance(expr, NamedExprs)
                 compositeStr = '[' + argStr.replace(' = ', ':') + ']' # list of (name, value) tuples                
-            if isSubExpr and expr.__class__ in (ExprList, NamedExprs, ExprTensor): 
+            if isSubExpr and expr.__class__ in (ExprTuple, NamedExprs, ExprArray): 
                 # It is a sub-Expression and a standard composite class.
                 # Just pass it in as an implicit composite expression (a list or dictionary).
                 # The constructor should be equipped to handle it appropriately.
-                return '[' + compositeStr + ']' if expr.__class__==ExprList else compositeStr
+                return '[' + compositeStr + ']' if expr.__class__==ExprTuple else compositeStr
             else:
                 return get_constructor() + '(' + compositeStr + ')' + withStyleCalls
         else:
             return get_constructor() + '(' + argStr + ')' + withStyleCalls
     
-    def proofNotebook(self, theorem_name, expr):
+    def thmProofNotebook(self, theorem_name, expr):
         '''
         Return the relative url to the proof notebook, creating it if it does not
         already exist.
@@ -1116,13 +1116,13 @@ class ContextStorage:
         if not os.path.isdir(proofs_path):
             # make the directory for the _proofs_
             os.makedirs(proofs_path)            
-        nb = self._generateGenericProofNotebook(theorem_name)
+        nb = self._generateGenericThmProofNotebook(theorem_name)
         # write the proof file
         with open(filename, 'w') as proof_notebook:
             proof_notebook.write(nb)
         return relurl(filename) # return the new proof file
     
-    def _generateGenericProofNotebook(self, theorem_name):
+    def _generateGenericThmProofNotebook(self, theorem_name):
         '''
         Given a theorem name and hash directory, generate the generic start
         of a proof notebook using the template.
@@ -1148,7 +1148,7 @@ class ContextStorage:
             if match is None: return None
             return match.groups()[0]
             
-    def stashExtraneousProofNotebooks(self, theorem_names):
+    def stashExtraneousThmProofNotebooks(self, theorem_names):
         '''
         For any proof notebooks for theorem names not included in the given 
         theorem_names, stash them or remove them if they are generic notebooks.
@@ -1176,7 +1176,7 @@ class ContextStorage:
             # its info, building the generic version, and comparing.
             theorem_name = self._proofNotebookTheoremName(filename)
             if theorem_name is not None:
-                generic_version = self._generateGenericProofNotebook(theorem_name)        
+                generic_version = self._generateGenericThmProofNotebook(theorem_name)        
                 with open(filename, 'r') as notebook:
                     if generic_version == notebook.read():
                         remove_file = True # just remove it, it is generic

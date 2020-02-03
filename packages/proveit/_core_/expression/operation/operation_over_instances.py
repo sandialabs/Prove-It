@@ -1,6 +1,6 @@
 from proveit._core_.expression import Expression
 from proveit._core_.expression.lambda_expr import Lambda
-from proveit._core_.expression.composite import ExprList, singleOrCompositeExpression, compositeExpression
+from proveit._core_.expression.composite import ExprTuple, singleOrCompositeExpression, compositeExpression
 from .operation import Operation
 
 class OperationOverInstances(Operation):
@@ -18,7 +18,7 @@ class OperationOverInstances(Operation):
     '''
     _init_argname_mapping_ = {'instanceVarOrVars':'instanceVarOrVars', 'instanceExpr':'instanceExpr', 'domain':'domain', 'domains':'domains', 'conditions':'conditions'}
     
-    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=dict()):
+    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=None):
         '''
         Create an Operation for the given operator that is applied over instances of the 
         given instance Variable(s), instanceVarOrVars, for the given instance Expression, 
@@ -50,6 +50,8 @@ class OperationOverInstances(Operation):
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         instanceVars = compositeExpression(instanceVarOrVars)
+        
+        if styles is None: styles=dict()
         
         if len(instanceVars)==0:
             raise ValueError("Expecting at least one instance variable when constructing an OperationOverInstances")
@@ -84,7 +86,7 @@ class OperationOverInstances(Operation):
         else:
             domain = domains = None
             nondomain_conditions = conditions
-                
+        
         if len(instanceVars) > 1:
             if nestMultiIvars:
                 # "inner" instance variable are all but the first one.
@@ -112,7 +114,7 @@ class OperationOverInstances(Operation):
                 
                 # the instance expression at this level should be the OperationOverInstances at the next level.
                 innerOperand = self._createOperand(inner_instance_vars, instanceExpr, conditions=inner_conditions)
-                instanceExpr = self.__class__._make(['Operation'], styles, [operator, innerOperand])
+                instanceExpr = self.__class__._make(['Operation'], dict(styles), [operator, innerOperand])
                 styles['instance_vars'] = 'join_next' # combine instance variables in the style
                 instanceVarOrVars = instanceVar = instanceVars[0]
             else:
@@ -149,7 +151,7 @@ class OperationOverInstances(Operation):
                 if all(domain==domains[0] for domain in domains):
                     self.domain_or_domains = self.domain = domains[0] # all the same domain
                 else:
-                    self.domain_or_domains = self.domains = ExprList(*domains)
+                    self.domain_or_domains = self.domains = ExprTuple(*domains)
         """
     
     def hasDomain(self):
@@ -188,9 +190,9 @@ class OperationOverInstances(Operation):
     
     def extractMyInitArgValue(self, argName):
         '''
-        Return the most proper initialization value for the initialization argument
-        of the given name in order to reconstruct this Expression in its
-        current style.
+        Return the most proper initialization value for the
+        initialization argument of the given name in order to
+        reconstruct this Expression in its current style.
         '''
         init_argname_mapping = self.__class__._init_argname_mapping_
         argName = init_argname_mapping.get(argName, argName)
@@ -198,7 +200,8 @@ class OperationOverInstances(Operation):
             return self.operator # simply the operator
         elif argName=='instanceVarOrVars':
             # return the joined instance variables according to style.
-            return singleOrCompositeExpression(OperationOverInstances.explicitInstanceVars(self))
+            return singleOrCompositeExpression(
+                OperationOverInstances.explicitInstanceVars(self))
         elif argName=='instanceExpr':
             # return the inner instance expression after joining the
             # instance variables according to the style
@@ -210,11 +213,12 @@ class OperationOverInstances(Operation):
             if domains == [self.domain]*len(domains):
                 return self.domain if argName=='domain' else None
             elif not None in domains:
-                return ExprList(*domains) if argName=='domains' else None
+                return ExprTuple(*domains) if argName=='domains' else None
             return None
         elif argName=='conditions':
             # return the joined conditions excluding domain conditions
-            return singleOrCompositeExpression(OperationOverInstances.explicitConditions(self))
+            return singleOrCompositeExpression(
+                OperationOverInstances.explicitConditions(self))
         
     def _allInstanceVars(self):
         '''
@@ -222,8 +226,9 @@ class OperationOverInstances(Operation):
         and any instance variables of nested OperationOVerInstances
         of the same type.
         Modified by wdc on 6/06/2019, modifying generator fxn name
-        from allInstanceVars() to _allInstanceVars() and adding a separate
-        non-generator version of the allInstanceVars() fxn below.
+        from allInstanceVars() to _allInstanceVars() and adding a
+        separate non-generator version of the allInstanceVars() fxn
+        below.
         '''
         if hasattr(self, 'instanceVars'):
             for ivar in self.instanceVars:
@@ -295,9 +300,9 @@ class OperationOverInstances(Operation):
         _allConditions() defined above.
         Added by wdc on 6/06/2019.
         '''
-        return list(self._allConditions());
+        return list(self._allConditions())
     
-    def joinedNestings(self):
+    def _joinedNestings(self):
         '''
         Yield the nested levels of the OperationOverInstances that are
         joined together in the style.
@@ -305,18 +310,30 @@ class OperationOverInstances(Operation):
         yield self
         iVarStyle = self.getStyle('instance_vars')
         if iVarStyle == 'join_next':
-            assert isinstance(self.instanceExpr, self.__class__), "Not expecting 'instance_vars' style to be 'join_next' unless there is nesting of the same type of OperationOverInstances"
+            assert isinstance(self.instanceExpr, self.__class__), (
+                "Not expecting 'instance_vars' style to be " +
+                "'join_next' unless there is nesting of the same " +
+                "type of OperationOverInstances")
             for expr in self.instanceExpr.joinedNestings():
                 yield expr
+
+    def joinedNestings(self):
+        '''
+        Returns the nested levels of the OperationOverInstances that
+        are joined together in the style. Relies on the generator
+        function _joinedNestings() defined above. Added here by wdc
+        on 8/25/2019.
+        '''
+        return list(self._joinedNestings())
     
     def explicitInstanceVars(self):
         '''
         Return the instance variables that are to be shown explicitly 
-        in the formatting (as opposed to being made implicit via conditions)
-        joined together at this level according to the style.
-        By default, this includes all of the instance variables that
-        are to be joined but this may be overridden to exclude implicit
-        instance variables.
+        in the formatting (as opposed to being made implicit via
+        conditions) joined together at this level according to the
+        style. By default, this includes all of the instance variables
+        that are to be joined but this may be overridden to exclude
+        implicit instance variables.
         '''
         if hasattr(self, 'instanceVars'):
             return self.instanceVars
@@ -374,25 +391,26 @@ class OperationOverInstances(Operation):
         
     def explicitInstanceExpr(self):
         '''
-        Return the instance expression after joining instance variables according
-        to the style.
+        Return the instance expression after joining instance variables
+        according to the style.
         '''
         iVarStyle = self.getStyle('instance_vars')
         if iVarStyle == 'join_next':
             return self.instanceExpr.explicitInstanceExpr()
         return self.instanceExpr
     
-    def instanceVarLists(self):
+    def _instanceVarLists(self):
         '''
-        Yield lists of instance vars that include all of the instance variables
-        (see allInstanceVars method) but grouped together according to
-        the style joining instance variables together.
+        Yield lists of instance vars that include all of the instance
+        variables (see allInstanceVars method) but grouped together
+        according to the style joining instance variables together.
         '''
         iVarGroup = []
         expr = self
         while isinstance(expr, self.__class__):
             if hasattr(expr, 'instanceVars'):
-                yield expr.instanceVars # grouped together intrinsically -- no nestMultiIvars
+                yield expr.instanceVars # grouped together intrinsically
+                                        # -- no nestMultiIvars
             else:
                 iVarGroup.append(expr.instanceVar)
                 iVarStyle = expr.getStyle('instance_vars')
@@ -400,8 +418,21 @@ class OperationOverInstances(Operation):
                     yield iVarGroup # this group is done
                     iVarGroup = [] # start next group
             expr = expr.instanceExpr
-        assert len(iVarGroup)==0,  "Not expecting 'instance_vars' style to be 'join_next' unless there is nesting of the same type of OperationOverInstances"
+        assert len(iVarGroup)==0, (
+            "Not expecting 'instance_vars' style to be " +
+            "'join_next' unless there is nesting of the same type " +
+            "of OperationOverInstances")
         
+    
+    def instanceVarLists(self):
+        '''
+        Returns lists of instance vars that include all of the instance
+        variables (see allInstanceVars method) but grouped together
+        according to the style joining instance variables together.
+        Relies on the generator function _instanceVarLists() defined
+        above. Added here by wdc on 8/25/2019.
+        '''
+        return list(self._instanceVarLists())
 
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
@@ -416,12 +447,12 @@ class OperationOverInstances(Operation):
         '''
         # override this default as desired
         explicitIvars = list(self.explicitInstanceVars()) # the (joined) instance vars to show explicitly
-        explicitConditions = ExprList(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
-        explicitDomains = ExprList(*self.explicitDomains()) # the (joined) domains
+        explicitConditions = ExprTuple(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
+        explicitDomains = ExprTuple(*self.explicitDomains()) # the (joined) domains
         explicitInstanceExpr = self.explicitInstanceExpr() # left over after joining instnace vars according to the style
         hasExplicitIvars = (len(explicitIvars) > 0)
         hasExplicitConditions = (len(explicitConditions) > 0)
-        hasMultiDomain = (len(explicitDomains)>1 and explicitDomains != ExprList(*[self.domain]*len(explicitDomains)))
+        hasMultiDomain = (len(explicitDomains)>1 and explicitDomains != ExprTuple(*[self.domain]*len(explicitDomains)))
         outStr = ''
         formattedVars = ', '.join([var.formatted(formatType, abbrev=True) for var in explicitIvars])
         if formatType == 'string':
@@ -433,7 +464,7 @@ class OperationOverInstances(Operation):
             if hasMultiDomain or self.domain is not None:
                 outStr += ' in '
                 if hasMultiDomain:
-                    outStr += explicitDomains.formatted(formatType, formattedOperator='*', fence=False)
+                    outStr += explicitDomains.formatted(formatType, operatorOrOperators='*', fence=False)
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)                    
             if hasExplicitConditions:
@@ -451,7 +482,7 @@ class OperationOverInstances(Operation):
             if hasMultiDomain or self.domain is not None:
                 outStr += r' \in '
                 if hasMultiDomain:
-                    outStr += explicitDomains.formatted(formatType, formattedOperator=r'\times', fence=False)
+                    outStr += explicitDomains.formatted(formatType, operatorOrOperators=r'\times', fence=False)
                 else:
                     outStr += self.domain.formatted(formatType, fence=False)
             if hasExplicitConditions:

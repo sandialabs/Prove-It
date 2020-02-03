@@ -1,7 +1,8 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
-from proveit.logic.equality import EvaluationError
+from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
+from proveit.logic.equality import SimplificationError
 from proveit._common_ import j,k,l,m, n, A, B, C, D, E, F, G,  AA, BB, CC, DD, EE
 from proveit.logic.boolean.booleans import inBool
+from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, groupCommute
 
 class And(Operation):
     # The operator of the And operation
@@ -127,7 +128,13 @@ class And(Operation):
         '''
         Side-effect derivations to attempt automatically for Not(A and B and .. and .. Z).
         '''
+        from proveit.logic import Not, Or
         yield self.deriveInBool # (A and B and ... and Z) in Booleans
+        # implemented by JML on 7/2/19
+        # If all of the operands are negated call the disjunction form of DeMorgan's
+        if all(isinstance(operand, Not) for operand in self.operands):
+            demorganOr = Or(*[operand.operand for operand in self.operands])
+            yield demorganOr.concludeViaDemorgans
         
     def inBoolSideEffects(self, knownTruth):
         '''
@@ -135,7 +142,7 @@ class And(Operation):
         (Z in Booleans).
         '''
         yield self.deducePartsInBool
-
+    
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
         From (A and B and ... and Z) derive [(A and B and ... and Z) in Booleans].
@@ -154,8 +161,9 @@ class And(Operation):
         r'''
         From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies 
         :math:`X` either by index or the expr.
+        edited by JML 7/9/19 implement someFromAnd for side effect use
         '''
-        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
+        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd, someFromAnd
         idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
@@ -165,10 +173,31 @@ class And(Operation):
             elif idx==1:
                 return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
+            pass # Need to grab Joaquin's ExprTuple len method
+            '''
+            from proveit import ExprTuple
             from proveit.number import num
-            mVal, nVal = num(idx), num(len(self.operands)-idx-1)
-            return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
-    
+            try:
+                mVal, nVal = num(idx), num(len(self.operands)-idx-1)
+                print(mVal,nVal)
+                mVal, nVal = ExprTuple(*self.operands[:idx]).len(), ExprTuple(*self.operands[idx + 1:]).len()
+                print(mVal, nVal)
+                return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
+            except ProofFailure:
+                self.deriveSomeFromAnd(idx, assumptions)
+            '''
+    def deriveSomeFromAnd(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        added by JML 7/8/19
+        From (A and ... and B and ... C) derive any one index even if it is an iteration. 
+        '''
+        from proveit import ExprTuple
+        from proveit.logic.boolean.conjunction._theorems_ import someFromAnd
+        lVal = ExprTuple(*self.operands[:idx]).len()
+        mVal = ExprTuple(self.operands[idx]).len()
+        nVal = ExprTuple(*self.operands[idx + 1:]).len()
+        return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:self.operands[:idx], BB:self.operands[idx], CC:self.operands[idx + 1:]}, assumptions = assumptions)
+
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         r'''
         From :math:`(A \land B)` derive :math:`A`.
@@ -184,38 +213,6 @@ class And(Operation):
         if len(self.operands) != 2:
             raise Exception('deriveRight only applicable for binary conjunction operations')
         return self.deriveInPart(1, assumptions)
-
-    def deriveCommutation(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import commutation
-        return commutation.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-
-    def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
-        '''
-        From (A and B and ... and Y and Z), assuming in Booleans and given beginning and end of group, derive and return
-        (A and B ... and (l and ... and M) and ... and X and Z).
-        Created by JML on 6/10/19
-        '''
-        from ._theorems_ import group
-        from proveit.number import num
-        if end <= beg:
-            raise IndexError ("Beginning and end value must be of the form beginning < end.")
-        if end > len(self.operands) -1:
-            raise IndexError("End value must be less than length of expression.")
-        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), AA:self.operands[:beg], BB:self.operands[beg : end], CC: self.operands[end :]}, assumptions=assumptions)
-
-    def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
-        '''
-        From (A and ... and H and I and J or ... or L and M or N and ... and Q), assuming in Booleans and given
-        the beginning and end of the groups to be switched,
-        derive and return (A and ... and H and M and J and ... and L and I and N and ... and Q).
-        Created by JML on 6/10/19
-        '''
-        from ._theorems_ import swap
-        from proveit.number import num
-        if 0 < i < j < len(self.operands) - 1:
-            return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands) - j - 1), AA: self.operands[:i],B: self.operands[i], CC: self.operands[i + 1:j], D: self.operands[j], EE: self.operands[j + 1:]},assumptions=assumptions)
-        else:
-            raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
 
     def concludeViaComposition(self, assumptions=USE_DEFAULTS):
         '''
@@ -267,7 +264,7 @@ class And(Operation):
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
             return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
 
-    def deduceDemorgansEquiv(self, assumptions=USE_DEFAULTS):
+    def concludeViaDemorgans(self, assumptions=USE_DEFAULTS):
         '''
         # created by JML 6/28/19
         From A and B and C conclude Not(Not(A) or Not(B) or Not(C))
@@ -294,7 +291,7 @@ class And(Operation):
                 return nandIfNotRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         return nandIfNotOne.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -306,39 +303,9 @@ class And(Operation):
             try:
                 self.disprove(assumptions)
             except ProofFailure:
-                raise EvaluationError("Unable to evaluate conjunction.")
+                pass
         return Operation.evaluation(self, assumptions)
     
-    def commute(self, startIdx1=None, endIdx1=None, startIdx2=None, endIdx2=None, assumptions=frozenset()):
-        '''
-        Commute self.operands[startIdx1:endIdx1] with self.operands[startIdx2:endIdx2].  
-        The default, if no indices are provided, is to commute the first operand with the rest
-        (convenient especially when there are just two operands).
-        Derives and returns the new conjunction operation from the original.
-        '''
-        from proveit.number import num
-        from ._theorems_ import binaryCommutation, andCommutation
-        if startIdx1 is None and endIdx1 is None and startIdx2 is None and endIdx2 is None:
-            stattIdx1, endIdx1, startIdx2, endIdx2 = 0, 1, 1, None
-        nOperands = len(self.operands)
-        start1, stop1, _ = slice(startIdx1, endIdx1).indices(nOperands)
-        start2, stop2, _ = slice(startIdx2, endIdx2).indices(nOperands)
-        if start1  > start2:
-            # swap 1 and 2 so that 1 comes first
-            startIdx1, endIdx1, startIdx2, endIdx2 = startIdx2, endIdx2, startIdx1, endIdx2
-            start1, stop1, start2, stop2 = start2, stop2, start1, stop1
-        if len(self.operands)==2 and (start1,stop1,start2,stop2)==(0,1,1,2):
-            return binaryCommutation.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-        
-        if stop1 > start2:
-            raise ValueError("Cannot commute overlapping sets of operands")
-        Asub = self.operands[:startIdx1] if startIdx1 is not None else []
-        Bsub = self.operands[startIdx1:endIdx1]
-        Csub = self.operands[endIdx1:startIdx2]
-        Dsub = self.operands[startIdx2:endIdx2]
-        Esub = self.operands[endIdx2:] if endIdx2 is not None else []
-        return andCommutation.specialize({Amulti:Asub, Bmulti:Bsub, Cmulti:Csub, Dmulti:Dsub, Emulti:Esub}, assumptions=assumptions)
-        
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to deduce, then return, that this 'and' expression is in the set of BOOLEANS.
@@ -350,6 +317,83 @@ class And(Operation):
         else:
             from proveit.number import num    
         return closure.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+
+    def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
+        '''
+        Given Boolean operands, deduce that this expression is equal to a form in which the operand
+        at index initIdx has been moved to finalIdx.
+        For example, (A and B and ... and Y and Z) = (A and ... and Y and B and Z)
+        via initIdx = 1 and finalIdx = -2.
+        '''
+        from ._theorems_ import commutation, leftwardCommutation, rightwardCommutation
+        return apply_commutation_thm(self, initIdx, finalIdx, commutation, leftwardCommutation, rightwardCommutation, assumptions)
+
+    def groupCommutation(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
+        '''
+        Given Boolean operands, deduce that this expression is equal to a form in which the operands
+        at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
+        It will do this by performing association first.  If disassocate is True, it
+        will be disassociated afterwards.
+        '''
+        return groupCommutation(self, initIdx, finalIdx, length, disassociate, assumptions)
+    
+    def commute(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
+        '''
+        From self, derive and return a form in which the operand
+        at index initIdx has been moved to finalIdx.
+        For example, given (A and B and ... and Y and Z) derive (A and ... and Y and B and Z)
+        via initIdx = 1 and finalIdx = -2.
+        '''
+        from ._theorems_ import commute, leftwardCommute, rightwardCommute      
+        return apply_commutation_thm(self, initIdx, finalIdx, commute, leftwardCommute, rightwardCommute, assumptions)  
+    
+    def groupCommute(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
+        '''
+        Given self, deduce and return a form in which the operands
+        at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
+        It will do this by performing association first.  If disassocate is True, it
+        will be disassociated afterwards.
+        '''
+        return groupCommute(self, initIdx, finalIdx, length, disassociate, assumptions)
+    
+    def association(self, startIdx, length, assumptions=USE_DEFAULTS):
+        '''
+        Given Boolean operands, deduce that this expression is equal to a form in which operands in the
+        range [startIdx, startIdx+length) are grouped together.
+        For example, (A and B and ... and Y and Z) = (A and B ... and (L and ... and M) and ... and Y and Z)
+        '''
+        from ._theorems_ import association
+        return apply_association_thm(self, startIdx, length, association, assumptions)
+
+    def associate(self, startIdx, length, assumptions=USE_DEFAULTS):
+        '''
+        From self, derive and return a form in which operands in the
+        range [startIdx, startIdx+length) are grouped together.
+        For example, from (A and B and ... and Y and Z) derive
+        (A and B ... and (L and ... and M) and ... and Y and Z).
+        '''
+        from ._theorems_ import associate
+        return apply_association_thm(self, startIdx, length, associate, assumptions)
+
+    def disassociation(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        Given Boolean operands, deduce that this expression is equal to a form in which the operand
+        at index idx is no longer grouped together.
+        For example, (A and B ... and (L and ... and M) and ... and Y and Z) = (A and B and ... and Y and Z)
+        '''
+        from ._theorems_ import disassociation
+        return apply_disassociation_thm(self, idx, disassociation, assumptions)
+
+    def disassociate(self, idx, assumptions=USE_DEFAULTS):
+        '''
+        From self, derive and return a form in which the operand
+        at the given index is ungrouped.
+        For example, from (A and B ... and (L and ... and M) and ... and Y and Z)
+        derive (A and B and ... and Y and Z).
+        '''
+        from ._theorems_ import disassociate
+        return apply_disassociation_thm(self, idx, disassociate, assumptions)
+
     
 def compose(expressions, assumptions=USE_DEFAULTS):
     '''
@@ -363,3 +407,9 @@ def compose(expressions, assumptions=USE_DEFAULTS):
         from proveit.number import num
         from ._theorems_ import andIfAll
         return andIfAll.specialize({m:num(len(expressions)), AA:expressions}, assumptions=assumptions)
+
+# Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(And, 'commutation', 'commuted', 'commute')
+InnerExpr.register_equivalence_method(And, 'groupCommutation', 'groupCommuted', 'groupCommute')
+InnerExpr.register_equivalence_method(And, 'association', 'associated', 'associate')
+InnerExpr.register_equivalence_method(And, 'disassociation', 'disassociated', 'disassociate')

@@ -856,6 +856,7 @@ class ContextStorage:
         # re-written (if we did not know it was a special expression before).
         try:
             expr_address = self.context.specialExprAddress(expr)
+            special_name = expr_address[-1].split('.')[0] # strip off ".expr"
         except KeyError:
             expr_address = None
         needs_rewriting = False
@@ -864,7 +865,7 @@ class ContextStorage:
             if not os.path.isfile(special_expr_name_filename):
                 needs_rewriting = True
                 with open(special_expr_name_filename, 'w') as nameFile:
-                    nameFile.write(expr_address[-1])
+                    nameFile.write(special_name)
                 special_expr_kind_filename = os.path.join(self.pv_it_dir, hash_directory, 'kind.txt')
                 with open(special_expr_kind_filename, 'w') as kindFile:
                     kindFile.write(expr_address[0])                
@@ -872,7 +873,6 @@ class ContextStorage:
         if not needs_rewriting and os.path.isfile(filename):
             return relurl(filename) # return the existing expression notebook file
         elif os.path.isfile(filename):
-            special_name = expr_address[-1].split('.')[0] # strip of ".expr"
             # Store the original version as orig_expr.ipynb.  It will be
             # resurrected if the expression is no longer "special" but still used.
             orig_notebook_filename = os.path.join(self.pv_it_dir, hash_directory, 'orig_expr.ipynb')
@@ -914,10 +914,12 @@ class ContextStorage:
                 item_names[expr_class] = module_name+'.'+constructor
         for namedExprAndStyleId, namedExprAddress in named_subexpr_addresses.items():
             if isinstance(namedExprAddress[0], str):
-                # Must be a special expression (axiom, theorem, or common expression)
-                module_name = namedExprAddress[0]
+                # Must be a special expression (axiom, theorem, 
+                module_name = namedExprAddress[0] # or common expression)
                 item_names[namedExprAndStyleId] = itemName = namedExprAddress[-1]
-                objName = itemName.split('.')[0] # split of '.expr' part if it is a Theorem or Axiom KnownTruth
+                 # Split off '.expr' part if it is a Theorem or Axiom 
+                 # KnownTruth
+                objName = itemName.split('.')[0]
                 module_name = self._moduleAbbreviatedName(module_name, objName)
                 is_unique = (len(named_items[itemName]) == 1)
                 from_imports.setdefault(module_name, []).append(objName)
@@ -926,7 +928,7 @@ class ContextStorage:
                 item_names[namedExprAndStyleId] = item_names[namedExprAddress[0]] + '.' + namedExprAddress[1]
                 
         # see if we need to add anything to the sys.path
-        needs_root_path = False # needs the root of this context addedS
+        needs_root_path = False # needs the root of this context added
         needs_local_path = False # needs the local path added
         # first, see if we even need to import a module with the same root as our context
         root_context = self.rootContextStorage.context
@@ -939,7 +941,7 @@ class ContextStorage:
                 break
             else:
                 module = importlib.import_module(module_name)
-                if not os.path.isabs(module.__file__):
+                if module.__package__ == '':
                     needs_local_path = True
         
         # generate the imports that we need (appending to sys.path if necessary).
@@ -1054,7 +1056,7 @@ class ContextStorage:
         for a Literal operator.  When there are muliple items with the same name, full names 
         must be used instead of abbreviations.
         '''
-        from proveit import Operation, Expression, ExprList, NamedExprs, ExprTensor
+        from proveit import Operation, Expression, ExprTuple, NamedExprs, ExprArray
         
         if expr in Operation.operationClassOfOperator:
             # the expression is an '_operator_' of an Operation class
@@ -1081,7 +1083,7 @@ class ContextStorage:
         if unnamedSubExprOccurences[(expr, expr._style_id)] > 1:
             return # already visited this -- no need to reprocess it
         
-        if not isSubExpr or expr.__class__ not in (ExprList, NamedExprs, ExprTensor): 
+        if not isSubExpr or expr.__class__ not in (ExprTuple, NamedExprs, ExprArray): 
             # add expr's class to exprClass and named items (unless it is a basic Composite sub-Expression
             # in which case we'll use a python list or dictionary to represent the composite expression).
             exprClassesAndConstructors.add((expr.__class__, expr.remakeConstructor()))
@@ -1131,7 +1133,7 @@ class ContextStorage:
         return '.'.join(split_module_name)
     
     def _exprBuildingCode(self, expr, itemNames, isSubExpr=True):
-        from proveit import Expression, Composite, ExprList, NamedExprs, ExprTensor
+        from proveit import Expression, Composite, ExprTuple, NamedExprs, ExprArray
                 
         if expr is None: return 'None' # special 'None' case
         
@@ -1174,24 +1176,41 @@ class ContextStorage:
         if len(withStyleCalls)>0: withStyleCalls = '.' + withStyleCalls
 
         if isinstance(expr, Composite):
-            if isinstance(expr, ExprList):
+            if isinstance(expr, ExprTuple):
                 compositeStr = argStr
-            elif isinstance(expr, ExprTensor):
+            elif isinstance(expr, ExprArray):
                 compositeStr = '{' + argStr.replace(' = ', ':') + '}'                
             else:
                 assert isinstance(expr, NamedExprs)
                 compositeStr = '[' + argStr.replace(' = ', ':') + ']' # list of (name, value) tuples                
-            if isSubExpr and expr.__class__ in (ExprList, NamedExprs, ExprTensor): 
+            if isSubExpr and expr.__class__ in (ExprTuple, NamedExprs, ExprArray): 
                 # It is a sub-Expression and a standard composite class.
                 # Just pass it in as an implicit composite expression (a list or dictionary).
                 # The constructor should be equipped to handle it appropriately.
-                return '[' + compositeStr + ']' if expr.__class__==ExprList else compositeStr
+                return '[' + compositeStr + ']' if expr.__class__==ExprTuple else compositeStr
             else:
                 return get_constructor() + '(' + compositeStr + ')' + withStyleCalls
         else:
             return get_constructor() + '(' + argStr + ')' + withStyleCalls
     
-    def proofNotebook(self, theorem_name, expr):
+    def proofNotebook(self, proof):
+        '''
+        Return the url to a proof notebook for the given stored proof.
+        Create the notebook if necessary.
+        '''
+        import proveit
+        (context, hash_directory) = self._retrieve(proof)
+        pv_it_dir = context._storage.pv_it_dir
+        filename = os.path.join(pv_it_dir, hash_directory, 'proof.ipynb')
+        proveit_path = os.path.split(proveit.__file__)[0]
+        template_filename = os.path.join(proveit_path, '..', 
+                                         '_proof_template_.ipynb')
+        if not os.path.isfile(filename):
+            # Copy the template.  Nothing needs to be edited for these.
+            shutil.copyfile(template_filename, filename)
+        return relurl(filename)
+    
+    def thmProofNotebook(self, theorem_name, expr):
         '''
         Return the relative url to the proof notebook, creating it if it does not
         already exist.
@@ -1222,13 +1241,13 @@ class ContextStorage:
         if not os.path.isdir(proofs_path):
             # make the directory for the _proofs_
             os.makedirs(proofs_path)            
-        nb = self._generateGenericProofNotebook(theorem_name)
+        nb = self._generateGenericThmProofNotebook(theorem_name)
         # write the proof file
         with open(filename, 'w') as proof_notebook:
             proof_notebook.write(nb)
         return relurl(filename) # return the new proof file
     
-    def _generateGenericProofNotebook(self, theorem_name):
+    def _generateGenericThmProofNotebook(self, theorem_name):
         '''
         Given a theorem name and hash directory, generate the generic start
         of a proof notebook using the template.
@@ -1236,7 +1255,7 @@ class ContextStorage:
         import proveit
         # read the template and change the contexts as appropriate
         proveit_path = os.path.split(proveit.__file__)[0]
-        with open(os.path.join(proveit_path, '..', '_proof_template_.ipynb'), 'r') as template:
+        with open(os.path.join(proveit_path, '..', '_theorem_proof_template_.ipynb'), 'r') as template:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
             context_links = self.context.links(os.path.join(self.directory, '_proofs_'))
@@ -1254,7 +1273,7 @@ class ContextStorage:
             if match is None: return None
             return match.groups()[0]
             
-    def stashExtraneousProofNotebooks(self, theorem_names):
+    def stashExtraneousThmProofNotebooks(self, theorem_names):
         '''
         For any proof notebooks for theorem names not included in the given 
         theorem_names, stash them or remove them if they are generic notebooks.
@@ -1282,7 +1301,7 @@ class ContextStorage:
             # its info, building the generic version, and comparing.
             theorem_name = self._proofNotebookTheoremName(filename)
             if theorem_name is not None:
-                generic_version = self._generateGenericProofNotebook(theorem_name)        
+                generic_version = self._generateGenericThmProofNotebook(theorem_name)        
                 with open(filename, 'r') as notebook:
                     if generic_version == notebook.read():
                         remove_file = True # just remove it, it is generic
@@ -1304,7 +1323,7 @@ class ContextStorage:
         new_filename = filename_base + "~stashed~%d.ipynb"%num
         print("Stashing %s to %s in case it is needed."%(relurl(filename), relurl(new_filename)))
         os.rename(filename, new_filename)
-        
+                
     def makeExpression(self, exprId):
         '''
         Return the Expression object that is represented in storage by
@@ -1408,6 +1427,42 @@ class ContextStorage:
             built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], styles_map[expr_id], sub_expressions, context)
         return built_expr_map[master_expr_id]        
     
+    def makeKnownTruth(self, truthId):
+        '''
+        Return the KnownTruth object that is represented in storage by
+        the given KnownTruth id.
+        '''
+        from proveit._core_.known_truth import KnownTruth
+        context_name, _ = self._split(truthId)
+        hash_path = self._storagePath(truthId)
+        with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
+            # extract the unique representation from the pv_it file
+            unique_rep = f.read()
+        exprids = self._extractReferencedStorageIds(unique_rep, context_name)
+        truth_expr_id = self.makeExpression(exprids[0])
+        assumptions = [self.makeExpression(exprid) for exprid in exprids[1:]]
+        return KnownTruth(truth_expr_id, assumptions)
+        
+    def makeShowProof(self, proof_id):
+        '''
+        Return the _ShowProof object that mocks up the proof 
+        represented in storage by the given proof id for just
+        the purposes of displaying the proof.
+        '''
+        from proveit._core_.proof import Proof
+        from proveit._core_.context import Context
+        context_name, hash_directory = self._split(proof_id)
+        if context_name=='':
+            context = self.context
+        else:
+            context = Context.getContext(context_name)
+        hash_path = self._storagePath(proof_id)        
+        with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
+            # extract the unique representation from the pv_it file
+            unique_rep = f.read()
+        self._proveItObjects[proof_id] = (context, hash_directory)           
+        return Proof._showProof(context, proof_id, unique_rep)
+        
     def recordCommonExprDependencies(self):
         '''
         Record the context names of any reference common expressions in storage
@@ -1458,19 +1513,19 @@ class ContextStorage:
                     referencing_contexts[new_context_name] = context
         return None
     
-    def referenceDisplayedExpressions(self, name, clear=False):
+    def referenceHyperlinkedObjects(self, name, clear=False):
         '''
-        Reference displayed expressions, recorded under the given name
+        Reference displayed expressions and proofs of displayed
+        KnownTruths recorded under the given name
         in the __pv_it directory.  If the same name is reused,
         any expressions that are not displayed this time that
         were displayed last time will be unreferenced.
         If clear is True, remove all of the references and the
         file that stores these references.
         '''
-        from proveit import Expression
-        from .context import Context
+        from proveit import Expression, KnownTruth
         
-        reference_file = os.path.join(self.referenced_dir, name + '_displayed.pv_it')
+        reference_file = os.path.join(self.referenced_dir, name + '_hyperlinked.pv_it')
         
         # read in previous "displayed" expressions
         previous = set()
@@ -1479,8 +1534,12 @@ class ContextStorage:
                 for line in f.readlines():
                     previous.add(line.strip())
         
-        # grab the current "displayed" expressions 
-        current = {self._proveItStorageId(expr) for style_id, expr in Expression.displayed_expression_styles}
+        # Grab the current "displayed" expressions and hyperlinked
+        # proofs:
+        current = {self._proveItStorageId(expr) for style_id, expr 
+                   in Expression.displayed_expression_styles}
+        current.update({self._proveItStorageId(proof) for style_id, proof 
+                        in KnownTruth.hyperlinked_proof_styles})
         
         # dereference old ones
         for old_ref in previous - current:
@@ -1497,11 +1556,12 @@ class ContextStorage:
         if clear:
             os.remove(reference_file)
     
-    def clearDisplayedExpressionReferences(self):
+    def clearHyperlinkedObjectReferences(self):
         '''
-        Remove all of the references to displayed expressions in this context.
+        Remove all of the references to displayed expressions 
+        and proofs of displayed known truths in this context.
         '''
-        suffix = '_displayed.pv_it'
+        suffix = '_hyperlinked.pv_it'
         for filename in os.listdir(self.referenced_dir):
             if filename[-len(suffix):] == suffix:
                 displayed_ref_path = os.path.join(self.referenced_dir, filename)

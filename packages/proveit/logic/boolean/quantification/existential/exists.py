@@ -1,5 +1,5 @@
 from proveit import OperationOverInstances, KnownTruth
-from proveit import Literal, Operation, ExprList, USE_DEFAULTS
+from proveit import Literal, Operation, ExprTuple, USE_DEFAULTS
 from proveit._common_ import A, B, P, R, S, xx, yy, QQ
 
 class Exists(OperationOverInstances):
@@ -48,7 +48,7 @@ class Exists(OperationOverInstances):
         raise NotImplementedError("Need to update")
         from ._theorems_ import existenceByExample
         from proveit.logic import InSet
-        if len(self.instanceVars) > 1 and (not isinstance(exampleInstance, ExprList) or (len(exampleInstance) != len(self.instanceVars))):
+        if len(self.instanceVars) > 1 and (not isinstance(exampleInstance, ExprTuple) or (len(exampleInstance) != len(self.instanceVars))):
             raise Exception('Number in exampleInstance list must match number of instance variables in the Exists expression')
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions

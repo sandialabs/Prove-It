@@ -37,8 +37,8 @@ class Abs(Operation):
         Assumptions may be needed to deduce that the sub-operands are in complexes.
         '''
         from .theorems import absFrac, absProd
-        from proveit.number import Fraction, Mult
-        if isinstance(self.operand, Fraction):
+        from proveit.number import Div, Mult
+        if isinstance(self.operand, Div):
             deduceInComplexes(self.operand.numerator, assumptions)
             deduceInComplexes(self.operand.denominator, assumptions)
             return absFrac.specialize({a:self.operand.numerator, b:self.operand.denominator}).checked(assumptions)
