@@ -16,16 +16,14 @@ class ExprType(type):
     '''
     By overriding the Expression type, we can make Operation-type
     expressions automatically populate the Operation.operationClassOfOperator
-    dictionary as long as the relevent '_operator_' class attribute is 
-    accessed at least once.
+    when any Expression class is provided with an '_operator_' class attribute.
     '''
-    
-    def __getattribute__(cls, name):
-        from proveit._core_.expression.operation import Operation
-        value = type.__getattribute__(cls, name)
-        if issubclass(cls, Operation) and name == '_operator_':
-            Operation.operationClassOfOperator[value] = cls
-        return value
+    def __init__(cls, *args, **kwargs):
+        type.__init__(cls, *args, **kwargs)
+        if hasattr(cls, '_operator_'):
+            from proveit._core_.expression.operation import Operation
+            if issubclass(cls, Operation):
+                Operation.operationClassOfOperator[cls._operator_] = cls
 
 class Expression(metaclass=ExprType):
     # set of (style-id, Expression) tuples

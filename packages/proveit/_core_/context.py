@@ -72,6 +72,9 @@ class Context:
         use the path of the containing directory.  If no path
         is provided, base the context on the current working directory.
         '''
+        if not os.path.exists(path):
+            raise ContextException("%s is not a valid path; unable to create Context."%path)
+        
         path = os.path.abspath(path)
         # if in a __pv_it_ directory, go to the containing context directory
         splitpath = path.split(os.path.sep)
