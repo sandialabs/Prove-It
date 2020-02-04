@@ -334,7 +334,9 @@ class Proof:
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
         html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
         first_requirements = None
-        proof_id = hex(self._style_id)
+        # If this is a _ShowProof object, _style_id will be a str.
+        proof_id = self._style_id if isinstance(self._style_id, str) \
+                    else hex(self._style_id)
         for k, proof in enumerate(proofSteps):
             # Show first requirements up at the top even if we need to
             # simply reference a later step.  (We'll only bother with this
