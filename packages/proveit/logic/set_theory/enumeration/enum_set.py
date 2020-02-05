@@ -32,27 +32,29 @@ class Set(Operation):
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
 
-    def permutation(self, initIdx=None, finalIdx=None,
-                    assumptions=USE_DEFAULTS):
-        '''
-        Deduce that this Set expression is set-equivalent to a Set
-        in which the element at index initIdx has been moved to
-        finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
-        initIdx = 1 (i.e. 'b') and finalIdx = -2. In traditional
-        cycle notation, this corresponds to an index-based cycle
-        (initIdx, initIdx+1, … finalIdx) where
-        0 ≤ initIdx ≤ finalIdx ≤ n - 1 for a set of size n.
-        TO BE REPLACED WITH ALTERNATELY-NAMED
-        permutationSimple() BELOW. Maintained here temporarily.
-        '''
-        from ._theorems_ import (binaryPermutation, leftwardPermutation,
-                                 rightwardPermutation)
-        return apply_commutation_thm(self, initIdx, finalIdx, binaryPermutation,
-                                     leftwardPermutation, rightwardPermutation,
-                                     assumptions)
+    # this has been renamed to permutation_move;
+    # and permutationGeneral has been renamed as permutation
+    # def permutation(self, initIdx=None, finalIdx=None,
+    #                 assumptions=USE_DEFAULTS):
+    #     '''
+    #     Deduce that this Set expression is set-equivalent to a Set
+    #     in which the element at index initIdx has been moved to
+    #     finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
+    #     initIdx = 1 (i.e. 'b') and finalIdx = -2. In traditional
+    #     cycle notation, this corresponds to an index-based cycle
+    #     (initIdx, initIdx+1, … finalIdx) where
+    #     0 ≤ initIdx ≤ finalIdx ≤ n - 1 for a set of size n.
+    #     TO BE REPLACED WITH ALTERNATELY-NAMED
+    #     permutationSimple() BELOW. Maintained here temporarily.
+    #     '''
+    #     from ._theorems_ import (binaryPermutation, leftwardPermutation,
+    #                              rightwardPermutation)
+    #     return apply_commutation_thm(self, initIdx, finalIdx, binaryPermutation,
+    #                                  leftwardPermutation, rightwardPermutation,
+    #                                  assumptions)
 
-    def permutationSimple(self, initIdx=None, finalIdx=None,
-                          assumptions=USE_DEFAULTS):
+    def permutation_move(self, initIdx=None, finalIdx=None,
+                         assumptions=USE_DEFAULTS):
         '''
         change to permutationMove (using move as the verb)
         and use a permutationSwap for the extra one (use swap for the verb)
@@ -70,8 +72,8 @@ class Set(Operation):
                                      leftwardPermutation, rightwardPermutation,
                                      assumptions)
 
-    def permutationGeneral(self, new_order=None, cycles=None,
-                           assumptions=USE_DEFAULTS):
+    def permutation(self, new_order=None, cycles=None,
+                    assumptions=USE_DEFAULTS):
         '''
         PERHAPS CALL THIS ONE just permutation
         Deduce that this Set expression is set-equivalent to a Set
@@ -82,6 +84,8 @@ class Set(Operation):
         {a, b, c, d}.permutationGeneral(cycles=[(1, 2, 3)]) would both
         return |- {a, b, c, d} = {a, c, d, b}.
         '''
+        print("Entering permutation:")                                          # for testing; delete later
+        print("    self = {}".format(self))                                     # for testing; delete later
         return generic_permutation(self, new_order, cycles, assumptions)
 
     def deduceEnumSubsetEqOld(self, subset_indices=None,

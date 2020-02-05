@@ -18,10 +18,12 @@ class TransRelUpdater:
         '''
         from proveit.logic import Equals, Set, SetEquiv
         self.expr = expr
-        if isinstance(expr, Set):
-            self.relation = SetEquiv(expr, expr).prove()
-        else:
-            self.relation = Equals(expr, expr).prove()
+        # OK, now taking back the SetEquiv stuff for enum Set
+        # if isinstance(expr, Set):
+        #     self.relation = SetEquiv(expr, expr).prove()
+        # else:
+        #     self.relation = Equals(expr, expr).prove()
+        self.relation = Equals(expr, expr).prove()
         self.assumptions = assumptions
     
     def update(self, relation, assumptions=None):

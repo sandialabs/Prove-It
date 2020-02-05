@@ -38,13 +38,19 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
 
     # trivial commutation (i.e. non-commutation)
     # but we need to distinguish SetEquiv from Equals
+    # hmm … not any more?
+    # if initIdx==finalIdx:
+    #     if isinstance(expr, Set):
+    #         return SetEquiv(expr, expr).prove()
+    #     return Equals(expr, expr).prove()
+
     if initIdx==finalIdx:
-        if isinstance(expr, Set):
-            return SetEquiv(expr, expr).prove()
         return Equals(expr, expr).prove()
 
     # number of operands or elements = 2
     if len(expr.operands)==2 and set([initIdx, finalIdx]) == {0, 1}:
+        print("Inside apply_commutation_thm, with 2 operands")                  # for testing; delete later
+        print("    expr = {}".format(expr))                                     # for testing; delete later
         A, B = binaryThm.allInstanceVars()
         return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
                                     assumptions=assumptions)
@@ -231,6 +237,10 @@ def generic_permutation(expr, new_order=None, cycles=None,
                         assumptions=USE_DEFAULTS):
     '''
     '''
+    print("Entering generic_permutation")                                       # for testing; delete later
+    print("    expr = {}".format(expr))                                         # for testing; delete later
+    print("    assumptions = {}".format(assumptions))                           # for testing; delete later
+    print("    type(expr) = {}".format(type(expr)))                             # for testing; delete later
     # check validity of default param usage: should have new_order list
     # OR list of cycles, but not both
     if new_order is None and cycles is None:
@@ -326,21 +336,27 @@ def generic_permutation(expr, new_order=None, cycles=None,
     # the eq.relation will hold this for us
 
     # for convenience while updating our equation
+    print("Just before defining eq, expr = {}".format(expr))                    # for testing; delete later
     eq = TransRelUpdater(expr, assumptions)
+    print("Initial eq.relation = {}".format(eq.relation))                       # for testing; delete later
 
     while current_order != desired_order:
 
-        # Use set comprehension find 1st index where the current_order
-        # and desired_order lists differ and the desired_order value
-        # at that location
+        # Use set comprehension to find 1st index where the
+        # current_order and desired_order lists differ and determine
+        # the desired_order value at that location
         temp_order_diff_info = next(
                 (idx, x, y) for idx, (x, y) in enumerate(
                 zip(current_order, desired_order)) if x != y)
         # extract the init and final indices for the permutation
         initIdx = current_order.index(temp_order_diff_info[2])
         finalIdx = temp_order_diff_info[0]
-        expr = eq.update(expr.permutationSimple(
+        print("    initIdx = {}".format(initIdx))                               # for testing; delete later
+        print("    finalIdx = {}".format(finalIdx))                             # for testing; delete later
+        print("    expr = {}".format(expr))                                     # for testing; delete later
+        expr = eq.update(expr.permutation_move(
                 initIdx, finalIdx, assumptions=assumptions))
+        print("    after eq.update, expr = {}".format(expr))                    # for testing; delete later
         # update current_order to reflect step-wise change
         current_order.remove(temp_order_diff_info[2])
         current_order.insert(finalIdx, temp_order_diff_info[2])
