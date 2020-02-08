@@ -23,6 +23,7 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
         initIdx, finalIdx = 0, 1 # defaults when there are 2 operands
 
     # transform any wrap-around indexing for simplicity
+    # this needs work actually …
     if initIdx < 0: initIdx = len(expr.operands)+initIdx
     if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx
 
@@ -49,8 +50,6 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
 
     # number of operands or elements = 2
     if len(expr.operands)==2 and set([initIdx, finalIdx]) == {0, 1}:
-        print("Inside apply_commutation_thm, with 2 operands")                  # for testing; delete later
-        print("    expr = {}".format(expr))                                     # for testing; delete later
         A, B = binaryThm.allInstanceVars()
         return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
                                     assumptions=assumptions)
@@ -87,7 +86,11 @@ def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS)
         # association over the entire range is trivial:
         return Equals(expr, expr).prove() # simply the self equality
     l, m, n, AA, BB, CC = thm.allInstanceVars()
-    return thm.specialize({l :num(beg), m:num(end - beg), n: num(len(expr.operands) - end), AA:expr.operands[:beg], BB:expr.operands[beg : end], CC: expr.operands[end :]}, assumptions=assumptions)
+    return thm.specialize(
+            {l:num(beg), m:num(end - beg), n: num(len(expr.operands) - end),
+             AA:expr.operands[:beg], BB:expr.operands[beg : end],
+             CC: expr.operands[end :]},
+            assumptions=assumptions)
 
 def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     from proveit.number import num
@@ -102,68 +105,68 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     length = len(expr.operands[idx].operands)
     return thm.specialize({l:num(idx), m:num(length), n: num(len(expr.operands) - idx - 1), AA:expr.operands[:idx], BB:expr.operands[idx].operands, CC:expr.operands[idx+1:]}, assumptions=assumptions)
 
-def apply_permutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
-                          rightwardThm, assumptions=USE_DEFAULTS):
-    '''
-    UNDER CONSTRUCTION
-    '''
-    from proveit.logic import SetEquiv
-    # Some initial print statements for testing
-    print("Entering apply_permutation_thm.")
-    print("    initIdx = {}".format(initIdx))
-    print("    finalIdx = {}".format(finalIdx))
-    print("    assumptions = {}".format(assumptions))
+# def apply_permutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm,
+#                           rightwardThm, assumptions=USE_DEFAULTS):
+#     '''
+#     UNDER CONSTRUCTION — can use apply_commutation_thm instead
+#     '''
+#     from proveit.logic import SetEquiv
+#     # Some initial print statements for testing
+#     print("Entering apply_permutation_thm.")
+#     print("    initIdx = {}".format(initIdx))
+#     print("    finalIdx = {}".format(finalIdx))
+#     print("    assumptions = {}".format(assumptions))
 
-    # check validity of supplied indices in terms of defaults
-    if initIdx is None or finalIdx is None:
-        if len(expr.operands) != 2:
-            raise IndexError("You may use default 'initIdx' or "
-                             "'finalIdx' values when applying "
-                             "permutation only if your set or "
-                             "set-like object contains exactly 2 "
-                             "elements.")
-        if initIdx is not finalIdx:
-            raise IndexError("When applying permutation, you must "
-                             "either supply both 'initIdx' and "
-                             "'finalIdx' or supply neither (allowed "
-                             "when there are only 2 elements)")
-        initIdx, finalIdx = 0, 1  # defaults when there are 2 elements
+#     # check validity of supplied indices in terms of defaults
+#     if initIdx is None or finalIdx is None:
+#         if len(expr.operands) != 2:
+#             raise IndexError("You may use default 'initIdx' or "
+#                              "'finalIdx' values when applying "
+#                              "permutation only if your set or "
+#                              "set-like object contains exactly 2 "
+#                              "elements.")
+#         if initIdx is not finalIdx:
+#             raise IndexError("When applying permutation, you must "
+#                              "either supply both 'initIdx' and "
+#                              "'finalIdx' or supply neither (allowed "
+#                              "when there are only 2 elements)")
+#         initIdx, finalIdx = 0, 1  # defaults when there are 2 elements
 
-    # acknowledge any wrap-around indexing; transform for simplicity
-    if initIdx < 0: initIdx = len(expr.operands)+initIdx
-    if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx
+#     # acknowledge any wrap-around indexing; transform for simplicity
+#     if initIdx < 0: initIdx = len(expr.operands)+initIdx
+#     if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx
 
-    # check validity of supplied index values
-    if initIdx >= len(expr.operands):
-        raise IndexError("'initIdx' = {0} is out of range. Should "
-                         "have 0 ≤ initIdx ≤ {1}.".
-                         format(initIdx, len(expr.operands) - 1))
-    if finalIdx >= len(expr.operands):
-        raise IndexError("'finalIdx' = {0} is out of range. Should "
-                         "have 0 ≤ finalIdx ≤ {1}.".
-                         format(finalIdx, len(expr.operands) - 1))
+#     # check validity of supplied index values
+#     if initIdx >= len(expr.operands):
+#         raise IndexError("'initIdx' = {0} is out of range. Should "
+#                          "have 0 ≤ initIdx ≤ {1}.".
+#                          format(initIdx, len(expr.operands) - 1))
+#     if finalIdx >= len(expr.operands):
+#         raise IndexError("'finalIdx' = {0} is out of range. Should "
+#                          "have 0 ≤ finalIdx ≤ {1}.".
+#                          format(finalIdx, len(expr.operands) - 1))
 
-    # trivial permutation
-    if initIdx==finalIdx:
-        return SetEquiv(expr, expr).prove()
+#     # trivial permutation
+#     if initIdx==finalIdx:
+#         return SetEquiv(expr, expr).prove()
 
-    # Set or set-like object with cardinality = 2
-    if len(expr.operands)==2 and set([initIdx, finalIdx]) == {0, 1}:
-        A, B = binaryThm.allInstanceVars()
-        return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
-                                    assumptions=assumptions)
-    
-    # 
-    if initIdx < finalIdx:
-        thm = rightwardThm
-        print("rightwardThm = ".format(thm))
-        print("rightwardThm.allInstanceVars() = ".format(thm.allInstanceVars()))
-        # l, m, n, A, B, C, D = rightwardThm.allInstanceVars()
-        # Asub, Bsub, Csub, Dsub = expr.operands[:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:finalIdx+1], expr.operands[finalIdx+1:]
-        # lSub, mSub, nSub = num(len(Asub)), num(len(Csub)), num(len(Dsub))
-    
+#     # Set or set-like object with cardinality = 2
+#     if len(expr.operands)==2 and set([initIdx, finalIdx]) == {0, 1}:
+#         A, B = binaryThm.allInstanceVars()
+#         return binaryThm.specialize({A:expr.operands[0], B:expr.operands[1]},
+#                                     assumptions=assumptions)
 
-    return expr
+#     #
+#     if initIdx < finalIdx:
+#         thm = rightwardThm
+#         print("rightwardThm = ".format(thm))
+#         print("rightwardThm.allInstanceVars() = ".format(thm.allInstanceVars()))
+#         # l, m, n, A, B, C, D = rightwardThm.allInstanceVars()
+#         # Asub, Bsub, Csub, Dsub = expr.operands[:initIdx], expr.operands[initIdx], expr.operands[initIdx+1:finalIdx+1], expr.operands[finalIdx+1:]
+#         # lSub, mSub, nSub = num(len(Asub)), num(len(Csub)), num(len(Dsub))
+
+
+#     return expr
 
 def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
     '''
@@ -184,27 +187,31 @@ def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumpt
     '''
     from proveit import TransRelUpdater
 
-    if initIdx < 0: initIdx = len(expr.operands)+initIdx # use wrap-around indexing
-    if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx # use wrap-around indexing
+    # use the following to allow/acknowledge wrap-around indexing
+    if initIdx < 0: initIdx = len(expr.operands)+initIdx     # wrap
+    if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx  # wrap
     if length==1:
         return expr.commutation(initIdx, finalIdx, assumptions=assumptions)
 
-    eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
-    expr = eq.update(expr.association(initIdx, initIdx+length, assumptions=assumptions)) # modified 1/13/2020 by wdc
-    # expr = eq.update(expr.association(initIdx, length, assumptions=assumptions))
-    expr = eq.update(expr.commutation(initIdx, finalIdx, assumptions=assumptions))
+    # for convenience while updating our equation:
+    eq = TransRelUpdater(expr, assumptions)
+    expr = eq.update(expr.association(initIdx, length, assumptions=assumptions))
+    expr = eq.update(expr.commutation(initIdx, finalIdx,
+                                      assumptions=assumptions))
     if disassociate:
         expr = eq.update(expr.disassociation(finalIdx, assumptions=assumptions))
     return eq.relation
 
-def groupCommute(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
+def groupCommute(expr, initIdx, finalIdx, length, disassociate=True,
+                 assumptions=USE_DEFAULTS):
     '''
-    Derive a commuted form of the given expr expression on a group of multiple
-    operands by associating them together first.
+    Derive a commuted form of the given expr expression on a group of
+    multiple operands by associating them together first.
     If 'dissassociate' is true, the group will be disassociated at end.
     '''
-    if initIdx < 0: initIdx = len(expr.operands)+initIdx # use wrap-around indexing
-    if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx # use wrap-around indexing
+    # use the following to allow/acknowledge wrap-around indexing
+    if initIdx < 0: initIdx = len(expr.operands)+initIdx     # wrap
+    if finalIdx < 0: finalIdx = len(expr.operands)+finalIdx  # wrap
     if length==1:
         return expr.commute(initIdx, finalIdx, assumptions=assumptions)
 
@@ -223,10 +230,12 @@ def pairwiseEvaluation(expr, assumptions):
     # successively evaluate and replace the operation performed on
     # the first two operands
 
-    eq = TransRelUpdater(expr, assumptions) # for convenience while updating our equation
+    # for convenience while updating our equation:
+    eq = TransRelUpdater(expr, assumptions)
 
     if len(expr.operands)==2:
-        raise ValueError("pairwiseEvaluation may only be used when there are more than 2 operands")
+        raise ValueError("pairwiseEvaluation may only be used when there "
+                         "are more than 2 operands.")
     while len(expr.operands) > 2:
         expr = eq.update(expr.association(0, length=2, assumptions=assumptions))
         expr = eq.update(expr.innerExpr().operands[0].evaluation(assumptions))
@@ -237,10 +246,6 @@ def generic_permutation(expr, new_order=None, cycles=None,
                         assumptions=USE_DEFAULTS):
     '''
     '''
-    print("Entering generic_permutation")                                       # for testing; delete later
-    print("    expr = {}".format(expr))                                         # for testing; delete later
-    print("    assumptions = {}".format(assumptions))                           # for testing; delete later
-    print("    type(expr) = {}".format(type(expr)))                             # for testing; delete later
     # check validity of default param usage: should have new_order list
     # OR list of cycles, but not both
     if new_order is None and cycles is None:
@@ -251,7 +256,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
         raise ValueError("Need to specify EITHER new_order OR cycles, "
                          "but not both.")
 
-    # check validity of provided index values: 
+    # check validity of provided index values:
     # (1) each index i needs to be 0 ≤ i ≤ n-1;
     # (2) set of indices provided in new_order needs to be complete,
     #     i.e. consisting of ints 0, 1, 2, …, n-1 (but we allow cycle
@@ -315,7 +320,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
             tempCycleLength = len(cycle)
             for i in range(0, tempCycleLength):
                 new_order[cycle[i]] = cycle[(i + 1)%tempCycleLength]
-        # quick check for duplicates in new_order (can't check it 
+        # quick check for duplicates in new_order (can't check it
         # earlier because there might be legitimate duplicates during
         # the cycles-to-new_order construction process):
         if len(new_order) != len(set(new_order)):
@@ -336,9 +341,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
     # the eq.relation will hold this for us
 
     # for convenience while updating our equation
-    print("Just before defining eq, expr = {}".format(expr))                    # for testing; delete later
     eq = TransRelUpdater(expr, assumptions)
-    print("Initial eq.relation = {}".format(eq.relation))                       # for testing; delete later
 
     while current_order != desired_order:
 
@@ -351,15 +354,10 @@ def generic_permutation(expr, new_order=None, cycles=None,
         # extract the init and final indices for the permutation
         initIdx = current_order.index(temp_order_diff_info[2])
         finalIdx = temp_order_diff_info[0]
-        print("    initIdx = {}".format(initIdx))                               # for testing; delete later
-        print("    finalIdx = {}".format(finalIdx))                             # for testing; delete later
-        print("    expr = {}".format(expr))                                     # for testing; delete later
         expr = eq.update(expr.permutation_move(
                 initIdx, finalIdx, assumptions=assumptions))
-        print("    after eq.update, expr = {}".format(expr))                    # for testing; delete later
         # update current_order to reflect step-wise change
         current_order.remove(temp_order_diff_info[2])
         current_order.insert(finalIdx, temp_order_diff_info[2])
 
     return eq.relation
-

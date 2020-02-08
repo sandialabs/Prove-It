@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, ExprTuple, USE_DEFAULTS
-from proveit.abstract_algebra.generic_methods import apply_permutation_thm
+# from proveit.abstract_algebra.generic_methods import apply_permutation_thm
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, generic_permutation)
 
@@ -58,7 +58,7 @@ class Set(Operation):
         '''
         change to permutationMove (using move as the verb)
         and use a permutationSwap for the extra one (use swap for the verb)
-        Deduce that this Set expression is set-equivalent to a Set
+        Deduce that this Set expression is equal to a Set
         in which the element at index initIdx has been moved to
         finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
         initIdx = 1 (i.e. 'b') and finalIdx = -2. In traditional
@@ -84,8 +84,6 @@ class Set(Operation):
         {a, b, c, d}.permutationGeneral(cycles=[(1, 2, 3)]) would both
         return |- {a, b, c, d} = {a, c, d, b}.
         '''
-        print("Entering permutation:")                                          # for testing; delete later
-        print("    self = {}".format(self))                                     # for testing; delete later
         return generic_permutation(self, new_order, cycles, assumptions)
 
     def deduceEnumSubsetEqOld(self, subset_indices=None,
@@ -149,8 +147,9 @@ class Set(Operation):
         {a, b, c, d}.deduceEnumSubsetEq(subset_indices=[1, 3]) and
         {a, b, c, d}.deduceEnumSubsetEq(subset=Set(b, d))
         return |– {b, d} subsetEq {a, b, c, d}.
-        This approach interprets the subset input param as a possible
-        multiset and then treat it as such!
+        Currently this approach interprets the subset input param as a
+        possible multiset and then treats it as such! But that needs
+        to change!
         '''
 
         from ._theorems_ import subsetEqOfSuperset
@@ -295,6 +294,59 @@ class Set(Operation):
                 assumptions=assumptions)
 
         return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
+
+    def reduction_elem(self, elem=None, idx=None):
+        '''
+        Deduce that this enum Set expression is equal to a Set
+        in which the multiply-occurring element specified either by
+        elem or by the position idx has been removed from the set.
+        If elem specified, method attempts to delete the 2nd occurrence
+        of elem from the set. If neither elem nor idx specified,
+        method attempts to delete the first repeated element of the Set.
+        If both elem and idx are specified, the elem param is ignored.
+        Examples: Let S = Set(a, b, a, b, a, c). Then
+        S.reduction_elem() gives |-S = {a, b, b, a, c};
+        S.reduction_elem(elem=b) gives |- S = {a, b, a, a, c};
+        S.reduction_elem(idx=4) gives |- S = {a, b, a, b, c}.
+        Created 02/07/2020 by wdc.
+        Last modified 02/07/2020 by wdc:
+            creation; established input param checking
+        '''
+        n = len(self.operands)
+
+        # if user has specified position index idx, use that
+        if idx is not None and (idx < -n or idx >= n):
+            raise IndexError("Index specification idx is out of bounds: {0}. "
+                             "Need {1} ≤ idx ≤ {2}.".
+                             format(idx,-n, n-1))
+
+        if idx is not None:
+            # we already checked for valid idx, so
+            # transform any wrap-around indexing for simplicity
+            if idx < 0: idx = n+idx
+            # check if idx corresponds to an elem that repeats
+            elem = self.operands[idx]
+            if list(self.operands).count(elem) < 2:
+                raise ValueError("The element '{0}' specified at index "
+                                 "idx={1} occurs just once in the enum set "
+                                 "and thus cannot be eliminated.".
+                                 format(elem, idx))
+
+        if idx is None and elem is not None:
+            # find index of 2nd occurrence of elem, if it exists
+            # first gen enumerated list of those repeated elems
+            idx_list_of_elem = (
+                [i for i,j in enumerate(self.operands) if j == elem])
+            if len(idx_list_of_elem) < 2:
+                raise ValueError("Specified element '{0}' appears just {1} "
+                                 "time(s) in the set and thus cannot be "
+                                 "eliminated.".
+                                 format(elem, len(idx_list_of_elem)))
+            else:
+                idx = idx_list_of_elem[1]
+
+        return "The idx value is: " + str(idx)
+
 
     # ----------------- #
     # Utility Functions #
