@@ -8,7 +8,12 @@ class Set(Operation):
     Defines an enumerated set (i.e. a set with explicitly-listed
     elements). For example, one could use Set(one, two, three) to
     produce the enumerated set {1, 2, 3} or Set(a, b, a) to produce
-    the enumerated set {a, b, a}.
+    the enumerated set {a, b, a}. Although repeated elements can be
+    specified and will appear in output expressions, the Set is
+    interpreted as a Set and not a multiset --- thus, e.g., we have
+    {a, b, a} = {a, b} and the cardinality of an enumerated Set such
+    as {a, b, a} should be the cardinality of the underlying support
+    {a, b}.
     '''
     
     # operator of the Set operation
@@ -295,7 +300,70 @@ class Set(Operation):
 
         return supersetPermRelation.subLeftSideInto(subset_of_permuted_superset)
 
-    def reduction_elem(self, elem=None, idx=None):
+    def reduction(self, assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this enum Set expression is equal to the Set's
+        support -- i.e. equal to a Set with all multiplicities reduced
+        to 1. For example, the Set(a, a, b, b, c, d)={a, a, b, b, c, d}
+        is equal to its support {a, b, c, d}. The deduction is
+        achieved by successively applying the element-by-element
+        reduction_elem() method until no further reduction is possible.
+        Created 02/08/2020 by wdc.
+        Last modified 02/08/2020 by wdc:
+            Creation; established input param checking
+        '''
+        from proveit import TransRelUpdater
+        eq = TransRelUpdater(self, assumptions)
+        print("Initially, eq.relation = {}".format(eq.relation))                # for testing; delete later
+        current_operands = list(self.operands)
+        # the following does not preserve the order, but we really
+        # just want the size of the support set
+        desired_operands = set(self.operands)
+        desired_num_operands = len(set(self.operands))
+        print("current_operands = {}".format(current_operands))                 # for testing; delete later
+        print("desired_operands = {}".format(desired_operands))                 # for testing; delete later
+        print("desired_num_operands = {}".format(desired_num_operands))         # for testing; delete later
+        expr = self
+        while len(current_operands) > desired_num_operands:
+            print("ENTERING WHILE LOOP")
+            print("    before update, expr = {}".format(expr))                  # for testing; delete later
+            expr = eq.update(expr.reduction_elem(assumptions=assumptions))
+            print("    after update, expr = {}".format(expr))                   # for testing; delete later
+            current_operands = expr.operands
+            print("    after update, current_operands = {}\n".
+                  format(current_operands))                                     # for testing; delete later
+
+        # while len(current_operands) != len(desired_operands):
+        #     # determine the first repeated element and
+        #     # use reduction_elem to eliminate that element
+        #     expr = eq.update(self.reduction_elem(assumptions=assumptions)
+
+        return eq.relation
+
+
+
+    # while current_order != desired_order:
+
+    #     # Use set comprehension to find 1st index where the
+    #     # current_order and desired_order lists differ and determine
+    #     # the desired_order value at that location
+    #     temp_order_diff_info = next(
+    #             (idx, x, y) for idx, (x, y) in enumerate(
+    #             zip(current_order, desired_order)) if x != y)
+    #     # extract the init and final indices for the permutation
+    #     initIdx = current_order.index(temp_order_diff_info[2])
+    #     finalIdx = temp_order_diff_info[0]
+    #     expr = eq.update(expr.permutation_move(
+    #             initIdx, finalIdx, assumptions=assumptions))
+    #     # update current_order to reflect step-wise change
+    #     current_order.remove(temp_order_diff_info[2])
+    #     current_order.insert(finalIdx, temp_order_diff_info[2])
+
+    # return eq.relation
+
+
+
+    def reduction_elem(self, elem=None, idx=None, assumptions=USE_DEFAULTS):
         '''
         Deduce that this enum Set expression is equal to a Set
         in which the multiply-occurring element specified either by
@@ -310,16 +378,16 @@ class Set(Operation):
         S.reduction_elem(idx=4) gives |- S = {a, b, a, b, c}.
         Created 02/07/2020 by wdc.
         Last modified 02/07/2020 by wdc:
-            creation; established input param checking
+            Creation; established input param checking
         '''
         n = len(self.operands)
 
-        # if user has specified position index idx, use that
+        # if user has specified position index idx,
+        # check for validity and use  idx if possible
         if idx is not None and (idx < -n or idx >= n):
             raise IndexError("Index specification idx is out of bounds: {0}. "
                              "Need {1} ≤ idx ≤ {2}.".
                              format(idx,-n, n-1))
-
         if idx is not None:
             # we already checked for valid idx, so
             # transform any wrap-around indexing for simplicity
@@ -328,24 +396,96 @@ class Set(Operation):
             elem = self.operands[idx]
             if list(self.operands).count(elem) < 2:
                 raise ValueError("The element '{0}' specified at index "
-                                 "idx={1} occurs just once in the enum set "
+                                 "idx={1} occurs just once in the enum Set "
                                  "and thus cannot be eliminated.".
                                  format(elem, idx))
 
+        # if user has specified elem instead of position index
+        # check validity and use if possible by converting to
+        # a positional index value
         if idx is None and elem is not None:
             # find index of 2nd occurrence of elem, if it exists
             # first gen enumerated list of those repeated elems
             idx_list_of_elem = (
                 [i for i,j in enumerate(self.operands) if j == elem])
-            if len(idx_list_of_elem) < 2:
-                raise ValueError("Specified element '{0}' appears just {1} "
-                                 "time(s) in the set and thus cannot be "
+            temp_len = len(idx_list_of_elem)
+            if temp_len < 2:
+                if temp_len == 0:
+                    temp_err_string = 'zero times'
+                else:
+                    temp_err_string = 'just 1 time'
+                raise ValueError("Specified element '{0}' appears {1} "
+                                 "in the enum Set and thus cannot be "
                                  "eliminated.".
-                                 format(elem, len(idx_list_of_elem)))
+                                 format(elem, temp_err_string))
             else:
                 idx = idx_list_of_elem[1]
 
-        return "The idx value is: " + str(idx)
+        # if user has specified NEITHER elem NOR positional index idx
+        # find first repeated element (if it exists) and use
+        # its positional index for idx
+        if idx is None and elem is None:
+            # check if there are ANY repeating elements:
+            if len(self.operands) == len(set(self.operands)):
+                raise ValueError("{0} appears to already be in reduced form.".
+                                 format(self))
+            else: # find first repeated elem
+                already_seen = set()
+                for i, elem in enumerate(self.operands):
+                    if elem in already_seen:
+                        idx = i
+                        break
+                    already_seen.add(elem)
+
+        # now that idx is OK determine location of a matching elem
+        # that will remain (so we can apply one of our reduction thms)
+        idx_to_elim = idx  # index of elem to eliminate
+        idx_to_keep = -1   # index of matching elem to keep
+        elem_to_elim = self.operands[idx_to_elim]
+        idxs_of_elems = (
+            [i for i,j in enumerate(self.operands) if j == elem_to_elim])
+        if idx_to_elim != idxs_of_elems[0]:
+            # elem to keep is left of elem to eliminate
+            idx_to_keep = idxs_of_elems[0]
+        else:
+            # elem to keep is right of elem to eliminate
+            idx_to_keep = idxs_of_elems[1]
+        print("idx_to_keep = {}".format(idx_to_keep))                           # for testing; delete later
+        print("idx_to_elim = {}".format(idx_to_elim))                           # for testing; delete later
+
+
+        # Now ready to apply the single-elem reduction theorem
+        from ._theorems_ import reduction_right, reduction_left
+        from proveit._common_ import l, m, n, x, aa, bb, cc
+        from proveit.number import num
+        print("reduction_right.allInstanceVars() = {}".format(reduction_right.allInstanceVars()))     # for testing; delete later
+        l, m, n, aa, x, bb, cc = reduction_right.allInstanceVars()
+
+        # NOTICE most of this is the same whether we are eliminating an
+        # extra element to the right or to the left of an id'd element
+        idx_left = min(idx_to_keep, idx_to_elim)
+        idx_right = max(idx_to_keep, idx_to_elim)
+        # so we break the set in into [ ]+[idx_left]+[ ]+[idx_right]+[ ]
+        l_sub, m_sub, n_sub = (num(idx_left),
+                               num(idx_right - idx_left - 1),
+                               num(len(self.operands)-1-idx_right))
+        print("(l_sub, m_sub, n_sub) = ({0}, {1}, {2})".
+                  format(l_sub, m_sub, n_sub))                                  # for testing; delete later
+        aa_sub, x_sub, bb_sub, cc_sub = (
+                list(self.operands)[0:idx_left],
+                list(self.operands)[idx_left],
+                list(self.operands)[idx_left + 1: idx_right],
+                list(self.operands)[idx_right + 1:])
+        print("(aa_sub, x_sub, bb_sub, cc_sub) = ({0}, {1}, {2}, {3})".
+                  format(aa_sub, x_sub, bb_sub, cc_sub))                        # for testing; delete later
+        if idx_to_keep < idx_to_elim:
+            return reduction_right.specialize(
+                {l:l_sub, m:m_sub, n:n_sub, aa:aa_sub, x:x_sub,
+                 bb:bb_sub, cc:cc_sub}, assumptions=assumptions)
+        else:
+            return reduction_left.specialize(
+                {l:l_sub, m:m_sub, n:n_sub, aa:aa_sub, x:x_sub,
+                 bb:bb_sub, cc:cc_sub}, assumptions=assumptions)
 
 
     # ----------------- #
