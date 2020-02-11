@@ -10,7 +10,7 @@ class Set(Operation):
     produce the enumerated set {1, 2, 3} or Set(a, b, a) to produce
     the enumerated set {a, b, a}. Although repeated elements can be
     specified and will appear in output expressions, the Set is
-    interpreted as a Set and not a multiset --- thus, e.g., we have
+    interpreted as a set and not a multiset --- thus, e.g., we have
     {a, b, a} = {a, b} and the cardinality of an enumerated Set such
     as {a, b, a} should be the cardinality of the underlying support
     {a, b}.
@@ -314,53 +314,17 @@ class Set(Operation):
         '''
         from proveit import TransRelUpdater
         eq = TransRelUpdater(self, assumptions)
-        print("Initially, eq.relation = {}".format(eq.relation))                # for testing; delete later
         current_operands = list(self.operands)
         # the following does not preserve the order, but we really
         # just want the size of the support set
         desired_operands = set(self.operands)
         desired_num_operands = len(set(self.operands))
-        print("current_operands = {}".format(current_operands))                 # for testing; delete later
-        print("desired_operands = {}".format(desired_operands))                 # for testing; delete later
-        print("desired_num_operands = {}".format(desired_num_operands))         # for testing; delete later
         expr = self
         while len(current_operands) > desired_num_operands:
-            print("ENTERING WHILE LOOP")
-            print("    before update, expr = {}".format(expr))                  # for testing; delete later
             expr = eq.update(expr.reduction_elem(assumptions=assumptions))
-            print("    after update, expr = {}".format(expr))                   # for testing; delete later
             current_operands = expr.operands
-            print("    after update, current_operands = {}\n".
-                  format(current_operands))                                     # for testing; delete later
-
-        # while len(current_operands) != len(desired_operands):
-        #     # determine the first repeated element and
-        #     # use reduction_elem to eliminate that element
-        #     expr = eq.update(self.reduction_elem(assumptions=assumptions)
 
         return eq.relation
-
-
-
-    # while current_order != desired_order:
-
-    #     # Use set comprehension to find 1st index where the
-    #     # current_order and desired_order lists differ and determine
-    #     # the desired_order value at that location
-    #     temp_order_diff_info = next(
-    #             (idx, x, y) for idx, (x, y) in enumerate(
-    #             zip(current_order, desired_order)) if x != y)
-    #     # extract the init and final indices for the permutation
-    #     initIdx = current_order.index(temp_order_diff_info[2])
-    #     finalIdx = temp_order_diff_info[0]
-    #     expr = eq.update(expr.permutation_move(
-    #             initIdx, finalIdx, assumptions=assumptions))
-    #     # update current_order to reflect step-wise change
-    #     current_order.remove(temp_order_diff_info[2])
-    #     current_order.insert(finalIdx, temp_order_diff_info[2])
-
-    # return eq.relation
-
 
 
     def reduction_elem(self, elem=None, idx=None, assumptions=USE_DEFAULTS):
@@ -450,15 +414,12 @@ class Set(Operation):
         else:
             # elem to keep is right of elem to eliminate
             idx_to_keep = idxs_of_elems[1]
-        print("idx_to_keep = {}".format(idx_to_keep))                           # for testing; delete later
-        print("idx_to_elim = {}".format(idx_to_elim))                           # for testing; delete later
 
 
         # Now ready to apply the single-elem reduction theorem
         from ._theorems_ import reduction_right, reduction_left
         from proveit._common_ import l, m, n, x, aa, bb, cc
         from proveit.number import num
-        print("reduction_right.allInstanceVars() = {}".format(reduction_right.allInstanceVars()))     # for testing; delete later
         l, m, n, aa, x, bb, cc = reduction_right.allInstanceVars()
 
         # NOTICE most of this is the same whether we are eliminating an
@@ -469,15 +430,11 @@ class Set(Operation):
         l_sub, m_sub, n_sub = (num(idx_left),
                                num(idx_right - idx_left - 1),
                                num(len(self.operands)-1-idx_right))
-        print("(l_sub, m_sub, n_sub) = ({0}, {1}, {2})".
-                  format(l_sub, m_sub, n_sub))                                  # for testing; delete later
         aa_sub, x_sub, bb_sub, cc_sub = (
                 list(self.operands)[0:idx_left],
                 list(self.operands)[idx_left],
                 list(self.operands)[idx_left + 1: idx_right],
                 list(self.operands)[idx_right + 1:])
-        print("(aa_sub, x_sub, bb_sub, cc_sub) = ({0}, {1}, {2}, {3})".
-                  format(aa_sub, x_sub, bb_sub, cc_sub))                        # for testing; delete later
         if idx_to_keep < idx_to_elim:
             return reduction_right.specialize(
                 {l:l_sub, m:m_sub, n:n_sub, aa:aa_sub, x:x_sub,
