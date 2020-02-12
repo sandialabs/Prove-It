@@ -75,34 +75,31 @@ class Expression(metaclass=ExprType):
             for style in styles.values():
                if not {',', ':', ';'}.isdisjoint(style):
                    raise ValueError("Styles are not allowed to contain a ',', ':', or ';'.  Just use spaces.") 
-                
-        # The 'generic' version of this expression, in which deterministic 'dummy' variables
-        # are used as Lambda parameters, determines the 'meaning' of the expression.
-        generic_sub_expressions = tuple(sub_expr._genericExpr for sub_expr in subExpressions)
-        generic_sub_expression_styles = tuple(generic_sub_expr._styleData for generic_sub_expr in generic_sub_expressions)
-        sub_expression_styles = tuple(sub_expr._styleData for sub_expr in subExpressions)
-        if hasattr(self, '_genericExpr'):
-            # The _genericExpr attribute was already set -- must be a Lambda Expression.
-            self._meaningData = self._genericExpr._meaningData            
-        elif sub_expression_styles != generic_sub_expression_styles:
-            # The 'generic' sub-expressions are different than the sub-expressions,
-            # so that propagates to this Expression's generic version.
-            self._genericExpr = self.__class__._make(coreInfo, dict(styles), generic_sub_expressions)
+        
+        # Set and initialize the "meaning data".
+        # The meaning data is shared among Expressions with the same 
+        # structure disregarding style or chosen lambda paramterization.
+        if hasattr(self, '_genericExpr') and self._genericExpr is not self:
+            # The _genericExpr attribute was already set
+            # -- must be a Lambda Expression.
             self._meaningData = self._genericExpr._meaningData
         else:
-            # This is this 'generic' version:
-            self._genericExpr = self
-            # The meaning data is shared among Expressions with the same structure disregarding style
-            self._meaningData = meaningData(self._generate_unique_rep(lambda expr : hex(expr._meaning_id), coreInfo))
+            object_rep_fn = lambda expr : hex(expr._meaning_id)
+            self._meaningData = meaningData(self._generate_unique_rep(object_rep_fn, 
+                                                                      coreInfo))
             if not hasattr(self._meaningData, '_coreInfo'):
                 # initialize the data of self._meaningData
                 self._meaningData._coreInfo = tuple(coreInfo)
                 # combine requirements from all sub-expressions
-                requirements = sum([subExpression.getRequirements() for subExpression in subExpressions], tuple()) + requirements
-                # Expression requirements are essentially assumptions that need to be proven for the expression to
-                # be valid.  Calling "checkAssumptions" will remove repeats and generate proof by assumption for each
-                # (which may not be necessary, but does not hurt).   
-                self._meaningData._requirements = defaults.checkedAssumptions(requirements)
+                requirements = sum([subExpression.getRequirements() for subExpression 
+                                    in subExpressions], tuple()) + requirements
+                # Expression requirements are essentially assumptions that need
+                # to be proven for the expression to be valid.  Calling 
+                # "checkAssumptions" will remove repeats and generate proof by 
+                # assumption for each (which may not be necessary, but does not
+                # hurt).   
+                self._meaningData._requirements = \
+                    defaults.checkedAssumptions(requirements)
         
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
@@ -128,6 +125,38 @@ class Expression(metaclass=ExprType):
         for subExpression in subExpressions: # update Expression.parent_expr_map
             self._styleData.addChild(self, subExpression)
     
+    def _generic_version(self):
+        '''
+        Retrieve (and create if necessary) the generic version of this 
+        expression in which deterministic 'dummy' variables are used as Lambda
+        parameters, determines the 'meaning' of the expression.
+        '''
+        if hasattr(self, '_genericExpr'):
+            return self._genericExpr
+        # Get the generic versions of the sub-expressions.
+        generic_sub_expressions = tuple(sub_expr._generic_version() 
+                                        for sub_expr in self._subExpressions)
+        # Get the styles of the sub expressions.
+        sub_expression_styles = tuple(sub_expr._styleData 
+                                      for sub_expr in self._subExpressions)
+        # Get the styles of the generic versions of the sub-expressions.
+        generic_sub_expression_styles = \
+            tuple(generic_sub_expr._styleData 
+                  for generic_sub_expr in generic_sub_expressions)
+        
+        if sub_expression_styles == generic_sub_expression_styles:
+            # This is the generic version.
+            self._genericExpr = self
+            return self
+        
+        # The 'generic' sub-expressions are different than the sub-expressions,
+        # so that propagates to this Expression's generic version.
+        self._genericExpr = self.__class__._make(self._meaningData._coreInfo, 
+                                                 dict(self._styleData.styles), 
+                                                 generic_sub_expressions)
+        return self._genericExpr
+        
+    
     def _setContext(self, context):
         '''
         Assign a Context to this expression.
@@ -147,13 +176,35 @@ class Expression(metaclass=ExprType):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
+        from proveit._core_.expression.lambda_expr import Lambda
         if coreInfo is None: coreInfo = self._coreInfo
         if styles is None and hasattr(self, '_styleData'):
             styles = self._styleData.styles
-        style_str = ''
         if styles is not None:
-            style_str = ';[' + ','.join(style_name + ':' + styles[style_name] for style_name in sorted(styles.keys())) + ']'
-        return self._class_path() + '[' + ','.join(coreInfo) + ']' + style_str + ';[' + ','.join(objectRepFn(expr) for expr in self._subExpressions) + ']'
+            style_str = ','.join(style_name + ':' + styles[style_name]
+                                 for style_name in sorted(styles.keys()))
+        else: style_str = ''
+        sub_expr_info = ','.join(objectRepFn(expr) for expr in self._subExpressions)
+        # All Lambda expressions are embued with a "generic version" (which may
+        # be itself) which we will store with the unique representation info.
+        if isinstance(self, Lambda):
+            if self._genericExpr is self:
+                generic_ref = '.' # Denote that it is "generic" itself.
+            else:
+                generic_ref = objectRepFn(self._genericExpr)
+        else:
+            # Only retain the reference to the generic version for Lambda
+            # expressions.  Other expressions may set a _genericExpr for
+            # convenience during runtime, but since these are generated on an
+            # as-needed basis, it shouldn't be included as part of the
+            # unique representation and there is no good reason to store it.
+            generic_ref = ''
+        # Note: putting the sub-expressions at the front makes it convenient
+        # to just grab that piece which is used when adding or removing
+        # references to stored information.
+        return '%s;%s;%s;%s;%s'%(generic_ref, sub_expr_info, self._class_path(), 
+                                 ','.join(coreInfo), style_str)
+    #self._class_path() + '[' + ','.join(coreInfo) + ']' + style_str + ';[' +  + ']'
     
     def _class_path(self):
         ExprClass = self.__class__
@@ -167,27 +218,14 @@ class Expression(metaclass=ExprType):
         return class_path
 
     @staticmethod
-    def _extractExprClass(unique_rep):
-        '''
-        Return the class of the Expression with the given unique representation.
-        '''
-        return unique_rep[:unique_rep.find('[')]
-
-    @staticmethod
-    def _extractCoreInfo(unique_rep):
-        '''
-        Return the core information of the given unique representation.
-        '''
-        return re.split(',', unique_rep[unique_rep.find('[')+1:unique_rep.find(']')])
-    
-    @staticmethod
-    def _extractStyle(unique_rep):
-        '''
-        Return the style information of the given unique representation assuming the style was included.
-        '''
-        style_str = unique_rep.split(';')[1]
-        style_pairs = re.split("\[|,|\]",style_str) 
-        return dict(style_pair.split(':') for style_pair in style_pairs if len(style_pair)>0)
+    def _parse_unique_rep(unique_rep):
+        generic_ref, sub_expr_info, expr_class_str, core_info_str, style_str = \
+            unique_rep.split(';')
+        core_info = [_ for _ in core_info_str.split(',') if _ != '']
+        style_pairs = [_ for _ in style_str.split(',') if _ != '']
+        style_dict = dict(style_pair.split(':') for style_pair in style_pairs)
+        sub_expr_refs = [_ for _ in sub_expr_info.split(',') if _ != '']
+        return expr_class_str, core_info, style_dict, sub_expr_refs, generic_ref
         
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
@@ -195,10 +233,13 @@ class Expression(metaclass=ExprType):
         Given a unique representation string, returns the list of representations
         of Prove-It objects that are referenced.
         '''
-        # After the ';' comes the list of sub-Expressions.
-        subExprs = unique_rep.split(';')[-1]
-        objIds = re.split("\[|,|\]",subExprs) 
-        return [objId for objId in objIds if len(objId) > 0]  
+        # The generic reference and sub expressions come respectfully at the 
+        # beginning of unique_rep.
+        generic_ref_end = unique_rep.find(';')
+        sub_expr_end = unique_rep.find(';', generic_ref_end+1)
+        ref_info = unique_rep[:sub_expr_end]
+        # Split by ',' or ';' to get the individual reference ids.
+        return [_ for _ in re.split(',|;', ref_info) if _ not in ('', '.')]
     
     def __setattr__(self, attr, value):
         '''
@@ -342,11 +383,11 @@ class Expression(metaclass=ExprType):
         '''
         return list(self._styleData.styles.keys())
     
-    def getStyle(self, styleName):
+    def getStyle(self, styleName, default=None):
         '''
         Return the current style setting for the given style name.
         '''
-        return self._styleData.styles[styleName]
+        return self._styleData.styles.get(styleName, default)
     
     def getStyles(self):
         '''
