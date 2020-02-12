@@ -43,6 +43,7 @@ def reset():
     Proof._clear_()
     Context._clear_()
     defaults.reset()
-    magics.proveItMagic.reset()
+    if hasattr(magics, 'proveItMagic'):
+        magics.proveItMagic.reset()
     from proveit._core_._unique_data import clear_unique_data
     clear_unique_data()
