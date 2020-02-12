@@ -24,7 +24,7 @@ class MatrixProd(Operation):
         '''
         print("MatrixProd, operands = {}".format(operands))                     # for testing; delete later
         print("MatrixProd, *operands = {}".format(*operands))                   # for testing; delete later
-        Operation.__init__(self, MatrixProd._operator_, *operands)
+        Operation.__init__(self, MatrixProd._operator_, operands)
         print("MatrixProd, operands = {}".format(operands))                     # for testing; delete later
     
     def formatted(self, formatType, fence=False, subFence=True):
@@ -56,10 +56,10 @@ class ScalarProd(Operation):
         Product between a scalar and a matrix.
         '''
         print("ScalarProd, operands = {}".format(operands))                     # for testing; delete later
-        Operation.__init__(self, ScalarProd._operator_, *operands)
+        Operation.__init__(self, ScalarProd._operator_, operands)
         print("ScalarProd, operands = {}".format(operands))                     # for testing; delete later
-        self.scalar = operands[0][0]
-        self.scaled = operands[0][1]
+        self.scalar = operands[0]
+        self.scaled = operands[1]
 
     # def doReducedSimplification(self):
     #     '''

@@ -121,3 +121,8 @@ class Meas(Operation):
     def __init__(self, ket):
         Operation.__init__(self, Meas._operator_, ket)
         self.ket = ket
+
+
+# to define later:
+# QubitRegisterSpace = lambda n : TensorExp(Exp(Complexes, two), n)
+# RegisterSU = lambda n : SU(Exp(two, n))
