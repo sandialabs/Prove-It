@@ -14,6 +14,7 @@ import lxml#Comment in for Python 3
 from lxml import etree#Comment in for Python 3
 import shutil
 import argparse
+import importlib
 import nbformat
 from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
 from nbconvert.preprocessors.execute import executenb
@@ -588,7 +589,7 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
         theorem_proof_notebooks = []
         # Turn off automation while loading theorems simply for recording
         # dependencies:
-        proveit.defaults.automation = False
+        #proveit.defaults.automation = False
         print("Finding theorem proof notebooks.")
         for context_path in context_paths:
             context = Context(context_path)
@@ -599,7 +600,20 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                 proof_notebook_theorems[proof_notebook_name] = theorem
                 theorem_proof_notebooks.append(proof_notebook_name)
         # Turn automation back on:
-        proveit.defaults.automation = True
+        #proveit.defaults.automation = True
+        
+        '''
+        # Some proveit modules may not have loaded properly while
+        # automation was off, so we need to reset and reload it. 
+        proveit.reset()
+        for k,v in list(sys.modules.items()):
+            if k.startswith('proveit'):
+                if k=='proveit' or k.startswith('proveit._core_'):
+                    # Don't reload proveit or proveit._core_.
+                    continue
+                print('reload', v)
+                importlib.reload(v)
+        '''
         
         if no_execute:
             if not just_execute_essentials:
