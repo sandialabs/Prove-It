@@ -6,15 +6,21 @@ class SetOfAll(OperationOverInstances):
     _operator_ = Literal(stringFormat='Set', context=__file__)    
     _init_argname_mapping_ = {'instanceElement':'instanceExpr'}
     
-    def __init__(self, instanceVarOrVars, instanceElement, domain=None, domains=None, conditions=tuple()):
+    def __init__(self, instanceVarOrVars, instanceElement, domain=None, domains=None, 
+                 conditions=tuple(), _lambda_map=None):
         '''
-        Create an expression representing the set of all instanceElement for instanceVar(s) such that the conditions are satisfied:
+        Create an expression representing the set of all instanceElement for 
+        instanceVar(s) such that the conditions are satisfied:
         {instanceElement | conditions}_{instanceVar(s) \in S}
         '''
-        # nestMultiIvars=False will ensure it does NOT treat multiple instance variables as 
-        # nested SetOfAll operations -- that would not make sense.
-        # (unlike forall, exists, summation, and product where it does make sense).
-        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVarOrVars, instanceElement, domain=domain, conditions=conditions, nestMultiIvars=False)
+        # nestMultiIvars=False will ensure it does NOT treat multiple instance
+        # variables as nested SetOfAll operations -- that would not make sense.
+        # (unlike forall, exists, summation, and product where it does make 
+        # sense).
+        OperationOverInstances.__init__(self, SetOfAll._operator_, instanceVarOrVars, 
+                                        instanceElement, domain=domain, 
+                                        conditions=conditions, nestMultiIvars=False,
+                                        _lambda_map=_lambda_map)
         self.instanceElement = self.instanceExpr
         if hasattr(self, 'instanceVar'):
             if not hasattr(self, 'domain'):
