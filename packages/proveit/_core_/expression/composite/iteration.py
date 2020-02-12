@@ -26,37 +26,90 @@ class Iter(Expression):
     y_{k-j+1}*x_1 + ... + y_{k-j+j}*x_j
     '''
 
-    def __init__(self, parameter_or_parameters, body, start_index_or_indices, end_index_or_indices, styles=None, requirements=tuple()):
+    def __init__(self, parameter_or_parameters, body, start_index_or_indices, end_index_or_indices, styles=None, requirements=tuple(), _lambda_map=None):
+        '''
+        Create an Iter that represents an iteration of the body for the
+        parameter(s) ranging from the start index/indices to the end 
+        index/indices.  A Lambda expression will be created as its 
+        sub-expression that maps the parameter(s) to the body with
+        conditions that restrict the parameter(s) to the appropriate interval.
+        
+        _lambda_map is used internally for efficiently rebuilding an Iter.
+        '''
         from proveit.logic import InSet
         from proveit.number import Interval
         
-        parameters = compositeExpression(parameter_or_parameters)
-
-        start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
-        if isinstance(start_index_or_indices, ExprTuple) and len(start_index_or_indices)==1:
-            start_index_or_indices = start_index_or_indices[0]
-        self.start_index_or_indices = start_index_or_indices
-        if isinstance(start_index_or_indices, Composite):
-            # a composite of multiple indices
-            self.start_indices = self.start_index_or_indices 
+        if _lambda_map is not None:
+            # Use the provided 'lambda_map' instead of creating one.
+            lambda_map = _lambda_map
+            pos_args = (parameter_or_parameters, body, start_index_or_indices, 
+                        end_index_or_indices)
+            if pos_args != (None, None, None, None):
+                raise ValueError("Positional arguments of the Init constructor "
+                                 "should be None if lambda_map is provided.")
+            parameters = lambda_map.parameters
+            body = lambda_map.body
+            conditions = lambda_map.conditions
+            if len(conditions) != len(parameters):
+                raise ValueError("Inconsistent number of conditions and lambda "
+                                 "map parameters")
+            start_indices, end_indices = [], []
+            for param, condition in zip(parameters, conditions):
+                invalid_condition_msg = ("Not the right kind of lambda_map condition "
+                                         "for an iteration")
+                if not isinstance(condition, InSet) or condition.element != param:
+                    raise ValueError(invalid_condition_msg)
+                domain = condition.domain
+                if not isinstance(domain, Interval):
+                    raise ValueError(invalid_condition_msg)
+                start_index, end_index = domain.lowerBound, domain.upperBound
+                start_indices.append(start_index)
+                end_indices.append(end_index)
+            self.start_indices = ExprTuple(*start_indices)
+            self.end_indices = ExprTuple(*end_indices)
+            if len(parameters) == 1:
+                self.start_index = self.start_indices[0]
+                self.end_index = self.end_indices[0]
+                self.start_index_or_indices = self.start_index
+                self.end_index_or_indices = self.end_index
+            else:
+                self.start_index_or_indices = self.start_indices
+                self.end_index_or_indices = self.end_indices                
         else:
-            # a single index
-            self.start_index = self.start_index_or_indices
-            # wrap a single index in a composite for convenience
-            self.start_indices = compositeExpression(self.start_index_or_indices)
+            parameters = compositeExpression(parameter_or_parameters)
 
-        end_index_or_indices = singleOrCompositeExpression(end_index_or_indices)
-        if isinstance(end_index_or_indices, ExprTuple) and len(end_index_or_indices)==1:
-            end_index_or_indices = end_index_or_indices[0]
-        self.end_index_or_indices = end_index_or_indices
-        if isinstance(self.end_index_or_indices, Composite):
-            # a composite of multiple indices
-            self.end_indices = self.end_index_or_indices 
-        else:
-            # a single index
-            self.end_index = self.end_index_or_indices
-            # wrap a single index in a composite for convenience
-            self.end_indices = compositeExpression(self.end_index_or_indices)                        
+            start_index_or_indices = singleOrCompositeExpression(start_index_or_indices)
+            if isinstance(start_index_or_indices, ExprTuple) and len(start_index_or_indices)==1:
+                start_index_or_indices = start_index_or_indices[0]
+            self.start_index_or_indices = start_index_or_indices
+            if isinstance(start_index_or_indices, Composite):
+                # a composite of multiple indices
+                self.start_indices = self.start_index_or_indices 
+            else:
+                # a single index
+                self.start_index = self.start_index_or_indices
+                # wrap a single index in a composite for convenience
+                self.start_indices = compositeExpression(self.start_index_or_indices)
+    
+            end_index_or_indices = singleOrCompositeExpression(end_index_or_indices)
+            if isinstance(end_index_or_indices, ExprTuple) and len(end_index_or_indices)==1:
+                end_index_or_indices = end_index_or_indices[0]
+            self.end_index_or_indices = end_index_or_indices
+            if isinstance(self.end_index_or_indices, Composite):
+                # a composite of multiple indices
+                self.end_indices = self.end_index_or_indices 
+            else:
+                # a single index
+                self.end_index = self.end_index_or_indices
+                # wrap a single index in a composite for convenience
+                self.end_indices = compositeExpression(self.end_index_or_indices)                        
+
+            conditions = []
+            for param, start_index, end_index in zip(parameters, self.start_indices, 
+                                                     self.end_indices):
+                conditions.append(InSet(param, Interval(start_index, end_index)))
+            
+            lambda_map = Lambda(parameters, body, conditions=conditions)
         
         self.ndims = len(self.start_indices)
         if self.ndims != len(self.end_indices):
@@ -65,11 +118,6 @@ class Iter(Expression):
         if len(parameters) != len(self.start_indices):
             raise ValueError("Inconsistent number of indices and lambda map parameters")
         
-        conditions = []
-        for param, start_index, end_index in zip(parameters, self.start_indices, self.end_indices):
-            conditions.append(InSet(param, Interval(start_index, end_index)))
-        
-        lambda_map = Lambda(parameters, body, conditions=conditions)
         Expression.__init__(self, ['Iter'], [lambda_map], styles=styles, requirements=requirements)
         self.lambda_map = lambda_map
         self._checkIndexedRestriction(body)
@@ -141,23 +189,12 @@ class Iter(Expression):
     
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
-        from proveit.logic import InSet
-        from proveit.number import Interval
         if subClass != Iter: 
             MakeNotImplemented(subClass)
         if len(coreInfo) != 1 or coreInfo[0] != 'Iter':
             raise ValueError("Expecting Iter coreInfo to contain exactly one item: 'Iter'")
         lambda_map = subExpressions[0]
-        if len(lambda_map.parameters) != len(lambda_map.conditions):
-            raise ValueError("Expecting the same number of parameters and conditions")
-        start_indices = []
-        end_indices = []
-        for param, condition in zip(lambda_map.parameters, lambda_map.conditions):
-            if not isinstance(condition, InSet) or condition.element != param or not isinstance(condition.domain, Interval):
-                raise ValueError("Expecting each 'Iter' condition to define an 'Interval' domain for the corresponding parameter")
-            start_indices.append(condition.domain.lowerBound)
-            end_indices.append(condition.domain.upperBound)
-        return Iter(lambda_map.parameters, lambda_map.body, start_indices, end_indices).withStyles(**styles)
+        return Iter(None, None, None, None, _lambda_map=lambda_map).withStyles(**styles)
             
     def remakeArguments(self):
         '''
@@ -171,15 +208,24 @@ class Iter(Expression):
         
     def first(self):
         '''
-        Return the first instance of the iteration.
+        Return the first instance of the iteration (and store for future use).
         '''
-        return self.lambda_map.body.substituted({parameter:index for parameter, index in zip(self.lambda_map.parameters, self.start_indices)})
+        if not hasattr(self, '_first'):
+            expr_map = {parameter:index for parameter, index 
+                        in zip(self.lambda_map.parameters, self.start_indices)}
+            self._first =  self.lambda_map.body.substituted(expr_map)
+        return self._first
 
     def last(self):
         '''
-        Return the last instance of the iteration.
+        Return the last instance of the iteration (and store for futurle use).
         '''
-        return self.lambda_map.body.substituted({parameter:index for parameter, index in zip(self.lambda_map.parameters, self.end_indices)})
+        if not hasattr(self, '_last'):
+            expr_map = {parameter:index for parameter, index 
+                        in zip(self.lambda_map.parameters, self.end_indices)}
+            self._last = self.lambda_map.body.substituted(expr_map)
+        return self._last
+    
         
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
