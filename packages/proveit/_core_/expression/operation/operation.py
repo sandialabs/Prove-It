@@ -364,7 +364,7 @@ class Operation(Expression):
         from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
         self._checkRelabelMap(relabelMap)
         if len(exprMap)>0 and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)        
+            return exprMap[self]._restrictionChecked(reservedVars)
         subbed_operand_or_operands = self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
         subbed_operands = compositeExpression(subbed_operand_or_operands)
         subbed_operator_or_operators = self.operator_or_operators.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)

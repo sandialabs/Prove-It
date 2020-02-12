@@ -669,7 +669,12 @@ class Assignments:
                     pass
             if proveItMagic.kind in ('axioms', 'theorems', 'common'):
                 if not isinstance(rightSide, Expression) and (rightSide is not None):
-                    raise ValueError("Right hand side of end-of-cell assignment(s) is expected to be Expression(s)")
+                    # raise ValueError("Right hand side of end-of-cell "
+                    #                  "assignment(s) is expected to be "
+                    #                  "Expression(s).")
+                    raise ValueError("Right hand side of end-of-cell "
+                                     "assignment(s) is {}, but is expected to "
+                                     "be Expression(s).".format(rightSide))
             processedRightSides.append(rightSide)
         self.names = list(names)
         self.rightSides = processedRightSides
