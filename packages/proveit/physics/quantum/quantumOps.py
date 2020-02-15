@@ -1,4 +1,6 @@
 from proveit import Operation, Literal
+from proveit.linalg import SU, TensorExp
+from proveit.number import  num, Complexes, Exp
 
 pkg = __package__ # delete this later; will no longer be needed
 
@@ -126,3 +128,20 @@ class Meas(Operation):
 # to define later:
 # QubitRegisterSpace = lambda n : TensorExp(Exp(Complexes, two), n)
 # RegisterSU = lambda n : SU(Exp(two, n))
+
+def QubitRegisterSpace(num_Qbits):
+    '''
+    Transplanted here beginning 2/13/2020 by wdc, from the old
+    physics/quantum/common.py
+    '''
+    # need some extra curly brackets around the Exp() expression
+    # to allow the latex superscript to work on something
+    # already superscripted
+    return TensorExp({Exp(Complexes, num(2))}, num_Qbits)
+
+def RegisterSU(n):
+    '''
+    Transplanted here beginning 2/13/2020 by wdc, from the old
+    physics/quantum/common.py
+    '''
+    return SU(Exp(num(2), n))

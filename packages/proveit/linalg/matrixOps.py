@@ -22,10 +22,7 @@ class MatrixProd(Operation):
         r'''
         Matrix dot product of any number of operands.
         '''
-        print("MatrixProd, operands = {}".format(operands))                     # for testing; delete later
-        print("MatrixProd, *operands = {}".format(*operands))                   # for testing; delete later
         Operation.__init__(self, MatrixProd._operator_, operands)
-        print("MatrixProd, operands = {}".format(operands))                     # for testing; delete later
     
     def formatted(self, formatType, fence=False, subFence=True):
         # Temporary hack to get quantum bra and ket products to display properly.
@@ -43,7 +40,8 @@ class ScalarProd(Operation):
     '''
     Product between a scalar and a matrix.
     Modified 02/11/2020 by wdc: making the class extend Operation
-    instead of BinaryOperation
+    instead of BinaryOperation. STILL NEED TO MAKE THIS A BINARY OP
+    by using two inputs instead of a *args argument
     '''
     # the literal operator of the MatrixProd operation
     # perhaps use SCALAR_PROD for string?
@@ -55,9 +53,7 @@ class ScalarProd(Operation):
         r'''
         Product between a scalar and a matrix.
         '''
-        print("ScalarProd, operands = {}".format(operands))                     # for testing; delete later
         Operation.__init__(self, ScalarProd._operator_, operands)
-        print("ScalarProd, operands = {}".format(operands))                     # for testing; delete later
         self.scalar = operands[0]
         self.scaled = operands[1]
 

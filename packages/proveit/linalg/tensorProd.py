@@ -17,8 +17,10 @@ class TensorProd(Operation):
                          context=__file__)
 
     def __init__(self, *operands):
-        Operation.__init__(self, TensorProd._operator_, *operands)
+        Operation.__init__(self, TensorProd._operator_, operands)
+        print("TensorProd self.operands = {}".format(self.operands))            # for testing; delete later
         self.factors = self.operands
+        print("TensorProd self.factors = {}".format(self.factors))              # for testing; delete later
 
     def factor(self, scalar):
         '''
@@ -86,7 +88,8 @@ class TensorExp(Operation):
         self.base = self.operands[0]
         self.exponent = self.operands[1]
     
-    def formatted(self, formatType, fence=True):
+    def _formatted(self, formatType, fence=True):
+        # changed from formatted to _formatted 2/14/2020 (wdc)
         formattedBase = self.base.formatted(formatType, fence=True)
         formattedExp = self.exponent.formatted(formatType, fence=True)
         if formatType == 'latex':
