@@ -17,7 +17,10 @@ class InSet(Operation):
         if hasattr(self.domain, 'membershipObject'):
             self.membershipObject = self.domain.membershipObject(element)
             if not isinstance(self.membershipObject, Membership):
-                raise TypeError("The 'membershipObject' of %s should be from a class derived from 'Membership'"%str(self.domain))
+                raise TypeError("The 'membershipObject' of %s is a %s which "
+                                "is not derived from %s as it should be."
+                                %(self.domain, self.membershipObject.__class__, 
+                                  Membership))
     
     def __dir__(self):
         '''
