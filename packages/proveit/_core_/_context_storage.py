@@ -1206,11 +1206,11 @@ class ContextStorage:
         (context, hash_directory) = self._retrieve(proof)
         pv_it_dir = context._storage.pv_it_dir
         filename = os.path.join(pv_it_dir, hash_directory, 'proof.ipynb')
-        proveit_path = os.path.split(proveit.__file__)[0]
-        template_filename = os.path.join(proveit_path, '..', 
-                                         '_proof_template_.ipynb')
         if not os.path.isfile(filename):
             # Copy the template.  Nothing needs to be edited for these.
+            proveit_path = os.path.split(proveit.__file__)[0]
+            template_filename = os.path.join(proveit_path, '..', 
+                                             '_proof_template_.ipynb')
             shutil.copyfile(template_filename, filename)
         return relurl(filename)
     
