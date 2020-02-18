@@ -213,6 +213,8 @@ class Proof:
         for group_str in group_strs:
             objIds = re.split(",|:|;",group_str) 
             groups.append([objId for objId in objIds if len(objId) > 0])
+        if proof_id in _ShowProof.show_proof_by_id:
+            return _ShowProof.show_proof_by_id[proof_id]
         return _ShowProof(context, proof_id, step_info, groups)
                                                     
     def isUsable(self):
@@ -328,11 +330,44 @@ class Proof:
 
     def _repr_html_(self):
         proofSteps = self.enumeratedProofSteps()
-        proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
         html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
+        first_requirements = None
+        # If this is a _ShowProof object, _style_id will be a str.
+        proof_id = self._style_id if isinstance(self._style_id, str) \
+                    else hex(self._style_id)
+                    
+        # For convenience, we will reference all of the first (top-level)
+        # requirements at the top even if it is a simple reference.
+        amendedProofSteps = []
         for k, proof in enumerate(proofSteps):
-            html += '<tr><td>%d</td>'%k
-            requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
+            if k == 0:
+                first_requirements = iter(proof.requiredProofs)
+            else:
+                while first_requirements is not None:
+                    try:
+                        req = next(first_requirements)
+                        if req == proof:
+                            break
+                        # Just reference a later step.
+                        amendedProofSteps.append(_ProofReference(req))
+                    except StopIteration:
+                        # Done with the first requirements:
+                        first_requirements = None 
+            amendedProofSteps.append(proof)
+        proofSteps = amendedProofSteps
+        
+        proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
+        for k, proof in enumerate(proofSteps):
+            html += '<tr><td><a name="%s_step%d">%d</a></td>'%(proof_id,k,k)
+            def reqLink(n):
+                return '<a href="#%s_step%d">%d</a>'%(proof_id, n, n)
+            if k==0:
+                # The first (top-level) proof has requirements at the
+                # top by design (though some of these may be references to
+                # later steps).
+                requiredProofNums = ', '.join(reqLink(k+1) for k, _ in enumerate(proof.requiredProofs))
+            else:
+                requiredProofNums = ', '.join(reqLink(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
             html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
             html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
@@ -360,6 +395,21 @@ class Proof:
             if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
         return out_str
+
+class _ProofReference:
+    '''
+    May be used as a dummy Proof in Proof._repr_html_ in order to refer
+    to a later proof step while keeping the "first" (top-level)
+    requirements at the top.
+    '''
+    
+    def __init__(self, ref):
+        self.requiredProofs = [ref]
+        self.provenTruth = ref.provenTruth
+    
+    def stepType(self):
+        # only used in the HTML version
+        return '<i>reference</i>'
 
 class Assumption(Proof):
     allAssumptions = dict() # map expression and to the assumption object
@@ -1011,6 +1061,10 @@ class _ShowProof:
     A mocked-up quasi-Proof object just for the purposes of showing a
     stored proof.
     '''
+    
+    # Map proof_id's to _ShowProof objects that have been created.
+    show_proof_by_id = dict()
+    
     def __init__(self, context, proof_id, stepInfo, refObjIdGroups):
         self._style_id = proof_id
         if '_' in stepInfo:
@@ -1042,6 +1096,7 @@ class _ShowProof:
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
             [context.getShowProof(obj_id) for obj_id in refObjIdGroups[-1]]
+        _ShowProof.show_proof_by_id[proof_id] = self
     
     def _repr_html_(self):
         return Proof._repr_html_(self)
