@@ -31,7 +31,7 @@ class Lambda(Expression):
     defines the mapping (x, y) -> x / y as long as x and y are Reals
     and y is not zero.
     '''
-    def __init__(self, parameter_or_parameters, body, conditions=tuple(), styles=None, requirements=tuple()):
+    def __init__(self, parameter_or_parameters, body, conditions=tuple(), styles=None, requirements=tuple(), _generic_expr=None):
         '''
         Initialize a Lambda function expression given parameter(s) and a body.
         Each parameter must be a Variable.
@@ -41,6 +41,8 @@ class Lambda(Expression):
         The 'body' attribute will be the lambda function body
         Expression (that may or may not be a Composite).  Zero or
         more expressions may be provided.
+        
+        _generic_expr is used internally for efficiently rebuilding a Lambda.
         '''
         from proveit._core_.expression.composite import compositeExpression, singleOrCompositeExpression, Iter
         if styles is None: styles = dict()
@@ -69,27 +71,36 @@ class Lambda(Expression):
         sub_exprs = [self.parameter_or_parameters, self.body]
         if len(self.conditions)>0: sub_exprs.append(self.conditions)
         
-        # Create a "generic" version (if not already) of the Lambda expression since the 
-        # choice of parameter labeling is irrelevant.
-        generic_body_vars = self.body._genericExpr.usedVars()
-        generic_condition_vars = self.conditions._genericExpr.usedVars()
-        used_generic_vars = generic_body_vars.union(generic_condition_vars)
-        generic_params = tuple(safeDummyVars(len(self.parameterVars), *(used_generic_vars-self.parameterVarSet)))
-        if generic_params != self.parameterVars:
-            relabel_map = {param:generic_param for param, generic_param in zip(self.parameterVars, generic_params)}
-            # temporarily disable automation during the relabeling process
-            prev_automation = defaults.automation
-            defaults.automation = False
-            generic_parameters = self.parameters._genericExpr.relabeled(relabel_map)
-            generic_body = self.body._genericExpr.relabeled(relabel_map)
-            generic_conditions = self.conditions._genericExpr.relabeled(relabel_map)
-            self._genericExpr = Lambda(generic_parameters, generic_body, generic_conditions, styles=dict(styles), requirements=requirements)
-            defaults.automation = prev_automation # restore to previous value
-        
+        if _generic_expr is None:
+            # Create a "generic" version (if not already) of the Lambda expression since the 
+            # choice of parameter labeling is irrelevant.
+            generic_body = self.body._generic_version()
+            generic_conditions = self.conditions._generic_version()
+            generic_body_vars = generic_body.usedVars()
+            generic_condition_vars = generic_conditions.usedVars()
+            used_generic_vars = generic_body_vars.union(generic_condition_vars)
+            generic_params = tuple(safeDummyVars(len(self.parameterVars), *(used_generic_vars-self.parameterVarSet)))
+            if generic_params != self.parameterVars:
+                relabel_map = {param:generic_param for param, generic_param in zip(self.parameterVars, generic_params)}
+                # temporarily disable automation during the relabeling process
+                prev_automation = defaults.automation
+                defaults.automation = False
+                generic_parameters = self.parameters._generic_version().relabeled(relabel_map)
+                generic_body = generic_body.relabeled(relabel_map)
+                generic_conditions = generic_conditions.relabeled(relabel_map)
+                genericExpr = Lambda(generic_parameters, generic_body, generic_conditions, styles=dict(styles), requirements=requirements)
+                defaults.automation = prev_automation # restore to previous value
+            else:
+                genericExpr = self
+        elif _generic_expr == '.':
+            genericExpr = self
+        else:
+            genericExpr = _generic_expr
+        self._genericExpr = genericExpr
         Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles, requirements=requirements)
     
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
+    def _make(subClass, coreInfo, styles, subExpressions, genericExpr=None):
         if len(coreInfo) != 1 or coreInfo[0] != 'Lambda':
             raise ValueError("Expecting Lambda coreInfo to contain exactly one item: 'Lambda'")
         if subClass != Lambda: 
@@ -99,7 +110,7 @@ class Lambda(Expression):
         else:
             parameters, body = subExpressions
             conditions = tuple()
-        return Lambda(parameters, body, conditions).withStyles(**styles)
+        return Lambda(parameters, body, conditions, _generic_expr=genericExpr).withStyles(**styles)
     
     def mapped(self, *args):
         '''

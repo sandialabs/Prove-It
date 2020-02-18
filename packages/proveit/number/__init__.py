@@ -18,11 +18,11 @@ from .ordering import Less, LessEq, LesserSequence, LessOnlySeq, LessEqOnlySeq, 
 
 import proveit
 
-try:
-    # Import some fundamental theorems without quantifiers.
-    # Fails before running the corresponding _axioms_/_theorems_ notebooks for the first time, but fine after that.
+if proveit.defaults.automation:
+    # Import some fundamental theorems without quantifiers that are
+    # imported when automation is used.
+    from .sets.integer._theorems_ import zeroInNats
     from .numeral.deci._theorems_ import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9
-    from .numeral.deci._theorems_ import nats_pos_1, nats_pos_2, nats_pos_3, nats_pos_4, nats_pos_5, nats_pos_6, nats_pos_7, nats_pos_8, nats_pos_9
+    from .numeral.deci._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
+    from .numeral.deci._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5, posnat6, posnat7, posnat8, posnat9
     from .negation._theorems_ import negatedZero
-except:
-    pass

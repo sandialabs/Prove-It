@@ -29,6 +29,7 @@ class Proof:
         Proof.uniqueProofs.clear()
         Assumption.allAssumptions.clear()
         Theorem.allTheorems.clear()
+        _ShowProof.show_proof_by_id.clear()
         
     def __init__(self, provenTruth, requiredTruths):
         

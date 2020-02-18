@@ -1,7 +1,8 @@
-from proveit._core_.expression import Expression
+import inspect
+from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.lambda_expr import Lambda
 from proveit._core_.expression.composite import ExprTuple, singleOrCompositeExpression, compositeExpression
-from .operation import Operation
+from .operation import Operation, OperationError
 
 class OperationOverInstances(Operation):
     '''
@@ -13,12 +14,12 @@ class OperationOverInstances(Operation):
     static variable to indicate how the initialization argument names in the 
     derived class correspond with the OperationOverInstances argument names.
     Omitted keys will be presumed to be unchanged argument names.  This is
-    a simple way to make extractInitArgValue and extractMyInitArgValue function
-    properly without overriding them.
+    a simple way to make extractMyInitArgValue function properly without 
+    overriding it.
     '''
     _init_argname_mapping_ = {'instanceVarOrVars':'instanceVarOrVars', 'instanceExpr':'instanceExpr', 'domain':'domain', 'domains':'domains', 'conditions':'conditions'}
     
-    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=None):
+    def __init__(self, operator, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=None, _lambda_map=None):
         '''
         Create an Operation for the given operator that is applied over instances of the 
         given instance Variable(s), instanceVarOrVars, for the given instance Expression, 
@@ -46,113 +47,182 @@ class OperationOverInstances(Operation):
         convenience for conditions of this form and may be formatted using a shorthand notation.
         For example, "forall_{x in S | Q(x)} P(x)" is a shorthand notation for 
         "forall_{x | x in S, Q(x)} P(x)".  
+        
+        _lambda_map is used internally for efficiently rebuilding an
+        OperationOverInstances expression.
         '''
         from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
-        instanceVars = compositeExpression(instanceVarOrVars)
         
         if styles is None: styles=dict()
         
-        if len(instanceVars)==0:
-            raise ValueError("Expecting at least one instance variable when constructing an OperationOverInstances")
-        
-        if domain is not None:
-            # prepend domain conditions
+        if _lambda_map is not None:
+            # Use the provided 'lambda_map' instead of creating one.
+            lambda_map = _lambda_map
+            instanceVars = lambda_map.parameters
+            instanceExpr = lambda_map.body
+            conditions = lambda_map.conditions
+            if len(instanceVars) > 1 and nestMultiIvars:
+                raise ValueError("Invalid 'lambda_map' for %s: multiple parameters "
+                                 "(%s) are not allowed when 'nestMultiIvars' is True."
+                                 %(str(self.__class__), str(instanceVars)))
+        else:
+            # We will need to generate the Lambda sub-expression.
+            # Do some initial preparations w.r.t. instanceVars, domain(s), and
+            # conditions.
+            instanceVars = compositeExpression(instanceVarOrVars)
+            if len(instanceVars)==0:
+                raise ValueError("Expecting at least one instance variable when "
+                                 "constructing an OperationOverInstances")
+            
+            # Add appropriate conditions for the domains:
+            if domain is not None:
+                # prepend domain conditions
+                if domains is not None:
+                    raise ValueError("Provide a single domain or multiple domains, "
+                                     "not both")
+                if not isinstance(domain, Expression):
+                    raise TypeError("The domain should be an 'Expression' type")
+                domains = [domain]*len(instanceVars)
+                    
             if domains is not None:
-                raise ValueError("Provide a single domain or multiple domains, not both")
-            if not isinstance(domain, Expression):
-                raise TypeError("The domain should be an 'Expression' type")
-            domains = [domain]*len(instanceVars)
-        
-        
-        if domains is not None:
-            # Prepend domain conditions.  Note that although we start with all domain conditions at the beginning,
-            # some may later get pushed back as "inner conditions" (see below),
-            if len(domains) != len(instanceVars):
-                raise ValueError("When specifying multiple domains, the number should be the same as the number of instance variables.")         
-            for domain in domains:
-                if domain is None:
-                    raise ValueError("When specifying multiple domains, none of them can be the None value")
-            conditions = [InSet(instanceVar, domain) for instanceVar, domain in zip(instanceVars, domains)] + list(conditions)
-            domain = domains[0]  # domain of the outermost instance variable
-        conditions = compositeExpression(conditions)        
-                
-        # domain(s) may be implied via the conditions.  If domain(s) were supplied, this should simply reproduce
-        # them from the conditions that were prepended.
-        if len(conditions)>=len(instanceVars) and all(isinstance(cond, InSet) and cond.element==ivar for ivar, cond in zip(instanceVars, conditions)):
+                # Prepend domain conditions.  Note that although we start with 
+                # all domain conditions at the beginning,
+                # some may later get pushed back as "inner conditions"
+                # (see below),
+                if len(domains) != len(instanceVars):
+                    raise ValueError("When specifying multiple domains, the number "
+                                     "should be the same as the number of instance "
+                                     "variables.")         
+                for domain in domains:
+                    if domain is None:
+                        raise ValueError("When specifying multiple domains, none "
+                                         "of them can be the None value")
+                conditions = [InSet(instanceVar, domain) for instanceVar, domain 
+                              in zip(instanceVars, domains)] + list(conditions)
+                domain = domains[0] # domain of the outermost instance variable
+            conditions = compositeExpression(conditions)        
+                                   
+        # domain(s) may be implied via the conditions.  If domain(s) were 
+        # supplied, this should simply reproduce them from the conditions that 
+        # were prepended.
+        if (len(conditions)>=len(instanceVars) and 
+            all(isinstance(cond, InSet) and cond.element==ivar for 
+                ivar, cond in zip(instanceVars, conditions))):
             domains = [cond.domain for cond in conditions[:len(instanceVars)]]
-            domain = domains[0] # used if we have a single instance variable or nestMultiIvars is True
+            # Used if we have a single instance variable 
+            # or nestMultiIvars is True:
+            domain = domains[0] 
             nondomain_conditions = conditions[len(instanceVars):]
         else:
             domain = domains = None
             nondomain_conditions = conditions
         
-        if len(instanceVars) > 1:
-            if nestMultiIvars:
-                # "inner" instance variable are all but the first one.
-                inner_instance_vars = instanceVars[1:]
-                inner_instance_param_vars = set(getParamVar(ivar) for ivar in inner_instance_vars)
-
-                # start with the domain conditions
+        if _lambda_map is None:
+            # Now do the actual lambda_map creation after handling
+            # nesting.
+            
+            # Handle nesting of multiple instance variables if needed.
+            if len(instanceVars) > 1 and nestMultiIvars:
+                
+                # Figure out how many "non-domain" conditions belong at
+                # each level.  At each level, "non-domain" conditions are
+                # included up to the first on that has any free variables that 
+                # include any of the "inner" instance variable parameters.
+                cond_free_vars = {cond:cond.freeVars() 
+                                  for cond in nondomain_conditions}
+                num_nondomain_conditions_vs_level = [0]*len(instanceVars)
+                remaining_nondomain_conditions = list(nondomain_conditions)
+                for i in range(len(instanceVars)):
+                    # Parameter variables correpsonding to 'inner' instance
+                    # variables at this level:
+                    inner_instance_params = set(getParamVar(ivar) for 
+                                                ivar in instanceVars[i+1:])
+                    # Start with the default # of non-domain conditions:
+                    num_nondomain_conditions = len(remaining_nondomain_conditions)
+                    # Go until a condition contains any of the "inner"
+                    # instance variable parameters as a free variable.
+                    for k, cond in enumerate(remaining_nondomain_conditions):
+                        if not cond_free_vars[cond].isdisjoint(inner_instance_params):
+                            num_nondomain_conditions = k
+                            break
+                    # Record the # of non-domain conditions and update the
+                    # 'remaining' ones.
+                    num_nondomain_conditions_vs_level[i] = num_nondomain_conditions
+                    remaining_nondomain_conditions = \
+                        remaining_nondomain_conditions[num_nondomain_conditions:]
+                
+                # Generate the nested OperationOverInstances from the inside
+                # out.
+                remaining_nondomain_conditions= list(nondomain_conditions)
+                for i in range(len(instanceVars)-1, 0, -1):
+                    inner_instance_var = instanceVars[i]
+                    
+                    # Get the appropriate conditions for level i.
+                    nconds = num_nondomain_conditions_vs_level[i]
+                    if nconds > 0:
+                        inner_conditions = remaining_nondomain_conditions[-nconds:]
+                        remaining_nondomain_conditions = \
+                            remaining_nondomain_conditions[:-nconds]
+                    else:
+                        inner_conditions = []
+                    if domains is not None:
+                        # prepend the domain condition
+                        inner_conditions.insert(0, conditions[i])
+                    
+                    # create the instnaceExpr at level i.
+                    innerOperand = self._createOperand([inner_instance_var], instanceExpr, 
+                                                       conditions=inner_conditions)
+                    inner_styles = dict(styles)
+                    if i == len(instanceVars)-1:
+                        # Inner-most -- no joining further.
+                        inner_styles['instance_vars'] = 'no_join' 
+                    else:
+                        # Join with the next level.
+                        inner_styles['instance_vars'] = 'join_next' 
+                    instanceExpr = self.__class__._make(['Operation'], inner_styles, 
+                                                        [operator, innerOperand])
+                
+                assert num_nondomain_conditions_vs_level[0] \
+                            == len(remaining_nondomain_conditions)
+                
+                # Get the appropriate top-level condition.
                 if domains is None:
-                    conditions = [] # no domain conditions
-                    inner_conditions = [] # inner or outer
+                    conditions = remaining_nondomain_conditions
                 else:
-                    inner_conditions = conditions[1:len(domains)] # everything but the outer domain condition
-                    conditions = [conditions[0]] # outer domain condition
+                    # prepend the domain condition at the top level.
+                    conditions = [conditions[0]] + remaining_nondomain_conditions
                 
-                # Apart from the domain conditions, the "inner" conditions start with the
-                # first one that has any free variables that include any of the "inner" instance variables.
-                for k, cond in enumerate(nondomain_conditions):
-                    if not cond.freeVars().isdisjoint(inner_instance_param_vars):
-                        inner_conditions += nondomain_conditions[k:]
-                        nondomain_conditions = nondomain_conditions[:k]
-                        break
-                
-                # Include the outer non-domain conditions.
-                conditions += nondomain_conditions
-                
-                # the instance expression at this level should be the OperationOverInstances at the next level.
-                innerOperand = self._createOperand(inner_instance_vars, instanceExpr, conditions=inner_conditions)
-                instanceExpr = self.__class__._make(['Operation'], dict(styles), [operator, innerOperand])
-                styles['instance_vars'] = 'join_next' # combine instance variables in the style
-                instanceVarOrVars = instanceVar = instanceVars[0]
-            else:
-                self.instanceVars = instanceVarOrVars = instanceVars
-                self.domains = domains # Domain for each instance variable
-        else:
-            instanceVarOrVars = instanceVar = instanceVars[0]
-            styles['instance_vars'] = 'no_join' # no combining instance variables in the style
-
-        Operation.__init__(self, operator, OperationOverInstances._createOperand(instanceVarOrVars, instanceExpr, conditions), styles=styles)
+                instanceVarOrVars = instanceVars[0]
+                instanceVars = [instanceVarOrVars]
+                # Combine instance variables in the style:
+                styles['instance_vars'] = 'join_next' 
+            elif len(instanceVars)==1:
+                instanceVarOrVars = instanceVars[0]
+                # No combining instance variables in the style:
+                styles['instance_vars'] = 'no_join' 
+            
+            # Generate the Lambda sub-expression.
+            lambda_map = OperationOverInstances._createOperand(instanceVarOrVars, 
+                                                               instanceExpr, 
+                                                               conditions)
 
         self.instanceExpr = instanceExpr
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
         
-        if not hasattr(self, 'instanceVars'):
-            self.instanceVar = instanceVar
+        if len(instanceVars) > 1:
+            self.instanceVars = instanceVars
+            self.domains = domains # Domain for each instance variable
+        else:
+            self.instanceVar = instanceVars[0]
             '''Outermost instance variable (or iteration of indexed variables) of the OperationOverInstance.'''
             self.domain = domain
             '''Domain of the outermost instance variable (may be None)'''
         
         self.conditions = conditions
         '''Conditions applicable to the outermost instance variable (or iteration of indexed variables) of the OperationOverInstance.  May include an implicit 'domain' condition.'''
-        
-        """
-        # extract the domain or domains from the condition (regardless of whether the domain/domains was explicitly provided
-        # or implicit through the conditions).
-        if len(conditions) >= len(instanceVars):
-            domains = []
-            for instanceVar, condition in zip(instanceVars, conditions):
-                if isinstance(condition, InSet) and condition.element == instanceVar:
-                    domains.append(condition.domain)
-            if len(domains) == len(instanceVars):
-                # There is a domain condition for each instance variable.
-                if all(domain==domains[0] for domain in domains):
-                    self.domain_or_domains = self.domain = domains[0] # all the same domain
-                else:
-                    self.domain_or_domains = self.domains = ExprTuple(*domains)
-        """
+
+        Operation.__init__(self, operator, lambda_map, styles=styles)
     
     def hasDomain(self):
         if hasattr(self, 'domains'):
@@ -162,32 +232,7 @@ class OperationOverInstances(Operation):
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, conditions):
         return Lambda(instanceVars, instanceExpr, conditions)
-    
-    @classmethod
-    def extractInitArgValue(operationClass, argName, operator, operand):
-        '''
-        Given a name of one of the arguments of the __init__ method,
-        return the corresponding value as determined by the
-        given operator and operand for an OperationOverInstances
-        Expression.
-        
-        Override this if the __init__ argument names are different than the
-        default.
-        '''
-        init_argname_mapping = operationClass._init_argname_mapping_
-        argName = init_argname_mapping.get(argName, argName)
-        assert isinstance(operand, Lambda), "Expecting OperationOverInstances operand to be a Lambda expression"
-        if argName=='operator':
-            return operator
-        if argName=='domain' or argName=='domains': 
-            return None # specify domains implicitly through conditions
-        elif argName=='instanceVarOrVars':
-            return singleOrCompositeExpression(operand.parameters)
-        elif argName=='instanceExpr':
-            return operand.body
-        elif argName=='conditions':
-            return operand.conditions
-    
+
     def extractMyInitArgValue(self, argName):
         '''
         Return the most proper initialization value for the
@@ -219,6 +264,41 @@ class OperationOverInstances(Operation):
             # return the joined conditions excluding domain conditions
             return singleOrCompositeExpression(
                 OperationOverInstances.explicitConditions(self))
+    
+    @classmethod
+    def _make(cls, coreInfo, styles, subExpressions):
+        if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
+            raise ValueError("Expecting Operation coreInfo to contain exactly one item: 'Operation'")
+        if len(subExpressions) != 2:
+            raise ValueError("Expecting exactly two subExpressions for an "
+                             "OperationOverInstances object: an operator and "
+                             "a lambda_map.")
+
+        implicit_operator = cls._implicitOperator()
+        if implicit_operator is None:
+            raise OperationError("Expecting a '_operator_' attribute for class "
+                                 "%s for the default OperationOverInstances._make "
+                                 "method"%str(cls))
+        
+        operator = subExpressions[0]
+        lambda_map = subExpressions[1]
+        
+        if not (operator == implicit_operator):
+            raise OperationError("An implicit operator may not be changed")
+        
+        args, varargs, varkw, defaults = inspect.getargspec(cls.__init__)
+        if args[-1] != '_lambda_map':
+            raise OperationError("'_lambda_map' must be the last argument "
+                                 "for a constructor of a class %s derived from "
+                                 "OperationOverInstances."%str(cls))
+        
+        # Subtract 'self' and '_lambda_map' from the number of args and set
+        # the rest to None.
+        num_remaining_args = len(args)-2
+        made_operation = cls(*[None]*num_remaining_args, _lambda_map=lambda_map)
+        if styles is not None:
+            made_operation.withStyles(**styles)
+        return made_operation
         
     def _allInstanceVars(self):
         '''
@@ -308,7 +388,7 @@ class OperationOverInstances(Operation):
         joined together in the style.
         '''
         yield self
-        iVarStyle = self.getStyle('instance_vars')
+        iVarStyle = self.getStyle('instance_vars') #, 'no_join')
         if iVarStyle == 'join_next':
             assert isinstance(self.instanceExpr, self.__class__), (
                 "Not expecting 'instance_vars' style to be " +

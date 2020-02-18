@@ -399,6 +399,15 @@ class ProveItMagicCommands:
         if expr._style_id != stored_expr._style_id:
             raise ProveItMagicFailure("The built '%s' style does not match that of the stored Expression"%expr_name)
         print("Passed sanity check: built '%s' is the same as the stored Expression."%expr_name)
+
+    def show_expr(self):
+        '''
+        Convenient for debugging when %check_expr fails.
+        '''
+        _, hash_id = os.path.split(os.path.abspath('.'))
+        context = Context()
+        stored_expr = context.getStoredExpr(hash_id)
+        return stored_expr
     
     def show_proof(self):
         _, hash_id = os.path.split(os.path.abspath('.'))
@@ -599,6 +608,10 @@ class ProveItMagic(Magics, ProveItMagicCommands):
                 expr = expr.expr
         ProveItMagicCommands.check_expr(self, expr_name, expr)
     
+    @line_magic
+    def show_expr(self, line):
+        return ProveItMagicCommands.show_expr(self)
+
     @line_magic
     def show_proof(self, line):
         return ProveItMagicCommands.show_proof(self)        

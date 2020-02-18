@@ -660,7 +660,8 @@ class ContextStorage:
         # represent other referenced Prove-It objects 
         return prefix + proveItObject._generate_unique_rep(self._proveItStorageId)
     
-    def _extractReferencedStorageIds(self, unique_rep, context_name=''):
+    def _extractReferencedStorageIds(self, unique_rep, context_name='', 
+                                     storage_ids=None):
         '''
         Given a unique representation string, returns the list of Prove-It
         storage ids of objects that are referenced.  A context_name may be
@@ -668,19 +669,22 @@ class ContextStorage:
         then the default may be used.
         '''
         from proveit import Expression, KnownTruth, Proof
-        if unique_rep[:6] == 'Proof:':
-            storage_ids = Proof._extractReferencedObjIds(unique_rep[6:])
-        elif unique_rep[:11] == 'KnownTruth:':
-            storage_ids = KnownTruth._extractReferencedObjIds(unique_rep[11:])
-        else:
-            # Assumed to be an expression then
-            storage_ids = Expression._extractReferencedObjIds(unique_rep)
+        if storage_ids is None:
+            if unique_rep[:6] == 'Proof:':
+                storage_ids = Proof._extractReferencedObjIds(unique_rep[6:])
+            elif unique_rep[:11] == 'KnownTruth:':
+                storage_ids = KnownTruth._extractReferencedObjIds(unique_rep[11:])
+            else:
+                # Assumed to be an expression then
+                storage_ids = Expression._extractReferencedObjIds(unique_rep)
         def relativeToExplicitPrefix(exprId, contextName):
-            # if the exprId is relative to the context it is in, make the context explicit
+            # If the exprId is relative to the context it is in, make the 
+            # context explicit.
             if '.' in exprId: return exprId # already has an explicit context
             return contextName + '.' + exprId
         if context_name != '':
-            return [relativeToExplicitPrefix(storage_id, context_name) for storage_id in storage_ids]
+            return [relativeToExplicitPrefix(storage_id, context_name) 
+                    for storage_id in storage_ids]
         return storage_ids
 
     def _addReference(self, proveItStorageId):
@@ -1202,11 +1206,11 @@ class ContextStorage:
         (context, hash_directory) = self._retrieve(proof)
         pv_it_dir = context._storage.pv_it_dir
         filename = os.path.join(pv_it_dir, hash_directory, 'proof.ipynb')
-        proveit_path = os.path.split(proveit.__file__)[0]
-        template_filename = os.path.join(proveit_path, '..', 
-                                         '_proof_template_.ipynb')
         if not os.path.isfile(filename):
             # Copy the template.  Nothing needs to be edited for these.
+            proveit_path = os.path.split(proveit.__file__)[0]
+            template_filename = os.path.join(proveit_path, '..', 
+                                             '_proof_template_.ipynb')
             shutil.copyfile(template_filename, filename)
         return relurl(filename)
     
@@ -1330,14 +1334,22 @@ class ContextStorage:
         the given expression id.
         '''
         import importlib
-        from proveit import Expression
+        from proveit import Expression, Lambda
         expr_class_map = dict() # map expression class strings to Expression class objects
         def importFn(exprClassStr):
             split_expr_class = exprClassStr.split('.')
             module = importlib.import_module('.'.join(split_expr_class[:-1]))
             expr_class_map[exprClassStr] = getattr(module, split_expr_class[-1])
-        def exprBuilderFn(exprClassStr, exprInfo, styles, subExpressions, context):
-            expr = expr_class_map[exprClassStr]._make(exprInfo, styles, subExpressions)
+        def exprBuilderFn(exprClassStr, exprInfo, styles, subExpressions, genericExpr,
+                          context):
+            expr_class = expr_class_map[exprClassStr]
+            if issubclass(expr_class, Lambda):
+                # For efficiency, make the Lambda expression with its generic
+                # version known to avoid needing to generate it via relabeling.
+                expr = expr_class._make(exprInfo, styles, subExpressions, 
+                                        genericExpr)
+            else:
+                expr = expr_class._make(exprInfo, styles, subExpressions)
             if context is not None and expr._style_id not in Expression.contexts:
                 expr._setContext(context)
                 # see if it is a special expression with an addressable name.
@@ -1366,6 +1378,7 @@ class ContextStorage:
         expr_class_rel_strs = dict() # relative paths of Expression classes that are local
         core_info_map = dict() # map expr-ids to core information
         styles_map = dict() # map expr-ids to style information
+        generic_id_map = dict() # map expr-ids to the generic version
         sub_expr_ids_map = dict() # map expr-ids to list of sub-expression ids
         context_map = dict() # map expr-ids to a Context 
         master_expr_id = exprId
@@ -1374,27 +1387,47 @@ class ContextStorage:
         except:
             local_context_name = None
                 
-        def getSubExprIds(exprId):
+        def getDependentExprIds(exprId):
+            '''
+            Given an expression id, yield the ids of all of its sub-expressions
+            as well as the id of the generic version of the expression if it
+            is not the generic version.
+            '''
             context_name, hash_directory = self._split(exprId)
             if context_name != '': context_map[exprId] = Context.getContext(context_name)
             hash_path = self._storagePath(exprId)
             with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
-                # extract the unique representation from the pv_it file
+                # Extract the unique representation from the pv_it file.
                 unique_rep = f.read()
-                # extract the Expression class from the unique representation 
-                expr_class_str = Expression._extractExprClass(unique_rep)
+                # Parse the unique_rep to get the expression information.
+                expr_class_str, core_info, style_dict, sub_expr_refs, generic_ref \
+                    = Expression._parse_unique_rep(unique_rep)
                 if local_context_name is not None and expr_class_str.find(local_context_name) == 0:
                     # import locally if necessary
                     expr_class_rel_strs[exprId] = expr_class_str[len(local_context_name)+1:]                
                 expr_class_strs[exprId] = expr_class_str
                 # extract the Expression "core information" from the unique representation
-                core_info_map[exprId] = Expression._extractCoreInfo(unique_rep)
-                styles_map[exprId] = Expression._extractStyle(unique_rep)
-                # get the sub-expressions all sub-expressions
-                sub_expr_ids_map[exprId] = self._extractReferencedStorageIds(unique_rep, context_name)
-                return sub_expr_ids_map[exprId]
+                core_info_map[exprId] = core_info
+                styles_map[exprId] = style_dict
+                if generic_ref != '' and generic_ref != '.':
+                    dependent_refs = [generic_ref] + sub_expr_refs
+                else:
+                    dependent_refs = sub_expr_refs
+                dependent_ids = \
+                    self._extractReferencedStorageIds(unique_rep, context_name, 
+                                                      storage_ids=dependent_refs)
+                if generic_ref == '.':
+                    # '.' denotes that this is a "generic" expression itself.
+                    generic_id_map[exprId] = '.'
+                    sub_expr_ids_map[exprId] = dependent_ids
+                elif generic_ref == '':
+                    sub_expr_ids_map[exprId] = dependent_ids
+                else:
+                    generic_id_map[exprId] = dependent_ids[0]
+                    sub_expr_ids_map[exprId] = dependent_ids[1:]
+                return dependent_ids
         
-        expr_ids = orderedDependencyNodes(exprId, getSubExprIds)
+        expr_ids = orderedDependencyNodes(exprId, getDependentExprIds)
         for expr_id in reversed(expr_ids):
             if expr_id in expr_class_rel_strs:
                 # there exists a relative path
@@ -1424,7 +1457,15 @@ class ContextStorage:
         for expr_id in reversed(expr_ids):
             sub_expressions =  [built_expr_map[sub_expr_id] for sub_expr_id in sub_expr_ids_map[expr_id]]
             context = context_map[expr_id] if expr_id in context_map else None
-            built_expr_map[expr_id] = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], styles_map[expr_id], sub_expressions, context)
+            if expr_id in generic_id_map:
+                generic_id = generic_id_map[expr_id]
+                if generic_id == '.': generic_expr = '.'
+                else: generic_expr = built_expr_map[generic_id]
+            else: generic_expr = None
+            expr = exprBuilderFn(expr_class_strs[expr_id], core_info_map[expr_id], 
+                                 styles_map[expr_id], sub_expressions, 
+                                 generic_expr, context)
+            built_expr_map[expr_id] = expr
         return built_expr_map[master_expr_id]        
     
     def makeKnownTruth(self, truthId):
