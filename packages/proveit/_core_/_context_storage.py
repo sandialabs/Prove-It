@@ -421,7 +421,6 @@ class ContextStorage:
         try:
             with open(os.path.join(specialStatementsPath, name, 'expr.pv_it'), 'r') as f:
                 expr_id = f.read()
-                start_time = time.time()
                 expr = self.makeExpression(expr_id)
                 if expr._style_id not in Expression.contexts:  
                     expr._setContext(self.context)
