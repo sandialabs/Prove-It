@@ -1,3 +1,4 @@
+import os
 from .label import Label
 from .var import Variable
 
@@ -34,7 +35,15 @@ class Literal(Label):
                 context = Context()
         elif isinstance(context, str):
             # convert a path string to a Context
-            context = Context(context)
+            if os.path.exists(context):
+                # Make a Context given a path.
+                context = Context(context)
+            else:
+                # Make a Context given a name.
+                # First create the local context to make sure we have access 
+                # to context roots referenced by this context.
+                Context() 
+                context = Context.getContext(context)
         Label.__init__(self, stringFormat, latexFormat, 'Literal', (context.name,)+tuple(extraCoreInfo))
         self._setContext(context)
         #if self._coreInfo in Literal.instances:
@@ -102,6 +111,24 @@ class Literal(Label):
             
             Literal.instances.pop(coreInfo)
             return made_obj.withStyles(**styles)
+
+    def remakeArguments(self):
+        '''
+        Yield the argument values that could be used to recreate the Literal.
+        '''
+        for arg in Label.remakeArguments(self):
+            yield arg
+        import inspect
+        init_args = inspect.getargspec(self.__class__.__init__)[0]
+        if len(init_args)==5 and init_args[3]=='extraCoreInfo' and init_args[4]=='context':
+            core_info = self.coreInfo()
+            context_name = core_info[3]
+            extra_core_info = core_info[4:]
+            if len(extra_core_info) > 0:
+                yield ('extraCoreInfo', extra_core_info)
+            yield ('context', '"' + context_name + '"')
+        else:
+            raise LabelError("Must properly implement the 'remakeArguments' method for class %s"%str(self.__class__))
         
 
 class DuplicateLiteralError(Exception):

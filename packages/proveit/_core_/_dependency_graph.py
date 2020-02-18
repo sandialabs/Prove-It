@@ -22,7 +22,7 @@ def orderedDependencyNodes(rootNode, requirementsFn):
     while len(queue) > 0:
         nextNode = queue.pop(0)
         nodesWithRepeats.append(nextNode)
-        queue += requirementsFn(nextNode)
+        queue.extend(requirementsFn(nextNode))
     # Second pass: remove duplicates.  Requirements should always come later 
     # (presenting the graph in a way that guarantees that it is acyclic).
     visited = set()

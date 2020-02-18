@@ -99,13 +99,14 @@ class Operation(Expression):
         return None
     
     @classmethod
-    def extractInitArgValue(operationClass, argName, operator_or_operators, operand_or_operands):
+    def extractInitArgValue(cls, argName, operator_or_operators, operand_or_operands):
         '''
         Given a name of one of the arguments of the __init__ method,
         return the corresponding value contained in the 'operands'
         composite expression (i.e., the operands of a constructed operation).
         
-        Override this method if you cannot simply pass the operands directly
+        Except when this is an OperationOverInstances, this method should
+        be overridden if you cannot simply pass the operands directly
         into the __init__ method.
         '''
         raise NotImplementedError("'extractInitArgValue' must be appropriately implemented if __init__ arguments do not fall into a simple 'default' scenario")
@@ -389,11 +390,16 @@ class Operation(Expression):
             # defined via an "_operator_" class attribute, then create the Operation of that class.
             operator = subbed_operators[0]
             if operator in Operation.operationClassOfOperator:
-                OperationClass = Operation.operationClassOfOperator[operator]
-                # Don't use transfer the styles; they may not apply in the same manner
-                # in the setting of the new operation.
-                return OperationClass._make(['Operation'], styles=None, subExpressions=[operator, subbed_operand_or_operands])
-        return self.__class__._make(['Operation'], self.getStyles(), [subbed_operator_or_operators, subbed_operand_or_operands])
+                op_class = Operation.operationClassOfOperator[operator]
+                if op_class != self.__class__:
+                    # Don't transfer the styles; they may not apply in the same 
+                    # manner in the setting of the new operation.
+                    return op_class._make(['Operation'], styles=None, 
+                                          subExpressions=[operator, 
+                                                          subbed_operand_or_operands])
+        return self.__class__._make(['Operation'], self.getStyles(), 
+                                    [subbed_operator_or_operators, 
+                                     subbed_operand_or_operands])
 
     
 class OperationError(Exception):

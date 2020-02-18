@@ -6,7 +6,8 @@ class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall', context=__file__)
     
-    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, conditions = tuple()):
+    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, 
+                 conditions = tuple(), _lambda_map=None):
         '''
         Create a Forall expression:
         forall_{instanceVars | conditions} instanceExpr.
@@ -14,9 +15,12 @@ class Forall(OperationOverInstances):
         given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
         may be singular or plural (iterable).
         '''
-        # nestMultiIvars=True will cause it to treat multiple instance variables as nested Forall operations internally
+        # nestMultiIvars=True will cause it to treat multiple instance 
+        # variables as nested Forall operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars, instanceExpr, domain, domains, conditions, nestMultiIvars=True)
+        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars, 
+                                        instanceExpr, domain, domains, conditions, 
+                                        nestMultiIvars=True, _lambda_map=_lambda_map)
         
     def sideEffects(self, knownTruth):
         '''

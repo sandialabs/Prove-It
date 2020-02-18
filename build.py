@@ -14,6 +14,7 @@ import lxml#Comment in for Python 3
 from lxml import etree#Comment in for Python 3
 import shutil
 import argparse
+import importlib
 import nbformat
 from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
 from nbconvert.preprocessors.execute import executenb
@@ -580,41 +581,61 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_axioms_.ipynb'))
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_theorems_.ipynb'))    
     
-    if not just_execute_essentials and not just_execute_expression_nbs and not just_execute_demos:
-        # Get the proof notebook filenames for the theorems in all of the contexts.
-        proof_notebook_theorems = dict() # map proof notebook names to corresponding Theorem objects.
-        theorem2notebook = dict() # map theorem to its proof notebook
-        name2theorem = dict() # map theorem name to the theorem
+    if not just_execute_expression_nbs and not just_execute_demos:
+        # Get the proof notebook filenames for the theorems in all of the 
+        # contexts.
+        # Map proof notebook names to corresponding Theorem objects:
+        proof_notebook_theorems = dict() 
         theorem_proof_notebooks = []
-        print("Preparing to execute proof notebooks.")
+        # Turn off automation while loading theorems simply for recording
+        # dependencies:
+        #proveit.defaults.automation = False
+        print("Finding theorem proof notebooks.")
         for context_path in context_paths:
             context = Context(context_path)
             for theorem_name in context.theoremNames():
+                print("Loading", theorem_name)
                 theorem = context.getTheorem(theorem_name)
                 proof_notebook_name = context.thmProofNotebook(theorem_name, theorem.provenTruth.expr)
                 proof_notebook_theorems[proof_notebook_name] = theorem
-                theorem2notebook[theorem] = proof_notebook_name
-                name2theorem[str(theorem)] = theorem
                 theorem_proof_notebooks.append(proof_notebook_name)
+        # Turn automation back on:
+        #proveit.defaults.automation = True
+        
+        '''
+        # Some proveit modules may not have loaded properly while
+        # automation was off, so we need to reset and reload it. 
+        proveit.reset()
+        for k,v in list(sys.modules.items()):
+            if k.startswith('proveit'):
+                if k=='proveit' or k.startswith('proveit._core_'):
+                    # Don't reload proveit or proveit._core_.
+                    continue
+                print('reload', v)
+                importlib.reload(v)
+        '''
         
         if no_execute:
-            for proof_notebook in theorem_proof_notebooks:
-                #if not os.path.isfile(proof_notebook[-5:] + '.html'): # temporary
-                exportToHTML(proof_notebook)
+            if not just_execute_essentials:
+                for proof_notebook in theorem_proof_notebooks:
+                    #if not os.path.isfile(proof_notebook[-5:] + '.html'): # temporary
+                    exportToHTML(proof_notebook)
         else:
             # Next, for each of the theorems, record the "presuming" information
             # of the proof notebooks in the _proofs_ folder.  Do this before executing
             # any of the proof notebooks to account for dependencies properly
             # (avoiding circular dependencies as intended).
+            print("Recording theorem dependencies.")
             for proof_notebook in theorem_proof_notebooks:
                 recordPresumingInfo(proof_notebook_theorems[proof_notebook], proof_notebook)
-                
-            # Next, execute all of the proof notebooks twice
-            # to ensure there are no circular logic violations.
-            for proof_notebook in theorem_proof_notebooks:
-                execute_processor.executeNotebook(proof_notebook)
-            for proof_notebook in theorem_proof_notebooks:
-                executeAndExportNotebook(execute_processor, proof_notebook)
+
+            if not just_execute_essentials:
+                # Next, execute all of the proof notebooks twice
+                # to ensure there are no circular logic violations.
+                for proof_notebook in theorem_proof_notebooks:
+                    execute_processor.executeNotebook(proof_notebook)
+                for proof_notebook in theorem_proof_notebooks:
+                    executeAndExportNotebook(execute_processor, proof_notebook)
             
     if not just_execute_essentials and not just_execute_expression_nbs and not just_execute_proofs:
         # Next, run any other notebooks within path/context directories
@@ -660,8 +681,8 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
                                     exportToHTML(proof_notebook)
                                 else:
                                     # if proof_html doesn't exist or is older than proof_notebook, generate it
-                                    if not os.path.isfile(proof_html) or os.path.getmtime(expr_html) < os.path.getmtime(expr_notebook):
-                                        # execute the expr.ipynb notebook
+                                    if not os.path.isfile(proof_html) or os.path.getmtime(proof_html) < os.path.getmtime(proof_notebook):
+                                        # execute the proof.ipynb notebook
                                         executeAndExportNotebook(execute_processor, proof_notebook)
                                         executed_hash_paths.add(hash_path) # done
                             # always execute the dependencies notebook for now to be safes
