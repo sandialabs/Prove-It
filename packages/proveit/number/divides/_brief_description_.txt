@@ -1,1 +1,0 @@
-divisibility operations such as x|y to indicate x is a factor of y (old)

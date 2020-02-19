@@ -15,8 +15,7 @@ from .integration import Integrate
 from .modular import Abs, Mod, ModAbs
 from .rounding import Floor, Ceil, Round
 from .ordering import Less, LessEq, LesserSequence, LessOnlySeq, LessEqOnlySeq, lesserSequence, Greater, GreaterEq, GreaterSequence, GreaterOnlySeq, GreaterEqOnlySeq, greaterSequence, Min, Max
-from .GCD import GCD
-from .divisibility import Divides
+from .divisibility import Divides, GCD
 
 import proveit
 
