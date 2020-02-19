@@ -11,10 +11,16 @@ class ModAbs(Operation):
         self.divisor = divisor
         
     def string(self, **kwargs):
-        return '|'+self.value.string(fence=False)+'|_{mod ' + self.divisor.string(fence=False) + '}'
+        return ( '|' + self.value.string(fence=False)+'|_{mod '
+                + self.divisor.string(fence=False)
+                + '}')
 
     def latex(self, **kwargs):
-        return '\left|'+self.value.string(fence=False)+'\right|_{{\rm mod}~' + self.divisor.string(fence=False) + '\right}'
+        return (  r'\left|'
+                + self.value.string(fence=False)
+                + r'\right|_{\textup{mod}~'
+                + self.divisor.string(fence=False)
+                + '}')
 
     def _closureTheorem(self, numberSet):
         from . import theorems

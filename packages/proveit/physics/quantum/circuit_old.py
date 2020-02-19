@@ -91,7 +91,7 @@ class Output(Operation):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == LATEX:
             return r'\rstick{' + formattedState + r'} \qw' 
-        else: return Operation.formatted(self, formatType, fence)
+        else: return Operation._formatted(self, formatType, fence)
 
 OUTPUT = Literal(pkg, 'OUTPUT', operationMaker = lambda operands : Output(*operands)) # An output state (exiting the right of the circuit)
 

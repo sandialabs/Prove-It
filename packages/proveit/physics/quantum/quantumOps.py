@@ -75,12 +75,13 @@ class RegisterBra(Operation):
         formattedLabel = self.label.formatted(formatType, fence=False)
         formattedSize = self.size.formatted(formatType, fence=False)
         if formatType == 'latex':
-            # can't seem to get the \prescript latex to work, so
-            # temporarily removing it to push things through -- perhaps
-            # mathtools not loading?
+            # can't seem to get the \prescript latex to work, so using
+            # a temporary work-around with an 'empty' subscript; much
+            # googling hasn't uncovered explanation for why \prescript
+            # isn't working in the ipynbs
             # return (r'\prescript{}{' + formattedSize + r'}\langle '
             #         + formattedLabel + r' \rvert')
-            return (r'\{' + formattedSize + r'\}\langle '
+            return (r'{_{'+formattedSize+r'}}\langle '
                     + formattedLabel + r' \rvert')
         else:
             return '{' + formattedSize + '}_'+u'\u2329'+formattedLabel+'|'
@@ -114,20 +115,16 @@ class RegisterKet(Operation):
     
 class Meas(Operation):
     '''
-    Class to represent the making of a measurement on a ket |𝜑⟩
+    Class to represent the making of a measurement on a ket |𝜑⟩.
     '''
     # the literal operator of the Meas operation
-    _operator_ = Literal(stringFormat='MEAS', latexFormat=r'{\cal M}',
+    _operator_ = Literal(stringFormat='MEAS', latexFormat=r'\mathcal{M}',
                          context=__file__)
 
     def __init__(self, ket):
         Operation.__init__(self, Meas._operator_, ket)
         self.ket = ket
 
-
-# to define later:
-# QubitRegisterSpace = lambda n : TensorExp(Exp(Complexes, two), n)
-# RegisterSU = lambda n : SU(Exp(two, n))
 
 def QubitRegisterSpace(num_Qbits):
     '''

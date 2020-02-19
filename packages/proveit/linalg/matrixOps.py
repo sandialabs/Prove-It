@@ -8,8 +8,6 @@ pkg = __package__
 class MatrixProd(Operation):
     '''
     Matrix dot product of any number of operands.
-    Modified 02/11/2020 by wdc: making the class extend Operation
-    instead of AssociativeOperation
     '''
 
     # the literal operator of the MatrixProd operation
@@ -34,14 +32,12 @@ class MatrixProd(Operation):
         # return Operation.formatted(self, formatType, fence, subFence)
         return Operation._formatted(self, formatType=formatType, fence=fence, subFence=subFence)
 
-# MATRIX_PROD = Literal(pkg, 'MATRIX_PROD', {STRING: r'.', LATEX: r' '}, operationMaker = lambda operands : MatrixProd(*operands))
 
 class ScalarProd(Operation):
     '''
-    Product between a scalar and a matrix.
-    Modified 02/11/2020 by wdc: making the class extend Operation
-    instead of BinaryOperation. STILL NEED TO MAKE THIS A BINARY OP
-    by using two inputs instead of a *args argument
+    Represents the product of a scalar and a matrix (or vector).
+    For example, ScalarProd(a, A) returns a A, the product of a scalar
+    'a' and the matrix A.
     '''
     # the literal operator of the MatrixProd operation
     # perhaps use SCALAR_PROD for string?
@@ -49,13 +45,13 @@ class ScalarProd(Operation):
     _operator_ = Literal(stringFormat=r'*', latexFormat = r'\;',
                          context=__file__)
 
-    def __init__(self, *operands):
+    def __init__(self, scalar, scaled):
         r'''
-        Product between a scalar and a matrix.
+        Product between a scalar and a matrix (or vector).
         '''
-        Operation.__init__(self, ScalarProd._operator_, operands)
-        self.scalar = operands[0]
-        self.scaled = operands[1]
+        Operation.__init__(self, ScalarProd._operator_, [scalar, scaled])
+        self.scalar = scalar
+        self.scaled = scaled
 
     # def doReducedSimplification(self):
     #     '''

@@ -7,7 +7,7 @@ class Floor(Function):
     
     def __init__(self, A):
         Function.__init__(self, Floor._operator_, A)
-        self.operand = A
+        # self.operand = A
 
     def _closureTheorem(self, numberSet):
         from . import theorems

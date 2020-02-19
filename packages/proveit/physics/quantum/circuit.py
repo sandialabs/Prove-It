@@ -78,7 +78,7 @@ class Input(Operation):
         if formatType == 'latex':
             return r'\lstick{' + formattedState + r'}' 
         else:
-            return Operation.formatted(self, formatType, fence)
+            return Operation._formatted(self, formatType, fence=fence)
 
 
 class Output(Operation):
@@ -100,7 +100,7 @@ class Output(Operation):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
             return r'\rstick{' + formattedState + r'} \qw' 
-        else: return Operation.formatted(self, formatType, fence)
+        else: return Operation._formatted(self, formatType, fence)
 
 
 class Gate(Operation):
@@ -117,6 +117,8 @@ class Gate(Operation):
         '''    
         Operation.__init__(self, Gate._operator_, gate_operation)
         self.gate_operation = self.operands[0]
+        print("self.gate_operation = {}".format(self.gate_operation))             # for testing; delete later
+        print("type(self.gate_operation) = {}".format(type(self.gate_operation))) # for testing; delete later
 
     # look here more carefully later, some changes during the project meeting
     def formatted(self, formatType, **kwargs):
@@ -124,7 +126,9 @@ class Gate(Operation):
         print("  formatType = {}".format(formatType))                           # for testing; delete later
         formattedGateOperation = (
                 self.gate_operation.formatted(formatType, fence=False))
+        print("  formattedGateOperation = {}".format(formattedGateOperation))   # for testing; delete later
         if formatType == 'latex':
+            print("    inside if formatType=latex block")                       # for testing; delete later
             return r'\gate{' + formattedGateOperation + r'}' 
         else: return Operation._formatted(self, formatType)
 
@@ -154,13 +158,14 @@ class Target(Operation):
         '''    
         Operation.__init__(self, Target._operator_, target_gate)
         self.target_gate = target_gate
+        print("target_gate = {}".format(self.target_gate))                      # for testing; delete later
 
     def formatted(self, formatType, fence=False):
         print("Entering Target.formatted().")                                   # for testing; delete later
         formattedGateOperation = self.target_gate.formatted(formatType, fence=False)
         if formatType == 'latex':
             return r'\gate{' + formattedGateOperation + r'}' 
-        else: return Operation.formatted(self, formatType, fence)
+        else: return Operation._formatted(self, formatType, fence)
 
 # TARGET = Literal(pkg, 'TARGET', {STRING:'TARGET', LATEX:r'\targ'}, lambda operands : Target(*operands))
 

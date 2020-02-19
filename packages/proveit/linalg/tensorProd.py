@@ -18,9 +18,7 @@ class TensorProd(Operation):
 
     def __init__(self, *operands):
         Operation.__init__(self, TensorProd._operator_, operands)
-        print("TensorProd self.operands = {}".format(self.operands))            # for testing; delete later
         self.factors = self.operands
-        print("TensorProd self.factors = {}".format(self.factors))              # for testing; delete later
 
     def factor(self, scalar):
         '''
@@ -99,15 +97,17 @@ class TensorExp(Operation):
 
     def doReducedSimplification(self, assumptions=frozenset()):
         '''
-        For the trivial cases of a one exponent, derive and return this tensor-exponentiated
-        expression equated with a simplified form.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        For the trivial cases of a one exponent, derive and return
+        this tensor-exponentiated expression equated with a simplified
+        form. Assumptions may be necessary to deduce necessary
+        conditions for the simplification.
         '''
         from proveit.number.common import zero, one
         from axioms import tensorExpOne
         if self.exponent == one:
             return tensorExpOne.specialize({x:self.base})
-            raise ValueError('Only trivial simplification is implemented (tensor exponent of one)')
+            raise ValueError('Only trivial simplification is implemented '
+                             '(tensor exponent of one).')
 
     
 # TENSOR_EXP = Literal(pkg, 'TENSOR_EXP', {STRING: r'^otimes', LATEX: r'^{\otimes}'}, operationMaker = lambda operands : TensorExp(*operands))
