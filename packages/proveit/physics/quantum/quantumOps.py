@@ -1,4 +1,4 @@
-from proveit import Operation, Literal
+from proveit import Operation, Literal, Function
 from proveit.linalg import SU, TensorExp
 from proveit.number import  num, Complexes, Exp
 
@@ -15,7 +15,7 @@ class Bra(Operation):
         Operation.__init__(self, Bra._operator_, label)
         self.label = self.operands[0] # might need to change
     
-    def _formatted(self, formatType, fence=False):
+    def _formatted(self, formatType, **kwargs):
         if formatType == 'latex':
             return (r'\langle '
                     + self.label.formatted(formatType, fence=False)
@@ -39,7 +39,7 @@ class Ket(Operation):
         Operation.__init__(self, Ket._operator_, label)
         self.label = self.operands[0]
     
-    def _formatted(self, formatType, fence=False, no_lvert=False):
+    def _formatted(self, formatType, no_lvert=False, **kwargs):
         leftStr = r'\lvert ' if formatType == 'latex' else '|'
         if no_lvert: leftStr = ''
         if formatType == 'latex':
@@ -113,7 +113,7 @@ class RegisterKet(Operation):
                     + formattedSize + '}')
 
     
-class Meas(Operation):
+class Meas(Function):
     '''
     Class to represent the making of a measurement on a ket |𝜑⟩.
     '''
@@ -122,7 +122,7 @@ class Meas(Operation):
                          context=__file__)
 
     def __init__(self, ket):
-        Operation.__init__(self, Meas._operator_, ket)
+        Function.__init__(self, Meas._operator_, ket)
         self.ket = ket
 
 
