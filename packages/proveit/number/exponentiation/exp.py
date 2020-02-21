@@ -95,7 +95,7 @@ class Exp(Operation):
         return self.formatted('latex', **kwargs)
             
     def formatted(self, formatType, **kwargs):
-        inner_str = self.base.formatted(formatType, forceFence=True)+r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
+        inner_str = self.base.formatted(formatType, fence=True, forceFence=True)+r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
         # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
