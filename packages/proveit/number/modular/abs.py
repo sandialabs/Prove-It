@@ -7,7 +7,6 @@ class Abs(Operation):
     
     def __init__(self, A):
         Operation.__init__(self, Abs._operator_, A)
-        self.operand = A
 
     def _closureTheorem(self, numberSet):
         from . import theorems
