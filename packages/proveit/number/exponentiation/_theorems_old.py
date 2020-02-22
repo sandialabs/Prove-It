@@ -238,16 +238,19 @@ sameExpDistribute = Forall([x,y,z],
                             domain = Complexes)
 sameExpDistribute
 
+# transferred 2/20/2020
 sqrtOfProd = Forall(xEtc, Equals(Sqrt(Mult(xEtc)),
                               Mult(Etcetera(Sqrt(xMulti)))),
                   domain=RealsPos)
 sqrtOfProd
 
+# transferred 2/20/2020
 prodOfSqrts = Forall(xEtc, Equals(Mult(Etcetera(Sqrt(xMulti))),
                                   Sqrt(Mult(xEtc))),
                      domain=RealsPos)
 prodOfSqrts
 
+# transferred 2/20/2020
 sqrtTimesItself = Forall(x, Equals(Mult(Sqrt(x), Sqrt(x)), x),
                          domain=Reals, conditions=[GreaterThanEquals(x, zero)])
 sqrtTimesItself

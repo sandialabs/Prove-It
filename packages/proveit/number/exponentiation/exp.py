@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, ExprTuple, ProofFailure, maybeFencedString, USE_DEFAULTS
 from proveit.logic import Membership
 import proveit._common_
-from proveit._common_ import S, a, x
+from proveit._common_ import a, b, x, S
 
 class Exp(Operation):
     # operator of the Exp operation.
@@ -164,6 +164,57 @@ class Exp(Operation):
         deduceInIntegers(n_, assumptions)
         deduceInComplexes([a_, b_], assumptions)
         return thm.specialize({n:n_}).specialize({a:a_, b:b_})
+
+    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+        '''
+        Given a number set number_set, attempt to prove that the given
+        expression is in that number set using the appropriate closure
+        theorem.
+        Created: 2/20/2020 by wdc, based on the same method in the Add
+                 class.
+        Last Modified: 2/20/2020 by wdc. Creation.
+        Once established, these authorship notations can be deleted.
+        '''
+
+        from proveit.number.exponentiation._theorems_ import (
+                  expNatClosure, expRealClosureExpNonZero,
+                  expRealClosureBasePos, expRealPosClosure)
+        from proveit.number import NaturalsPos, Reals, RealsPos
+
+        if number_set == NaturalsPos:
+            print("self.base = {}".format(self.base))                           # for testing; delete later
+            print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
+            return expNatClosure.specialize({a:self.base, b:self.exponent},
+                      assumptions=assumptions)
+
+        if number_set == Reals:
+            # trying to allow for 2 possibilities here
+            print("self.base = {}".format(self.base))                           # for testing; delete later
+            print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
+            err_string = ''
+            try:
+                return expRealClosureBasePos.specialize(
+                        {a:self.base, b:self.exponent},
+                        assumptions=assumptions)
+            except:
+                err_string = 'Positive base condition failed '
+                try:
+                    return expRealClosureExpNonZero.specialize(
+                            {a:self.base, b:self.exponent},
+                            assumptions=assumptions)
+                except:
+                    err_string += ('and non-zero exponent condition failed. '
+                                   'Need base ≥ 0 and exponent ≠ 0, OR '
+                                   'base > 0.')
+                    raise Exception(err_string)
+
+        if number_set == RealsPos:
+            print("self.base = {}".format(self.base))                           # for testing; delete later
+            print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
+            return expRealPosClosure.specialize(
+                            {a:self.base, b:self.exponent},
+                            assumptions=assumptions)
+
     
 class ExpSetMembership(Membership):
     '''
