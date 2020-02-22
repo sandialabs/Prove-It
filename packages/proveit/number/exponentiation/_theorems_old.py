@@ -157,6 +157,7 @@ intExpOfProdRev = Forall(n, Forall((a, b),
                          domain=Integers)
 intExpOfProdRev
 
+# transferred 2/20/2020
 natsPosExpOfProd = Forall(n, Forall((a, b),
                                     Equals(Exp(Mult(a,b),n),
                                            Mult(Exp(a,n),Exp(b,n))),
@@ -164,6 +165,7 @@ natsPosExpOfProd = Forall(n, Forall((a, b),
                           domain=NaturalsPos)
 natsPosExpOfProd
 
+# omitted from transfer (essentially duplicates above) 2/20/2020
 natsPosExpOfProdRev = Forall(n, Forall((a, b),
                                        Equals(Mult(Exp(a,n),Exp(b,n)),
                                               Exp(Mult(a,b),n)),
@@ -171,6 +173,7 @@ natsPosExpOfProdRev = Forall(n, Forall((a, b),
                              domain=NaturalsPos)
 natsPosExpOfProdRev
 
+# transferred 2/20/2020
 # Works for integers powers through repetition of a^b (or a^{-b}) and adding exponents.
 # Does not work for fractional powers.  Consider sqrt[(-1)^2] = 1 not (-1)^{2*(1/2)} = -1.
 intExpOfExp = Forall(n, Forall((a, b), 
@@ -180,6 +183,7 @@ intExpOfExp = Forall(n, Forall((a, b),
                   domain=Integers)
 intExpOfExp
 
+# transferred 2/20/2020
 intExpOfNegExp = Forall(n, Forall((a, b), 
                                Equals(Exp(Exp(a, Neg(b)), n), 
                                       Exp(a, Neg(Mult(b, n)))),
@@ -187,6 +191,7 @@ intExpOfNegExp = Forall(n, Forall((a, b),
                         domain=Integers)
 intExpOfNegExp
 
+# transferred 2/20/2020
 negIntExpOfExp = Forall(n, Forall((a, b),
                             Equals(Exp(Exp(a, b), Neg(n)), 
                                    Exp(a, Neg(Mult(b, n)))), 
@@ -195,6 +200,7 @@ negIntExpOfExp = Forall(n, Forall((a, b),
 
 negIntExpOfExp
 
+# transferred 2/20/2020
 negIntExpOfNegExp = Forall(n, Forall((a, b),
                                      Equals(Exp(Exp(a, Neg(b)), Neg(n)), 
                                             Exp(a, Mult(b, n))), 
@@ -203,6 +209,7 @@ negIntExpOfNegExp = Forall(n, Forall((a, b),
 
 negIntExpOfNegExp
 
+# transferred 2/20/2020
 diffSquareComm = Forall([a,b],
                         Equals(
                             Exp(Sub(a,b),two),
@@ -210,18 +217,21 @@ diffSquareComm = Forall([a,b],
                         domain = Complexes)
 diffSquareComm
 
+# transferred 2/20/2020
 oneExp = Forall([x],
                Equals(Exp(x,one),
                       x),
                domain = Complexes)
 oneExp
 
+# already transferred
 expOne = Forall([x],
                Equals(Exp(one,x),
                      one),
                domain = Complexes)
 expOne
 
+# transferred 2/20/2020
 sameExpDistribute = Forall([x,y,z],
                             Equals(Mult(Exp(x,y),Exp(z,y)),
                                  Exp(Mult(x,z),y)),
