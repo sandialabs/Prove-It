@@ -1,4 +1,4 @@
-from proveit import Literal, Operation
+from proveit import Literal, Operation, USE_DEFAULTS
 
 class Sqrt(Operation):
     # operator of the Exp operation.
@@ -33,3 +33,35 @@ class Sqrt(Operation):
             return theorems.sqrtRealPosClosure            
         elif numberSet == Complexes:
             return theorems.sqrtComplexClosure
+
+    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+        '''
+        Given a number set number_set, attempt to prove that the given
+        expression is in that number set using the appropriate closure
+        theorem.
+        Created: 2/23/2020 by wdc, based on the same method in the Add
+                 class.
+        Last Modified: 2/23/2020 by wdc. Creation.
+        Once established, these authorship notations can be deleted.
+        '''
+        
+        from proveit._common_ import a
+        from proveit.logic import InSet
+        from proveit.number.exponentiation._theorems_ import (
+                  sqrtRealClosure, sqrtRealPosClosure, sqrtComplexClosure)
+        from proveit.number import Complexes, Reals, RealsPos
+
+        if number_set == Reals:
+            print("self.base = {}".format(self.base))                           # for testing; delete later
+            return sqrtRealClosure.specialize({a:self.base},
+                      assumptions=assumptions)
+
+        if number_set == RealsPos:
+            print("self.base = {}".format(self.base))                           # for testing; delete later
+            return sqrtRealPosClosure.specialize({a:self.base},
+                      assumptions=assumptions)
+
+        if number_set == Complexes:
+            print("self.base = {}".format(self.base))                           # for testing; delete later
+            return sqrtComplexClosure.specialize({a:self.base},
+                      assumptions=assumptions)

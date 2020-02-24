@@ -1,2 +1,3 @@
-from .interval import RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
-from ._common_ import Reals, RealsNeg, RealsPos, e, pi
+from .interval import (IntervalCC, IntervalCO, IntervalOC, IntervalOO,
+	                     RealInterval)
+from ._common_ import e, pi, Reals, RealsNeg, RealsNonNeg, RealsPos 

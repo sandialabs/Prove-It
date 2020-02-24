@@ -51,13 +51,15 @@ class Exp(Operation):
         elif self.base == one:
             return exponentiatedOne.specialize({x:self.exponent})
         else:
-            raise ValueError('Only trivial simplification is implemented (zero or one for the base or exponent)')
+            raise ValueError('Only trivial simplification is implemented '
+                             '(zero or one for the base or exponent).')
 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one exponent or zero or one base,
-        derive and return this exponential expression equated with a simplified form.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        derive and return this exponential expression equated with a
+        simplified form. Assumptions may be necessary to deduce
+        necessary conditions for the simplification.
         '''
         from proveit.number import zero, one
         from .theorems import expZeroEqOne, exponentiatedZero, exponentiatedOne
@@ -71,7 +73,8 @@ class Exp(Operation):
         elif self.base == one:
             return exponentiatedOne.specialize({x:self.exponent})
         else:
-            raise ValueError('Only trivial simplification is implemented (zero or one for the base or exponent)')
+            raise ValueError('Only trivial simplification is implemented '
+                             '(zero or one for the base or exponent).')
                 
         
     def deduceInRealsPosDirectly(self, assumptions=frozenset()):
@@ -80,7 +83,8 @@ class Exp(Operation):
         if self.exponent == two:
             deduceInReals(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
-            return real.theorems.sqrdClosure.specialize({a:self.base}).checked(assumptions)
+            return real.theorems.sqrdClosure.specialize(
+                {a:self.base}).checked(assumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealsPos, assumptions)
 
@@ -95,8 +99,9 @@ class Exp(Operation):
         return self.formatted('latex', **kwargs)
             
     def formatted(self, formatType, **kwargs):
-        inner_str = self.base.formatted(formatType, fence=True, forceFence=True)+r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
-        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        inner_str = self.base.formatted(formatType, fence=True, forceFence=True) + r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
     
@@ -128,7 +133,8 @@ class Exp(Operation):
             b_times_c = self.exponent
             thm = intExpOfExp
         if not hasattr(b_times_c, 'factor'):
-            raise Exception('Exponent not factorable, may not raise the exponent factor.')
+            raise Exception('Exponent not factorable, may not raise the '
+                            'exponent factor.')
         factorEq = b_times_c.factor(expFactor, pull='right', groupRemainder=True, assumptions=assumptions)
         if factorEq.lhs != factorEq.rhs:
             # factor the exponent first, then raise this exponent factor
@@ -176,10 +182,12 @@ class Exp(Operation):
         Once established, these authorship notations can be deleted.
         '''
 
+        from proveit.logic import InSet
         from proveit.number.exponentiation._theorems_ import (
-                  expNatClosure, expRealClosureExpNonZero,
-                  expRealClosureBasePos, expRealPosClosure)
-        from proveit.number import NaturalsPos, Reals, RealsPos
+                  expComplexClosure, expNatClosure, expRealClosure,
+                  expRealClosureExpNonZero,expRealClosureBasePos,
+                  expRealPosClosure)
+        from proveit.number import Complexes, NaturalsPos, Reals, RealsPos
 
         if number_set == NaturalsPos:
             print("self.base = {}".format(self.base))                           # for testing; delete later
@@ -187,8 +195,21 @@ class Exp(Operation):
             return expNatClosure.specialize({a:self.base, b:self.exponent},
                       assumptions=assumptions)
 
+        # the following would be useful to replace the next two Reals
+        # closure theorems, once we get the system to deal
+        # effectively with the Or(A, And(B, C)) conditions
+        # if number_set == Reals:
+        #     print("self.base = {}".format(self.base))                           # for testing; delete later
+        #     print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
+        #     return expRealClosure.specialize(
+        #                     {a:self.base, b:self.exponent},
+        #                     assumptions=assumptions)
+
         if number_set == Reals:
-            # trying to allow for 2 possibilities here
+            # Would prefer the more general approach commented-out
+            # above; in the meantime, allowing for 2 possibilities here:
+            # if base is positive real, exp can be any real;
+            # if base is real ≥ 0, exp must be non-zero
             print("self.base = {}".format(self.base))                           # for testing; delete later
             print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
             err_string = ''
@@ -214,6 +235,16 @@ class Exp(Operation):
             return expRealPosClosure.specialize(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
+
+        if number_set == Complexes:
+            print("self.base = {}".format(self.base))                           # for testing; delete later
+            print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
+            return expComplexClosure.specialize(
+                            {a:self.base, b:self.exponent},
+                            assumptions=assumptions)
+
+        msg = "'deduceInNumberSet' not implemented for the %s set"%str(number_set)
+        raise ProofFailure(InSet(self, number_set), assumptions, msg)
 
     
 class ExpSetMembership(Membership):
