@@ -52,16 +52,13 @@ class Sqrt(Operation):
         from proveit.number import Complexes, Reals, RealsPos
 
         if number_set == Reals:
-            print("self.base = {}".format(self.base))                           # for testing; delete later
             return sqrtRealClosure.specialize({a:self.base},
                       assumptions=assumptions)
 
         if number_set == RealsPos:
-            print("self.base = {}".format(self.base))                           # for testing; delete later
             return sqrtRealPosClosure.specialize({a:self.base},
                       assumptions=assumptions)
 
         if number_set == Complexes:
-            print("self.base = {}".format(self.base))                           # for testing; delete later
             return sqrtComplexClosure.specialize({a:self.base},
                       assumptions=assumptions)

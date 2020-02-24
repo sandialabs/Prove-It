@@ -190,8 +190,6 @@ class Exp(Operation):
         from proveit.number import Complexes, NaturalsPos, Reals, RealsPos
 
         if number_set == NaturalsPos:
-            print("self.base = {}".format(self.base))                           # for testing; delete later
-            print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
             return expNatClosure.specialize({a:self.base, b:self.exponent},
                       assumptions=assumptions)
 
@@ -199,8 +197,6 @@ class Exp(Operation):
         # closure theorems, once we get the system to deal
         # effectively with the Or(A, And(B, C)) conditions
         # if number_set == Reals:
-        #     print("self.base = {}".format(self.base))                           # for testing; delete later
-        #     print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
         #     return expRealClosure.specialize(
         #                     {a:self.base, b:self.exponent},
         #                     assumptions=assumptions)
@@ -210,8 +206,6 @@ class Exp(Operation):
             # above; in the meantime, allowing for 2 possibilities here:
             # if base is positive real, exp can be any real;
             # if base is real ≥ 0, exp must be non-zero
-            print("self.base = {}".format(self.base))                           # for testing; delete later
-            print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
             err_string = ''
             try:
                 return expRealClosureBasePos.specialize(
@@ -230,15 +224,11 @@ class Exp(Operation):
                     raise Exception(err_string)
 
         if number_set == RealsPos:
-            print("self.base = {}".format(self.base))                           # for testing; delete later
-            print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
             return expRealPosClosure.specialize(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
 
         if number_set == Complexes:
-            print("self.base = {}".format(self.base))                           # for testing; delete later
-            print("self.exponent = {}".format(self.exponent))                   # for testing; delete later
             return expComplexClosure.specialize(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
@@ -261,22 +251,31 @@ class ExpSetMembership(Membership):
         Attempt to conclude that the element is in the exponentiated set.
         '''   
         from proveit.logic import InSet
-        from proveit.logic.set_theory.membership._theorems_ import exp_set_0, exp_set_1, exp_set_2, exp_set_3, exp_set_4, exp_set_5, exp_set_6, exp_set_7, exp_set_8, exp_set_9
+        from proveit.logic.set_theory.membership._theorems_ import (
+            exp_set_0, exp_set_1, exp_set_2, exp_set_3, exp_set_4, exp_set_5,
+            exp_set_6, exp_set_7, exp_set_8, exp_set_9)
         from proveit.number import zero, isLiteralInt, DIGITS
         element = self.element
         domain = self.domain
         elem_in_set = InSet(element, domain)
         if not isinstance(element, ExprTuple):
-            raise ProofFailure(elem_in_set, assumptions, "Can only automatically deduce membership in exponentiated sets for an element that is a list")
+            raise ProofFailure(
+                elem_in_set, assumptions,
+                "Can only automatically deduce membership in exponentiated "
+                "sets for an element that is a list")
         exponent_eval = domain.exponent.evaluation(assumptions=assumptions)
         exponent = exponent_eval.rhs
         base = domain.base
         #print(exponent, base, exponent.asInt(),element, domain, len(element))
         if isLiteralInt(exponent):
             if exponent == zero:
-                return exp_set_0.specialize({x:element, S:base}, assumptions=assumptions)
+                return exp_set_0.specialize({x:element, S:base},
+                                            assumptions=assumptions)
             if len(element) != exponent.asInt():
-                raise ProofFailure(elem_in_set, assumptions, "Element not a member of the exponentiated set; incorrect list length")
+                raise ProofFailure(
+                    elem_in_set, assumptions,
+                    "Element not a member of the exponentiated set; "
+                    "incorrect list length")
             elif exponent in DIGITS:
                 # thm = forall_S forall_{a, b... in S} (a, b, ...) in S^n
                 thm = locals()['exp_set_%d'%exponent.asInt()]
@@ -285,13 +284,21 @@ class ExpSetMembership(Membership):
                 expr_map.update({proveit._common_.__getattr__(chr(ord('a')+k)):elem_k for k, elem_k in enumerate(element)})
                 elem_in_set = thm.specialize(expr_map, assumptions=assumptions)
             else:
-                raise ProofFailure(elem_in_set, assumptions, "Automatic deduction of membership in exponentiated sets is not supported beyond an exponent of 9")
+                raise ProofFailure(
+                    elem_in_set, assumptions,
+                    "Automatic deduction of membership in exponentiated sets "
+                    "is not supported beyond an exponent of 9")
         else:
-            raise ProofFailure(elem_in_set, assumptions, "Automatic deduction of membership in exponentiated sets is only supported for an exponent that is a literal integer")
+            raise ProofFailure(
+                elem_in_set, assumptions,
+                "Automatic deduction of membership in exponentiated sets is "
+                "only supported for an exponent that is a literal integer")
         if exponent_eval.lhs != exponent_eval.rhs:
-            # after proving that the element is in the set taken to the evaluation of the exponent,
-            # substitute back in the original exponent.
-            return exponent_eval.subLeftSideInto(elem_in_set, assumptions=assumptions)
+            # after proving that the element is in the set taken to
+            # the evaluation of the exponent, substitute back in the
+            # original exponent.
+            return exponent_eval.subLeftSideInto(elem_in_set,
+                                                 assumptions=assumptions)
         return elem_in_set
 
     def sideEffects(self, knownTruth):
