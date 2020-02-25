@@ -109,14 +109,20 @@ class InnerExpr:
         '''
         curInnerExpr = self.exprHierarchy[-1]
         if isinstance(curInnerExpr, ExprTuple):
-            # For an ExprTuple, the item key is simply the index of the sub-Expression
-            if key < 0: key = len(curInnerExpr)+key
+            # For an ExprTuple, the item key is either the index of the 
+            # sub-Expression or a slice (in which case the replacement map
+            # has multiple parameters).
+            if isinstance(key, int) and key < 0: key = len(curInnerExpr)+key
+            if isinstance(key, slice):
+                if key.step is not None and key.step != 1:
+                    raise ValueError("When using a slice for an InnerExpr, the"
+                                     " step must be 1, not %d"%key.step)
             return InnerExpr(self.exprHierarchy[0], self.innerExprPath + (key,))
         elif isinstance(curInnerExpr, Composite):
-            # For any other Composite (ExprArray or NamedExprs), the key is the key of the Composite dictionary.
-            # The sub-Expressions are in the order that the keys are sorted.
-            sortedKeys = sorted(curInnerExpr.keys())
-            return InnerExpr(self.exprHierarchy[0], self.innerExprPath + [sortedKeys.index(key)])
+            # For NamedExprs, the key is the key of its dictionary.
+            # The sub-Expressions are in the order of the keys.
+            keys = curInnerExpr.keys()
+            return InnerExpr(self.exprHierarchy[0], self.innerExprPath + [keys.index(key)])
         raise KeyError("The current sub-Expression is not a Composite.")
     
     def _getAttrAsInnerExpr(self, cur_depth, attr, attr_expr):
@@ -254,17 +260,35 @@ class InnerExpr:
         equiv_rhs.__doc__ = "Return an equivalent form of this expression derived via '%s'."%equiv_method
         setattr(expr_class, past_tense_name, equiv_rhs)
     
-    def replMap(self):
+    def replMap(self, assumptions=USE_DEFAULTS):
         '''
         Returns the lambda function/map that would replace this particular inner
         expression within the top-level expression.
         '''
+        from proveit import Iter, varIter
+        from proveit.number import one
         # build the lambda expression, starting with the lambda parameter and
         # working up the hierarchy.
         top_level_expr = self.exprHierarchy[0]
         cur_sub_expr = self.exprHierarchy[-1]
+        cur_idx = self.innerExprPath[-1] if len(self.innerExprPath)>0 else None
         
-        if isinstance(cur_sub_expr, Composite):
+        if isinstance(cur_idx, slice):
+            # When there is a slice of an ExprTuple at the bottom level, we
+            # will map an iteration of parameters as the filler for the slice.
+            assert isinstance(cur_sub_expr, tuple), "Unexpected type"
+            parent_tuple = self.exprHierarchy[-2]
+            assert isinstance(parent_tuple, ExprTuple), "Unexpected type"
+            start, stop = cur_idx.start, cur_idx.stop
+            if start is None: start = 0
+            if stop is None: stop = len(parent_tuple)
+            sub_tuple = ExprTuple(*cur_sub_expr)
+            sub_tuple_len = sub_tuple.length(assumptions)
+            dummy_var = top_level_expr.safeDummyVar()
+            lambda_params = varIter(dummy_var, one, sub_tuple_len)
+            lambda_body = ExprTuple(parent_tuple[:start] + (lambda_params,)
+                                    + parent_tuple[stop:])
+        elif isinstance(cur_sub_expr, Composite):
             dummy_vars = top_level_expr.safeDummyVars(len(cur_sub_expr))
             lambda_params = dummy_vars
             if len(self.parameters)==0:
@@ -282,8 +306,11 @@ class InnerExpr:
                 # between the top-level expression and the inner expression.
                 lambda_body = Function(lambda_params[0], self.parameters)
         for expr, idx in reversed(list(zip(self.exprHierarchy, self.innerExprPath))):
-            expr_subs = list(expr.subExprIter())
-            lambda_body = expr.__class__._make(expr.coreInfo(), expr.getStyles(), expr_subs[:idx] + [lambda_body] + expr_subs[idx+1:])
+            if isinstance(idx, slice): continue
+            expr_subs = tuple(expr.subExprIter())
+            lambda_body = expr.__class__._make(expr.coreInfo(), expr.getStyles(), 
+                                               expr_subs[:idx] + (lambda_body,) 
+                                               + expr_subs[idx+1:])
         return Lambda(lambda_params, lambda_body)
     
     def _expr_rep(self):
