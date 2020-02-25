@@ -354,19 +354,25 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
         Return this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
         '''
-        from proveit._core_.expression.composite.composite import compositeExpression
-        from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
+        from proveit import Lambda, compositeExpression, ExprTuple, Iter
+        from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
+        from proveit.logic import Equals
         self._checkRelabelMap(relabelMap)
         if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
-        subbed_operand_or_operands = self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        subbed_operand_or_operands = \
+            self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, 
+                                                 assumptions, requirements)
         subbed_operands = compositeExpression(subbed_operand_or_operands)
-        subbed_operator_or_operators = self.operator_or_operators.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        subbed_operator_or_operators = \
+            self.operator_or_operators.substituted(exprMap, relabelMap, reservedVars, 
+                                                   assumptions, requirements)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
         if len(subbed_operators)==1:
             subbedOperator = subbed_operators[0]
@@ -374,20 +380,47 @@ class Operation(Expression):
                 # Substitute the entire operation via a Lambda body
                 # For example, f(x, y) -> x + y.
                 if len(subbed_operands) != len(subbedOperator.parameters):
-                    raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of parameters')
+                    raise ImproperSubstitution('Cannot substitute an Operation '
+                                               'with the wrong number of parameters')
                 if len(subbedOperator.conditions) != 0:
-                    raise ImproperSubstitution('Operation substitution must be defined via an Unconditioned Lambda expression')
-                operandSubMap = {param:operand for param, operand in zip(subbedOperator.parameters, subbed_operands)}
+                    raise ImproperSubstitution('Operation substitution must be '
+                                               'defined via an Unconditioned Lambda '
+                                               'expression')
+                operand_sub_map = dict()
+                for param, operand in zip(subbedOperator.parameters, 
+                                          subbed_operands):
+                    if isinstance(param, Iter):
+                        # Iteration parameters require special treatment.
+                        # We need to substitute and ExprTuple for the 
+                        # parameter variable and ensure the length is 
+                        # appropriate.
+                        param_var = getParamVar(param)
+                        sub = ExprTuple(operand)
+                        operand_sub_map[param_var] = sub
+                        param_len = ExprTuple(param).length(assumptions)
+                        sub_len = sub.length(assumptions)
+                        len_req = Equals(param_len, sub_len).prove(assumptions)
+                        requirements.append(len_req)
+                    else:
+                        operand_sub_map[param] = operand
                 if not reservedVars is None:
-                    # the reserved variables of the lambda body excludes the lambda parameters
-                    # (i.e., the parameters mask externally reserved variables).
-                    lambdaExprReservedVars = {k:v for k, v in reservedVars.items() if k not in subbedOperator.parameterVarSet}
-                else: lambdaExprReservedVars = None
-                return subbedOperator.body._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, assumptions=assumptions, requirements=requirements)
+                    # The reserved variables of the lambda body excludes the 
+                    # lambda parameters (i.e., the parameters mask externally 
+                    # reserved variables).
+                    lambda_expr_reserved_vars = \
+                        {k:v for k, v in reservedVars.items() 
+                         if k not in subbedOperator.parameterVarSet}
+                else: lambda_expr_reserved_vars = None
+                subbed_operator_body = subbedOperator.body
+                subbed_operator_body._restrictionChecked(lambda_expr_reserved_vars)
+                return subbed_operator_body.substituted(operand_sub_map, 
+                                                        assumptions=assumptions, 
+                                                        requirements=requirements)
         # remake the Expression with substituted operator and/or operands
         if len(subbed_operators)==1:
-            # If it is a single operator that is a literal operator of an Operation class
-            # defined via an "_operator_" class attribute, then create the Operation of that class.
+            # If it is a single operator that is a literal operator of an 
+            # Operation class  defined via an "_operator_" class attribute, 
+            # then create the Operation of that class.
             operator = subbed_operators[0]
             if operator in Operation.operationClassOfOperator:
                 op_class = Operation.operationClassOfOperator[operator]
