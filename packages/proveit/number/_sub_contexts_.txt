@@ -4,13 +4,11 @@ addition
 negation
 ordering
 multiplication
-divides
-divisibility
 division
+divisibility
 modular
 exponentiation
 summation
 product
 differentiation
 integration
-divisibility
