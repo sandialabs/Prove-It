@@ -7,17 +7,14 @@ from __future__ import print_function
 import sys
 import os
 import re
-from time import monotonic
-from queue import Empty
-#import lxml.etree#Comment out for Python 3
+import time
 import lxml#Comment in for Python 3
 from lxml import etree#Comment in for Python 3
 import shutil
 import argparse
-import importlib
 import nbformat
 from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
-from nbconvert.preprocessors.execute import executenb
+#from nbconvert.preprocessors.execute import executenb
 from nbconvert import HTMLExporter
 import IPython
 from IPython.lib.latextools import LaTeXTool
@@ -26,8 +23,6 @@ import datetime
 import tarfile
 #import urllib#Comment out for Python 3
 import urllib.request#Comment in for Python 3
-import tempfile
-import subprocess
 import zmq # to catch ZMQError which randomly occurs when starting a Jupyter kernel
 import proveit
 from proveit import Context
@@ -311,7 +306,8 @@ len(gc.get_objects()) # used to check for memory leaks
         Read, execute, and write out the notebook at the given path.
         Return the notebook object.
         '''
-        print("Executing", notebook_path)
+        print("Executing", notebook_path, end='', flush=True)
+        start_time = time.time()
         
         # read
         with open(notebook_path, encoding='utf8') as f:
@@ -335,6 +331,8 @@ len(gc.get_objects()) # used to check for memory leaks
                 #execute_processor.km.restart_kernel(newport=True)
         with open(notebook_path, 'wt', encoding='utf8') as f:
             nbformat.write(nb, f)
+        
+        print("; finished in %0.2f seconds"%(time.time()-start_time))
         return nb
 
 def generate_css_if_missing(path):
@@ -352,7 +350,7 @@ def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=F
     The notebook object (nb) may be provided, or it will be
     read in from the file.
     '''
-    print('Exporting', notebook_path, 'to HTML')
+    start_time = time.time()
     orig_strip_links = html_exporter.preprocessors[0].strip_links
     orig_make_images_inline = html_exporter.preprocessors[0].make_images_inline
     try:
@@ -371,6 +369,7 @@ def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=F
     finally:
         html_exporter.preprocessors[0].strip_links = orig_strip_links
         html_exporter.preprocessors[0].make_images_inline = orig_make_images_inline # revert back to what it was
+    print('Exported', notebook_path, 'to HTML in %0.2f seconds'%(time.time()-start_time))
 
 def executeAndExportNotebook(execute_processor, notebook_path, no_execute=False):
     '''
@@ -594,11 +593,13 @@ def build(execute_processor, context_paths, all_paths, no_execute=False, just_ex
         for context_path in context_paths:
             context = Context(context_path)
             for theorem_name in context.theoremNames():
-                print("Loading", theorem_name)
+                start_time = time.time()
+                print("Loading", theorem_name, end='', flush=True)
                 theorem = context.getTheorem(theorem_name)
                 proof_notebook_name = context.thmProofNotebook(theorem_name, theorem.provenTruth.expr)
                 proof_notebook_theorems[proof_notebook_name] = theorem
                 theorem_proof_notebooks.append(proof_notebook_name)
+                print("; finished in %0.2f seconds"%(time.time()-start_time))
         # Turn automation back on:
         #proveit.defaults.automation = True
         
