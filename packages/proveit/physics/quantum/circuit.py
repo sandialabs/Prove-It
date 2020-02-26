@@ -91,7 +91,7 @@ class Output(Operation):
     
     def __init__(self, state):
         '''
-        Create a INPUT operation with the given input state.
+        Create an OUTPUT operation with the given input state.
         '''    
         Operation.__init__(self, Output._operator_, state)
         self.state = state
