@@ -349,8 +349,9 @@ class ExpSetMembership(Membership):
         return
         yield
 
-# outside any specific class
-def sq_rt(base):
+# outside any specific class:
+# special Exp case of square root
+def sqrt(base):
     '''
     Special function for square root version of an exponential.
     Formatting depends on the argument supplied to the withStyles()
@@ -359,5 +360,6 @@ def sq_rt(base):
     using a traditional square root radical. If you want a square
     root to be displayed more literally as a base to the 1/2 power,
     use Exp(_, frac(1/2)) directly.
+    Could later generalize this to cuber roots or even nth roots.
     '''
     return Exp(base, frac(one, two)).withStyles(square_root='radical')

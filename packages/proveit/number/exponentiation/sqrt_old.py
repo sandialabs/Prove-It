@@ -1,3 +1,8 @@
+## Until Thurs 2/27/2020, we utilized the Sqrt class from this sqrt.py
+## Replaced Sqrt class with a special sqrt() function that produces
+## a special version of an Exp expression, and that sqrt() function
+## can now be found in exp.py (defined outside any specific class).
+
 from proveit import Literal, Operation, USE_DEFAULTS
 
 class Sqrt(Operation):
