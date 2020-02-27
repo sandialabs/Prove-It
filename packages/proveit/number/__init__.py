@@ -10,7 +10,7 @@ from .addition import Add, subtract, dist_subtract, dist_add
 from .negation import Neg
 from .multiplication import Mult
 from .division import Div, frac
-from .exponentiation import Exp, Sqrt
+from .exponentiation import Exp, sq_rt, Sqrt
 from .summation import Sum
 from .integration import Integrate
 from .modular import Abs, Mod, ModAbs

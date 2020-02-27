@@ -1,7 +1,9 @@
-from proveit import Literal, Operation, ExprTuple, ProofFailure, maybeFencedString, USE_DEFAULTS
+from proveit import (Literal, Operation, ExprTuple, ProofFailure,
+                     maybeFencedString, USE_DEFAULTS, StyleOptions)
 from proveit.logic import Membership
 import proveit._common_
 from proveit._common_ import a, b, x, S
+from proveit.number import one, two, frac
 
 class Exp(Operation):
     # operator of the Exp operation.
@@ -92,18 +94,60 @@ class Exp(Operation):
         import complex.theorems
         return complex.theorems.powNotEqZero
 
+    def styleOptions(self):
+        options = StyleOptions(self)
+        options.add('square_root',
+                    "'inline': uses 'sqrt()';'radical': uses radical symbol")
+        return options
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
+        print("Entering Exp latex() method.")                                   # for testing; delete later
+        print("    self.getStyle('square_root') = {}".
+              format(self.getStyle('square_root')))                             # for testing; delete later
         return self.formatted('latex', **kwargs)
+
+    # def latex(self, **kwargs):
+    #     if self.getStyle('division')=='fraction':
+    #         # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
+    #         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+    #         return maybeFencedLatex(r'\frac{'+self.numerator.latex()+'}{'+self.denominator.latex()+'}', **kwargs)
+    #     else:
+    #         return Operation.latex(self,**kwargs) # normal division
             
     def formatted(self, formatType, **kwargs):
-        inner_str = self.base.formatted(formatType, fence=True, forceFence=True) + r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
+        print("Entering Exp formatted() method.")                               # for testing; delete later
+        # begin building the inner_str
+        inner_str = self.base.formatted(formatType, fence=True, forceFence=True)
+        print("    (1) inner_str={}".format(inner_str))                         # for testing; delete later
+        if self.getStyle('square_root') == None:
+            print("    self.getStyle('square_root')={}".format(self.getStyle('square_root') )) # for testing; delete later
+            inner_str = inner_str + r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
+        else:
+            if self.getStyle('square_root') == 'inline':
+                inner_str = r'sqrt(' + self.base.formatted(formatType, fence=True, forceFence=True) + ')}'
+            elif self.getStyle('square_root') == 'radical':
+                if formatType == 'string':
+                    inner_str = r'sqrt(' + self.base.formatted(formatType, fence=True, forceFence=True) + ')'
+                elif formatType == 'latex':
+                    inner_str = r'\sqrt{' + self.base.formatted(formatType, fence=True, forceFence=True) + '}'
+        print("    inner_str={}".format(inner_str))                             # for testing; delete later
         # only fence if forceFence=True (nested exponents is an
         # example of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
         return maybeFencedString(inner_str, **kwargs)
+
+    ## Original Exp formatted method below (without the print statements)
+    # def formatted(self, formatType, **kwargs):
+    #     print("Entering Exp formatted() method.")                               # for testing; delete later
+    #     inner_str = self.base.formatted(formatType, fence=True, forceFence=True) + r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
+    #     print("    inner_str={}".format(inner_str))                             # for testing; delete later
+    #     # only fence if forceFence=True (nested exponents is an
+    #     # example of when fencing must be forced)
+    #     kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+    #     return maybeFencedString(inner_str, **kwargs)
     
     def distributeExponent(self, assumptions=frozenset()):
         from proveit.number import Div
@@ -304,3 +348,16 @@ class ExpSetMembership(Membership):
     def sideEffects(self, knownTruth):
         return
         yield
+
+# outside any specific class
+def sq_rt(base):
+    '''
+    Special function for square root version of an exponential.
+    Formatting depends on the argument supplied to the withStyles()
+    method called on the Expression superclass, which then sets
+    things up so the Exp latex() method will display the expression
+    using a traditional square root radical. If you want a square
+    root to be displayed more literally as a base to the 1/2 power,
+    use Exp(_, frac(1/2)) directly.
+    '''
+    return Exp(base, frac(one, two)).withStyles(square_root='radical')
