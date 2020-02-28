@@ -9,6 +9,7 @@ from .numeral import zero, one, two, three, four, five, six, seven, eight, nine,
 from .addition import Add, subtract, dist_subtract, dist_add
 from .negation import Neg
 from .multiplication import Mult
+from .product import Prod
 from .division import Div, frac
 from .exponentiation import Exp, sqrt
 from .summation import Sum
