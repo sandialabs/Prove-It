@@ -96,8 +96,8 @@ class Exp(Operation):
 
     def styleOptions(self):
         options = StyleOptions(self)
-        options.add('square_root',
-                    "'inline': uses 'sqrt()';'radical': uses radical symbol")
+        options.add('radical',
+                    "'sqrt': 'uses std sqrt radical'")
         return options
 
     def string(self, **kwargs):
@@ -105,8 +105,8 @@ class Exp(Operation):
 
     def latex(self, **kwargs):
         print("Entering Exp latex() method.")                                   # for testing; delete later
-        print("    self.getStyle('square_root') = {}".
-              format(self.getStyle('square_root')))                             # for testing; delete later
+        print("    self.getStyle('radical') = {}".
+              format(self.getStyle('radical')))                                 # for testing; delete later
         return self.formatted('latex', **kwargs)
 
     # def latex(self, **kwargs):
@@ -118,22 +118,16 @@ class Exp(Operation):
     #         return Operation.latex(self,**kwargs) # normal division
             
     def formatted(self, formatType, **kwargs):
-        print("Entering Exp formatted() method.")                               # for testing; delete later
         # begin building the inner_str
         inner_str = self.base.formatted(formatType, fence=True, forceFence=True)
-        print("    (1) inner_str={}".format(inner_str))                         # for testing; delete later
-        if self.getStyle('square_root') == None:
-            print("    self.getStyle('square_root')={}".format(self.getStyle('square_root') )) # for testing; delete later
+        if self.getStyle('radical') == None:
             inner_str = inner_str + r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
         else:
-            if self.getStyle('square_root') == 'inline':
-                inner_str = r'sqrt(' + self.base.formatted(formatType, fence=True, forceFence=True) + ')}'
-            elif self.getStyle('square_root') == 'radical':
+            if self.getStyle('radical') == 'sqrt':
                 if formatType == 'string':
                     inner_str = r'sqrt(' + self.base.formatted(formatType, fence=True, forceFence=True) + ')'
                 elif formatType == 'latex':
                     inner_str = r'\sqrt{' + self.base.formatted(formatType, fence=True, forceFence=True) + '}'
-        print("    inner_str={}".format(inner_str))                             # for testing; delete later
         # only fence if forceFence=True (nested exponents is an
         # example of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
@@ -225,12 +219,13 @@ class Exp(Operation):
         Last Modified: 2/20/2020 by wdc. Creation.
         Once established, these authorship notations can be deleted.
         '''
-
+        print("Entering Exp.deduceInNumberSet()")                               # for testing; delete later
+        print("    self = {}".format(self))                                     # for testing; delete later
         from proveit.logic import InSet
         from proveit.number.exponentiation._theorems_ import (
                   expComplexClosure, expNatClosure, expRealClosure,
                   expRealClosureExpNonZero,expRealClosureBasePos,
-                  expRealPosClosure)
+                  expRealPosClosure, sqrtComplexClosure, sqrtRealPosClosure)
         from proveit.number import Complexes, NaturalsPos, Reals, RealsPos
 
         if number_set == NaturalsPos:
@@ -268,12 +263,21 @@ class Exp(Operation):
                     raise Exception(err_string)
 
         if number_set == RealsPos:
-            return expRealPosClosure.specialize(
-                            {a:self.base, b:self.exponent},
-                            assumptions=assumptions)
+            print("number_set == RealsPos, self = {}".format(self))             # for testing; delete later
+            if self.getStyle('radical') == 'sqrt':
+                return sqrtRealPosClosure.specialize(
+                        {a:self.base},assumptions=assumptions)
+            else:
+                print("radical style was NOT sqrt")                             # for testing; delete later
+                return expRealPosClosure.specialize(
+                        {a:self.base, b:self.exponent},assumptions=assumptions)
 
         if number_set == Complexes:
-            return expComplexClosure.specialize(
+            if self.getStyle('radical') == 'sqrt':
+                return sqrtComplexClosure.specialize(
+                        {a:self.base}, assumptions=assumptions)
+            else:
+                return expComplexClosure.specialize(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
 
@@ -360,6 +364,6 @@ def sqrt(base):
     using a traditional square root radical. If you want a square
     root to be displayed more literally as a base to the 1/2 power,
     use Exp(_, frac(1/2)) directly.
-    Could later generalize this to cuber roots or even nth roots.
+    Could later generalize this to cube roots or general nth roots.
     '''
-    return Exp(base, frac(one, two)).withStyles(square_root='radical')
+    return Exp(base, frac(one, two)).withStyles(radical='sqrt')

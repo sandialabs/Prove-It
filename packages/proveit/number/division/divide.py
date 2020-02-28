@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, StyleOptions, maybeFencedLatex
+from proveit import (Literal, maybeFencedLatex, Operation, StyleOptions,
+                     USE_DEFAULTS)
 
 class Div(Operation):
     # operator of the Add operation
@@ -119,6 +120,26 @@ class Div(Operation):
         else:
             raise Exception("Unsupported operand type to distribute over: " + self.numerator.__class__)
     
+    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+        '''
+        Given a number set number_set, attempt to prove that the given
+        expression is in that number set using the appropriate closure
+        theorem.
+        Created: 2/27/2020 by wdc, based on the same method in the Add
+                 class. Just a start on this method, to be cont'd.
+        Last Modified: 2/27/2020 by wdc. Creation.
+        Once established, these authorship notations can be deleted.
+        '''
+        from proveit._common_ import a, b
+        from proveit.logic import InSet
+        from proveit.number.division._theorems_ import divRealClosure
+        from proveit.number import Reals
+
+        if number_set == Reals:
+            return divRealClosure.specialize(
+                {a:self.numerator, b:self.denominator},
+                assumptions=assumptions)
+
     """
     def factor(self,theFactor,pull="left", groupFactor=False, groupRemainder=None, assumptions=frozenset()):
         '''
