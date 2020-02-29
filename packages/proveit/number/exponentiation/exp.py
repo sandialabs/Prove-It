@@ -223,7 +223,7 @@ class Exp(Operation):
         theorem. This method uses specialized thms for the sqrt() cases.
         Created: 2/20/2020 by wdc, based on the same method in the Add
                  class.
-        Last modified: 2/28/2020 by wdc. Adding specialization for
+        Last modified: 2/28/2020 by wdc. Added specialization for
                        sqrt() cases created using the sqrt() fxn.
         Last Modified: 2/20/2020 by wdc. Creation.
         Once established, these authorship notations can be deleted.
