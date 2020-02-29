@@ -30,7 +30,8 @@ class Exp(Operation):
         elif numberSet == Reals:
             return real.theorems.powClosure
         elif numberSet == RealsPos:
-            if self.exponent != two: # otherwise, use deduceInRealsPosDirectly(..)
+            if self.exponent != two: # otherwise, use
+                                     # deduceInRealsPosDirectly(..)
                 return real.theorems.powPosClosure            
         elif numberSet == Complexes:
             return complex.theorems.powClosure
@@ -38,8 +39,9 @@ class Exp(Operation):
     def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one exponent or zero or one base,
-        derive and return this exponential expression equated with a simplified form.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        derive and return this exponential expression equated with a
+        simplified form. Assumptions may be necessary to deduce
+        necessary conditions for the simplification.
         '''
         from proveit.number import zero, one
         from .theorems import expZeroEqOne, exponentiatedZero, exponentiatedOne
@@ -104,62 +106,61 @@ class Exp(Operation):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        print("Entering Exp latex() method.")                                   # for testing; delete later
-        print("    self.getStyle('radical') = {}".
-              format(self.getStyle('radical')))                                 # for testing; delete later
         return self.formatted('latex', **kwargs)
-
-    # def latex(self, **kwargs):
-    #     if self.getStyle('division')=='fraction':
-    #         # only fence if forceFence=True (a fraction within an exponentiation is an example of when fencing should be forced)
-    #         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
-    #         return maybeFencedLatex(r'\frac{'+self.numerator.latex()+'}{'+self.denominator.latex()+'}', **kwargs)
-    #     else:
-    #         return Operation.latex(self,**kwargs) # normal division
             
     def formatted(self, formatType, **kwargs):
         # begin building the inner_str
         inner_str = self.base.formatted(formatType, fence=True, forceFence=True)
         if self.getStyle('radical') == None:
-            inner_str = inner_str + r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
+            inner_str = (
+                    inner_str
+                    + r'^{'+self.exponent.formatted(formatType, fence=False)
+                    + '}')
         else:
             if self.getStyle('radical') == 'sqrt':
                 if formatType == 'string':
-                    inner_str = r'sqrt(' + self.base.formatted(formatType, fence=True, forceFence=True) + ')'
+                    inner_str = (
+                            r'sqrt('
+                            + self.base.formatted(formatType, fence=True,
+                                                  forceFence=True)
+                            + ')')
                 elif formatType == 'latex':
-                    inner_str = r'\sqrt{' + self.base.formatted(formatType, fence=True, forceFence=True) + '}'
+                    inner_str = (
+                            r'\sqrt{'
+                            + self.base.formatted(formatType, fence=True,
+                                                  forceFence=True)
+                            + '}')
         # only fence if forceFence=True (nested exponents is an
         # example of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
+        kwargs['fence'] = (
+            kwargs['forceFence'] if 'forceFence' in kwargs else False)
         return maybeFencedString(inner_str, **kwargs)
-
-    ## Original Exp formatted method below (without the print statements)
-    # def formatted(self, formatType, **kwargs):
-    #     print("Entering Exp formatted() method.")                               # for testing; delete later
-    #     inner_str = self.base.formatted(formatType, fence=True, forceFence=True) + r'^{'+self.exponent.formatted(formatType, fence=False) + '}'
-    #     print("    inner_str={}".format(inner_str))                             # for testing; delete later
-    #     # only fence if forceFence=True (nested exponents is an
-    #     # example of when fencing must be forced)
-    #     kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False        
-    #     return maybeFencedString(inner_str, **kwargs)
     
     def distributeExponent(self, assumptions=frozenset()):
         from proveit.number import Div
-        from proveit.number.division.theorems import fracIntExpRev, fracNatPosExpRev
+        from proveit.number.division.theorems import (
+                fracIntExpRev, fracNatPosExpRev)
         if isinstance(self.base, Div):
             exponent = self.exponent
             try:
                 deduceInNaturalsPos(exponent, assumptions)
-                deduceInComplexes([self.base.numerator, self.base.denominator], assumptions)
+                deduceInComplexes([self.base.numerator, self.base.denominator],
+                                  assumptions)
                 deduceNotZero(self.base.denominator, assumptions)
-                return fracNatPosExpRev.specialize({n:exponent}).specialize({a:self.numerator.base, b:self.denominator.base})
+                return fracNatPosExpRev.specialize(
+                        {n:exponent}).specialize(
+                            {a:self.numerator.base, b:self.denominator.base})
             except:
                 deduceInIntegers(exponent, assumptions)
-                deduceInComplexes([self.base.numerator, self.base.denominator], assumptions)
+                deduceInComplexes([self.base.numerator, self.base.denominator],
+                                  assumptions)
                 deduceNotZero(self.base.numerator, assumptions)
                 deduceNotZero(self.base.denominator, assumptions)
-                return fracIntExpRev.specialize({n:exponent}).specialize({a:self.base.numerator, b:self.base.denominator})
-        raise Exception('distributeExponent currently only implemented for a fraction base')
+                return fracIntExpRev.specialize(
+                        {n:exponent}).specialize(
+                            {a:self.base.numerator, b:self.base.denominator})
+        raise Exception('distributeExponent currently only implemented for a '
+                        'fraction base')
         
     def raiseExpFactor(self, expFactor, assumptions=frozenset()):
         from proveit.number import Neg
@@ -173,11 +174,15 @@ class Exp(Operation):
         if not hasattr(b_times_c, 'factor'):
             raise Exception('Exponent not factorable, may not raise the '
                             'exponent factor.')
-        factorEq = b_times_c.factor(expFactor, pull='right', groupRemainder=True, assumptions=assumptions)
+        factorEq = b_times_c.factor(expFactor, pull='right',
+                                    groupRemainder=True,
+                                    assumptions=assumptions)
         if factorEq.lhs != factorEq.rhs:
             # factor the exponent first, then raise this exponent factor
             factoredExpEq = factorEq.substitution(self)
-            return factoredExpEq.applyTransitivity(factoredExpEq.rhs.raiseExpFactor(expFactor, assumptions=assumptions))
+            return factoredExpEq.applyTransitivity(
+                    factoredExpEq.rhs.raiseExpFactor(expFactor,
+                                                     assumptions=assumptions))
         nSub = b_times_c.operands[1]
         aSub = self.base
         bSub = b_times_c.operands[0]
@@ -188,9 +193,11 @@ class Exp(Operation):
 
     def lowerOuterExp(self, assumptions=frozenset()):
         from proveit.number import Neg
-        from .theorems import intExpOfExp, intExpOfNegExp, negIntExpOfExp, negIntExpOfNegExp
+        from .theorems import (
+                intExpOfExp, intExpOfNegExp, negIntExpOfExp, negIntExpOfNegExp)
         if not isinstance(self.base, Exp):
-            raise Exception('May only apply lowerOuterExp to nested Exp operations')
+            raise Exception('May only apply lowerOuterExp to nested '
+                            'Exp operations')
         if isinstance(self.base.exponent, Neg) and isinstance(self.exponent, Neg):
             b_, n_ = self.base.exponent.operand, self.exponent.operand
             thm = negIntExpOfNegExp
@@ -213,19 +220,20 @@ class Exp(Operation):
         '''
         Given a number set number_set, attempt to prove that the given
         expression is in that number set using the appropriate closure
-        theorem.
+        theorem. This method uses specialized thms for the sqrt() cases.
         Created: 2/20/2020 by wdc, based on the same method in the Add
                  class.
+        Last modified: 2/28/2020 by wdc. Adding specialization for
+                       sqrt() cases created using the sqrt() fxn.
         Last Modified: 2/20/2020 by wdc. Creation.
         Once established, these authorship notations can be deleted.
         '''
-        print("Entering Exp.deduceInNumberSet()")                               # for testing; delete later
-        print("    self = {}".format(self))                                     # for testing; delete later
         from proveit.logic import InSet
         from proveit.number.exponentiation._theorems_ import (
                   expComplexClosure, expNatClosure, expRealClosure,
                   expRealClosureExpNonZero,expRealClosureBasePos,
-                  expRealPosClosure, sqrtComplexClosure, sqrtRealPosClosure)
+                  expRealPosClosure, sqrtComplexClosure, sqrtRealClosure,
+                  sqrtRealPosClosure)
         from proveit.number import Complexes, NaturalsPos, Reals, RealsPos
 
         if number_set == NaturalsPos:
@@ -245,30 +253,32 @@ class Exp(Operation):
             # above; in the meantime, allowing for 2 possibilities here:
             # if base is positive real, exp can be any real;
             # if base is real ≥ 0, exp must be non-zero
-            err_string = ''
-            try:
-                return expRealClosureBasePos.specialize(
-                        {a:self.base, b:self.exponent},
-                        assumptions=assumptions)
-            except:
-                err_string = 'Positive base condition failed '
+            if self.getStyle('radical') == 'sqrt':
+                return sqrtRealClosure.specialize(
+                        {a:self.base},assumptions=assumptions)
+            else:
+                err_string = ''
                 try:
-                    return expRealClosureExpNonZero.specialize(
+                    return expRealClosureBasePos.specialize(
                             {a:self.base, b:self.exponent},
                             assumptions=assumptions)
                 except:
-                    err_string += ('and non-zero exponent condition failed. '
-                                   'Need base ≥ 0 and exponent ≠ 0, OR '
-                                   'base > 0.')
-                    raise Exception(err_string)
+                    err_string = 'Positive base condition failed '
+                    try:
+                        return expRealClosureExpNonZero.specialize(
+                                {a:self.base, b:self.exponent},
+                                assumptions=assumptions)
+                    except:
+                        err_string += (
+                            'and non-zero exponent condition failed. '
+                            'Need base ≥ 0 and exponent ≠ 0, OR base > 0.')
+                        raise Exception(err_string)
 
         if number_set == RealsPos:
-            print("number_set == RealsPos, self = {}".format(self))             # for testing; delete later
             if self.getStyle('radical') == 'sqrt':
                 return sqrtRealPosClosure.specialize(
                         {a:self.base},assumptions=assumptions)
             else:
-                print("radical style was NOT sqrt")                             # for testing; delete later
                 return expRealPosClosure.specialize(
                         {a:self.base, b:self.exponent},assumptions=assumptions)
 
