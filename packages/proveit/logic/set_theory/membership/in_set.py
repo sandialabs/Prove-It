@@ -21,6 +21,16 @@ class InSet(Operation):
                                 "is not derived from %s as it should be."
                                 %(self.domain, self.membershipObject.__class__, 
                                   Membership))
+
+    # trying this as a temporary measure
+    # the operand_or_operands[0] really doesn't catch the problem
+    # but might be sufficient to push some things through
+    @staticmethod
+    def extractInitArgValue(argName, operator_or_operators, operand_or_operands):
+        if argName=='element':
+            return operand_or_operands[0]
+        if argName=='domain':
+            return operand_or_operands[-1]
     
     def __dir__(self):
         '''

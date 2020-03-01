@@ -1,5 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
 from proveit.logic import Equals, InSet
+from proveit.number import num
 from proveit.number.sets import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
@@ -420,26 +421,49 @@ class Mult(Operation):
                 expr = expr.rhs.group(endIdx=-numFactorOperands, assumptions=assumptions)
         return Equals(self, expr.rhs)
         
-    def exponentCombination(self, startIdx=None, endIdx=None, assumptions=USE_DEFAULTS):
+    def exponentCombination(self, startIdx=None, endIdx=None,
+                            assumptions=USE_DEFAULTS):
         '''
-        Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$,  $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b},
-        or equates $a^c b^c$ to $(a b)^c$.
+        Equates $a^b a^c$ to $a^{b+c}$, $a^b a^{-c}$ to $a^{b-c}$, 
+        $a^b a$ to $a^{b+1}, $a a^b$ to $a^{1+b}, or
+        $a^c b^c$ to $(a b)^c$.
         '''
-        from proveit.number.exponentiation._theorems_ import expOfPositivesProd, intExpOfProd, natsPosExpOfProd
-        from proveit.number.exponentiation._theorems_ import sumInExp, diffInExp, diffFracInExp
-        from proveit.number.exponentiation._theorems_ import addOneRightInExp, addOneLeftInExp
-        from proveit.number.exponentiation._theorems_ import prodOfSqrts
-        from proveit.number import Sqrt, Exp, Neg, Div
+        from proveit._common_ import n, xx
+        from proveit.number.exponentiation._theorems_ import (
+                expOfPositivesProd, intExpOfProd, natsPosExpOfProd)
+        from proveit.number.exponentiation._theorems_ import (
+                sumInExp, diffInExp, diffFracInExp)
+        from proveit.number.exponentiation._theorems_ import (
+                addOneRightInExp, addOneLeftInExp)
+        # from proveit.number.exponentiation._theorems_ import prodOfSqrts
+        from proveit.number.exponentiation._theorems_ import sqrtOfProd
+        from proveit.number import one, sqrt, Exp, Neg, Div
         if startIdx is not None or endIdx is not None:
             dummyVar = self.safeDummyVar()
             grouped = self.group(startIdx, endIdx, assumptions=assumptions)
-            innerCombination = grouped.rhs.factors[startIdx].exponentCombination(assumptions=assumptions)
-            combineInGroup = innerCombination.substitution(Mult(*(self.factors[:startIdx] + (dummyVar,) + self.factors[endIdx:])), dummyVar)
+            innerCombination = (
+                grouped.rhs.factors[startIdx].
+                exponentCombination(assumptions=assumptions))
+            combineInGroup = (
+                innerCombination.
+                substitution(Mult(*(self.factors[:startIdx]
+                                    + (dummyVar,)
+                                    + self.factors[endIdx:])), dummyVar))
             return grouped.applyTransitivity(combineInGroup)
-        if all(isinstance(factor, Sqrt) for factor in self.factors):
+        # if all(isinstance(factor, Sqrt) for factor in self.factors):
+        #     # combine the square roots into one square root
+        #     factorBases = [factor.base for factor in self.factors]
+        #     return prodOfSqrts.specialize({xMulti:factorBases},
+        #                                   assumptions=assumptions)
+        # the following sqrt specialization modified by wdc on 2/29/2020
+        # based on the above-commented-out code (kept here temporarily
+        # until we're sure this works ok)
+        if all(factor.getStyle('radical') == 'sqrt' for factor in self.factors):
             # combine the square roots into one square root
             factorBases = [factor.base for factor in self.factors]
-            return prodOfSqrts.specialize({xMulti:factorBases}, assumptions=assumptions)
+            return sqrtOfProd.specialize(
+                    {n:num(len(factorBases)), xx:factorBases},
+                    assumptions=assumptions)
         if len(self.operands) != 2 or not isinstance(self.operands[0], Exp) or not isinstance(self.operands[1], Exp):
             if len(self.operands) == 2 and isinstance(self.operands[0], Exp) and self.operands[0].base == self.operands[1]:
                 # Of the form a^b a
@@ -480,8 +504,11 @@ class Mult(Operation):
             except:
                 return expOfPositivesProd.specialize({c:expSub}, assumptions=assumptions).deriveReversed(assumptions).specialize({a:aSub, b:bSub}, assumptions=assumptions)
         else:
-            raise Exception('Product is not in the correct form to combine exponents: ' + str(self))
-        return thm.specialize({a:aSub, b:bSub, c:cSub}, assumptions=assumptions).deriveReversed(assumptions)
+            raise Exception('Product is not in the correct form to '
+                            'combine exponents: ' + str(self))
+        return thm.specialize(
+                {a:aSub, b:bSub, c:cSub},
+                assumptions=assumptions).deriveReversed(assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
