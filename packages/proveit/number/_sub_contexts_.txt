@@ -5,6 +5,7 @@ negation
 ordering
 multiplication
 division
+divisibility
 modular
 exponentiation
 summation
