@@ -1,0 +1,1 @@
+A temporary context for our first pass at a proof that the sqrt of 2 is irrational
