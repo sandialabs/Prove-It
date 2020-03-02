@@ -117,48 +117,6 @@ class Forall(OperationOverInstances):
         and then call specialize on the KnownTruth.
         '''
         return self.prove(assumptions).specialize(specializeMap, relabelMap, assumptions=assumptions)
-
-    def _specializeUnravelingTheorem(self, theorem, *instanceVarLists):
-        raise NotImplementedError("Need to update")
-        assert len(self.instanceVars) > 1, "Can only unravel a forall statement with multiple instance variables"
-        if len(instanceVarLists) == 1:
-            raise ValueError("instanceVarLists should be a list of 2 or more Variable lists")
-        if len(instanceVarLists) > 2:
-            return self.deriveUnraveled(ExprTuple(instanceVarLists[:-1]), instanceVarLists[-1]).deriveUnraveled(*instanceVarLists[:-1]).checked({self})
-        outerVars, innerVars = instanceVarLists
-        outerVarSet, innerVarSet = set(outerVars), set(innerVars)
-        assert innerVarSet | outerVarSet == set(self.instanceVars), "outerVars and innterVars must combine to the full set of instance variables"
-        assert innerVarSet.isdisjoint(outerVarSet), "outerVars and innterVars must be disjoint sets"
-        innerConditions = []
-        outerConditions = []
-        for condition in self.conditions:
-            if condition.freeVars().isdisjoint(innerVars):
-                outerConditions.append(condition)
-            else: innerConditions.append(condition)
-        P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
-        Q_op, Q_op_sub = Operation(Qmulti, outerVars), outerConditions
-        R_op, R_op_sub = Operation(Rmulti, innerVars), innerConditions
-        return theorem.specialize({xMulti:outerVars, yMulti:innerVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}) 
-           
-    def deriveUnraveled(self, instanceVarLists, assumptions=USE_DEFAULTS):
-        '''
-        From a multi-variable forall statement, derive the nested, unravelled forall statement.  For example,
-        forall_{x, y | Q(x), R(y)} P(x, y) becomes forall_{x | Q(x)} forall_{y | R(y)} P(x, y).
-        The instanceVarLists should be a list of lists of instanceVars, in the same order as the original
-        instanceVars, to indicate how to break up the nested forall statements.
-        '''
-        from ._theorems_ import unraveling
-        return self._specializeUnravelingTheorem(unraveling, instanceVarLists).deriveConclusion(assumptions)
-        
-    def deriveUnraveledEquiv(self, instanceVarLists):
-        '''
-        From a multi-variable forall statement, derive its equivalence with a nested, unravelled forall statement.
-        For example, forall_{x, y in DOMAIN | Q(x), R(y)} P(x, y) = forall_{x in DOMAIN | Q(x)} forall_{y in DOMAIN | R(y)} P(x, y).
-        The instanceVarLists should be a list of lists of instanceVars, in the same order as the original
-        instanceVars, to indicate how to break up the nested forall statements.
-        '''
-        from ._theorems_ import bundledEquiv
-        return self._specializeUnravelingTheorem(bundledEquiv, instanceVarLists)
         
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
@@ -166,12 +124,13 @@ class Forall(OperationOverInstances):
         by calling the condition's forallEvaluation method
         '''
         assert self.hasDomain(), "Cannot automatically evaluate a forall statement with no domain"
-        if len(self.instanceVars) == 1:
+
+        if len(list(self.instanceVarLists())) == 1:
             # Use the domain's forallEvaluation method
             return self.domain.forallEvaluation(self, assumptions)
         else:
             # Evaluate an unravelled version
-            unravelledEquiv = self.deriveUnraveledEquiv(*[[var] for var in self.instanceVars])
+            unravelledEquiv = self.deriveUnraveledEquiv([var for var in (list(self.instanceVarLists()))])
             return unravelledEquiv.rhs.evaluation(assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
@@ -184,12 +143,3 @@ class Forall(OperationOverInstances):
         P_op, P_op_sub = Operation(P, self.instanceVars), self.instanceExpr
         Q_op, Q_op_sub = Operation(Qmulti, self.instanceVars), self.conditions
         return forallInBool.specialize({P_op:P_op_sub, Q_op:Q_op_sub, xMulti:self.instanceVars, S:self.domain})
-
-    def unraveled(self):
-        remainingConditions = self.conditions
-        expr = self.instanceExpr
-        for ivar in reversed(self.instanceVars):
-            localConditions = [conditions for conditions in remainingConditions if ivar in conditions.freeVars()]
-            expr = Forall(ivar, expr, conditions=localConditions)
-            remainingConditions = [conditions for conditions in remainingConditions if conditions not in localConditions]
-        return expr

@@ -327,8 +327,7 @@ class ExpSetMembership(Membership):
         #print(exponent, base, exponent.asInt(),element, domain, len(element))
         if isLiteralInt(exponent):
             if exponent == zero:
-                return exp_set_0.specialize({x:element, S:base},
-                                            assumptions=assumptions)
+                return exp_set_0.specialize({S:base}, assumptions=assumptions)
             if len(element) != exponent.asInt():
                 raise ProofFailure(
                     elem_in_set, assumptions,

@@ -27,6 +27,9 @@ inRealsNeg_inComplexes
 inRealsPos_iff_positive = Forall(a, Iff(InSet(a, RealsPos), GreaterThan(a, zero)), domain=Reals)
 inRealsPos_iff_positive
 
+inRationalsPos_iff_positive = Forall(a, Iff(InSet(a, RationalsPos), Greater(a, zero)), domain=Rationals)
+inRationalsPos_iff_positive
+
 inRealsNeg_iff_negative = Forall(a, Iff(InSet(a, RealsNeg), LessThan(a, zero)), domain=Reals)
 inRealsNeg_iff_negative
 

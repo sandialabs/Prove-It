@@ -1,1 +1,1 @@
-rational and irrational numbers
+includes irrational numbers (e.g., the square root of 2 is not rational)

@@ -1,3 +1,4 @@
 integer
+rational
 real
 complex
