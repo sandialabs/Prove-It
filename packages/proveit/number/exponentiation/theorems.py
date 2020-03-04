@@ -1,7 +1,7 @@
 from proveit import Etcetera
 from proveit.logic import Forall, InSet, Equals, NotEquals
 from proveit.number import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
-from proveit.number import Exp, Sqrt, Add, Mult, Sub, Neg, frac, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
+from proveit.number import Exp, sqrt, Add, Mult, Sub, Neg, frac, Abs, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals
 from proveit.common import a, b, c, d, n, x, y, z, xEtc, xMulti
 from proveit.number.common import zero, one, two
 from proveit import beginTheorems, endTheorems
@@ -23,14 +23,14 @@ expComplexClosure = Forall([a, b], InSet(Exp(a, b), Complexes), domain=Complexes
                     conditions=[NotEquals(a, zero)])
 expComplexClosure
 
-sqrtRealClosure = Forall([a], InSet(Sqrt(a), Reals), domain=Reals,
+sqrtRealClosure = Forall([a], InSet(sqrt(a), Reals), domain=Reals,
                          conditions=[GreaterThanEquals(a, zero)])
 sqrtRealClosure
 
-sqrtRealPosClosure = Forall([a], InSet(Sqrt(a), RealsPos), domain=RealsPos)
+sqrtRealPosClosure = Forall([a], InSet(sqrt(a), RealsPos), domain=RealsPos)
 sqrtRealPosClosure
 
-sqrtComplexClosure = Forall([a], InSet(Sqrt(a), Complexes), domain=Complexes)
+sqrtComplexClosure = Forall([a], InSet(sqrt(a), Complexes), domain=Complexes)
 sqrtComplexClosure
 
 # Should generalize to even power closure, but need to define and implement evens set to do this.
@@ -228,17 +228,17 @@ sameExpDistribute = Forall([x,y,z],
                             domain = Complexes)
 sameExpDistribute
 
-sqrtOfProd = Forall(xEtc, Equals(Sqrt(Mult(xEtc)),
-                              Mult(Etcetera(Sqrt(xMulti)))),
+sqrtOfProd = Forall(xEtc, Equals(sqrt(Mult(xEtc)),
+                              Mult(Etcetera(sqrt(xMulti)))),
                   domain=RealsPos)
 sqrtOfProd
 
-prodOfSqrts = Forall(xEtc, Equals(Mult(Etcetera(Sqrt(xMulti))),
-                                  Sqrt(Mult(xEtc))),
+prodOfSqrts = Forall(xEtc, Equals(Mult(Etcetera(sqrt(xMulti))),
+                                  sqrt(Mult(xEtc))),
                      domain=RealsPos)
 prodOfSqrts
 
-sqrtTimesItself = Forall(x, Equals(Mult(Sqrt(x), Sqrt(x)), x),
+sqrtTimesItself = Forall(x, Equals(Mult(sqrt(x), sqrt(x)), x),
                          domain=Reals, conditions=[GreaterThanEquals(x, zero)])
 sqrtTimesItself
 

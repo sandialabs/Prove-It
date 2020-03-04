@@ -262,8 +262,11 @@ class OperationOverInstances(Operation):
             return None
         elif argName=='conditions':
             # return the joined conditions excluding domain conditions
-            return singleOrCompositeExpression(
+            conditions = compositeExpression(
                 OperationOverInstances.explicitConditions(self))
+            if len(conditions)==0:
+                conditions = tuple() # set to match the "default"
+            return conditions
     
     @classmethod
     def _make(cls, coreInfo, styles, subExpressions):
