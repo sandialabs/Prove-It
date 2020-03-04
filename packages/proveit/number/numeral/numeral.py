@@ -123,7 +123,7 @@ class NumeralSequence(Operation, IrreducibleValue):
             return Equals(self, self).prove()
         pass # need axioms/theorems to prove inequality amongst different numerals
     
-    def notEquals(self, other, assumptions=USE_DEFAULTS):
+    def notEqual(self, other, assumptions=USE_DEFAULTS):
         # same method works for Numeral and NumeralSequence.
         return Numeral.notEquals(self, other, assumptions=assumptions)
     
