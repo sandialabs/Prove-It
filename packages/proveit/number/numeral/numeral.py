@@ -1,5 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 from proveit.logic import IrreducibleValue, Equals
+from proveit._common_ import a, b
 
 class Numeral(Literal, IrreducibleValue):
     _inNaturalsStmts = None # initializes when needed
@@ -18,6 +19,15 @@ class Numeral(Literal, IrreducibleValue):
         if other==self:
             return Equals(self, self).prove()
         pass # need axioms/theorems to prove inequality amongst different numerals
+    
+    def notEqual(self, other, assumptions=USE_DEFAULTS):
+        from proveit.number import Less
+        from proveit.number.ordering._theorems_ import lessIsNotEq, gtrIsNotEq
+        _a, _b = Less.sorted_items([self, other], assumptions=assumptions)
+        if self==_a:
+            return lessIsNotEq.specialize({a:_a, b:_b}, assumptions=assumptions)
+        else:
+            return gtrIsNotEq.specialize({a:_b, b:_a}, assumptions=assumptions)
 
     def remakeArguments(self):
         '''
@@ -75,12 +85,14 @@ class Numeral(Literal, IrreducibleValue):
             Numeral._inNaturalsStmts = {0:zeroInNats, 1:nat1, 2:nat2, 3:nat3, 4:nat4, 5:nat5, 6:nat6, 7:nat7, 8:nat8, 9:nat9}
         return Numeral._inNaturalsStmts[self.n]
     
+    '''
     def deduceNotZero(self):
         if Numeral._notZeroStmts is None:
             from .deci._theorems_ import oneNotZero, twoNotZero, threeNotZero, fourNotZero, fiveNotZero
             from .deci._theorems_ import sixNotZero, sevenNotZero, eightNotZero, nineNotZero
             Numeral._notZeroStmts = {1:oneNotZero, 2:twoNotZero, 3:threeNotZero, 4:fourNotZero, 5:fiveNotZero, 6:sixNotZero, 7:sevenNotZero, 8:eightNotZero, 9:nineNotZero}
         return Numeral._notZeroStmts[self.n]
+    '''
 
     def deduceInNaturalsPos(self):
         if Numeral._inNaturalsPosStmts is None:
@@ -110,7 +122,11 @@ class NumeralSequence(Operation, IrreducibleValue):
         if other==self:
             return Equals(self, self).prove()
         pass # need axioms/theorems to prove inequality amongst different numerals
-            
+    
+    def notEquals(self, other, assumptions=USE_DEFAULTS):
+        # same method works for Numeral and NumeralSequence.
+        return Numeral.notEquals(self, other, assumptions=assumptions)
+    
     def _formatted(self, formatType, **kwargs):
         return ''.join(digit.formatted(formatType) for digit in self.digits)
 
