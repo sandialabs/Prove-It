@@ -13,10 +13,32 @@ class Exp(Operation):
         r'''
         Raise base to exponent power.
         '''
-        Operation.__init__(self, Exp._operator_, (base, exponent))
+        Operation.__init__(self, Exp._operator_, (base, exponent),
+                           styles={'exponent':'raised'})
         self.base = base
         self.exponent = exponent
 
+    def remakeConstructor(self):
+        if self.getStyle('exponent') == 'radical':
+            # Use a different constructor if using the 'radical' style.
+            if self.exponent == frac(one, two):
+                return 'sqrt' 
+            else:
+                raise ValueError("Unkown radical type, exponentiating to the power "
+                                 "of %s"%str(self.exponent))
+        return Operation.remakeConstructor(self)
+    
+    def remakeArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the Operation.
+        '''
+        if self.getStyle('exponent') == 'radical':
+            yield self.base
+        else:
+            yield self.base
+            yield self.exponent
+    
     def membershipObject(self, element):
         return ExpSetMembership(element, self)
     
@@ -43,44 +65,32 @@ class Exp(Operation):
         simplified form. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
         '''
-        from proveit.number import zero, one
-        from .theorems import expZeroEqOne, exponentiatedZero, exponentiatedOne
-        from .theorems import expOne
-        if self.exponent == zero:
-            return expZeroEqOne.specialize({a:self.base})
-        elif self.exponent == one:
-            return expOne.specialize({a:self.base})
-        elif self.base == zero:
-            return exponentiatedZero.specialize({x:self.exponent})
-        elif self.base == one:
-            return exponentiatedOne.specialize({x:self.exponent})
-        else:
-            raise ValueError('Only trivial simplification is implemented '
-                             '(zero or one for the base or exponent).')
+        from proveit.logic import Equals
+        from proveit.number import one
+        from ._theorems_ import complexXToFirstPowerIsX
+        if self.exponent == one:
+            return complexXToFirstPowerIsX.specialize({a:self.base})
+        return Equals(self, self).prove()
 
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         For trivial cases, a zero or one exponent or zero or one base,
         derive and return this exponential expression equated with a
-        simplified form. Assumptions may be necessary to deduce
+        evaluated form. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
         '''
         from proveit.number import zero, one
-        from .theorems import expZeroEqOne, exponentiatedZero, exponentiatedOne
-        from .theorems import expOne
+        from ._theorems_ import expZeroEqOne, exponentiatedZero, exponentiatedOne
         if self.exponent == zero:
-            return expZeroEqOne.specialize({a:self.base})
-        elif self.exponent == one:
-            return expOne.specialize({a:self.base})
+            return expZeroEqOne.specialize({a:self.base}) # =1
         elif self.base == zero:
-            return exponentiatedZero.specialize({x:self.exponent})
+            return exponentiatedZero.specialize({x:self.exponent}) # =0
         elif self.base == one:
-            return exponentiatedOne.specialize({x:self.exponent})
+            return exponentiatedOne.specialize({x:self.exponent}) # =1
         else:
             raise ValueError('Only trivial simplification is implemented '
                              '(zero or one for the base or exponent).')
                 
-        
     def deduceInRealsPosDirectly(self, assumptions=frozenset()):
         import real.theorems
         from number import two
@@ -88,7 +98,7 @@ class Exp(Operation):
             deduceInReals(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
             return real.theorems.sqrdClosure.specialize(
-                {a:self.base}).checked(assumptions)
+                {a:self.base}).checked(as5sumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealsPos, assumptions)
 
@@ -98,9 +108,11 @@ class Exp(Operation):
 
     def styleOptions(self):
         options = StyleOptions(self)
-        options.add('radical',
-                    "'sqrt': 'uses std sqrt radical'")
+        options.add('exponent',
+                    "'raised': exponent as a superscript; "
+                    "'radical': using a radical sign")
         return options
+    
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -111,13 +123,13 @@ class Exp(Operation):
     def formatted(self, formatType, **kwargs):
         # begin building the inner_str
         inner_str = self.base.formatted(formatType, fence=True, forceFence=True)
-        if self.getStyle('radical') == None:
+        if self.getStyle('exponent') == 'raised':
             inner_str = (
                     inner_str
                     + r'^{'+self.exponent.formatted(formatType, fence=False)
                     + '}')
-        else:
-            if self.getStyle('radical') == 'sqrt':
+        elif self.getStyle('exponent') == 'radical':
+            if self.exponent == frac(one, two):
                 if formatType == 'string':
                     inner_str = (
                             r'sqrt('
@@ -130,6 +142,10 @@ class Exp(Operation):
                             + self.base.formatted(formatType, fence=True,
                                                   forceFence=True)
                             + '}')
+            else:
+                raise ValueError("Unkown radical type, exponentiating to the power "
+                                 "of %s"%str(self.exponent))
+                
         # only fence if forceFence=True (nested exponents is an
         # example of when fencing must be forced)
         kwargs['fence'] = (
@@ -172,8 +188,8 @@ class Exp(Operation):
             b_times_c = self.exponent
             thm = intExpOfExp
         if not hasattr(b_times_c, 'factor'):
-            raise Exception('Exponent not factorable, may not raise the '
-                            'exponent factor.')
+            raise ValueError('Exponent not factorable, may not raise the '
+                             'exponent factor.')
         factorEq = b_times_c.factor(expFactor, pull='right',
                                     groupRemainder=True,
                                     assumptions=assumptions)
@@ -253,7 +269,7 @@ class Exp(Operation):
             # above; in the meantime, allowing for 2 possibilities here:
             # if base is positive real, exp can be any real;
             # if base is real ≥ 0, exp must be non-zero
-            if self.getStyle('radical') == 'sqrt':
+            if self.exponent==frac(one, two):
                 return sqrtRealClosure.specialize(
                         {a:self.base},assumptions=assumptions)
             else:
@@ -275,7 +291,7 @@ class Exp(Operation):
                         raise Exception(err_string)
 
         if number_set == RealsPos:
-            if self.getStyle('radical') == 'sqrt':
+            if self.exponent==frac(one, two):
                 return sqrtRealPosClosure.specialize(
                         {a:self.base},assumptions=assumptions)
             else:
@@ -283,7 +299,7 @@ class Exp(Operation):
                         {a:self.base, b:self.exponent},assumptions=assumptions)
 
         if number_set == Complexes:
-            if self.getStyle('radical') == 'sqrt':
+            if self.exponent==frac(one, two):
                 return sqrtComplexClosure.specialize(
                         {a:self.base}, assumptions=assumptions)
             else:
@@ -375,4 +391,4 @@ def sqrt(base):
     use Exp(_, frac(1/2)) directly.
     Could later generalize this to cube roots or general nth roots.
     '''
-    return Exp(base, frac(one, two)).withStyles(radical='sqrt')
+    return Exp(base, frac(one, two)).withStyles(exponent='radical')
