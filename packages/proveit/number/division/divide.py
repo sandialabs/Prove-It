@@ -131,12 +131,21 @@ class Div(Operation):
         Once established, these authorship notations can be deleted.
         '''
         from proveit._common_ import a, b
-        from proveit.logic import InSet
-        from proveit.number.division._theorems_ import divRealClosure
-        from proveit.number import Reals
+        from proveit.number.division._theorems_ import (divRealClosure,
+                                                        divideRealPosClosure,
+                                                        divideComplexClosure)
+        from proveit.number import Reals, RealsPos, Complexes
 
         if number_set == Reals:
             return divRealClosure.specialize(
+                {a:self.numerator, b:self.denominator},
+                assumptions=assumptions)
+        elif number_set == RealsPos:
+            return divideRealPosClosure.specialize(
+                {a:self.numerator, b:self.denominator},
+                assumptions=assumptions)
+        elif number_set == Complexes:
+            return divideComplexClosure.specialize(
                 {a:self.numerator, b:self.denominator},
                 assumptions=assumptions)
 
