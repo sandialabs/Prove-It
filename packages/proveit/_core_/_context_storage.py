@@ -713,8 +713,11 @@ class ContextStorage:
         storage identifier.
         '''        
         hash_path = self._storagePath(proveItStorageId)
-        with open(os.path.join(hash_path, 'ref_count.txt'), 'r') as f:
-            return int(f.read().strip())
+        try:
+            with open(os.path.join(hash_path, 'ref_count.txt'), 'r') as f:
+                return int(f.read().strip())
+        except FileNotFoundError:
+            return 0
            
     def _removeReference(self, proveItStorageId, removingSpecialExpr=False):
         '''
@@ -730,16 +733,17 @@ class ContextStorage:
         if not os.path.isdir(hash_path):
             print("WARNING: Referenced '__pv_it' path, for removal, does not exist: %s"%hash_path)
             return # not there -- skip it
-        with open(os.path.join(hash_path, 'ref_count.txt'), 'r') as f:
-            ref_count = int(f.read().strip()) - 1
+        ref_count = self._getRefCount(hash_path) - 1
         if ref_count <= 0:
             # Reference count down to zero (or less).  Remove references to
             # referenced objects and then delete this prove-it object from
             # storage and everything associated with it.
-            with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
-                rep = f.read()
-            for objId in self._extractReferencedStorageIds(rep, context_name):
-                self._removeReference(objId)
+            unique_rep_file = os.path.join(hash_path, 'unique_rep.pv_it')
+            if os.path.isfile(unique_rep_file):
+                with open(unique_rep_file, 'r') as f:
+                    rep = f.read()
+                for objId in self._extractReferencedStorageIds(rep, context_name):
+                    self._removeReference(objId)
             # remove the entire directory storing this prove-it object
             self._erase_hash_directory(hash_path)
         else:
