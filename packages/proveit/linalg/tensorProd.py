@@ -1,6 +1,5 @@
-from proveit import Literal, Operation #, STRING, LATEX
+from proveit import Literal, Operation
 from proveit.logic import Equals
-# from proveit.logic.genericOps import AssociativeOperation
 from proveit._common_ import f, x, y, alpha, S # aEtc, xEtc, yEtc, zEtc, 
 from proveit.linalg.matrixOps import ScalarProd
 

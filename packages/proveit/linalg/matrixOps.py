@@ -13,7 +13,7 @@ class MatrixProd(Operation):
     # the literal operator of the MatrixProd operation
     # perhaps use MATRIX_PROD for string?
     # latexFormat try using \; in place of a blank space
-    _operator_ = Literal(stringFormat=r'.', latexFormat = r'\;',
+    _operator_ = Literal(stringFormat=r'.', latexFormat = r'\thinspace',
                          context=__file__)
 
     def __init__(self, *operands):
@@ -42,7 +42,7 @@ class ScalarProd(Operation):
     # the literal operator of the MatrixProd operation
     # perhaps use SCALAR_PROD for string?
     # latexFormat try using \; in place of a blank space
-    _operator_ = Literal(stringFormat=r'*', latexFormat = r'\;',
+    _operator_ = Literal(stringFormat=r'*', latexFormat = r'\thinspace',
                          context=__file__)
 
     def __init__(self, scalar, scaled):
