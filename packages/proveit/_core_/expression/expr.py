@@ -34,7 +34,7 @@ class Expression(metaclass=ExprType):
     
     # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
     # recursion in the `prove` method.
-    in_progress_to_conclude = set() 
+    in_progress_to_conclude = set()
 
     @staticmethod
     def _clear_():
@@ -498,6 +498,17 @@ class Expression(metaclass=ExprType):
             raise ProofFailure(self, assumptions, "'conclude' method not implemented for proof automation")
         finally:
             Expression.in_progress_to_conclude.remove(in_progress_key)
+    
+    def proven(self, assumptions=USE_DEFAULTS):
+        '''
+        Return True if and only if the expression is known to be true.
+        '''
+        from proveit import ProofFailure
+        try:
+            self.prove(assumptions, automation=False)
+            return True
+        except ProofFailure:
+            return False
 
     def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
@@ -672,7 +683,7 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.label.var import safeDummyVars
         return safeDummyVars(n, self)
             
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         If possible, return a KnownTruth of this expression equal to its
         irreducible value.  Checks for an existing evaluation.  If it
@@ -683,14 +694,20 @@ class Expression(metaclass=ExprType):
         from proveit.logic import Equals, defaultSimplification, SimplificationError
         from proveit import KnownTruth, ProofFailure
         from proveit.logic.irreducible_value import isIrreducibleValue
+
+        assumptions = defaults.checkedAssumptions(assumptions)
         
         method_called = None
         try:
             # First try the default tricks. If a reduction succesfully occurs,
             # evaluation will be called on that reduction.
-            evaluation = defaultSimplification(self.innerExpr(), mustEvaluate=True, assumptions=assumptions)
+            evaluation = defaultSimplification(self.innerExpr(), mustEvaluate=True, 
+                                               assumptions=assumptions,
+                                               automation=automation)
             method_called = defaultSimplification
         except SimplificationError as e:
+            if automation is False:
+                raise e # Nothing else we can try when automation is off.
             # The default failed, let's try the Expression-class specific version.
             try:
                 evaluation = self.doReducedEvaluation(assumptions)
@@ -743,31 +760,41 @@ class Expression(metaclass=ExprType):
         return self.evaluation(assumptions=assumptions).rhs
    """ 
         
-    def simplification(self, assumptions=USE_DEFAULTS):
+    def simplification(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         If possible, return a KnownTruth of this expression equal to a
         canonically simplified form. Checks for an existing simplifcation.
-        If it doesn't exist, try some default strategies including a reduction.
-        Attempt the Expression-class-specific "doReducedSimplication"
-        when necessary.
+        If it doesn't exist and automation is True, try some default strategies
+        including a reduction.  Attempt the Expression-class-specific 
+        "doReducedSimplication" when necessary.
         '''
-        from proveit.logic import Equals, defaultSimplification, SimplificationError
+        from proveit.logic import (Equals, defaultSimplification, 
+                                   SimplificationError, EvaluationError)
         from proveit import KnownTruth, ProofFailure
+        
+        assumptions = defaults.checkedAssumptions(assumptions)
         
         method_called = None
         try:
             # First try the default tricks. If a reduction succesfully occurs,
             # simplification will be called on that reduction.
-            simplification = defaultSimplification(self.innerExpr(), assumptions=assumptions)
+            simplification = defaultSimplification(self.innerExpr(), 
+                                                   assumptions=assumptions,
+                                                   automation=automation)
             method_called = defaultSimplification
-        except SimplificationError as e:
-            # The default did nothing, let's try the Expression-class specific versions of
-            # evaluation and simplification.
+        except SimplificationError:
+            if automation is False:
+                # When automation is False, we raise an exception if there
+                # is not a known simplification.
+                raise SimplificationError("Unknown simplification of %s under "
+                                          "assumptions %s"%(self, assumptions))
+            # The default did nothing, let's try the Expression-class specific 
+            # versions of evaluation and simplification.
             try:
                 # first try evaluation.  that is as simple as it gets.
                 simplification = self.doReducedEvaluation(assumptions)
                 method_called = self.doReducedEvaluation
-            except (NotImplementedError, SimplificationError):
+            except (NotImplementedError, EvaluationError):
                 try:
                     simplification = self.doReducedSimplification(assumptions)
                     method_called = self.doReducedSimplification
