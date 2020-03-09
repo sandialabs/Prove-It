@@ -1,5 +1,5 @@
 from proveit import asExpression, defaults, USE_DEFAULTS, ProofFailure
-from proveit import Literal, Operation, Lambda, ParameterExtractionError
+from proveit import Literal, Operation, Lambda, ArgumentExtractionError
 from proveit import TransitiveRelation, TransitivityException
 from proveit.logic.irreducible_value import isIrreducibleValue
 from proveit._common_ import A, B, P, Q, f, x, y, z
@@ -189,7 +189,14 @@ class Equals(TransitiveRelation):
         '''
         from ._theorems_ import equalsReversal
         return equalsReversal.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
-
+    
+    def reversed(self):
+        '''
+        Return an Equals expression with the right side and left side reversed
+        from this one.  This is not a derivation: see deriveReversed().
+        '''
+        return Equals(self.rhs, self.lhs)
+    
     def deduceNotEquals(self, assumptions=USE_DEFAULTS):
         r'''
         Deduce x != y assuming not(x = y), where self is x=y.
@@ -299,10 +306,10 @@ class Equals(TransitiveRelation):
         return foldSingleton.specialize({x:self.lhs, y:self.rhs}, assumptions=assumptions)
     
     @staticmethod
-    def _lambdaExpr(lambdaMap, defaultGlobalReplSubExpr):
+    def _lambdaExpr(lambdaMap, defaultGlobalReplSubExpr, assumptions=USE_DEFAULTS):
         from proveit._core_.expression.inner_expr import InnerExpr
         if isinstance(lambdaMap, InnerExpr):
-            expr = lambdaMap.replMap()
+            expr = lambdaMap.replMap(assumptions)
         else: expr = lambdaMap
         if not isinstance(expr, Lambda):
             # as a default, do a global replacement
@@ -318,8 +325,15 @@ class Equals(TransitiveRelation):
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
         '''
+        from proveit import ExprTuple
         from ._axioms_ import substitution
-        fxLambda = Equals._lambdaExpr(lambdaMap, self.lhs)
+        
+        # Check if this should be an iteration replacement within an ExprTuple
+        # which must be handled differently.
+        if isinstance(self.lhs, ExprTuple):
+            pass
+            
+        fxLambda = Equals._lambdaExpr(lambdaMap, self.lhs, assumptions)
         return substitution.specialize({x:self.lhs, y:self.rhs, f:fxLambda}, assumptions=assumptions)
         
     def subLeftSideInto(self, lambdaMap, assumptions=USE_DEFAULTS):
@@ -407,21 +421,24 @@ class Equals(TransitiveRelation):
         from ._axioms_ import equalityInBool
         return equalityInBool.specialize({x:self.lhs, y:self.rhs})
         
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given operands that may be evaluated to irreducible values that
         may be compared, or if there is a known evaluation of this
         equality, derive and return this expression equated to
         TRUE or FALSE.
         '''
-        if self.lhs == self.rhs:
-            # prove equality is true by reflexivity
-            return evaluateTruth(self.prove().expr, assumptions=[])
-        if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
-            # Irreducible values must know how to evaluate the equality
-            # between each other, where appropriate.
-            return self.lhs.evalEquality(self.rhs)
-        return TransitiveRelation.evaluation(self, assumptions)
+        if automation:
+            if self.lhs == self.rhs:
+                # prove equality is true by reflexivity
+                return evaluateTruth(self.prove().expr, assumptions=[])
+            if isIrreducibleValue(self.lhs) and isIrreducibleValue(self.rhs):
+                # Irreducible values must know how to evaluate the equality
+                # between each other, where appropriate.
+                return self.lhs.evalEquality(self.rhs)
+            return TransitiveRelation.evaluation(self, assumptions)
+        return Operation.evaluation(self, assumptions, automation)
+
     
     @staticmethod
     def invert(lambda_map, rhs, assumptions=USE_DEFAULTS):
@@ -439,21 +456,21 @@ class Equals(TransitiveRelation):
                     return inversion
         # The mapping may be a trivial identity: f(x) = f(x)
         try:
-            x = lambda_map.extractParameter(rhs)
+            x = lambda_map.extractArgument(rhs)
             # Found a trivial inversion.  Store it for future reference.
             known_equality = Equals(rhs, rhs).prove()
             Equals.inversions.setdefault((lambda_map, rhs), []).append((known_equality, x))
             return x # Return the found inversion.
-        except ParameterExtractionError:
+        except ArgumentExtractionError:
             pass # well, it was worth a try
         # Search among known relations for a solution.
         for known_equality, lhs in Equals.knownRelationsFromRight(rhs, assumptionsSet):
             try:
-                x = lambda_map.extractParameter(lhs)
+                x = lambda_map.extractArgument(lhs)
                 # Found an inversion.  Store it for future reference.
                 Equals.inversions.setdefault((lambda_map, rhs), []).append((known_equality, x))
                 return x # Return the found inversion.
-            except ParameterExtractionError:
+            except ArgumentExtractionError:
                 pass # not a match.  keep looking.
         raise InversionError("No inversion found to map %s onto %s"%(str(lambda_map), str(rhs)))
     
@@ -753,6 +770,13 @@ def evaluateFalsehood(expr, assumptions):
 class SimplificationError(Exception):
     def __init__(self, message):
         self.message = message
+    def __str__(self):
+        return self.message
+
+class EvaluationError(Exception):
+    def __init__(self, expr, assumptions):
+        self.message = ("Evaluation of %s under assumptions %s is not known"
+                        %(expr, assumptions))
     def __str__(self):
         return self.message
 
