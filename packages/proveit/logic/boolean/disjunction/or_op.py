@@ -296,7 +296,7 @@ class Or(Operation):
         compose([leftImplConclusion, rightImplConclusion], assumptions)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
@@ -305,14 +305,7 @@ class Or(Operation):
         from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations
         if len(self.operands) == 0:
             return emptyDisjunction
-        try:
-            self.prove(assumptions)
-        except ProofFailure:
-            try:
-                self.disprove(assumptions)
-            except ProofFailure:
-                pass
-        return Operation.evaluation(self, assumptions)
+        return Operation.evaluation(self, assumptions, automation)
 
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''

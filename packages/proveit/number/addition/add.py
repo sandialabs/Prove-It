@@ -253,7 +253,6 @@ class Add(Operation):
         negations that occur).
         '''
         from proveit.number import Neg
-        
         expr = self
         
         # A convenience to allow successive update to the equation via transitivities.
@@ -269,7 +268,11 @@ class Add(Operation):
         for i, operand in enumerate(self.operands):
             if isinstance(operand, Neg): continue
             if operand in neg_operand_indices:
-                j = neg_operand_indices[operand].pop()
+                indices = neg_operand_indices[operand]
+                j = indices.pop()
+                if len(indices)==0: 
+                    # no more indices to use in the future
+                    neg_operand_indices.pop(operand) 
                 # By finding where i and j will be inserted into the canceled_indices
                 # array, we can figure out how much they need to shift by to compensate
                 # for previous cancelations.
@@ -689,7 +692,7 @@ class Add(Operation):
         created by JML on 7/31/19. modified by WMW on 9/7/19.
         evaluate literals in a given expression (used for simplification)
         '''
-        from proveit.logic import SimplificationError
+        from proveit.logic import EvaluationError
         from proveit.number import Neg, isLiteralInt
 
         abs_terms = [term.operand if isinstance(term, Neg) else term for term in self.terms]
@@ -714,7 +717,7 @@ class Add(Operation):
             return eq.relation
         
         if not isinstance(expr, Add):
-            raise SimplificationError("%s simplified to %s which is not irreducible"%(self, expr)) 
+            raise EvaluationError(eq.expr, assumptions) 
 
         # If all the operands are the same, combine via multiplication and then evaluate.
         if all(operand==expr.operands[0] for operand in expr.operands):
@@ -735,7 +738,7 @@ class Add(Operation):
                 eq.update(expr.evaluation(assumptions))
                 return eq.relation
 
-        raise SimplificationError("Unable to evaluate %s"%str(self))
+        raise EvaluationError(self, assumptions)
         
     def subtractionFolding(self, termIdx=None, assumptions=frozenset()):
         '''

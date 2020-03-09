@@ -291,20 +291,13 @@ class And(Operation):
                 return nandIfNotRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         return nandIfNotOne.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations
-        try:
-            self.prove(assumptions)
-        except ProofFailure:
-            try:
-                self.disprove(assumptions)
-            except ProofFailure:
-                pass
-        return Operation.evaluation(self, assumptions)
+        return Operation.evaluation(self, assumptions, automation)
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
