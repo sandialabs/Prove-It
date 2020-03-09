@@ -375,33 +375,64 @@ class Operation(Expression):
                                                    assumptions, requirements)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
         if len(subbed_operators)==1:
-            subbedOperator = subbed_operators[0]
-            if isinstance(subbedOperator, Lambda):
+            subbed_operator = subbed_operators[0]
+            if isinstance(subbed_operator, Lambda):
                 # Substitute the entire operation via a Lambda body
                 # For example, f(x, y) -> x + y.
-                if len(subbed_operands) != len(subbedOperator.parameters):
-                    raise ImproperSubstitution('Cannot substitute an Operation '
-                                               'with the wrong number of parameters')
-                if len(subbedOperator.conditions) != 0:
+                # Use the generic version of this lambda-defined operation.
+                # This will ensure that if then lambda has any iteration
+                # parameters, it will have only one parameter item.
+                subbed_op_lambda = subbed_operator._genericExpr
+                if (len(subbed_op_lambda.parameters)==1 and 
+                    isinstance(subbed_op_lambda.parameters[0], Iter)):
+                    # The subbed operator is a lambda with an iteration of
+                    # parameters: e.g, x_1, ..., x_n |-> f(x_1, ..., x_n).
+                    # This is treated differently.  
+                    has_iteration_param = True
+                else:
+                    # No iteration parameter (since the generic version should
+                    # consolidate any iteration parameter into one), so
+                    # we need an element-wise match for the substitution.
+                    has_iteration_param = False
+                    if len(subbed_operands) != len(subbed_op_lambda.parameters):
+                        raise ImproperSubstitution('Cannot substitute an Operation '
+                                                   'with the wrong number of parameters: '
+                                                   '%s vs %s'%(str(subbed_operands),
+                                                               str(subbed_operator.parameters)))
+                if len(subbed_op_lambda.conditions) != 0:
                     raise ImproperSubstitution('Operation substitution must be '
                                                'defined via an Unconditioned Lambda '
-                                               'expression')
+                                               'expression, not %s'%subbed_op_lambda)
                 operand_sub_map = dict()
-                for param, operand in zip(subbedOperator.parameters, 
-                                          subbed_operands):
-                    if isinstance(param, Iter):
-                        # Iteration parameters require special treatment.
-                        # We need to substitute and ExprTuple for the 
-                        # parameter variable and ensure the length is 
-                        # appropriate.
-                        param_var = getParamVar(param)
-                        sub = ExprTuple(operand)
-                        operand_sub_map[param_var] = sub
-                        param_len = ExprTuple(param).length(assumptions)
-                        sub_len = sub.length(assumptions)
-                        len_req = Equals(param_len, sub_len).prove(assumptions)
-                        requirements.append(len_req)
-                    else:
+                if has_iteration_param:
+                    # Iteration parameters require special treatment.
+                    # We need to substitute the iterated indexed variable
+                    # parameter with all of the operands as an ExprTuple 
+                    # and ensure the length is appropriate.
+                    from proveit.number import Add, num
+                    from proveit.iteration import Len
+                    param = subbed_op_lambda.parameters[0]
+                    param_var = getParamVar(param)
+                    assert isinstance(subbed_operands, ExprTuple)
+                    operand_sub_map[param_var] = subbed_operands
+                    param_len = param.end_index
+                    if param.lambda_map.body.base != 1:
+                        # Note that the start index must be the base.
+                        param_len = Add(param.end_index, num(1-param.body.base))
+                    sub_len = subbed_operands.length(assumptions)
+                    #print('substituted', self, 'using', exprMap)
+                    #print('length of', subbed_operands, ':', sub_len)
+                    len_req = Equals(Len(subbed_operands), param_len)
+                    len_req = len_req.prove(assumptions)
+                    #print('requirement', len_req)
+                    requirements.append(len_req)
+                else:
+                    for param, operand in zip(subbed_op_lambda.parameters, 
+                                              subbed_operands):
+                        if isinstance(param, Iter):
+                            raise Exception("The generic version of a Lambda "
+                                            "should consolidate any iteration "
+                                            "parameters as one parameter item.")
                         operand_sub_map[param] = operand
                 if not reservedVars is None:
                     # The reserved variables of the lambda body excludes the 
@@ -409,9 +440,9 @@ class Operation(Expression):
                     # reserved variables).
                     lambda_expr_reserved_vars = \
                         {k:v for k, v in reservedVars.items() 
-                         if k not in subbedOperator.parameterVarSet}
+                         if k not in subbed_op_lambda.parameterVarSet}
                 else: lambda_expr_reserved_vars = None
-                subbed_operator_body = subbedOperator.body
+                subbed_operator_body = subbed_op_lambda.body
                 subbed_operator_body._restrictionChecked(lambda_expr_reserved_vars)
                 return subbed_operator_body.substituted(operand_sub_map, 
                                                         assumptions=assumptions, 
