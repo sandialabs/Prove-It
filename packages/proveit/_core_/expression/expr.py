@@ -674,7 +674,8 @@ class Expression(metaclass=ExprType):
         Attempt the Expression-class-specific "doReducedEvaluation"
         when necessary.
         '''
-        from proveit.logic import Equals, defaultSimplification, SimplificationError
+        from proveit.logic import (Equals, defaultSimplification, 
+                                   SimplificationError, EvaluationError)
         from proveit import KnownTruth, ProofFailure
         from proveit.logic.irreducible_value import isIrreducibleValue
 
@@ -696,8 +697,9 @@ class Expression(metaclass=ExprType):
                 evaluation = self.doReducedEvaluation(assumptions)
                 method_called = self.doReducedEvaluation
             except NotImplementedError:
-                # We have nothing but the default evaluation strategy to try, and that failed.
-                raise e 
+                # We have nothing but the default evaluation strategy to try,
+                # and that failed.
+                raise EvaluationError(self, assumptions)
         
         if not isinstance(evaluation, KnownTruth) or not isinstance(evaluation.expr, Equals):
             msg = ("%s must return an KnownTruth, "

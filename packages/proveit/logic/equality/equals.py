@@ -113,7 +113,7 @@ class Equals(TransitiveRelation):
                 if evaluation.rhs != self.rhs:
                     raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation
-            except SimplificationError as e:
+            except EvaluationError as e:
                 raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
         elif isIrreducibleValue(self.lhs):
             try:
@@ -121,7 +121,7 @@ class Equals(TransitiveRelation):
                 if evaluation.rhs != self.lhs:
                     raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation.deriveReversed()
-            except SimplificationError as e:
+            except EvaluationError as e:
                 raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
