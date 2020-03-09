@@ -236,7 +236,7 @@ class Mult(Operation):
         after simplifying negations and eliminating one factors.
         '''
         from ._theorems_ import multZeroLeft, multZeroRight, multZeroAny
-        from proveit.logic import isIrreducibleValue, SimplificationError
+        from proveit.logic import isIrreducibleValue, EvaluationError
         from proveit.number import zero
         
         # First check for any zero factors -- quickest way to do an evaluation.
@@ -279,7 +279,7 @@ class Mult(Operation):
             eq.update(pairwiseEvaluation(expr, assumptions))
             return eq.relation
 
-        raise SimplificationError("Unable to evaluate %s"%str(self))
+        raise EvaluationError(self, assumptions)
     
     def conversionToAddition(self, assumptions=USE_DEFAULTS):
         '''

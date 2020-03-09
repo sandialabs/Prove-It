@@ -81,21 +81,22 @@ class Not(Operation):
         if fence: outStr += ')'
         return outStr            
     
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._theorems_ import notT, notF # load in truth-table evaluations
+        return Operation.evaluation(self, assumptions, automation)
+    
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import notT
         from proveit.logic.boolean._common_ import TRUE, FALSE
         from proveit.logic.boolean.negation._theorems_ import falsifiedNegationIntro
-        if self.operand == TRUE and notT.isUsable(): return notT
-        if self.operand == FALSE and notF.isUsable(): return notF
-        opValue = self.operand.evaluation(assumptions=assumptions).rhs
-        if opValue == TRUE:
+        if self.operand == TRUE:
+            assert not notT.isUsable(), "We should not get to here if notT is usable"
             # evaluate to FALSE via falsifiedNegationIntro
             return falsifiedNegationIntro.specialize({A:self.operand}, assumptions=assumptions)
-        return Operation.evaluation(self, assumptions)
     
     def substituteInFalse(self, lambdaMap, assumptions=USE_DEFAULTS):
         '''
