@@ -69,7 +69,7 @@ class Equals(TransitiveRelation):
             yield self.deriveReversed
         if self.rhs == FALSE:
             try:
-                self.lhs.prove()
+                self.lhs.prove(automation=False)
                 # derive FALSE given lhs=FALSE and lhs.
                 yield self.deriveContradiction
             except ProofFailure:
