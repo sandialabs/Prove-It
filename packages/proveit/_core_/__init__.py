@@ -2,7 +2,7 @@
 
 from .expression import Expression, InnerExpr
 from .expression import Operation, OperationError, Function, OperationSequence, OperationOverInstances
-from .expression import Lambda, LambdaError, ParameterExtractionError, Label, Variable, Literal, DuplicateLiteralError
+from .expression import Lambda, LambdaError, ArgumentExtractionError, Label, Variable, Literal, DuplicateLiteralError
 from .expression import safeDummyVar, safeDefaultOrDummyVar, expressionDepth
 from .expression import MakeNotImplemented, ImproperRelabeling, ImproperSubstitution, ScopingViolation
 from .expression import Composite, compositeExpression, singleOrCompositeExpression

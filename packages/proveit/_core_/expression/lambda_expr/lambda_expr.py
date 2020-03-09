@@ -13,7 +13,12 @@ def getParamVar(parameter):
     from proveit._core_.expression.label import Variable
     from proveit._core_.expression.composite import Iter, Indexed
     if isinstance(parameter, Iter) and isinstance(parameter.lambda_map.body, Indexed):
-        return parameter.lambda_map.body.var
+        from proveit.number import num
+        indexed_var = parameter.lambda_map.body
+        if parameter.start_index != num(indexed_var.base):
+            raise TypeError('An iteration parameter must start with the base '
+                            'of the indexed variable')
+        return indexed_var.var
     elif isinstance(parameter, Indexed):
         return parameter.var
     elif isinstance(parameter, Variable):
@@ -59,8 +64,8 @@ class Lambda(Expression):
         self.parameterVars = tuple(parameterVars)
         self.parameterVarSet = frozenset(parameterVars)
         if len(self.parameterVarSet) != len(self.parameters):
-            raise ValueError('Lambda parameters Variables must be unique with "
-                             "respect to each other.')
+            raise ValueError("Lambda parameters Variables must be unique with "
+                             "respect to each other.")
         body = singleOrCompositeExpression(body)
         if not isinstance(body, Expression):
             raise TypeError('A Lambda body must be of type Expression')
@@ -72,6 +77,8 @@ class Lambda(Expression):
         if _generic_expr is None:
             # Create a "generic" version (if not already) of the Lambda 
             # expression since the choice of parameter labeling is irrelevant.
+            # If there are multiple parameters and any of them are iterations,
+            # combine them together into one iteration parameter.  TODO
             generic_body = self.body._generic_version()
             generic_body_vars = generic_body.usedVars()
             disallowed_vars = (generic_body_vars-self.parameterVarSet)
@@ -120,21 +127,21 @@ class Lambda(Expression):
         return self.body.substituted({param:arg for param, arg 
                                       in zip(self.parameters, args)})
     
-    def extractParameter(self, mappedExpr):
+    def extractArgument(self, mappedExpr):
         '''
-        Given a mapped expression, return the parameter that will transform
+        Given a mapped expression, return the argument that will transform
         this Lambda expression into the mapped expression.  For example,
         if the Lambda expression is x -> x + 1 and the mapped expression
         is 2 + 1, this will return 2.  If there is more than one parameter
-        in this Lambda expression, use extractParameters instead.
+        in this Lambda expression, use extractArguments instead.
         '''
-        assert len(self.parameters) == 1, ("Use the 'extractParameters' method "
+        assert len(self.parameters) == 1, ("Use the 'extractArguments' method "
                                            "when there is more than one parameter")
         return self.extractParameters(mappedExpr)[0]
 
-    def extractParameters(self, mappedExpr):
+    def extractArguments(self, mappedExpr):
         '''
-        Given a mapped expression, return the parameters that will transform
+        Given a mapped expression, return the arguments that will transform
         this Lambda expression into the mapped expression.  For example,
         if the Lambda expression is (x, y) -> x + y and the mapped expression
         is 1 + 2, this will return (1, 2).
@@ -146,24 +153,24 @@ class Lambda(Expression):
         lambda_sub_expr = self.body
         mapped_sub_expr = mappedExpr
         if lambda_sub_expr.numSubExpr() != mapped_sub_expr.numSubExpr():
-            raise ParameterExtractionError("# of sub-expressions, %d vs %d"
-                                           %(lambda_sub_expr.numSubExpr(), 
-                                             mapped_sub_expr.numSubExpr()))
+            raise ArgumentExtractionError("# of sub-expressions, %d vs %d"
+                                          %(lambda_sub_expr.numSubExpr(), 
+                                            mapped_sub_expr.numSubExpr()))
         if lambda_sub_expr.__class__ != mapped_sub_expr.__class__:
-            raise ParameterExtractionError("Expression class, %s vs %s"
-                                           %(str(lambda_sub_expr.__class__), 
-                                             str(mapped_sub_expr.__class__)))
+            raise ArgumentExtractionError("Expression class, %s vs %s"
+                                          %(str(lambda_sub_expr.__class__), 
+                                            str(mapped_sub_expr.__class__)))
         if lambda_sub_expr._coreInfo != mapped_sub_expr._coreInfo:
-            raise ParameterExtractionError("core information, %s vs %s"
-                                           %(str(lambda_sub_expr._coreInfo), 
-                                             str(mapped_sub_expr._coreInfo)))
+            raise ArgumentExtractionError("core information, %s vs %s"
+                                          %(str(lambda_sub_expr._coreInfo), 
+                                            str(mapped_sub_expr._coreInfo)))
         lambda_sub_expr_iters = [lambda_sub_expr.subExprIter()]
         mapped_sub_expr_iters = [mapped_sub_expr.subExprIter()]
         while len(lambda_sub_expr_iters) > 0:
             try:
                 lambda_sub_expr = next(lambda_sub_expr_iters[-1])
                 mapped_sub_expr = next(mapped_sub_expr_iters[-1])
-                extraction_err = ParameterExtractionError # abbreviation
+                extraction_err = ArgumentExtractionError # abbreviation
                 if lambda_sub_expr in parameters:
                     # found a match
                     param_idx = parameters.index(lambda_sub_expr)
@@ -397,15 +404,19 @@ class Lambda(Expression):
         innerFreeVs = set(self.body.freeVars()).union(self.conditions.freeVars())
         return innerFreeVs - self.parameterVarSet
 
+def common_lambda_map(expr1, expr2):
+    pass
+
+
 class LambdaError(Exception):
     def __init__(self, message):
         self.message = message
     def __str__(self):
         return self.message
 
-class ParameterExtractionError(Exception):
+class ArgumentExtractionError(Exception):
     def __init__(self, specifics):
         self.specifics = specifics
     def __str__(self):
-        return ("Cannot extract parameter; mappedExpr does not match this Lambda "
+        return ("Cannot extract argument(s); mappedExpr does not match this Lambda "
                 "expression: " + self.specifics)
