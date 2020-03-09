@@ -68,10 +68,16 @@ class Equals(TransitiveRelation):
             # automatically derive the reversed form which is equivalent
             yield self.deriveReversed
         if self.rhs == FALSE:
-            # derive lhs => FALSE from lhs = FALSE
-            yield self.deriveContradiction
-            # derive lhs from Not(lhs) = FALSE, if self is in this form
-            #yield self.deriveViaFalsifiedNegation
+            try:
+                self.lhs.prove()
+                # derive FALSE given lhs=FALSE and lhs.
+                yield self.deriveContradiction
+            except ProofFailure:
+                pass
+            # Use this form after merging in 'Expression.proven' commite:
+            #if self.lhs.proven(): # If lhs is proven using default assumptions.
+            #    # derive FALSE given lhs=FALSE and lhs.
+            #    yield self.deriveContradiction
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             yield self.deriveViaBooleanEquality
@@ -83,7 +89,6 @@ class Equals(TransitiveRelation):
         '''
         Side-effect derivations to attempt automatically for a negated equation.        
         '''
-        from proveit.logic.boolean._common_ import FALSE
         yield self.deduceNotEquals # A != B from not(A=B)
                 
     def conclude(self, assumptions):
@@ -266,19 +271,7 @@ class Equals(TransitiveRelation):
         '''
         from proveit.logic.boolean.implication import denyViaContradiction
         return denyViaContradiction(self, conclusion, assumptions)
-            
-    """
-    def deriveViaFalsifiedNegation(self, assumptions=USE_DEFAULTS):
-        '''
-        From Not(A)=FALSE, derive A.
-        '''
-        from proveit.logic.boolean import Not, FALSE
-        from proveit.logic.boolean.negation._axioms_ import falsifiedNegationElim
-        if isinstance(self.lhs, Not) and self.rhs == FALSE:
-            return falsifiedNegationElim.specialize({A:self.lhs.operand}, assumptions=assumptions)
-        raise ValueError('Equals.deriveViaContradiction is only applicable if the left-hand-side is a Not operation and the right-hand-side is FALSE')
-    """
-        
+    
     def concludeBooleanEquality(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return self of the form (A=TRUE) assuming A, A=FALSE assuming Not(A), [Not(A)=FALSE] assuming A.
