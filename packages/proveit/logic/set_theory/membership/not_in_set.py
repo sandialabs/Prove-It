@@ -6,6 +6,10 @@ class NotInSet(Operation):
     _operator_ = Literal(stringFormat='not-in',
                          latexFormat=r'\notin',
                          context=__file__)    
+
+    # maps elements to NotInSet KnownTruths.
+    # For example, map x to (x \nin S) if (x \nin S) is a KnownTruth.
+    knownNonmemberships = dict()
     
     def __init__(self, element, domain):
         Operation.__init__(self, NotInSet._operator_, (element, domain))
@@ -43,10 +47,12 @@ class NotInSet(Operation):
     
     def sideEffects(self, knownTruth):
         '''
+        Store the proven non-membership in knownNonmemberships.
         Unfold x not-in S as Not(x in S) as an automatic side-effect.
         If the domain has a 'nonmembershipObject' method, side effects
         will also be generated from the 'sideEffects' object that it generates.
         '''
+        NotInSet.knownNonmemberships.setdefault(self.element, set()).add(knownTruth)
         yield self.unfoldNotIn
         if hasattr(self, 'nonmembershipObject'):
             for sideEffect in self.nonmembershipObject.sideEffects(knownTruth):
@@ -72,11 +78,69 @@ class NotInSet(Operation):
 
     def conclude(self, assumptions):
         '''
-        Attempt to conclude that the element is not in the domain
-        via the 'nonmembership object'
-        (if the domain has a 'nonmembershipObject' method).
-        Otherwise, try 'concludeAsFolded'.
+        Attempt to conclude that the element is in the domain.
+        First, see if it is not contained in a superset of the domain.
+        Next, check if the element has a known simplification; if so,
+        try to derive non-membership via this simplification.
+        If there isn't a known simplification, next try to call
+        the 'self.domain.nonmembershipObject.conclude(..)' method to prove
+        the non-membership.  If that fails, try simplifying the element
+        again, this time using automation to push the simplification through
+        if possible.
+        As a last resort, try 'concludeAsFolded'.
         '''
+        from proveit.logic import SupersetEq, InSet
+        from proveit import ProofFailure
+        from proveit.logic import SimplificationError
+
+        
+        # See if the membership is already known.
+        if self.element in NotInSet.knownNonmemberships:
+            for knownNonmembership in NotInSet.knownNonmemberships[self.element]:
+                if knownNonmembership.isSufficient(assumptions):
+                    # x not in R is a known truth; if we know that 
+                    # R supseteq S, we are done.
+                    supRel = SupersetEq(knownNonmembership.domain, 
+                                        self.domain)
+                    if supRel.proven(assumptions):
+                        # S is a subset of R, so now we can prove x not in S.
+                        return supRel.deriveSubsetNonMembership(self.element,
+                                                                assumptions)
+        # No known membership works.  Let's see if there is a known
+        # simplification of the element before trying anything else.
+        try:
+            elem_simplification = self.element.simplification(assumptions, 
+                                                              automation=False)
+            if elem_simplification.lhs == elem_simplification.rhs:
+                elem_simplification = None # reflection doesn't count
+        except SimplificationError:
+            elem_simplification = None
+        
+        if elem_simplification is None:
+            # If there is not a known simplification, try using a 
+            # membershipObject to conclude the membership.
+            try:
+                # could not prove it through a subset relationship,
+                # now try to use a MembershipObject
+                if hasattr(self, 'nonmembershipObject'):
+                    return self.nonmembershipObject.conclude(assumptions)
+            except Exception:
+                pass # no luck with that.
+        
+            # Since the membershipObject approach failed, let's try
+            # harder to simplify the element.
+            elem_simplification = self.element.simplification(assumptions)
+            if elem_simplification.lhs == elem_simplification.rhs:
+                elem_simplification = None # reflection doesn't count
+        
+        # If the element simplification successed, prove the membership
+        # via the simplified form of the element.
+        if elem_simplification.lhs is not None:
+            simple_elem = elem_simplification.rhs
+            simple_nonmembership = NotInSet(simple_elem, self.domain).prove(assumptions)
+            inner_expr = simple_nonmembership.innerExpr().element 
+            return elem_simplification.subLeftSideInto(inner_expr, assumptions)
+
         if hasattr(self, 'nonmembershipObject'):
             return self.nonmembershipObject.conclude(assumptions)
         return self.concludeAsFolded(assumptions=assumptions)
