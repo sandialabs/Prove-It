@@ -142,6 +142,13 @@ class Iter(Expression):
         self.lambda_map = lambda_map
     """
     
+    def unconditionedMap(self):
+        '''
+        Return the lambda map for this iteration without the conditions
+        that restrict the parameter between the start and end.
+        '''
+        return Lambda(self.lambda_map.parameters, self.lambda_map.body)
+    
     def _checkIndexedRestriction(self, subExpr):
         '''
         An iteration is restricted to not contain any Indexed variable
@@ -243,12 +250,15 @@ class Iter(Expression):
             formatted_operator = operator.formatted(formatType)
         formatted_sub_expressions = [subExpr.formatted(formatType, fence=subFence) for subExpr in (self.first(), self.last())]
         formatted_sub_expressions.insert(1, '\ldots' if formatType=='latex' else '...')
+        # Normally the iteration will be wrapped in an ExprTuple and fencing
+        # will be handled externally.  When it isn't, we don't want to fence it
+        # anyway.
+        #if fence: 
+        #    outStr += '(' if formatType=='string' else  r'\left('
         # put the formatted operator between each of formattedSubExpressions
-        if fence: 
-            outStr += '(' if formatType=='string' else  r'\left('
         outStr += formatted_operator.join(formatted_sub_expressions)
-        if fence:            
-            outStr += ')' if formatType=='string' else  r'\right)'
+        #if fence:            
+        #    outStr += ')' if formatType=='string' else  r'\right)'
         return outStr
     
     def getInstance(self, index_or_indices, assumptions = USE_DEFAULTS, requirements = None):
@@ -389,17 +399,19 @@ class Iter(Expression):
                         except ProofFailure as e:
                             raise IterationError("Failed to prove requirement "
                                                   "%s:\n%s"%(requirement, e))
+                        '''
                         if right==subbed_end[axis]:
                             # This last entry is the inclusive end
                             # rather than past the end, so it is an
                             # exception.
                             entry_end = right
                         else:
-                            # Subtract one from the start of the next
-                            # entyr to get the end of this entry.
-                            entry_end = dist_subtract(right, one)
-                            entry_end = _simplifiedCoord(entry_end, assumptions,
-                                                        requirements)
+                        '''
+                        # Subtract one from the start of the next
+                        # entry to get the end of this entry.
+                        entry_end = dist_subtract(right, one)
+                        entry_end = _simplifiedCoord(entry_end, assumptions,
+                                                    requirements)
                     all_entry_ends[axis].append(entry_end)
                 # See if we should add the end value as an extra 
                 # singular entry.  If param_vals[-1] is at the inclusive
@@ -412,7 +424,9 @@ class Iter(Expression):
                     # Otherwise, the last param_val will be one after
                     # the inclusive end which we will want to use below
                     # when building the last iteration entry.
-                    all_entry_starts[axis].append(param_vals[-1])           
+                    all_entry_starts[axis].append(param_vals[-1])  
+                #print('param_vals', param_vals)                    
+                #print('all_entry start/ends', all_entry_starts, all_entry_ends)                    
                 do_expansion = True
             except EmptyIterException:
                 # Indexing over a negative or empty range.  The only way this
@@ -653,6 +667,67 @@ class Iter(Expression):
             requirements += new_requirements # append new requirements
         
         return subbed_self
+    
+    def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
+        '''
+        Return the equation between this iteration within an ExprTuple
+        and a split version in the following manner: 
+            (f(self.start_index), ..., f(self.end_index)) =
+            (f(self.start_index), ..., f(before_split_index), 
+             f(before_split_index+1), ..., f(self.end_index))
+        where f represents the self.lambda_map.
+        '''
+        from proveit._common_ import f, i, j, k
+        from proveit.logic import Equals
+        from proveit.number import Add, one, subtract
+        
+        unconditioned_lambda = Lambda(self.lambda_map.parameters,
+                                          self.lambda_map.body)
+        start_index, end_index = self.start_index, self.end_index
+        if end_index == Add(before_split_idx, one):
+            # special case which uses the axiom:
+            from proveit.iteration._axioms_ import iterExtensionDef
+            return iterExtensionDef.specialize(
+                    {f:unconditioned_lambda, i:start_index, j:before_split_idx},
+                    assumptions=assumptions)
+        elif before_split_idx == self.start_index:
+            # special case when pealing off the front
+            from proveit.iteration._theorems_ import partition_front
+            return partition_front.specialize(
+                    {f:unconditioned_lambda, i:self.start_index, j:self.end_index},
+                     assumptions=assumptions)
+        elif (before_split_idx == subtract(end_index, one) or
+              Equals(before_split_idx, subtract(end_index, one)).proven(assumptions)):
+            # special case when pealing off the back
+            from proveit.iteration._theorems_ import partition_back
+            return partition_back.specialize(
+                    {f:unconditioned_lambda, i:start_index, j:end_index},
+                     assumptions=assumptions)
+        else:
+            from proveit.iteration._theorems_ import partition
+            return partition.specialize(
+                    {f:unconditioned_lambda, i:start_index, j:before_split_idx,
+                     k:end_index}, assumptions=assumptions)
+    
+    """
+    TODO: change register_equivalence_method to allow and fascilitate these
+    method stubs for purposes of generating useful documentation.
+
+    def partitioned(self, before_split_idx, assumptions=USE_DEFAULTS):
+        '''
+        Return the right-hand-side of a 'partition'.
+        '''
+        raise Exception("Should be implemented via InnerExpr.register_equivalence_method")
+    
+    def split(self, before_split_idx, assumptions=USE_DEFAULTS):
+        '''
+        As an InnerExpr method when the inner expression is an Iter,
+        return the expression with the inner expression replaced by its
+        'partitioned' version.
+        '''
+        raise Exception("Implemented via InnerExpr.register_equivalence_method "
+                        "only to be applied to an InnerExpr object.")
+    """
 
 
 def varIter(var, start, end):

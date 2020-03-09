@@ -8,6 +8,7 @@ class ExprTuple(Composite, Expression):
     An ExprTuple is a composite Exporession composed of an ordered list 
     of member Expressions.
     """
+    
     def __init__(self, *expressions):
         '''
         Initialize an ExprTuple from an iterable over Expression 
@@ -424,7 +425,12 @@ class ExprTuple(Composite, Expression):
                 # From one entry to the next should be a natural number (could be
                 # an empty entry).
                 #print("simplified entry span", entry_span)
-                new_span_requirements.append(InSet(entry_span, Naturals).prove(assumptions))
+                requirement = InSet(entry_span, Naturals)
+                try:
+                    requirement = requirement.prove(assumptions)
+                except ProofFailure:
+                    raise Exception("Failed requirement: %s"%requirement)
+                new_span_requirements.append(requirement)
                 coord = _simplifiedCoord(dist_add(coord, entry_span), 
                                         assumptions, new_simp_requirements)
             else:
@@ -460,13 +466,14 @@ class ExprTuple(Composite, Expression):
         self.entryCoords(base, assumptions, requirements)
         return self._lastEntryCoordInfo[-1]
     
-    def length(self, assumptions, requirements=None):
+    def length(self, assumptions=USE_DEFAULTS):
         '''
-        Return the length of this tuple as an Expression.  This
+        Return the proven length of this tuple as an Expression.  This
         length includes the extent of all contained iterations. 
         '''
-        return self.entryCoords(0, assumptions, requirements)[-1]
-            
+        from proveit.iteration import Len
+        return Len(self).simplification(assumptions).rhs
+                
     def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
                     assumptions=USE_DEFAULTS):
         '''
@@ -490,6 +497,117 @@ class ExprTuple(Composite, Expression):
             else:
                 subbed_exprs.append(subbed_expr)
         return ExprTuple(*subbed_exprs)
+        
+    def merger(self, assumptions=USE_DEFAULTS):
+        '''
+        If this is an tuple of expressions that can be directly merged together
+        into a single iteration, return this proven equivalence.  For example,
+        {j \in Naturals, k-(j+1) \in Naturals} 
+        |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)
+        '''
+        from proveit._core_.expression.lambda_expr import Lambda
+        from proveit._core_.expression.composite.iteration import Iter
+        from proveit.relation import TransRelUpdater
+        from proveit.iteration._theorems_ import (merge, merge_front, merge_back,
+                                                  merge_pair, merge_series)
+        from proveit._common_ import f, i, j, k, l, x
+        
+        # A convenience to allow successive update to the equation via 
+        # transitivities (starting with self=self).
+        eq = TransRelUpdater(self, assumptions)
+        
+        # Determine the position of the first Iter item and get the lambda map.
+        first_iter_pos = len(self)
+        lambda_map = None
+        for _k, item in enumerate(self):
+            if isinstance(item, Iter):
+                lambda_map = Lambda(item.lambda_map.parameter, item.lambda_map.body)
+                first_iter_pos = _k
+                break
+        
+        if 1 < first_iter_pos:
+            if lambda_map is None:
+                raise NotImplementedError("Means of extracting a lambda map has not been implemented")
+                pass # need the lambda map
+            # Collapse singular items at the beginning.
+            front_singles = ExprTuple(eq.expr[:first_iter_pos])
+            i_sub = lambda_map.extractArgument(front_singles[0])
+            j_sub = lambda_map.extractArgument(front_singles[-1])
+            if len(front_singles)==2:
+                # Merge a pair of singular items.
+                front_merger = merge_pair.specialize({f:lambda_map, i:i_sub, j:j_sub}, 
+                                                     assumptions=assumptions)
+            else:
+                # Merge a series of singular items in one shot.
+                front_merger = merge_series.specialize({f:lambda_map, x:front_singles,
+                                                        i:i_sub, j:j_sub}, 
+                                                       assumptions=assumptions)
+            eq.update(front_merger.substitution(self.innerExpr()[:first_iter_pos], 
+                                                assumptions=assumptions))
+            
+        if len(eq.expr) == 1:
+            # We have accomplished a merger down to one item.
+            return eq.relation
+        
+        if len(eq.expr) == 2:
+            # Merge a pair.
+            if isinstance(eq.expr[0], Iter):
+                if isinstance(eq.expr[1], Iter):
+                    # Merge a pair of Iters.
+                    item = eq.expr[1]
+                    other_lambda_map = Lambda(item.lambda_map.parameter, 
+                                              item.lambda_map.body)
+                    if other_lambda_map != lambda_map:
+                        raise ExprTupleError("Cannot merge together iterations "
+                                             "with different lambda maps: %s vs %s"
+                                             %(lambda_map, lambda_map_2nd))
+                    iSub, jSub = eq.expr[0].start_index, eq.expr[0].end_index
+                    kSub, lSub = eq.expr[1].start_index, eq.expr[1].end_index
+                    merger = \
+                        merge.specialize({f:lambda_map, i:iSub, j:jSub, k:kSub, 
+                                          l:lSub}, assumptions=assumptions)
+                else:
+                    # Merge an Iter and a singular item.
+                    iSub, jSub = eq.expr[0].start_index, eq.expr[0].end_index
+                    kSub = lambda_map.extractArgument(eq.expr[1])
+                    merger = \
+                        merge_back.specialize({f:lambda_map, i:iSub, j:jSub,
+                                               k:kSub}, assumptions=assumptions)                    
+            else:
+                # Merge a singular item and Iter.
+                iSub = lambda_map.extractArgument(eq.expr[0])
+                jSub, kSub = eq.expr[1].start_index, eq.expr[1].end_index
+                merger = \
+                    merge_front.specialize({f:lambda_map, i:iSub, j:jSub,
+                                            k:kSub}, assumptions=assumptions)
+            eq.update(merger)
+            return eq.relation
+        
+        while len(eq.expr) > 1:
+            front_merger = ExprTuple(eq.expr[:2]).merger(assumptions)
+            eq.update(front_merger.substitution(self.innerExpr()[:2], 
+                                                assumptions=assumptions))
+    
+    """
+    TODO: change register_equivalence_method to allow and fascilitate these
+    method stubs for purposes of generating useful documentation.
+    
+    def merged(self, assumptions=USE_DEFAULTS):
+        '''
+        Return the right-hand-side of a 'merger'.
+        '''
+        raise Exception("Should be implemented via InnerExpr.register_equivalence_method")
+    
+    def merge(self, assumptions=USE_DEFAULTS):
+        '''
+        As an InnerExpr method when the inner expression is an ExprTuple,
+        return the expression with the inner expression replaced by its
+        'merged' version.
+        '''
+        raise Exception("Implemented via InnerExpr.register_equivalence_method "
+                        "only to be applied to an InnerExpr object.")
+    """
+
 
 class ExprTupleError(Exception):
     def __init__(self, msg):
