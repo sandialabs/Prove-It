@@ -7,7 +7,7 @@ class InSet(Operation):
                          context=__file__)    
     
     # maps elements to InSet KnownTruths.
-    # For exmple, map x to (x in S) if (x in S) is a KnownTruth.
+    # For example, map x to (x in S) if (x in S) is a KnownTruth.
     knownMemberships = dict()
         
     def __init__(self, element, domain):
@@ -77,28 +77,71 @@ class InSet(Operation):
     def conclude(self, assumptions):
         '''
         Attempt to conclude that the element is in the domain.
-        First, see if it is contained in a subset of the domain.  
-        If that fails and the domain has a 'membershipObject' method,
-        try calling 'conclude' on the object it generates.
+        First, see if it is known to be contained in a known subset of the 
+        domain.  Next, check if the element has a known simplification; if so,
+        try to derive membership via this simplification.
+        If there isn't a known simplification, next try to call
+        the 'self.domain.membershipObject.conclude(..)' method to prove
+        the membership.  If that fails, try simplifying the element
+        again, this time using automation to push the simplification through
+        if possible.
         '''
         from proveit.logic import SubsetEq
         from proveit import ProofFailure
-        # try to conclude some x in S
+        from proveit.logic import SimplificationError
+        
+        # See if the membership is already known.
         if self.element in InSet.knownMemberships:
             for knownMembership in InSet.knownMemberships[self.element]:
                 if knownMembership.isSufficient(assumptions):
-                    try:
-                        # x in R is a known truth; if we can proof R subseteq S, we are done.
-                        subsetRelation = SubsetEq(knownMembership.domain, self.domain).prove(assumptions)
+                    # x in R is a known truth; if we know that R subseteq S,
+                    # we are done.
+                    subRel = SubsetEq(knownMembership.domain, self.domain)
+                    if subRel.proven(assumptions):
                         # S is a superset of R, so now we can prove x in S.
-                        return subsetRelation.deriveSupsersetMembership(self.element, assumptions=assumptions)
-                    except ProofFailure:
-                        pass # no luck, keep trying
-        # could not prove it through a subset relationship,
-        # now try to use a MembershipObject
-        if hasattr(self, 'membershipObject'):
-            return self.membershipObject.conclude(assumptions)
-              
+                        return subRel.deriveSupsersetMembership(self.element,
+                                                                assumptions)
+        
+        # No known membership works.  Let's see if there is a known
+        # simplification of the element before trying anything else.
+        try:
+            elem_simplification = self.element.simplification(assumptions, 
+                                                              automation=False)
+            if elem_simplification.lhs == elem_simplification.rhs:
+                elem_simplification = None # reflection doesn't count
+        except SimplificationError:
+            elem_simplification = None
+        
+        exception = None
+        if elem_simplification is None:
+            # If there is not a known simplification, try using a 
+            # membershipObject to conclude the membership.
+            try:
+                # could not prove it through a subset relationship,
+                # now try to use a MembershipObject
+                return self.membershipObject.conclude(assumptions)
+            except Exception as e:
+                exception = e # no luck with that.
+        
+            # Since the membershipObject approach failed, let's try
+            # harder to simplify the element.
+            elem_simplification = self.element.simplification(assumptions)
+            if elem_simplification.lhs == elem_simplification.rhs:
+                elem_simplification = None # reflection doesn't count
+        
+        # If the element simplification successed, prove the membership
+        # via the simplified form of the element.
+        if elem_simplification is not None:
+            simple_elem = elem_simplification.rhs
+            simple_membership = InSet(simple_elem, self.domain).prove(assumptions)
+            inner_expr = simple_membership.innerExpr().element 
+            return elem_simplification.subLeftSideInto(inner_expr, assumptions)
+        else:
+            # No useful simplification strategy.  Raise the exception from
+            # having no 'membershipObject' or the 'membershipObject' failing
+            # to conclude.
+            raise exception
+    
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to form evaluation of whether (element in domain) is
