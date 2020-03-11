@@ -14,10 +14,13 @@ class ModAbs(Operation):
         return '|'+self.value.string(fence=False)+'|_{mod ' + self.divisor.string(fence=False) + '}'
 
     def latex(self, **kwargs):
-        print("self.divisor.string(fence=False) = {}".
-            format(self.divisor.string(fence=False)))                           # for testing
         # return r'\left|'+self.value.string(fence=False)+r'\right|_{{\rm mod}~' + self.divisor.string(fence=False) + r'\right}'
-        return r'\left|'+self.value.string(fence=False)+r'\right|_{\textup{mod}\thinspace ' + self.divisor.string(fence=False) + r'}'
+        # return (  r'\left|'+self.value.string(fence=False)
+        #         + r'\right|_{\textup{mod}\thinspace '
+        #         + self.divisor.string(fence=False) + r'}')
+        return (  r'\left|'+self.value.latex(fence=False)
+                + r'\right|_{\textup{mod}\thinspace '
+                + self.divisor.string(fence=False) + r'}')
 
     def _closureTheorem(self, numberSet):
         from . import theorems
