@@ -20,7 +20,7 @@ class ModAbs(Operation):
         #         + self.divisor.string(fence=False) + r'}')
         return (  r'\left|'+self.value.latex(fence=False)
                 + r'\right|_{\textup{mod}\thinspace '
-                + self.divisor.string(fence=False) + r'}')
+                + self.divisor.latex(fence=False) + r'}')
 
     def _closureTheorem(self, numberSet):
         from . import theorems
