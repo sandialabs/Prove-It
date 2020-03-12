@@ -21,8 +21,12 @@ class Not(Operation):
         if isinstance(self.operand, Not):
             yield self.deriveViaDoubleNegation # A given Not(Not(A))
         try:
-            # derive the contradiction assuming the operand
-            yield self.deriveContradiction # FALSE given Not(A) and A
+            try:
+                self.operand.prove(automation=False)
+                # derive FALSE given Not(A) and A
+                yield self.deriveContradiction
+            except ProofFailure:
+                pass
         except:
             pass # no contradiction
         yield self.deriveInBool # [Not(A) in Boolean] given Not(A)

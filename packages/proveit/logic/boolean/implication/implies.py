@@ -186,20 +186,23 @@ class Implies(TransitiveRelation):
     def deriveViaContradiction(self, assumptions=USE_DEFAULTS):
         r'''
         From (Not(A) => FALSE), derive and return A assuming A in Booleans.
-        Or from (A => FALSE), derive and return Not(A) assuming A in Booleans`.
+        Or from (A => FALSE), derive and return Not(A) assuming A in Booleans.
+        Or from (A => FALSE), derive and return A != TRUE.
         '''
-        from proveit.logic import FALSE
+        from proveit.logic import FALSE, inBool
         from ._theorems_ import affirmViaContradiction, denyViaContradiction, notTrueViaContradiction
         if self.consequent != FALSE:
-            raise ValueError('deriveViaContridiction method is only applicable if FALSE is implicated, not for ' + str(self))
+            raise ValueError('deriveViaContradiction method is only applicable if FALSE is implicated, not for ' + str(self))
         if isinstance(self.antecedent, Not):
             stmt = self.antecedent.operand
             return affirmViaContradiction.specialize({A:stmt}, assumptions=assumptions)
         else:
             try:
+                inBool(self.antecedent).prove(assumptions, automation=False)
                 return denyViaContradiction.specialize({A:self.antecedent}, assumptions=assumptions)
             except ProofFailure:
                 return notTrueViaContradiction.specialize({A:self.antecedent},assumptions=assumptions)
+    
     def concludeSelfImplication(self):
         from ._theorems_ import selfImplication
         if self.antecedent != self.consequent:
