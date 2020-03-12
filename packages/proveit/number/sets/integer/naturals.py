@@ -58,16 +58,16 @@ class NaturalPosSet(NumberSet):
         from proveit._common_ import x
         return xInNatsPosInBool.specialize({x:member}, assumptions=assumptions)
 
-# if proveit.defaults.automation:
-#     # Import some fundamental theorems without quantifiers that are
-#     # imported when automation is used.
-#     from ._theorems_ import natsPosInNats, natsInInts, natsPosInInts
-
 if proveit.defaults.automation:
-    try:
-        # Import some fundamental theorems without quantifiers that are
-        # imported when automation is used.
-        # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-        from ._theorems_ import natsPosInNats, natsInInts, natsPosInInts
-    except:
-        pass
+    # Import some fundamental theorems without quantifiers that are
+    # imported when automation is used.
+    from ._theorems_ import natsPosInNats, natsInInts, natsPosInInts
+
+# if proveit.defaults.automation:
+#     try:
+#         # Import some fundamental theorems without quantifiers that are
+#         # imported when automation is used.
+#         # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+#         from ._theorems_ import natsPosInNats, natsInInts, natsPosInInts
+#     except:
+#         pass
