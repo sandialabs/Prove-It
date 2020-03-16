@@ -37,10 +37,7 @@ class SetOfAll(OperationOverInstances):
             
     def _formatted(self, formatType, fence=False, **kwargs):
         outStr = ''
-        if len(self.explicitConditions()) == 0:
-            explicit_conditions = ExprTuple()
-        else:
-            explicit_conditions = ExprTuple(self.explicitConditions())
+        explicit_conditions = ExprTuple(*self.explicitConditions())
         inner_fence = (len(explicit_conditions) > 0)
         formatted_instance_var = self.instanceVar.formatted(formatType)
         formatted_instance_element = self.instanceElement.formatted(
