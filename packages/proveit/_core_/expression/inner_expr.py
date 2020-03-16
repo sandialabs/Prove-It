@@ -266,7 +266,6 @@ class InnerExpr:
         expression within the top-level expression.
         '''
         from proveit import Iter, varIter
-        from proveit.number import one
         # build the lambda expression, starting with the lambda parameter and
         # working up the hierarchy.
         top_level_expr = self.exprHierarchy[0]
@@ -276,6 +275,7 @@ class InnerExpr:
         if isinstance(cur_idx, slice):
             # When there is a slice of an ExprTuple at the bottom level, we
             # will map an iteration of parameters as the filler for the slice.
+            from proveit.number import one
             assert isinstance(cur_sub_expr, tuple), "Unexpected type"
             parent_tuple = self.exprHierarchy[-2]
             assert isinstance(parent_tuple, ExprTuple), "Unexpected type"
