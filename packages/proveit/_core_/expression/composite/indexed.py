@@ -6,46 +6,40 @@ from proveit._core_.expression.label import Variable
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
 
-class Indexed(Expression):
+class IndexedVar(Operation):
     '''
-    An Indexed Expression expresses a Variable,
-    representing an ExprTuple or ExprArray, being indexed
-    to yield an element.
-    
-    Upon substitution, it automatically performs the indexing
-    if the indexed expression is a composite and the
-    difference between the index and base is a known
-    integer (or list of integers).
+    An IndexedVar Expression expresses a Variable or
+    nested IndexedVar, representing an ExprTuple or ExprArray, 
+    being indexed to yield an element.  When IndexedVar's are
+    nested, the default style is to display it as a single
+    variable with multiple indices.  That is,
+    (x_i)_j will display, by default, as x_{i, j}.
     '''
     
-    def __init__(self, var, index_or_indices, base=1, styles=None, requirements=tuple()):
+    def __init__(self, var, index, flatten_nested_indexing=True):
         from .composite import compositeExpression
-        if not isinstance(var, Variable):
-            raise TypeError("'var' being indexed should be a Variable, got %s"%str(var))
-        self.indices = compositeExpression(index_or_indices)
-        if len(self.indices) == 1:
-            # has a single parameter
-            self.index = self.indices[0]
-            self.index_or_indices = self.index
+        if not isinstance(var, Variable) or not isinstance(var, IndexedVar):
+            raise TypeError("'var' being indexed should be a Variable an IndexedVar"
+                            "itself, got %s"%str(var))
+        self.index = index
+        if isinstance(var, IndexedVar):
+            if flatten_nested_indexing:
+                styles = {'multi_indexed_var':'flat'}
+            else:
+                styles = {'multi_indexed_var':'nested'}                
         else:
-            self.index_or_indices = self.indices
-        if not isinstance(base, int):
-            raise TypeError("'base' should be an integer")
-        Expression.__init__(self, ['Indexed', str(base)], [var, self.index_or_indices], styles=styles, requirements=requirements)
+            styles = None
+        Operation.__init__(self, var, self.index, styles=styles)
         self.var = var
-        self.base = base
     
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
-        if subClass != Indexed: 
+        if subClass != IndexedVar: 
             MakeNotImplemented(subClass)
-        if len(coreInfo) != 2 or coreInfo[0] != 'Indexed':
-            raise ValueError("Expecting Indexed coreInfo to contain exactly two items: 'Indexed' and the integer 'base'")
-        try:
-            base = int(coreInfo[1])
-        except:
-            raise ValueError("Expecting 'base' to be an integer")
-        return Indexed(*subExpressions, base=base).withStyles(**styles)       
+        if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
+            raise ValueError("Expecting IndexedVar coreInfo to contain exactly"
+                             " one item: 'Operation'")
+        return IndexedVar(*subExpressions).withStyles(**styles)       
 
     def remakeArguments(self):
         '''
@@ -54,14 +48,41 @@ class Indexed(Expression):
         '''
         yield self.var
         yield self.index_or_indices
-        yield ('base', self.base)       
+        if self.getStyle('multi_indexed_var', None) == 'nested':
+            yield ('flatten_nested_indexing', False)       
     
-    def string(self, **kwargs):
-        return self.var.string() + '_' + self.index_or_indices.string(fence=True)
-
-    def latex(self, **kwargs):
-        return self.var.latex() + '_{' + self.index_or_indices.latex(fence=False) + '}'
-
+    def getBaseVar(self):
+        '''
+        Return the Variable being indexed, or if it is a nested IndexedVar,
+        that of the nested IndexedVar until we get to the actual Variable.
+        '''
+        if isinstance(self.var, IndexedVar):
+            return self.var.getBaseVar()
+        return self.var
+    
+    def getIndices(self):
+        '''
+        Return the indices of the IndexedVar, starting from the inner-most
+        nested IndexedVar going out.
+        '''
+        if isinstance(self.var, IndexedVar):
+            return self.var.getIndices() + (self.index,)
+        return (self.index,)
+    
+    def _formatted(self, formatType, **kwargs):
+        if self.getStyle('multi_indexed_var', None) == 'flat' and \
+                isinstance(self.var, IndexedVar):
+            indices_str = ','.join(index.formatted(formatType) 
+                                   for index in self.getIndices())
+            result = self.getBaseVar.formatted(formatType) + '_{'+indices_str+'}'
+        else:
+            index_str = self.index.formatted(formatType, fence=False)
+            result = self.var.formatted(formatType, fence=True) + '_{' + index_str + '}'
+        if kwargs.get('fence', False) == True:
+            if formatType=='latex':
+                return r'\left(' + result + r'\right)'
+            else: return '(' + result + ')'
+    
     def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with the substitutions made 
