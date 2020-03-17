@@ -324,8 +324,8 @@ class Operation(Expression):
                     else:
                         return '\left[' + operator.latex(fence=True) +  r'\right]\left(' + operands.latex(fence=False, subFence=False) + r'\right)'
                     raise ValueError("Unexpected formatType: " + str(formatType))  
-            fence =  kwargs['fence'] if 'fence' in kwargs else False
-            subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
+            fence =  kwargs.get('fence', False)
+            subFence =  kwargs.get('subFence', True)
             do_wrapping = len(wrapPositions)>0
             formatted_str = ''
             if fence: formatted_str = '(' if formatType=='string' else  r'\left('
