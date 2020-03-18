@@ -84,7 +84,8 @@ class NamedExprs(Composite, Expression):
         outStr += r'\end{array} \right\}' + '\n'
         return outStr            
     
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
+                    assumptions=USE_DEFAULTS):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.`
@@ -93,7 +94,9 @@ class NamedExprs(Composite, Expression):
         if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)
         else:
-            return NamedExprs([(key,expr.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)) for key, expr in self.items()])
+            return NamedExprs([(key,expr.substituted(exprMap, relabelMap, 
+                                                     reservedVars, assumptions)) 
+                               for key, expr in self.items()])
 
     def usedVars(self):
         '''

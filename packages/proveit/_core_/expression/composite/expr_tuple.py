@@ -468,7 +468,7 @@ class ExprTuple(Composite, Expression):
         return self.entryCoords(0, assumptions, requirements)[-1]
             
     def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
+                    assumptions=USE_DEFAULTS):
         '''
         Returns this expression with the substitutions made 
         according to exprMap and/or relabeled according to relabelMap.
@@ -481,7 +481,7 @@ class ExprTuple(Composite, Expression):
         subbed_exprs = []
         for expr in self:
             subbed_expr = expr.substituted(exprMap, relabelMap, reservedVars, 
-                                           assumptions, requirements)
+                                           assumptions)
             if isinstance(expr, Iter) and isinstance(subbed_expr, ExprTuple):
                 # The iterated expression is being expanded 
                 # and should be embedded into the list.

@@ -967,7 +967,7 @@ class Specialization(Proof):
         mappings = dict(specializeMap)
         mappings.update(relabelMap) # mapping everything
         
-        subbed_expr = expr.substituted(specializeMap, relabelMap, assumptions=assumptions, requirements=requirements)
+        subbed_expr = expr.substituted(specializeMap, relabelMap, assumptions=assumptions)
         
         # Return the expression and conditions with substitutions and the information to reconstruct the specialization
         return subbed_expr, subbedConditions + requirements, mappedVarLists, mappings

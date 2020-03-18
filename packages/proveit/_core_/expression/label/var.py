@@ -14,7 +14,8 @@ class Variable(Label):
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
                                         
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
+                    assumptions=USE_DEFAULTS):
         '''
         Returns this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.

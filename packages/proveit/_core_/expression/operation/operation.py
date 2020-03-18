@@ -19,7 +19,7 @@ class Operation(Expression):
         '''
         Operation.operationClassOfOperator.clear()
         
-    def __init__(self, operator_or_operators, operand_or_operands, styles=None, requirements=tuple()):
+    def __init__(self, operator_or_operators, operand_or_operands, styles=None):
         '''
         Create an operation with the given operator(s) and operand(s).
         The operator(s) must be Label(s) (a Variable or a Literal).
@@ -68,12 +68,18 @@ class Operation(Expression):
             styles['wrapPositions'] = '()' # no wrapping by default
         if 'justification' not in styles:
             styles['justification'] = 'center'
-        Expression.__init__(self, ['Operation'], (self.operator_or_operators, self.operand_or_operands), styles=styles, requirements=requirements)
+        sub_exprs = (self.operator_or_operators, self.operand_or_operands)
+        Expression.__init__(self, ['Operation'], sub_exprs, styles=styles)
 
     def styleOptions(self):
         options = StyleOptions(self)
-        options.addOption('wrapPositions', "position(s) at which wrapping is to occur; '2 n - 1' is after the nth operand, '2 n' is after the nth operation.")
-        options.addOption('justification', "if any wrap positions are set, justify to the 'left', 'center', or 'right'")
+        options.addOption('wrapPositions', 
+                          ("position(s) at which wrapping is to occur; '2 n - 1' "
+                           "is after the nth operand, '2 n' is after the nth "
+                           "operation."))
+        options.addOption('justification', 
+                          ("if any wrap positions are set, justify to the 'left', "
+                           "'center', or 'right'"))
         return options
 
     def withWrappingAt(self, *wrapPositions):
@@ -171,9 +177,6 @@ class Operation(Expression):
         operands = compositeExpression(operand_or_operands)
         args, varargs, varkw, defaults = inspect.getargspec(operationClass.__init__)
         args = args[1:] # skip over the 'self' arg
-        if len(args)>0 and args[-1]=='requirements':
-            args = args[:-1] # NOT TREATING 'requirements' FULLY AT THIS TIME; THIS NEEDS WORK.
-            defaults = defaults[:-1]
         if len(args)>0 and args[-1]=='styles':
             args = args[:-1] # NOT TREATING 'styles' FULLY AT THIS TIME; THIS NEEDS WORK.
             defaults = defaults[:-1]
@@ -354,7 +357,8 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
+                    assumptions=USE_DEFAULTS):
         '''
         Return this expression with the variables substituted 
         according to subMap and/or relabeled according to relabelMap.
@@ -364,9 +368,11 @@ class Operation(Expression):
         self._checkRelabelMap(relabelMap)
         if len(exprMap)>0 and (self in exprMap):
             return exprMap[self]._restrictionChecked(reservedVars)        
-        subbed_operand_or_operands = self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        subbed_operand_or_operands = \
+            self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, assumptions)
         subbed_operands = compositeExpression(subbed_operand_or_operands)
-        subbed_operator_or_operators = self.operator_or_operators.substituted(exprMap, relabelMap, reservedVars, assumptions, requirements)
+        subbed_operator_or_operators = \
+            self.operator_or_operators.substituted(exprMap, relabelMap, reservedVars, assumptions)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
         if len(subbed_operators)==1:
             subbedOperator = subbed_operators[0]
@@ -374,16 +380,23 @@ class Operation(Expression):
                 # Substitute the entire operation via a Lambda body
                 # For example, f(x, y) -> x + y.
                 if len(subbed_operands) != len(subbedOperator.parameters):
-                    raise ImproperSubstitution('Cannot substitute an Operation with the wrong number of parameters')
+                    raise ImproperSubstitution("Cannot substitute an Operation "
+                                               "with the wrong number of parameters")
                 if len(subbedOperator.conditions) != 0:
-                    raise ImproperSubstitution('Operation substitution must be defined via an Unconditioned Lambda expression')
-                operandSubMap = {param:operand for param, operand in zip(subbedOperator.parameters, subbed_operands)}
+                    raise ImproperSubstitution("Operation substitution must be "
+                                               "defined via an Unconditioned Lambda "
+                                               "expression")
+                operandSubMap = {param:operand for param, operand in 
+                                 zip(subbedOperator.parameters, subbed_operands)}
                 if not reservedVars is None:
-                    # the reserved variables of the lambda body excludes the lambda parameters
-                    # (i.e., the parameters mask externally reserved variables).
-                    lambdaExprReservedVars = {k:v for k, v in reservedVars.items() if k not in subbedOperator.parameterVarSet}
+                    # The reserved variables of the lambda body excludes the 
+                    # lambda parameters (i.e., the parameters mask externally
+                    # reserved variables).
+                    lambdaExprReservedVars = \
+                        {k:v for k, v in reservedVars.items()
+                         if k not in subbedOperator.parameterVarSet}
                 else: lambdaExprReservedVars = None
-                return subbedOperator.body._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, assumptions=assumptions, requirements=requirements)
+                return subbedOperator.body._restrictionChecked(lambdaExprReservedVars).substituted(operandSubMap, assumptions=assumptions)
         # remake the Expression with substituted operator and/or operands
         if len(subbed_operators)==1:
             # If it is a single operator that is a literal operator of an Operation class

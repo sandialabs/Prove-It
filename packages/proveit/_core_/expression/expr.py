@@ -47,15 +47,15 @@ class Expression(metaclass=ExprType):
         Expression.contexts.clear()
         assert len(Expression.in_progress_to_conclude)==0, "Unexpected remnant 'in_progress_to_conclude' items (should have been temporary)"
                         
-    def __init__(self, coreInfo, subExpressions=tuple(), styles=None, requirements=tuple()):
+    def __init__(self, coreInfo, subExpressions=tuple(), styles=None):
         '''
-        Initialize an expression with the given coreInfo (information relevant at the core Expression-type
-        level) which should be a list (or tuple) of strings, and a list (or tuple) of subExpressions.
-        "styles" is a dictionary used to indicate how the Expression should be formatted
-        when there are different possibilities (e.g. division with '/' or as a fraction).  The meaning
-        of the expression is independent of its styles signature.
-        The "requirements" are expressions that must be proven to be true in order for the Expression
-        to make sense.
+        Initialize an expression with the given coreInfo (information relevant 
+        at the core Expression-type level) which should be a list (or tuple) of
+        strings, and a list (or tuple) of subExpressions.  "styles" is a 
+        dictionary used to indicate how the Expression should be formatted
+        when there are different possibilities (e.g. division with '/' or as a 
+        fraction).  The meaning of the expression is independent of its styles 
+        signature.
         '''
         if styles is None: styles = dict()
         for coreInfoElem in coreInfo:
@@ -90,16 +90,6 @@ class Expression(metaclass=ExprType):
             if not hasattr(self._meaningData, '_coreInfo'):
                 # initialize the data of self._meaningData
                 self._meaningData._coreInfo = tuple(coreInfo)
-                # combine requirements from all sub-expressions
-                requirements = sum([subExpression.getRequirements() for subExpression 
-                                    in subExpressions], tuple()) + requirements
-                # Expression requirements are essentially assumptions that need
-                # to be proven for the expression to be valid.  Calling 
-                # "checkAssumptions" will remove repeats and generate proof by 
-                # assumption for each (which may not be necessary, but does not
-                # hurt).   
-                self._meaningData._requirements = \
-                    defaults.checkedAssumptions(requirements)
         
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
@@ -109,7 +99,6 @@ class Expression(metaclass=ExprType):
         # reference this unchanging data of the unique 'meaning' data
         self._meaning_id = self._meaningData._unique_id
         self._coreInfo = self._meaningData._coreInfo
-        self._requirements = self._meaningData._requirements
         
         self._style_id = self._styleData._unique_id
         
@@ -394,13 +383,7 @@ class Expression(metaclass=ExprType):
         Return a copy of the internally maintained styles dictionary.
         '''
         return dict(self._styleData.styles)
-    
-    def getRequirements(self):
-        '''
-        Return a copy of the requirements.
-        '''
-        return tuple(self._requirements)
-     
+         
     def remakeConstructor(self):
         '''
         Method to call to reconstruct this Expression.  The default is the class name
@@ -554,21 +537,21 @@ class Expression(metaclass=ExprType):
         '''
         return iter(())
     
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, assumptions=USE_DEFAULTS, requirements=None):
+    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
+                    assumptions=USE_DEFAULTS):
         '''
         Returns this expression with the expressions substituted 
-        according to the exprMap dictionary (mapping Expressions to Expressions --
-        for specialize, this may only map Variables to Expressions).
+        according to the exprMap dictionary (mapping Expressions to Expressions
+        -- for specialize, this may only map Variables to Expressions).
         If supplied, reservedVars is a dictionary that maps reserved Variable's
-        to relabeling exceptions.  You cannot substitute with an expression that
-        uses a restricted variable and you can only relabel the exception to the
-        restricted variable.  This is used to protect an Lambda function's "scope".
+        to relabeling exceptions.  You cannot substitute with an expression 
+        that uses a restricted variable and you can only relabel the exception 
+        to the restricted variable.  This is used to protect an Lambda 
+        function's "scope".
         
-        For certain Expression classes in proveit._core_.expression.composite,
-        intermediate proofs may be required.  This is why assumptions may be
-        needed.  If a list is passed into requirements, KnownTruth's for these
-        intermediate proofs will be appended to it -- these are requirements
-        for the substitution to be valid.
+        In the case of Conditional expressions, they will be reduced to
+        one of the values if its corresponding condition is known to be
+        true.  For this reason, assumptions are provided and passed along.
         '''
         self._checkRelabelMap(relabelMap)
         if len(exprMap)>0 and (self in exprMap):
