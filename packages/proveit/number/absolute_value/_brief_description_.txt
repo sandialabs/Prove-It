@@ -1,1 +1,1 @@
-place-holder for absolute_value context
+absolute value of reals (and subsets) and norm of complex numbers
