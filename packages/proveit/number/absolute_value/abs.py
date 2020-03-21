@@ -9,11 +9,17 @@ class Abs(Operation):
         Operation.__init__(self, Abs._operator_, A)
 
     def _closureTheorem(self, numberSet):
-        from . import theorems
+        from . import _theorems_
+        from proveit.number import Reals, RealsNonNeg, RealsPos
         if numberSet == Reals:
-            return theorems.absComplexClosure # complex in, real out
+            # complex in, real out
+            return _theorems_.absComplexClosure
+        elif numberSet == RealsNonNeg:
+            # complex in, non-neg real out
+            return _theorems_.absComplexClosureNonNegReals
         elif numberSet == RealsPos:
-            return theorems.absNonzeroClosure # nonzero in, real positive out
+            # nonzero in, real positive out
+            return _theorems_.absNonzeroClosure    
 
     def _notEqZeroTheorem(self):
         from . import theorems
