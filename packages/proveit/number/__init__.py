@@ -13,7 +13,8 @@ from .division import Div, frac
 from .exponentiation import Exp, sqrt
 from .summation import Sum
 from .integration import Integrate
-from .modular import Abs, Mod, ModAbs
+from .absolute_value import Abs
+from .modular import Mod, ModAbs
 from .rounding import Floor, Ceil, Round
 from .ordering import Less, LessEq, LesserSequence, LessOnlySeq, LessEqOnlySeq, lesserSequence, Greater, GreaterEq, GreaterSequence, GreaterOnlySeq, GreaterEqOnlySeq, greaterSequence, Min, Max
 from .divisibility import Divides, GCD
