@@ -1,4 +1,4 @@
-from proveit import Literal, Operation
+from proveit import Literal, Operation, USE_DEFAULTS
 from proveit._common_ import a, b, x
 
 class Abs(Operation):
@@ -55,3 +55,34 @@ class Abs(Operation):
         from .theorems import absElim
         # deduceNonNeg(self.operand, assumptions) # NOT YET IMPLEMENTED
         return absElim.specialize({x:self.operand})
+
+    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+        '''
+        Given a number set number_set (such as Integers, Reals, etc),
+        attempt to prove that the given expression is in that number
+        set using the appropriate closure theorem.
+        Created: 3/21/2020 by wdc, based on the same method in the Add
+                 and Exp classes.
+        Last modified: 3/21/2020 by wdc. Creation
+        Once established, these authorship notations can be deleted.
+        '''
+        from proveit.logic import InSet
+        from proveit.number.absolute_value._theorems_ import (
+                  absComplexClosure, absNonzeroClosure,
+                  absComplexClosureNonNegReals)
+        from proveit.number import Complexes, Reals, RealsNonNeg, RealsPos
+
+        if number_set == Reals:
+            return absComplexClosure.specialize({a:self.operand},
+                      assumptions=assumptions)
+
+        if number_set == RealsPos:
+            return absNonzeroClosure.specialize({a:self.operand},
+                      assumptions=assumptions)
+
+        if number_set == RealsNonNeg:
+            return absComplexClosureNonNegReals.specialize({a:self.operand},
+                      assumptions=assumptions)
+
+        msg = "'deduceInNumberSet' not implemented for the %s set"%str(number_set)
+        raise ProofFailure(InSet(self, number_set), assumptions, msg)
