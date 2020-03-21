@@ -22,8 +22,8 @@ class Abs(Operation):
             return _theorems_.absNonzeroClosure    
 
     def _notEqZeroTheorem(self):
-        from . import theorems
-        return theorems.absNotEqZero
+        from . import _theorems_
+        return _theorems_.absNotEqZero
     
     def string(self, **kwargs):
         return '|'+self.operand.string()+'|'
@@ -32,7 +32,8 @@ class Abs(Operation):
         return r'\left|'+self.operand.latex()+r'\right|'
 
     def deduceGreaterThanEqualsZero(self, assumptions=frozenset()):
-        from .theorems import absIsNonNeg
+        # not yet clear how to update this method
+        from ._theorems_ import absIsNonNeg
         deduceInComplexes(self.operand, assumptions)
         return absIsNonNeg.specialize({a:self.operand}).checked(assumptions)
     
@@ -53,14 +54,14 @@ class Abs(Operation):
         else:
             raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
     
-    def absElimination(self, assumptions=frozenset()):
+    def absElimination(self, assumptions=USE_DEFAULTS):
         '''
-        For some |x| expression, deduce |x| = x after trying to deduce x >= 0.
-        Assumptions may be needed to deduce x >= 0.
+        For some |x| expression, deduce |x| = x after trying to deduce
+        x >= 0. Assumptions may be needed to deduce x >= 0.
         '''
-        from .theorems import absElim
+        from ._theorems_ import absElim
         # deduceNonNeg(self.operand, assumptions) # NOT YET IMPLEMENTED
-        return absElim.specialize({x:self.operand})
+        return absElim.specialize({x:self.operand}, assumptions=assumptions)
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
