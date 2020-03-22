@@ -31,11 +31,19 @@ class Abs(Operation):
     def latex(self, **kwargs):
         return r'\left|'+self.operand.latex()+r'\right|'
 
-    def deduceGreaterThanEqualsZero(self, assumptions=frozenset()):
-        # not yet clear how to update this method
+    # def deduceGreaterThanEqualsZero(self, assumptions=frozenset()):
+    #     # not yet clear how to update this method
+    #     from ._theorems_ import absIsNonNeg
+    #     deduceInComplexes(self.operand, assumptions)
+    #     return absIsNonNeg.specialize({a:self.operand}).checked(assumptions)
+
+    def deduceGreaterThanEqualsZero(self, assumptions=USE_DEFAULTS):
+        # 03/21/2020 wdc: a first attempt at updating this method
+        from proveit.logic import InSet
+        from proveit.number import Complexes
         from ._theorems_ import absIsNonNeg
-        deduceInComplexes(self.operand, assumptions)
-        return absIsNonNeg.specialize({a:self.operand}).checked(assumptions)
+        InSet(self.operand, Complexes).prove(assumptions=assumptions)
+        return absIsNonNeg.specialize({a:self.operand}, assumptions=assumptions)
     
     def distribute(self, assumptions=frozenset()):
         '''
