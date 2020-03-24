@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit._common_ import a, b, x
 
 class Abs(Operation):
@@ -42,23 +42,49 @@ class Abs(Operation):
         from proveit.logic import InSet
         from proveit.number import Complexes
         from ._theorems_ import absIsNonNeg
-        InSet(self.operand, Complexes).prove(assumptions=assumptions)
+        # InSet(self.operand, Complexes).prove(assumptions=assumptions)
         return absIsNonNeg.specialize({a:self.operand}, assumptions=assumptions)
     
+    # def distribute(self, assumptions=frozenset()):
+    #     '''
+    #     Distribute the absolute value over a product or fraction.
+    #     Assumptions may be needed to deduce that the sub-operands are
+    #     complex numbers.
+    #     '''
+    #     from ._theorems_ import absFrac, absProd
+    #     from proveit.number import Div, Mult
+    #     if isinstance(self.operand, Div):
+    #         deduceInComplexes(self.operand.numerator, assumptions)
+    #         deduceInComplexes(self.operand.denominator, assumptions)
+    #         return absFrac.specialize({a:self.operand.numerator, b:self.operand.denominator}).checked(assumptions)
+    #     elif isinstance(self.operand, Mult):
+    #         deduceInComplexes(self.operand.operands, assumptions)
+    #         return absProd.specialize({xEtc:self.operand.operands}).checked(assumptions)
+    #     else:
+    #         raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
+
     def distribute(self, assumptions=frozenset()):
         '''
+        03/21/2020 wdc: a first attempt at updating this method;
+        still eliciting an extractInitArgValue error related to a multi-
+        variable domain conditionfor the Mult case. TO BE UPDATED LATER.
         Distribute the absolute value over a product or fraction.
-        Assumptions may be needed to deduce that the sub-operands are in complexes.
+        Assumptions may be needed to deduce that the sub-operands are
+        complex numbers.
         '''
-        from .theorems import absFrac, absProd
-        from proveit.number import Div, Mult
+        from ._theorems_ import absFrac, absProd
+        from proveit._common_ import n, xx
+        from proveit.logic import InSet
+        from proveit.number import num, Complexes, Div, Mult
         if isinstance(self.operand, Div):
-            deduceInComplexes(self.operand.numerator, assumptions)
-            deduceInComplexes(self.operand.denominator, assumptions)
-            return absFrac.specialize({a:self.operand.numerator, b:self.operand.denominator}).checked(assumptions)
+            return absFrac.specialize(
+                    {a:self.operand.numerator, b:self.operand.denominator},
+                    assumptions=assumptions)
         elif isinstance(self.operand, Mult):
-            deduceInComplexes(self.operand.operands, assumptions)
-            return absProd.specialize({xEtc:self.operand.operands}).checked(assumptions)
+            from proveit._common_ import xx
+            theOperands = self.operand.operands
+            return absProd.specialize({n:num(len(theOperands)), xx:theOperands},
+                                      assumptions=assumptions)
         else:
             raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
     
