@@ -256,11 +256,12 @@ class Lambda(Expression):
         keep derivation rules (i.e., instantiation) simple.  For details,
         see the Iter.substituted documentation.
         '''
-        return Lambda._apply(self.parameters, self.body, *operands,
+        repl_map = dict()
+        return Lambda._apply(self.parameters, self.body, repl_map, *operands,
                              assumptions=assumptions, requirements=requirements)
         
     @staticmethod 
-    def _apply(parameters, body, *operands, 
+    def _apply(parameters, body, repl_map, *operands, 
                assumptions=USE_DEFAULTS, requirements=None):
         '''
         Static method version of Lambda.apply which is convenient for 
@@ -268,7 +269,7 @@ class Lambda(Expression):
         need to be initialized (for the sake of efficiency for an 
         Instantiation proof).
         '''
-        from proveit import ExprTuple, Iter, ProofFailure
+        from proveit import ExprTuple, Iter, ProofFailure, safeDummyVar
         from proveit.logic import Equals
         from proveit.iteration import Len
         
@@ -278,7 +279,6 @@ class Lambda(Expression):
         
         # We will be matching operands with parameters in the proper order.
         operands_iter = iter(operands) 
-        repl_map = dict() # for the Lambda body substitution
         try:
             # Loop through each parameter entry and match it with corresponding
             # operand(s).  Singular parameter entries match with singular
@@ -292,10 +292,12 @@ class Lambda(Expression):
                     # one or more operand entries in order to match the
                     # element-wise length.
                     param_tuple = ExprTuple(parameter)
-                    param_indices = Iter(i, i, parameter.start_index, 
+                    idx_var = safeDummyVar(*parameters, body)
+                    param_indices = Iter(idx_var, idx_var, 
+                                         parameter.start_index, 
                                          parameter.end_index)
                     param_len = Len(ExprTuple(param_indices))
-                    if paramters[-1] == parameter:
+                    if parameters[-1] == parameter:
                         # This iterated parameter is the last entry,
                         # so it must encompass all remaining operands.
                         # We can attempt to prove the length requirement

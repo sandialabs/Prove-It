@@ -961,7 +961,7 @@ class Instantiation(Proof):
                 replacement = repl_map.get(parameter_var, parameter_var)
                 operands.append(replacement)
         
-        subbed_expr = Lambda._apply(parameters, expr, *operands,
+        subbed_expr = Lambda._apply(parameters, expr, repl_map, *operands,
                                     assumptions=assumptions,
                                     requirements=requirements)
         
