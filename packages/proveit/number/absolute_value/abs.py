@@ -67,7 +67,9 @@ class Abs(Operation):
         '''
         03/21/2020 wdc: a first attempt at updating this method;
         still eliciting an extractInitArgValue error related to a multi-
-        variable domain conditionfor the Mult case. TO BE UPDATED LATER.
+        variable domain condition for the Mult case. See _demos_ pg
+        for an example; WW thinks this is a prob with iterations and
+        we'll fix/update this later.
         Distribute the absolute value over a product or fraction.
         Assumptions may be needed to deduce that the sub-operands are
         complex numbers.
@@ -86,7 +88,8 @@ class Abs(Operation):
             return absProd.specialize({n:num(len(theOperands)), xx:theOperands},
                                       assumptions=assumptions)
         else:
-            raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
+            raise ValueError('Unsupported operand type for absolution value '
+                             'distribution: ', str(self.operand.__class__))
     
     def absElimination(self, assumptions=USE_DEFAULTS):
         '''
