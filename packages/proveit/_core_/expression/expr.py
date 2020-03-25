@@ -429,16 +429,13 @@ class Expression(metaclass=ExprType):
         if automation is USE_DEFAULTS:
             automation = defaults.automation
                 
-        # Note: exclude WILDCARD_ASSUMPTIONS when looking for an existing proof.
-        #   (may not matter, but just in case).
-        foundTruth = KnownTruth.findKnownTruth(self, (assumptionsSet - {'*'}))
+        foundTruth = KnownTruth.findKnownTruth(self, assumptionsSet)
         if foundTruth is not None: 
             foundTruth.withMatchingStyles(self, assumptions) # give it the appropriate style
             return foundTruth # found an existing KnownTruth that does the job!
                 
-        if self in assumptionsSet or '*' in assumptionsSet:
-            # prove by assumption if self is in the list of assumptions or
-            # WILDCARD_ASSUMPTIONS is in the list of assumptions.
+        if self in assumptionsSet:
+            # prove by assumption if self is in the list of assumptions.
             from proveit._core_.proof import Assumption
             return Assumption.makeAssumption(self, assumptions).provenTruth
         
