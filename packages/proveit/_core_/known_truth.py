@@ -205,7 +205,17 @@ class KnownTruth:
             finally:
                 KnownTruth.in_progress_to_derive_sideeffects.remove(self)        
             KnownTruth.sideeffect_processed.add((self.expr, sorted_assumptions))
-
+    
+    def orderOfAppearance(self, subExpressions):
+        '''
+        Yields the given sub-Expressions in the order in which they
+        appear in this KnownTruth.  There may be repeats.
+        '''
+        for assumption in self.assumptions:
+            for expr in assumption.orderOfAppearance(subExpressions):
+        for expr in self.expr.orderOfAppearance(subExpressions):
+            yield expr
+    
     def __eq__(self, other):
         if isinstance(other, KnownTruth):
             return self._meaning_id == other._meaning_id
@@ -582,20 +592,22 @@ class KnownTruth:
     def __getattr__(self, name):
         '''
         The KnownTruth aquires the attributes of its Expression, so it will act
-        like the Expression except it has additional (or possibly overridden) attributes.
-        When accessing functions of the Expression, if that function has 'assumptions'
-        as a keyword argument, the assumptions of the KnownTruth are automatically
-        included.
+        like the Expression except it has additional (or possibly overridden) 
+        attributes.  When accessing functions of the Expression, if that 
+        function has 'assumptions' as a keyword argument, the assumptions of 
+        the KnownTruth are automatically included.
         '''
         from proveit import defaults, USE_DEFAULTS
         import inspect
         
         # called only if the attribute does not exist in KnownTruth directly
         if name == 'png':
-            raise AttributeError("Do not use the Expression version of the 'png' attribute.") 
+            raise AttributeError("Do not use the Expression version of the 'png' "
+                                 "attribute.") 
         attr = getattr(self.expr, name)
         
-        if hasattr(attr, '__call__') and 'assumptions' in inspect.getargspec(attr).args:
+        if (hasattr(attr, '__call__') 
+                and 'assumptions' in inspect.getargspec(attr).args):
             # The attribute is a callable function with 'assumptions' as an argument.
             # Automatically include the KnownTruth assumptions.
 
@@ -688,8 +700,17 @@ class KnownTruth:
         '''
         from proveit._core_.proof import Specialization
         return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
+
+    def specialize(self, repl_map=None, relabel_map=None, assumptions=USE_DEFAULTS):
+        # TEMPORARY BACKWARD COMPATIBILITY
+        if repl_map is None:
+            repl_map = dict()
+        if relabel_map is not None:
+            repl_map.update(relabel_map)
+        return instantiate(repl_map, assumptions)
+
         
-    def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+    def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
         '''
         Performs a specialize derivation step to be proven under the given
         assumptions, in addition to the assumptions of the KnownTruth.
@@ -708,7 +729,7 @@ class KnownTruth:
         '''
         from proveit import Operation, Variable, Lambda, singleOrCompositeExpression
         from proveit.logic import Forall
-        from .proof import Specialization, SpecializationFailure, ProofFailure
+        from .proof import Instantiation, SpecializationFailure, ProofFailure
         
         if not self.isUsable():
             # If this KnownTruth is not usable, see if there is an alternate under the
@@ -758,7 +779,7 @@ class KnownTruth:
                 raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
             lambdaExpr = expr.operand
             assert isinstance(lambdaExpr, Lambda), "Forall Operation operand must be a Lambda function"
-            instanceVars, expr, conditions  = lambdaExpr.parameterVars, lambdaExpr.body, lambdaExpr.conditions
+            instanceVars, expr  = lambdaExpr.parameterVars, lambdaExpr.body
             for iVar in instanceVars:
                 if iVar in remainingSubVars:
                     # remove this instance variable from the remaining substitution variables
@@ -767,7 +788,9 @@ class KnownTruth:
                     # default is to map instance variables to themselves
                     processedSubMap[iVar] = iVar
 
-        return self._checkedTruth(Specialization(self, numForallEliminations=numForallEliminations, specializeMap=processedSubMap, relabelMap=relabelMap, assumptions=assumptions))
+        return self._checkedTruth(
+                Instantiation(self, num_forall_eliminations=num_forall_eliminations, 
+                              repl_map=repl_map, assumptions=assumptions))
         
     def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
         '''
