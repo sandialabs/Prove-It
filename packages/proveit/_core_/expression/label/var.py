@@ -1,5 +1,5 @@
 from .label import Label
-from proveit._core_.expression.expr import MakeNotImplemented, ScopingViolation, ImproperRelabeling
+from proveit._core_.expression.expr import MakeNotImplemented, ImproperSubstitution
 from proveit._core_.defaults import USE_DEFAULTS
 
 class Variable(Label):
@@ -14,27 +14,40 @@ class Variable(Label):
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
                                         
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
-                    assumptions=USE_DEFAULTS):
+    def substituted(self, repl_map, reserved_vars=None, 
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Returns this expression with the variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
+        Returns this Variable possibly substituted according to the 
+        replacement map (repl_map) dictionary.  See the
+        Expr.substituted documentation.
+
+        We must check the reserved_vars to make sure we are not violating
+        Lambda scoping restrictions.  
         '''
         from proveit._core_.expression.expr import Expression
-        self._checkRelabelMap(relabelMap)
-        if len(exprMap)>0 and (self in exprMap):
-            subbed = exprMap[self]
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
+        if len(repl_map)>0 and (self in repl_map):
+            subbed = repl_map[self]
             if not isinstance(subbed, Expression):
                 raise TypeError('Must substitute a Variable with an Expression (not %s)'%subbed.__class__)
-            return subbed._restrictionChecked(reservedVars)
-        elif relabelMap is not None:
-            subbed = relabelMap.get(self, self)
-            if not isinstance(subbed, Variable):
-                raise ImproperRelabeling('May only relabel Variable to Variable')
-            if reservedVars is not None and subbed in list(reservedVars.keys()):
-                if self != reservedVars[subbed]:
-                    raise ScopingViolation("Relabeling in violation of Variable scoping restrictions.")
-            return subbed
+            if isinstance(subbed, ExprTuple) and subbed in repl_map:
+                # We surmise that this is a substitution of iterated variables
+                # which must only reside in IndexedVar's of an Iter over a
+                # matching range of indices to be a proper substitution.
+                raise ImproperSubstitution("Iterated parameter substitution can "
+                                           "only be performed when the parameter "
+                                           "variable is only ever contained in an "
+                                           "IndexedVar with indices iterated over "
+                                           "the same range as the iterated "
+                                           "parameter, %s "
+                                           "(see Lambda.apply documentation)"
+                                           %subbed)
+            if subbed in reserved_vars and self == reserved_vars[subbed]:
+                # We surmise that this is a relabeled Lambda parameter which
+                # is okay and does not violate scoping restrictions.
+                return subbed
+            # Check to make sure that scoping restrictions are not violated.
+            return subbed._restrictionChecked(reserved_vars)
         return self
         
     def usedVars(self):

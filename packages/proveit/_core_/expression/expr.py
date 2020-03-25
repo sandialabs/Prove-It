@@ -548,115 +548,64 @@ class Expression(metaclass=ExprType):
         '''
         return iter(())
     
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
-                    assumptions=USE_DEFAULTS):
+    def substituted(self, repl_map, reserved_vars=None, 
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Returns this expression with the expressions substituted 
-        according to the exprMap dictionary (mapping Expressions to Expressions
-        -- for specialize, this may only map Variables to Expressions).
-        If supplied, reservedVars is a dictionary that maps reserved Variable's
-        to relabeling exceptions.  You cannot substitute with an expression 
-        that uses a restricted variable and you can only relabel the exception 
-        to the restricted variable.  This is used to protect an Lambda 
-        function's "scope".
+        Returns this expression with sub-expressions substituted 
+        according to the replacement map (repl_map) dictionary 
+        which maps Expressions to Expressions.  When used for instantiation,
+        this should specifically map Variables to Expressions.  When there
+        is a replacement for a Lambda parameter variable, it only impacts the
+        inner scope of the Lambda if the replacement is also a variable and
+        thus only a relabeling of the parameter.  Otherwise, only occurrences
+        of the Variable external to the Lambda map will be substituted.
         
-        In the case of Conditional expressions, they will be reduced to
-        one of the values if its corresponding condition is known to be
-        true.  For this reason, assumptions are provided and passed along.
+        reserved_vars is used internally to protect the "scope" of a
+        Lambda map.  For more details, see the Lambda.substitution
+        documentation.
+
+        'assumptions' and 'requirements' are used when an operator is
+        substituted by a Lambda map that has iterated parameters such that 
+        the length of the parameters and operands must be proven to be equal.
+        For more details, see Operation.substituted, Lambda.apply, and
+        Iter.substituted (which is the sequence of calls involved).
         '''
-        self._checkRelabelMap(relabelMap)
-        if len(exprMap)>0 and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)
+        if len(repl_map)>0 and (self in repl_map):
+            return repl_map[self]._restrictionChecked(reserved_vars)
         else:
             return self
-    
-    def relabeled(self, relabelMap, reservedVars=None):
-        '''
-        A watered down version of substituted in which only variable labels are
-        changed.
-        '''
-        return self.substituted(exprMap=dict(), relabelMap=relabelMap, reservedVars=reservedVars)
-    
-    def _checkRelabelMap(self, relabelMap):
-        '''
-        Make sure that all of the relabelMap keys are Variable objects
-        '''
-        from proveit import Variable
-        if relabelMap is None: return
-        for key in relabelMap:
-            if not isinstance(key, Variable):
-                raise TypeError("relabelMap keys must be Variables")
     
     def copy(self):
         '''
         Make a copy of the Expression with the same styles.
         '''
-        expr_copy = self.substituted(exprMap=dict()) # vacuous substitution makes a copy
+        # vacuous substitution makes a copy
+        expr_copy = self.substituted(expr_repl_map=dict()) 
         return expr_copy
-
-    def _iterSubParamVals(self, axis, iterParam, startArg, endArg, exprMap, 
-                          relabelMap=None, reservedVars=None, 
-                          assumptions=USE_DEFAULTS, requirements=None):
-        '''
-        Consider a substitution over a containing iteration (Iter) defined via exprMap, 
-        relabelMap, etc, and expand the iteration by substituting the 
-        "iteration parameter" over the range from the "starting argument" to the 
-        "ending argument" (both inclusive).
-        
-        This default version merge-sorts the results from all
-        sub-expressions or raises a _NoExpandedIteration exception\
-        if none of the sub-expressions yield anything to indicate
-        that any containing Indexed variable is being expanded.
-        '''                
-        from proveit.number import LessEq       
-        from proveit._core_.expression.expr import _NoExpandedIteration
-        from proveit._core_.expression.composite.composite import _generateCoordOrderAssumptions
-        # Collect the iteration substitution parameter values for all 
-        # of the operators and operands and merge them together.
-        val_lists = []
-        extended_assumptions = list(assumptions)
-        if requirements is None: requirements = []
-        for sub_expr in self._subExpressions:
-            try:
-                vals = sub_expr._iterSubParamVals(axis, iterParam, startArg, 
-                                                  endArg, exprMap, relabelMap, 
-                                                  reservedVars, assumptions, 
-                                                  requirements)
-                extended_assumptions.extend(_generateCoordOrderAssumptions(vals))
-                val_lists.append(vals)
-            except _NoExpandedIteration:
-                pass
-        if len(val_lists) == 0:
-            raise _NoExpandedIteration()
-        
-        # We won't add the requirements for the sorting here.  Instead, we will make
-        # sure differences are in naturals numbers at the Iter.substitution level.
-        param_vals = LessEq.mergesorted_items(val_lists, assumptions=extended_assumptions,
-                                              skip_exact_reps=True, skip_equiv_reps=True)
-        return list(param_vals)
-        
-    def _validateRelabelMap(self, relabelMap):
-        if len(relabelMap) != len(set(relabelMap.values())):
-            raise ImproperRelabeling("Cannot relabel different Variables to the same Variable.")
     
     def usedVars(self):
         '''
-        Returns the union of the used Variables of the sub-Expressions.
+        Return all of the used Variables of this Expression,
+        included those in sub-expressions.
         '''
         return set().union(*[expr.usedVars() for expr in self.subExprIter()])
         
     def freeVars(self):
         '''
-        Returns the union of the free Variables of the sub-Expressions.
+        Return all of the free Variables of this Expression,
+        included those in sub-expressions but excluding those with internal
+        bindings within Lambda expressions.
         '''
         return set().union(*[expr.freeVars() for expr in self.subExprIter()])
 
-    def freeMultiVars(self):
-        """
-        Returns the used multi-variables that are not bound as an instance variable
-        or wrapped in a Bundle (see multiExpression.py).
-        """
-        return set()    
+    def freeIndexedVars(self, index):
+        '''
+        Return all of the free IndexeVars of this Expression with the
+        given index, included those in sub-expressions but excluding those
+        with internal bindings within Lambda expressions.
+        '''
+        return set().union(*[expr.freeIndexedVars(index) 
+                             for expr in self.subExprIter()])
 
     def safeDummyVar(self):
         from proveit._core_.expression.label.var import safeDummyVar
@@ -836,14 +785,14 @@ class Expression(metaclass=ExprType):
             for expr in subExpr.orderOfAppearance(subExpressions):
                 yield expr
         
-    def _restrictionChecked(self, reservedVars):
+    def _restrictionChecked(self, reserved_vars):
         '''
         Check that a substituted expression (self) does not use any 
         reserved variables (parameters of a Lambda function Expression).
         '''
-        if reservedVars is not None \
-                and not self.freeVars().isdisjoint(reservedVars.keys()):
-            intersection = self.freeVars().intersection(reservedVars.keys())
+        if reserved_vars is not None \
+                and not self.freeVars().isdisjoint(reserved_vars.keys()):
+            intersection = self.freeVars().intersection(reserved_vars.keys())
             msg = ("Must not make substitution with reserved variables "
                    "(i.e., parameters of a Lambda function).\n"
                    "These variables are in violation: %s"%str(intersection))
@@ -905,12 +854,6 @@ class MakeNotImplemented(NotImplementedError):
         return "make method not implemented for " + str(self.exprSubClass)
 
 class ImproperSubstitution(Exception):
-    def __init__(self, message):
-        self.message = message
-    def __str__(self):
-        return self.message
-
-class ImproperRelabeling(Exception):
     def __init__(self, message):
         self.message = message
     def __str__(self):

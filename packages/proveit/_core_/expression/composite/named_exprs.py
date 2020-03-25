@@ -84,18 +84,30 @@ class NamedExprs(Composite, Expression):
         outStr += r'\end{array} \right\}' + '\n'
         return outStr            
     
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
-                    assumptions=USE_DEFAULTS):
+    def substituted(self, repl_map, reserved_vars=None, 
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Returns this expression with the substitutions made 
-        according to exprMap and/or relabeled according to relabelMap.`
+        Returns this expression with sub-expressions substituted 
+        according to the replacement map (repl_map) dictionary.
+        
+        reserved_vars is used internally to protect the "scope" of a
+        Lambda map.  For more details, see the Lambda.substitution
+        documentation.
+
+        'assumptions' and 'requirements' are used when an operator is
+        substituted by a Lambda map that has iterated parameters such that 
+        the length of the parameters and operands must be proven to be equal.
+        For more details, see Operation.substituted, Lambda.apply, and
+        Iter.substituted (which is the sequence of calls involved).
+        
+        For a NamedExprs, each sub-expression is 'substituted' independently.
         '''
-        self._checkRelabelMap(relabelMap)
-        if len(exprMap)>0 and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)
+        if len(repl_map)>0 and (self in repl_map):
+            # The full expression is to be substituted.
+            return repl_map[self]._restrictionChecked(reserved_vars)
         else:
-            return NamedExprs([(key,expr.substituted(exprMap, relabelMap, 
-                                                     reservedVars, assumptions)) 
+            return NamedExprs([(key, expr.substituted(repl_map, reserved_vars, 
+                                                      assumptions, requirements)) 
                                for key, expr in self.items()])
 
     def usedVars(self):

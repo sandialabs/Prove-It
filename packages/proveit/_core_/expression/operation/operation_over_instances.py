@@ -2,6 +2,7 @@ import inspect
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.lambda_expr import Lambda
 from proveit._core_.expression.composite import ExprTuple, singleOrCompositeExpression, compositeExpression
+from proveit._core_.expression.conditional import Conditional
 from .operation import Operation, OperationError
 
 class OperationOverInstances(Operation):
@@ -58,10 +59,20 @@ class OperationOverInstances(Operation):
         
         if _lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
+            from proveit.logic import And
             lambda_map = _lambda_map
             instanceVars = lambda_map.parameters
-            instanceExpr = lambda_map.body
-            conditions = lambda_map.conditions
+            if isinstance(lambda_map.body, Conditional):
+                # Has conditions.
+                instanceExpr = lambda_map.body.value
+                if isinstance(lambda_map.body.condition, And):
+                    conditions = compositeExpression(lambda_map.body.condition.operands)
+                else:
+                    conditions = compositeExpression(lambda_map.body.condition)
+            else:
+                # No conditions.
+                instanceExpr = lambda_map.body
+                conditions = ExprTuple()
             if len(instanceVars) > 1 and nestMultiIvars:
                 raise ValueError("Invalid 'lambda_map' for %s: multiple parameters "
                                  "(%s) are not allowed when 'nestMultiIvars' is True."
@@ -231,7 +242,14 @@ class OperationOverInstances(Operation):
                         
     @staticmethod
     def _createOperand(instanceVars, instanceExpr, conditions):
-        return Lambda(instanceVars, instanceExpr, conditions)
+        from proveit import Iter
+        from proveit.logic import And
+        if len(conditions) == 0:
+            return Lambda(instanceVars, instanceExpr)
+        else:
+            if len(conditions) > 1 or isinstance(conditions[0], Iter):
+                conditions = And(*conditions)
+            return Lambda(instanceVars, Conditional(instanceExpr, conditions))
 
     def extractMyInitArgValue(self, argName):
         '''

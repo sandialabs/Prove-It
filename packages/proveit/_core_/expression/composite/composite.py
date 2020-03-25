@@ -44,13 +44,12 @@ def compositeExpression(expressions):
     if isinstance(expressions, ExprTuple) or isinstance(expressions, NamedExprs) or isinstance(expressions, ExprArray):
         return expressions # already in a multi-expression wrapper
     elif isinstance(expressions, Expression):
-        return ExprTuple(expressions) # a single expression that we will wrap in an ExpressionLIst
+        # A single expression that we will wrap in an ExprTuple:
+        return ExprTuple(expressions) 
     else:
-        if isinstance(expressions, dict):
-            return ExprArray(expressions)
         try:
-            # see if we can build an expression list
-            return ExprTuple(*[singleOrCompositeExpression(subExpr) for subExpr in expressions])
+            # See if we can build an ExprTuple.
+            return ExprTuple(*expressions)
         except:
             # try to see if we can use expressions to generate a NamedExpressions object
             return NamedExprs(expressions)
@@ -61,6 +60,7 @@ def singleOrCompositeExpression(exprOrExprs):
     of Expressions, or simply return the given Expression if it is one.
     '''
     from proveit._core_.known_truth import KnownTruth
+    from .iteration import Iter
     if isinstance(exprOrExprs, KnownTruth):
         exprOrExprs = exprOrExprs.expr
     if isinstance(exprOrExprs, Expression):

@@ -1,6 +1,5 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.expression.composite import compositeExpression
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 class Conditional(Expression):
     '''
@@ -12,7 +11,9 @@ class Conditional(Expression):
     to any of the values.
     '''
     
-    def __init__(self, value_or_values, condition_or_conditions):        
+    def __init__(self, value_or_values, condition_or_conditions):    
+        from proveit._core_.expression.composite.composite import compositeExpression
+
         self.values = compositeExpression(value_or_values)
         if len(self.values) == 1:
             # has a single value
@@ -20,7 +21,7 @@ class Conditional(Expression):
             self.value_or_values = self.value
         else:
             self.value_or_values = self.values
-        self.conditions = compositeExpression(value_or_values)
+        self.conditions = compositeExpression(condition_or_conditions)
         if len(self.conditions) == 1:
             # has a single value
             self.condition = self.conditions[0]
@@ -70,37 +71,54 @@ class Conditional(Expression):
             return r'\left[' + inner_str + r'\right] '
         return inner_str
     
+    '''
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         from proveit.logic import EvaluationError, TRUE
         for condition in self.conditions:
             if condition == TRUE:
                 return value # ACTUALLY, THIS MUST BE PROVED
         raise EvaluationError(self, assumptions)
+    '''
     
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None,
-                    assumptions=USE_DEFAULTS):
+    def substituted(self, repl_map, reserved_vars=None,
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Return this expression with its variables substituted 
-        according to exprMap and/or relabeled according to relabelMap.
-        If one of the conditions is known to be true, simply return
-        the value corresonding to that condition.  Otherwise,
-        return the Conditional with substituted values and conditions.
-        '''
+        Returns this expression with sub-expressions substituted 
+        according to the replacement map (repl_map) dictionary.
         
-        # Do the substitution for the conditions and see if any are Known to be
-        # true.  If it is return the corresponding value.
-        subbed_conditions = []
-        for value, condition in zip(self.values, self.conditions):
-            subbed_cond =condition.substituted(exprMap, relabelMap, reservedVars, 
-                                               assumptions)
-            if subbed_cond.proven(assumptions):
-                return value.substituted(exprMap, relabelMap, reservedVars,
-                                         assumptions)
-            subbed_conditions.append(subbed_cond)
+        reserved_vars is used internally to protect the "scope" of a
+        Lambda map.  For more details, see the Lambda.substitution
+        documentation.
+
+        'assumptions' and 'requirements' are used when an operator is
+        substituted by a Lambda map that has iterated parameters such that 
+        the length of the parameters and operands must be proven to be equal.
+        For more details, see Operation.substituted, Lambda.apply, and
+        Iter.substituted (which is the sequence of calls involved).
+        
+        For a Conditional, a condition is added to the assumptions when 
+        'substituted' is called on the value corresponding to that condition.
+        '''
             
+        if len(repl_map)>0 and (self in repl_map):
+            # The full expression is to be substituted.
+            return repl_map[self]._restrictionChecked(reserved_vars)
+        
         subbed_values = []
-        for value, subbed_con in zip(self.values, subbed_conditions):
-            subbed_val = value.substituted(exprMap, relabelMap, reservedVars,
-                                           assumptions+[subbed_cond])
+        subbed_conditions = []
+        if requirements is None: requirements = []
+        for value, condition in zip(self.values, self.conditions):
+            # First perform substitution on the conditions:
+            subbed_cond = condition.substituted(repl_map, reserved_vars, 
+                                                assumptions, requirements)
+            subbed_conditions.append(subbed_cond)
+            # Next perform substitution on the value, adding the condition
+            # as an assumption.            
+            assumptions = defaults.checkedAssumptions(assumptions)
+            subbed_val = value.substituted(repl_map, reserved_vars,
+                                           assumptions+(subbed_cond,),
+                                           requirements)
             subbed_values.append(subbed_val)
         return Conditional(subbed_values, subbed_conditions)
+    
+        

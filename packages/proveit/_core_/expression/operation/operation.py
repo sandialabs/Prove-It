@@ -29,13 +29,18 @@ class Operation(Expression):
         'operators' and 'operands' attributes that bundle
         the one or more Expressions into a composite Expression.
         '''
-        from proveit._core_.expression.composite import Composite, compositeExpression, singleOrCompositeExpression, Iter, Indexed
+        from proveit._core_.expression.composite import Composite, compositeExpression, singleOrCompositeExpression, Iter
         from proveit._core_.expression.label.label import Label
+        from .indexed_var import IndexedVar
         if styles is None: styles = dict()
         if hasattr(self.__class__, '_operator_') and operator_or_operators==self.__class__._operator_:
             operator = operator_or_operators
             if Expression.contexts[operator._style_id] != operator.context:
                 raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
+        if isinstance(operator_or_operators, Iter):
+            operator_or_operators = [operator_or_operators]
+        if isinstance(operand_or_operands, Iter):
+            operand_or_operands = [operand_or_operands]
         self.operator_or_operators = singleOrCompositeExpression(operator_or_operators)
         self.operand_or_operands = singleOrCompositeExpression(operand_or_operands)
         if isinstance(self.operator_or_operators, Composite):
@@ -43,15 +48,15 @@ class Operation(Expression):
             self.operators = self.operator_or_operators 
             for operator in self.operators:
                 if isinstance(operator, Iter):
-                    if not isinstance(operator.lambda_map.body, Indexed):
-                        raise TypeError('operators must be Labels, Indexed variables, or iteration (Iter) over Indexed variables.')                
-                elif not isinstance(operator, Label) and not isinstance(operator, Indexed):
-                    raise TypeError('operator must be a Label, Indexed variable, or iteration (Iter) over Indexed variables.')
+                    if not isinstance(operator.body, IndexedVar):
+                        raise TypeError('operators must be Labels, an indexed variable (IndexedVar), or iteration (Iter) over indexed variables (IndexedVar).')                
+                elif not isinstance(operator, Label) and not isinstance(operator, IndexedVar):
+                    raise TypeError('operator must be a Label, an indexed variable (IndexedVar), or iteration (Iter) over indexed variables (IndexedVar).')
         else:
             # a single operator
             self.operator = self.operator_or_operators
-            if not isinstance(self.operator, Label) and not isinstance(self.operator, Indexed):
-                raise TypeError('operator must be a Label, Indexed variable, or iteration (Iter) over Indexed variables, not %s.'%str(self.operator.__class__))
+            if not isinstance(self.operator, Label) and not isinstance(self.operator, IndexedVar):
+                raise TypeError('operator must be a Label, an indexed variable (IndexedVar), or iteration (Iter) over indexed variables (IndexedVar), not %s.'%str(self.operator.__class__))
             # wrap a single operator in a composite for convenience
             self.operators = compositeExpression(self.operator)
         if isinstance(self.operand_or_operands, Composite):
@@ -357,100 +362,81 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def substituted(self, exprMap, relabelMap=None, reservedVars=None, 
-                    assumptions=USE_DEFAULTS):
+    def substituted(self, repl_map, reserved_vars=None, 
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Return this expression with the variables substituted 
-        according to subMap and/or relabeled according to relabelMap.
+        Returns this expression with sub-expressions substituted 
+        according to the replacement map (repl_map) dictionary.
+        
+        reserved_vars is used internally to protect the "scope" of a
+        Lambda map.  For more details, see the Lambda.substitution
+        documentation.
+        
+        When an operater of an Operation is substituted by a Lambda map, the 
+        operation itself will be substituted with the Lambda map applied to the
+        operands.  For example, substituting 
+        f : (x,y) -> x+y
+        on f(a, b) will result in a+b.  When performing operation
+        substitution with iterated parameters, the Lambda map application
+        will require the length of the iterated parameters to equal with 
+        the number of corresponding operand elements.  For example,
+        f : (a, b_1, ..., b_n) -> a*b_1 + ... + a*b_n
+        n : 3
+        applied to f(w, x, y, z) will result in w*x + w*y + w*z provided that
+        |(b_1, ..., b_3)| = |(x, y, z)| is proven.
+        Assumptions may be needed to prove such requirements.  Requirements
+        will be appended to the 'requirements' list if one is provided.
+        
+        There are limitations with respect the Lambda map application involving
+        iterated parameters when perfoming operation substitution in order to
+        keep derivation rules (i.e., instantiation) simple.  For details,
+        see the Iter.substituted documentation.
         '''
         from proveit import Lambda, compositeExpression, ExprTuple, Iter
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         from proveit.logic import Equals
-        self._checkRelabelMap(relabelMap)
-        if len(exprMap)>0 and (self in exprMap):
-            return exprMap[self]._restrictionChecked(reservedVars)        
-        subbed_operand_or_operands = \
-            self.operand_or_operands.substituted(exprMap, relabelMap, reservedVars, 
-                                                 assumptions)
-        subbed_operands = compositeExpression(subbed_operand_or_operands)
+        
+        # Check reserved variable restrictions for scoping volations.
+        if len(repl_map)>0 and (self in repl_map):
+            # The full expression is to be substituted.
+            return repl_map[self]._restrictionChecked(reserved_vars)      
+        
+        # Perform substitutions for the operator(s) and operand(s).
         subbed_operator_or_operators = \
-            self.operator_or_operators.substituted(exprMap, relabelMap, reservedVars, 
-                                                   assumptions)
+            self.operator_or_operators.substituted(repl_map, reserved_vars, 
+                                                   assumptions, requirements)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
+        subbed_operand_or_operands = \
+            self.operand_or_operands.substituted(repl_map, reserved_vars, 
+                                                 assumptions, requirements)
+        subbed_operands = compositeExpression(subbed_operand_or_operands)
+        
+        # Check if the operator is being substituted by a Lambda map in which
+        # case we should perform full oepration substitution.
         if len(subbed_operators)==1:
             subbed_operator = subbed_operators[0]
             if isinstance(subbed_operator, Lambda):
-                # Substitute the entire operation via a Lambda body
-                # For example, f(x, y) -> x + y.
-                # Use the generic version of this lambda-defined operation.
-                # This will ensure that if then lambda has any iteration
-                # parameters, it will have only one parameter item.
-                subbed_op_lambda = subbed_operator._genericExpr
-                if (len(subbed_op_lambda.parameters)==1 and 
-                    isinstance(subbed_op_lambda.parameters[0], Iter)):
-                    # The subbed operator is a lambda with an iteration of
-                    # parameters: e.g, x_1, ..., x_n |-> f(x_1, ..., x_n).
-                    # This is treated differently.  
-                    has_iteration_param = True
-                else:
-                    # No iteration parameter (since the generic version should
-                    # consolidate any iteration parameter into one), so
-                    # we need an element-wise match for the substitution.
-                    has_iteration_param = False
-                    if len(subbed_operands) != len(subbed_op_lambda.parameters):
-                        raise ImproperSubstitution('Cannot substitute an Operation '
-                                                   'with the wrong number of parameters: '
-                                                   '%s vs %s'%(str(subbed_operands),
-                                                               str(subbed_operator.parameters)))
-                if len(subbed_op_lambda.conditions) != 0:
-                    raise ImproperSubstitution('Operation substitution must be '
-                                               'defined via an Unconditioned Lambda '
-                                               'expression, not %s'%subbed_op_lambda)
-                operand_sub_map = dict()
-                if has_iteration_param:
-                    # Iteration parameters require special treatment.
-                    # We need to substitute the iterated indexed variable
-                    # parameter with all of the operands as an ExprTuple 
-                    # and ensure the length is appropriate.
-                    from proveit.number import Add, num
-                    from proveit.iteration import Len
-                    param = subbed_op_lambda.parameters[0]
-                    param_var = getParamVar(param)
-                    assert isinstance(subbed_operands, ExprTuple)
-                    operand_sub_map[param_var] = subbed_operands
-                    param_len = param.end_index
-                    if param.lambda_map.body.base != 1:
-                        # Note that the start index must be the base.
-                        param_len = Add(param.end_index, num(1-param.body.base))
-                    sub_len = subbed_operands.length(assumptions)
-                    #print('substituted', self, 'using', exprMap)
-                    #print('length of', subbed_operands, ':', sub_len)
-                    len_req = Equals(Len(subbed_operands), param_len)
-                    len_req = len_req.prove(assumptions)
-                    #print('requirement', len_req)
-                    requirements.append(len_req)
-                else:
-                    for param, operand in zip(subbed_op_lambda.parameters, 
-                                              subbed_operands):
-                        if isinstance(param, Iter):
-                            raise Exception("The generic version of a Lambda "
-                                            "should consolidate any iteration "
-                                            "parameters as one parameter item.")
-                        operand_sub_map[param] = operand
-                if not reservedVars is None:
+                # Substitute the entire operation via a Lambda map
+                # application.  For example, f(x, y) -> x + y,
+                # or g(a, b_1, ..., b_n) -> a * b_1 + ... + a * b_n.
+                
+                subbed_op_lambda = subbed_operator
+                if not reserved_vars is None:
                     # The reserved variables of the lambda body excludes the 
                     # lambda parameters (i.e., the parameters mask externally 
                     # reserved variables).
                     lambda_expr_reserved_vars = \
-                        {k:v for k, v in reservedVars.items() 
+                        {k:v for k, v in reserved_vars.items() 
                          if k not in subbed_op_lambda.parameterVarSet}
                 else: lambda_expr_reserved_vars = None
                 subbed_operator_body = subbed_op_lambda.body
                 subbed_operator_body._restrictionChecked(lambda_expr_reserved_vars)
-                return subbed_operator_body.substituted(operand_sub_map, 
-                                                        assumptions=assumptions, 
-                                                        requirements=requirements)
-        # remake the Expression with substituted operator and/or operands
+                
+                return subbed_operator.apply(*subbed_operands, 
+                                             assumptions=assumptions, 
+                                             requirements=requirements)
+        
+        # Remake the Expression with substituted operator and/or operands
         if len(subbed_operators)==1:
             # If it is a single operator that is a literal operator of an 
             # Operation class  defined via an "_operator_" class attribute, 
