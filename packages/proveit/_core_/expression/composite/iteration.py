@@ -158,7 +158,7 @@ class Iter(Expression):
         
         # map to the desired instance
         return self.lambda_map.apply(index)
-    
+        
     def substituted(self, repl_map, reserved_vars=None, 
                     assumptions=USE_DEFAULTS, requirements=None):
         '''
@@ -364,7 +364,6 @@ class Iter(Expression):
                 # For a singular element entry, yield the substituted element.
                 yield body.substituted(entry_repl_map, inner_reserved_vars,
                                        inner_assumptions, requirements)
-                
     
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
         '''
@@ -406,7 +405,6 @@ class Iter(Expression):
                     {f:unconditioned_lambda, i:start_index, j:before_split_idx,
                      k:end_index}, assumptions=assumptions)
         
-    
     """
     TODO: change register_equivalence_method to allow and fascilitate these
     method stubs for purposes of generating useful documentation.

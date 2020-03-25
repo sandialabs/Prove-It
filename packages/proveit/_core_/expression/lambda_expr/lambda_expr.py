@@ -309,7 +309,7 @@ class Lambda(Expression):
                             raise LambdaApplicationError(self, operands, assumptions,
                                                          "Failed to prove operand "
                                                          "length requirement: %s"
-                                                         %str(e)))
+                                                         %str(e))
                     else:
                         # Collect enough operands to match the length of the
                         # iterated parameter.
