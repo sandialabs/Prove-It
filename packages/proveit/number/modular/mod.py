@@ -40,13 +40,12 @@ class Mod(Operation):
         # from numberSets import deduceInIntegers, deduceInReals
         try:
             # if the operands are integers, then we can deduce that
-            # a mod b is in 0..(b-1)
-            # deduceInIntegers(self.operands, assumptions)
+            # a mod b is an integer in the set {0,1,...,(b-1)}
             return modInInterval.specialize(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
         except:
-            # if the operands are reals, then we can deduce that a mod b is in [0, b)
-            # deduceInReals(self.operands, assumptions)
+            # if the operands are reals, then we can deduce that
+            # a mod b is in half-open real interval [0, b)
             return modInIntervalCO.specialize(
                     {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
@@ -73,5 +72,6 @@ class Mod(Operation):
             return modRealClosure.specialize({a:self.dividend, b:self.divisor},
                       assumptions=assumptions)
 
-        msg = ("'Mod.deduceInNumberSet()' not implemented for the %s set"%str(number_set))
+        msg = ("'Mod.deduceInNumberSet()' not implemented for "
+               "the %s set"%str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
