@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, ProofFailure, USE_DEFAULTS
+from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit._common_ import a, b, x
 
 class Abs(Operation):
@@ -63,7 +63,7 @@ class Abs(Operation):
     #     else:
     #         raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
 
-    def distribute(self, assumptions=frozenset()):
+    def distribute(self, assumptions=USE_DEFAULTS):
         '''
         03/21/2020 wdc: a first attempt at updating this method;
         still eliciting an extractInitArgValue error related to a multi-
@@ -88,8 +88,9 @@ class Abs(Operation):
             return absProd.specialize({n:num(len(theOperands)), xx:theOperands},
                                       assumptions=assumptions)
         else:
-            raise ValueError('Unsupported operand type for absolution value '
-                             'distribution: ', str(self.operand.__class__))
+            raise ValueError(
+                'Unsupported operand type for absolute value distribute() '
+                'method: ', str(self.operand.__class__))
     
     def absElimination(self, assumptions=USE_DEFAULTS):
         '''
@@ -107,7 +108,10 @@ class Abs(Operation):
         set using the appropriate closure theorem.
         Created: 3/21/2020 by wdc, based on the same method in the Add
                  and Exp classes.
-        Last modified: 3/21/2020 by wdc. Creation
+        Last modified: 3/26/2020 by wdc.
+                       Added defaults.checkedAssumptions to avoid
+                       ProofFailure error.
+        Previously modified: 3/21/2020 by wdc. Creation
         Once established, these authorship notations can be deleted.
         '''
         from proveit.logic import InSet
@@ -115,6 +119,10 @@ class Abs(Operation):
                   absComplexClosure, absNonzeroClosure,
                   absComplexClosureNonNegReals)
         from proveit.number import Complexes, Reals, RealsNonNeg, RealsPos
+
+        # among other things, make sure non-existent assumptions
+        # manifest as empty tuple () rather than None
+        assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Reals:
             return absComplexClosure.specialize({a:self.operand},
@@ -128,5 +136,6 @@ class Abs(Operation):
             return absComplexClosureNonNegReals.specialize({a:self.operand},
                       assumptions=assumptions)
 
-        msg = "'deduceInNumberSet' not implemented for the %s set"%str(number_set)
+        msg = ("'Abs.deduceInNumberSet()' not implemented for "
+               "the %s set"%str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
