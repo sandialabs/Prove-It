@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, ProofFailure, USE_DEFAULTS
+from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit.number.sets import Integers, Reals
 from proveit._common_ import a, b
 
@@ -56,13 +56,20 @@ class Mod(Operation):
         set using the appropriate closure theorem.
         Created: 3/25/2020 by wdc, based on the same method in the Add,
                  Exp, and Abs classes.
-        Last modified: 3/25/2020 by wdc. Creation
+        Last modified: 3/26/2020 by wdc.
+                       Added defaults.checkedAssumptions to avoid
+                       ProofFailure error.
+        Prveiously modified: 3/25/2020 by wdc. Creation.
         Once established, these authorship notations can be deleted.
         '''
         from proveit.logic import InSet
         from proveit.number.modular._theorems_ import (
                   modIntClosure, modRealClosure)
         from proveit.number import Integers, Reals
+
+        # among other things, make sure non-existent assumptions
+        # manifest as empty tuple () rather than None
+        assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Integers:
             return modIntClosure.specialize({a:self.dividend, b:self.divisor},

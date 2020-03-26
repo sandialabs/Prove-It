@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, ProofFailure, USE_DEFAULTS
+from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit.number.sets import Reals
 
 class ModAbs(Operation):
@@ -31,6 +31,9 @@ class ModAbs(Operation):
         number set using the appropriate closure theorem.
         Created: 3/25/2020 by wdc, based on the same method in the Add,
                  Exp, and Abs classes.
+        Last modified: 3/26/2020 by wdc.
+                       Added defaults.checkedAssumptions to avoid
+                       ProofFailure error.
         Last modified: 3/25/2020 by wdc. Creation
         Once established, these authorship notations can be deleted.
         '''
@@ -39,6 +42,10 @@ class ModAbs(Operation):
         from proveit.number.modular._theorems_ import (
                 modAbsIntClosure, modAbsRealClosure)
         from proveit.number import Integers, Reals
+
+        # among other things, make sure non-existent assumptions
+        # manifest as empty tuple () rather than None
+        assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Integers:
             return modAbsIntClosure.specialize(
