@@ -36,7 +36,6 @@ class ExprTuple(Composite, Expression):
         '''
         from proveit._core_ import KnownTruth
         from .composite import singleOrCompositeExpression
-        from .iteration import Iter
         entries = []
         for entry in expressions:
             if isinstance(entry, KnownTruth):
@@ -292,7 +291,7 @@ class ExprTuple(Composite, Expression):
                     if other_lambda_map != lambda_map:
                         raise ExprTupleError("Cannot merge together iterations "
                                              "with different lambda maps: %s vs %s"
-                                             %(lambda_map, lambda_map_2nd))
+                                             %(lambda_map, other_lambda_map))
                     iSub, jSub = eq.expr[0].start_index, eq.expr[0].end_index
                     kSub, lSub = eq.expr[1].start_index, eq.expr[1].end_index
                     merger = \

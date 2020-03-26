@@ -91,8 +91,8 @@ class Lambda(Expression):
                 prev_automation = defaults.automation
                 defaults.automation = False
                 generic_parameters = self.parameters._generic_version()
-                generic_parameters = generic_parameters.relabeled(relabel_map)
-                generic_body = generic_body.relabeled(relabel_map)
+                generic_parameters = generic_parameters.substituted(relabel_map)
+                generic_body = generic_body.substituted(relabel_map)
                 genericExpr = Lambda(generic_parameters, generic_body)
                 defaults.automation = prev_automation # restore to previous value
             else:
@@ -200,7 +200,7 @@ class Lambda(Expression):
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Lambda expression.
         '''
-        yield self.parameter
+        yield self.parameter_or_parameters
         yield self.body
 
     def string(self, **kwargs):
@@ -308,7 +308,8 @@ class Lambda(Expression):
                         try:
                             requirements.append(len_req.prove(assumptions))
                         except ProofFailure as e:
-                            raise LambdaApplicationError(self, operands, assumptions,
+                            raise LambdaApplicationError(parameters, body, 
+                                                         operands, assumptions,
                                                          "Failed to prove operand "
                                                          "length requirement: %s"
                                                          %str(e))
@@ -334,15 +335,16 @@ class Lambda(Expression):
                     # singular operator.
                     operand = next(operands_iter)
                     if isinstance(operand, Iter):
-                        raise LambdaApplicationError(self, operands, assumptions,
+                        raise LambdaApplicationError(parameters, body, 
+                                                     operands, assumptions,
                                                      "Singular parameters must "
                                                      "correspond with singular "
                                                      "operands: %s vs %s."
                                                      %(parameter, operands))
-                        raise error
                     repl_map[parameter] = operand
         except StopIteration:
-            raise LambdaApplicationError(self, operands, assumptions,
+            raise LambdaApplicationError(parameters, body, 
+                                         operands, assumptions,
                                          "Parameter/operand length mismatch "
                                          "or unproven length equality for "
                                          "correspondence with %s."
@@ -357,7 +359,7 @@ class Lambda(Expression):
         handles the change in scope properly as well as parameter relabeling.
         '''
         
-        from proveit import compositeExpression, Iter, ExprTuple
+        from proveit import Variable, Iter
         
         # Within the lambda scope, we can relabel lambda parameters
         # to a different Variable, but any other kind of substitution of
@@ -394,7 +396,7 @@ class Lambda(Expression):
                                                          assumptions, requirements)
                 else:
                     subbed_param = inner_repl_map[param_var]
-                inner_reserved_vars[relabeled_param] = param_var
+                inner_reserved_vars[subbed_param] = param_var
             else:
                 # The parameter is not being relabeled.  However, if it
                 # is an iteration, there could be a substitution in the indices
@@ -443,7 +445,6 @@ class Lambda(Expression):
         For more details, see Operation.substituted, Lambda.apply, and
         Iter.substituted (which is the sequence of calls involved).
         '''
-        from proveit.logic import Forall
         
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
@@ -501,7 +502,8 @@ class Lambda(Expression):
         
         TODO: we also need to handle parameter splitting transformations.
         '''
-        for key, val in relabel_map.iteritems():
+        from proveit import Variable
+        for key, val in relabel_map.items():
             if not isinstance(key, Variable):
                 raise TypeError("relabel_map must map Variables to Variables. "
                                 "%s key is not a Variable."%key)
@@ -582,8 +584,8 @@ class Lambda(Expression):
                 if indexed_var.var not in self.parameterVarSet}
 
 class LambdaApplicationError(Exception):
-    def __init__(self, lambda_map, operands, assumptions, extra_msg):
-        self.lambda_map = lambda_map
+    def __init__(self, parameters, body, operands, assumptions, extra_msg):
+        self.lambda_map = Lambda(parameters, body)
         self.operands = operands
         self.assumptions = assumptions
         self.extra_msg = extra_msg

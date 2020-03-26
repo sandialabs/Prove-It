@@ -111,7 +111,6 @@ class KnownTruth:
         should not be created manually but rather through the creation of Proofs which should
         be done indirectly via Expression/KnownTruth derivation-step methods.
         '''
-        from proveit._core_.proof import Proof
         # do some type checking
         if not isinstance(expression, Expression):
             raise ValueError('The expression (expr) of a KnownTruth should be an Expression')
@@ -213,6 +212,7 @@ class KnownTruth:
         '''
         for assumption in self.assumptions:
             for expr in assumption.orderOfAppearance(subExpressions):
+                yield expr
         for expr in self.expr.orderOfAppearance(subExpressions):
             yield expr
     
@@ -707,86 +707,122 @@ class KnownTruth:
             repl_map = dict()
         if relabel_map is not None:
             repl_map.update(relabel_map)
-        return instantiate(repl_map, assumptions)
+        return self.instantiate(repl_map, assumptions)
 
         
     def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
         '''
-        Performs a specialize derivation step to be proven under the given
-        assumptions, in addition to the assumptions of the KnownTruth.
-        This will eliminate one or more nested Forall operations, specializing
-        the instance variables according to specializeMap.  Eliminates
-        the number of Forall operations required to utilize all of the
-        specializeMap keys.  The default mapping of all instance variables
-        is a mapping to itself (e.g., {x:x, y:y}).  Simultaneously, variables 
-        may be relabeled via relabelMap (see the relabel method).  Note, there 
-        is a difference between  making substitutons simultaneously versus 
-        in-series.  For example, the {x:y, y:x} mapping will swap x and y 
-        variables, but mapping {x:y} then {y:x} in series would set both 
-        variables to x.
-        Returns the proven specialized KnownTruth, or throws an exception if the
-        proof fails.        
+        Performs an instantiation derivation step to be proven under the given
+        assumptions, in addition to the (possibly revised) assumptions of the 
+        KnownTruth.  This may instantiate Variables, according to the 
+        "replacement" map (repl_map), on either side of the turnstile of the 
+        KnownTruth, the assumptions side and the "truth" side.  It may also 
+        eliminate any number of nested Forall operations, instantiating the 
+        instance Variables according to repl_map, going to the depth
+        for which the instance variables occur as keys in repl_map.  
+        For Variables that map to Variables and occur as "internal" Lambda
+        map parameters (internal after the Forall operations are eliminated),
+        they will be relabeled within the "internal" Lambda map parameters.
+        For Variables that map to non-Variables, the replacement will not
+        penetrate into internal Lambda maps that use that Variable as a
+        parameter.  Replacements are made simultaneously.  For example,
+        the {x:y, y:x} mapping will swap x and y variables, but mapping {x:y} 
+        then {y:x} in series would set both variables to x.
+        
+        Returns the proven instantiated KnownTruth, or throws an exception if 
+        the proof fails.  For the proof to succeed, all conditions of
+        eliminated Forall operations, after replacements are made, must
+        be proven.  Furthermore, there may be additional requirements when
+        iterated parameters are instantiated (see Lambda.apply for details).
+        Automation will be used in attempting to prove these requirements.
         '''
-        from proveit import Operation, Variable, Lambda, singleOrCompositeExpression
+        from proveit import (Operation, Variable, Lambda, 
+                             singleOrCompositeExpression, 
+                             ExprTuple, Iter, IndexedVar)
         from proveit.logic import Forall
-        from .proof import Instantiation, SpecializationFailure, ProofFailure
+        from .proof import Instantiation, ProofFailure
         
         if not self.isUsable():
-            # If this KnownTruth is not usable, see if there is an alternate under the
-            # set of assumptions that is usable.
+            # If this KnownTruth is not usable, see if there is an alternate 
+            # under the set of assumptions that is usable.
             try:
                 alternate = self.expr.prove(assumptions, automation=False)
             except ProofFailure:
                 self.raiseUnusableProof()
-            return alternate.specialize(specializeMap, relabelMap, assumptions)
+            return alternate.instantiate(repl_map, assumptions)
         
-        # if no specializeMap is provided, specialize the "explicitInstanceVars" of the Forall with default mappings 
-        # (mapping instance variables to themselves)
-        if specializeMap is None: specializeMap = {ivar:ivar for ivar in self.explicitInstanceVars()}
-        if relabelMap is None: relabelMap = dict()
-                
+        # If no repl_map is provided, specialize the "explicitInstanceVars" 
+        # of the Forall with default mappings (mapping instance variables to 
+        # themselves)
+        if repl_map is None: 
+            repl_map = {ivar:ivar for ivar in self.explicitInstanceVars()}
+                        
         # Include the KnownTruth assumptions along with any provided assumptions
         assumptions = defaults.checkedAssumptions(assumptions)
-        assumptions += self.assumptions
 
-        # For any entrys in the subMap with Operation keys, convert
+        # For any entrys in repl_map with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
         # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
-        # Convert to composite expressions as needed (via singleOrCompositeExpression).
-        processedSubMap = dict()
-        for key, sub in specializeMap.items():
+        # And any ExprTuple-wrapped Iter entries will be 
+        # Also, convert to composite expressions as needed
+        # (via singleOrCompositeExpression).
+        processed_repl_map = dict()
+        for key, sub in repl_map.items():
             sub = singleOrCompositeExpression(sub)
-            if isinstance(key, Operation):
+            if isinstance(key, Variable):
+                processed_repl_map[key] = sub
+            elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
                 operation = key
-                subVar = operation.operator
+                sub_var = operation.operator
                 sub = Lambda(operation.operands, sub)
-                processedSubMap[subVar] = sub
-            elif isinstance(key, Variable):
-                processedSubMap[key] = sub
+                processed_repl_map[sub_var] = sub
+            elif (isinstance(key, ExprTuple) and len(key)==1 
+                  and isinstance(key[0], Iter) 
+                  and isinstance(key[0].body, IndexedVar)):
+                # Replacement key of the form (x_i, ..., x_j).
+                # That is fine for expanding iterated variables, but make sure
+                # the replacement is an ExprTuple and also include
+                # x : (x_i, ..., x_j) so the Iter.substituted method can
+                # handle it properly.
+                if not isinstance(sub, ExprTuple):
+                    raise TypeError("Must replace %s with an ExprTuple, not %s"
+                                    %(key, sub)) 
+                processed_repl_map[key[0].body.var] = key
             else:
-                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'Expecting specializeMap keys to be Variables, MultiVariables, or Operations with Variable/MultiVariable operators; not %s'%str(key.__class__))
-        remainingSubVars = set(processedSubMap.keys())
+                raise TypeError("%s is not the expected kind of Expression as "
+                                "a repl_map key.  Expecting repl_map keys to be "
+                                "Variables, Operations with Variable operators "
+                                "(for operation substitution), or an ExprTuple "
+                                "containing a single iterated IndexedVar "
+                                "like (x_i, ..., x_j)."%key)
         
-        # Determine the number of Forall eliminations.  There must be at least
-        # one (if zero is desired, relabel should be called instead).
-        # The number is determined by the instance variables that occur as keys
-        # in the subMap.
+        # Determine the number of Forall eliminations.  
+        # The number is determined by the instance variables that occur as 
+        # keys in repl_map.
         expr = self.expr
-        numForallEliminations = 0
-        while numForallEliminations==0 or len(remainingSubVars) > 0:
-            numForallEliminations += 1
+        remaining_repl_vars = set(processed_repl_map.keys())
+        forall_depth = 0
+        num_forall_eliminations = 0
+        while len(remaining_repl_vars) > 0:
             if not isinstance(expr, Forall):
-                raise SpecializationFailure(self, specializeMap, relabelMap, assumptions, 'May only specialize instance variables of directly nested Forall operations')
-            lambdaExpr = expr.operand
-            assert isinstance(lambdaExpr, Lambda), "Forall Operation operand must be a Lambda function"
-            instanceVars, expr  = lambdaExpr.parameterVars, lambdaExpr.body
-            for iVar in instanceVars:
-                if iVar in remainingSubVars:
-                    # remove this instance variable from the remaining substitution variables
-                    remainingSubVars.remove(iVar)
-                elif iVar not in processedSubMap:
+                # No more directly nested universal quantifiers to eliminate.
+                break 
+            lambda_expr = expr.operand
+            assert isinstance(lambda_expr, Lambda), ("Forall Operation operand "
+                                                     "must be a Lambda function")
+            instance_vars, expr  = lambda_expr.parameterVars, lambda_expr.body
+            forall_depth += 1
+            for ivar in instance_vars:
+                if ivar in remaining_repl_vars:
+                    # Remove this instance variable from the remaining 
+                    # variables to replace.
+                    remaining_repl_vars.remove(ivar)
+                    # Eliminate to this depth at least since there is
+                    # a replacement map for the instance variable:
+                    num_forall_eliminations = forall_depth
+                elif ivar not in processed_repl_map:
                     # default is to map instance variables to themselves
-                    processedSubMap[iVar] = iVar
+                    processed_repl_map[ivar] = ivar
 
         return self._checkedTruth(
                 Instantiation(self, num_forall_eliminations=num_forall_eliminations, 
@@ -860,7 +896,7 @@ class KnownTruth:
         return self.asImplication(hypothesis)
 
     def raiseUnusableProof(self):
-        from .proof import UnusableProof, Theorem, Axiom
+        from .proof import UnusableProof
         proof = self.proof()
         unusuable_proof = proof._meaningData._unusableProof
         if proof == unusuable_proof:

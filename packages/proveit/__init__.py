@@ -16,11 +16,11 @@ from ._core_ import (
         ScopingViolation, ProofFailure,
         Composite, compositeExpression, singleOrCompositeExpression,
         ExprTuple, ExprTupleError, ExprArray, NamedExprs, Iter, varIter,
+        IterationInstanceError,
         KnownTruth, asExpression, asExpressions,
         Proof, Assumption, Axiom, Theorem, ModusPonens, 
-        HypotheticalReasoning, Specialization, Generalization,
-        ModusPonensFailure, RelabelingFailure, SpecializationFailure, 
-        GeneralizationFailure,
+        HypotheticalReasoning, Instantiation, Generalization,
+        ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
         StyleOptions, maybeFencedString, maybeFencedLatex, maybeFenced)
 from .relation import (TransitiveRelation, TransitiveSequence, TransitivityException, 
                        TransRelUpdater)

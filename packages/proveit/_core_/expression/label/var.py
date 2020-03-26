@@ -42,7 +42,8 @@ class Variable(Label):
                                            "parameter, %s "
                                            "(see Lambda.apply documentation)"
                                            %subbed)
-            if subbed in reserved_vars and self == reserved_vars[subbed]:
+            if (reserved_vars is not None and subbed in reserved_vars
+                    and self == reserved_vars[subbed]):
                 # We surmise that this is a relabeled Lambda parameter which
                 # is okay and does not violate scoping restrictions.
                 return subbed

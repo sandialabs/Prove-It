@@ -373,7 +373,7 @@ class Proof:
             html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
             html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
-            if proof.stepType()=='specialization':
+            if proof.stepType()=='instantiation':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + proof._mapping('HTML') + '</td></tr>'
             if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
@@ -392,7 +392,7 @@ class Proof:
             out_str += proof.stepType() + '\t' + requiredProofNums + '\t'
             out_str += proof.provenTruth.string(performUsabilityCheck=False)
             out_str += '\n'
-            if proof.stepType()=='specialization':
+            if proof.stepType()=='instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
             if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
@@ -460,7 +460,7 @@ class Axiom(Proof):
             raise ValueError("An axiom 'name' must be a string")
         self.context = context
         self.name = name
-        Proof.__init__(self, KnownTruth(expr, expr.getRequirements()), [])
+        Proof.__init__(self, KnownTruth(expr, frozenset()), [])
 
     def _generate_step_info(self, objectRepFn):
         return self.stepType() + '_' + str(self) + ':'
@@ -726,13 +726,11 @@ class ModusPonens(Proof):
             try:
                 # Must prove the implication under the given assumptions.
                 implicationTruth = implicationExpr.prove(assumptions)
-                _appendExtraAssumptions(assumptions, implicationTruth)
             except ProofFailure:
                 raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Implication, %s, is not proven'%str(implicationExpr))
             try:
                 # Must prove the antecedent under the given assumptions.
                 antecedentTruth = implicationExpr.operands[0].prove(assumptions)
-                _appendExtraAssumptions(assumptions, antecedentTruth)
             except ProofFailure:
                 raise ModusPonensFailure(implicationExpr.operands[1], assumptions, 'Antecedent of %s is not proven'%str(implicationExpr))
             # remove any unnecessary assumptions (but keep the order that was provided)
@@ -771,7 +769,7 @@ class HypotheticalReasoning(Proof):
 
 class Instantiation(Proof):
     def __init__(self, original_known_truth, num_forall_eliminations, 
-                 repl_map=None, assumptions=USE_DEFAULTS):
+                 repl_map, assumptions):
         '''
         Create the specialization+instantiation proof step that eliminates
         some number of nested Forall operations (specialization) and 
@@ -783,15 +781,13 @@ class Instantiation(Proof):
         
         See Expression.substituted for details regarding the replacement rules.
         '''
-        assumptions = list(defaults.checkedAssumptions(assumptions))
         prev_default_assumptions = defaults.assumptions
         # These assumptions will be used for deriving any side-effects:
         defaults.assumptions = assumptions 
         
         try:
-            if repl_map is None: repl_map = dict()
             if not isinstance(original_known_truth, KnownTruth):
-                raiseFailure('May only instantiate a KnownTruth')
+                raise TypeError("May only 'instantiate' a KnownTruth")
             if original_known_truth.proof() is None:
                 raise UnusableProof(KnownTruth.theoremBeingProven, original_known_truth)
                 
@@ -802,15 +798,15 @@ class Instantiation(Proof):
             for assumption in original_known_truth.assumptions:
                 # Possible substitutions in the "original" KnownTruth 
                 # assumption.
-                subbed_assumption = assumption.substituted(repl_map, assumptions,
-                                                           requirements)
+                subbed_assumption = assumption.substituted(
+                        repl_map, assumptions=assumptions, requirements=requirements)
                 orig_subbed_assumptions.append(subbed_assumption)
             
             # Automatically use the assumptions of the original_known_truth
             # plus the assumptions that were provided.
-            assumptions = (orig_subbed_assumptions + assumptions)
+            assumptions = tuple(orig_subbed_assumptions) + assumptions
             # Eliminate duplicates.
-            assumptions = list(OrderedDict.fromkeys(assumptions)) 
+            assumptions = tuple(OrderedDict.fromkeys(assumptions)) 
             # Make this the new default (for side-effects).
             defaults.assumptions = assumptions
                         
@@ -823,22 +819,19 @@ class Instantiation(Proof):
             requirements = list(OrderedDict.fromkeys(requirements))
             
             # Remove any unnecessary assumptions (but keep the order that was
-            # provided).  Make sure we have all of the requirement assumptions.
+            # provided).  Note that some assumptions of requirements may
+            # not be in the 'assumptions' list for this instantiation step
+            # if they rely on internal assumptions from a Conditional.
             assumptions_set = set()
             for requirement in requirements:
                 assumptions_set |= requirement.assumptionsSet
-            unmet_assumptions = assumptions_set - set(assumptions)
-            assert len(unmet_assumptions)==0, "Missing requirement assumptions"
             assumptions = [assumption for assumption in assumptions 
                            if assumption in assumptions_set]
             
             # Sort the replaced variables in order of their appearance in the 
             # original KnownTruth.
-            # First get all of them.
-            repl_vars = list(repl_map.keys())
-            # Then sort them according to the order of appearance.
-            repl_vars = [var in original_known_truth.orderOfAppearance(repl_vars)]
-            # Finally remove duplicates.
+            repl_vars = list(original_known_truth.orderOfAppearance(repl_map.keys()))
+            # And remove duplicates.
             repl_vars = list(OrderedDict.fromkeys(repl_vars))
                 
             # we have what we need; set up the Instantiation Proof
@@ -846,8 +839,8 @@ class Instantiation(Proof):
             self.mapping_var_order = repl_vars
             # Exclude anything in the repl_map that does not appear in the
             # original KnownTruth:
-            self.mapping = {key:val for key, val in repl_map.iteritems()
-                            if val in repl_vars}
+            self.mapping = {key:val for key, val in repl_map.items()
+                            if key in repl_vars}
             instantiated_truth = KnownTruth(instantiated_expr, assumptions)
             Proof.__init__(self, instantiated_truth, 
                            [original_known_truth] + requirements)
@@ -860,7 +853,8 @@ class Instantiation(Proof):
         Generate information about this proof step, including mapping 
         information for this specialization.
         '''
-        mapping_info = ','.join(objectRepFn(var) + ':' + objectRepFn(self.mappings[var]) 
+        mapping = self.mapping
+        mapping_info = ','.join(objectRepFn(var) + ':' + objectRepFn(mapping[var]) 
                                for var in self.mapping_var_order)
         return self.stepType() + ':{' + mapping_info + '}'
                                 
@@ -876,33 +870,27 @@ class Instantiation(Proof):
         return formatted(var) + ' : ' + formatted(replacement)
     
     def _mapping(self, formatType='HTML'):
-        mappedVarLists = self.mappedVarLists
         if formatType=='HTML':
             out = '<span style="font-size:20px;">'
         else: out = ''
-        out += ', '.join(self._single_mapping(var, self.mappings[var], formatType) 
-                         for var in mappedVars)
+        out += ', '.join(self._single_mapping(var, self.mapping[var], formatType) 
+                         for var in self.mapping_var_order)
         if formatType=='HTML':
             out += '</span>'
         return out
 
     @staticmethod
-    def _instantiated_known_truth(original_known_truth, num_forall_eliminations, 
-                                  repl_map, repl_key_order, assumptions,
-                                  requirements):
+    def _instantiated_expr(original_known_truth, num_forall_eliminations, 
+                           repl_map, assumptions, requirements):
         '''
-        Return a tuple of (instantiation, conditions).  The 
-        instantiation derives from the original known truth.
+        Return the instantiated version of the right side of the
+        original_known_truth.  The assumptions on the left side of
+        the turnstile are treated in Instantiation.__init__.
         
-        and its 
-        conditions via a specialization inference rule (or relabeling as a 
-        special case).
         Eliminates the specified number of Forall operations, substituting all
-        of the corresponding instance variables according to the substitution
-        map dictionary (subMap), or defaulting basic instance variables as
-        themselves. 
+        of the corresponding instance variables according to repl_map.
         '''
-        from proveit import Lambda, Expression, Iter, Conditional
+        from proveit import Lambda, Expression, Conditional
         from proveit.logic import Forall, And
         
         for key, sub in repl_map.items():
@@ -912,7 +900,7 @@ class Instantiation(Proof):
         
         # Eliminate the desired number of Forall operations and extract
         # appropriately mapped conditions.
-        expr = original_known_truth
+        expr = original_known_truth.expr
         remaining_forall_eliminations = num_forall_eliminations
         parameters = []
         operands = []
@@ -947,15 +935,14 @@ class Instantiation(Proof):
                     conditions = [condition]
                 for condition in conditions:
                     # make substitutions in the condition'
-                    subbed_cond = condition.substituted(repl_map, assumptions,
-                                                        requirements)
+                    subbed_cond = condition.substituted(repl_map, 
+                                                        assumptions=assumptions,
+                                                        requirements=requirements)
                     try:
                         requirements.append(subbed_cond.prove(assumptions))    
                     except ProofFailure:
                         raiseFailure('Unmet specialization requirement: %s'
-                                     %str(requirement_expr))                    
-                else:
-                condition = None
+                                     %str(subbed_cond))                    
             parameters.extend(lambda_expr.parameters)
             for parameter_var in instance_vars:
                 replacement = repl_map.get(parameter_var, parameter_var)
@@ -1067,19 +1054,14 @@ class _ShowProof:
         else:
             self.context = context
             self.step_type_str = stepInfo
-        if self.step_type_str=='specialization':
+        if self.step_type_str=='instantiation':
             # Extract the mapping information.
-            self.mappedVarLists = []
-            self.mappings = dict()
-            # All but the last two groups must correspond to 
-            # mapping information.
-            for group in refObjIdGroups[:-2]:
-                var_mapping_pairs = [(context.getStoredExpr(group[i]), 
-                                      context.getStoredExpr(group[i+1])) \
-                                     for i in range(0, len(group), 2)]
-                mapping = dict(var_mapping_pairs)
-                self.mappings.update(mapping)
-                self.mappedVarLists.append(mapping.keys())
+            group = refObjIdGroups[0]
+            var_mapping_pairs = [(context.getStoredExpr(group[i]), 
+                                  context.getStoredExpr(group[i+1])) \
+                                 for i in range(0, len(group), 2)]
+            self.mapping_var_order = [key for key, value in var_mapping_pairs]
+            self.mapping = dict(var_mapping_pairs)
         self.provenTruth = context.getStoredKnownTruth(refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
@@ -1102,10 +1084,10 @@ class _ShowProof:
             return self.context.proofNotebook(self)
             
     def _single_mapping(self, *args):
-        return Specialization._single_mapping(self, *args)
+        return Instantiation._single_mapping(self, *args)
 
     def _mapping(self, *args):
-        return Specialization._mapping(self, *args)
+        return Instantiation._mapping(self, *args)
     
     def enumeratedProofSteps(self):
         return Proof.enumeratedProofSteps(self)

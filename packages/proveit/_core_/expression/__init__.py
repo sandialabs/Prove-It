@@ -8,5 +8,5 @@ from .conditional import Conditional
 from .lambda_expr import Lambda, LambdaApplicationError, ArgumentExtractionError
 from .composite import (Composite, compositeExpression, singleOrCompositeExpression, 
                         ExprTuple, ExprTupleError, ExprArray, NamedExprs, Iter,
-                        varIter)
+                        varIter, IterationInstanceError)
 from .label import Label, Variable, Literal, DuplicateLiteralError, safeDummyVar, safeDefaultOrDummyVar

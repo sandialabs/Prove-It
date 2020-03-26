@@ -1,6 +1,7 @@
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.operation.operation import Operation
 from proveit._core_.expression.label import Variable
+from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
 
@@ -46,7 +47,7 @@ class IndexedVar(Operation):
         if isinstance(self.var, IndexedVar):
             options.add('multi_indexed_var', 
                         ("'flat' or 'nested' to show multipe "
-                         "indices or the true nested structure")
+                         "indices or the true nested structure"))
         return options
     
     @classmethod

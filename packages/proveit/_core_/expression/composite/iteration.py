@@ -152,8 +152,9 @@ class Iter(Expression):
                 relation = LessEq.sort([first, second], reorder=False, 
                                        assumptions=assumptions)
             except:
-                raise IterationError("Indices not provably within the iteration "
-                                     "range: %s <= %s"%(first, second)) 
+                raise IterationInstanceError(
+                        "Indices not provably within the iteration "
+                        "range: %s <= %s"%(first, second)) 
             requirements.append(relation)
         
         # map to the desired instance
@@ -214,7 +215,7 @@ class Iter(Expression):
         
         See the Lambda.apply documentation for a related discussion.
         '''
-        from proveit.logic import Equals, InSet
+        from proveit.logic import InSet
         from proveit.number import Interval
 
         if len(repl_map)>0 and (self in repl_map):
@@ -248,22 +249,34 @@ class Iter(Expression):
         # Need to expand IndexedVar's.  The expansions must be defined over
         # the range of this iteration and must be aligned with each other.
         
+        def raise_failed_range_match(indexed_var_iter):
+            raise ImproperSubstitution("The expansion of iterated parameters "
+                                       "is only allowed where the Iter range "
+                                       "matches the parameters range. The range "
+                                       "of %s does not match %s"
+                                       %(self, indexed_var_iter))
+        
         # The repl_map should map each variable being indexed to the same
-        # range of indices covered by this Iter to keep track that we
-        # have the correct range.
+        # range of indices covered by this Iter.  For example,
+        # x : (x_i, ..., x_j).  These mappings keep track that the Iter has
+        # the correct corresponding range.
         for indexed_var in indexed_vars_of_iter:
             # indexed_var_iter_tuple should be something like (x_i, ..., x_j)
             # where i and j match the start and end indices of this Iter.
             indexed_var_iter_tuple = repl_map[indexed_var.var]
-            if len(indexed_var_iter_tuple) != 1:
-                raise error
+            if (not isinstance(indexed_var_iter_tuple, ExprTuple)
+                    or len(indexed_var_iter_tuple) != 1
+                    or not isinstance(indexed_var_iter_tuple[0], Iter)):
+                raise ImproperSubstitution(
+                        "All IndexedVar's of an Iter must be expanded together. "
+                        "%s:%s indicates an expansion but %s:%s does not"
+                        %(first_expanded_var, repl_map[first_expanded_var],
+                          indexed_var.var, indexed_var_iter_tuple))
             indexed_var_iter = indexed_var_iter_tuple[0]
-            if not isinstance(indexed_var_iter, Iter):
-                raise error
             if indexed_var_iter.start_index != self.start_index:
-                raise error
+                raise raise_failed_range_match(indexed_var_iter)
             if indexed_var_iter.end_index != self.end_index:
-                raise error
+                raise raise_failed_range_match(indexed_var_iter)
         
         def raise_failed_to_expand(first_expanded_indexed_var, indexed_var):
             raise ImproperSubstitution("When expanding IndexedVar's within an"
@@ -271,11 +284,11 @@ class Iter(Expression):
                                        "must all be expanded together.  "
                                        "%s is being expanded but %s is not"
                                        %(first_expanded_indexed_var, indexed_var))
-        def raise_failed_match(first_expansion, expansion):
+        def raise_failed_expansion_match(first_expansion, expansion):
             raise ImproperSubstitution("When expanding IndexedVar's within an"
                                        "Iter whose parameter is the index, their"
-                                       "expansion Iter indices must all match,
-                                       "unlike %s vs %s."
+                                       "expansion Iter indices must all match."
+                                       "  %s vs %s do not match."
                                        %(first_expansion, expansion))
         
         first_indexed_var_iter_tuple = repl_map[first_expanded_var]
@@ -295,6 +308,7 @@ class Iter(Expression):
         # Loop over the entries of the first expansion which must be
         # in correspondence (same Iter range or the same in being singular)
         # with the other expansions.
+        body = self.body
         for k, first_expansion_entry in enumerate(first_expansion):
             entry_repl_map = dict(inner_repl_map)       
             # Loop over all of the IndexedVar's being expanded and make
@@ -307,24 +321,24 @@ class Iter(Expression):
                     indexed_var_iter_tuple = inner_repl_map[indexed_var.var]
                     expansion = inner_repl_map.get(indexed_var_iter_tuple, 
                                                    indexed_var_iter_tuple)
-                    if not isinstance(expansion, ExprTupe): expansion=None
+                    if not isinstance(expansion, ExprTuple): expansion=None
                 if expansion is None:
                     # Failing to all expand together.
                     raise_failed_to_expand(first_expanded_indexed_var, indexed_var)
                 if len(expansion) != len(first_expansion):
                     # Failing to have the same number of entries.
-                    raise_failed_match(first_expansion, expansion)
+                    raise_failed_expansion_match(first_expansion, expansion)
                 entry = expansion[k]
                 if isinstance(entry, Iter) != isinstance(first_expansion_entry, Iter):
                     # Failing to match w.r.t. being singular or not.
-                    raise_failed_match(first_expansion, expansion)
+                    raise_failed_expansion_match(first_expansion, expansion)
                 if isinstance(entry, Iter):
                     if entry.start_index !=  first_expansion_entry.start_index:
                         # Failed to have the same Iter range (different start).
-                        raise_failed_match(first_expansion, expansion)
+                        raise_failed_expansion_match(first_expansion, expansion)
                     if entry.entry_index !=  first_expansion_entry.entry_index:
                         # Failed to have the same Iter range (different end).
-                        raise_failed_match(first_expansion, expansion)
+                        raise_failed_expansion_match(first_expansion, expansion)
                     # Relabel the entry body to use the parameter of this
                     # Iter so that all the parameters will be consistent.
                     new_body = entry.body.substituted({entry.parameter:parameter})
@@ -430,3 +444,9 @@ def varIter(var, start, end):
     from proveit import safeDummyVar, IndexedVar
     param = safeDummyVar(var)
     return Iter(param, IndexedVar(var, param), start, end)
+
+class IterationInstanceError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg

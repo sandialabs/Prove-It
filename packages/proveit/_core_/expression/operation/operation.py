@@ -392,9 +392,7 @@ class Operation(Expression):
         keep derivation rules (i.e., instantiation) simple.  For details,
         see the Iter.substituted documentation.
         '''
-        from proveit import Lambda, compositeExpression, ExprTuple, Iter
-        from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
-        from proveit.logic import Equals
+        from proveit import Lambda, compositeExpression
         
         # Check reserved variable restrictions for scoping volations.
         if len(repl_map)>0 and (self in repl_map):

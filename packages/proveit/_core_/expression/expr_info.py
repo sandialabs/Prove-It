@@ -29,10 +29,11 @@ class ExpressionInfo:
         return orderedDependencyNodes(self.expr, lambda expr : expr._subExpressions)
 
     def __repr__(self):
-        from .composite import NamedExprs, Indexed, Iter
-        from .operation import Operation
+        from .composite import NamedExprs, Iter
+        from .operation import Operation, IndexedVar
         from .lambda_expr import Lambda
         from .label import Label, Literal
+        from .conditional import Conditional
         enumeratedExpressions = self._getEnumeratedExpressions()
         expr_num_map = {expr:k for k, expr in enumerate(enumeratedExpressions)}
         outStr = ''
@@ -60,15 +61,20 @@ class ExpressionInfo:
                     outStr += indent + r'operand: ' + str(expr_num_map[expr.operand]) + '\n'
                 else: # has multiple operands
                     outStr += indent + r'operands: ' + str(expr_num_map[expr.operands]) + '\n'                    
+            elif isinstance(expr, Conditional):
+                if len(expr.conditions) == 1:
+                    outStr += indent + r'value: ' + str(expr_num_map[expr.value]) + '\n'
+                    outStr += indent + r'condition: ' + str(expr_num_map[expr.condition]) + '\n'
+                else:
+                    outStr += indent + r'values: ' + str(expr_num_map[expr.values]) + '\n'
+                    outStr += indent + r'conditions: ' + str(expr_num_map[expr.conditions]) + '\n'                    
             elif isinstance(expr, Lambda):
                 if hasattr(expr, 'parameter'): # has a single parameter
                     outStr += indent + 'parameter: %s\n'%(expr_num_map[expr.parameter])
                 else:        
                     outStr += indent + r'parameters: %s\n'%(expr_num_map[expr.parameters])
                 outStr += indent + r'body: ' + str(expr_num_map[expr.body]) + '\n'
-                if len(expr.conditions) > 0:
-                    outStr += indent + r'conditions: %s\n'%(expr_num_map[expr.conditions])
-            elif isinstance(expr, Indexed):
+            elif isinstance(expr, IndexedVar):
                 outStr += indent + 'var: %d\n'%(expr_num_map[expr.var])
                 if hasattr(expr, 'index'):
                     outStr += indent +'index: %d\n'%(expr_num_map[expr.index])
@@ -93,8 +99,9 @@ class ExpressionInfo:
         return repr(self)
     
     def _repr_html_(self):
-        from .composite import ExprTuple, ExprArray, NamedExprs, Indexed, Iter
-        from .operation import Operation
+        from .composite import ExprTuple, ExprArray, NamedExprs, Iter
+        from .operation import Operation, IndexedVar
+        from .conditional import Conditional
         from .lambda_expr import Lambda
         from .label import Variable, Literal
         from .expr import Expression
@@ -122,15 +129,20 @@ class ExpressionInfo:
                     sub_expressions += 'operand:&nbsp;%d<br>'%(expr_num_map[expr.operand])
                 else: # has multiple operands
                     sub_expressions += 'operands:&nbsp;%d<br>'%(expr_num_map[expr.operands])
+            elif isinstance(expr, Conditional):
+                if len(expr.conditions) == 1:
+                    sub_expressions = 'value:&nbsp;%s<br>'%expr_num_map[expr.value]
+                    sub_expressions += 'condition:&nbsp;%s<br>'%expr_num_map[expr.condition]
+                else:
+                    sub_expressions = 'values:&nbsp;%s<br>'%expr_num_map[expr.values]
+                    sub_expressions += 'conditions:&nbsp;%s<br>'%expr_num_map[expr.conditions]
             elif isinstance(expr, Lambda):
                 if hasattr(expr, 'parameter'): # has a single parameter
                     sub_expressions = 'parameter:&nbsp;%s<br>'%(expr_num_map[expr.parameter])
                 else:                        
                     sub_expressions = 'parameters:&nbsp;%s<br>'%(expr_num_map[expr.parameters])
                 sub_expressions += 'body:&nbsp;%d<br>'%(expr_num_map[expr.body])
-                if len(expr.conditions)>0:
-                    sub_expressions += 'conditions:&nbsp;%d<br>'%(expr_num_map[expr.conditions])
-            elif isinstance(expr, Indexed):
+            elif isinstance(expr, IndexedVar):
                 sub_expressions += 'var:&nbsp;%d<br>'%(expr_num_map[expr.var])
                 if hasattr(expr, 'index'):
                     sub_expressions += 'index:&nbsp;%d<br>'%(expr_num_map[expr.index])
@@ -153,7 +165,7 @@ class ExpressionInfo:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr]
             html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
-            if self.show_details and expr.__class__ not in (Variable, Literal, Operation, Lambda, Indexed, NamedExprs, ExprTuple, ExprArray, Indexed, Iter):
+            if self.show_details and expr.__class__ not in (Variable, Literal, Operation, Lambda, IndexedVar, NamedExprs, ExprTuple, ExprArray, Iter):
                 # not a core expression so show the actual class when showing the details
                 html += '<tr><td colspan=4 style="text-align:left"><strong>class:</strong> %s</td></tr>\n'%expr._class_path()
             if self.show_details and isinstance(expr, Literal):
