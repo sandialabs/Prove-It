@@ -13,25 +13,42 @@ class Mod(Operation):
         self.divisor = self.operands[1]
 
     def _closureTheorem(self, numberSet):
-        from . import theorems
+        from . import _theorems_
         if numberSet == Integers:
-            return theorems.modIntClosure
+            return _theorems_.modIntClosure
         elif numberSet == Reals:
-            return theorems.modRealClosure
+            return _theorems_.modRealClosure
     
-    def deduceInInterval(self, assumptions=frozenset()):
-        from .theorems import modInInterval, modInIntervalCO
-        from numberSets import deduceInIntegers, deduceInReals
+    # def deduceInInterval(self, assumptions=frozenset()):
+    #     from ._theorems_ import modInInterval, modInIntervalCO
+    #     from numberSets import deduceInIntegers, deduceInReals
+    #     try:
+    #         # if the operands are integers, then we can deduce that
+    #         # a mod b is in 0..(b-1)
+    #         deduceInIntegers(self.operands, assumptions)
+    #         return modInInterval.specialize(
+    #                 {a:self.dividend, b:self.divisor}).checked(assumptions)
+    #     except:
+    #         # if the operands are reals, then we can deduce that a mod b is in [0, b)
+    #         deduceInReals(self.operands, assumptions)
+    #         return modInIntervalCO.specialize({a:self.dividend, b:self.divisor}).checked(assumptions)
+
+    def deduceInInterval(self, assumptions=USE_DEFAULTS):
+        # an initial attempt to update
+        # by wdc 3/25/2020
+        from ._theorems_ import modInInterval, modInIntervalCO
+        # from numberSets import deduceInIntegers, deduceInReals
         try:
             # if the operands are integers, then we can deduce that
             # a mod b is in 0..(b-1)
-            deduceInIntegers(self.operands, assumptions)
+            # deduceInIntegers(self.operands, assumptions)
             return modInInterval.specialize(
-                    {a:self.dividend, b:self.divisor}).checked(assumptions)
+                    {a:self.dividend, b:self.divisor}, assumptions=assumptions)
         except:
             # if the operands are reals, then we can deduce that a mod b is in [0, b)
-            deduceInReals(self.operands, assumptions)
-            return modInIntervalCO.specialize({a:self.dividend, b:self.divisor}).checked(assumptions)
+            # deduceInReals(self.operands, assumptions)
+            return modInIntervalCO.specialize(
+                    {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -56,6 +73,5 @@ class Mod(Operation):
             return modRealClosure.specialize({a:self.dividend, b:self.divisor},
                       assumptions=assumptions)
 
-        msg = ("'Mod.deduceInNumberSet()' not implemented for the "
-               "%s set"%str(number_set))
+        msg = ("'Mod.deduceInNumberSet()' not implemented for the %s set"%str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
