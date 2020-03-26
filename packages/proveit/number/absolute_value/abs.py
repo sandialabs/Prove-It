@@ -19,7 +19,7 @@ class Abs(Operation):
             return _theorems_.absComplexClosureNonNegReals
         elif numberSet == RealsPos:
             # nonzero in, real positive out
-            return _theorems_.absNonzeroClosure    
+            return _theorems_.absNonzeroClosure   
 
     def _notEqZeroTheorem(self):
         from . import _theorems_
