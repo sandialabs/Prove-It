@@ -1,4 +1,4 @@
-from proveit import Literal, Operation
+from proveit import Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit.number.sets import Integers, Reals
 from proveit._common_ import a, b
 
@@ -23,10 +23,39 @@ class Mod(Operation):
         from .theorems import modInInterval, modInIntervalCO
         from numberSets import deduceInIntegers, deduceInReals
         try:
-            # if the operands are integers, then we can deduce that a mod b is in 0..(b-1)
+            # if the operands are integers, then we can deduce that
+            # a mod b is in 0..(b-1)
             deduceInIntegers(self.operands, assumptions)
-            return modInInterval.specialize({a:self.dividend, b:self.divisor}).checked(assumptions)
+            return modInInterval.specialize(
+                    {a:self.dividend, b:self.divisor}).checked(assumptions)
         except:
             # if the operands are reals, then we can deduce that a mod b is in [0, b)
             deduceInReals(self.operands, assumptions)
             return modInIntervalCO.specialize({a:self.dividend, b:self.divisor}).checked(assumptions)
+
+    def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
+        '''
+        Given a number set number_set (such as Integers, Reals, etc),
+        attempt to prove that the given Mod expression is in that number
+        set using the appropriate closure theorem.
+        Created: 3/25/2020 by wdc, based on the same method in the Add,
+                 Exp, and Abs classes.
+        Last modified: 3/25/2020 by wdc. Creation
+        Once established, these authorship notations can be deleted.
+        '''
+        from proveit.logic import InSet
+        from proveit.number.modular._theorems_ import (
+                  modIntClosure, modRealClosure)
+        from proveit.number import Integers, Reals
+
+        if number_set == Integers:
+            return modIntClosure.specialize({a:self.dividend, b:self.divisor},
+                      assumptions=assumptions)
+
+        if number_set == Reals:
+            return modRealClosure.specialize({a:self.dividend, b:self.divisor},
+                      assumptions=assumptions)
+
+        msg = ("'Mod.deduceInNumberSet()' not implemented for the "
+               "%s set"%str(number_set))
+        raise ProofFailure(InSet(self, number_set), assumptions, msg)
