@@ -68,8 +68,11 @@ class Add(Operation):
             operands = list(self.operands)
             for operand in operands:
                 if isinstance(operand, Iter):
-                    # make the operator a Iter in correspondence with the operands Iter
-                    operators.append(Iter(operand.lambda_map.parameter_or_parameters, self.operator, operand.start_index_or_indices, operand.end_index_or_indices))
+                    # Make the operator a Iter in correspondence with the 
+                    # operands Iter
+                    operators.append(Iter(operand.lambda_map.parameter_or_parameters, 
+                                          self.operator, operand.start_index, 
+                                          operand.end_index))
                 else:
                     operators.append(self.operator)
             implicitFirstOperator = True # the first operator is implicit if it is a '+'
@@ -1014,8 +1017,8 @@ def subtract(a, b):
     from proveit.number import Neg
     if isinstance(b, Iter):
         b = Iter(b.lambda_map.parameter_or_parameters, 
-                 Neg(b.lambda_map.body), b.start_index_or_indices, 
-                 b.end_index_or_indices, b.getStyles())
+                 Neg(b.lambda_map.body), b.start_index, 
+                 b.end_index, b.getStyles())
         # The default style will use subtractions where appropriate.
         return Add(a, b)
     return Add(a, Neg(b))
@@ -1033,8 +1036,8 @@ def dist_subtract(a, b):
                   for term in b.terms]
     elif isinstance(b, Iter):
         bterms = [Iter(b.lambda_map.parameter_or_parameters, 
-                       Neg(b.lambda_map.body), b.start_index_or_indices,
-                       b.end_index_or_indices, b.getStyles())]
+                       Neg(b.lambda_map.body), b.start_index,
+                       b.end_index, b.getStyles())]
     else:
         bterms = [Neg(b)]
     if isinstance(a, Add):
