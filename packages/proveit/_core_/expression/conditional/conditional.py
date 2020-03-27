@@ -56,16 +56,16 @@ class Conditional(Expression):
         yield self.condition_or_conditions
     
     def string(self, **kwargs):
-        inner_str = '; '.join(value.string() + ' | ' + condition.string() \
+        inner_str = '; '.join(value.string() + ' if ' + condition.string() \
                               for value, condition in zip(self.values, 
                                                           self.conditions))
         return '{' + inner_str +'}'
     
     def latex(self, **kwargs):
-        inner_str = r' \\ '.join(value.latex() + ' &  ' + condition.latex() \
+        inner_str = r' \\ '.join(value.latex() + r' & \textrm{if} &  ' + condition.latex() \
                                   for value, condition in zip(self.values, 
                                                               self.conditions))
-        inner_str = r'\begin{array}{c|c}' + inner_str + r'\end{array}'
+        inner_str = r'\begin{array}{ccc}' + inner_str + r'\end{array}'
         inner_str = r'\left\{' + inner_str + r'\right.'
         if kwargs.get('fence', False):
             return r'\left[' + inner_str + r'\right] '
