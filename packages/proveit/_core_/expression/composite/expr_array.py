@@ -7,7 +7,12 @@ import itertools
 from ast import literal_eval
                 
 
-class ExprArray(Composite, Expression): 
+class ExprArray(ExprTuple):
+    '''
+    NEED TO REDO AS A WRAPPER FOR AN ExprTuple of ExprTuples
+    '''
+    
+    
     '''
     An ExprArray is a composite Expression representing
     an n-dimensional tensor.  It serves to map n-coordinate 
