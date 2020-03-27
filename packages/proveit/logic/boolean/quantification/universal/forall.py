@@ -111,12 +111,18 @@ class Forall(OperationOverInstances):
         R_op, R_op_sub = Operation(Rmulti, innerForall.instanceVars), innerForall.conditions
         return bundling.specialize({xMulti:self.instanceVars, yMulti:innerForall.instanceVars, P_op:P_op_sub, Q_op:Q_op_sub, R_op:R_op_sub, S:self.domain}).deriveConclusion(assumptions)
 
-    def specialize(self, specializeMap=None, relabelMap=None, assumptions=USE_DEFAULTS):
+    def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
         '''
-        First attempt to prove that this Forall statement is true under the assumptions,
-        and then call specialize on the KnownTruth.
+        First attempt to prove that this Forall statement is true under the 
+        assumptions, and then call specialize on the KnownTruth.
         '''
-        return self.prove(assumptions).specialize(specializeMap, relabelMap, assumptions=assumptions)
+        return self.prove(assumptions).instantiate(repl_map, assumptions=assumptions)
+
+    def specialize(self, repl_map=None, assumptions=USE_DEFAULTS):
+        '''
+        TEMPORARY FOR BACKWARD COMPATIBILITY
+        '''
+        return self.prove(assumptions).instantiate(repl_map, assumptions=assumptions)    
         
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
