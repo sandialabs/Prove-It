@@ -1,1 +1,3 @@
-from .lambda_expr import Lambda, LambdaApplicationError, ArgumentExtractionError
+from .lambda_expr import (
+        Lambda, ParameterCollisionError,
+        LambdaApplicationError, ArgumentExtractionError)

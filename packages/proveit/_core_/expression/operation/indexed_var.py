@@ -54,9 +54,9 @@ class IndexedVar(Operation):
     def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != IndexedVar: 
             MakeNotImplemented(subClass)
-        if len(coreInfo) != 1 or coreInfo[0] != 'Operation':
+        if len(coreInfo) != 1 or coreInfo[0] != 'IndexedVar':
             raise ValueError("Expecting IndexedVar coreInfo to contain exactly"
-                             " one item: 'Operation'")
+                             " one item: 'IndexedVar'")
         return IndexedVar(*subExpressions).withStyles(**styles)       
 
     def remakeArguments(self):
@@ -92,7 +92,7 @@ class IndexedVar(Operation):
                 isinstance(self.var, IndexedVar):
             indices_str = ','.join(index.formatted(formatType) 
                                    for index in self.getIndices())
-            result = self.getBaseVar.formatted(formatType) + '_{'+indices_str+'}'
+            result = self.getBaseVar().formatted(formatType) + '_{'+indices_str+'}'
         else:
             index_str = self.index.formatted(formatType, fence=False)
             result = self.var.formatted(formatType, forceFence=True) + '_{' + index_str + '}'

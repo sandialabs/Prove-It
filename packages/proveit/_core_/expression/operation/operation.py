@@ -43,20 +43,25 @@ class Operation(Expression):
             operand_or_operands = [operand_or_operands]
         self.operator_or_operators = singleOrCompositeExpression(operator_or_operators)
         self.operand_or_operands = singleOrCompositeExpression(operand_or_operands)
+        def raiseBadOperatorType(operator):
+            raise TypeError('operator(s) must be a Label, an indexed variable '
+                            '(IndexedVar), or iteration (Iter) over indexed'
+                            'variables (IndexedVar). %s is none of those.'
+                            %str(operator))            
         if isinstance(self.operator_or_operators, Composite):
             # a composite of multiple operators:
             self.operators = self.operator_or_operators 
             for operator in self.operators:
                 if isinstance(operator, Iter):
                     if not isinstance(operator.body, IndexedVar):
-                        raise TypeError('operators must be Labels, an indexed variable (IndexedVar), or iteration (Iter) over indexed variables (IndexedVar).')                
+                        raiseBadOperatorType(operator)
                 elif not isinstance(operator, Label) and not isinstance(operator, IndexedVar):
-                    raise TypeError('operator must be a Label, an indexed variable (IndexedVar), or iteration (Iter) over indexed variables (IndexedVar).')
+                    raiseBadOperatorType(operator)
         else:
             # a single operator
             self.operator = self.operator_or_operators
             if not isinstance(self.operator, Label) and not isinstance(self.operator, IndexedVar):
-                raise TypeError('operator must be a Label, an indexed variable (IndexedVar), or iteration (Iter) over indexed variables (IndexedVar), not %s.'%str(self.operator.__class__))
+                raiseBadOperatorType(self.operator)
             # wrap a single operator in a composite for convenience
             self.operators = compositeExpression(self.operator)
         if isinstance(self.operand_or_operands, Composite):
@@ -74,7 +79,11 @@ class Operation(Expression):
         if 'justification' not in styles:
             styles['justification'] = 'center'
         sub_exprs = (self.operator_or_operators, self.operand_or_operands)
-        Expression.__init__(self, ['Operation'], sub_exprs, styles=styles)
+        if isinstance(self, IndexedVar):
+            core_type = 'IndexedVar'
+        else:
+            core_type = 'Operation'
+        Expression.__init__(self, [core_type], sub_exprs, styles=styles)
 
     def styleOptions(self):
         options = StyleOptions(self)
@@ -448,7 +457,7 @@ class Operation(Expression):
                     return op_class._make(['Operation'], styles=None, 
                                           subExpressions=[operator, 
                                                           subbed_operand_or_operands])
-        return self.__class__._make(['Operation'], self.getStyles(), 
+        return self.__class__._make(self._coreInfo, self.getStyles(), 
                                     [subbed_operator_or_operators, 
                                      subbed_operand_or_operands])
 

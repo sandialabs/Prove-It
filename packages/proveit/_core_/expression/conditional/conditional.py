@@ -62,10 +62,10 @@ class Conditional(Expression):
         return '{' + inner_str +'}'
     
     def latex(self, **kwargs):
-        inner_str = r' \\ '.join(value.latex() + ' & | &  ' + condition.latex() \
+        inner_str = r' \\ '.join(value.latex() + ' &  ' + condition.latex() \
                                   for value, condition in zip(self.values, 
                                                               self.conditions))
-        inner_str = r'\begin{array}{ccc}' + inner_str + r'\end{array}'
+        inner_str = r'\begin{array}{c|c}' + inner_str + r'\end{array}'
         inner_str = r'\left\{' + inner_str + r'\right.'
         if kwargs.get('fence', False):
             return r'\left[' + inner_str + r'\right] '

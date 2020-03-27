@@ -215,6 +215,7 @@ class Iter(Expression):
         
         See the Lambda.apply documentation for a related discussion.
         '''
+        from proveit import safeDummyVar
         from proveit.logic import InSet
         from proveit.number import Interval
 
@@ -225,12 +226,12 @@ class Iter(Expression):
         assumptions = defaults.checkedAssumptions(assumptions)
         new_requirements = []
         lambda_map = self.lambda_map
-        parameter = self.parameter
+        orig_parameter = self.parameter
         
         # Check if any of the IndexedVars whose index is the iteration
         # parameter is being expanded by the repl_map.
         must_expand = False
-        first_expanded_indexed_var = None
+        first_expanded_var = None
         indexed_vars_of_iter = self.lambda_map.freeIndexedVars(self.parameter)
         for indexed_var in indexed_vars_of_iter:
             if indexed_var.var in repl_map \
@@ -278,39 +279,43 @@ class Iter(Expression):
             if indexed_var_iter.end_index != self.end_index:
                 raise raise_failed_range_match(indexed_var_iter)
         
-        def raise_failed_to_expand(first_expanded_indexed_var, indexed_var):
-            raise ImproperSubstitution("When expanding IndexedVar's within an"
-                                       "Iter whose parameter is the index, they"
+        def raise_failed_to_expand(first_expanded_var, indexed_var):
+            raise ImproperSubstitution("When expanding IndexedVar's within an "
+                                       "Iter whose parameter is the index, they "
                                        "must all be expanded together.  "
-                                       "%s is being expanded but %s is not"
-                                       %(first_expanded_indexed_var, indexed_var))
+                                       "%s is being expanded but %s is not."
+                                       %(first_expanded_var, indexed_var))
         def raise_failed_expansion_match(first_expansion, expansion):
-            raise ImproperSubstitution("When expanding IndexedVar's within an"
-                                       "Iter whose parameter is the index, their"
-                                       "expansion Iter indices must all match."
-                                       "  %s vs %s do not match."
+            raise ImproperSubstitution("When expanding IndexedVar's within an "
+                                       "Iter whose parameter is the index, their "
+                                       "expansion Iter indices must all match. "
+                                       "%s vs %s do not match."
                                        %(first_expansion, expansion))
         
-        first_indexed_var_iter_tuple = repl_map[first_expanded_var]
-        first_expansion = repl_map.get(first_indexed_var_iter_tuple, 
-                                       first_indexed_var_iter_tuple)
+        first_expanded_var_repl = repl_map[first_expanded_var]
+        first_expansion = repl_map.get(first_expanded_var_repl, 
+                                       first_expanded_var_repl)
 
 
         # Need to handle the change in scope within the lambda 
         # expression.  We won't use 'new_params'.  They aren't relavent 
         # after an expansion, this won't be used.
-        new_params, inner_repl_map, inner_assumptions, inner_reserved_vars \
-            = self.lambda_map._innerScopeSub(repl_map, reserved_vars, 
-                                             assumptions, new_requirements)
+        new_params, inner_repl_map, inner_reserved_vars, inner_assumptions \
+            = self.lambda_map._inner_scope_sub(repl_map, reserved_vars, 
+                                               assumptions, new_requirements)
         assert len(new_params)==1
-        new_param = new_params[0]
+        # We won't use the new parameter from 'new_params', and we
+        # won't need 'inner_reserved_vars'.  To be safe, we just need a safe 
+        # dummy variable that doesn't clash with anything involved.
+        new_param = safeDummyVar(self, *[repl for key, repl in repl_map.items()])
         
         # Loop over the entries of the first expansion which must be
         # in correspondence (same Iter range or the same in being singular)
         # with the other expansions.
         body = self.body
         for k, first_expansion_entry in enumerate(first_expansion):
-            entry_repl_map = dict(inner_repl_map)       
+            entry_repl_map = dict(inner_repl_map)  
+            entry_repl_map[orig_parameter] = new_param
             # Loop over all of the IndexedVar's being expanded and make
             # sure their kth entry is in correspondence with the first
             # expansions kth entry (with respect to Iter range or being
@@ -318,13 +323,13 @@ class Iter(Expression):
             for indexed_var in indexed_vars_of_iter:
                 expansion = None
                 if indexed_var.var in inner_repl_map:
-                    indexed_var_iter_tuple = inner_repl_map[indexed_var.var]
-                    expansion = inner_repl_map.get(indexed_var_iter_tuple, 
-                                                   indexed_var_iter_tuple)
+                    indexed_var_repl = inner_repl_map[indexed_var.var]
+                    expansion = inner_repl_map.get(indexed_var_repl, 
+                                                   indexed_var_repl)
                     if not isinstance(expansion, ExprTuple): expansion=None
                 if expansion is None:
                     # Failing to all expand together.
-                    raise_failed_to_expand(first_expanded_indexed_var, indexed_var)
+                    raise_failed_to_expand(first_expanded_var, indexed_var.var)
                 if len(expansion) != len(first_expansion):
                     # Failing to have the same number of entries.
                     raise_failed_expansion_match(first_expansion, expansion)
@@ -336,12 +341,12 @@ class Iter(Expression):
                     if entry.start_index !=  first_expansion_entry.start_index:
                         # Failed to have the same Iter range (different start).
                         raise_failed_expansion_match(first_expansion, expansion)
-                    if entry.entry_index !=  first_expansion_entry.entry_index:
+                    if entry.end_index !=  first_expansion_entry.end_index:
                         # Failed to have the same Iter range (different end).
                         raise_failed_expansion_match(first_expansion, expansion)
                     # Relabel the entry body to use the parameter of this
                     # Iter so that all the parameters will be consistent.
-                    new_body = entry.body.substituted({entry.parameter:parameter})
+                    new_body = entry.body.substituted({entry.parameter:new_param})
                     # For this entry, replace the IndexedVar with the 
                     # corresponding Iter body.
                     entry_repl_map[indexed_var] = new_body
@@ -354,11 +359,12 @@ class Iter(Expression):
                 # For an Iter entry, yield a new Iter using the entry_repl_map.
                 start_index = first_expansion_entry.start_index
                 end_index = first_expansion_entry.end_index
-                range_assumption = InSet(parameter, Interval(start_index, end_index))
+                range_assumption = InSet(new_param, Interval(start_index, end_index))
                 entry_assumptions = inner_assumptions + [range_assumption]
                 entry_requirements = []
+                # Note: we don't need to use the 'inner' reserved vars.
                 yield Iter(new_param,
-                           body.substituted(entry_repl_map, inner_reserved_vars,
+                           body.substituted(entry_repl_map, reserved_vars,
                                             entry_assumptions, entry_requirements),
                            start_index, end_index)
                 # Translate from inner requirements to outer requirements
@@ -376,7 +382,7 @@ class Iter(Expression):
                     requirements.append(requirement)
             else:
                 # For a singular element entry, yield the substituted element.
-                yield body.substituted(entry_repl_map, inner_reserved_vars,
+                yield body.substituted(entry_repl_map, reserved_vars,
                                        inner_assumptions, requirements)
     
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):

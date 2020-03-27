@@ -66,8 +66,7 @@ class Lambda(Expression):
         self.parameterVars = tuple(parameterVars)
         self.parameterVarSet = frozenset(parameterVars)
         if len(self.parameterVarSet) != len(self.parameters):
-            raise ValueError("Lambda parameters Variables must be unique with "
-                             "respect to each other.")
+            raise ParameterCollisionError(self.parameters)
         body = singleOrCompositeExpression(body)
         if not isinstance(body, Expression):
             raise TypeError('A Lambda body must be of type Expression')
@@ -276,6 +275,7 @@ class Lambda(Expression):
         # We will be appending to the requirements list if it is given
         # (or a throw-away list if it is not).
         if requirements is None: requirements = []
+        assumptions = defaults.checkedAssumptions(assumptions)
         
         # We will be matching operands with parameters in the proper order.
         operands_iter = iter(operands) 
@@ -322,14 +322,15 @@ class Lambda(Expression):
                             param_operands_len = Len(ExprTuple(*param_operands))
                             len_req = Equals(param_operands_len, param_len)
                             if len_req.proven(assumptions):
-                                requirements.append(len_req)
+                                requirements.append(len_req.prove(assumptions))
+                                break # we have a match
                     # For the iterated parameter replacement, we map the 
                     # parameter variable to the parameter iteration tuple
                     # (e.g., x : (x_i, ..., x_n)) to indicate the index
                     # range and then map that iteration tuple to the
                     # actual operands to be replaced.
                     repl_map[getParamVar(parameter)] = param_tuple
-                    repl_map[param_tuple] = param_operands
+                    repl_map[param_tuple] = ExprTuple(*param_operands)
                 else:
                     # This is a singular parameter which should match with a
                     # singular operator.
@@ -413,6 +414,9 @@ class Lambda(Expression):
             except TypeError:
                 # Otherwise use append.
                 new_params.append(subbed_param)
+        
+        if len(set(new_params)) != len(new_params):
+            raise ParameterCollisionError(new_params)
 
         # Can't use assumptions involving lambda parameter variables
         inner_assumptions = [assumption for assumption in assumptions 
@@ -582,6 +586,13 @@ class Lambda(Expression):
         innerFreeVs = set(self.body.freeIndexedVars(index))
         return {indexed_var for indexed_var in innerFreeVs 
                 if indexed_var.var not in self.parameterVarSet}
+
+class ParameterCollisionError(Exception):
+    def __init__(self, parameters):
+        self.parameters = parameters
+    def __str__(self):
+        return ("Parameter variables must be unique.  %s does not satisfy "
+                "this criterion."%self.parameters)
 
 class LambdaApplicationError(Exception):
     def __init__(self, parameters, body, operands, assumptions, extra_msg):

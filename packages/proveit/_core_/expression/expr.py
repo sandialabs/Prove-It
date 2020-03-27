@@ -288,8 +288,9 @@ class Expression(metaclass=ExprType):
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
         '''
-        Should make the Expression object for the specific Expression sub-class based upon the coreInfo
-        and subExpressions.  Must be implemented for each core Expression sub-class that can be instantiated.
+        Should make the Expression object for the specific Expression sub-class
+        based upon the coreInfo and subExpressions.  Must be implemented for 
+        each core Expression sub-class that can be instantiated.
         '''
         raise MakeNotImplemented(subClass)
                     
@@ -790,10 +791,7 @@ class Expression(metaclass=ExprType):
         if reserved_vars is not None \
                 and not self.freeVars().isdisjoint(reserved_vars.keys()):
             intersection = self.freeVars().intersection(reserved_vars.keys())
-            msg = ("Must not make substitution with reserved variables "
-                   "(i.e., parameters of a Lambda function).\n"
-                   "These variables are in violation: %s"%str(intersection))
-            raise ScopingViolation(msg)
+            raise ScopingViolation(intersection)
         return self
 
     def _repr_html_(self, context=None, unofficialNameKindContext=None):
@@ -857,8 +855,11 @@ class ImproperSubstitution(Exception):
         return self.message
 
 class ScopingViolation(Exception):
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, violating_vars):
+        self.message = ("Must not make substitution with reserved variables "
+                        "(i.e., parameters of a Lambda function).\n"
+                        "These variables are in violation: %s"%str(violating_vars))
+        self.violating_vars = violating_vars
     def __str__(self):
         return self.message
 

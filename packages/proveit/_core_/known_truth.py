@@ -779,6 +779,7 @@ class KnownTruth:
             elif (isinstance(key, ExprTuple) and len(key)==1 
                   and isinstance(key[0], Iter) 
                   and isinstance(key[0].body, IndexedVar)):
+                '''
                 # Replacement key of the form (x_i, ..., x_j).
                 # That is fine for expanding iterated variables, but make sure
                 # the replacement is an ExprTuple and also include
@@ -788,6 +789,9 @@ class KnownTruth:
                     raise TypeError("Must replace %s with an ExprTuple, not %s"
                                     %(key, sub)) 
                 processed_repl_map[key[0].body.var] = key
+                '''
+                # Not quite right.  How will it check the length requirement??
+                assert False
             else:
                 raise TypeError("%s is not the expected kind of Expression as "
                                 "a repl_map key.  Expecting repl_map keys to be "

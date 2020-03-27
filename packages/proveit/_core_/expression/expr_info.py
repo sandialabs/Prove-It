@@ -52,6 +52,9 @@ class ExpressionInfo:
             if isinstance(expr, NamedExprs):
                 for key in list(expr.keys()):
                     outStr += indent + key + ': ' + str(expr_num_map[expr[key]]) + '\n'
+            elif isinstance(expr, IndexedVar):
+                outStr +=  r'variable: ' + str(expr_num_map[expr.var]) + '\n'
+                outStr +=  r'index: ' + str(expr_num_map[expr.index])   + '\n'                  
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
                     outStr += indent + r'operator: ' + str(expr_num_map[expr.operator]) + '\n'
@@ -120,6 +123,9 @@ class ExpressionInfo:
             if isinstance(expr, NamedExprs):
                 for key in list(expr.keys()):
                     sub_expressions += '%s: %d<br>'%(key, expr_num_map[expr[key]])
+            elif isinstance(expr, IndexedVar):
+                sub_expressions = 'variable:&nbsp;%d<br>'%(expr_num_map[expr.var])
+                sub_expressions += 'index:&nbsp;%d<br>'%(expr_num_map[expr.index])                    
             elif isinstance(expr, Operation):
                 if hasattr(expr, 'operator'): # has a single operator
                     sub_expressions = 'operator:&nbsp;%d<br>'%(expr_num_map[expr.operator])
