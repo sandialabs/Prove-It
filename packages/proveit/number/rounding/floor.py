@@ -19,6 +19,23 @@ class Floor(Function):
             
     def latex(self, **kwargs):
         return r'\lfloor ' + self.operand.latex(fence=False) + r'\rfloor'
+
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+        '''
+        Created: 3/28/2020 by wdc.
+        Last modified: 3/28/2020 by wdc. Creation. Based on roughly
+                       analogous methods in Add and Exp classes. May
+                       need to be renamed.
+
+        For the trivial case where the operand is an integer,
+        derive and return this floor expression equated with the
+        operand itself. Assumptions may be necessary to deduce
+        necessary conditions for the simplification.
+        '''
+        from proveit._common_ import x
+        from ._theorems_ import floorOfInteger
+        return floorOfInteger.specialize(
+                {x:self.operand}, assumptions=assumptions)
         
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -33,19 +50,18 @@ class Floor(Function):
         from proveit._common_ import x
         from proveit.logic import InSet
         from proveit.number.rounding._theorems_ import (
-                  roundRealClosure, roundRealPosClosure)
-        from proveit.number import Integers, Naturals
+                  floorRealClosure, floorRealPosClosure)
 
         # among other things, convert any assumptions=None
         # to assumptions=()
         assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Integers:
-            return roundRealClosure.specialize({x:self.operand},
+            return floorRealClosure.specialize({x:self.operand},
                       assumptions=assumptions)
 
         if number_set == Naturals:
-            return roundRealPosClosure.specialize({x:self.operand},
+            return floorRealPosClosure.specialize({x:self.operand},
                       assumptions=assumptions)
 
         msg = ("'Floor.deduceInNumberSet()' not implemented for the "
