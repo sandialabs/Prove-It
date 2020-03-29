@@ -11,11 +11,11 @@ class Floor(Function):
         # is still working!
 
     def _closureTheorem(self, numberSet):
-        from . import theorems
+        from . import _theorems_
         if numberSet == Naturals:
-            return theorems.floorRealPosClosure
+            return _theorems_.floorRealPosClosure
         elif numberSet == Integers:
-            return theorems.floorRealClosure
+            return _theorems_.floorRealClosure
             
     def latex(self, **kwargs):
         return r'\lfloor ' + self.operand.latex(fence=False) + r'\rfloor'

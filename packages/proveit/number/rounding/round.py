@@ -11,9 +11,9 @@ class Round(Function):
         # is still working!
 
     def _closureTheorem(self, numberSet):
-        from . import theorems
+        from . import _theorems_
         if numberSet == Naturals:
-            return theorems.roundRealPosClosure
+            return _theorems_.roundRealPosClosure
         elif numberSet == Integers:
-            return theorems.roundRealClosure
+            return _theorems_.roundRealClosure
             

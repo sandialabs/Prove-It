@@ -11,11 +11,11 @@ class Ceil(Function):
         # is still working!
 
     def _closureTheorem(self, numberSet):
-        from . import theorems
+        from . import _theorems_
         if numberSet == NaturalsPos:
-            return theorems.ceilRealPosClosure
+            return _theorems_.ceilRealPosClosure
         elif numberSet == Integers:
-            return theorems.ceilRealClosure
+            return _theorems_.ceilRealClosure
 
     def latex(self, **kwargs):
         return r'\lceil ' + self.operand.latex(fence=False) + r'\rceil'
