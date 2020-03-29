@@ -7,7 +7,8 @@ class Ceil(Function):
     
     def __init__(self, A):
         Function.__init__(self, Ceil._operator_, A)
-        self.operand = A
+        # self.operand = A # check later that the operand attribute
+        # is still working!
 
     def _closureTheorem(self, numberSet):
         from . import theorems
