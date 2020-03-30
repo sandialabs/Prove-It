@@ -28,7 +28,7 @@ class Floor(Function):
                        need to be renamed.
 
         For the trivial case where the operand is an integer,
-        derive and return this floor expression equated with the
+        derive and return this Floor expression equated with the
         operand itself. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
         '''

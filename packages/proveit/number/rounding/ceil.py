@@ -28,7 +28,7 @@ class Ceil(Function):
                        need to be renamed.
 
         For the trivial case where the operand is an integer,
-        derive and return this ceiling expression equated with the
+        derive and return this Ceil expression equated with the
         operand itself. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
         '''
@@ -64,6 +64,6 @@ class Ceil(Function):
             return ceilRealPosClosure.specialize({x:self.operand},
                       assumptions=assumptions)
 
-        msg = ("'Floor.deduceInNumberSet()' not implemented for the "
+        msg = ("'Ceil.deduceInNumberSet()' not implemented for the "
                "%s set"%str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)

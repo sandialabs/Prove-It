@@ -28,11 +28,33 @@ class Round(Function):
         derive and return this Round expression equated with the
         operand itself. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
+        For the case where the operand is of the form (real + int),
+        derive and return this Round expression equated with
+        Round(real) + int.
+        CONSIDER ADDING A RECURSIVE COMPONENT to allow further 
+        simplfication, for example for Round(real + int + int).
         '''
-        from proveit._common_ import x
-        from ._theorems_ import roundOfInteger
-        return roundOfInteger.specialize(
-                {x:self.operand}, assumptions=assumptions)
+        from proveit._common_ import n, x
+        from proveit.logic import InSet
+        from proveit.number import Add, Integers
+        from ._theorems_ import roundOfInteger, roundOfRealPlusInt
+        try:
+            # InSet(self.operand, Integers).prove(assumptions=assumptions)
+            return roundOfInteger.specialize(
+                    {x:self.operand}, assumptions=assumptions)
+        except:
+            if isinstance(self.operand, Add):
+                subops = self.operand.operands
+                if len(subops)==2:
+                    xsub = subops[0]
+                    nsub = subops[1]
+                else:
+                    xsub = Add(subops[:-1])
+                    n: subops[-1]
+                return roundOfRealPlusInt.specialize(
+                        {x:xsub, n:nsub}, assumptions=assumptions)
+            else:
+                raise ValueError("Expecting simpler operands for Round() fxn.")
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -61,7 +83,7 @@ class Round(Function):
             return roundRealPosClosure.specialize({x:self.operand},
                       assumptions=assumptions)
 
-        msg = ("'Floor.deduceInNumberSet()' not implemented for the "
+        msg = ("'Round.deduceInNumberSet()' not implemented for the "
                "%s set"%str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
             
