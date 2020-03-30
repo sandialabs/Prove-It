@@ -102,8 +102,8 @@ class IndexedVar(Operation):
             else: return '(' + result + ')'
         return result
 
-    def freeIndexedVars(self, index):
+    def _free_indexed_vars(self, index):
         if self.index == index:
             return {self}
         else:
-            return set()
+            return Expression._free_indexed_vars(index)

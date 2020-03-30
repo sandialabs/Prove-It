@@ -51,10 +51,12 @@ class Variable(Label):
             return subbed._restrictionChecked(reserved_vars)
         return self
         
-    def usedVars(self):
+    def _used_vars(self):
         return {self}
         
-    def freeVars(self):
+    def _free_vars(self, exclusions=frozenset()):
+        if self in exclusions: 
+            return set() # this is excluded
         return {self}
 
 def dummyVar(n):
@@ -77,7 +79,7 @@ def dummyVar(n):
     return Variable('_' + letters + '_', latexFormat = r'{_{-}' + letters + r'_{-}}')
 
 def safeDummyVar(*expressions):
-    usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])
+    usedVs = frozenset().union(*[expr._used_vars() for expr in expressions])
     i = 0
     while dummyVar(i) in usedVs:
         i += 1
@@ -90,7 +92,7 @@ def safeDummyVars(n, *expressions):
     return dummyVars
             
 def safeDefaultOrDummyVar(defaultVar, *expressions):
-    usedVs = frozenset().union(*[expr.usedVars() for expr in expressions])
+    usedVs = frozenset().union(*[expr._used_vars() for expr in expressions])
     if defaultVar not in usedVs:
         return defaultVar
     return safeDummyVar(*expressions)

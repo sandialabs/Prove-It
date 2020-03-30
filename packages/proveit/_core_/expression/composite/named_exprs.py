@@ -46,16 +46,12 @@ class NamedExprs(Composite, Expression):
     def items(self):
         for key in self.keywords:
             yield key, self.elems[key]
-
-    def values(self):
-        for key in self.keywords:
-            yield self.elems[key]
     
     def keys(self):
         return self.keywords
 
     def values(self):
-        return [self.elems[key] for key in self.keywords]
+        return self.elems.values()
 
     def remakeArguments(self):
         '''
@@ -111,16 +107,3 @@ class NamedExprs(Composite, Expression):
             return NamedExprs([(key, expr.substituted(repl_map, reserved_vars, 
                                                       assumptions, requirements)) 
                                for key, expr in self.items()])
-
-    def usedVars(self):
-        '''
-        Returns the union of the used Variables of the sub-Expressions.
-        '''
-        return set().union(*[expr.usedVars() for expr in list(self.elems.values())])
-        
-    def freeVars(self):
-        '''
-        Returns the union of the free Variables of the sub-Expressions.
-        '''
-        return set().union(*[expr.freeVars() for expr in list(self.elems.values())])
-

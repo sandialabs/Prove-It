@@ -581,28 +581,35 @@ class Expression(metaclass=ExprType):
         expr_copy = self.substituted(expr_repl_map=dict()) 
         return expr_copy
     
-    def usedVars(self):
+    def _used_vars(self):
         '''
         Return all of the used Variables of this Expression,
         included those in sub-expressions.
+        Call externally via the used_vars method in expr.py.
         '''
-        return set().union(*[expr.usedVars() for expr in self.subExprIter()])
+        return set().union(*[expr._used_vars() for expr in self.subExprIter()])
         
-    def freeVars(self):
+    def _free_vars(self, exclusions=frozenset()):
         '''
         Return all of the free Variables of this Expression,
         included those in sub-expressions but excluding those with internal
-        bindings within Lambda expressions.
+        bindings within Lambda expressions.  If this Expression
+        is in the exclusions set, skip over it.
+        Call externally via the free_vars method in expr.py.
         '''
-        return set().union(*[expr.freeVars() for expr in self.subExprIter()])
+        if self in exclusions: 
+            return set() # this is excluded
+        return set().union(*[expr._free_vars(exclusions=exclusions) 
+                             for expr in self.subExprIter()])
 
-    def freeIndexedVars(self, index):
+    def _free_indexed_vars(self, index):
         '''
         Return all of the free IndexeVars of this Expression with the
         given index, included those in sub-expressions but excluding those
         with internal bindings within Lambda expressions.
+        Call externally via the free_indexed_vars method in expr.py.
         '''
-        return set().union(*[expr.freeIndexedVars(index) 
+        return set().union(*[expr._free_indexed_vars(index) 
                              for expr in self.subExprIter()])
 
     def safeDummyVar(self):
@@ -623,7 +630,7 @@ class Expression(metaclass=ExprType):
         '''
         from proveit.logic import (Equals, defaultSimplification, 
                                    SimplificationError, EvaluationError)
-        from proveit import KnownTruth, ProofFailure
+        from proveit import KnownTruth
         from proveit.logic.irreducible_value import isIrreducibleValue
 
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -663,7 +670,7 @@ class Expression(metaclass=ExprType):
             msg = ("%s must return an KnownTruth "
                    "equality with an irreducible value on the right side, "
                    "not %s for %s assuming %s"
-                   %(method_name, evaluation, self, assumptions))
+                   %(method_called, evaluation, self, assumptions))
             raise ValueError(msg)
         # Note: No need to store in Equals.evaluations or Equals.simplifications; this
         # is done automatically as a side-effect for proven equalities with irreducible
@@ -702,7 +709,7 @@ class Expression(metaclass=ExprType):
         '''
         from proveit.logic import (Equals, defaultSimplification, 
                                    SimplificationError, EvaluationError)
-        from proveit import KnownTruth, ProofFailure
+        from proveit import KnownTruth
         
         assumptions = defaults.checkedAssumptions(assumptions)
         
@@ -789,8 +796,8 @@ class Expression(metaclass=ExprType):
         reserved variables (parameters of a Lambda function Expression).
         '''
         if reserved_vars is not None \
-                and not self.freeVars().isdisjoint(reserved_vars.keys()):
-            intersection = self.freeVars().intersection(reserved_vars.keys())
+                and not self._free_vars().isdisjoint(reserved_vars.keys()):
+            intersection = self._free_vars().intersection(reserved_vars.keys())
             raise ScopingViolation(intersection)
         return self
 
@@ -832,6 +839,30 @@ class Expression(metaclass=ExprType):
     def exprInfo(self, details=False):
         from proveit._core_.expression.expr_info import ExpressionInfo
         return ExpressionInfo(self, details)
+        
+def used_vars(expr):
+    '''
+    Return all of the used Variables of this Expression,
+    included those in sub-expressions.
+    '''
+    return expr._used_vars(expr)
+
+def free_vars(expr, exclusions=frozenset()):
+    '''
+    Return all of the free Variables of this Expression,
+    included those in sub-expressions but excluding those with internal
+    bindings within Lambda expressions.  If this Expression
+    is in the exclusions set, skip over it.
+    '''
+    return expr._free_vars(exclusions=exclusions)
+
+def free_indexed_vars(expr, index):
+    '''
+    Return all of the free IndexeVars of this Expression with the
+    given index, included those in sub-expressions but excluding those
+    with internal bindings within Lambda expressions.
+    '''
+    return expr._free_indexed_vars(index)
 
 def expressionDepth(expr):
     '''

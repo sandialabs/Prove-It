@@ -1,9 +1,9 @@
 # Core Prove-It constructs required used to construct/verify proofs.
 
 from .expression import (
-        Expression, InnerExpr, expressionDepth,
-        MakeNotImplemented, ImproperSubstitution, 
-        ScopingViolation, 
+        Expression, used_vars, free_vars, free_indexed_vars,
+        expressionDepth, MakeNotImplemented, ImproperSubstitution, ScopingViolation, 
+        InnerExpr,
         Label, Literal, Variable, DuplicateLiteralError,
         safeDummyVar, safeDefaultOrDummyVar,
         Operation, IndexedVar, Function, OperationSequence, 

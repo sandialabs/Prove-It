@@ -9,6 +9,7 @@ Proof objects form a DAG.
 
 from collections import OrderedDict
 import re
+from proveit._core_.expression.expr import free_vars
 from proveit._core_.known_truth import KnownTruth
 from proveit._core_._unique_data import meaningData, styleData
 from .defaults import defaults, USE_DEFAULTS
@@ -990,7 +991,7 @@ class Generalization(Proof):
                     newConditions = remainingConditions
                 else:
                     # use all applicable conditions in the supplied order
-                    conditionApplicability = [not remainingCondition.freeVars().isdisjoint(newForallVars) for remainingCondition in remainingConditions]
+                    conditionApplicability = [not free_vars(remainingCondition).isdisjoint(newForallVars) for remainingCondition in remainingConditions]
                     newConditions = [remainingCondition for applicable, remainingCondition in zip(conditionApplicability, remainingConditions) if applicable]
                     remainingConditions = [remainingCondition for applicable, remainingCondition in zip(conditionApplicability, remainingConditions) if not applicable]
                 # new conditions can eliminate corresponding assumptions
@@ -1001,7 +1002,7 @@ class Generalization(Proof):
                 Generalization._checkGeneralization(generalizedExpr, expr)
                 expr = generalizedExpr
             for assumption in assumptions:
-                if not assumption.freeVars().isdisjoint(introducedForallVars):
+                if not free_vars(assumption).isdisjoint(introducedForallVars):
                     raise GeneralizationFailure(generalizedExpr, assumptions, 'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
             generalizedTruth = KnownTruth(generalizedExpr, assumptions)
             self.instanceTruth = instanceTruth

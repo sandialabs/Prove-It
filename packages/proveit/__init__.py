@@ -5,7 +5,8 @@ if sys.version_info[0] < 3:
 from ._core_ import (
         defaults, USE_DEFAULTS, InvalidAssumptions, Context, 
         ContextException,
-        Expression, InnerExpr, expressionDepth,
+        Expression, used_vars, free_vars, free_indexed_vars, InnerExpr, 
+        expressionDepth,
         Operation, IndexedVar, Function, OperationSequence, 
         OperationOverInstances, OperationError,
         Conditional, 

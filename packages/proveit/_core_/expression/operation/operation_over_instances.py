@@ -1,5 +1,5 @@
 import inspect
-from proveit._core_.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.expression.expr import Expression, MakeNotImplemented, free_vars
 from proveit._core_.expression.lambda_expr import Lambda
 from proveit._core_.expression.composite import ExprTuple, singleOrCompositeExpression, compositeExpression
 from proveit._core_.expression.conditional import Conditional
@@ -140,7 +140,7 @@ class OperationOverInstances(Operation):
                 # each level.  At each level, "non-domain" conditions are
                 # included up to the first on that has any free variables that 
                 # include any of the "inner" instance variable parameters.
-                cond_free_vars = {cond:cond.freeVars() 
+                cond_free_vars = {cond:free_vars(cond) 
                                   for cond in nondomain_conditions}
                 num_nondomain_conditions_vs_level = [0]*len(instanceVars)
                 remaining_nondomain_conditions = list(nondomain_conditions)

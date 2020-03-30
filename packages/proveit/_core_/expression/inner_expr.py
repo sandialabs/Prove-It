@@ -1,4 +1,4 @@
-from .expr import Expression
+from .expr import Expression, free_vars
 from .operation import Function
 from .lambda_expr import Lambda
 from .composite import ExprTuple, Composite, NamedExprs, compositeExpression
@@ -145,7 +145,7 @@ class InnerExpr:
                 sub_expr = repl_map.body
                 for j in self.innerExprPath[:cur_depth]:
                     sub_expr = sub_expr.subExpr(j)
-                if repl_map.parameterVarSet.issubset(compositeExpression(getattr(sub_expr, attr)).freeVars()):
+                if repl_map.parameterVarSet.issubset(free_vars(compositeExpression(getattr(sub_expr, attr)))):
                     return deeper_inner_expr
         # No match found at this depth -- let's continue to the next depth
         for i, inner_sub in enumerate(inner_subs):

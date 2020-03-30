@@ -5,8 +5,7 @@ Define some custom magic for Prove-It in IPython notebooks.
 from IPython.core.magic import Magics, magics_class, line_magic
 from IPython import get_ipython
 from IPython.display import display, HTML
-import nbformat
-from proveit._core_.expression import Expression
+from proveit._core_.expression import Expression, free_vars
 from proveit._core_ import KnownTruth, Theorem
 from proveit._core_.context import Context
 import ipywidgets as widgets
@@ -151,7 +150,6 @@ class ContextInterface:
         creating it if necessary.
         '''
         import proveit
-        import json
         notebook_name = os.path.join(subContextName, '_context_.ipynb')
         if not os.path.isdir(subContextName):
             os.mkdir(subContextName)
@@ -688,8 +686,8 @@ class Assignments:
                 proveItMagic.keys.remove(name)
                 continue
             if proveItMagic.kind == 'axioms' or proveItMagic.kind == 'theorems':
-                if len(rightSide.freeVars()) > 0:
-                    raise ValueError('%s should not have free variables; variables must all be bound (e.g. universally quantified).  Free variables: %s'%(proveItMagic.kind, rightSide.freeVars()))
+                if len(free_vars(rightSide)) > 0:
+                    raise ValueError('%s should not have free variables; variables must all be bound (e.g. universally quantified).  Free variables: %s'%(proveItMagic.kind, free_vars(rightSide)))
                 if name in proveItMagic.definitions:
                     if proveItMagic.definitions[name] != rightSide:
                         print('WARNING: Redefining', name)

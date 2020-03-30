@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, OperationOverInstances, maybeFenced, USE_DEFAULTS, ProofFailure
+from proveit import (Literal, Operation, OperationOverInstances, free_vars,
+                     maybeFenced, USE_DEFAULTS, ProofFailure)
 from proveit.logic import InSet
 from proveit.number.sets import RealInterval, Interval, Reals, Integers, Naturals, Complexes
 from proveit.number.negation import Neg
@@ -231,7 +232,7 @@ class Sum(OperationOverInstances):
         '''
         from proveit.number.multiplication.theorems import distributeThroughSummationRev
         from proveit.number import Mult
-        if not theFactor.freeVars().isdisjoint(self.indices):
+        if not free_vars(theFactor).isdisjoint(self.indices):
             raise Exception('Cannot factor anything involving summation indices out of a summation')
         # We may need to factor the summand within the summation
         summand_assumptions = assumptions | {InSet(index, self.domain) for index in self.indices}

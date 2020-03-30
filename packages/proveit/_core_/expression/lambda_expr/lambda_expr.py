@@ -1,4 +1,6 @@
-from proveit._core_.expression.expr import Expression, MakeNotImplemented, ImproperSubstitution, ScopingViolation
+from proveit._core_.expression.expr import (Expression, MakeNotImplemented, 
+                                            ImproperSubstitution, ScopingViolation,
+                                            free_vars)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.expression.label.var import safeDummyVars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -79,7 +81,7 @@ class Lambda(Expression):
             # Create a "generic" version (if not already) of the Lambda 
             # expression since the choice of parameter labeling is irrelevant.
             generic_body = self.body._generic_version()
-            generic_body_vars = generic_body.usedVars()
+            generic_body_vars = generic_body._used_vars()
             disallowed_vars = (generic_body_vars-self.parameterVarSet)
             generic_param_vars = tuple(safeDummyVars(len(self.parameterVars), 
                                                      *disallowed_vars))
@@ -420,7 +422,7 @@ class Lambda(Expression):
 
         # Can't use assumptions involving lambda parameter variables
         inner_assumptions = [assumption for assumption in assumptions 
-                             if assumption.freeVars().isdisjoint(new_params)]
+                             if free_vars(assumption).isdisjoint(new_params)]
                                       
         return new_params, inner_repl_map, inner_reserved_vars, inner_assumptions
         
@@ -470,14 +472,14 @@ class Lambda(Expression):
             # in a manner that respects the change in scope w.r.t.
             # lambda parameters.
             for requirement in inner_requirements:
-                if requirement.freeVars().isdisjoint(new_params):
+                if free_vars(requirement).isdisjoint(new_params):
                     requirements.append(requirement)
                 else:
                     # If the requirement involves any of the Lambda parameters,
                     # it must be generalized under these parameters to ensure
                     # there is no scoping violation since the scope of these
                     # parameters is within the new Lambda.
-                    requirement_params = requirement.freeVars().intersection(new_params)
+                    requirement_params = free_vars(requirement).intersection(new_params)
                     conditions = requirement.assumptions
                     requirement = requirement.generalize(requirement_params,
                                                          conditions=conditions)
@@ -560,30 +562,32 @@ class Lambda(Expression):
         lambdaParam = masterExpr.safeDummyVar()
         return Lambda(lambdaParam, masterExpr.substituted({subExpr:lambdaParam}))
     
-    def usedVars(self):
+    def _used_vars(self):
         '''
         The used variables of the lambda function are the used variables of the 
-        body+conditions plus the lambda parameter variables.
+        body plus the lambda parameter variables.
         '''
-        return self.body.usedVars().union(set(self.parameterVarSet))
+        return self.body._used_vars().union(set(self.parameterVarSet))
         
-    def freeVars(self):
+    def _free_vars(self, exclusions=frozenset()):
         '''
         The free variables the lambda function are the free variables of the 
         body minus the lambda parameter variables.  The lambda 
         function binds those variables.
         '''
-        innerFreeVs = set(self.body.freeVars())
+        if self in exclusions:         
+            return set() # this is excluded
+        innerFreeVs = set(self.body._free_vars(exclusions=exclusions))
         return innerFreeVs - self.parameterVarSet
     
-    def freeIndexedVars(self, index):
+    def _free_indexed_vars(self, index):
         '''
         The free indexed variables of the lambda function are the free 
         indexed variables of the body minus any whose 'var' is in the
         set of lambda parameter variables.  The lambda function binds those 
         variables.
         '''
-        innerFreeVs = set(self.body.freeIndexedVars(index))
+        innerFreeVs = set(self.body._free_indexed_vars(index))
         return {indexed_var for indexed_var in innerFreeVs 
                 if indexed_var.var not in self.parameterVarSet}
 
