@@ -35,11 +35,9 @@ class Round(Function):
         simplfication, for example for Round(real + int + int).
         '''
         from proveit._common_ import n, x
-        from proveit.logic import InSet
         from proveit.number import Add, Integers
         from ._theorems_ import roundOfInteger, roundOfRealPlusInt
         try:
-            # InSet(self.operand, Integers).prove(assumptions=assumptions)
             return roundOfInteger.specialize(
                     {x:self.operand}, assumptions=assumptions)
         except:
@@ -54,7 +52,11 @@ class Round(Function):
                 return roundOfRealPlusInt.specialize(
                         {x:xsub, n:nsub}, assumptions=assumptions)
             else:
-                raise ValueError("Expecting simpler operands for Round() fxn.")
+                raise ValueError("Round.doReducedSimplification() method "
+                                 "expecting simpler operands. Consider "
+                                 "reviewing the roundOfInteger and "
+                                 "roundOfRealPlusInt theorems in the "
+                                 "proveit/number/rounding context.")
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
