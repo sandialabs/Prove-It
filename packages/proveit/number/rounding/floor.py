@@ -20,23 +20,6 @@ class Floor(Function):
     def latex(self, **kwargs):
         return r'\lfloor ' + self.operand.latex(fence=False) + r'\rfloor'
 
-    # def doReducedSimplification(self, assumptions=USE_DEFAULTS):
-    #     '''
-    #     Created: 3/28/2020 by wdc.
-    #     Last modified: 3/28/2020 by wdc. Creation. Based on roughly
-    #                    analogous methods in Add and Exp classes. May
-    #                    need to be renamed.
-
-    #     For the trivial case where the operand is an integer,
-    #     derive and return this Floor expression equated with the
-    #     operand itself. Assumptions may be necessary to deduce
-    #     necessary conditions for the simplification.
-    #     '''
-    #     from proveit._common_ import x
-    #     from ._theorems_ import floorOfInteger
-    #     return floorOfInteger.specialize(
-    #             {x:self.operand}, assumptions=assumptions)
-
     def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
         Created: 3/30/2020 by wdc.
@@ -45,14 +28,14 @@ class Floor(Function):
                        need to be renamed.
 
         For the trivial case where the operand is an integer,
-        derive and return this Round expression equated with the
+        derive and return this Floor expression equated with the
         operand itself. Assumptions may be necessary to deduce
         necessary conditions for the simplification.
         For the case where the operand is of the form (real + int),
-        derive and return this Round expression equated with
+        derive and return this Floor expression equated with
         Round(real) + int.
         CONSIDER ADDING A RECURSIVE COMPONENT to allow further 
-        simplfication, for example for Round(real + int + int).
+        simplfication, for example for Floor(real + int + int).
         '''
         from proveit._common_ import n, x
         from proveit.number import Add, Integers
