@@ -11,13 +11,6 @@ class Mod(Operation):
         Operation.__init__(self, Mod._operator_, (dividend, divisor))
         self.dividend = self.operands[0]
         self.divisor = self.operands[1]
-
-    def _closureTheorem(self, numberSet):
-        from . import _theorems_
-        if numberSet == Integers:
-            return _theorems_.modIntClosure
-        elif numberSet == Reals:
-            return _theorems_.modRealClosure
     
     # def deduceInInterval(self, assumptions=frozenset()):
     #     from ._theorems_ import modInInterval, modInIntervalCO

@@ -19,11 +19,6 @@ class ModAbs(Operation):
                 + r'\right|_{\textup{mod}\thinspace '
                 + self.divisor.latex(fence=False) + r'}')
 
-    def _closureTheorem(self, numberSet):
-        from . import _theorems_
-        if numberSet == Reals:
-            return _theorems_.modAbsRealClosure
-
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
         Given a number set number_set (such as Integers, Reals, etc),

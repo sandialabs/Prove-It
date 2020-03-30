@@ -6,20 +6,7 @@ class Abs(Operation):
     _operator_ = Literal(stringFormat='Abs', context=__file__)
 
     def __init__(self, A):
-        Operation.__init__(self, Abs._operator_, A)
-
-    def _closureTheorem(self, numberSet):
-        from . import _theorems_
-        from proveit.number import Reals, RealsNonNeg, RealsPos
-        if numberSet == Reals:
-            # complex in, real out
-            return _theorems_.absComplexClosure
-        elif numberSet == RealsNonNeg:
-            # complex in, non-neg real out
-            return _theorems_.absComplexClosureNonNegReals
-        elif numberSet == RealsPos:
-            # nonzero in, real positive out
-            return _theorems_.absNonzeroClosure   
+        Operation.__init__(self, Abs._operator_, A)   
 
     def _notEqZeroTheorem(self):
         from . import _theorems_
