@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-from proveit.number.sets import Integers, Reals
+# from proveit.number.sets import Integers, Reals
 from proveit._common_ import a, b
 
 class Mod(Operation):
@@ -57,20 +57,24 @@ class Mod(Operation):
         '''
         from proveit.logic import InSet
         from proveit.number.modular._theorems_ import (
-                  modIntClosure, modRealClosure)
-        from proveit.number import Integers, Reals
+                  modIntClosure, modIntToNatsClosure, modRealClosure)
+        from proveit.number import Integers, Naturals, Reals
 
         # among other things, make sure non-existent assumptions
         # manifest as empty tuple () rather than None
         assumptions = defaults.checkedAssumptions(assumptions)
 
         if number_set == Integers:
-            return modIntClosure.specialize({a:self.dividend, b:self.divisor},
-                      assumptions=assumptions)
+            return modIntClosure.specialize(
+                    {a:self.dividend, b:self.divisor}, assumptions=assumptions)
+
+        if number_set == Naturals:
+            return modIntToNatsClosure.specialize(
+                    {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
         if number_set == Reals:
-            return modRealClosure.specialize({a:self.dividend, b:self.divisor},
-                      assumptions=assumptions)
+            return modRealClosure.specialize(
+                    {a:self.dividend, b:self.divisor}, assumptions=assumptions)
 
         msg = ("'Mod.deduceInNumberSet()' not implemented for "
                "the %s set"%str(number_set))
