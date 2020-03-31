@@ -24,6 +24,6 @@ class Card(Function):
         from ._theorems_ import distinctSubsetExistence, distinctPairExistence
         if len(elems)==2:
             aVar, bVar = elems
-            return distinctPairExistence.specialize({S:self.domain}, relabelMap={a:aVar, b:bVar}, assumptions=assumptions)
+            return distinctPairExistence.specialize({S:self.domain, a:aVar, b:bVar}, assumptions=assumptions)
         else:
-            return distinctSubsetExistence.specialize({S:self.domain, N:num(len(elems))}, relabelMap={xMulti:elems}, assumptions=assumptions)
+            return distinctSubsetExistence.specialize({S:self.domain, N:num(len(elems)), xMulti:elems}, assumptions=assumptions)

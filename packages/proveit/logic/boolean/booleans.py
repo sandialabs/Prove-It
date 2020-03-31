@@ -159,6 +159,7 @@ class BooleanMembership(Membership):
         else:
             #  [(element = TRUE) or (element = FALSE)] assuming inBool(element)
             return unfoldInBoolExplicit.specialize({A:self.element}, assumptions=assumptions)
+
     def fold(self, assumptions=USE_DEFAULTS):
         '''
         From [(element=TRUE) or (element=FALSE)], derive inBool(Element).

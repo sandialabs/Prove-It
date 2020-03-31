@@ -145,7 +145,7 @@ class SupersetEq(SupersetRelation):
         x will be relabeled if an elemInstanceVar is supplied.
         '''
         from ._theorems_ import unfoldSupsetEq
-        return unfoldSupsetEq.specialize({A:self.superset, B:self.subset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions)
+        return unfoldSupsetEq.specialize({A:self.superset, B:self.subset, x:elemInstanceVar}, assumptions=assumptions)
     
     def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
         '''
@@ -171,7 +171,7 @@ class SupersetEq(SupersetRelation):
         (forall_{x in B} x in A).
         '''
         from ._theorems_ import foldSupsetEq
-        return foldSupsetEq.specialize({A:self.superset, B:self.subset}, relabelMap={x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
+        return foldSupsetEq.specialize({A:self.superset, B:self.subset, x:elemInstanceVar}, assumptions=assumptions).deriveConsequent(assumptions)
         
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
