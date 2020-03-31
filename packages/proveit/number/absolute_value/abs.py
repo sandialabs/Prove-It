@@ -7,16 +7,22 @@ class Abs(Operation):
 
     def __init__(self, A):
         Operation.__init__(self, Abs._operator_, A)   
-
-    def _notEqZeroTheorem(self):
-        from . import _theorems_
-        return _theorems_.absNotEqZero
     
     def string(self, **kwargs):
         return '|'+self.operand.string()+'|'
 
     def latex(self, **kwargs):
         return r'\left|'+self.operand.latex()+r'\right|'
+
+    def notEqual(self, rhs, assumptions=USE_DEFAULTS):
+        # accessed from conclude() method in not_equals.py 
+        from ._theorems_ import absNotEqZero
+        from proveit.number import zero
+        if rhs == zero:
+            return absNotEqZero.specialize(
+                    {a:self.operand}, assumptions=assumptions)
+        raise ProofFailure(Equals(self, zero), assumptions,
+                "'notEqual' only implemented for a right side of zero")
 
     # def deduceGreaterThanEqualsZero(self, assumptions=frozenset()):
     #     # not yet clear how to update this method
