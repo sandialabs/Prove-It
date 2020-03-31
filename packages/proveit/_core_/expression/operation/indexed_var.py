@@ -106,4 +106,4 @@ class IndexedVar(Operation):
         if self.index == index:
             return {self}
         else:
-            return Expression._free_indexed_vars(index)
+            return Expression._free_indexed_vars(self, index)
