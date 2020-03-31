@@ -27,7 +27,9 @@ class Forall(OperationOverInstances):
         Side-effect derivations to attempt automatically for this forall operation.
         '''
         if self.hasDomain() and hasattr(self.domain, 'unfoldForall'):
-            yield self.unfold # derive an unfolded version (dependent upon the domain)
+            assumptions = knownTruth.assumptions
+            if len(self.conditions)==0:
+                yield self.unfold # derive an unfolded version (dependent upon the domain)
         
     def conclude(self, assumptions):
         '''
