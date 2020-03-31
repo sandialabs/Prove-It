@@ -1,9 +1,29 @@
 import inspect
 from proveit._core_.expression.expr import Expression, MakeNotImplemented, free_vars
 from proveit._core_.expression.lambda_expr import Lambda
-from proveit._core_.expression.composite import ExprTuple, singleOrCompositeExpression, compositeExpression
+from proveit._core_.expression.composite import (
+        ExprTuple, singleOrCompositeExpression, compositeExpression, Iter)
 from proveit._core_.expression.conditional import Conditional
 from .operation import Operation, OperationError
+
+def _extract_domain_from_condition(ivar, condition):
+    '''
+    Given a "domain" condition (e.g., "x in S" or "(x_1 in S), ..., (x_n in S)")
+    return the domain (e.g., "S").  Return None if the condition is not
+    a "domain" condition for the given instance variable(s).
+    '''
+    from proveit.logic import InSet
+    if isinstance(ivar, Iter):
+        if (isinstance(condition, Iter) and isinstance(condition.body, InSet)
+                and condition.body.element==ivar.body
+                and condition.start_index==ivar.start_index
+                and condition.end_index==ivar.end_index):
+            return condition.body.domain
+    elif isinstance(condition, InSet) and condition.element==ivar:
+        return condition.domain
+    return None
+    
+    
 
 class OperationOverInstances(Operation):
     '''
@@ -109,25 +129,32 @@ class OperationOverInstances(Operation):
                     if domain is None:
                         raise ValueError("When specifying multiple domains, none "
                                          "of them can be the None value")
-                conditions = [InSet(instanceVar, domain) for instanceVar, domain 
-                              in zip(instanceVars, domains)] + list(conditions)
+                domain_conditions = []
+                for ivar, domain in zip(instanceVars, domains):
+                    if isinstance(ivar, Iter):
+                        condition = Iter(ivar.parameter, InSet(ivar.body, domain),
+                                         ivar.start_index, ivar.end_index)
+                    else:
+                        condition = InSet(ivar, domain)
+                    domain_conditions.append(condition)
+                conditions = domain_conditions + list(conditions)
                 domain = domains[0] # domain of the outermost instance variable
             conditions = compositeExpression(conditions)        
                                    
         # domain(s) may be implied via the conditions.  If domain(s) were 
         # supplied, this should simply reproduce them from the conditions that 
         # were prepended.
-        if (len(conditions)>=len(instanceVars) and 
-            all(isinstance(cond, InSet) and cond.element==ivar for 
-                ivar, cond in zip(instanceVars, conditions))):
-            domains = [cond.domain for cond in conditions[:len(instanceVars)]]
-            # Used if we have a single instance variable 
-            # or nestMultiIvars is True:
-            domain = domains[0] 
-            nondomain_conditions = conditions[len(instanceVars):]
-        else:
-            domain = domains = None
-            nondomain_conditions = conditions
+        domain = domains = None # These may be reset below if there are ...
+        nondomain_conditions = conditions # ... domain conditions.
+        if (len(conditions)>=len(instanceVars)):
+            domains = [_extract_domain_from_condition(ivar, cond) for
+                       ivar, cond in zip(instanceVars, conditions)]
+            if all(domain is not None for domain in domains):
+                # Used if we have a single instance variable 
+                # or nestMultiIvars is True:
+                domain = domains[0] 
+                nondomain_conditions = conditions[len(instanceVars):]
+            else: domains=None
         
         if _lambda_map is None:
             # Now do the actual lambda_map creation after handling
@@ -138,7 +165,7 @@ class OperationOverInstances(Operation):
                 
                 # Figure out how many "non-domain" conditions belong at
                 # each level.  At each level, "non-domain" conditions are
-                # included up to the first on that has any free variables that 
+                # included up to the first one that has any free variables that 
                 # include any of the "inner" instance variable parameters.
                 cond_free_vars = {cond:free_vars(cond) 
                                   for cond in nondomain_conditions}
@@ -181,7 +208,7 @@ class OperationOverInstances(Operation):
                         # prepend the domain condition
                         inner_conditions.insert(0, conditions[i])
                     
-                    # create the instnaceExpr at level i.
+                    # create the instanceExpr at level i.
                     innerOperand = self._createOperand([inner_instance_var], instanceExpr, 
                                                        conditions=inner_conditions)
                     inner_styles = dict(styles)
@@ -193,6 +220,7 @@ class OperationOverInstances(Operation):
                         inner_styles['instance_vars'] = 'join_next' 
                     instanceExpr = self.__class__._make(['Operation'], inner_styles, 
                                                         [operator, innerOperand])
+                    
                 
                 assert num_nondomain_conditions_vs_level[0] \
                             == len(remaining_nondomain_conditions)
@@ -459,15 +487,18 @@ class OperationOverInstances(Operation):
     def explicitConditions(self):
         '''
         Return the conditions that are to be shown explicitly in the formatting
-        (after the "such that" symbol "|") at this level according to the style.
-        By default, this includes all of the 'joined' conditions except 
+        (after the "such that" symbol "|") at this level according to the 
+        style.  By default, this includes all of the 'joined' conditions except 
         implicit 'domain' conditions.
         '''
         from proveit.logic import InSet
         if hasattr(self, 'domains'):
-            assert len(self.conditions) > len(self.domains), 'expecting a condition for each domain'
-            for condition, domain in zip(self.conditions, self.domains):
-                assert condition == InSet(self.instanceVar, domain)
+            assert len(self.conditions) > len(self.domains), ('expecting a condition'
+                                                              ' for each domain')
+            for ivar, condition, domain in zip(self.instanceVars, self.conditions, 
+                                               self.domains):
+                cond_domain = _extract_domain_from_condition(ivar, condition)      
+                assert condition == InSet(self.instanceVar, cond_domain)
             return self.conditions[len(self.domains):] # skip the domains
         else:
             explicit_domains = self.explicitDomains()
@@ -476,7 +507,9 @@ class OperationOverInstances(Operation):
                 if len(explicit_domains)==0:
                     conditions.extend(expr.conditions)
                 else:
-                    assert expr.conditions[0] == InSet(expr.instanceVar, expr.domain)
+                    cond_domain = _extract_domain_from_condition(expr.instanceVar, 
+                                                                 expr.conditions[0])
+                    assert cond_domain == expr.domain
                     conditions.extend(expr.conditions[1:])
             return conditions
 
