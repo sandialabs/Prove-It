@@ -707,9 +707,9 @@ class Expression(metaclass=ExprType):
         including a reduction.  Attempt the Expression-class-specific 
         "doReducedSimplication" when necessary.
         '''
+        from proveit import KnownTruth, ProofFailure
         from proveit.logic import (Equals, defaultSimplification, 
                                    SimplificationError, EvaluationError)
-        from proveit import KnownTruth
         
         assumptions = defaults.checkedAssumptions(assumptions)
         
@@ -737,7 +737,7 @@ class Expression(metaclass=ExprType):
                 try:
                     simplification = self.doReducedSimplification(assumptions)
                     method_called = self.doReducedSimplification
-                except (NotImplementedError, SimplificationError):
+                except (NotImplementedError, SimplificationError, ProofFailure):
                     # Simplification did not work.  Just use self-equality.
                     self_eq = Equals(self, self)
                     simplification = self_eq.prove()
