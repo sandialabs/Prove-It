@@ -377,7 +377,10 @@ class Expression(metaclass=ExprType):
         '''
         Return the current style setting for the given style name.
         '''
-        return self._styleData.styles.get(styleName, default)
+        if default is None:
+            return self._styleData.styles[styleName]
+        else:
+            return self._styleData.styles.get(styleName, default)
     
     def getStyles(self):
         '''

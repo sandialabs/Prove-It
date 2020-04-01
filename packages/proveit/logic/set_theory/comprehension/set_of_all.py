@@ -21,7 +21,8 @@ class SetOfAll(OperationOverInstances):
         # product where it does make sense).
         OperationOverInstances.__init__(self, SetOfAll._operator_,
                                         instanceVarOrVars, instanceElement,
-                                        domain=domain, conditions=conditions,
+                                        domain=domain, domains=domains,
+                                        conditions=conditions,
                                         nestMultiIvars=False,
                                         _lambda_map=_lambda_map)
         self.instanceElement = self.instanceExpr
@@ -39,10 +40,10 @@ class SetOfAll(OperationOverInstances):
         outStr = ''
         explicit_conditions = ExprTuple(*self.explicitConditions())
         inner_fence = (len(explicit_conditions) > 0)
-        formatted_instance_var = self.instanceVar.formatted(formatType)
         formatted_instance_element = self.instanceElement.formatted(
                 formatType, fence=inner_fence)
-        formatted_domain = self.domain.formatted(formatType, fence=True)
+        explicit_domains = self.explicitDomains()
+        domain_conditions = ExprTuple(*self.domainConditions())
         if formatType == 'latex': outStr += r"\left\{"
         else: outStr += "{"
         outStr += formatted_instance_element
@@ -54,11 +55,17 @@ class SetOfAll(OperationOverInstances):
             outStr += formatted_conditions
         if formatType == 'latex': outStr += r"\right\}"
         else: outStr += "}"
-        outStr += '_{' + formatted_instance_var
-        if self.domain is not None:
-            if formatType == 'latex': outStr += r' \in '
-            else: outStr += ' in '
-            outStr += formatted_domain
+        outStr += '_{' 
+        if explicit_domains == [explicit_domains[0]]*len(explicit_domains):
+            # all in the same domain
+            outStr += self.instanceVars.formatted(formatType, operatorOrOperators=',',
+                                                  fence=False)
+            outStr += r' \in ' if formatType=='latex' else ' in '
+            outStr += explicit_domains[0].formatted(formatType)
+        else:
+            outStr += domain_conditions.formatted(formatType,  
+                                                operatorOrOperators=',',
+                                                fence=False)
         outStr += '}'
         return outStr
     
