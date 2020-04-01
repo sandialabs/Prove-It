@@ -66,7 +66,7 @@ class IndexedVar(Operation):
         '''
         yield self.var
         yield self.index
-        if self.getStyle('multi_indexed_var', None) == 'nested':
+        if self.getStyle('multi_indexed_var', 'flat') == 'nested':
             yield ('flatten_nested_indexing', False)       
     
     def getBaseVar(self):
@@ -88,7 +88,7 @@ class IndexedVar(Operation):
         return (self.index,)
     
     def _formatted(self, formatType, **kwargs):
-        if self.getStyle('multi_indexed_var', None) == 'flat' and \
+        if self.getStyle('multi_indexed_var', 'nested') == 'flat' and \
                 isinstance(self.var, IndexedVar):
             indices_str = ','.join(index.formatted(formatType) 
                                    for index in self.getIndices())

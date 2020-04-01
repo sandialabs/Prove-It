@@ -490,8 +490,8 @@ class OperationOverInstances(Operation):
         from proveit.logic import InSet
         if hasattr(self, 'domains'):
             assert len(self.conditions) > len(self.domains), 'expecting a condition for each domain'
-            for instanceVar, condition, domain in zip(self.instanceVars, self.conditions, self.domains):
-                assert condition == InSet(instanceVar, domain)
+            for ivar, condition, domain in zip(self.instanceVars, self.conditions, self.domains):
+                assert domain == _extract_domain_from_condition(ivar, condition)
             return self.conditions[:len(self.domains)]
         else:
             explicit_domains = self.explicitDomains()
@@ -499,7 +499,9 @@ class OperationOverInstances(Operation):
                 return [] # no explicit domains
             domain_conditions = []
             for expr in self.joinedNestings():
-                assert expr.conditions[0] == InSet(expr.instanceVar, expr.domain)
+                assert (expr.domain == 
+                        _extract_domain_from_condition(expr.instanceVar, 
+                                                       expr.conditions[0]))
                 domain_conditions.append(expr.conditions[0])
             return domain_conditions
     
