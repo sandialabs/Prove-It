@@ -8,7 +8,8 @@ from proveit._common_ import a, f, P, S, QQ, xx
 class Sum(OperationOverInstances):
     # operator of the Sum operation.
     _operator_ = Literal(stringFormat='Sum', latexFormat=r'\sum', context=__file__)   
-    _init_argname_mapping_ = {'indexOrIndices':'instanceVarOrVars', 'summand':'instanceExpr'}
+    _init_argname_mapping_ = {'indexOrIndices':'instanceParamOrParams', 
+                              'summand':'instanceExpr'}
     
 #    def __init__(self, summand-instanceExpression, indices-instanceVars, domains):
 #    def __init__(self, instanceVars, instanceExpr, conditions = tuple(), domain=EVERYTHING):

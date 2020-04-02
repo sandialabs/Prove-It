@@ -6,20 +6,20 @@ class NotExists(OperationOverInstances):
     # operator of the NotExists operation
     _operator_ = Literal(stringFormat='notexists', latexFormat=r'\nexists', context=__file__)
     
-    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, 
+    def __init__(self, instanceParamOrParams, instanceExpr, domain=None, domains=None, 
                  conditions=tuple(), _lambda_map=None):
         '''
         Create a exists (there exists) expression:
-        exists_{instanceVars | conditions} instanceExpr
-        This expresses that there exists a value of the instanceVar(s) for 
-        which the optional condition(s) is/are satisfied and the instanceExpr
-        is true.  The instanceVar(s) and condition(s) may be 
-        singular or plural (iterable).
+        exists_{instanceParamOrParams | conditions} instanceExpr
+        This expresses that there exists a value of the instance parameters(s)
+        for which the optional condition(s) is/are satisfied and the 
+        instanceExpr is true.  The instance parameters(s) and condition(s) may 
+        be singular or plural (iterable).
         '''
         # nestMultiIvars=True will cause it to treat multiple instance 
         # variables as nested NotExists operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, NotExists._operator_, instanceVarOrVars, 
+        OperationOverInstances.__init__(self, NotExists._operator_, instanceParamOrParams, 
                                         instanceExpr, domain, domains, conditions,
                                         nestMultiIvars=True, _lambda_map=_lambda_map)
 

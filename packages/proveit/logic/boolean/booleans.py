@@ -26,7 +26,7 @@ class BooleanSet(Literal):
         from .conjunction import compose
         assert(isinstance(forallStmt, Forall)), "May only apply forallEvaluation method of BOOLEANS to a forall statement"
         assert(forallStmt.domain == Booleans), "May only apply forallEvaluation method of BOOLEANS to a forall statement with the BOOLEANS domain"
-        instanceList = list(forallStmt.instanceVarLists())
+        instanceList = list(forallStmt.instanceParamLists())
         instanceVar = instanceList[0][0]
         instanceExpr = forallStmt.instanceExpr
         P_op = Operation(P, instanceVar)

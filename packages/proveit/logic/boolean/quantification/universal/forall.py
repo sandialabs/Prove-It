@@ -6,19 +6,20 @@ class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall', context=__file__)
     
-    def __init__(self, instanceVarOrVars, instanceExpr, domain=None, domains=None, 
+    def __init__(self, instanceParamOrParams, instanceExpr, domain=None, domains=None, 
                  conditions = tuple(), _lambda_map=None):
         '''
         Create a Forall expression:
-        forall_{instanceVars | conditions} instanceExpr.
-        This expresses that the instanceExpr is true for all values of the instanceVar(s)
-        given that the optional condition(s) is/are satisfied.  The instanceVar(s) and condition(s)
+        forall_{instanceParamOrParams | conditions} instanceExpr.
+        This expresses that the instanceExpr is true for all values of the 
+        instance parameter(s) given that the optional condition(s) is/are 
+        satisfied.  The instance parameter(s) and condition(s)
         may be singular or plural (iterable).
         '''
         # nestMultiIvars=True will cause it to treat multiple instance 
         # variables as nested Forall operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Forall._operator_, instanceVarOrVars, 
+        OperationOverInstances.__init__(self, Forall._operator_, instanceParamOrParams, 
                                         instanceExpr, domain, domains, conditions, 
                                         nestMultiIvars=True, _lambda_map=_lambda_map)
         
@@ -41,7 +42,7 @@ class Forall(OperationOverInstances):
         extra_assumptions = tuple(self.inclusiveConditions())
         try:
             proven_inst_expr = self.explicitInstanceExpr().prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions), automation=False)
-            return proven_inst_expr.generalize(self.explicitInstanceVars(), conditions=extra_assumptions)
+            return proven_inst_expr.generalize(self.instanceParamLists(), conditions=extra_assumptions)
         except:
             pass
         # next try 'foldAsForall' on the domain (if applicable)
@@ -56,14 +57,14 @@ class Forall(OperationOverInstances):
         # lastly, try to prove via generalization with automation
         try:
             proven_inst_expr = self.explicitInstanceExpr().prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions))
-            instanceVarLists = [list(self.explicitInstanceVars())]
+            instanceParamLists = [list(self.explicitInstanceParams())]
             conditions = list(self.inclusiveConditions())
             # see if we can generalize multiple levels simultaneously for a shorter proof
             while isinstance(proven_inst_expr.proof(), Generalization):
-                instanceVarLists.append(list(proven_inst_expr.explicitInstanceVars()))
+                instanceParamLists.append(list(proven_inst_expr.explicitInstanceParams()))
                 conditions += proven_inst_expr.conditions
                 proven_inst_expr = proven_inst_expr.proof().requiredTruths[0]
-            return proven_inst_expr.generalize(forallVarLists=instanceVarLists, conditions=conditions)
+            return proven_inst_expr.generalize(forallVarLists=instanceParamLists, conditions=conditions)
         except ProofFailure:
             if hasFoldAsForall:
                 raise ProofFailure(self, assumptions, "Unable to conclude automatically; both the 'foldAsForall' method on the domain and automated generalization failed.")
@@ -133,7 +134,7 @@ class Forall(OperationOverInstances):
         '''
         assert self.hasDomain(), "Cannot automatically evaluate a forall statement with no domain"
 
-        if len(list(self.instanceVarLists())) == 1:
+        if len(list(self.instanceParamLists())) == 1:
             # Use the domain's forallEvaluation method
             return self.domain.forallEvaluation(self, assumptions)
         else:
