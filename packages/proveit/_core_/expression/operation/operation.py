@@ -416,10 +416,9 @@ class Operation(Expression):
         subbed_operand_or_operands = \
             self.operand_or_operands.substituted(repl_map, reserved_vars, 
                                                  assumptions, requirements)
-        subbed_operands = compositeExpression(subbed_operand_or_operands)
         
         # Check if the operator is being substituted by a Lambda map in which
-        # case we should perform full oepration substitution.
+        # case we should perform full operation substitution.
         if len(subbed_operators)==1:
             subbed_operator = subbed_operators[0]
             if isinstance(subbed_operator, Lambda):
@@ -439,7 +438,7 @@ class Operation(Expression):
                 subbed_operator_body = subbed_op_lambda.body
                 subbed_operator_body._restrictionChecked(lambda_expr_reserved_vars)
                 
-                return subbed_operator.apply(*subbed_operands, 
+                return subbed_operator.apply(*[subbed_operand_or_operands], 
                                              assumptions=assumptions, 
                                              requirements=requirements)
         

@@ -268,7 +268,9 @@ class Lambda(Expression):
         Static method version of Lambda.apply which is convenient for 
         doing 'apply' with an 'on-the-fly' effective Lambda that does not
         need to be initialized (for the sake of efficiency for an 
-        Instantiation proof).
+        Instantiation proof).  It also has the flexibility of allowing
+        an initial 'repl_map' to start with, which will me amended according
+        to paramater:operand mappings.
         '''
         from proveit import ExprTuple, Iter, ProofFailure, safeDummyVar
         from proveit.logic import Equals
@@ -320,12 +322,12 @@ class Lambda(Expression):
                         # iterated parameter.
                         param_operands = []
                         while True:
-                            param_operands.append(next(operands_iter))
                             param_operands_len = Len(ExprTuple(*param_operands))
                             len_req = Equals(param_operands_len, param_len)
                             if len_req.proven(assumptions):
                                 requirements.append(len_req.prove(assumptions))
                                 break # we have a match
+                            param_operands.append(next(operands_iter))
                     # For the iterated parameter replacement, we map the 
                     # parameter variable to the parameter iteration tuple
                     # (e.g., x : (x_i, ..., x_n)) to indicate the index

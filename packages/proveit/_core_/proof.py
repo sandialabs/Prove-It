@@ -891,7 +891,8 @@ class Instantiation(Proof):
         Eliminates the specified number of Forall operations, substituting all
         of the corresponding instance variables according to repl_map.
         '''
-        from proveit import Lambda, Expression, Conditional
+        from proveit import (Lambda, Expression, Conditional, ExprTuple, Iter)
+        from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         from proveit.logic import Forall, And
         
         for key, sub in repl_map.items():
@@ -917,8 +918,40 @@ class Instantiation(Proof):
             lambda_expr = expr.operand
             if not isinstance(lambda_expr, Lambda):
                 raise TypeError("Forall Operation lambdaExpr must be a Lambda")
-            instance_vars, expr = \
-                lambda_expr.parameterVars, lambda_expr.body
+            expr = lambda_expr.body
+            
+            # Update the parameters and the operands (for applying an
+            # effective lambda map after eliminating some number of universal
+            # quantifiers).  Note that the parameters may be an iteration
+            # of indexed variables whose indices should be updated via
+            # substitutions.
+            parameters_repl_map = dict(repl_map)
+            for var in lambda_expr.parameterVars:
+                # Exclude the actual parameter variables when doing the
+                # parameter replacement.  We can leave other variables in
+                # there even if they occur as parameters at deeper levels
+                # because the repl_map is to replace all occurrences that
+                # it can (only skipping internal lambda paramaters when
+                # the replacement is not a simple relabeling variable).
+                parameters_repl_map.pop(var)
+            subbed_parameters = \
+                lambda_expr.parameters.substituted(parameters_repl_map,
+                        assumptions=assumptions, requirements=requirements)
+            parameters.extend(subbed_parameters)
+            for parameter in subbed_parameters:
+                parameter_var = getParamVar(parameter)
+                replacement = repl_map.get(parameter_var, parameter)
+                if isinstance(parameter, Iter) and isinstance(replacement, ExprTuple):
+                    # The iteration parameter variable is replace by an 
+                    # ExprTuple, so extend the operands with the replacement.
+                    operands.extend(replacement)
+                else:
+                    operands.append(replacement)
+            
+            # If there are any conditions of the universal quantifier being
+            # eliminated, prove that these conditions are satisfied and add
+            # them as "requirements" after performing appropriate 
+            # substitutions.
             if isinstance(expr, Conditional):
                 if len(expr.conditions) != 1:
                     raise ValueError("Expecting exactly 1 condition for a Forall "
@@ -935,20 +968,34 @@ class Instantiation(Proof):
                 else:
                     conditions = [condition]
                 for condition in conditions:
-                    # make substitutions in the condition'
-                    subbed_cond = condition.substituted(repl_map, 
-                                                        assumptions=assumptions,
-                                                        requirements=requirements)
-                    try:
-                        requirements.append(subbed_cond.prove(assumptions))    
-                    except ProofFailure:
-                        raiseFailure('Unmet specialization requirement: %s'
-                                     %str(subbed_cond))                    
-            parameters.extend(lambda_expr.parameters)
-            for parameter_var in instance_vars:
-                replacement = repl_map.get(parameter_var, parameter_var)
-                operands.append(replacement)
+                    # Make substitutions in the condition by applying the
+                    # effective lambda map (mapping the parameters to the
+                    # condition) on the "operands" (parameter replacements).
+                    if isinstance(condition, Iter):
+                        # An Iter condition must be wrapped with an ExprTuple
+                        # to make a proper Lambda body.
+                        condition = ExprTuple(condition)
+                    subbed_cond = Lambda._apply(parameters, condition, repl_map,
+                                                *operands, assumptions=assumptions,
+                                                requirements=requirements)
+                    if isinstance(subbed_cond, ExprTuple):
+                        subbed_conds = subbed_cond
+                    else:
+                        subbed_conds = [subbed_cond] # should be singular.
+                    for subbed_cond in subbed_conds:          
+                        if isinstance(subbed_cond, Iter):
+                            # If the substituted condition "entry" is an Iter,
+                            # we need to wrap it in a conjunction.
+                            subbed_cond = And(subbed_cond)
+                        try:
+                            requirements.append(subbed_cond.prove(assumptions))    
+                        except ProofFailure:
+                            raiseFailure('Unmet specialization requirement: %s'
+                                         %str(subbed_cond))                    
         
+        # Make substitutions in the inner instance expression by applying the
+        # effective lambda map (mapping the parameters to the instance 
+        # expression) on the "operands" (parameter replacements).
         subbed_expr = Lambda._apply(parameters, expr, repl_map, *operands,
                                     assumptions=assumptions,
                                     requirements=requirements)

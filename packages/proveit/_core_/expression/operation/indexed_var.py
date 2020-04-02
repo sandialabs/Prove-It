@@ -28,7 +28,7 @@ class IndexedVar(Operation):
         '''
         from proveit._core_.expression.composite.composite import compositeExpression
         if not isinstance(var, Variable) and not isinstance(var, IndexedVar):
-            raise TypeError("'var' being indexed should be a Variable an IndexedVar"
+            raise TypeError("'var' being indexed should be a Variable an IndexedVar "
                             "itself, got %s"%str(var))
         if isinstance(var, IndexedVar):
             if flatten_nested_indexing:

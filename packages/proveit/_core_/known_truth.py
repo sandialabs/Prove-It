@@ -690,7 +690,8 @@ class KnownTruth:
         if not proven_truth.isUsable():
             proven_truth.raiseUnusableProof()
         return proven_truth        
-        
+    
+    """
     def relabel(self, relabelMap):
         '''
         Performs a relabeling derivation step, deriving another KnownTruth
@@ -700,7 +701,8 @@ class KnownTruth:
         '''
         from proveit._core_.proof import Specialization
         return self._checkedTruth(Specialization(self, numForallEliminations=0, relabelMap=relabelMap, assumptions=self.assumptions))
-
+    """
+    
     def specialize(self, repl_map=None, relabel_map=None, assumptions=USE_DEFAULTS):
         # TEMPORARY BACKWARD COMPATIBILITY
         if repl_map is None:
@@ -736,7 +738,7 @@ class KnownTruth:
         iterated parameters are instantiated (see Lambda.apply for details).
         Automation will be used in attempting to prove these requirements.
         '''
-        from proveit import (Operation, Variable, Lambda, 
+        from proveit import (Variable, Operation, Conditional, Lambda, 
                              singleOrCompositeExpression, 
                              ExprTuple, Iter, IndexedVar)
         from proveit.logic import Forall
@@ -815,6 +817,9 @@ class KnownTruth:
             assert isinstance(lambda_expr, Lambda), ("Forall Operation operand "
                                                      "must be a Lambda function")
             instance_vars, expr  = lambda_expr.parameterVars, lambda_expr.body
+            if isinstance(expr, Conditional):
+                # Skip over the "conditions" of the Forall expression.
+                expr = expr.value
             forall_depth += 1
             for ivar in instance_vars:
                 if ivar in remaining_repl_vars:
@@ -827,10 +832,10 @@ class KnownTruth:
                 elif ivar not in processed_repl_map:
                     # default is to map instance variables to themselves
                     processed_repl_map[ivar] = ivar
-
+        
         return self._checkedTruth(
                 Instantiation(self, num_forall_eliminations=num_forall_eliminations, 
-                              repl_map=repl_map, assumptions=assumptions))
+                              repl_map=processed_repl_map, assumptions=assumptions))
         
     def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
         '''
