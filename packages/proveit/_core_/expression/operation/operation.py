@@ -320,9 +320,13 @@ class Operation(Expression):
         
         '''
         if hasattr(self, 'operator'):
-            return Operation._formattedOperation(formatType, self.operator, self.operands, self.wrapPositions(), self.getStyle('justification'), **kwargs)
+            return Operation._formattedOperation(formatType, self.operator, self.operands, 
+                                                 wrapPositions=self.wrapPositions(), justification=self.getStyle('justification'), 
+                                                 **kwargs)
         else:
-            return Operation._formattedOperation(formatType, self.operators, self.operands, self.wrapPositions(), self.getStyle('justification'), **kwargs)
+            return Operation._formattedOperation(formatType, self.operators, self.operands, 
+                                                 wrapPositions=self.wrapPositions(), justification=self.getStyle('justification'), 
+                                                 **kwargs)
     
     @staticmethod
     def _formattedOperation(formatType, operatorOrOperators, operands, wrapPositions, justification, implicitFirstOperator=False, **kwargs):
@@ -342,13 +346,8 @@ class Operation(Expression):
             subFence =  kwargs.get('subFence', True)
             do_wrapping = len(wrapPositions)>0
             formatted_str = ''
-            if fence: formatted_str = '(' if formatType=='string' else  r'\left('
-            if do_wrapping and formatType=='latex': 
-                formatted_str += r'\begin{array}{%s} '%justification[0]
-            formatted_str += operands.formatted(formatType, fence=False, subFence=subFence, operatorOrOperators=operator, wrapPositions=wrapPositions)
-            if do_wrapping and formatType=='latex': 
-                formatted_str += r' \end{array}'
-            if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
+            formatted_str += operands.formatted(formatType, fence=fence, subFence=subFence, operatorOrOperators=operator, 
+                                                wrapPositions=wrapPositions, justification=justification)
             return formatted_str
         else:
             operators = operatorOrOperators

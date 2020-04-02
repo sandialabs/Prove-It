@@ -2,6 +2,7 @@ from .composite import Composite, _simplifiedCoord
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.expression.style_options import StyleOptions
 
 class ExprTuple(Composite, Expression):
     """
@@ -9,7 +10,7 @@ class ExprTuple(Composite, Expression):
     of member Expressions.
     """
     
-    def __init__(self, *expressions):
+    def __init__(self, *expressions, styles=None):
         '''
         Initialize an ExprTuple from an iterable over Expression 
         objects.  When subsequent iterations in the tuple form a
@@ -50,8 +51,33 @@ class ExprTuple(Composite, Expression):
         self.entries = tuple(entries)
         self._lastEntryCoordInfo = None
         self._lastQueriedEntryIndex = 0
-        Expression.__init__(self, ['ExprTuple'], self.entries)
         
+        if styles is None: styles = dict()
+        if 'operation' not in styles:
+            styles['operation'] = 'normal' # vs 'function
+        if 'wrapPositions' not in styles:
+            styles['wrapPositions'] = '()' # no wrapping by default
+        if 'justification' not in styles:
+            styles['justification'] = 'left'
+
+        Expression.__init__(self, ['ExprTuple'], self.entries, styles=styles)
+
+    def styleOptions(self):
+        options = StyleOptions(self)
+        options.addOption('wrapPositions', 
+                          ("position(s) at which wrapping is to occur; 'n' "
+                           "is after the nth comma."))
+        options.addOption('justification', 
+                          ("if any wrap positions are set, justify to the 'left', "
+                           "'center', or 'right'"))
+        return options
+
+    def withWrappingAt(self, *wrapPositions):
+        return self.withStyles(wrapPositions='(' + ' '.join(str(pos) for pos in wrapPositions) + ')')
+    
+    def withJustification(self, justification):
+        return self.withStyles(justification=justification)
+    
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
         if subClass != ExprTuple: 
@@ -68,6 +94,23 @@ class ExprTuple(Composite, Expression):
         '''
         for subExpr in self.subExprIter():
             yield subExpr
+
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'withWrappingAt'
+        and 'withJustification' calls.
+        '''
+        wrap_positions = self.wrapPositions()
+        call_strs = []
+        if len(wrap_positions) > 0:
+            call_strs.append('withWrappingAt(' + ','.join(str(pos) for pos in wrap_positions) + ')')
+        justification = self.getStyle('justification')
+        if justification != 'center':
+            call_strs.append('withJustification(' + justification + ')')
+        return call_strs
                                         
     def __iter__(self):
         '''
@@ -116,18 +159,40 @@ class ExprTuple(Composite, Expression):
         else:
             return self.entries.index(entry, start, stop)
 
+    def wrapPositions(self):
+        '''
+        Return a list of wrap positions according to the current style setting.
+        Position 'n' is after the nth comma.
+        '''
+        return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
+    
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
         
-    def formatted(self, formatType, fence=True, subFence=False, operatorOrOperators=None, implicitFirstOperator=False, wrapPositions=tuple()):
+    def formatted(self, formatType, fence=True, subFence=False, operatorOrOperators=None, implicitFirstOperator=False, 
+                  wrapPositions=None, justification=None):
         from .iteration import Iter
+
         outStr = ''
         if len(self) == 0 and fence: 
             # for an empty list, show the parenthesis to show something.            
             return '()'
+        
+        if wrapPositions is None:
+            # Convert from a convention where position 'n' is after the nth comma to one in which the position '2n' is 
+            # after the nth operator (which also allow for position before operators).
+            wrapPositions = [2*pos for pos in self.wrapPositions()]
+        if justification is None:
+            justification = self.getStyle('justification', 'left')
+        
+        do_wrapping = len(wrapPositions)>0
+        if fence: outStr = '(' if formatType=='string' else  r'\left('
+        if do_wrapping and formatType=='latex': 
+            outStr += r'\begin{array}{%s} '%justification[0]
+        
         ellipses = r'\ldots' if formatType=='latex' else ' ... '
         formatted_sub_expressions = []
         for sub_expr in self:
@@ -138,9 +203,8 @@ class ExprTuple(Composite, Expression):
                 formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=True))
             else:
                 formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=subFence))
+        
         # put the formatted operator between each of formattedSubExpressions
-        if fence: 
-            outStr += '(' if formatType=='string' else  r'\left('
         for wrap_position in wrapPositions:
             if wrap_position%2==1:
                 # wrap after operand (before next operation)
@@ -178,8 +242,11 @@ class ExprTuple(Composite, Expression):
                 outStr += ' ' + formatted_sub_expressions[-1]
             elif len(formatted_sub_expressions) != len(formatted_operators):
                 raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator iterations must be in correpsondence with operand iterations.")
-        if fence:            
-            outStr += ')' if formatType=='string' else  r'\right)'
+
+        if do_wrapping and formatType=='latex': 
+            outStr += r' \end{array}'
+        if fence: outStr += ')' if formatType=='string' else  r'\right)'
+        
         return outStr
     
     def length(self, assumptions=USE_DEFAULTS):
