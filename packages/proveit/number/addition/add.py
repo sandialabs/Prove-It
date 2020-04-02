@@ -690,6 +690,7 @@ class Add(Operation):
                               "Perhaps we were not able to prove that the involved numbers "
                               "are in the Complexes set."%self)
         return self.evaluation() 
+    
     def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
         '''
         created by JML on 7/31/19. modified by WMW on 9/7/19.

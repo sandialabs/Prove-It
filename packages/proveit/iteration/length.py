@@ -1,4 +1,4 @@
-from proveit import Operation, Literal, USE_DEFAULTS
+from proveit import Operation, Literal, Iter, defaults, USE_DEFAULTS
 from proveit._common_ import a, b, c, d, e, f, g, h, i, j, k, x, y, aa
 
 class Len(Operation):
@@ -9,7 +9,64 @@ class Len(Operation):
         Operation.__init__(self, Len._operator_, operand)
         if not hasattr(self, 'operand'):
             self.operand = self.operands # always only one tuple operand
+            if defaults.automation==True:
+                # Handle some automation for dealing with
+                # ExprTuple length requirements in the expansion of 
+                # iterated parameters (see Lambda.apply).
+                try:
+                    self.autoInvocations()                            
+                finally:
+                    defaults.automation = True
+    
+    def autoInvocations(self):
+        '''
+        Invoke useful axioms/theorems pertaining to this Len expression
+        for automation purposes.  In particular, these are meant for
+        dealing with ExprTuple length requirements in the expansion of 
+        iterated parameters (see Lambda.apply).
+        '''
+        # Avoid infinite recursion:
+        defaults.automation = False 
+        if len(self.operands)==1 and isinstance(self.operands[0], Iter):
+            # In the special case of needing the length of an
+            # iteration of the form (1, ..., n) where n is a decimal,
+            # import theorems that may be relevant.  For example:
+            # (1, 2, 3) = (1, ..., 3)
+            # |(1, 2, 3)| = |(1, ..., 3)|
+            from proveit.number import one
+            import proveit.number.numeral.deci
+            from proveit.number.numeral.deci import DIGITS
+            iter_operand = self.operands[0]
+            if iter_operand.body == iter_operand.parameter:
+                start_index = iter_operand.start_index
+                end_index = iter_operand.end_index
+                if (start_index == one and end_index in DIGITS):
+                    n = end_index.asInt()
+                    proveit.number.numeral.deci._theorems_\
+                        .__getattr__('count%d_iter'%n)
+                    proveit.number.numeral.deci._theorems_\
+                        .__getattr__('count%d_iter_len'%n)
+        elif not any(isinstance(operand, Iter) for operand in self.operands):
+            if 0 < len(self.operands) < 10:
+                # Automatically get the count and equivalence with
+                # the length of the proper iteration starting from
+                # 1.  For example,
+                # |(a, b, c)| = 3
+                # |(a, b, c)| = |(1, .., 3)|
+                import proveit.number.numeral.deci
+                n = len(self.operands)
+                len_thm = proveit.number.numeral.deci._theorems_\
+                            .__getattr__('tuple%d_len'%n)
+                iter_len_thm = proveit.number.numeral.deci._theorems_\
+                                .__getattr__('tuple%d_iter_len'%n)
+                repl_map = dict()
+                for param, operand in zip(len_thm.explicitInstanceParams(),
+                                          self.operands):
+                    repl_map[param] = operand
+                len_thm.specialize(repl_map)
+                iter_len_thm.specialize(repl_map)        
         
+    
     @staticmethod
     def extractInitArgValue(argName, operator_or_operators, operand_or_operands):
         if argName=='operand':
