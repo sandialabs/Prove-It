@@ -86,14 +86,8 @@ class ExpressionInfo:
                 outStr += indent +'base: "%d"\n'%expr.base        
             elif isinstance(expr, Iter):
                 outStr += indent + 'lambda_map: %d\n'%(expr_num_map[expr.lambda_map])
-                if hasattr(expr, 'start_index'): # single index
-                    outStr += indent + 'start_index: %d\n'%(expr_num_map[expr.start_index])
-                else: # multiple indices
-                    outStr += indent + 'start_indices: %d\n'%(expr_num_map[expr.start_indices])
-                if hasattr(expr, 'end_index'): # single index
-                    outStr += indent + 'end_index: %d\n'%(expr_num_map[expr.end_index])
-                else: # multiple indices
-                    outStr += indent + 'end_indices: %d\n'%(expr_num_map[expr.end_indices])
+                outStr += indent + 'start_index: %d\n'%(expr_num_map[expr.start_index])
+                outStr += indent + 'end_index: %d\n'%(expr_num_map[expr.end_index])
             else:
                 outStr += indent + r'sub-expressions: ' + ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions) + '\n'
         return outStr
@@ -157,16 +151,8 @@ class ExpressionInfo:
                 sub_expressions += 'base:&nbsp;"%d"<br>'%expr.base
             elif isinstance(expr, Iter):
                 sub_expressions += 'lambda_map:&nbsp;%d<br>'%(expr_num_map[expr.lambda_map])
-                '''
-                if hasattr(expr, 'start_index'): # single index
-                    sub_expressions += 'start_index:&nbsp;%d<br>'%(expr_num_map[expr.start_index])
-                else: # multiple indices
-                    sub_expressions += 'start_indices:&nbsp;%d<br>'%(expr_num_map[expr.start_indices])
-                if hasattr(expr, 'end_index'): # single index
-                    sub_expressions += 'end_index:&nbsp;%d<br>'%(expr_num_map[expr.end_index])
-                else: # multiple indices
-                    sub_expressions += 'end_indices:&nbsp;%d<br>'%(expr_num_map[expr.end_indices])
-                '''
+                sub_expressions += 'start_index:&nbsp;%d<br>'%(expr_num_map[expr.start_index])
+                sub_expressions += 'end_index:&nbsp;%d<br>'%(expr_num_map[expr.end_index])
             else:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr]

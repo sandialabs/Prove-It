@@ -29,47 +29,34 @@ class Iter(Expression):
         '''
         Create an Iter that represents an iteration of the body for the
         parameter ranging from the start index to the end index.  
-        A Lambda expression will be created as its 
-        sub-expression that maps the parameter(s) to the body with
-        conditions that restrict the parameter(s) to the appropriate interval.
+        A Lambda expression will be created as its first sub-expression.
+        The start and end indices with be the second and third
+        sub-expressions.
         
         _lambda_map is used internally for efficiently rebuilding an Iter.
         '''
-        from proveit.logic import InSet
-        from proveit.number import Interval
-        
         if _lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
             lambda_map = _lambda_map
-            pos_args = (parameter, body, start_index, end_index)
-            if pos_args != (None, None, None, None):
-                raise ValueError("Positional arguments of the Init constructor "
-                                 "should be None if lambda_map is provided.")
+            if (parameter, body) != (None, None):
+                raise ValueError("'parameter' and 'body' arguments of the "
+                                 "Iter constructor should be None if "
+                                 "_lambda_map is provided.")
             parameter = lambda_map.parameter
-            condition = lambda_map.body.condition
-            invalid_condition_msg = ("Not the right kind of lambda_map condition "
-                                     "for an iteration")
-            if not isinstance(condition, InSet) or condition.element != parameter:
-                raise ValueError(invalid_condition_msg)
-            domain = condition.domain
-            if not isinstance(domain, Interval):
-                raise ValueError(invalid_condition_msg)
-            self.start_index, self.end_index = domain.lowerBound, domain.upperBound
         else:
-            self.start_index = start_index
-            self.end_index = end_index
-            condition = InSet(parameter, Interval(start_index, end_index))
-            conditional = Conditional(body, condition)
-            lambda_map = Lambda(parameter, conditional)
+            lambda_map = Lambda(parameter, body)
         
-        Expression.__init__(self, ['Iter'], [lambda_map])
+        Expression.__init__(self, ['Iter'], 
+                            [lambda_map, start_index, end_index])
+        self.start_index = start_index
+        self.end_index = end_index
         self.lambda_map = lambda_map
         # The body of the Lambda map is a Conditional that conditions the 
         # mapping according to the parameter being in the [start, end] 
         # interval.  We'll use self.body to refer to the value of this
         # conditional.
         self.parameter = self.lambda_map.parameter
-        self.body = self.lambda_map.body.value
+        self.body = self.lambda_map.body
     
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
@@ -77,8 +64,9 @@ class Iter(Expression):
             MakeNotImplemented(subClass)
         if len(coreInfo) != 1 or coreInfo[0] != 'Iter':
             raise ValueError("Expecting Iter coreInfo to contain exactly one item: 'Iter'")
-        lambda_map = subExpressions[0]
-        return Iter(None, None, None, None, _lambda_map=lambda_map).withStyles(**styles)
+        lambda_map, start_index, end_index = subExpressions
+        return Iter(None, None, start_index, end_index, _lambda_map=lambda_map) \
+                .withStyles(**styles)
             
     def remakeArguments(self):
         '''
@@ -92,7 +80,8 @@ class Iter(Expression):
         
     def first(self):
         '''
-        Return the first instance of the iteration (and store for future use).
+        Return the first instance of the iteration 
+        (and store for future use).
         '''
         if not hasattr(self, '_first'):
             expr_map = {self.lambda_map.parameter:self.start_index}
@@ -101,21 +90,14 @@ class Iter(Expression):
 
     def last(self):
         '''
-        Return the last instance of the iteration (and store for futurle use).
+        Return the last instance of the iteration 
+        (and store for future use).
         '''
         if not hasattr(self, '_last'):
             expr_map = {self.lambda_map.parameter:self.end_index}
             self._last = self.body.substituted(expr_map)
         return self._last
-    
-    def unconditioned_map(self):
-        '''
-        Return the Lambda map of this Iter without its condition
-        (of the parameter being in the interval between the start and
-        end indices).
-        '''
-        return Lambda(self.parameter, self.body)
-    
+        
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -136,11 +118,12 @@ class Iter(Expression):
         # anyway.
         return formatted_operator.join(formatted_sub_expressions)
     
-    def getInstance(self, index, assumptions = USE_DEFAULTS, requirements = None):
+    def getInstance(self, index, assumptions = USE_DEFAULTS, 
+                    requirements = None):
         '''
-        Return the iteration instance with the given index
-        as an Expression, using the given assumptions as needed
-        to interpret the indices expression.  Required
+        Return the iteration instance with the given Lambda map
+        index as an Expression, using the given assumptions as 
+        needed to interpret the index expression.  Required
         truths, proven under the given assumptions, that 
         were used to make this interpretation will be
         appended to the given 'requirements' (if provided).
@@ -152,8 +135,8 @@ class Iter(Expression):
             requirements = [] 
         
         # first make sure that the indices are in the iteration range
-        start, end = self.start_index, self.end_index
-        for first, second in ((start, index), (index, end)):
+        start_index, end_index = self.start_index, self.end_index
+        for first, second in ((start_index, index), (index, end_index)):
             relation = None
             try:
                 relation = LessEq.sort([first, second], reorder=False, 
@@ -165,7 +148,8 @@ class Iter(Expression):
             requirements.append(relation)
         
         # map to the desired instance
-        return self.lambda_map.apply(index)
+        return self.lambda_map.apply(index, assumptions=assumptions,
+                                     requirements=requirements)
         
     def substituted(self, repl_map, reserved_vars=None, 
                     assumptions=USE_DEFAULTS, requirements=None):
@@ -178,26 +162,28 @@ class Iter(Expression):
         documentation.
 
         'assumptions' and 'requirements' are used when an operator is
-        substituted by a Lambda map that has iterated parameters such that 
-        the length of the parameters and operands must be proven to be equal.
-        See the Operation.substituted and Lambda.apply documentation for more 
-        details.
+        substituted by a Lambda map that has iterated parameters such 
+        that the length of the parameters and operands must be proven 
+        to be equal.  See the Operation.substituted and Lambda.apply 
+        documentation for more details.
         
         There are limitations with respect to applying a Lambda map with
         iterated parameters that are enforced here in Iter.substituted.
         
         First, iterated parameter variables must only be contained in 
-        an IndexedVar with indices iterated over the same range (same start 
-        and end index) as the parameter iteration itself.  
+        an IndexedVar with indices iterated over the same range (same 
+        start and end argument) as the parameter iteration itself.  
         The following example meets this restriction.
         
         Applying the Lambda
         (x, y_1, ..., y_3, z_i, ..., z_j) -> 
             x*y_1 + ... + x*y_3 + z_i + ... + z_j
         to operands (a, b, c, d, e_m, ..., e_n, f)
-        will result in a*b + a*c + a*d + e_m + ... _ e_n + f provided that
+        will result in a*b + a*c + a*d + e_m + ... _ e_n + f provided 
+        that
         |(b, c, d)| = |(1, ..., 3)| is proven in advance and that
-        |(e_m, ..., e_n, f)| = |(i, ..., j)| can be proven via automation.            
+        |(e_m, ..., e_n, f)| = |(i, ..., j)| can be proven via 
+        automation.            
         
         A counter-example not meeting the restriction is
         (x_1, ..., x_n) -> x_1 * ... * x_j
@@ -215,16 +201,16 @@ class Iter(Expression):
         but may not be applied to
         (a, b_1, ..., b_{n-1}, c_1, ..., c_{n-1}, d)
         
-        In order to handle these restricted cases, transformations must be
-        made to bring the IndexedVar iteration in alignment.   Use methods such
-        as Lambda.relabeled, Iteration.partition, or Iteration.split to do 
-        this.
+        In order to handle these restricted cases, transformations must 
+        be made to bring the IndexedVar iteration in alignment.   Use 
+        methods such as Lambda.relabeled, Iteration.partition, or 
+        Iteration.split to do this.
         
         See the Lambda.apply documentation for a related discussion.
         '''
         from proveit import safeDummyVar
-        from proveit.logic import Equals, InSet
-        from proveit.number import Interval, Add, one
+        from proveit.logic import Equals #, InSet
+        from proveit.number import Add, one #, Interval
 
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
@@ -251,10 +237,10 @@ class Iter(Expression):
                 if len(indexed_var_iter_tuple) != 1 \
                         or not isinstance(indexed_var_iter_tuple[0], Iter):
                     raise ImproperSubstitution(
-                            "Improper indexed variable expansion: expecting the  "
-                            "repl_map value for '%s' to be an iteration of indexed "
-                            "variables, got '%s' instead."%(indexed_var.var, 
-                                               indexed_var_iter_tuple))
+                            "Improper indexed variable expansion: expecting "
+                            "the  repl_map value for '%s' to be an iteration "
+                            "of indexed variables, got '%s' instead."
+                            %(indexed_var.var, indexed_var_iter_tuple))
                     
                         
                 first_expanded_var = indexed_var.var
@@ -263,70 +249,75 @@ class Iter(Expression):
         if not must_expand:
             # No need to worry about expanding IndexedVar's.  Just call
             # 'substituted' on the Lambda map sub-expression.
-            subbed_lambda_map = lambda_map.substituted(repl_map, reserved_vars, 
-                                                       assumptions, requirements)
-            yield Iter(None, None, None, None, _lambda_map = subbed_lambda_map)
+            subbed_lambda_map = lambda_map.substituted(
+                    repl_map, reserved_vars, assumptions, requirements)
+            yield Iter(None, None, subbed_start, subbed_end, 
+                       _lambda_map = subbed_lambda_map)
             return True
         
-        # Need to expand IndexedVar's.  The expansions must be defined over
-        # the range of this iteration and must be aligned with each other.
+        # Need to expand IndexedVar's.  The expansions must be defined 
+        # over the range of this iteration and must be aligned with each 
+        # other.
         
         def raise_failed_range_match(indexed_var_iter):
-            raise ImproperSubstitution("The expansion of iterated parameters "
-                                       "is only allowed where the Iter range "
-                                       "matches the parameters range. The range "
-                                       "of %s does not match %s"
-                                       %(self, indexed_var_iter))
+            raise ImproperSubstitution(
+                    "The expansion of iterated parameters is only allowed "
+                    "where the Iter range matches the parameters range. "
+                    "The range of %s does not match %s"
+                    %(self, indexed_var_iter))
         # If the iteration parameters is used for anything other than an
         # IndexedVar, or not all of the IndexedVars that are indexed by
         # the iteration parameter, all of the new indices must match the 
         # original indices, not just the length.
-        remaining_free_vars = self.body._free_vars(exclusions=indexed_vars_of_iter)
+        remaining_free_vars = \
+            self.body._free_vars(exclusions=indexed_vars_of_iter)
         indices_must_match = (self.parameter in remaining_free_vars)
         if indices_must_match:
-            reason_indices_must_match = ("Iter parameter appears outside of "
-                                         "IndexedVar indices within the Iter "
-                                         "body")
+            reason_indices_must_match = (
+                    "Iter parameter appears outside of IndexedVar indices "
+                    "within the Iter body")
 
-        # The repl_map should map each variable being indexed to the same
-        # range of indices covered by this Iter.  For example,
-        # x : (x_i, ..., x_j).  These mappings keep track that the Iter has
-        # the correct corresponding range.
+        # The repl_map should map each variable being indexed to the 
+        # same range of indices covered by this Iter.  For example,
+        # x : (x_i, ..., x_j).  These mappings keep track that the Iter 
+        # has the correct corresponding range.
         # Map indexed variables to their respective expansions, if they
         # are being expanded.
         indexed_var_expansion = dict() 
         for indexed_var in indexed_vars_of_iter:
-            # indexed_var_iter_tuple should be something like (x_i, ..., x_j)
-            # where i and j match the start and end indices of this Iter.
+            # indexed_var_iter_tuple should be something like 
+            # (x_i, ..., x_j)
+            # where i and j match the start and end arguments of this
+            # Iter.
             indexed_var_iter_tuple = repl_map.get(indexed_var.var, None)
             if (not isinstance(indexed_var_iter_tuple, ExprTuple)
                     or len(indexed_var_iter_tuple) != 1
                     or not isinstance(indexed_var_iter_tuple[0], Iter)):
                 # If the IndexedVars are not all expanded together,
-                # we must match the new indices with the old indices, not
-                # just the length.
+                # we must match the new indices with the old indices, 
+                # not just the length.
                 if not indices_must_match:
                     indices_must_match = True
-                    reason_indices_must_match = ("not all of the indexed variables "
-                                                 "being indexed by the Iter "
-                                                 "parameter are being expanded "
-                                                 "(%s is expanded but %s is not)"
-                                                 %(indexed_var.var, first_expanded_var))
+                    reason_indices_must_match = (
+                            "not all of the indexed variables being indexed "
+                            "by the Iter parameter are being expanded "
+                            "(%s is expanded but %s is not)"
+                            %(indexed_var.var, first_expanded_var))
                 continue
             indexed_var_iter = indexed_var_iter_tuple[0]
             if indexed_var_iter.start_index != subbed_start:
                 raise raise_failed_range_match(indexed_var_iter)
             if indexed_var_iter.end_index != subbed_end:
                 raise raise_failed_range_match(indexed_var_iter)
-            indexed_var_expansion[indexed_var] = repl_map.get(indexed_var_iter_tuple,
-                                                              indexed_var_iter_tuple)
+            indexed_var_expansion[indexed_var] = \
+                repl_map.get(indexed_var_iter_tuple, indexed_var_iter_tuple)
         
         def raise_failed_expansion_match(first_expansion, expansion):
-            raise ImproperSubstitution("When expanding IndexedVar's within an "
-                                       "Iter whose parameter is the index, their "
-                                       "expansion Iter indices must all match. "
-                                       "%s vs %s do not match."
-                                       %(first_expansion, expansion))
+            raise ImproperSubstitution(
+                    "When expanding IndexedVar's within an Iter whose "
+                    "parameter is the index, their expansion Iter indices "
+                    "must all match. %s vs %s do not match."
+                    %(first_expansion, expansion))
         
         first_expanded_var_repl = repl_map[first_expanded_var]
         first_expansion = repl_map.get(first_expanded_var_repl, 
@@ -341,8 +332,8 @@ class Iter(Expression):
                                                assumptions, new_requirements)
         assert len(new_params)==1
         # We won't use the new parameter from 'new_params', and we
-        # won't need 'inner_reserved_vars'.  To be safe, we just need a safe 
-        # dummy variable that doesn't clash with anything involved.
+        # won't need 'inner_reserved_vars'.  To be safe, we just need a
+        # safe dummy variable that doesn't clash with anything involved.
         new_param = safeDummyVar(self, *[repl for key, repl in repl_map.items()])
                 
         if indices_must_match:
@@ -352,8 +343,8 @@ class Iter(Expression):
             next_index = subbed_start
 
         # Loop over the entries of the first expansion which must be
-        # in correspondence (same Iter range or the same in being singular)
-        # with the other expansions.
+        # in correspondence (same Iter range or the same in being 
+        # singular) with the other expansions.
         body = self.body
         for k, first_expansion_entry in enumerate(first_expansion):
             entry_repl_map = dict(inner_repl_map)  
@@ -366,7 +357,8 @@ class Iter(Expression):
                     # Failing to have the same number of entries.
                     raise_failed_expansion_match(first_expansion, expansion)
                 entry = expansion[k]
-                if isinstance(entry, Iter) != isinstance(first_expansion_entry, Iter):
+                if isinstance(entry, Iter) != isinstance(first_expansion_entry, 
+                                                         Iter):
                     # Failing to match w.r.t. being singular or not.
                     raise_failed_expansion_match(first_expansion, expansion)
                 if isinstance(entry, Iter):
@@ -391,14 +383,23 @@ class Iter(Expression):
                 # For an Iter entry, yield a new Iter using the entry_repl_map.
                 start_index = first_expansion_entry.start_index
                 end_index = first_expansion_entry.end_index
-                range_assumption = InSet(new_param, Interval(start_index, end_index))
-                entry_assumptions = inner_assumptions + [range_assumption]
+                
+                # Let's keep this simple.  If it isn't really necessary
+                # to be so fancy with this internal assumption about
+                # being in the [start, end] interval, let's not do it.
+                # If needed, we can use explicit axioms/theorems to
+                # make use of this property rather than in the core.
+                #range_assumption = InSet(new_param, 
+                #                         Interval(start_index, end_index))
+                
+                entry_assumptions = inner_assumptions # + [range_assumption]
                 entry_requirements = []
                 entry_repl_map[orig_parameter] = new_param
                 # Note: we don't need to use the 'inner' reserved vars.
                 entry = Iter(new_param,
                              body.substituted(entry_repl_map, reserved_vars,
-                                              entry_assumptions, entry_requirements),
+                                              entry_assumptions, 
+                                              entry_requirements),
                              start_index, end_index)
                 if indices_must_match:
                     # We need to know the new_indices to match with the
@@ -412,16 +413,18 @@ class Iter(Expression):
                 # lambda parameters.
                 for requirement in entry_requirements:
                     if new_param in requirement._free_vars():
-                        # If the requirement involves the Iter parameter,
-                        # it must be generalized under these parameters to 
-                        # ensure there is no scoping violation since this
-                        # parameter's scope is within the new Iter.
+                        # If the requirement involves the Iter 
+                        # parameter, it must be generalized under these
+                        # parameters to ensure there is no scoping 
+                        # violation since this parameter's scope is
+                        # within the new Iter.
                         conditions = requirement.assumptions
-                        requirement = requirement.generalize(new_param,
-                                                             conditions=conditions)
+                        requirement = requirement.generalize(
+                                new_param, conditions=conditions)
                     requirements.append(requirement)
             else:
-                # For a singular element entry, yield the substituted element.
+                # For a singular element entry, yield the substituted
+                # element.
                 if indices_must_match:
                     # The actual iteration parameter index is needed:
                     entry_repl_map[orig_parameter] = next_index
@@ -445,9 +448,10 @@ class Iter(Expression):
             try:
                 requirements.append(requirement.prove(assumptions))
             except ProofFailure as e:
-                raise ImproperSubstitution("Iter indices failed to match expansion "
-                                           "which is necessary because %s: %s."
-                                           %(reason_indices_must_match, e))
+                raise ImproperSubstitution(
+                        "Iter indices failed to match expansion which is "
+                        "necessary because %s: %s."
+                        %(reason_indices_must_match, e))
     
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
         '''
@@ -462,31 +466,31 @@ class Iter(Expression):
         from proveit.logic import Equals
         from proveit.number import Add, one, subtract
         
-        unconditioned_lambda = self.unconditioned_map()
+        lambda_map = self.lambda_map
         start_index, end_index = self.start_index, self.end_index
         if end_index == Add(before_split_idx, one):
             # special case which uses the axiom:
             from proveit.iteration._axioms_ import iterExtensionDef
             return iterExtensionDef.specialize(
-                    {f:unconditioned_lambda, i:start_index, j:before_split_idx},
+                    {f:lambda_map, i:start_index, j:before_split_idx},
                     assumptions=assumptions)
         elif before_split_idx == self.start_index:
             # special case when pealing off the front
             from proveit.iteration._theorems_ import partition_front
             return partition_front.specialize(
-                    {f:unconditioned_lambda, i:self.start_index, j:self.end_index},
+                    {f:lambda_map, i:self.start_index, j:self.end_index},
                      assumptions=assumptions)
         elif (before_split_idx == subtract(end_index, one) or
               Equals(before_split_idx, subtract(end_index, one)).proven(assumptions)):
             # special case when pealing off the back
             from proveit.iteration._theorems_ import partition_back
             return partition_back.specialize(
-                    {f:unconditioned_lambda, i:start_index, j:end_index},
+                    {f:lambda_map, i:start_index, j:end_index},
                      assumptions=assumptions)
         else:
             from proveit.iteration._theorems_ import partition
             return partition.specialize(
-                    {f:unconditioned_lambda, i:start_index, j:before_split_idx,
+                    {f:lambda_map, i:start_index, j:before_split_idx,
                      k:end_index}, assumptions=assumptions)
         
     """
