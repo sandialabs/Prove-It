@@ -415,20 +415,33 @@ class _ProofReference:
         return '<i>reference</i>'
 
 class Assumption(Proof):
-    allAssumptions = dict() # map expression and to the assumption object
+    # Map expressions to corresponding assumption objects.
+    allAssumptions = dict() 
      
     def __init__(self, expr, assumptions=None):
-        assert expr not in Assumption.allAssumptions, "Do not create an Assumption object directly; use Assumption.makeAssumption instead."
+        from proveit._core_.expression.composite.iteration import Iter
+        assert expr not in Assumption.allAssumptions, \
+            ("Do not create an Assumption object directly; "
+             "use Assumption.makeAssumption instead.")
         assumptions = defaults.checkedAssumptions(assumptions)
         if expr not in assumptions:
-            # an Assumption proof must assume itself; that's what it does.
+            # An Assumption proof must assume itself; 
+            # that's what it does.
             assumptions = assumptions + (expr,)
         prev_default_assumptions = defaults.assumptions
-        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+        # These assumptions will be used for deriving any side-effects
+        defaults.assumptions = assumptions
+        # When assumptions are in an iteration, the assumed truth
+        # must be wrapped in a conjunction (And).
+        if isinstance(expr, Iter):
+            from proveit.logic import And
+            assumed_truth = And(expr)
+        else:
+            assumed_truth = expr
         try:
-            Proof.__init__(self, KnownTruth(expr, {expr}), [])
+            Proof.__init__(self, KnownTruth(assumed_truth, {expr}), [])
         finally:
-            # restore the original default assumptions
+            # Restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
         Assumption.allAssumptions[expr] = self
     
@@ -769,7 +782,7 @@ class HypotheticalReasoning(Proof):
         return 'hypothetical reasoning'
 
 class Instantiation(Proof):
-    def __init__(self, original_known_truth, num_forall_eliminations, 
+    def __init__(self, orig_known_truth, num_forall_eliminations, 
                  repl_map, assumptions):
         '''
         Create the specialization+instantiation proof step that eliminates
@@ -787,24 +800,27 @@ class Instantiation(Proof):
         defaults.assumptions = assumptions 
         
         try:
-            if not isinstance(original_known_truth, KnownTruth):
+            if not isinstance(orig_known_truth, KnownTruth):
                 raise TypeError("May only 'instantiate' a KnownTruth")
-            if original_known_truth.proof() is None:
-                raise UnusableProof(KnownTruth.theoremBeingProven, original_known_truth)
+            if orig_known_truth.proof() is None:
+                raise UnusableProof(KnownTruth.theoremBeingProven, 
+                                    orig_known_truth)
                 
             # The "original" KnownTruth is the first "requirement truth" for
             # this derivation step.
             orig_subbed_assumptions = []
             requirements = []
-            for assumption in original_known_truth.assumptions:
+            for assumption in orig_known_truth.assumptions:
                 # Possible substitutions in the "original" KnownTruth 
                 # assumption.
                 subbed_assumption = assumption.substituted(
-                        repl_map, assumptions=assumptions, requirements=requirements)
+                        repl_map, assumptions=assumptions, 
+                        requirements=requirements)
                 orig_subbed_assumptions.append(subbed_assumption)
             
-            # Automatically use the assumptions of the original_known_truth
-            # plus the assumptions that were provided.
+            # Automatically use the assumptions of the 
+            # original_known_truth plus the assumptions that were 
+            # provided.
             assumptions = tuple(orig_subbed_assumptions) + assumptions
             # Eliminate duplicates.
             assumptions = tuple(OrderedDict.fromkeys(assumptions)) 
@@ -812,39 +828,40 @@ class Instantiation(Proof):
             defaults.assumptions = assumptions
                         
             instantiated_expr = \
-                Instantiation._instantiated_expr(original_known_truth, 
-                                                 num_forall_eliminations, repl_map,
-                                                 assumptions, requirements)
+                Instantiation._instantiated_expr(
+                        orig_known_truth, num_forall_eliminations, repl_map,
+                        assumptions, requirements)
             
             # Remove duplicates in the requirements.
             requirements = list(OrderedDict.fromkeys(requirements))
             
-            # Remove any unnecessary assumptions (but keep the order that was
-            # provided).  Note that some assumptions of requirements may
-            # not be in the 'assumptions' list for this instantiation step
-            # if they rely on internal assumptions from a Conditional.
-            assumptions_set = set()
+            # Remove any unnecessary assumptions (but keep the order 
+            # that was provided).  Note that some assumptions of 
+            # requirements may not be in the 'assumptions' list 
+            # if they made use of internal assumptions from a 
+            # Conditional.
+            assumptions = list(orig_subbed_assumptions)
             for requirement in requirements:
-                assumptions_set |= requirement.assumptionsSet
-            assumptions = [assumption for assumption in assumptions 
-                           if assumption in assumptions_set]
+                assumptions.extend(requirement.assumptionsSet)
+            assumptions = list(OrderedDict.fromkeys(assumptions))
             
-            # Sort the replaced variables in order of their appearance in the 
-            # original KnownTruth.
-            repl_vars = list(original_known_truth.orderOfAppearance(repl_map.keys()))
+            # Sort the replaced variables in order of their appearance 
+            # in the original KnownTruth.
+            repl_vars = repl_map.keys()
+            repl_vars = list(orig_known_truth.orderOfAppearance(repl_vars))
             # And remove duplicates.
             repl_vars = list(OrderedDict.fromkeys(repl_vars))
                 
             # we have what we need; set up the Instantiation Proof
-            self.original_known_truth = original_known_truth
+            self.orig_known_truth = orig_known_truth
             self.mapping_var_order = repl_vars
-            # Exclude anything in the repl_map that does not appear in the
-            # original KnownTruth:
+            # Exclude anything in the repl_map that does not appear in 
+            # the original KnownTruth:
             self.mapping = {key:val for key, val in repl_map.items()
                             if key in repl_vars}
             instantiated_truth = KnownTruth(instantiated_expr, assumptions)
             Proof.__init__(self, instantiated_truth, 
-                           [original_known_truth] + requirements)
+                           [orig_known_truth] + requirements)
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
@@ -888,8 +905,9 @@ class Instantiation(Proof):
         original_known_truth.  The assumptions on the left side of
         the turnstile are treated in Instantiation.__init__.
         
-        Eliminates the specified number of Forall operations, substituting all
-        of the corresponding instance variables according to repl_map.
+        Eliminates the specified number of Forall operations, 
+        substituting all  of the corresponding instance variables 
+        according to repl_map.
         '''
         from proveit import (Lambda, Expression, Conditional, ExprTuple, Iter)
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
@@ -944,7 +962,7 @@ class Instantiation(Proof):
                 if isinstance(parameter, Iter) and isinstance(replacement, ExprTuple):
                     # The iteration parameter variable is replace by an 
                     # ExprTuple, so extend the operands with the replacement.
-                    operands.extend(replacement)
+                    operands.extend(replacement.entries)
                 else:
                     operands.append(replacement)
             

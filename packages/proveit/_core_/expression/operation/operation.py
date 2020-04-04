@@ -430,14 +430,17 @@ class Operation(Expression):
                     # The reserved variables of the lambda body excludes the 
                     # lambda parameters (i.e., the parameters mask externally 
                     # reserved variables).
-                    lambda_expr_reserved_vars = \
+                    lambda_expr_res_vars = \
                         {k:v for k, v in reserved_vars.items() 
                          if k not in subbed_op_lambda.parameterVarSet}
-                else: lambda_expr_reserved_vars = None
+                else: 
+                    lambda_expr_res_vars = None
                 subbed_operator_body = subbed_op_lambda.body
-                subbed_operator_body._restrictionChecked(lambda_expr_reserved_vars)
-                
-                return subbed_operator.apply(*[subbed_operand_or_operands], 
+                subbed_operator_body._restrictionChecked(lambda_expr_res_vars)
+                subbed_operands = \
+                    compositeExpression(subbed_operand_or_operands)
+
+                return subbed_operator.apply(*subbed_operands, 
                                              assumptions=assumptions, 
                                              requirements=requirements)
         
