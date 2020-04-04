@@ -716,7 +716,7 @@ class Add(Operation):
         eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
         
         # start with cancelations (maybe everything cancels to zero)
-        expr = eq.update(self.cancelations(assumptions))
+        expr = eq.update(expr.cancelations(assumptions))
         if isIrreducibleValue(expr):
             return eq.relation
         
@@ -725,7 +725,7 @@ class Add(Operation):
 
         # If all the operands are the same, combine via multiplication and then evaluate.
         if all(operand==expr.operands[0] for operand in expr.operands):
-            expr = eq.update(self.conversionToMultiplication(assumptions))
+            expr = eq.update(expr.conversionToMultiplication(assumptions))
             eq.update(expr.evaluation(assumptions))
             return eq.relation 
         
@@ -733,10 +733,10 @@ class Add(Operation):
             expr = eq.update(pairwiseEvaluation(expr, assumptions))
             return eq.relation
         
-        if len(self.operands)==2:
+        if len(expr.operands)==2:
             # If both operands are negated, factor out the negation.
-            if all(isinstance(operand, Neg) for operand in self.operands):
-                negated = Neg(Add(*[operand.operand for operand in self.operands]))
+            if all(isinstance(operand, Neg) for operand in expr.operands):
+                negated = Neg(Add(*[operand.operand for operand in expr.operands]))
                 neg_distribution = negated.distribution(assumptions)
                 expr = eq.update(neg_distribution.deriveReversed())
                 eq.update(expr.evaluation(assumptions))
