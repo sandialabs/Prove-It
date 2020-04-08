@@ -28,48 +28,47 @@ class Forall(OperationOverInstances):
         Side-effect derivations to attempt automatically for this forall operation.
         '''
         if self.hasDomain() and hasattr(self.domain, 'unfoldForall'):
-            assumptions = knownTruth.assumptions
             if len(self.conditions)==0:
                 yield self.unfold # derive an unfolded version (dependent upon the domain)
         
     def conclude(self, assumptions):
         '''
-        If the domain has a 'foldForall' method, attempt to conclude this Forall statement
-        via 'concludeAsFolded' or by proving the instance expression under proper assumptions
-        and then generalizing.
+        If the instance expression, or some instance expression of 
+        nested universal quantifiers, is known to be true, conclude
+        via generalization.  Otherwise, if the domain has a 'foldForall'
+        method, attempt to conclude this Forall statement
+        via 'concludeAsFolded'.
         '''
         # first try to prove via generalization without automation
-        extra_assumptions = tuple(self.inclusiveConditions())
-        try:
-            proven_inst_expr = self.explicitInstanceExpr().prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions), automation=False)
-            return proven_inst_expr.generalize(self.instanceParamLists(), conditions=extra_assumptions)
-        except:
-            pass
+        assumptions = defaults.checkedAssumptions(assumptions)
+        expr = self
+        instanceParamLists = []
+        conditions = []
+        while isinstance(expr, Forall):
+            new_params = expr.explicitInstanceParams()
+            instanceParamLists.append(list(new_params))
+            conditions += list(expr.inclusiveConditions())
+            expr = expr.explicitInstanceExpr()
+            new_assumptions = assumptions + tuple(conditions)
+            if expr.proven(assumptions=assumptions + tuple(conditions)):
+                proven_inst_expr = expr.prove(new_assumptions)
+                return proven_inst_expr.generalize(instanceParamLists, 
+                                                   conditions=conditions)
         # next try 'foldAsForall' on the domain (if applicable)
-        hasFoldAsForall=False
         if self.hasDomain() and hasattr(self.domain, 'foldAsForall'):
             # try foldAsForall first
-            hasFoldAsForall=True
             try:
                 return self.concludeAsFolded(assumptions)
             except:
-                pass
-        # lastly, try to prove via generalization with automation
-        try:
-            proven_inst_expr = self.explicitInstanceExpr().prove(assumptions=extra_assumptions+defaults.checkedAssumptions(assumptions))
-            instanceParamLists = [list(self.explicitInstanceParams())]
-            conditions = list(self.inclusiveConditions())
-            # see if we can generalize multiple levels simultaneously for a shorter proof
-            while isinstance(proven_inst_expr.proof(), Generalization):
-                instanceParamLists.append(list(proven_inst_expr.explicitInstanceParams()))
-                conditions += proven_inst_expr.conditions
-                proven_inst_expr = proven_inst_expr.proof().requiredTruths[0]
-            return proven_inst_expr.generalize(forallVarLists=instanceParamLists, conditions=conditions)
-        except ProofFailure:
-            if hasFoldAsForall:
-                raise ProofFailure(self, assumptions, "Unable to conclude automatically; both the 'foldAsForall' method on the domain and automated generalization failed.")
-            else:
-                raise ProofFailure(self, assumptions, "Unable to conclude automatically; the domain has no 'foldAsForall' method and automated generalization failed.")
+                raise ProofFailure(self, assumptions, 
+                                   "Unable to conclude automatically; "
+                                   "the 'foldAsForall' method on the "
+                                   "domain failed.")
+        raise ProofFailure(self, assumptions, 
+                           "Unable to conclude automatically; a "
+                           "universally quantified instance expression "
+                           "is not known to be true and the domain has "
+                           "no 'foldAsForall' method.")
     
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
