@@ -35,14 +35,18 @@ class Implies(TransitiveRelation):
     
     def sideEffects(self, knownTruth):
         '''
-        Yield the TransitiveRelation side-effects (which also records knownLeftSides
-        and knownRightSides).  Also derive the consequent as a side-effect.
-        As a special case, if the consequent is FALSE, do deriveViaContradiction.
+        Yield the TransitiveRelation side-effects (which also records 
+        knownLeftSides nd knownRightSides).  Also derive the consequent 
+        as a side-effect if the antecedent is known to be true
+        (under the "side-effect" assumptions).
+        As a special case, if the consequent is FALSE, do 
+        deriveViaContradiction.
         '''
         from proveit.logic.boolean._common_ import FALSE
         for sideEffect in TransitiveRelation.sideEffects(self, knownTruth):
             yield sideEffect
-        #yield self.deriveConsequent # B given A=>B and A
+        if self.antecedent.proven():
+            yield self.deriveConsequent # B given A=>B and A
         if self.consequent == FALSE:
             yield self.deriveViaContradiction # Not(A) given A=>FALSE or A given Not(A)=>FALSE
 
@@ -57,9 +61,10 @@ class Implies(TransitiveRelation):
             
     def conclude(self, assumptions):
         '''
-        Try to automatically conclude this implication by reducing its operands
-        to true/false, or by doing a "transitivity" search amongst known true implications
-        whose assumptions are covered by the given assumptions.
+        Try to automatically conclude this implication by reducing its 
+        operands to true/false, or by doing a "transitivity" search 
+        amongst known true implications whose assumptions are covered by
+        the given assumptions.
         '''
         from ._axioms_ import untrueAntecedentImplication
         from ._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse, falseAntecedentImplication
