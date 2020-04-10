@@ -2,4 +2,4 @@ from .composite import Composite, compositeExpression, singleOrCompositeExpressi
 from .named_exprs import NamedExprs
 from .expr_tuple import ExprTuple, ExprTupleError
 from .expr_array import ExprArray
-from .iteration import Iter, varIter, IterationInstanceError
+from .expr_range import ExprRange, varRange, RangeInstanceError

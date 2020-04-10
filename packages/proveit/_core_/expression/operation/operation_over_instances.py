@@ -2,7 +2,8 @@ import inspect
 from proveit._core_.expression.expr import Expression, MakeNotImplemented, free_vars
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda, getParamVar
 from proveit._core_.expression.composite import (
-        ExprTuple, singleOrCompositeExpression, compositeExpression, Iter)
+        ExprTuple, singleOrCompositeExpression, compositeExpression, 
+        ExprRange)
 from proveit._core_.expression.conditional import Conditional
 from .operation import Operation, OperationError
 
@@ -13,8 +14,8 @@ def _extract_domain_from_condition(ivar, condition):
     a "domain" condition for the given instance variable(s).
     '''
     from proveit.logic import InSet
-    if isinstance(ivar, Iter):
-        if (isinstance(condition, Iter) and isinstance(condition.body, InSet)
+    if isinstance(ivar, ExprRange):
+        if (isinstance(condition, ExprRange) and isinstance(condition.body, InSet)
                 and condition.body.element==ivar.body
                 and condition.start_index==ivar.start_index
                 and condition.end_index==ivar.end_index):
@@ -137,9 +138,10 @@ class OperationOverInstances(Operation):
                                          "of them can be the None value")
                 domain_conditions = []
                 for iparam, domain in zip(instance_params, domains):
-                    if isinstance(iparam, Iter):
-                        condition = Iter(iparam.parameter, InSet(iparam.body, domain),
-                                         iparam.start_index, iparam.end_index)
+                    if isinstance(iparam, ExprRange):
+                        condition = ExprRange(
+                                iparam.parameter, InSet(iparam.body, domain),
+                                iparam.start_index, iparam.end_index)
                     else:
                         condition = InSet(iparam, domain)
                     domain_conditions.append(condition)
@@ -287,12 +289,12 @@ class OperationOverInstances(Operation):
                         
     @staticmethod
     def _createOperand(instanceParamOrParams, instanceExpr, conditions):
-        from proveit import Iter
+        from proveit import ExprRange
         from proveit.logic import And
         if len(conditions) == 0:
             return Lambda(instanceParamOrParams, instanceExpr)
         else:
-            if len(conditions) > 1 or isinstance(conditions[0], Iter):
+            if len(conditions) > 1 or isinstance(conditions[0], ExprRange):
                 conditions = And(*conditions)
             return Lambda(instanceParamOrParams, Conditional(instanceExpr, conditions))
 

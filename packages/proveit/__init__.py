@@ -17,13 +17,14 @@ from ._core_ import (
         MakeNotImplemented, ImproperSubstitution, 
         ScopingViolation, ProofFailure,
         Composite, compositeExpression, singleOrCompositeExpression,
-        ExprTuple, ExprTupleError, ExprArray, NamedExprs, Iter, varIter,
-        IterationInstanceError,
+        ExprTuple, ExprTupleError, ExprArray, NamedExprs, ExprRange, 
+        varRange, RangeInstanceError,
         KnownTruth, asExpression, asExpressions,
         Proof, Assumption, Axiom, Theorem, ModusPonens, 
         HypotheticalReasoning, Instantiation, Generalization,
         ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
         StyleOptions, maybeFencedString, maybeFencedLatex, maybeFenced)
+from .core_expr_types import (Len,)
 from .relation import (TransitiveRelation, TransitiveSequence, TransitivityException, 
                        TransRelUpdater)
 

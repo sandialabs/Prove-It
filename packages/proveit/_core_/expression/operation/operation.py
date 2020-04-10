@@ -1,7 +1,6 @@
 import inspect
-from proveit._core_.expression.expr import Expression, ImproperSubstitution
+from proveit._core_.expression.expr import Expression
 from proveit._core_.expression.style_options import StyleOptions
-from proveit._core_.expression.fencing import maybeFenced
 from proveit._core_.defaults import USE_DEFAULTS
 
 class Operation(Expression):
@@ -18,7 +17,9 @@ class Operation(Expression):
         state information must implement _clear_ to clear that information.
         '''
         Operation.operationClassOfOperator.clear()
-        
+    
+    # NEED CAPABILITY TO SPECIFY A SINGLE OPERAND THAT IS AN ExprTuple.
+    
     def __init__(self, operator_or_operators, operand_or_operands, styles=None):
         '''
         Create an operation with the given operator(s) and operand(s).
@@ -29,7 +30,9 @@ class Operation(Expression):
         'operators' and 'operands' attributes that bundle
         the one or more Expressions into a composite Expression.
         '''
-        from proveit._core_.expression.composite import Composite, compositeExpression, singleOrCompositeExpression, Iter
+        from proveit._core_.expression.composite import (
+                Composite, compositeExpression, 
+                singleOrCompositeExpression, ExprRange)
         from proveit._core_.expression.label.label import Label
         from .indexed_var import IndexedVar
         if styles is None: styles = dict()
@@ -37,9 +40,9 @@ class Operation(Expression):
             operator = operator_or_operators
             if Expression.contexts[operator._style_id] != operator.context:
                 raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
-        if isinstance(operator_or_operators, Iter):
+        if isinstance(operator_or_operators, ExprRange):
             operator_or_operators = [operator_or_operators]
-        if isinstance(operand_or_operands, Iter):
+        if isinstance(operand_or_operands, ExprRange):
             operand_or_operands = [operand_or_operands]
         self.operator_or_operators = singleOrCompositeExpression(operator_or_operators)
         self.operand_or_operands = singleOrCompositeExpression(operand_or_operands)
@@ -52,7 +55,7 @@ class Operation(Expression):
             # a composite of multiple operators:
             self.operators = self.operator_or_operators 
             for operator in self.operators:
-                if isinstance(operator, Iter):
+                if isinstance(operator, ExprRange):
                     if not isinstance(operator.body, IndexedVar):
                         raiseBadOperatorType(operator)
                 elif not isinstance(operator, Label) and not isinstance(operator, IndexedVar):
@@ -330,13 +333,13 @@ class Operation(Expression):
     
     @staticmethod
     def _formattedOperation(formatType, operatorOrOperators, operands, wrapPositions, justification, implicitFirstOperator=False, **kwargs):
-        from proveit import Iter, ExprTuple, compositeExpression
+        from proveit import ExprRange, ExprTuple, compositeExpression
         if isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
             operator = operatorOrOperators
             # Single operator case.
             # Different formatting when there is 0 or 1 element, unless it is an Iter
             if len(operands) < 2:
-                if len(operands) == 0 or not isinstance(operands[0], Iter):
+                if len(operands) == 0 or not isinstance(operands[0], ExprRange):
                     if formatType == 'string':
                         return '[' + operator.string(fence=True) +  '](' + operands.string(fence=False, subFence=False) + ')'
                     else:
@@ -353,9 +356,9 @@ class Operation(Expression):
             operators = operatorOrOperators
             operands = compositeExpression(operands)
             # Multiple operator case.
-            # Different formatting when there is 0 or 1 element, unless it is an Iter
+            # Different formatting when there is 0 or 1 element, unless it is an ExprRange
             if len(operands) < 2:
-                if len(operands) == 0 or not isinstance(operands[0], Iter):
+                if len(operands) == 0 or not isinstance(operands[0], ExprRange):
                     raise OperationError("No defaut formatting with multiple operators and zero operands")
             fence =  kwargs['fence'] if 'fence' in kwargs else False
             subFence =  kwargs['subFence'] if 'subFence' in kwargs else True
@@ -437,12 +440,21 @@ class Operation(Expression):
                     lambda_expr_res_vars = None
                 subbed_operator_body = subbed_op_lambda.body
                 subbed_operator_body._restrictionChecked(lambda_expr_res_vars)
-                subbed_operands = \
-                    compositeExpression(subbed_operand_or_operands)
-
-                return subbed_operator.apply(*subbed_operands, 
-                                             assumptions=assumptions, 
-                                             requirements=requirements)
+                
+                if hasattr(self, 'operand'):
+                    # A single operand as a single argument.
+                    operand = subbed_operand_or_operands
+                    return subbed_operator.apply(operand,
+                                                 assumptions=assumptions,
+                                                 requirements=requirements)
+                else:
+                    # Multiple operands as multiple arguments.
+                    subbed_operands = \
+                        compositeExpression(subbed_operand_or_operands)
+    
+                    return subbed_operator.apply(*subbed_operands, 
+                                                 assumptions=assumptions, 
+                                                 requirements=requirements)
         
         # Remake the Expression with substituted operator and/or operands
         if len(subbed_operators)==1:

@@ -13,13 +13,13 @@ def getParamVar(parameter):
     is the variable of the Indexed expression.
     '''
     from proveit._core_.expression.label import Variable
-    from proveit._core_.expression.composite import Iter
+    from proveit._core_.expression.composite import ExprRange
     from proveit._core_.expression.operation.indexed_var import IndexedVar 
-    if isinstance(parameter, Iter) and isinstance(parameter.body, IndexedVar):
+    if isinstance(parameter, ExprRange) and isinstance(parameter.body, IndexedVar):
         if parameter.body.index != parameter.parameter:
-            raise TypeError("Parameter may be an Iter over IndexedVar objects "
+            raise TypeError("Parameter may be an ExprRange over IndexedVar objects "
                             "(e.g., x_1, ..., x_n, but the IndexedVar index must "
-                            "match the Iter parameter.  %s fails this criterion."
+                            "match the ExprRange parameter.  %s fails this criterion."
                             %parameter)
         indexed_var = parameter.body
         return indexed_var.var
@@ -29,7 +29,7 @@ def getParamVar(parameter):
         return parameter
     else:
         raise TypeError('Parameter must be a Variables, Indexed variable, or '
-                        'iteration (Iter) over Indexed variables.  %s fails '
+                        'range (ExprRange) over Indexed variables.  %s fails '
                         'to meet this requirement.'%parameter)
 
 class Lambda(Expression):
@@ -44,7 +44,7 @@ class Lambda(Expression):
     def __init__(self, parameter_or_parameters, body, _generic_expr=None):
         '''
         Initialize a Lambda function expression given parameter(s) and a body.
-        Each parameter must be a Variable or an iteration (Iter) of 
+        Each parameter must be a Variable or a range (ExprRange) of 
         indexed variables (IndexedVar).
         When there is a single parameter, there will be a 'parameter'
         attribute. Either way, there will be a 'parameters' attribute
@@ -56,7 +56,7 @@ class Lambda(Expression):
         '''
         from proveit._core_.expression.composite import (compositeExpression, 
                                                          singleOrCompositeExpression, 
-                                                         Iter)
+                                                         ExprRange)
         self.parameters = compositeExpression(parameter_or_parameters)
         parameterVars = [getParamVar(parameter) for parameter in self.parameters]
         if len(self.parameters) == 1:
@@ -72,8 +72,8 @@ class Lambda(Expression):
         body = singleOrCompositeExpression(body)
         if not isinstance(body, Expression):
             raise TypeError('A Lambda body must be of type Expression')
-        if isinstance(body, Iter):
-            raise TypeError('An Iter must be within an ExprTuple or ExprArray, '
+        if isinstance(body, ExprRange):
+            raise TypeError('An ExprRange must be within an ExprTuple or ExprArray, '
                             'not directly as a Lambda body')
         self.body = body
                 
@@ -92,8 +92,8 @@ class Lambda(Expression):
                 prev_automation = defaults.automation
                 defaults.automation = False
                 generic_parameters = self.parameters._generic_version()
-                generic_parameters = generic_parameters.substituted(relabel_map)
-                generic_body = generic_body.substituted(relabel_map)
+                generic_parameters = generic_parameters.relabeled(relabel_map)
+                generic_body = generic_body.relabeled(relabel_map)
                 genericExpr = Lambda(generic_parameters, generic_body)
                 defaults.automation = prev_automation # restore to previous value
             else:
@@ -255,7 +255,7 @@ class Lambda(Expression):
         There are limitations with respect the Lambda map application involving
         iterated parameters when perfoming operation substitution in order to
         keep derivation rules (i.e., instantiation) simple.  For details,
-        see the Iter.substituted documentation.
+        see the ExprRange.substituted documentation.
         '''
         repl_map = dict()
         return Lambda._apply(self.parameters, self.body, repl_map, *operands,
@@ -272,17 +272,17 @@ class Lambda(Expression):
         an initial 'repl_map' to start with, which will me amended according
         to paramater:operand mappings.
         '''
-        from proveit import ExprTuple, Iter, ProofFailure, safeDummyVar
+        from proveit import (ExprTuple, ExprRange, ProofFailure, 
+                             safeDummyVar, Len)
         from proveit.logic import Equals
-        from proveit.iteration import Len
-        
+                
         # We will be appending to the requirements list if it is given
         # (or a throw-away list if it is not).
         if requirements is None: requirements = []
         assumptions = defaults.checkedAssumptions(assumptions)
         
         # We will be matching operands with parameters in the proper order.
-        operands_iter = iter(operands) 
+        operands_iter = iter(operands)
         try:
             # Loop through each parameter entry and match it with corresponding
             # operand(s).  Singular parameter entries match with singular
@@ -291,15 +291,15 @@ class Lambda(Expression):
             # For example, (x_1, ..., x_n, y) has an element-wise lenght of
             # n+1.
             for parameter in parameters:
-                if isinstance(parameter, Iter):
+                if isinstance(parameter, ExprRange):
                     # This is a iterated parameter which corresponds with
                     # one or more operand entries in order to match the
                     # element-wise length.
                     param_tuple = ExprTuple(parameter)
                     idx_var = safeDummyVar(*parameters, body)
-                    param_indices = Iter(idx_var, idx_var, 
-                                         parameter.start_index, 
-                                         parameter.end_index)
+                    param_indices = ExprRange(idx_var, idx_var, 
+                                              parameter.start_index, 
+                                              parameter.end_index)
                     param_len = Len(ExprTuple(param_indices))
                     if parameters[-1] == parameter:
                         # This iterated parameter is the last entry,
@@ -339,7 +339,7 @@ class Lambda(Expression):
                     # This is a singular parameter which should match with a
                     # singular operator.
                     operand = next(operands_iter)
-                    if isinstance(operand, Iter):
+                    if isinstance(operand, ExprRange):
                         raise LambdaApplicationError(parameters, body, 
                                                      operands, assumptions,
                                                      "Singular parameters must "
@@ -350,21 +350,30 @@ class Lambda(Expression):
         except StopIteration:
             raise LambdaApplicationError(parameters, body, 
                                          operands, assumptions,
-                                         "Parameter/operand length mismatch "
+                                         "Parameter/argument length mismatch "
                                          "or unproven length equality for "
                                          "correspondence with %s."
                                          %str(parameter))
+        # Make sure all of the operands were consumed.
+        try:
+            next(operands_iter)
+            # All operands were not consumed.
+            raise LambdaApplicationError(parameters, body, 
+                                         operands, assumptions,
+                                         "Too many arguments")       
+        except StopIteration:
+            pass # Good.  All operands were consumed.
         return body.substituted(repl_map, assumptions=assumptions, 
                                 requirements=requirements)
     
     def _inner_scope_sub(self, repl_map, reserved_vars, 
                          assumptions, requirements):
         '''
-        Helper method for substituted (and used by Iter.substituted) which 
+        Helper method for substituted (and used by ExprRange.substituted) which 
         handles the change in scope properly as well as parameter relabeling.
         '''
         
-        from proveit import Variable, Iter
+        from proveit import Variable, ExprRange
         
         # Within the lambda scope, we can relabel lambda parameters
         # to a different Variable, but any other kind of substitution of
@@ -392,9 +401,10 @@ class Lambda(Expression):
                 # The parameter is being relabeled, simultaneous with the
                 # substitution, so track the change with respect to the
                 # new_params and inner_reservations.
-                if isinstance(parameter, Iter):
+                if isinstance(parameter, ExprRange):
                     # e.g., x_1, ..., x_n -> y_1, ..., y_n.
-                    # It could also change the index range.  For example,
+                    # It could also change the index range.
+                    # For example,
                     # x_i, ..., x_j -> y_1, ..., y_n.
                     subbed_param = parameter.substituted(inner_repl_map, 
                                                          reserved_vars, 
@@ -412,8 +422,8 @@ class Lambda(Expression):
                 inner_reserved_vars[param_var] = param_var
             # Append new_params with the substituted version of this parameter.
             try:
-                # If subbed_param is iterable (i.e., the parameter is an Iter
-                # since Iter.substituted acts as a generator), use extend.
+                # If subbed_param is iterable (i.e., the parameter is an ExprRange
+                # since ExprRange.substituted acts as a generator), use extend.
                 new_params.extend(subbed_param)
             except TypeError:
                 # Otherwise use append.
@@ -451,7 +461,7 @@ class Lambda(Expression):
         substituted with a lambda map that has iterated parameters such that 
         the length of the parameters and operands are required to be equal.
         For more details, see Operation.substituted, Lambda.apply, and
-        Iter.substituted (which is the sequence of calls involved).
+        ExprRange.substituted (which is the sequence of calls involved).
         '''
         
         if len(repl_map)>0 and (self in repl_map):
@@ -488,7 +498,7 @@ class Lambda(Expression):
                 requirements.append(requirement)
             
         except ScopingViolation as e:
-            raise ScopingViolation("Scoping violation while substituting"
+            raise ScopingViolation("Scoping violation while substituting "
                                     "%s.  %s"%(str(self), e.message))
         
             
@@ -500,6 +510,7 @@ class Lambda(Expression):
             raise ImproperSubstitution(e.args[0])            
         return newLambda
     
+    """
     def relabeled(self, relabel_map):
         '''
         Return a variant of this Lambda expression with one or more
@@ -521,6 +532,7 @@ class Lambda(Expression):
         result = self.substituted(relabel_map)
         assert result==self, "Relabeled version should be 'equal' to original"
         return result
+    """
     
     def compose(self, lambda2):
         '''
@@ -607,8 +619,11 @@ class LambdaApplicationError(Exception):
         self.assumptions = assumptions
         self.extra_msg = extra_msg
     def __str__(self):
-        return ("Failure to apply %s to %s assuming %s: %s"
-                %(self.lambda_map, self.operands, self.assumptions, self.extra_msg))
+        assumption_str = ''
+        if len(self.assumptions) > 0:
+            assumption_str = ' assuming %s'%str(self.assumptions)
+        return ("Failure to apply %s to %s%s: %s"
+                %(self.lambda_map, self.operands, assumption_str, self.extra_msg))
 
 class ArgumentExtractionError(Exception):
     def __init__(self, specifics):

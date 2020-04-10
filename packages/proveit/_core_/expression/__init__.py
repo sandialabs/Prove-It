@@ -9,8 +9,9 @@ from .operation import (Operation, IndexedVar, Function, OperationSequence,
 from .conditional import Conditional
 from .lambda_expr import (Lambda, ParameterCollisionError,
                           LambdaApplicationError, ArgumentExtractionError)
-from .composite import (Composite, compositeExpression, singleOrCompositeExpression, 
-                        ExprTuple, ExprTupleError, ExprArray, NamedExprs, Iter,
-                        varIter, IterationInstanceError)
+from .composite import (
+        Composite, compositeExpression, singleOrCompositeExpression, 
+        ExprTuple, ExprTupleError, ExprArray, NamedExprs, ExprRange,
+        varRange, RangeInstanceError)
 from .label import (Label, Literal, Variable, DuplicateLiteralError, 
                     safeDummyVar, safeDefaultOrDummyVar)

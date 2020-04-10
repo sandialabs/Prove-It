@@ -150,8 +150,8 @@ class ExprTuple(Composite, Expression):
         Return True if this has a single element that is not an
         iteration.
         '''
-        from .iteration import Iter
-        return len(self)==1 and not isinstance(self[0], Iter)
+        from .expr_range import ExprRange
+        return len(self)==1 and not isinstance(self[0], ExprRange)
     
     def index(self, entry, start=0, stop=None):
         if stop is None:
@@ -174,7 +174,7 @@ class ExprTuple(Composite, Expression):
         
     def formatted(self, formatType, fence=True, subFence=False, operatorOrOperators=None, implicitFirstOperator=False, 
                   wrapPositions=None, justification=None):
-        from .iteration import Iter
+        from .expr_range import ExprRange
 
         outStr = ''
         if len(self) == 0 and fence: 
@@ -196,7 +196,7 @@ class ExprTuple(Composite, Expression):
         ellipses = r'\ldots' if formatType=='latex' else ' ... '
         formatted_sub_expressions = []
         for sub_expr in self:
-            if isinstance(sub_expr, Iter):
+            if isinstance(sub_expr, ExprRange):
                 formatted_sub_expressions += [sub_expr.first().formatted(formatType, fence=subFence), ellipses, sub_expr.last().formatted(formatType, fence=subFence)]
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists                
@@ -224,7 +224,7 @@ class ExprTuple(Composite, Expression):
             # assume all different operators
             formatted_operators = []
             for operator in operatorOrOperators:
-                if isinstance(operator, Iter):
+                if isinstance(operator, ExprRange):
                     formatted_operators += [operator.first().formatted(formatType), '', operator.last().formatted(formatType)]
                 else:
                     formatted_operators.append(operator.formatted(formatType))
@@ -254,7 +254,7 @@ class ExprTuple(Composite, Expression):
         Return the proven length of this tuple as an Expression.  This
         length includes the extent of all contained iterations. 
         '''
-        from proveit.iteration import Len
+        from proveit import Len
         return Len(self).simplification(assumptions).rhs
                 
     def substituted(self, repl_map, reserved_vars=None, 
@@ -277,15 +277,15 @@ class ExprTuple(Composite, Expression):
         entry that is an Iter, its results are embedded as one or more entries 
         of the ExprTuple.
         '''
-        from .iteration import Iter
+        from .expr_range import ExprRange
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
             return repl_map[self]._restrictionChecked(reserved_vars)
         
         subbed_exprs = []
         for expr in self:
-            if isinstance(expr, Iter):
-                # Iter.substituted is a generator that yields items to be
+            if isinstance(expr, ExprRange):
+                # ExprRange.substituted is a generator that yields items to be
                 # embedded into the tuple.
                 for subbed_item in expr.substituted(repl_map, reserved_vars, 
                                                     assumptions, requirements):
@@ -298,13 +298,14 @@ class ExprTuple(Composite, Expression):
     
     def merger(self, assumptions=USE_DEFAULTS):
         '''
-        If this is an tuple of expressions that can be directly merged together
-        into a single iteration, return this proven equivalence.  For example,
+        If this is an tuple of expressions that can be directly merged 
+        together into a single ExprRange, return this proven 
+        equivalence.  For example,
         {j \in Naturals, k-(j+1) \in Naturals} 
         |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)
         '''
         from proveit._core_.expression.lambda_expr import Lambda
-        from proveit._core_.expression.composite.iteration import Iter
+        from .expr_range import ExprRange
         from proveit.relation import TransRelUpdater
         from proveit.iteration._theorems_ import (merge, merge_front, merge_back,
                                                   merge_pair, merge_series)
@@ -318,7 +319,7 @@ class ExprTuple(Composite, Expression):
         first_iter_pos = len(self)
         lambda_map = None
         for _k, item in enumerate(self):
-            if isinstance(item, Iter):
+            if isinstance(item, ExprRange):
                 lambda_map = Lambda(item.lambda_map.parameter, item.lambda_map.body)
                 first_iter_pos = _k
                 break

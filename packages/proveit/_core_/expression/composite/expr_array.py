@@ -2,10 +2,8 @@ from .composite import Composite
 from .expr_tuple import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from .iteration import Iter
 import itertools
 from ast import literal_eval
-                
 
 class ExprArray(ExprTuple):
     '''

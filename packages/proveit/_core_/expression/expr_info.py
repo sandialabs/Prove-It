@@ -29,7 +29,7 @@ class ExpressionInfo:
         return orderedDependencyNodes(self.expr, lambda expr : expr._subExpressions)
 
     def __repr__(self):
-        from .composite import NamedExprs, Iter
+        from .composite import NamedExprs, ExprRange
         from .operation import Operation, IndexedVar
         from .lambda_expr import Lambda
         from .label import Label, Literal
@@ -84,7 +84,7 @@ class ExpressionInfo:
                 else:
                     outStr += indent +'indices: %d\n'%(expr_num_map[expr.indices])
                 outStr += indent +'base: "%d"\n'%expr.base        
-            elif isinstance(expr, Iter):
+            elif isinstance(expr, ExprRange):
                 outStr += indent + 'lambda_map: %d\n'%(expr_num_map[expr.lambda_map])
                 outStr += indent + 'start_index: %d\n'%(expr_num_map[expr.start_index])
                 outStr += indent + 'end_index: %d\n'%(expr_num_map[expr.end_index])
@@ -96,7 +96,7 @@ class ExpressionInfo:
         return repr(self)
     
     def _repr_html_(self):
-        from .composite import ExprTuple, ExprArray, NamedExprs, Iter
+        from .composite import ExprTuple, ExprArray, NamedExprs, ExprRange
         from .operation import Operation, IndexedVar
         from .conditional import Conditional
         from .lambda_expr import Lambda
@@ -149,7 +149,7 @@ class ExpressionInfo:
                 else:
                     sub_expressions += 'indices:&nbsp;%d<br>'%(expr_num_map[expr.indices])
                 sub_expressions += 'base:&nbsp;"%d"<br>'%expr.base
-            elif isinstance(expr, Iter):
+            elif isinstance(expr, ExprRange):
                 sub_expressions += 'lambda_map:&nbsp;%d<br>'%(expr_num_map[expr.lambda_map])
                 sub_expressions += 'start_index:&nbsp;%d<br>'%(expr_num_map[expr.start_index])
                 sub_expressions += 'end_index:&nbsp;%d<br>'%(expr_num_map[expr.end_index])
@@ -157,7 +157,9 @@ class ExpressionInfo:
                 sub_expressions = ', '.join(str(expr_num_map[subExpr]) for subExpr in expr._subExpressions)
             context = expr_context_map[expr]
             html += '<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n'%(k, expr._coreInfo[0], sub_expressions, expr._repr_html_(context=context))
-            if self.show_details and expr.__class__ not in (Variable, Literal, Operation, Lambda, IndexedVar, NamedExprs, ExprTuple, ExprArray, Iter):
+            if self.show_details and expr.__class__ not in \
+                    (Variable, Literal, Operation, Lambda, IndexedVar, 
+                     NamedExprs, ExprTuple, ExprArray, ExprRange):
                 # not a core expression so show the actual class when showing the details
                 html += '<tr><td colspan=4 style="text-align:left"><strong>class:</strong> %s</td></tr>\n'%expr._class_path()
             if self.show_details and isinstance(expr, Literal):

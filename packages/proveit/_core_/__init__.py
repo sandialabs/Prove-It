@@ -13,8 +13,8 @@ from .expression import (
         ArgumentExtractionError, 
         Composite, compositeExpression, 
         singleOrCompositeExpression, ExprTuple, ExprTupleError, 
-        ExprArray, NamedExprs, Iter, 
-        varIter, IterationInstanceError,
+        ExprArray, NamedExprs, ExprRange, 
+        varRange, RangeInstanceError,
         StyleOptions, maybeFencedString, 
         maybeFencedLatex, maybeFenced)
 from .known_truth import KnownTruth, asExpression, asExpressions

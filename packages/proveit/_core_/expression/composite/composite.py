@@ -60,7 +60,6 @@ def singleOrCompositeExpression(exprOrExprs):
     of Expressions, or simply return the given Expression if it is one.
     '''
     from proveit._core_.known_truth import KnownTruth
-    from .iteration import Iter
     if isinstance(exprOrExprs, KnownTruth):
         exprOrExprs = exprOrExprs.expr
     if isinstance(exprOrExprs, Expression):
