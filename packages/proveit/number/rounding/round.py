@@ -28,8 +28,6 @@ class Round(Function):
         the simplification. For the case where the operand is of the
         form x = real + int, derive and return this Round expression
         equated with Round(real) + int.
-        CONSIDER ADDING A RECURSIVE COMPONENT to allow further 
-        simplfication, for example for Round(real + int + int).
         '''
         from proveit._common_ import n, x
         from proveit.logic import InSet
@@ -60,9 +58,13 @@ class Round(Function):
         #                          "reviewing the roundOfInteger and "
         #                          "roundOfRealPlusInt theorems in the "
         #                          "proveit/number/rounding context.")
+
+        # Entire operand is known to be or assumed to be an Integer?
         if InSet(self.operand, Integers).proven(assumptions=assumptions):
-            # entire operand is known to be an integer
+            # Entire operand is known to be or assumed to be an integer
+            # so we can simply remove the Round() wrapper
             return self.roundingElimination(assumptions)
+        # Operand is an Add object?
         elif isinstance(self.operand, Add):
             # We have Round(a+b+...+n) but the sum a+b+...+n is not
             # known to be an integer. We can try to:
@@ -70,20 +72,93 @@ class Round(Function):
             # sum of (n-1) terms that is known to be real and apply the
             # extraction method; then,
             # (2) repeat the process on the resulting extracted expr.
+            #######
+            # OR we could first try to partition all ints away and
+            # see if remainders are all known to be reals … that might
+            # be more fun to do that first
+
+            from proveit import TransRelUpdater
+            tempExpr = self
+            # for convenience while updating our equation
+            eq = TransRelUpdater(tempExpr, assumptions)
+
             print("entering the elif")                                          # for testing; delete later
             subops = self.operand.operands
             print("    subops = {}".format(subops))                             # for testing; delete later
-            if len(subops)>2:
-                print(" subops rearranged = {} {}".
-                      format(subops[1], subops[0:1] + subops[1+1:]))            # for testing; delete later
+
+            # (1) First see if we can do it all in one fell swoop
+            # BUT later pull out the special 2-addend case to try first
+            indices_of_known_ints = []
+            indices_of_reals_not_ints = []
+            indices_of_unknowns = []
+            for i in range(len(subops)):
+                if InSet(subops[i], Integers).proven(assumptions):
+                    indices_of_known_ints.append(i)
+                elif InSet(subops[i], Reals).proven(assumptions):
+                    indices_of_reals_not_ints.append(i)
+                else:
+                    indices_of_unknowns.append(i)
+            print("indices_of_known_ints = {}".format(indices_of_known_ints))   # for testing; delete later
+            print("indices_of_reals_not_ints = {}".format(indices_of_reals_not_ints))   # for testing; delete later
+            print("indices_of_unknowns = {}".format(indices_of_unknowns))       # for testing; delete later
+            if len(indices_of_unknowns) == 0:
+                # we should be able to rearrange and partition the
+                # addends into reals and ints, so let's do so
+                print("All operands should be integers or reals!")              # for testing; delete later
+                original_addends = list(subops)
+                desired_order_by_index = list(indices_of_reals_not_ints+indices_of_known_ints)
+                print("    original_addends: {}".format(original_addends))      # for testing; delete later
+                print("    desired_order_by_index: {}".format(desired_order_by_index)) # for testing; delete later
+                for i in range(len(original_addends)):
+                    init_idx = tempExpr.operand.operands.index(original_addends[desired_order_by_index[i]])
+                    tempExpr = eq.update(self.innerExpr().operand.commutation(
+                        init_idx, i, assumptions=assumptions))
+                print("    After commutation, tempExpr = {}".format(tempExpr))  # for testing; delete later
+                # WORKING OK UP TO HERE — COMMUTATION PROCESS SEEMS FINE
+
+                # next need to make the Add(a, b, ..., n) into an
+                # Add((a, b, ..., j), (j_1, ..., n)) using association
+                if len(indices_of_reals_not_ints) > 1:
+                    # associate those elements (already re-arranged to
+                    # be at the front of the operand.operands):
+                    tempExpr = eq.update(
+                            tempExpr.innerExpr().operand.association(
+                                    0, len(indices_of_reals_not_ints),
+                                    assumptions=assumptions))
+                if len(indices_of_known_ints) > 1:
+                    # associate those elements (already re-arranged to
+                    # be at the end of the operand.operands):
+                    tempExpr = eq.update(
+                            tempExpr.innerExpr().operand.association(
+                                    1, len(indices_of_known_ints),
+                                    assumptions=assumptions))
+                print("    After association, tempExpr = {}".format(tempExpr))  # for testing; delete later
+                print("    After association, tempExpr.operand.operands = {}".  # for testing; delete later
+                           format(tempExpr.operand.operands))                   # for testing; delete later
+
+                tempExpr = eq.update(tempExpr.roundingExtraction(1, assumptions))
+                return eq.relation
+
+
 
             for i in range(len(subops)):
                 print("testing {} in Integers ...".format(subops[i]))           # for testing; delete later
                 print("testing {} in Reals ...".format(subops[0:i]+subops[i+1:])) # for testing; delete later
                 if (InSet(subops[i], Integers).proven(assumptions=assumptions) and
                     _allProvenReals(subops[0:i]+subops[i+1:], assumptions=assumptions)):
+                    print("tempExpr = {}".format(tempExpr))                     # for testing; delete later
+                    print("tempExpr.operand = {}".format(tempExpr.operand))     # for testing; delete later
                     print("{} is an int, all others are real".format(subops[i])) # for testing; delete later
-                    return self.roundingExtraction(i, assumptions)
+                    tempExpr = eq.update(
+                            tempExpr.roundingExtraction(i, assumptions))
+                    # how to grab just the Round() object in the tempExpr?
+                    print("tempExpr.operands is then: {}".format(tempExpr.operands)) # for testing; delete later
+                    print("tempExpr is an instance of: {}".format(type(tempExpr)))  # for testing; delete later
+                    print("tempExpr.innerExpr = {}".format(tempExpr.innerExpr())) # for testing; delete later
+                    print("tempExpr.innerExpr.operands[0] = {}".format(tempExpr.innerExpr().operands[0])) # for testing; delete later
+                    print("tempExpr.innerExpr.operands[0].operands = {}".format(tempExpr.innerExpr().operands[0].operands)) # for testing; delete later
+                    return eq.relation
+                    # return self.roundingExtraction(i, assumptions)
             nsub=''
             if len(subops)==2:
                 xsub = subops[0]
@@ -171,9 +246,8 @@ class Round(Function):
         eq = TransRelUpdater(expr, assumptions)
         print("    eq.relation = {}".format(eq.relation))                       # for testing; delete later
 
-        # first (re-)arrange operands to comform to thm format
-        # using user-supplied indx_to_extract
-        # use Add.commutation
+        # first use Add.commutation to (re-)arrange operands to comform
+        # to theorem format, using user-supplied idx_to_extract
         if isinstance(self.operand, Add):
             print("    Operand is of class 'Add'")                              # for testing; delete later
             print("    item to extract is {0} and index {1}".                   # for testing; delete later
@@ -192,11 +266,8 @@ class Round(Function):
 
             # An association step -- because the later application of
             # the roundOfRealPlusInt thm produces a grouping of the 
-            # Round operands in the chain of equivalences. (Actually
-            # kind of annoying, because the grouping doesn't appear in
-            # the pirnted outputs of the intermediate stages and is thus
-            # difficult to catch)
-            # BUT, only perform the association multiple operands are
+            # Round operands in the chain of equivalences.
+            # BUT, only perform the association if multiple operands are
             # needing to be associated:
             if len(expr.operand.operands)-1 > 1:
                 expr = eq.update(expr.innerExpr().operand.association(
