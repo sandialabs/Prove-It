@@ -1,5 +1,6 @@
 from proveit import defaults, Function, InnerExpr, Literal, USE_DEFAULTS
 from proveit.number.sets import Integers, Naturals, NaturalsPos
+from proveit.number.rounding.rounding_methods import apply_roundingElimination
 
 class Ceil(Function):
     # operator of the Ceil operation.
@@ -61,6 +62,29 @@ class Ceil(Function):
                                  "ceilOfRealPlusInt theorems in the "
                                  "proveit/number/rounding context.")
 
+    # def roundingElimination(self, assumptions=USE_DEFAULTS):
+    #     '''
+    #     For the trivial case of Ceil(x) where the operand x is already
+    #     an integer, derive and return this Ceil expression equated
+    #     with the operand itself: Ceil(x) = x. Assumptions may be
+    #     necessary to deduce necessary conditions (for example, that x
+    #     actually is an integer) for the simplification.
+    #     This method is utilized by the doReducedSimplification() method
+    #     only after the operand x is verified to already be proven
+    #     (or assumed) to be an integer.
+    #     For the case where the operand is of the form x = real + int,
+    #     see the roundingExtraction() method.
+    #     '''
+    #     from proveit._common_ import x
+    #     from ._theorems_ import ceilOfInteger
+
+    #     # among other things, convert any assumptions=None
+    #     # to assumptions=() to avoid later len() errors
+    #     assumptions = defaults.checkedAssumptions(assumptions)
+
+    #     return ceilOfInteger.specialize(
+    #                 {x:self.operand}, assumptions=assumptions)
+
     def roundingElimination(self, assumptions=USE_DEFAULTS):
         '''
         For the trivial case of Ceil(x) where the operand x is already
@@ -74,15 +98,9 @@ class Ceil(Function):
         For the case where the operand is of the form x = real + int,
         see the roundingExtraction() method.
         '''
-        from proveit._common_ import x
         from ._theorems_ import ceilOfInteger
 
-        # among other things, convert any assumptions=None
-        # to assumptions=() to avoid later len() errors
-        assumptions = defaults.checkedAssumptions(assumptions)
-
-        return ceilOfInteger.specialize(
-                    {x:self.operand}, assumptions=assumptions)
+        return apply_roundingElimination(self, ceilOfInteger, assumptions)
 
     def roundingExtraction(self, idx_to_extract=None, assumptions=USE_DEFAULTS):
         '''
