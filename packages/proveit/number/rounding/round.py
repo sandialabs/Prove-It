@@ -38,56 +38,26 @@ class Round(Function):
         # to assumptions=()
         assumptions = defaults.checkedAssumptions(assumptions)
 
-        # try:
-        #     return roundOfInteger.specialize(
-        #             {x:self.operand}, assumptions=assumptions)
-        # except:
-        #     if isinstance(self.operand, Add):
-        #         subops = self.operand.operands
-        #         if len(subops)==2:
-        #             xsub = subops[0]
-        #             nsub = subops[1]
-        #         else:
-        #             xsub = Add(subops[:-1])
-        #             nsub: subops[-1]
-        #         return roundOfRealPlusInt.specialize(
-        #                 {x:xsub, n:nsub}, assumptions=assumptions)
-        #     else:
-        #         raise ValueError("Round.doReducedSimplification() method "
-        #                          "expecting simpler operands. Consider "
-        #                          "reviewing the roundOfInteger and "
-        #                          "roundOfRealPlusInt theorems in the "
-        #                          "proveit/number/rounding context.")
-
-        # Entire operand is known to be or assumed to be an Integer?
+        #-- Case (1): Round(x)                                       --#
+        #-- Entire operand x is known or assumed to be an Integer.   --#
         if InSet(self.operand, Integers).proven(assumptions=assumptions):
             # Entire operand is known to be or assumed to be an integer
             # so we can simply remove the Round() wrapper
             return self.roundingElimination(assumptions)
-        # Operand is an Add object?
+        #-- Case (2): Round(x) = Round(Add(a,b,...,n))               --#
+        #-- Operand x is an Add object, not known or assumed to be   --#
+        #-- an int, but addends might be reals and ints              --#
         elif isinstance(self.operand, Add):
-            # We have Round(a+b+...+n) but the sum a+b+...+n is not
-            # known to be an integer. We can try to:
-            # (1) partition the sum into a single integer term plus a
-            # sum of (n-1) terms that is known to be real and apply the
-            # extraction method; then,
-            # (2) repeat the process on the resulting extracted expr.
-            #######
-            # OR we could first try to partition all ints away and
-            # see if remainders are all known to be reals … that might
-            # be more fun to do that first
-
+            # Try to partition all suboperands into ints vs. reals
             from proveit import TransRelUpdater
             tempExpr = self
             # for convenience while updating our equation
             eq = TransRelUpdater(tempExpr, assumptions)
 
-            print("entering the elif")                                          # for testing; delete later
             subops = self.operand.operands
-            print("    subops = {}".format(subops))                             # for testing; delete later
 
-            # (1) First see if we can do it all in one fell swoop
-            # BUT later pull out the special 2-addend case to try first
+            # Collect indices of operands known or assumed to be
+            # ints versus reals versus neither
             indices_of_known_ints = []
             indices_of_reals_not_ints = []
             indices_of_unknowns = []
@@ -98,26 +68,20 @@ class Round(Function):
                     indices_of_reals_not_ints.append(i)
                 else:
                     indices_of_unknowns.append(i)
-            print("indices_of_known_ints = {}".format(indices_of_known_ints))   # for testing; delete later
-            print("indices_of_reals_not_ints = {}".format(indices_of_reals_not_ints))   # for testing; delete later
-            print("indices_of_unknowns = {}".format(indices_of_unknowns))       # for testing; delete later
             if len(indices_of_unknowns) == 0:
-                # we should be able to rearrange and partition the
-                # addends into reals and ints, so let's do so
-                print("All operands should be integers or reals!")              # for testing; delete later
+                # each addend is an int or a real, so we should be able
+                # to rearrange and partition the addends as such
                 original_addends = list(subops)
-                desired_order_by_index = list(indices_of_reals_not_ints+indices_of_known_ints)
-                print("    original_addends: {}".format(original_addends))      # for testing; delete later
-                print("    desired_order_by_index: {}".format(desired_order_by_index)) # for testing; delete later
+                desired_order_by_index = list(
+                        indices_of_reals_not_ints+indices_of_known_ints)
+                # commute to put reals first, followed by ints
                 for i in range(len(original_addends)):
-                    init_idx = tempExpr.operand.operands.index(original_addends[desired_order_by_index[i]])
+                    init_idx = tempExpr.operand.operands.index(
+                            original_addends[desired_order_by_index[i]])
                     tempExpr = eq.update(self.innerExpr().operand.commutation(
                         init_idx, i, assumptions=assumptions))
-                print("    After commutation, tempExpr = {}".format(tempExpr))  # for testing; delete later
-                # WORKING OK UP TO HERE — COMMUTATION PROCESS SEEMS FINE
 
-                # next need to make the Add(a, b, ..., n) into an
-                # Add((a, b, ..., j), (j_1, ..., n)) using association
+                # associate the reals
                 if len(indices_of_reals_not_ints) > 1:
                     # associate those elements (already re-arranged to
                     # be at the front of the operand.operands):
@@ -125,6 +89,7 @@ class Round(Function):
                             tempExpr.innerExpr().operand.association(
                                     0, len(indices_of_reals_not_ints),
                                     assumptions=assumptions))
+                # associate the ints
                 if len(indices_of_known_ints) > 1:
                     # associate those elements (already re-arranged to
                     # be at the end of the operand.operands):
@@ -132,48 +97,16 @@ class Round(Function):
                             tempExpr.innerExpr().operand.association(
                                     1, len(indices_of_known_ints),
                                     assumptions=assumptions))
-                print("    After association, tempExpr = {}".format(tempExpr))  # for testing; delete later
-                print("    After association, tempExpr.operand.operands = {}".  # for testing; delete later
-                           format(tempExpr.operand.operands))                   # for testing; delete later
 
                 tempExpr = eq.update(tempExpr.roundingExtraction(1, assumptions))
                 return eq.relation
 
-
-
-            for i in range(len(subops)):
-                print("testing {} in Integers ...".format(subops[i]))           # for testing; delete later
-                print("testing {} in Reals ...".format(subops[0:i]+subops[i+1:])) # for testing; delete later
-                if (InSet(subops[i], Integers).proven(assumptions=assumptions) and
-                    _allProvenReals(subops[0:i]+subops[i+1:], assumptions=assumptions)):
-                    print("tempExpr = {}".format(tempExpr))                     # for testing; delete later
-                    print("tempExpr.operand = {}".format(tempExpr.operand))     # for testing; delete later
-                    print("{} is an int, all others are real".format(subops[i])) # for testing; delete later
-                    tempExpr = eq.update(
-                            tempExpr.roundingExtraction(i, assumptions))
-                    # how to grab just the Round() object in the tempExpr?
-                    print("tempExpr.operands is then: {}".format(tempExpr.operands)) # for testing; delete later
-                    print("tempExpr is an instance of: {}".format(type(tempExpr)))  # for testing; delete later
-                    print("tempExpr.innerExpr = {}".format(tempExpr.innerExpr())) # for testing; delete later
-                    print("tempExpr.innerExpr.operands[0] = {}".format(tempExpr.innerExpr().operands[0])) # for testing; delete later
-                    print("tempExpr.innerExpr.operands[0].operands = {}".format(tempExpr.innerExpr().operands[0].operands)) # for testing; delete later
-                    return eq.relation
-                    # return self.roundingExtraction(i, assumptions)
-            nsub=''
-            if len(subops)==2:
-                xsub = subops[0]
-                nsub = subops[1]
             else:
-                print("len(subops) != 2")
-                xsub = Add(subops[:-1])
-                nsub: subops[-1]
-            if InSet(nsub, Integers).proven(assumptions=assumptions):
-                return roundOfRealPlusInt.specialize(
-                        {x:xsub, n:nsub}, assumptions=assumptions)
-            else:
-                msg = ("{} not yet proven to be in set of Integers.".
-                       format(nsub))
-                raise ProofFailure(InSet(nsub, Integers), assumptions, msg)
+                list_of_unknowns = [subops[i] for i in indices_of_unknowns]
+                msg = ("In Round.doReducedSimplification, operands {} not "
+                       "assumed or proven to be Integers or Reals.".
+                       format(list_of_unknowns))
+                raise ValueError(msg)
         else:
             raise ValueError("Round.doReducedSimplification() method "
                              "expecting simpler operands. Consider "
@@ -194,7 +127,6 @@ class Round(Function):
         For the case where the operand is of the form x = real + int,
         see the roundingExtraction() method.
         '''
-        print("Entering roundingElimination() method.")                         # for testing; delete later
         from proveit._common_ import x
         from ._theorems_ import roundOfInteger
 
@@ -221,12 +153,12 @@ class Round(Function):
         For the case where the entire operand x is itself an integer,
         see the roundingElimination() method.
 
-        This works only if x is an instance of the Add class at its
-        outermost level, e.g. x = Add(a, b, …, n). The operands of that
-        Add class can be other things, but the extraction is guaranteed
-        to work only if the inner operands a, b, etc., are simple.
+        This works only if the operand x is an instance of the Add
+        class at its outermost level, e.g. x = Add(a, b, …, n). The
+        operands of that Add class can be other things, but the
+        extraction is guaranteed to work only if the inner operands
+        a, b, etc., are simple.
         '''
-        print("Entering roundingExtraction() method.")                          # for testing; delete later
         from proveit import TransRelUpdater
         from proveit._common_ import n, x, y
         from proveit.logic import Equals
@@ -238,31 +170,15 @@ class Round(Function):
         assumptions = defaults.checkedAssumptions(assumptions)
 
         expr = self
-        print("    expr = {}".format(expr))                                      # for testing; delete later
-        print("    expr.innerExpr() = {}".format(expr.innerExpr()))              # for testing; delete later
-        print("    expr.innerExpr().operand = {}".format(expr.innerExpr().operand)) # for testing; delete later
 
         # for convenience while updating our equation
         eq = TransRelUpdater(expr, assumptions)
-        print("    eq.relation = {}".format(eq.relation))                       # for testing; delete later
 
         # first use Add.commutation to (re-)arrange operands to comform
         # to theorem format, using user-supplied idx_to_extract
         if isinstance(self.operand, Add):
-            print("    Operand is of class 'Add'")                              # for testing; delete later
-            print("    item to extract is {0} and index {1}".                   # for testing; delete later
-                  format(self.operand.operands[idx_to_extract], idx_to_extract)) # for testing; delete later
-            print("    self.innerExpr().operand = {}".format(self.innerExpr().operand)) # for testing; delete later
-            print("    expr.innerExpr().operand = {}".format(expr.innerExpr().operand)) # for testing; delete later
             expr = eq.update(self.innerExpr().operand.commutation(idx_to_extract,
                     len(self.operand.operands)-1, assumptions=assumptions))
-            print("After COMMUTATION eq.update():")                             # for testing; delete later
-            print("    expr = {}".format(expr))                                 # for testing; delete later
-            print("    expr.operand = {}".format(expr.operand))                 # for testing; delete later
-            print("    expr.operand.operands = {}".format(expr.operand.operands)) # for testing; delete later
-            print("    eq.relation = {}".format(eq.relation))                   # for testing; delete later
-            print("    eq.relation.rhs = {}".format(eq.relation.rhs))           # for testing; delete later
-            # print("    eq.relation.rhs.exprInfo() = {}".format(eq.relation.rhs.exprInfo()))           # for testing; delete later
 
             # An association step -- because the later application of
             # the roundOfRealPlusInt thm produces a grouping of the 
@@ -273,14 +189,6 @@ class Round(Function):
                 expr = eq.update(expr.innerExpr().operand.association(
                         0, len(expr.operand.operands)-1, assumptions=assumptions))
 
-            print("AFTER ASSOCIATION eq.update():")                             # for testing; delete later
-            print("    expr = {}".format(expr))                                 # for testing; delete later
-            print("    expr.operand = {}".format(expr.operand))                 # for testing; delete later
-            print("    expr.operand.operands = {}".format(expr.operand.operands)) # for testing; delete later
-            print("    expr.operand.operands[0] = {}".format(expr.operand.operands[0])) # for testing; delete later
-            print("    eq.relation = {}".format(eq.relation))                   # for testing; delete later
-            print("    eq.relation.rhs = {}".format(eq.relation.rhs))           # for testing; delete later
-
 
             # then update by applying the roundOfRealPlusInt thm
             x_sub = expr.operand.operands[0]
@@ -290,17 +198,14 @@ class Round(Function):
 
             return eq.relation
         else:
-            raise ValueError("Round operand not of class 'Add'.")
+            raise ValueError("In attempting Round(x).roundingExtraction(), "
+                             "the operand x is not of class 'Add'.")
 
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
         Given a number set number_set, attempt to prove that the given
-        expression is in that number set using the appropriate closure
-        theorem.
-        Created: 3/28/2020 by wdc, based on similar methods in Add, Exp,
-                 etc., classes.
-        Last Modified: 3/28/2020 by wdc. Creation.
-        Once established, these authorship notations can be deleted.
+        Round expression is in that number set using the appropriate
+        closure theorem.
         '''
         from proveit._common_ import x
         from proveit.logic import InSet
@@ -323,16 +228,10 @@ class Round(Function):
                "%s set"%str(number_set))
         raise ProofFailure(InSet(self, number_set), assumptions, msg)
 
-# utility function
-def _allProvenReals(aTuple, assumptions):
-    print("Entering _allProvenReals()")                                         # for testing; delete later
-    for elem in aTuple:
-        if not InSet(elem, Reals).proven(assumptions=assumptions):
-            print("{} not in Reals!".format(elem))                              # for testing; delete later
-            return False
-    return True
 
 # Register these generic expression equivalence methods:
-InnerExpr.register_equivalence_method(Round, 'roundingElimination',
-                                      'roundingEliminated', 'roundingEliminate')
+InnerExpr.register_equivalence_method(
+        Round, 'roundingElimination', 'roundingEliminated', 'roundingEliminate')
+InnerExpr.register_equivalence_method(
+        Round, 'roundingExtraction', 'roundingExtracted', 'roundingExtract')
             
