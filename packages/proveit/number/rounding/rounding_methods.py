@@ -8,7 +8,7 @@ def apply_roundingElimination(expr, roundingEliminationThm,
     respective F(x).roundingElimination() method.
     For the trivial case of F(x) where the operand x is already
     an integer, derive and return this rounding F expression equated
-    with the operand itself: F(x) = x. For example, |- Ceil(x) = x.
+    with the operand itself: |- F(x) = x. For example, |- Ceil(x) = x.
     Assumptions may be necessary to deduce necessary conditions
     (for example, that x actually is an integer) for the simplification.
     This method is utilized by the F(x).doReducedSimplification()
