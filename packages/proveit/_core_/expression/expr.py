@@ -90,6 +90,20 @@ class Expression(metaclass=ExprType):
             if not hasattr(self._meaningData, '_coreInfo'):
                 # initialize the data of self._meaningData
                 self._meaningData._coreInfo = tuple(coreInfo)
+        '''
+        if not hasattr(self, '_genericExpr'):
+            self._genericExpr = self._generic_version()
+        if self._genericExpr is self:
+            # Create the meaning data.
+            object_rep_fn = lambda expr : hex(expr._meaning_id)
+            self._meaningData = meaningData(self._generate_unique_rep(object_rep_fn, 
+                                                                      coreInfo))
+            if not hasattr(self._meaningData, '_coreInfo'):
+                # initialize the data of self._meaningData
+                self._meaningData._coreInfo = tuple(coreInfo)            
+        else:
+            self._meaningData = self._genericExpr._meaningData
+        '''
         
         # The style data is shared among Expressions with the same structure and style -- this will contain the 'png' generated on demand.
         self._styleData = styleData(self._generate_unique_rep(lambda expr : hex(expr._style_id), coreInfo, styles))
@@ -117,8 +131,8 @@ class Expression(metaclass=ExprType):
     def _generic_version(self):
         '''
         Retrieve (and create if necessary) the generic version of this 
-        expression in which deterministic 'dummy' variables are used as Lambda
-        parameters, determines the 'meaning' of the expression.
+        expression in which deterministic 'dummy' variables are used as 
+        Lambda parameters, determines the 'meaning' of the expression.
         '''
         if hasattr(self, '_genericExpr'):
             return self._genericExpr
@@ -319,9 +333,9 @@ class Expression(metaclass=ExprType):
     def innerExpr(self):
         '''
         Return an InnerExpr object to wrap the expression and
-        access any inner sub-expression for the purpose of creating
-        a lambda expression to replace the inner expression within
-        this one or change its styles.
+        access any inner sub-expression for the purpose of replacing
+        the inner expression, or change its styles, or relabeling its
+        variables.
         '''
         from .inner_expr import InnerExpr
         return InnerExpr(self)
@@ -554,27 +568,49 @@ class Expression(metaclass=ExprType):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary 
-        which maps Expressions to Expressions.  When used for instantiation,
-        this should specifically map Variables to Expressions.  When there
-        is a replacement for a Lambda parameter variable, it only impacts the
-        inner scope of the Lambda if the replacement is also a variable and
-        thus only a relabeling of the parameter.  Otherwise, only occurrences
-        of the Variable external to the Lambda map will be substituted.
+        which maps Expressions to Expressions.  When used for 
+        instantiation, this should specifically map Variables to
+        Expressions.  When there is a replacement for a Lambda parameter
+        variable, it only impacts the inner scope of the Lambda if the 
+        replacement is also a variable and thus only a relabeling of the
+        parameter.  Otherwise, only occurrences of the Variable external
+        to the Lambda map will be substituted.
         
         reserved_vars is used internally to protect the "scope" of a
         Lambda map.  For more details, see the Lambda.substitution
         documentation.
 
         'assumptions' and 'requirements' are used when an operator is
-        substituted by a Lambda map that has iterated parameters such that 
-        the length of the parameters and operands must be proven to be equal.
-        For more details, see Operation.substituted, Lambda.apply, and
-        Iter.substituted (which is the sequence of calls involved).
+        substituted by a Lambda map that has iterated parameters such 
+        that the length of the parameters and operands must be proven to
+        be equal.  For more details, see Operation.substituted, 
+        Lambda.apply, and Iter.substituted (which is the sequence of 
+        calls involved).
         '''
         if len(repl_map)>0 and (self in repl_map):
             return repl_map[self]._restrictionChecked(reserved_vars)
         else:
-            return self
+            subbed_sub_exprs = [sub_expr.substituted(repl_map, reserved_vars,
+                                                     assumptions, requirements)
+                                for sub_expr in self._subExpressions]
+            return self.__class__._make(self._coreInfo,
+                                        dict(self._styleData.styles),
+                                        subbed_sub_exprs)
+    
+    def relabeled(self, relabel_map):
+        '''
+        Return a new expression in which all instances of the
+        variables as keys in the 'relabel_map' dictionary are replaced 
+        by the corresponding values.  The replacements must be
+        Variable objects, or a TypeError will be raised.
+        '''
+        relabeled_sub_exprs = [sub_expr.relabeled(relabel_map) 
+                               for sub_expr in self._subExpressions]
+        if self._subExpressions != relabeled_sub_exprs:
+            return self.__class__._make(self._coreInfo, 
+                                        dict(self._styleData.styles),
+                                        relabeled_sub_exprs)
+        return self
     
     def copy(self):
         '''

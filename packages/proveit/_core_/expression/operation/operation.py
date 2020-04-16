@@ -38,8 +38,8 @@ class Operation(Expression):
         if styles is None: styles = dict()
         if hasattr(self.__class__, '_operator_') and operator_or_operators==self.__class__._operator_:
             operator = operator_or_operators
-            if Expression.contexts[operator._style_id] != operator.context:
-                raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
+            #if Expression.contexts[operator._style_id] != operator.context:
+            #    raise OperationError("Expecting '_operator_' Context to match the Context of the Operation sub-class.  Use 'context=__file__'.")
         if isinstance(operator_or_operators, ExprRange):
             operator_or_operators = [operator_or_operators]
         if isinstance(operand_or_operands, ExprRange):
@@ -403,7 +403,8 @@ class Operation(Expression):
         keep derivation rules (i.e., instantiation) simple.  For details,
         see the Iter.substituted documentation.
         '''
-        from proveit import Lambda, compositeExpression
+        from proveit import (Lambda, compositeExpression, ExprTuple, 
+                             ExprRange)
         
         # Check reserved variable restrictions for scoping volations.
         if len(repl_map)>0 and (self in repl_map):
@@ -419,8 +420,8 @@ class Operation(Expression):
             self.operand_or_operands.substituted(repl_map, reserved_vars, 
                                                  assumptions, requirements)
         
-        # Check if the operator is being substituted by a Lambda map in which
-        # case we should perform full operation substitution.
+        # Check if the operator is being substituted by a Lambda map in
+        # which case we should perform full operation substitution.
         if len(subbed_operators)==1:
             subbed_operator = subbed_operators[0]
             if isinstance(subbed_operator, Lambda):
@@ -430,9 +431,9 @@ class Operation(Expression):
                 
                 subbed_op_lambda = subbed_operator
                 if not reserved_vars is None:
-                    # The reserved variables of the lambda body excludes the 
-                    # lambda parameters (i.e., the parameters mask externally 
-                    # reserved variables).
+                    # The reserved variables of the lambda body excludes
+                    # the lambda parameters (i.e., the parameters mask 
+                    # externally reserved variables).
                     lambda_expr_res_vars = \
                         {k:v for k, v in reserved_vars.items() 
                          if k not in subbed_op_lambda.parameterVarSet}
@@ -441,35 +442,42 @@ class Operation(Expression):
                 subbed_operator_body = subbed_op_lambda.body
                 subbed_operator_body._restrictionChecked(lambda_expr_res_vars)
                 
-                if hasattr(self, 'operand'):
-                    # A single operand as a single argument.
-                    operand = subbed_operand_or_operands
-                    return subbed_operator.apply(operand,
-                                                 assumptions=assumptions,
-                                                 requirements=requirements)
+                if len(self.operands)==1 and \
+                        not isinstance(self.operands[0], ExprRange):
+                    # A single operand case (even if that operand 
+                    # happens to be a tuple).
+                    subbed_operands = [subbed_operand_or_operands]
                 else:
-                    # Multiple operands as multiple arguments.
-                    subbed_operands = \
-                        compositeExpression(subbed_operand_or_operands)
-    
-                    return subbed_operator.apply(*subbed_operands, 
-                                                 assumptions=assumptions, 
-                                                 requirements=requirements)
+                    subbed_operands = subbed_operand_or_operands
+                return subbed_operator.apply(*subbed_operands, 
+                                             assumptions=assumptions, 
+                                             requirements=requirements)
         
-        # Remake the Expression with substituted operator and/or operands
+        if isinstance(subbed_operand_or_operands, ExprTuple) \
+                and len(subbed_operand_or_operands)==1 \
+                and not isinstance(subbed_operand_or_operands[0], ExprRange) \
+                and not isinstance(subbed_operand_or_operands[0], ExprTuple):
+            # An 'operands' ExprTuple of a single, simple (non-range and 
+            # non-tuple) expression is just a single operand.
+            subbed_operand_or_operands = subbed_operand_or_operands[0]
+        
+        # Remake the Expression with substituted operator and/or 
+        # operands
         if len(subbed_operators)==1:
-            # If it is a single operator that is a literal operator of an 
-            # Operation class  defined via an "_operator_" class attribute, 
-            # then create the Operation of that class.
+            # If it is a single operator that is a literal operator of 
+            # an Operation class  defined via an "_operator_" class 
+            # attribute, then create the Operation of that class.
             operator = subbed_operators[0]
             if operator in Operation.operationClassOfOperator:
                 op_class = Operation.operationClassOfOperator[operator]
                 if op_class != self.__class__:
-                    # Don't transfer the styles; they may not apply in the same 
-                    # manner in the setting of the new operation.
-                    return op_class._make(['Operation'], styles=None, 
-                                          subExpressions=[operator, 
-                                                          subbed_operand_or_operands])
+                    # Don't transfer the styles; they may not apply in 
+                    # the same manner in the setting of the new 
+                    # operation.
+                    return op_class._make(
+                            ['Operation'], styles=None, 
+                            subExpressions=[operator,
+                                            subbed_operand_or_operands])
         return self.__class__._make(self._coreInfo, self.getStyles(), 
                                     [subbed_operator_or_operators, 
                                      subbed_operand_or_operands])

@@ -27,9 +27,11 @@ class IndexedVar(Operation):
         style is changed.
         '''
         from proveit._core_.expression.composite.composite import compositeExpression
+        from proveit._core_.expression.label.label import TemporaryLabel
         if not isinstance(var, Variable) and not isinstance(var, IndexedVar):
-            raise TypeError("'var' being indexed should be a Variable an IndexedVar "
-                            "itself, got %s"%str(var))
+            if not isinstance(var, TemporaryLabel):
+                raise TypeError("'var' being indexed should be a Variable an IndexedVar "
+                                "itself, got %s"%str(var))
         if isinstance(var, IndexedVar):
             if flatten_nested_indexing:
                 styles = {'multi_indexed_var':'flat'}

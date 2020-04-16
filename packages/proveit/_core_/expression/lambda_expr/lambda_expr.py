@@ -1,7 +1,6 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented, 
                                             ImproperSubstitution, ScopingViolation,
                                             free_vars)
-from proveit._core_.expression.conditional import Conditional
 from proveit._core_.expression.label.var import safeDummyVars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
@@ -12,6 +11,7 @@ def getParamVar(parameter):
     parameter variable (that is introduced in the new scopse) 
     is the variable of the Indexed expression.
     '''
+    from proveit._core_.expression.label.label import TemporaryLabel
     from proveit._core_.expression.label import Variable
     from proveit._core_.expression.composite import ExprRange
     from proveit._core_.expression.operation.indexed_var import IndexedVar 
@@ -24,8 +24,12 @@ def getParamVar(parameter):
         indexed_var = parameter.body
         return indexed_var.var
     elif isinstance(parameter, IndexedVar):
-        return parameter.var
-    elif isinstance(parameter, Variable):
+        var = parameter.var
+        while isinstance(var, IndexedVar):
+            # May be a nested IndexedVar.  We want the innermost var.
+            var = var.var 
+        return var
+    elif isinstance(parameter, Variable) or isinstance(parameter, TemporaryLabel):
         return parameter
     else:
         raise TypeError('Parameter must be a Variables, Indexed variable, or '
@@ -54,9 +58,8 @@ class Lambda(Expression):
         
         _generic_expr is used internally for efficiently rebuilding a Lambda.
         '''
-        from proveit._core_.expression.composite import (compositeExpression, 
-                                                         singleOrCompositeExpression, 
-                                                         ExprRange)
+        from proveit._core_.expression.composite import (
+                compositeExpression, singleOrCompositeExpression, ExprRange)
         self.parameters = compositeExpression(parameter_or_parameters)
         parameterVars = [getParamVar(parameter) for parameter in self.parameters]
         if len(self.parameters) == 1:
@@ -70,6 +73,7 @@ class Lambda(Expression):
         if len(self.parameterVarSet) != len(self.parameters):
             raise ParameterCollisionError(self.parameters)
         body = singleOrCompositeExpression(body)
+                
         if not isinstance(body, Expression):
             raise TypeError('A Lambda body must be of type Expression')
         if isinstance(body, ExprRange):
@@ -79,25 +83,17 @@ class Lambda(Expression):
                 
         if _generic_expr is None:
             # Create a "generic" version (if not already) of the Lambda 
-            # expression since the choice of parameter labeling is irrelevant.
-            generic_body = self.body._generic_version()
-            generic_body_vars = generic_body._used_vars()
-            disallowed_vars = (generic_body_vars-self.parameterVarSet)
-            generic_param_vars = tuple(safeDummyVars(len(self.parameterVars), 
-                                                     *disallowed_vars))
-            if generic_param_vars != self.parameterVars:
-                relabel_map = {param:generic_param for param, generic_param 
-                               in zip(self.parameterVars, generic_param_vars)}
-                # temporarily disable automation during the relabeling process
-                prev_automation = defaults.automation
+            # expression since the choice of parameter labeling is 
+            # irrelevant.
+            
+            # Temporarily disable automation while making the
+            # generic version.
+            prev_automation = defaults.automation
+            try:
                 defaults.automation = False
-                generic_parameters = self.parameters._generic_version()
-                generic_parameters = generic_parameters.relabeled(relabel_map)
-                generic_body = generic_body.relabeled(relabel_map)
-                genericExpr = Lambda(generic_parameters, generic_body)
-                defaults.automation = prev_automation # restore to previous value
-            else:
-                genericExpr = self
+                genericExpr = self._generic_version()
+            finally:
+                defaults.automation = prev_automation
         elif _generic_expr == '.':
             genericExpr = self
         else:
@@ -118,6 +114,71 @@ class Lambda(Expression):
         parameters, body = subExpressions
         return Lambda(parameters, body, _generic_expr=genericExpr)\
                     .withStyles(**styles)
+
+    def _generic_version(self):
+        '''
+        Retrieve (and create if necessary) the generic version of this 
+        Lambda expression in which its parameters are replaced with
+        deterministic 'dummy' variables.
+        '''
+        if hasattr(self, '_genericExpr'):
+            return self._genericExpr
+
+        from proveit._core_.expression.operation.indexed_var import IndexedVar
+        from proveit._core_.expression.composite import ExprTuple
+        generic_body = self.body._generic_version()
+        
+        # If there are any Indexed variables, try to replace them
+        # with temporary dummy variables: e.b., a_i -> q.
+        # If they don't occur any other way, we can replace them
+        # in the generic version.
+        indexed_var_params = [param for param in self.parameters 
+                              if isinstance(param, IndexedVar)]
+        repl_map = dict()
+        if len(indexed_var_params) > 0:
+            indexed_var_replacements = safeDummyVars(len(indexed_var_params),
+                                                     generic_body)
+            repl_map = {indexed_var:repl for indexed_var, repl 
+                        in zip(indexed_var_params, indexed_var_replacements)}
+            generic_body = generic_body.substituted(repl_map)
+            generic_body_free_vars = generic_body._free_vars()
+            for indexed_var_param in indexed_var_params:
+                if getParamVar(indexed_var_param) in generic_body_free_vars:
+                    # The variable of indexed_var_param occurs in other
+                    # forms than just the indexed_var_param itself.
+                    # We can't know for sure if this is incorrect
+                    # (a_i could have been replaced with a_n in some
+                    # occurrence assuming i=n), but we do need to
+                    # revert the replacement to be safe.
+                    generic_body = generic_body.substituted(
+                            {repl_map[indexed_var_param]:indexed_var_param})
+                    repl_map.pop(indexed_var_param)
+        if len(repl_map) > 0:
+            # Made indexed variable replacements.
+            parameters = \
+                ExprTuple(*[repl_map[param] if param in repl_map else param
+                            for param in self.parameters])
+            parameter_vars = [getParamVar(param) for param in parameters]
+            parameter_var_set = set(parameter_vars)
+        else:
+            parameters = self.parameters
+            parameter_vars = self.parameterVars
+            parameter_var_set = self.parameterVarSet
+        
+        generic_body_vars = generic_body._used_vars()
+        disallowed_vars = (generic_body_vars-parameter_var_set)
+        generic_param_vars = tuple(safeDummyVars(len(parameter_vars), 
+                                                 *disallowed_vars))
+        if len(repl_map) > 0 or generic_param_vars != parameter_vars:
+            # Create the generic version via relabeling.
+            relabel_map = {param:generic_param for param, generic_param 
+                           in zip(parameter_vars, generic_param_vars)}
+            generic_parameters = parameters._generic_version()
+            generic_parameters = generic_parameters.relabeled(relabel_map)
+            generic_body = generic_body.relabeled(relabel_map)
+            return Lambda(generic_parameters, generic_body)
+        else:
+            return self
     
     def extractArgument(self, mappedExpr):
         '''
@@ -129,7 +190,7 @@ class Lambda(Expression):
         '''
         assert len(self.parameters) == 1, ("Use the 'extractArguments' method "
                                            "when there is more than one parameter")
-        return self.extractParameters(mappedExpr)[0]
+        return self.extractArguments(mappedExpr)[0]
 
     def extractArguments(self, mappedExpr):
         '''
@@ -232,7 +293,8 @@ class Lambda(Expression):
     
     def apply(self, *operands, assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Apply this lambda map onto the given operands, returning the
+        Apply this lambda map onto the given operands (a beta reduction
+        in the lambda calculus terminology), returning the
         expression that results from applying the map.  Assumptions
         may be necessary to prove requirements that will be passed back
         if a requirements list is provided.  Requirements may be needed
@@ -257,12 +319,11 @@ class Lambda(Expression):
         keep derivation rules (i.e., instantiation) simple.  For details,
         see the ExprRange.substituted documentation.
         '''
-        repl_map = dict()
-        return Lambda._apply(self.parameters, self.body, repl_map, *operands,
+        return Lambda._apply(self.parameters, self.body, *operands,
                              assumptions=assumptions, requirements=requirements)
         
     @staticmethod 
-    def _apply(parameters, body, repl_map, *operands, 
+    def _apply(parameters, body, *operands,
                assumptions=USE_DEFAULTS, requirements=None):
         '''
         Static method version of Lambda.apply which is convenient for 
@@ -274,14 +335,16 @@ class Lambda(Expression):
         '''
         from proveit import (ExprTuple, ExprRange, ProofFailure, 
                              safeDummyVar, Len)
-        from proveit.logic import Equals
-                
+        from proveit.logic import Equals, EvaluationError
+        
         # We will be appending to the requirements list if it is given
         # (or a throw-away list if it is not).
         if requirements is None: requirements = []
         assumptions = defaults.checkedAssumptions(assumptions)
         
-        # We will be matching operands with parameters in the proper order.
+        # We will be matching operands with parameters in the proper 
+        # order and adding corresponding entries to the replacement map.
+        repl_map = dict()
         operands_iter = iter(operands)
         try:
             # Loop through each parameter entry and match it with corresponding
@@ -292,6 +355,7 @@ class Lambda(Expression):
             # n+1.
             for parameter in parameters:
                 if isinstance(parameter, ExprRange):
+                    from proveit.number import zero, one
                     # This is a iterated parameter which corresponds with
                     # one or more operand entries in order to match the
                     # element-wise length.
@@ -336,16 +400,42 @@ class Lambda(Expression):
                     repl_map[getParamVar(parameter)] = param_tuple
                     repl_map[param_tuple] = ExprTuple(*param_operands)
                 else:
-                    # This is a singular parameter which should match with a
-                    # singular operator.
+                    # This is a singular parameter which should match
+                    # with a singular operator or range(s) with known
+                    # length summing up to 1 (may have zero length
+                    # ranges).
                     operand = next(operands_iter)
                     if isinstance(operand, ExprRange):
-                        raise LambdaApplicationError(parameters, body, 
-                                                     operands, assumptions,
-                                                     "Singular parameters must "
-                                                     "correspond with singular "
-                                                     "operands: %s vs %s."
-                                                     %(parameter, operands))
+                        # Rangle lengths must be known values and sum 
+                        # to 1.
+                        try:
+                            while True:
+                                operand_len_evaluation = \
+                                    Len(operand).evaluation(
+                                            assumptions=assumptions)
+                                requirements.append(operand_len_evaluation)
+                                operand_len_val = operand_len_evaluation.rhs
+                                if operand_len_val == one:
+                                    break # Good to go.
+                                elif operand_len_val == zero:
+                                    # Keep going until we get a length
+                                    # of 1.
+                                    operand = next(operands_iter)
+                                else:
+                                    # No good.
+                                    raise LambdaApplicationError(
+                                            parameter, body, operands,
+                                            assumptions,
+                                            "Parameter/argument length "
+                                            "mismatch 1 vs %s"
+                                            %operand_len_evaluation.rhs)
+                        except EvaluationError:                                                        
+                            raise LambdaApplicationError(
+                                    parameters, body, operands, assumptions,
+                                    "Singular parameters must correspond "
+                                    "with singular operands or ranges with "
+                                    "lengths known to sum to 1: %s vs %s."
+                                    %(parameter, operand))
                     repl_map[parameter] = operand
         except StopIteration:
             raise LambdaApplicationError(parameters, body, 
@@ -363,8 +453,14 @@ class Lambda(Expression):
                                          "Too many arguments")       
         except StopIteration:
             pass # Good.  All operands were consumed.
-        return body.substituted(repl_map, assumptions=assumptions, 
-                                requirements=requirements)
+        try:
+            return body.substituted(repl_map, assumptions=assumptions, 
+                                    requirements=requirements)
+        except ImproperSubstitution as e:
+            raise LambdaApplicationError(parameters, body, 
+                                         operands, assumptions,
+                                         "Improper substitution: %s "
+                                         %str(e))
     
     def _inner_scope_sub(self, repl_map, reserved_vars, 
                          assumptions, requirements):

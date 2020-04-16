@@ -15,3 +15,6 @@ from .composite import (
         varRange, RangeInstanceError)
 from .label import (Label, Literal, Variable, DuplicateLiteralError, 
                     safeDummyVar, safeDefaultOrDummyVar)
+
+InnerExpr.register_equivalence_method(ExprRange, 'partition', 'partitioned', 'split')
+InnerExpr.register_equivalence_method(ExprTuple, 'merger', 'merged', 'merge')

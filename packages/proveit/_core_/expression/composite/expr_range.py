@@ -239,7 +239,7 @@ class ExprRange(Expression):
                                                     assumptions, requirements)
         subbed_end = self.end_index.substituted(repl_map, reserved_vars, 
                                                 assumptions, requirements)
-                
+        
         # Check if any of the IndexedVars whose index is the ExprRange
         # parameter is being expanded by the repl_map.
         must_expand = False
@@ -253,7 +253,7 @@ class ExprRange(Expression):
                                           ExprRange):
                     raise ImproperSubstitution(
                             "Improper indexed variable expansion: expecting "
-                            "the  repl_map value for '%s' to be an range "
+                            "the repl_map value for '%s' to bean range "
                             "of indexed variables, got '%s' instead."
                             %(indexed_var.var, indexed_var_range_tuple))
                     
@@ -262,12 +262,23 @@ class ExprRange(Expression):
                 must_expand = True
         
         if not must_expand:
-            # No need to worry about expanding IndexedVar's.  Just call
-            # 'substituted' on the Lambda map sub-expression.
-            subbed_lambda_map = lambda_map.substituted(
-                    repl_map, reserved_vars, assumptions, requirements)
-            yield ExprRange(None, None, subbed_start, subbed_end, 
-                            _lambda_map = subbed_lambda_map)
+            # No need to worry about expanding IndexedVar's.
+            if subbed_start==subbed_end:
+                # The start and end are the same, so
+                # just get the one lambda map instance and
+                # yield this instance after calling 'substituted' on it.
+                lambda_map_instance = lambda_map.apply(
+                        subbed_start, assumptions=assumptions,
+                        requirements=requirements)
+                yield lambda_map_instance.substituted(
+                        repl_map, reserved_vars, assumptions, requirements)
+            else:
+                # Just call 'substituted' on the Lambda map 
+                # sub-expression and rebuild the ExprRange.
+                subbed_lambda_map = lambda_map.substituted(
+                        repl_map, reserved_vars, assumptions, requirements)
+                yield ExprRange(None, None, subbed_start, subbed_end, 
+                                _lambda_map = subbed_lambda_map)
             return True
         
         # Need to expand IndexedVar's.  The expansions must be defined 
@@ -485,9 +496,9 @@ class ExprRange(Expression):
         from proveit._common_ import f, i, j, k
         from proveit.logic import Equals
         from proveit.number import Add, one, subtract
-        from proveit.core_expr_types.ranges._axioms_ import (
+        from proveit.core_expr_types.tuples._axioms_ import (
                 range_extension_def)
-        from proveit.core_expr_types.ranges._theorems_ import (
+        from proveit.core_expr_types.tuples._theorems_ import (
                 partition_front, partition_back, partition)
         
         lambda_map = self.lambda_map

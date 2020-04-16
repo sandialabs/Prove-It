@@ -1,3 +1,4 @@
+import types
 from .composite import Composite, _simplifiedCoord
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
@@ -285,11 +286,10 @@ class ExprTuple(Composite, Expression):
         subbed_exprs = []
         for expr in self:
             if isinstance(expr, ExprRange):
-                # ExprRange.substituted is a generator that yields items to be
-                # embedded into the tuple.
-                for subbed_item in expr.substituted(repl_map, reserved_vars, 
-                                                    assumptions, requirements):
-                    subbed_exprs.append(subbed_item)
+                # ExprRange.substituted is a generator that yields items
+                # to be embedded into the tuple.
+                subbed_exprs.extend(expr.substituted(
+                        repl_map, reserved_vars, assumptions, requirements))
             else:
                 subbed_expr = expr.substituted(repl_map, reserved_vars, 
                                                assumptions, requirements)
@@ -307,15 +307,18 @@ class ExprTuple(Composite, Expression):
         from proveit._core_.expression.lambda_expr import Lambda
         from .expr_range import ExprRange
         from proveit.relation import TransRelUpdater
-        from proveit.iteration._theorems_ import (merge, merge_front, merge_back,
-                                                  merge_pair, merge_series)
+        from proveit.core_expr_types.tuples._theorems_ import (
+                merge, merge_front, merge_back, merge_extension,
+                merge_pair, merge_series)
         from proveit._common_ import f, i, j, k, l, x
+        from proveit.number import Add, one
         
         # A convenience to allow successive update to the equation via 
         # transitivities (starting with self=self).
         eq = TransRelUpdater(self, assumptions)
         
-        # Determine the position of the first Iter item and get the lambda map.
+        # Determine the position of the first Iter item and get the 
+        # lambda map.
         first_iter_pos = len(self)
         lambda_map = None
         for _k, item in enumerate(self):
@@ -350,8 +353,8 @@ class ExprTuple(Composite, Expression):
         
         if len(eq.expr) == 2:
             # Merge a pair.
-            if isinstance(eq.expr[0], Iter):
-                if isinstance(eq.expr[1], Iter):
+            if isinstance(eq.expr[0], ExprRange):
+                if isinstance(eq.expr[1], ExprRange):
                     # Merge a pair of Iters.
                     item = eq.expr[1]
                     other_lambda_map = Lambda(item.lambda_map.parameter, 
@@ -367,11 +370,16 @@ class ExprTuple(Composite, Expression):
                                           l:lSub}, assumptions=assumptions)
                 else:
                     # Merge an Iter and a singular item.
-                    iSub, jSub = eq.expr[0].start_index, eq.expr[0].end_index
-                    kSub = lambda_map.extractArgument(eq.expr[1])
-                    merger = \
-                        merge_back.specialize({f:lambda_map, i:iSub, j:jSub,
-                                               k:kSub}, assumptions=assumptions)                    
+                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index                        
+                    _k = lambda_map.extractArgument(eq.expr[1])
+                    if _k == Add(_j, one):
+                        merger = merge_extension.specialize(
+                                {f:lambda_map, i:_i, j:_j}, 
+                                assumptions=assumptions)                    
+                    else:
+                        merger = merge_back.specialize(
+                                {f:lambda_map, i:_i, j:_j, k:_k}, 
+                                assumptions=assumptions)                    
             else:
                 # Merge a singular item and Iter.
                 iSub = lambda_map.extractArgument(eq.expr[0])

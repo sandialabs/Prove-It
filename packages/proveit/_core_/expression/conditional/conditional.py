@@ -12,12 +12,16 @@ class Conditional(Expression):
     '''
     
     def __init__(self, value_or_values, condition_or_conditions):    
-        from proveit._core_.expression.composite.composite import compositeExpression
+        from proveit._core_.expression.composite import (
+                compositeExpression, ExprRange)
 
         self.values = compositeExpression(value_or_values)
         if len(self.values) == 1:
             # has a single value
             self.value = self.values[0]
+            if isinstance(self.value, ExprRange):
+                raise TypeError('Value must not be an ExprRange: %s'
+                                %self.value)
             self.value_or_values = self.value
         else:
             self.value_or_values = self.values
@@ -25,6 +29,9 @@ class Conditional(Expression):
         if len(self.conditions) == 1:
             # has a single value
             self.condition = self.conditions[0]
+            if isinstance(self.condition, ExprRange):
+                raise TypeError('Condition must not be an ExprRange: %s'
+                                %self.condition)
             self.condition_or_conditions = self.condition
         else:
             self.condition_or_conditions = self.conditions
@@ -59,16 +66,16 @@ class Conditional(Expression):
         inner_str = '; '.join(value.string() + ' if ' + condition.string() \
                               for value, condition in zip(self.values, 
                                                           self.conditions))
-        return '{' + inner_str +'}'
+        return '{' + inner_str +'.'
     
     def latex(self, **kwargs):
         inner_str = r' \\ '.join(value.latex() + r' & \textrm{if} &  ' + condition.latex() \
                                   for value, condition in zip(self.values, 
                                                               self.conditions))
         inner_str = r'\begin{array}{ccc}' + inner_str + r'\end{array}'
-        inner_str = r'\left\{' + inner_str + r'\right.'
-        if kwargs.get('fence', False):
-            return r'\left[' + inner_str + r'\right] '
+        inner_str = r'\left\{' + inner_str + r'\right..'
+        #if kwargs.get('fence', False):
+        #    return r'\left[' + inner_str + r'\right] '
         return inner_str
     
     '''
@@ -99,7 +106,8 @@ class Conditional(Expression):
         For a Conditional, a condition is added to the assumptions when 
         'substituted' is called on the value corresponding to that condition.
         '''
-            
+        from proveit import ExprRange
+        from proveit.logic import And
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
             return repl_map[self]._restrictionChecked(reserved_vars)
@@ -111,6 +119,11 @@ class Conditional(Expression):
             # First perform substitution on the conditions:
             subbed_cond = condition.substituted(repl_map, reserved_vars, 
                                                 assumptions, requirements)
+            if isinstance(subbed_cond, And) and len(subbed_cond.operands)==1 \
+                    and not isinstance(subbed_cond.operands[0], ExprRange):
+                # Automatically replaced a condition conjunction with
+                # a single operand with just that operand.
+                subbed_cond = subbed_cond.operands[0]
             subbed_conditions.append(subbed_cond)
             # Next perform substitution on the value, adding the condition
             # as an assumption.            

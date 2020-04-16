@@ -740,7 +740,7 @@ class KnownTruth:
         '''
         from proveit import (Variable, Operation, Conditional, Lambda, 
                              singleOrCompositeExpression, 
-                             ExprTuple, Iter, IndexedVar)
+                             ExprTuple, ExprRange, IndexedVar)
         from proveit.logic import Forall
         from .proof import Instantiation, ProofFailure
         
@@ -765,35 +765,32 @@ class KnownTruth:
         # For any entrys in repl_map with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
         # For example f(x,y):g(x,y) would become f:[(x,y) -> g(x,y)].
-        # And any ExprTuple-wrapped Iter entries will be 
+        # And any ExprTuple-wrapped ExprRange entries will be 
         # Also, convert to composite expressions as needed
         # (via singleOrCompositeExpression).
         processed_repl_map = dict()
-        for key, sub in repl_map.items():
-            sub = singleOrCompositeExpression(sub)
-            if isinstance(key, Variable):
-                processed_repl_map[key] = sub
+        for key, replacement in repl_map.items():
+            replacement = singleOrCompositeExpression(replacement)
+            '''
+            if isinstance(replacement, ExprRange):
+                raise TypeError("Not expecting an ExprRange for a replacement "
+                                "when instantiating.  Got %s.  Perhaps it "
+                                "should be wrapped in an ExprTuple."
+                                %replacement)
+            '''
+            if isinstance(key, Variable) or isinstance(key, IndexedVar):
+                processed_repl_map[key] = replacement
+            elif (isinstance(key, ExprTuple) and len(key)==1 
+                  and isinstance(key[0], ExprRange) 
+                  and isinstance(key[0].body, IndexedVar)):
+                # Replacement key of the form (x_i, ..., x_j)
+                # which is valid for replacing a range of variables.
+                processed_repl_map[key] = replacement
             elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
                 operation = key
-                sub_var = operation.operator
-                sub = Lambda(operation.operands, sub)
-                processed_repl_map[sub_var] = sub
-            elif (isinstance(key, ExprTuple) and len(key)==1 
-                  and isinstance(key[0], Iter) 
-                  and isinstance(key[0].body, IndexedVar)):
-                '''
-                # Replacement key of the form (x_i, ..., x_j).
-                # That is fine for expanding iterated variables, but make sure
-                # the replacement is an ExprTuple and also include
-                # x : (x_i, ..., x_j) so the Iter.substituted method can
-                # handle it properly.
-                if not isinstance(sub, ExprTuple):
-                    raise TypeError("Must replace %s with an ExprTuple, not %s"
-                                    %(key, sub)) 
-                processed_repl_map[key[0].body.var] = key
-                '''
-                # Not quite right.  How will it check the length requirement??
-                assert False
+                repl_var = operation.operator
+                replacement = Lambda(operation.operands, replacement)
+                processed_repl_map[repl_var] = replacement
             else:
                 raise TypeError("%s is not the expected kind of Expression as "
                                 "a repl_map key.  Expecting repl_map keys to be "
@@ -980,6 +977,17 @@ class KnownTruth:
         html += self.expr._repr_html_()
         html += '</span>'
         return html
+    
+    def innerExpr(self):
+        '''
+        Return an InnerExpr object to wrap the KnownTruth and
+        access any inner sub-expression (including assumptions or
+        inner expressions of assumptions) for the purpose of 
+        replacing the inner expression, changing its style,
+        or relabeling variables.
+        '''
+        from .expression.inner_expr import InnerExpr
+        return InnerExpr(self)
 
 def asExpression(truthOrExpression):
     '''

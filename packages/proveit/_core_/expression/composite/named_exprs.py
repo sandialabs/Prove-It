@@ -1,7 +1,6 @@
-from .composite import Composite
+from .composite import Composite, singleOrCompositeExpression
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.defaults import USE_DEFAULTS
-import re
+#import re
 
 class NamedExprs(Composite, Expression):
     """
@@ -17,17 +16,24 @@ class NamedExprs(Composite, Expression):
         elems = dict()
         for key, val in items:
             keywords.append(key)
-            elems[key] = val
+            if ':' in key:
+                raise ValueError("':' not allowed in NamedExprs string")
             if not isinstance(key, str): 
                 raise TypeError("Keywords of an expression dictionary may only be strings")
-            if not re.match('[A-Za-z0-9_]+', key):
-                raise ValueError('A NamedExprs key may only include alphanumeric or underscore chararcters.')
+            #if not re.match('[A-Za-z0-9_]+', key):
+            #    raise ValueError('A NamedExprs key may only include alphanumeric or underscore chararcters.')
             if isinstance(val, KnownTruth):
                 val = val.expr # extract the Expression from the KnownTruth
-            if not isinstance(val, Expression): 
-                raise TypeError("Values of an expression dictionary must be Expressions")
+            try:
+                val = singleOrCompositeExpression(val)
+            except TypeError:
+                raise TypeError("Values of NamedExprs must be Expressions")
+            elems[key] = val
         self.keywords, self.elems = keywords, elems
-        Expression.__init__(self, ['NamedExprs'] + list(self.keys()), 
+        # ',' isn't allowed in the core info and ':' is not allowed
+        # in NamedExprs keys, so swap one with the other to encode.
+        core_info_enc_keywords = [key.replace(',', ':') for key in keywords]        
+        Expression.__init__(self, ['NamedExprs'] + core_info_enc_keywords, 
                             [self[key] for key in list(self.keys())], 
                             styles=styles)
 
@@ -67,7 +73,7 @@ class NamedExprs(Composite, Expression):
             MakeNotImplemented(subClass) 
         if coreInfo[0] != 'NamedExprs':
             raise ValueError("Expecting NamedExprs coreInfo[0] to be 'NamedExprs'")
-        keys = coreInfo[1:]
+        keys = [key.replace(':', ',') for key in coreInfo[1:]]
         if len(subExpressions) != len(keys):
             raise ValueError("The number of sub-expressions, " + str(len(subExpressions)), ", expected to match the number of the NamedExprs' keys, ", str(len(keys)))
         return NamedExprs([(key,subExpression) for key, subExpression in zip(keys, subExpressions)]).withStyles(**styles)   
@@ -78,32 +84,11 @@ class NamedExprs(Composite, Expression):
     def latex(self, **kwargs):
         outStr = r'\left\{ \begin{array}{l}' + '\n'
         for key in list(self.keys()):
-            outStr += r'{\rm ' + key.replace('_', r'\_') + r'}: ' + self[key].latex(fence=True) + r'\\' + '\n'
+            if key[0] == '$':
+                # format as latex
+                formatted_key = key[1:-1]
+            else:
+                formatted_key = r'{\rm ' + key.replace('_', r'\_') + r'}'
+            outStr += formatted_key + ': ' + self[key].latex(fence=True) + r'\\' + '\n'
         outStr += r'\end{array} \right\}' + '\n'
         return outStr            
-    
-    def substituted(self, repl_map, reserved_vars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
-        '''
-        Returns this expression with sub-expressions substituted 
-        according to the replacement map (repl_map) dictionary.
-        
-        reserved_vars is used internally to protect the "scope" of a
-        Lambda map.  For more details, see the Lambda.substitution
-        documentation.
-
-        'assumptions' and 'requirements' are used when an operator is
-        substituted by a Lambda map that has iterated parameters such that 
-        the length of the parameters and operands must be proven to be equal.
-        For more details, see Operation.substituted, Lambda.apply, and
-        Iter.substituted (which is the sequence of calls involved).
-        
-        For a NamedExprs, each sub-expression is 'substituted' independently.
-        '''
-        if len(repl_map)>0 and (self in repl_map):
-            # The full expression is to be substituted.
-            return repl_map[self]._restrictionChecked(reserved_vars)
-        else:
-            return NamedExprs([(key, expr.substituted(repl_map, reserved_vars, 
-                                                      assumptions, requirements)) 
-                               for key, expr in self.items()])

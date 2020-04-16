@@ -419,7 +419,7 @@ class Assumption(Proof):
     allAssumptions = dict() 
      
     def __init__(self, expr, assumptions=None):
-        from proveit._core_.expression.composite.iteration import Iter
+        from proveit import ExprRange
         assert expr not in Assumption.allAssumptions, \
             ("Do not create an Assumption object directly; "
              "use Assumption.makeAssumption instead.")
@@ -431,9 +431,9 @@ class Assumption(Proof):
         prev_default_assumptions = defaults.assumptions
         # These assumptions will be used for deriving any side-effects
         defaults.assumptions = assumptions
-        # When assumptions are in an iteration, the assumed truth
+        # The assumed truth from a ranges of assumptions
         # must be wrapped in a conjunction (And).
-        if isinstance(expr, Iter):
+        if isinstance(expr, ExprRange):
             from proveit.logic import And
             assumed_truth = And(expr)
         else:
@@ -765,10 +765,20 @@ class ModusPonens(Proof):
 
 class HypotheticalReasoning(Proof):
     def __init__(self, consequentTruth, antecedentExpr): 
-        from proveit.logic import Implies
-        assumptions = [assumption for assumption in consequentTruth.assumptions if assumption != antecedentExpr]
+        from proveit import ExprRange
+        from proveit.logic import Implies, And
+        if isinstance(antecedentExpr, ExprRange):
+            # Assumption ranges must be transformed to a 
+            # conjunction form on the other side.
+            elim_assumption = antecedentExpr
+            antecedentExpr = And(antecedentExpr)
+        else:
+            elim_assumption = antecedentExpr
+        assumptions = [assumption for assumption in consequentTruth.assumptions 
+                       if assumption != elim_assumption]
         prev_default_assumptions = defaults.assumptions
-        defaults.assumptions = assumptions # these assumptions will be used for deriving any side-effects
+         # These assumptions will be used for deriving any side-effects
+        defaults.assumptions = assumptions
         try:
             implicationExpr = Implies(antecedentExpr, consequentTruth.expr)
             implicationTruth = KnownTruth(implicationExpr, assumptions)
@@ -795,10 +805,29 @@ class Instantiation(Proof):
         
         See Expression.substituted for details regarding the replacement rules.
         '''
+        from proveit import (Expression, Variable, Lambda, ExprRange, 
+                             ExprTuple, IndexedVar)
         prev_default_assumptions = defaults.assumptions
         # These assumptions will be used for deriving any side-effects:
         defaults.assumptions = assumptions 
         
+        # Prepare the 'parameters' and 'operands' for a lambda map
+        # application (beta reduction) to perform the replacements.
+        parameters = []
+        for key, repl in repl_map.items():
+            if not isinstance(repl, Expression):
+                raise TypeError("Expecting instantiation substitutions to be "
+                                "'Expression' objects")
+            if isinstance(key, ExprTuple):
+                # If the key is an ExprTuple, it must be a range of
+                # indexed variables.  This should already have been
+                # checked in KnownTruth.instantiate.
+                assert (len(key)==1 and isinstance(key[0], ExprRange) 
+                        and isinstance(key[0].body, IndexedVar))
+                parameters.append[key[0]]
+            else:
+                parameters.append(key)
+                
         try:
             if not isinstance(orig_known_truth, KnownTruth):
                 raise TypeError("May only 'instantiate' a KnownTruth")
@@ -810,13 +839,20 @@ class Instantiation(Proof):
             # this derivation step.
             orig_subbed_assumptions = []
             requirements = []
+            
+            # Make possible substitutions in the "original" KnownTruth 
+            # assumption.
+            operands = list(Instantiation._operands_of_parameters(parameters, 
+                                                                  repl_map))          
             for assumption in orig_known_truth.assumptions:
-                # Possible substitutions in the "original" KnownTruth 
-                # assumption.
-                subbed_assumption = assumption.substituted(
-                        repl_map, assumptions=assumptions, 
-                        requirements=requirements)
-                orig_subbed_assumptions.append(subbed_assumption)
+                subbed_assumption = Lambda._apply(
+                        parameters, assumption, *operands,
+                        assumptions=assumptions, requirements=requirements)
+                if isinstance(assumption, ExprRange):
+                    # An iteration of assumptions to expand.
+                    orig_subbed_assumptions.extend(subbed_assumption)
+                else:
+                    orig_subbed_assumptions.append(subbed_assumption)
             
             # Automatically use the assumptions of the 
             # original_known_truth plus the assumptions that were 
@@ -829,8 +865,8 @@ class Instantiation(Proof):
                         
             instantiated_expr = \
                 Instantiation._instantiated_expr(
-                        orig_known_truth, num_forall_eliminations, repl_map,
-                        assumptions, requirements)
+                        orig_known_truth, num_forall_eliminations,
+                        parameters, repl_map, assumptions, requirements)
             
             # Remove duplicates in the requirements.
             requirements = list(OrderedDict.fromkeys(requirements))
@@ -847,7 +883,9 @@ class Instantiation(Proof):
             
             # Sort the replaced variables in order of their appearance 
             # in the original KnownTruth.
-            repl_vars = repl_map.keys()
+            # Exclude tuple to tuple maps that are for internal use.
+            repl_vars = [key for key in repl_map.keys() 
+                         if isinstance(key, Variable)]
             repl_vars = list(orig_known_truth.orderOfAppearance(repl_vars))
             # And remove duplicates.
             repl_vars = list(OrderedDict.fromkeys(repl_vars))
@@ -857,6 +895,19 @@ class Instantiation(Proof):
             self.mapping_var_order = repl_vars
             # Exclude anything in the repl_map that does not appear in 
             # the original KnownTruth:
+            mapping = dict()
+            for var in repl_vars:
+                repl = repl_map[var]
+                if isinstance(repl, ExprTuple) and repl in repl_map:
+                    # Must be a range replacement in which, for
+                    # bookkeeping, the repl_map maps the variable
+                    # to the tuple with the variable range,
+                    # e.g., x : x_1, ..., x_n, and that tuple maps
+                    # to the actual replacement.  We want our
+                    # mapping to take this 'x' to the actual
+                    # replacement.
+                    repl = repl_map[repl]
+                mapping[var] = repl
             self.mapping = {key:val for key, val in repl_map.items()
                             if key in repl_vars}
             instantiated_truth = KnownTruth(instantiated_expr, assumptions)
@@ -865,7 +916,7 @@ class Instantiation(Proof):
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
-
+    
     def _generate_step_info(self, objectRepFn):
         '''
         Generate information about this proof step, including mapping 
@@ -896,10 +947,26 @@ class Instantiation(Proof):
         if formatType=='HTML':
             out += '</span>'
         return out
-
+    
+    @staticmethod
+    def _operands_of_parameters(parameters, repl_map):
+        '''
+        Generate the operands that correspond to the parameters
+        according to the given replacement_map.
+        '''
+        from proveit import ExprTuple
+        for parameter in parameters:
+            if (ExprTuple(parameter) in repl_map):
+                # Yield the entries for the replacement of the
+                # ExprTuple of the parameter.
+                for entry in repl_map[ExprTuple(parameter)]:
+                    yield entry
+            else:
+                yield repl_map[parameter]
+    
     @staticmethod
     def _instantiated_expr(original_known_truth, num_forall_eliminations, 
-                           repl_map, assumptions, requirements):
+                           parameters, repl_map, assumptions, requirements):
         '''
         Return the instantiated version of the right side of the
         original_known_truth.  The assumptions on the left side of
@@ -909,21 +976,15 @@ class Instantiation(Proof):
         substituting all  of the corresponding instance variables 
         according to repl_map.
         '''
-        from proveit import (Lambda, Expression, Conditional, ExprTuple, Iter)
+        from proveit import (Lambda, Conditional, ExprTuple, ExprRange,
+                             IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         from proveit.logic import Forall, And
-        
-        for key, sub in repl_map.items():
-            if not isinstance(sub, Expression):
-                raise TypeError("Expecting instantiation substitutions to be "
-                                "'Expression' objects")
-        
+                
         # Eliminate the desired number of Forall operations and extract
         # appropriately mapped conditions.
         expr = original_known_truth.expr
         remaining_forall_eliminations = num_forall_eliminations
-        parameters = []
-        operands = []
         def raiseFailure(msg):
             raise InstantiationFailure(original_known_truth, repl_map, 
                                        assumptions, msg)
@@ -938,83 +999,124 @@ class Instantiation(Proof):
                 raise TypeError("Forall Operation lambdaExpr must be a Lambda")
             expr = lambda_expr.body
             
-            # Update the parameters and the operands (for applying an
-            # effective lambda map after eliminating some number of universal
-            # quantifiers).  Note that the parameters may be an iteration
-            # of indexed variables whose indices should be updated via
-            # substitutions.
-            parameters_repl_map = dict(repl_map)
-            for var in lambda_expr.parameterVars:
-                # Exclude the actual parameter variables when doing the
-                # parameter replacement.  We can leave other variables in
-                # there even if they occur as parameters at deeper levels
-                # because the repl_map is to replace all occurrences that
-                # it can (only skipping internal lambda paramaters when
-                # the replacement is not a simple relabeling variable).
-                parameters_repl_map.pop(var)
-            subbed_parameters = \
-                lambda_expr.parameters.substituted(parameters_repl_map,
-                        assumptions=assumptions, requirements=requirements)
-            parameters.extend(subbed_parameters)
-            for parameter in subbed_parameters:
-                parameter_var = getParamVar(parameter)
-                replacement = repl_map.get(parameter_var, parameter)
-                if isinstance(parameter, Iter) and isinstance(replacement, ExprTuple):
-                    # The iteration parameter variable is replace by an 
-                    # ExprTuple, so extend the operands with the replacement.
-                    operands.extend(replacement.entries)
-                else:
-                    operands.append(replacement)
+            # Prepare to eliminate a universal quantifier.
             
-            # If there are any conditions of the universal quantifier being
-            # eliminated, prove that these conditions are satisfied and add
-            # them as "requirements" after performing appropriate 
-            # substitutions.
+            # For any parameter ranges of the universal quantifier
+            # being eliminated, perform substitutions on the
+            # start and end indices.  For example,
+            # x_i, ..., x_j could be transformed to
+            # x_1, ..., x_n.
+            # Also, automatically replace something of the form
+            # x_i, ..., x_i to just x_i.
+            subbed_parameters = []
+            for parameter_entry in lambda_expr.parameters:
+                if isinstance(parameter_entry, ExprRange):
+                    # Perform a substitution on this universal 
+                    # quantifier parameter entry will all of the
+                    # 'parameters' except for the entry's Variable.
+                    entry_params = \
+                        [param for param in parameters 
+                         if param != getParamVar(parameter_entry)]
+                    entry_operands = Instantiation._operands_of_parameters(
+                            entry_params, repl_map)
+                    subbed_param_entry = Lambda._apply(
+                            entry_params, parameter_entry, *entry_operands, 
+                            assumptions=assumptions, requirements=requirements)
+                    subbed_parameters.extend(subbed_param_entry)
+                else:
+                    subbed_parameters.append(parameter_entry)
+            
+            # When we eliminate a universal quantifier with a range of
+            # parameters, and the Variable of that range is a 
+            # key in 'repl_map' whose associated value is an ExprTuple, 
+            # we'll swap out the Variable for the ExprRange as the 
+            # replacement key.
+            # For example, if we have some x:(a, b, c) mapping and
+            # we eliminate a universal quantification over
+            # x_1, ..., x_n then we'll effectively change it to a
+            # (x_1, ..., x_n) : (a, b, c)
+            # mapping.
+            # Also needs to handle the case where the range is reduced
+            # the a single indexed variable: x_i, ..., x_i -> x_i.
+            for subbed_param_entry in subbed_parameters:
+                if (isinstance(subbed_param_entry, ExprRange)
+                        or isinstance(subbed_param_entry, IndexedVar)):
+                    param_var = getParamVar(subbed_param_entry)
+                    if param_var not in repl_map:
+                        # No replacement to worry about here.
+                        continue
+                    replacement = repl_map.get(param_var, subbed_param_entry)
+                    if isinstance(replacement, ExprTuple):
+                        # Remove the Variable of the range from
+                        # 'parameters' (e.g, 'x').
+                        try:
+                            parameters.remove(param_var)
+                        except ValueError:
+                            pass # It must have been removed already.
+                        # Append the ExprRange to 'parameters'
+                        # (e.g., 'x_1, ..., x_n')
+                        parameters.append(subbed_param_entry)
+                        # Swap out the corresponding 'repl_map' keys.
+                        repl_map.pop(param_var)
+                        repl_map[ExprTuple(subbed_param_entry)] = replacement
+            
+            # If there are any conditions of the universal quantifier 
+            # being eliminated, prove that these conditions are
+            # satisfied and add them as "requirements" after performing
+            # appropriate substitutions.
+            operands = list(Instantiation._operands_of_parameters(parameters, 
+                                                                  repl_map))
             if isinstance(expr, Conditional):
                 if len(expr.conditions) != 1:
-                    raise ValueError("Expecting exactly 1 condition for a Forall "
-                                     "Conditional")
+                    raise ValueError("Expecting exactly 1 condition for "
+                                     "a Forall Conditional")
                 condition = expr.condition
                 expr = expr.value
-                if isinstance(condition, And):
-                    # It is important to deal with a conjunction condition
-                    # in this implicit manner here or we would have a
-                    # chicken/egg infinite recursion problem.  That is, we
-                    # have to split up a conjunction into multiple requirements
-                    # at some point, so we do it here.
-                    conditions = condition.operands
-                else:
-                    conditions = [condition]
-                for condition in conditions:
-                    # Make substitutions in the condition by applying the
-                    # effective lambda map (mapping the parameters to the
-                    # condition) on the "operands" (parameter replacements).
-                    if isinstance(condition, Iter):
-                        # An Iter condition must be wrapped with an ExprTuple
-                        # to make a proper Lambda body.
-                        condition = ExprTuple(condition)
-                    subbed_cond = Lambda._apply(parameters, condition, repl_map,
-                                                *operands, assumptions=assumptions,
-                                                requirements=requirements)
-                    if isinstance(subbed_cond, ExprTuple):
-                        subbed_conds = subbed_cond
+                
+                # Make substitutions in the condition by applying
+                # the effective lambda map (mapping the parameters 
+                # to the condition) on the "operands" (parameter 
+                # replacements).
+                subbed_cond = Lambda._apply(
+                        parameters, condition, *operands, 
+                        assumptions=assumptions, requirements=requirements)
+                
+                if isinstance(subbed_cond, And):
+                    # It is important to deal with a conjunction 
+                    # condition in this implicit manner here or we would
+                    # have a chicken/egg infinite recursion problem.  
+                    # That is, we have to split up a conjunction into 
+                    # multiple requirements at some point, so we do it 
+                    # here.
+                    if subbed_cond.proven(assumptions):
+                        # If the full condition conjunction is known
+                        # to be true, we'll just use that as the
+                        # requirement and be done with it.
+                        requirements.append(subbed_cond.prove(assumptions))   
+                        subbed_conds = []
                     else:
-                        subbed_conds = [subbed_cond] # should be singular.
-                    for subbed_cond in subbed_conds:          
-                        if isinstance(subbed_cond, Iter):
-                            # If the substituted condition "entry" is an Iter,
-                            # we need to wrap it in a conjunction.
-                            subbed_cond = And(subbed_cond)
-                        try:
-                            requirements.append(subbed_cond.prove(assumptions))    
-                        except ProofFailure:
-                            raiseFailure('Unmet specialization requirement: %s'
-                                         %str(subbed_cond))                    
+                        subbed_conds = subbed_cond.operands
+                else:
+                    subbed_conds = [subbed_cond]
+                
+                for subbed_cond in subbed_conds:
+                    if isinstance(subbed_cond, ExprRange):
+                        # If the substituted condition "entry" is 
+                        # a range, we need to wrap it in a 
+                        # conjunction.
+                        subbed_cond = And(subbed_cond)
+                    try:
+                        requirements.append(subbed_cond.prove(assumptions))    
+                    except ProofFailure:
+                        raiseFailure('Unmet specialization requirement: %s'
+                                     %str(subbed_cond))                    
         
         # Make substitutions in the inner instance expression by applying the
         # effective lambda map (mapping the parameters to the instance 
         # expression) on the "operands" (parameter replacements).
-        subbed_expr = Lambda._apply(parameters, expr, repl_map, *operands,
+        operands = list(Instantiation._operands_of_parameters(parameters, 
+                                                              repl_map))
+        subbed_expr = Lambda._apply(parameters, expr, *operands,
                                     assumptions=assumptions,
                                     requirements=requirements)
         
@@ -1022,16 +1124,17 @@ class Instantiation(Proof):
         return subbed_expr
 
 class Generalization(Proof):
-    def __init__(self, instanceTruth, newForallVarLists, newConditions=tuple()):
+    def __init__(self, instanceTruth, newForallParamLists, newConditions=tuple()):
         '''
         A Generalization step wraps a KnownTruth (instanceTruth) in one or more Forall operations.
         The number of Forall operations introduced is the number of lists in newForallVarLists.
         The conditions are introduced in the order they are given at the outermost level that is 
-        applicable.  For example, if newForallVarLists is [[x, y], z]  and the new 
+        applicable.  For example, if newForallParamLists is [[x, y], z]  and the new 
         conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
             forall_{x, y in Integers | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
-        from proveit import KnownTruth, Variable
+        from proveit import KnownTruth
+        from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         from proveit.logic import Forall
         if not isinstance(instanceTruth, KnownTruth):
             raise GeneralizationFailure(None, [], 'May only generalize a KnownTruth instance')
@@ -1045,13 +1148,12 @@ class Generalization(Proof):
             remainingConditions = list(newConditions)
             expr = instanceTruth.expr
             introducedForallVars = set()
-            for k, newForallVars in enumerate(reversed(newForallVarLists)):
-                for forallVar in newForallVars:
-                    if not isinstance(forallVar, Variable):
-                        raise ValueError('Forall variables of a generalization must be Variable objects')
+            for k, newForallParams in enumerate(reversed(newForallParamLists)):
+                newForallVars = [getParamVar(parameter) 
+                                 for parameter in newForallParams]
                 introducedForallVars |= set(newForallVars)
                 newConditions = []
-                if k == len(newForallVarLists)-1:
+                if k == len(newForallParamLists)-1:
                     # the final introduced Forall operation must use all of the remaining conditions
                     newConditions = remainingConditions
                 else:
@@ -1062,7 +1164,9 @@ class Generalization(Proof):
                 # new conditions can eliminate corresponding assumptions
                 assumptions -= set(newConditions)
                 # create the new generalized expression
-                generalizedExpr = Forall(instanceVarOrVars=newForallVars, instanceExpr=expr, conditions=newConditions)
+                generalizedExpr = Forall(
+                        instanceParamOrParams=newForallParams, 
+                        instanceExpr=expr, conditions=newConditions)
                 # make sure this is a proper generalization that doesn't break the logic:
                 Generalization._checkGeneralization(generalizedExpr, expr)
                 expr = generalizedExpr
@@ -1084,15 +1188,22 @@ class Generalization(Proof):
     @staticmethod
     def _checkGeneralization(generalizedExpr, instanceExpr):
         '''
-        Make sure the generalizedExpr is a proper generalization of the instanceExpr.
+        Make sure the generalizedExpr is a proper generalization of the 
+        instanceExpr.
         '''
-        from proveit import Lambda
+        from proveit import Lambda, Conditional
         from proveit.logic import Forall
         assert isinstance(generalizedExpr, Forall), 'The result of a generalization must be a Forall operation'
         lambdaExpr = generalizedExpr.operand
         assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
         expr = lambdaExpr.body
         while expr != instanceExpr:
+            if isinstance(expr, Conditional) and len(expr.values)==1:
+                # Dig into the conditional.  Adding conditions only
+                # weakens the statement, so it doesn't matter what
+                # the conditions are.
+                expr = expr.values[0]
+                if expr == instanceExpr: break
             if not isinstance(expr, Forall): break
             expr = expr.instanceExpr # take it another nested level if necessary
         assert expr == instanceExpr, 'Generalization not consistent with the original expression: ' + str(expr) + ' vs ' + str(instanceExpr)

@@ -545,7 +545,7 @@ class CommonExpressions(ModuleType):
         return sorted(list(self.__dict__.keys()) + list(self._context.commonExpressionNames()))
 
     def __getattr__(self, name):
-        from proveit import Label
+        from proveit._core_.expression.label.label import TemporaryLabel
         if name[0:2]=='__': 
             raise AttributeError # don't handle internal Python attributes
         
@@ -573,7 +573,7 @@ class CommonExpressions(ModuleType):
             if isinstance(e, UnsetCommonExpressions):
                 # Use a temporary placeholder if the common expressions are not set.
                 # This avoids exceptions while common exppressions are being built/rebuilt.
-                return Label("Temporary_placeholder_for_undefined_%s.%s"%(self._context.name, name), "Temporary\_placeholder\_for\_undefined\_%s.%s"%(self._context.name, name))
+                return TemporaryLabel(self._context.name + '.' + name)
             
             raise AttributeError("'" + name + "' not found in the list of common expressions of '" + self._context.name + "'\n(make sure to execute the appropriate '_common_.ipynb' notebook after any changes)")
 
