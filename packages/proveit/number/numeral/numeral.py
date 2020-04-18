@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import defaults, Literal, Operation, USE_DEFAULTS
 from proveit.logic import IrreducibleValue, Equals
 from proveit._common_ import a, b
 
@@ -14,6 +14,17 @@ class Numeral(Literal, IrreducibleValue):
         if not isinstance(n, int):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
+        # see if we can already deduce the numeral in Naturals
+        # print("Entering Numeral.__init__ with n = {}".format(self.n))           # for testing; delete later
+        # if (self.n==3):
+        #     print("n = {}".format(self.n))                                      # for testing; delete later
+        # try:
+        #     # self.deduceInNaturals()
+        #     from proveit.number import Integers
+        #     self.deduceInNumberSet(Integers)
+        # # but if not, that's ok
+        # except:
+        #     pass
     
     def evalEquality(self, other, assumptions=USE_DEFAULTS):
         if other==self:

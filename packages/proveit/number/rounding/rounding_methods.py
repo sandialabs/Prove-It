@@ -145,10 +145,26 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
         indices_of_reals_not_ints = []
         indices_of_unknowns = []
         for i in range(len(subops)):
+            the_subop = subops[i]
+            # first do the easiest checks -- is the subop already an
+            # Integer or a Real?
             if InSet(subops[i], Integers).proven(assumptions):
                 indices_of_known_ints.append(i)
             elif InSet(subops[i], Reals).proven(assumptions):
                 indices_of_reals_not_ints.append(i)
+            # try something just a little harder
+            elif the_subop in InSet.knownMemberships.keys():
+                from proveit.logic.set_theory import SubsetEq
+                print("    Found subop {} as a key!".format(the_subop))         # for testing 4/17/20; delete later
+                print("    The value is: {}".format(InSet.knownMemberships[the_subop]))         # for testing 4/17/20; delete later
+                for kt in InSet.knownMemberships[the_subop]:
+                    print("The kt set is: {}".format(kt.expr.operands[1]))      # for testing 4/17/20; delete later
+                    print("The kt set is a subset of Integers? {}".format(SubsetEq(kt.expr.operands[1], Integers).proven(assumptions)))
+                    if SubsetEq(kt.expr.operands[1], Integers).proven(assumptions):
+                        InSet(the_subop, Integers).prove()
+                        print("{} has been proven to be in Integers!".format(the_subop))
+                        indices_of_known_ints.append(i)
+                        break
             else:
                 indices_of_unknowns.append(i)
         if len(indices_of_unknowns) == 0 and len(indices_of_known_ints)>0:
@@ -206,7 +222,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
             elif len(indices_of_known_ints) == 0:
                 msg = ("In attempting f(x).apply_reducedSimplification, no "
                        "operands were found to be assumed or proven to be "
-                       "Integers.".format(list_of_unknowns))
+                       "Integers.")
             else:
                 msg = ("In attempting f(x).apply_reducedSimplification, "
                        "an unknown error has occurred, probably related "
