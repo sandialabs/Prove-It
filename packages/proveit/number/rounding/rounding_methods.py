@@ -11,10 +11,10 @@ def apply_roundingElimination(expr, roundingEliminationThm,
     with the operand itself: |- F(x) = x. For example, |- Ceil(x) = x.
     Assumptions may be necessary to deduce necessary conditions
     (for example, that x actually is an integer) for the simplification.
-    This method is utilized by the F(x).doReducedSimplification()
-    method, via the F(x).roundingElimination() method, but only after
-    the operand x is verified to already be proven (or assumed) to be
-    an integer.
+    This method is utilized by the F(x).apply_reducedSimplification()
+    method, indirectly via the F(x).roundingElimination() method, but
+    only after the operand x is verified to already be proven (or
+    assumed) to be an integer.
     For the case where the operand is of the form x = real + int,
     see the apply_roundingExtraction() function.
     '''
@@ -45,17 +45,16 @@ def apply_roundingExtraction(expr, roundingExtractionThm, idx_to_extract=None,
                 1, assumptions=[InSet(x, Reals), InSet(y, Reals)]),
     will eventually end up here and return
         |- F(x) = Ceil(x+y) + 2
-    This method is utilized by the F(x).doReducedSimplification()
-    method, via the F(x).roundingExtraction() method, but only after
-    the operand x is verified to already be proven (or assumed) to be
-    the sum of reals and integers.
+    This method is utilized by the F(x).apply_reducedSimplification()
+    method, indirectly via the F(x).roundingExtraction() method, but
+    only after the operand x is verified to already be proven (or
+    assumed) to be the sum of reals and integers.
     For the case where the entire operand x is itself an integer,
     see the roundingElimination() method.
     This works only if the operand x is an instance of the Add
     class at its outermost level, e.g. x = Add(a, b, …, n). The
     operands of that Add class can be other things, but the extraction
-    is guaranteed to work only if the inner operands a, b, ..., n are
-    simple.
+    will work only if the inner operands a, b, ..., n are simple.
     '''
     from proveit._common_ import n, x, y
     from proveit.number import Add
@@ -99,16 +98,19 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     '''
     Let F(x) represent the relevant Ceil(x), Floor(x), or Round(x)
     fxn calling the apply_reducedSimplification() method from the
-    respective F(x).doReducedSimplification() method.
+    respective F(x).doReducedSimplification() method (which itself is
+    likely called from the F(x).simplification() method).
     For the trivial case F(x) where the operand x is already
     known to be or assumed to be an integer, derive and return this
     F(x) expression equated with the operand itself: F(x) = x. For
-    example, |- Round(2) = 2 or |- Floor(1) = 1.
-    Assumptions may be necessary to deduce necessary conditions for
-    the simplification. For the case where the operand is of the
-    form x = real + int, derive and return this F(x) expression
-    equated with F(real) + int. For example,
-    |- Floor(x + 2) = Floor(x) + 2
+    example, |- Round(2) = 2 or |- Floor(1) = 1. Assumptions may be
+    necessary to deduce necessary conditions for the simplification
+    (for example, for deducing that the operand really is an integer).
+    For the case where the operand is of the form x = real + int,
+    derive and return this F(x) expression equated with F(real) + int.
+    For example, |- Floor(x + 2) = Floor(x) + 2. Again, assumptions
+    may be necessary to deduce the appropriate set containments for
+    the operands within the Add operand x.
     '''
     from proveit._common_ import n, x
     from proveit.logic import InSet
@@ -133,23 +135,12 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #-- -------------------------------------------------------- --#
     if expr.operand in InSet.knownMemberships.keys():
         from proveit.logic.set_theory import Subset, SubsetEq
-        print("Found operand {} as a key!".format(expr.operand))                # for testing 4/18/2020; delete later
-        print("    The dictionary value for key {0} is: {1}".format(            # for testing 4/18/2020; delete later
-                expr.operand, InSet.knownMemberships[expr.operand]))            # for testing 4/18/2020; delete later
         for kt in InSet.knownMemberships[expr.operand]:
-            print("    The kt is: {}".format(kt))                               # for testing 4/18/2020; delete later
-            print("    The kt set is: {}".format(kt.expr.operands[1]))          # for testing 4/17/20; delete later
-            print("    The kt set is a proper or improper subset of Integers? {}".
-                format(SubsetEq(kt.expr.operands[1], Integers).proven(assumptions) or
-                       Subset(kt.expr.operands[1], Integers).proven(assumptions)))
-            print("    Sufficient assumptions? {}".format(kt.isSufficient(assumptions)))  # for testing 4/17/20; delete later
             if kt.isSufficient(assumptions):
-                print("kt.isSufficient(assumptions) = True")                    # for testing 4/18/2020; delete later
-                if (SubsetEq(kt.expr.operands[1], Integers).proven(assumptions) or 
+                if (SubsetEq(kt.expr.operands[1], Integers).proven(assumptions)
+                    or 
                     Subset(kt.expr.operands[1], Integers).proven(assumptions)):
-                    print("    Subset or SubsetEq proven().")                   # for testing 4/18/2020; delete later
                     InSet(expr.operand, Integers).prove()
-                    print("    {} has been proven to be in Integers!".format(expr.operand))  # for testing 4/17/2020; delete later
                     return expr.roundingElimination(assumptions)
 
     #-- -------------------------------------------------------- --#
@@ -158,8 +149,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #--           an int, but addends might be reals and ints    --#
     #-- -------------------------------------------------------- --#
     if isinstance(expr.operand, Add):
-        print("Operand is an Add instance!")                                    # for testing 4/18/20; delete later
-        # Try to partition all suboperands into ints vs. reals
+        # Try to partition all suboperands into Integers vs. Reals
         
         # for convenience while updating our equation
         eq = TransRelUpdater(expr, assumptions)
@@ -182,20 +172,18 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
             # then try something just a little harder
             elif the_subop in InSet.knownMemberships.keys():
                 from proveit.logic.set_theory import Subset, SubsetEq
-                print("    Found subop {} as a key!".format(the_subop))         # for testing 4/17/20; delete later
-                print("    The value is: {}".format(InSet.knownMemberships[the_subop]))         # for testing 4/17/20; delete later
                 for kt in InSet.knownMemberships[the_subop]:
-                    print("The kt set is: {}".format(kt.expr.operands[1]))      # for testing 4/17/20; delete later
-                    print("The kt set is a subset of Integers? {}".format(SubsetEq(kt.expr.operands[1], Integers).proven(assumptions)))
                     if kt.isSufficient(assumptions):
-                        if (SubsetEq(kt.expr.operands[1], Integers).proven(assumptions) or
-                            Subset(kt.expr.operands[1], Integers).proven(assumptions)):
+                        if (SubsetEq(kt.expr.operands[1], Integers).
+                                proven(assumptions) or
+                            Subset(kt.expr.operands[1], Integers).
+                                proven(assumptions)):
                             InSet(the_subop, Integers).prove()
-                            print("{} has been proven to be in Integers!".format(the_subop))
                             indices_of_known_ints.append(i)
                             break
             else:
                 indices_of_unknowns.append(i)
+
         if len(indices_of_unknowns) == 0 and len(indices_of_known_ints)>0:
             # each addend is an int or a real, with at least one
             # int, so we should be able to rearrange and partition
@@ -232,6 +220,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                                 start_idx,
                                 len(indices_of_known_ints),
                                 assumptions=assumptions))
+
             if len(indices_of_known_ints)==len(subops):
                 # all the addends were actually integers
                 # could probably short-circuit this earlier!
@@ -264,7 +253,6 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #--           to be an Integer and x is not an Add object    --#
     #-- -------------------------------------------------------- --#
     else:
-        print("Operand is neither an Integer nor an Add instance!")             # for testing 4/18/20; delete later
         raise ValueError("The doReducedSimplification() method of the "
                          "rounding function f (Ceil, Floor, or Round) is "
                          "expecting simpler operands. Consider reviewing "
