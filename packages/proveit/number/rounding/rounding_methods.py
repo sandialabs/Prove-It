@@ -130,8 +130,9 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
         return expr.roundingElimination(assumptions)
 
     #-- -------------------------------------------------------- --#
-    #-- Case (2): F(x) where entire operand x can EASILY be      --#
-    #--           proven to be an Integer.                       --#
+    #-- Case (2): F(x) where entire operand x is not yet known   --*
+    #--           to be an Integer but can EASILY be proven      --#
+    #--           to be an Integer.                              --#
     #-- -------------------------------------------------------- --#
     if expr.operand in InSet.knownMemberships.keys():
         from proveit.logic.set_theory import Subset, SubsetEq
@@ -258,6 +259,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                          "expecting simpler operands. Consider reviewing "
                          "the fOfInteger and fOfRealPlusInt theorems "
                          "in the proveit/number/rounding context.")
+        
 
 def rounding_deduceInNumberSet(expr, number_set, roundingRealClosureThm,
                                roundingRealPosClosureThm,
@@ -267,6 +269,7 @@ def rounding_deduceInNumberSet(expr, number_set, roundingRealClosureThm,
         Ceil, Floor, or Round expression is in that number set using
         the appropriate closure theorem.
         '''
+        from proveit import ProofFailure
         from proveit._common_ import x
         from proveit.logic import InSet
         from proveit.number import Integers, Naturals
