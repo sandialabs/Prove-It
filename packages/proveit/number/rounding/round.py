@@ -75,11 +75,11 @@ class Round(Function):
         Round expression is in that number set using the appropriate
         closure theorem.
         '''
-        from proveit.number.rounding._theorems_ import (
-                roundRealClosure, roundRealPosClosure)
+        from proveit.number.rounding._axioms_ import roundIsAnInt
+        from proveit.number.rounding._theorems_ import roundRealPosClosure
 
         return rounding_deduceInNumberSet(
-                self, number_set, roundRealClosure, roundRealPosClosure,
+                self, number_set, roundIsAnInt, roundRealPosClosure,
                 assumptions)
 
 

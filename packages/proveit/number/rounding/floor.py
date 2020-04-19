@@ -75,11 +75,11 @@ class Floor(Function):
         Floor expression is in that number set using the appropriate
         closure theorem.
         '''
-        from proveit.number.rounding._theorems_ import (
-                  floorRealClosure, floorRealPosClosure)
+        from proveit.number.rounding._axioms_ import floorIsAnInt
+        from proveit.number.rounding._theorems_ import floorRealPosClosure
 
         return rounding_deduceInNumberSet(
-            self, number_set, floorRealClosure, floorRealPosClosure,
+            self, number_set, floorIsAnInt, floorRealPosClosure,
             assumptions)
 
 # Register these generic expression equivalence methods:

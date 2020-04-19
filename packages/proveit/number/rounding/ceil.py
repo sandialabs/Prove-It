@@ -75,11 +75,11 @@ class Ceil(Function):
         Ceil expression is in that number set using the appropriate
         closure theorem.
         '''
-        from proveit.number.rounding._theorems_ import (
-                  ceilRealClosure, ceilRealPosClosure)
+        from proveit.number.rounding._axioms_ import ceilIsAnInt
+        from proveit.number.rounding._theorems_ import ceilRealPosClosure
 
         return rounding_deduceInNumberSet(
-            self, number_set, ceilRealClosure, ceilRealPosClosure,
+            self, number_set, ceilIsAnInt, ceilRealPosClosure,
             assumptions)
 
 # Register these generic expression equivalence methods:
