@@ -769,8 +769,11 @@ class Expression(metaclass=ExprType):
         try:
             # First try the default tricks. If a reduction succesfully occurs,
             # simplification will be called on that reduction.
+            print("Calling defaultSimplification.")                             # for testing; delete later
             simplification = defaultSimplification(self.innerExpr(), assumptions=assumptions)
             method_called = defaultSimplification
+            print("Method_called = {}".format(method_called))               # for testing; delete later
+            print("After which simplification = {}".format(simplification)) # for testing; delete later
         except SimplificationError as e:
             # The default did nothing, let's try the Expression-class specific versions of
             # evaluation and simplification.
@@ -800,6 +803,8 @@ class Expression(metaclass=ExprType):
             raise ValueError(msg)
         # Remember this simplification for next time:
         Equals.simplifications.setdefault(self, set()).add(simplification)
+        # print("Equals.simplifications = {}".format(Equals.simplifications))     # for testing; delete later
+        print("The simplification about to be returned = {}".format(simplification)) # for testing; delete later
              
         return simplification
     

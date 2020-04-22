@@ -565,6 +565,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     evaluateTruth].  If operandsOnlTrue, only simplify the operands of 
     the inner expression.
     '''
+    print("Entering defaultSimplification.")                                    # for testing; delete later
     from proveit.logic import TRUE, FALSE
     from proveit.logic.boolean._axioms_ import trueAxiom
     topLevel = innerExpr.exprHierarchy[0]
@@ -630,8 +631,11 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
         if len(candidates) >= 1:
             # Return the "best" candidate with respect to fewest number
             # of steps.
+            print("    len(candidates)>=1")                                     # for testing; delete later
+            print("    candidates = {}".format(candidates))                     # for testing; delete later
             min_key = lambda knownTruth: knownTruth.proof().numSteps()
             simplification = min(candidates, key=min_key)
+            print("    simplification = {}".format(simplification))             # for testing; delete later
             return innerSimplification(simplification)
 
     if not automation:
