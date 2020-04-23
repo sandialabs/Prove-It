@@ -41,7 +41,9 @@ class OperationOverInstances(Operation):
     '''
     _init_argname_mapping_ = {'instanceParamOrParams':'instanceParamOrParams', 'instanceExpr':'instanceExpr', 'domain':'domain', 'domains':'domains', 'conditions':'conditions'}
     
-    def __init__(self, operator, instanceParamOrParams, instanceExpr, domain=None, domains=None, conditions=tuple(), nestMultiIvars=False, styles=None, _lambda_map=None):
+    def __init__(self, operator, instanceParamOrParams, instanceExpr, *,
+                 domain=None, domains=None, condition=None, conditions=None,
+                 nestMultiIvars=False, styles=None, _lambda_map=None):
         '''
         Create an Operation for the given operator that is applied over
         instances of the given instance parameter(s), instanceParamOrParams, 
@@ -83,6 +85,13 @@ class OperationOverInstances(Operation):
         from proveit._core_.expression.lambda_expr.lambda_expr import getParamVar
         
         if styles is None: styles=dict()
+        if condition is not None:
+            if conditions is not None:
+                raise ValueError("Cannot specify both 'conditions' and "
+                                 "'condition'")
+            conditions = (condition,)
+        elif conditions is None:
+            conditions = tuple()
         
         if _lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
@@ -265,8 +274,11 @@ class OperationOverInstances(Operation):
             self.instanceParamOrParams = self.instanceParams
             self.instanceVarOrVars = self.instanceVars
             '''Instance parameter variables of the OperationOverInstance.'''
-            self.domains = domains # Domain for each instance variable
-            '''Domains of the instance parameters (may be None)'''
+            if domains is not None:
+                self.domains = domains # Domain for each instance variable
+                '''Domains of the instance parameters (may be None)'''
+            else:
+                self.domain = None
         else:
             self.instanceParam = instance_params[0]
             '''Outermost instance parameter of the OperationOverInstance.'''
@@ -279,24 +291,24 @@ class OperationOverInstances(Operation):
         
         self.conditions = conditions
         '''Conditions applicable to the outermost instance variable (or iteration of indexed variables) of the OperationOverInstance.  May include an implicit 'domain' condition.'''
+        
+        if isinstance(lambda_map.body, Conditional):
+            self.condition = lambda_map.body.condition
 
         Operation.__init__(self, operator, lambda_map, styles=styles)
     
     def hasDomain(self):
         if hasattr(self, 'domains'):
-            return True
+            return self.domains is not None
         return self.domain is not None
                         
     @staticmethod
     def _createOperand(instanceParamOrParams, instanceExpr, conditions):
-        from proveit import ExprRange
-        from proveit.logic import And
         if len(conditions) == 0:
             return Lambda(instanceParamOrParams, instanceExpr)
         else:
-            if len(conditions) > 1 or isinstance(conditions[0], ExprRange):
-                conditions = And(*conditions)
-            return Lambda(instanceParamOrParams, Conditional(instanceExpr, conditions))
+            conditional =  Conditional(instanceExpr, conditions)
+            return Lambda(instanceParamOrParams, conditional)
 
     def extractMyInitArgValue(self, argName):
         '''
@@ -323,13 +335,15 @@ class OperationOverInstances(Operation):
                 return ExprTuple(*domains) if argName=='domains' else None
             if self.domain is None: return None
             return self.domain if argName=='domain' else None
-        elif argName=='conditions':
+        elif argName=='condition' or argName=='conditions':
             # return the joined conditions excluding domain conditions
             conditions = compositeExpression(
                 OperationOverInstances.explicitConditions(self))
-            if len(conditions)==0:
-                conditions = tuple() # set to match the "default"
-            return conditions
+            if len(conditions)==1 and argName=='condition':
+                return conditions[0]
+            elif len(conditions) > 1 and argName=='conditions':
+                return conditions
+            return None
     
     @classmethod
     def _make(cls, coreInfo, styles, subExpressions):
@@ -352,15 +366,16 @@ class OperationOverInstances(Operation):
         if not (operator == implicit_operator):
             raise OperationError("An implicit operator may not be changed")
         
-        args, varargs, varkw, defaults = inspect.getargspec(cls.__init__)
-        if args[-1] != '_lambda_map':
-            raise OperationError("'_lambda_map' must be the last argument "
+        args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
+            inspect.getfullargspec(cls.__init__)
+        if '_lambda_map' not in kwonlyargs:
+            raise OperationError("'_lambda_map' must be a keyword only argument "
                                  "for a constructor of a class %s derived from "
                                  "OperationOverInstances."%str(cls))
         
-        # Subtract 'self' and '_lambda_map' from the number of args and set
+        # Subtract 'self' from the number of args and set
         # the rest to None.
-        num_remaining_args = len(args)-2
+        num_remaining_args = len(args)-1
         made_operation = cls(*[None]*num_remaining_args, _lambda_map=lambda_map)
         if styles is not None:
             made_operation.withStyles(**styles)
@@ -518,6 +533,8 @@ class OperationOverInstances(Operation):
         are joined together at this level according to the style.
         If there is no domain, return None.
         '''
+        if not self.hasDomain():
+            return []
         if hasattr(self, 'domains'):
             return self.domains
         else:
@@ -533,9 +550,9 @@ class OperationOverInstances(Operation):
         areg joined together at this level according to the style.
         '''
         if hasattr(self, 'domains'):
-            assert len(self.conditions) > len(self.domains), 'expecting a condition for each domain'
+            assert len(self.conditions) >= len(self.domains), 'expecting a condition for each domain'
             for iparam, condition, domain in  \
-                    zip(self.instancsParams, self.conditions, self.domains):
+                    zip(self.instanceParams, self.conditions, self.domains):
                 assert domain == _extract_domain_from_condition(iparam, condition)
             return self.conditions[:len(self.domains)]
         else:
@@ -558,12 +575,12 @@ class OperationOverInstances(Operation):
         implicit 'domain' conditions.
         '''
         if hasattr(self, 'domains'):
-            assert len(self.conditions) > len(self.domains), ('expecting a condition'
-                                                              ' for each domain')
-            for iparam, condition, domain in zip(self.instancsParams, self.conditions, 
+            assert len(self.conditions) >= len(self.domains), ('expecting a condition'
+                                                               ' for each domain')
+            for iparam, condition, domain in zip(self.instanceParams, self.conditions, 
                                                 self.domains):
-                cond_domain = _extract_domain_from_condition(iparam, condition)      
-                assert cond_domain == condition
+                cond_domain = _extract_domain_from_condition(iparam, condition)     
+                assert cond_domain == domain
             return self.conditions[len(self.domains):] # skip the domains
         else:
             explicit_domains = self.explicitDomains()
@@ -646,10 +663,11 @@ class OperationOverInstances(Operation):
         explicitIparams = list(self.explicitInstanceParams()) # the (joined) instance vars to show explicitly
         explicitConditions = ExprTuple(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
         explicitDomains = ExprTuple(*self.explicitDomains()) # the (joined) domains
-        explicitInstanceExpr = self.explicitInstanceExpr() # left over after joining instnace vars according to the style
+        explicitInstanceExpr = self.explicitInstanceExpr() # left over after joining instance vars according to the style
         hasExplicitIparams = (len(explicitIparams) > 0)
         hasExplicitConditions = (len(explicitConditions) > 0)
-        hasMultiDomain = (len(explicitDomains)>1 and explicitDomains != ExprTuple(*[self.domain]*len(explicitDomains)))
+        hasMultiDomain = (len(explicitDomains)>1 and (not hasattr(self, 'domain')
+                          or explicitDomains != ExprTuple(*[self.domain]*len(explicitDomains))))
         domain_conditions = ExprTuple(*self.domainConditions())        
         outStr = ''
         formattedParams = ', '.join([param.formatted(formatType, abbrev=True) 
