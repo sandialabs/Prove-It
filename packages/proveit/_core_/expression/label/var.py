@@ -14,15 +14,12 @@ class Variable(Label):
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
                                         
-    def substituted(self, repl_map, reserved_vars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+                     requirements=None):
         '''
         Returns this Variable possibly substituted according to the 
         replacement map (repl_map) dictionary.  See the
         Expr.substituted documentation.
-
-        We must check the reserved_vars to make sure we are not 
-        violating Lambda scoping restrictions.  
         '''
         from proveit._core_.expression.expr import Expression
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
@@ -44,18 +41,10 @@ class Variable(Label):
                         "parameter, %s "
                         "(see Lambda.apply documentation)"
                         %subbed)
-            if (reserved_vars is not None and subbed in reserved_vars
-                    and self == reserved_vars[subbed]):
-                # We surmise that this is a relabeled Lambda parameter 
-                # which is okay and does not violate scoping 
-                # restrictions.
-                return subbed
-            # Check to make sure that scoping restrictions are not 
-            # violated.
-            return subbed._restrictionChecked(reserved_vars)
+            return subbed
         return self
     
-    def relabeled(self, relabel_map):
+    def _relabeled(self, relabel_map):
         '''
         Return a new expression in which variables are relabeled
         according to the 'relabel_map'.

@@ -32,7 +32,7 @@ class Operation(Expression):
         '''
         from proveit._core_.expression.composite import (
                 Composite, compositeExpression, 
-                singleOrCompositeExpression, ExprRange)
+                singleOrCompositeExpression, ExprTuple, ExprRange)
         from proveit._core_.expression.label.label import Label
         from .indexed_var import IndexedVar
         if styles is None: styles = dict()
@@ -45,7 +45,12 @@ class Operation(Expression):
         if isinstance(operand_or_operands, ExprRange):
             operand_or_operands = [operand_or_operands]
         self.operator_or_operators = singleOrCompositeExpression(operator_or_operators)
-        self.operand_or_operands = singleOrCompositeExpression(operand_or_operands)
+        
+        # Reduce to a single operand if it is just a tuple with
+        # one non-ExprRange and non-ExprTuple element.
+        self.operand_or_operands = singleOrCompositeExpression(
+                operand_or_operands, do_singular_reduction=True)
+        
         def raiseBadOperatorType(operator):
             raise TypeError('operator(s) must be a Label, an indexed variable '
                             '(IndexedVar), or iteration (Iter) over indexed'
@@ -70,6 +75,10 @@ class Operation(Expression):
         if isinstance(self.operand_or_operands, Composite):
             # a composite of multiple operands
             self.operands = self.operand_or_operands
+            if (isinstance(self.operands, ExprTuple) and len(self.operands)==1
+                    and isinstance(self.operands[0], ExprTuple)):
+                # This is a single operand that is an ExprTuple.
+                self.operand = self.operands[0]
         else:
             # a single operand
             self.operand = self.operand_or_operands
@@ -155,7 +164,7 @@ class Operation(Expression):
         return self.__class__._extractInitArgs(self.operator_or_operators, self.operand_or_operands, obj=self)
     
     @classmethod
-    def _extractInitArgs(operationClass, operator_or_operators, operand_or_operands, obj=None):
+    def _extractInitArgs(cls, operator_or_operators, operand_or_operands, obj=None):
         '''
         For a particular Operation class and given operator(s) and operand(s),
         yield (name, value) pairs to pass into the initialization method
@@ -187,20 +196,24 @@ class Operation(Expression):
         each operand individually.
         '''
         from proveit._core_.expression.composite.composite import compositeExpression
-        implicit_operator = operationClass._implicitOperator()
+        implicit_operator = cls._implicitOperator()
         matches_implicit_operator = (operator_or_operators == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
             raise OperationError("An implicit operator may not be changed")
         operands = compositeExpression(operand_or_operands)
-        args, varargs, varkw, defaults = inspect.getargspec(operationClass.__init__)
+        args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
+            inspect.getfullargspec(cls.__init__)
         args = args[1:] # skip over the 'self' arg
         if len(args)>0 and args[-1]=='styles':
             args = args[:-1] # NOT TREATING 'styles' FULLY AT THIS TIME; THIS NEEDS WORK.
             defaults = defaults[:-1]
         if obj is None:
-            extract_init_arg_value_fn = lambda arg : operationClass.extractInitArgValue(arg, operator_or_operators, operand_or_operands)
+            extract_init_arg_value_fn = \
+                lambda arg : cls.extractInitArgValue(arg, operator_or_operators, 
+                                                     operand_or_operands)
         else:
-            extract_init_arg_value_fn = lambda arg : obj.extractMyInitArgValue(arg)
+            extract_init_arg_value_fn = \
+                lambda arg : obj.extractMyInitArgValue(arg)
         try:
             arg_vals = [extract_init_arg_value_fn(arg) for arg in args]
             if varargs is not None:
@@ -220,6 +233,11 @@ class Operation(Expression):
                 kw_arg_vals = extract_init_arg_value_fn(varkw)
                 for arg, val in kw_arg_vals.items():
                     yield (arg, val)
+            if kwonlyargs is not None:
+                for kwonlyarg in kwonlyargs:
+                    val = extract_init_arg_value_fn(kwonlyarg)
+                    if val != kwonlydefaults[kwonlyarg]:
+                        yield (kwonlyarg, val)
         except NotImplementedError:
             if (varkw is None): # and (operationClass.extractInitArgValue == Operation.extractInitArgValue):
                 # try some default scenarios (that do not involve keyword arguments)
@@ -244,7 +262,11 @@ class Operation(Expression):
                         for operand in operands:
                             yield operand
                         return
-                raise NotImplementedError("Must implement 'extractInitArgValue' for the Operation of type %s if it does not fall into one of the default cases for 'extractInitArgs'"%str(operationClass))
+                raise NotImplementedError(
+                        "Must implement 'extractInitArgValue' for the "
+                        "Operation of type %s if it does not fall into "
+                        "one of the default cases for 'extractInitArgs'"
+                        %str(cls))
 
     @classmethod
     def _make(operationClass, coreInfo, styles, subExpressions):
@@ -297,7 +319,7 @@ class Operation(Expression):
             call_strs.append('withWrappingAt(' + ','.join(str(pos) for pos in wrap_positions) + ')')
         justification = self.getStyle('justification')
         if justification != 'center':
-            call_strs.append('withJustification(' + justification + ')')
+            call_strs.append('withJustification("' + justification + '")')
         return call_strs
     
     def string(self, **kwargs):
@@ -373,15 +395,11 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def substituted(self, repl_map, reserved_vars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+                     requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
-        
-        reserved_vars is used internally to protect the "scope" of a
-        Lambda map.  For more details, see the Lambda.substitution
-        documentation.
         
         When an operater of an Operation is substituted by a Lambda map, the 
         operation itself will be substituted with the Lambda map applied to the
@@ -403,22 +421,21 @@ class Operation(Expression):
         keep derivation rules (i.e., instantiation) simple.  For details,
         see the Iter.substituted documentation.
         '''
-        from proveit import (Lambda, compositeExpression, ExprTuple, 
-                             ExprRange)
+        from proveit import (Lambda, singleOrCompositeExpression,
+                             compositeExpression, ExprTuple, ExprRange)
         
-        # Check reserved variable restrictions for scoping volations.
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
-            return repl_map[self]._restrictionChecked(reserved_vars)      
+            return repl_map[self]  
         
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator_or_operators = \
-            self.operator_or_operators.substituted(repl_map, reserved_vars, 
-                                                   assumptions, requirements)
-        subbed_operators = compositeExpression(subbed_operator_or_operators)
+            self.operator_or_operators._substituted(repl_map, assumptions, 
+                                                    requirements)
         subbed_operand_or_operands = \
-            self.operand_or_operands.substituted(repl_map, reserved_vars, 
-                                                 assumptions, requirements)
+            self.operand_or_operands._substituted(repl_map, assumptions, 
+                                                  requirements)
+        subbed_operators = compositeExpression(subbed_operator_or_operators)
         
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
@@ -429,19 +446,6 @@ class Operation(Expression):
                 # application.  For example, f(x, y) -> x + y,
                 # or g(a, b_1, ..., b_n) -> a * b_1 + ... + a * b_n.
                 
-                subbed_op_lambda = subbed_operator
-                if not reserved_vars is None:
-                    # The reserved variables of the lambda body excludes
-                    # the lambda parameters (i.e., the parameters mask 
-                    # externally reserved variables).
-                    lambda_expr_res_vars = \
-                        {k:v for k, v in reserved_vars.items() 
-                         if k not in subbed_op_lambda.parameterVarSet}
-                else: 
-                    lambda_expr_res_vars = None
-                subbed_operator_body = subbed_op_lambda.body
-                subbed_operator_body._restrictionChecked(lambda_expr_res_vars)
-                
                 if len(self.operands)==1 and \
                         not isinstance(self.operands[0], ExprRange):
                     # A single operand case (even if that operand 
@@ -449,17 +453,26 @@ class Operation(Expression):
                     subbed_operands = [subbed_operand_or_operands]
                 else:
                     subbed_operands = subbed_operand_or_operands
-                return subbed_operator.apply(*subbed_operands, 
-                                             assumptions=assumptions, 
-                                             requirements=requirements)
+                return Lambda._apply(
+                        subbed_operator.parameters, subbed_operator.body,
+                        *subbed_operands, assumptions=assumptions, 
+                        requirements=requirements)
         
-        if isinstance(subbed_operand_or_operands, ExprTuple) \
-                and len(subbed_operand_or_operands)==1 \
-                and not isinstance(subbed_operand_or_operands[0], ExprRange) \
-                and not isinstance(subbed_operand_or_operands[0], ExprTuple):
-            # An 'operands' ExprTuple of a single, simple (non-range and 
-            # non-tuple) expression is just a single operand.
-            subbed_operand_or_operands = subbed_operand_or_operands[0]
+        had_singular_operand = hasattr(self, 'operand')
+        if (had_singular_operand and isinstance(subbed_operand_or_operands, 
+                                                ExprTuple)
+                and not isinstance(self.operand_or_operands, ExprTuple)):
+            # If a singular operand is replaced with an ExprTuple,
+            # we must wrap an extra ExprTuple around it to indicate
+            # that it is still a singular operand with the operand
+            # as the ExprTuple (rather than expanding to multip 
+            # operands).
+            subbed_operand_or_operands = ExprTuple(subbed_operand_or_operands)
+        else:
+            # Possibly collapse multiple operands to a single operand
+            # via "do_singular_reduction=True".
+            subbed_operand_or_operands = singleOrCompositeExpression(
+                subbed_operand_or_operands, do_singular_reduction=True)
         
         # Remake the Expression with substituted operator and/or 
         # operands
@@ -474,14 +487,19 @@ class Operation(Expression):
                     # Don't transfer the styles; they may not apply in 
                     # the same manner in the setting of the new 
                     # operation.
-                    return op_class._make(
+                    subbed_sub_exprs = (operator, subbed_operand_or_operands)
+                    substituted = op_class._checked_make(
                             ['Operation'], styles=None, 
-                            subExpressions=[operator,
-                                            subbed_operand_or_operands])
-        return self.__class__._make(self._coreInfo, self.getStyles(), 
-                                    [subbed_operator_or_operators, 
-                                     subbed_operand_or_operands])
+                            subExpressions=subbed_sub_exprs)
+                    return substituted
+        
+        subbed_sub_exprs = (subbed_operator_or_operators, 
+                            subbed_operand_or_operands)
+        substituted = self.__class__._checked_make(
+                self._coreInfo, self.getStyles(), subbed_sub_exprs)
+        return substituted
 
+        
     
 class OperationError(Exception):
     def __init__(self, message):

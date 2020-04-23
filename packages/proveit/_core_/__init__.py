@@ -2,7 +2,7 @@
 
 from .expression import (
         Expression, used_vars, free_vars, free_indexed_vars,
-        expressionDepth, MakeNotImplemented, ImproperSubstitution, ScopingViolation, 
+        expressionDepth, MakeNotImplemented, ImproperSubstitution, 
         InnerExpr,
         Label, Literal, Variable, DuplicateLiteralError,
         safeDummyVar, safeDefaultOrDummyVar,

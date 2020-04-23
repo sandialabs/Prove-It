@@ -1350,10 +1350,11 @@ class ContextStorage:
             if issubclass(expr_class, Lambda):
                 # For efficiency, make the Lambda expression with its generic
                 # version known to avoid needing to generate it via relabeling.
-                expr = expr_class._make(exprInfo, styles, subExpressions, 
-                                        genericExpr)
+                expr = expr_class._checked_make(
+                        exprInfo, styles, subExpressions, genericExpr)
             else:
-                expr = expr_class._make(exprInfo, styles, subExpressions)
+                expr = expr_class._checked_make(exprInfo, styles, 
+                                                subExpressions)
             if context is not None and expr._style_id not in Expression.contexts:
                 expr._setContext(context)
                 # see if it is a special expression with an addressable name.

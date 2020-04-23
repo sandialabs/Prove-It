@@ -25,6 +25,20 @@ class Composite:
     pass
 
 
+def singularExpression(expression):
+    from .expr_range import ExprRange
+    from proveit._core_.known_truth import KnownTruth
+    if isinstance(expression, KnownTruth):
+        expression = expression.expr   
+    if isinstance(expression, ExprRange):
+        raise TypeError("A singular expression may not be an ExprRange "
+                        ": %s"%expression)
+    if isinstance(expression, Composite):
+        raise TypeError("A singular expression may not be a Composite "
+                        "(ExprTuple or NamedExprs): %s"%expression)
+    assert isinstance(expression, Expression)
+    return expression
+
 def compositeExpression(expressions):
     '''
     Put the appropriate CompositeExpression wrapper around expressions.  
@@ -54,17 +68,35 @@ def compositeExpression(expressions):
             # try to see if we can use expressions to generate a NamedExpressions object
             return NamedExprs(expressions)
 
-def singleOrCompositeExpression(exprOrExprs):
+def singleOrCompositeExpression(expr_or_exprs, 
+                                wrap_expr_range_in_tuple=True,
+                                do_singular_reduction=False):
     '''
-    Put the approriate CompositeExpression wrapper around a list (iterable) or dictionary
-    of Expressions, or simply return the given Expression if it is one.
+    Put the approriate CompositeExpression wrapper around a list 
+    (iterable) or dictionary of Expressions, or simply return the given 
+    Expression if it is one.  If wrap_expr_range_in_tuple, wrap
+    an ExprRange in an ExprTuple. If do_singular_reduction is True and
+    the result is an ExprTuple with one item that is neither an
+    ExprRange nor a nested ExprTuple, return the single item.
     '''
     from proveit._core_.known_truth import KnownTruth
-    if isinstance(exprOrExprs, KnownTruth):
-        exprOrExprs = exprOrExprs.expr
-    if isinstance(exprOrExprs, Expression):
-        return exprOrExprs
-    else: return compositeExpression(exprOrExprs)
+    from .expr_tuple import ExprTuple
+    from .expr_range import ExprRange
+    if isinstance(expr_or_exprs, KnownTruth):
+        expr_or_exprs = expr_or_exprs.expr
+    if wrap_expr_range_in_tuple and isinstance(expr_or_exprs, ExprRange):
+        # An ExprRange must be wrapped in an ExprTuple in the
+        # situations when either a single or composite are allowed.
+        return ExprTuple(expr_or_exprs)
+    if not isinstance(expr_or_exprs, Expression):
+        expr_or_exprs = compositeExpression(expr_or_exprs)
+    if (do_singular_reduction and isinstance(expr_or_exprs, ExprTuple)
+            and len(expr_or_exprs)==1):
+        if (not isinstance(expr_or_exprs[0], ExprTuple) and
+                not isinstance(expr_or_exprs[0], ExprRange)):
+            # Reduce it to a singular expression.
+            return expr_or_exprs[0]
+    return expr_or_exprs
 
 
 def _simplifiedCoord(coord, assumptions, requirements):

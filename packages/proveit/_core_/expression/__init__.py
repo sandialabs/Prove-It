@@ -1,6 +1,6 @@
 from .expr import (Expression, used_vars, free_vars, free_indexed_vars,
                    expressionDepth,
-                   MakeNotImplemented, ImproperSubstitution, ScopingViolation)
+                   MakeNotImplemented, ImproperSubstitution)
 from .style_options import StyleOptions
 from .inner_expr import InnerExpr
 from .fencing import maybeFencedString, maybeFencedLatex, maybeFenced

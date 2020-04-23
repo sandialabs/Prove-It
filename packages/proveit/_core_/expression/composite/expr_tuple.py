@@ -45,9 +45,7 @@ class ExprTuple(Composite, Expression):
                 entry = entry.expr 
             if not isinstance(entry, Expression):
                 entry = singleOrCompositeExpression(entry)
-            if not isinstance(entry, Expression):
-                raise TypeError("ExprTuple must be created out of "
-                                  "Expressions, not %s."%entry.__class__)
+            assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
         self._lastEntryCoordInfo = None
@@ -109,8 +107,8 @@ class ExprTuple(Composite, Expression):
         if len(wrap_positions) > 0:
             call_strs.append('withWrappingAt(' + ','.join(str(pos) for pos in wrap_positions) + ')')
         justification = self.getStyle('justification')
-        if justification != 'center':
-            call_strs.append('withJustification(' + justification + ')')
+        if justification != 'left':
+            call_strs.append('withJustification("' + justification + '")')
         return call_strs
                                         
     def __iter__(self):
@@ -258,16 +256,12 @@ class ExprTuple(Composite, Expression):
         from proveit import Len
         return Len(self).simplification(assumptions).rhs
                 
-    def substituted(self, repl_map, reserved_vars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def _substituted(self, repl_map,
+                     assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
         
-        reserved_vars is used internally to protect the "scope" of a
-        Lambda map.  For more details, see the Lambda.substitution
-        documentation.
-
         'assumptions' and 'requirements' are used when an operator is
         substituted by a Lambda map that has iterated parameters such that 
         the length of the parameters and operands must be proven to be equal.
@@ -281,17 +275,17 @@ class ExprTuple(Composite, Expression):
         from .expr_range import ExprRange
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
-            return repl_map[self]._restrictionChecked(reserved_vars)
+            return repl_map[self]
         
         subbed_exprs = []
         for expr in self:
             if isinstance(expr, ExprRange):
                 # ExprRange.substituted is a generator that yields items
                 # to be embedded into the tuple.
-                subbed_exprs.extend(expr.substituted(
-                        repl_map, reserved_vars, assumptions, requirements))
+                subbed_exprs.extend(expr._substituted_entries(
+                        repl_map, assumptions, requirements))
             else:
-                subbed_expr = expr.substituted(repl_map, reserved_vars, 
+                subbed_expr = expr._substituted(repl_map, 
                                                assumptions, requirements)
                 subbed_exprs.append(subbed_expr)
         return ExprTuple(*subbed_exprs)

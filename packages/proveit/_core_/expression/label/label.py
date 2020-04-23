@@ -76,12 +76,12 @@ class TemporaryLabel(Label):
     A TemporaryLabel is used temporarily during a build process until
     mutual dependencies of common expressions are resolved.
     '''
-    _prefix = "Temporary_placeholder_for_undefined"
+    _prefix = "Temporary_placeholder_for_undefined_"
     
     def __init__(self, name):
-        string_format = "%s_%s"%(TemporaryLabel._prefix, name)
-        latex_format = "%s\_%s"%(TemporaryLabel._prefix.replace('_', '\_'),
-                                 name)
+        string_format = "%s%s"%(TemporaryLabel._prefix, name)
+        latex_format = "%s%s"%(TemporaryLabel._prefix.replace('_', '\_'),
+                               name)
         Label.__init__(self, string_format, latex_format, 
                        labelType = 'TemporaryLabel')
 

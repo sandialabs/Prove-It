@@ -28,6 +28,7 @@ class NamedExprs(Composite, Expression):
                 val = singleOrCompositeExpression(val)
             except TypeError:
                 raise TypeError("Values of NamedExprs must be Expressions")
+            assert isinstance(val, Expression)
             elems[key] = val
         self.keywords, self.elems = keywords, elems
         # ',' isn't allowed in the core info and ':' is not allowed

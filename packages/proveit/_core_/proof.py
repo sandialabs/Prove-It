@@ -1012,7 +1012,7 @@ class Instantiation(Proof):
             for parameter_entry in lambda_expr.parameters:
                 if isinstance(parameter_entry, ExprRange):
                     # Perform a substitution on this universal 
-                    # quantifier parameter entry will all of the
+                    # quantifier parameter entry with all of the
                     # 'parameters' except for the entry's Variable.
                     entry_params = \
                         [param for param in parameters 
@@ -1022,7 +1022,7 @@ class Instantiation(Proof):
                     subbed_param_entry = Lambda._apply(
                             entry_params, parameter_entry, *entry_operands, 
                             assumptions=assumptions, requirements=requirements)
-                    subbed_parameters.extend(subbed_param_entry)
+                    subbed_parameters.append(subbed_param_entry)
                 else:
                     subbed_parameters.append(parameter_entry)
             
@@ -1067,12 +1067,9 @@ class Instantiation(Proof):
             operands = list(Instantiation._operands_of_parameters(parameters, 
                                                                   repl_map))
             if isinstance(expr, Conditional):
-                if len(expr.conditions) != 1:
-                    raise ValueError("Expecting exactly 1 condition for "
-                                     "a Forall Conditional")
                 condition = expr.condition
                 expr = expr.value
-                
+
                 # Make substitutions in the condition by applying
                 # the effective lambda map (mapping the parameters 
                 # to the condition) on the "operands" (parameter 
@@ -1198,11 +1195,11 @@ class Generalization(Proof):
         assert isinstance(lambdaExpr, Lambda), 'A Forall Expression must be in the proper form'
         expr = lambdaExpr.body
         while expr != instanceExpr:
-            if isinstance(expr, Conditional) and len(expr.values)==1:
+            if isinstance(expr, Conditional):
                 # Dig into the conditional.  Adding conditions only
                 # weakens the statement, so it doesn't matter what
                 # the conditions are.
-                expr = expr.values[0]
+                expr = expr.value
                 if expr == instanceExpr: break
             if not isinstance(expr, Forall): break
             expr = expr.instanceExpr # take it another nested level if necessary

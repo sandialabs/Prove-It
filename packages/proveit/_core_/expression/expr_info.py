@@ -65,12 +65,8 @@ class ExpressionInfo:
                 else: # has multiple operands
                     outStr += indent + r'operands: ' + str(expr_num_map[expr.operands]) + '\n'                    
             elif isinstance(expr, Conditional):
-                if len(expr.conditions) == 1:
-                    outStr += indent + r'value: ' + str(expr_num_map[expr.value]) + '\n'
-                    outStr += indent + r'condition: ' + str(expr_num_map[expr.condition]) + '\n'
-                else:
-                    outStr += indent + r'values: ' + str(expr_num_map[expr.values]) + '\n'
-                    outStr += indent + r'conditions: ' + str(expr_num_map[expr.conditions]) + '\n'                    
+                outStr += indent + r'value: ' + str(expr_num_map[expr.value]) + '\n'
+                outStr += indent + r'condition: ' + str(expr_num_map[expr.condition]) + '\n'
             elif isinstance(expr, Lambda):
                 if hasattr(expr, 'parameter'): # has a single parameter
                     outStr += indent + 'parameter: %s\n'%(expr_num_map[expr.parameter])
@@ -130,12 +126,8 @@ class ExpressionInfo:
                 else: # has multiple operands
                     sub_expressions += 'operands:&nbsp;%d<br>'%(expr_num_map[expr.operands])
             elif isinstance(expr, Conditional):
-                if len(expr.conditions) == 1:
-                    sub_expressions = 'value:&nbsp;%s<br>'%expr_num_map[expr.value]
-                    sub_expressions += 'condition:&nbsp;%s<br>'%expr_num_map[expr.condition]
-                else:
-                    sub_expressions = 'values:&nbsp;%s<br>'%expr_num_map[expr.values]
-                    sub_expressions += 'conditions:&nbsp;%s<br>'%expr_num_map[expr.conditions]
+                sub_expressions = 'value:&nbsp;%s<br>'%expr_num_map[expr.value]
+                sub_expressions += 'condition:&nbsp;%s<br>'%expr_num_map[expr.condition]
             elif isinstance(expr, Lambda):
                 if hasattr(expr, 'parameter'): # has a single parameter
                     sub_expressions = 'parameter:&nbsp;%s<br>'%(expr_num_map[expr.parameter])

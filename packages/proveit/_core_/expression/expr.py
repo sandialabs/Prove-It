@@ -18,6 +18,28 @@ class ExprType(type):
     expressions automatically populate the Operation.operationClassOfOperator
     when any Expression class is provided with an '_operator_' class attribute.
     '''
+    
+    # These attributes should not be overridden by classes outside
+    # of the core.
+    protected = ('_generic_version', '_setContext', '_substituted',
+                 '_make', '_check_make', '_relabeled', '_used_vars',
+                 '_free_vars', '_repr_html_', '_coreInfo',
+                 '_subExpressions', '_genericExpr', 
+                 '_meaningData', '_meaning_id',
+                 '_styleData', '_style_id')
+    
+    def __new__(meta, name, bases, attrs):
+        # Tip from
+        # https://stackoverflow.com/questions/3948873
+        #             /prevent-function-overriding-in-python
+        core_package = 'proveit._core_'
+        if attrs['__module__'][:len(core_package)] != core_package:
+            for attribute in attrs:
+                if attribute in ExprType.protected:
+                    raise AttributeError('Overriding of attribute "%s" '
+                                         'not allowed.'%attribute)
+        return super().__new__(meta, name, bases, attrs)
+    
     def __init__(cls, *args, **kwargs):
         type.__init__(cls, *args, **kwargs)
         if hasattr(cls, '_operator_'):
@@ -154,9 +176,9 @@ class Expression(metaclass=ExprType):
         
         # The 'generic' sub-expressions are different than the sub-expressions,
         # so that propagates to this Expression's generic version.
-        self._genericExpr = self.__class__._make(self._meaningData._coreInfo, 
-                                                 dict(self._styleData.styles), 
-                                                 generic_sub_expressions)
+        self._genericExpr = self.__class__._checked_make(
+                self._meaningData._coreInfo, dict(self._styleData.styles), 
+                generic_sub_expressions)
         return self._genericExpr
         
     
@@ -300,14 +322,32 @@ class Expression(metaclass=ExprType):
         if formatType == 'latex': return self.latex(**kwargs)
     
     @classmethod
-    def _make(subClass, coreInfo, styles, subExpressions):
+    def _make(cls, coreInfo, styles, subExpressions, genericExpr=None):
         '''
         Should make the Expression object for the specific Expression sub-class
         based upon the coreInfo and subExpressions.  Must be implemented for 
         each core Expression sub-class that can be instantiated.
         '''
-        raise MakeNotImplemented(subClass)
-                    
+        raise MakeNotImplemented(cls)
+
+    @classmethod
+    def _checked_make(cls, coreInfo, styles, subExpressions, genericExpr=None):
+        '''
+        Check that '_make' is done appropriately since it is not 
+        entirely within the control of the core.
+        '''
+        coreInfo = tuple(coreInfo)
+        subExpressions = tuple(subExpressions)
+        if genericExpr is not None:
+            made = cls._make(coreInfo, styles, subExpressions, genericExpr)
+        else:
+            made = cls._make(coreInfo, styles, subExpressions)
+        assert made._coreInfo == coreInfo, (
+                "%s vs %s"%(made._coreInfo, coreInfo))
+        assert made._subExpressions == subExpressions, (
+                "%s vs %s"%(made._subExpressions, subExpressions))
+        return made
+    
     def coreInfo(self):
         '''
         Copy out the core information.
@@ -563,8 +603,8 @@ class Expression(metaclass=ExprType):
         '''
         return iter(())
     
-    def substituted(self, repl_map, reserved_vars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+                    requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary 
@@ -587,15 +627,28 @@ class Expression(metaclass=ExprType):
         Lambda.apply, and Iter.substituted (which is the sequence of 
         calls involved).
         '''
+        # Call the "protected" version of 'substituted' which may only
+        # be overridden by the "primitive" core expression classes.
+        return self._substituted(repl_map, assumptions, requirements)
+
+    
+    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+                     requirements=None):
+        '''
+        The "protected" implementation of 'substituted' which may only
+        # be overridden by the "primitive" core expression classes.
+        '''
         if len(repl_map)>0 and (self in repl_map):
-            return repl_map[self]._restrictionChecked(reserved_vars)
+            substituted = repl_map[self]
         else:
-            subbed_sub_exprs = [sub_expr.substituted(repl_map, reserved_vars,
-                                                     assumptions, requirements)
-                                for sub_expr in self._subExpressions]
-            return self.__class__._make(self._coreInfo,
-                                        dict(self._styleData.styles),
-                                        subbed_sub_exprs)
+            subbed_sub_exprs = \
+                tuple(sub_expr._substituted(repl_map, assumptions, 
+                                            requirements)
+                      for sub_expr in self._subExpressions)
+            substituted = self.__class__._checked_make(
+                    self._coreInfo, dict(self._styleData.styles),
+                    subbed_sub_exprs)
+        return substituted
     
     def relabeled(self, relabel_map):
         '''
@@ -604,20 +657,30 @@ class Expression(metaclass=ExprType):
         by the corresponding values.  The replacements must be
         Variable objects, or a TypeError will be raised.
         '''
-        relabeled_sub_exprs = [sub_expr.relabeled(relabel_map) 
-                               for sub_expr in self._subExpressions]
+        return self._relabeled(relabel_map)
+    
+    def _relabeled(self, relabel_map):
+        '''
+        The "protected" implementation of 'relabeled' which may only
+        # be overridden by the "primitive" core expression classes.
+        '''
+        relabeled_sub_exprs = \
+            tuple(sub_expr._relabeled(relabel_map) 
+                  for sub_expr in self._subExpressions)
         if self._subExpressions != relabeled_sub_exprs:
-            return self.__class__._make(self._coreInfo, 
-                                        dict(self._styleData.styles),
-                                        relabeled_sub_exprs)
-        return self
+            substituted = self.__class__._checked_make(
+                    self._coreInfo, dict(self._styleData.styles),
+                    relabeled_sub_exprs)
+            return substituted
+        else:
+            return self
     
     def copy(self):
         '''
         Make a copy of the Expression with the same styles.
         '''
         # vacuous substitution makes a copy
-        expr_copy = self.substituted(expr_repl_map=dict()) 
+        expr_copy = self._substituted(expr_repl_map=dict()) 
         return expr_copy
     
     def _used_vars(self):
@@ -828,18 +891,7 @@ class Expression(metaclass=ExprType):
         for subExpr in self._subExpressions:
             for expr in subExpr.orderOfAppearance(subExpressions):
                 yield expr
-        
-    def _restrictionChecked(self, reserved_vars):
-        '''
-        Check that a substituted expression (self) does not use any 
-        reserved variables (parameters of a Lambda function Expression).
-        '''
-        if reserved_vars is not None \
-                and not self._free_vars().isdisjoint(reserved_vars.keys()):
-            intersection = self._free_vars().intersection(reserved_vars.keys())
-            raise ScopingViolation(intersection)
-        return self
-
+    
     def _repr_html_(self, context=None, unofficialNameKindContext=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
@@ -921,15 +973,6 @@ class MakeNotImplemented(NotImplementedError):
 class ImproperSubstitution(Exception):
     def __init__(self, message):
         self.message = message
-    def __str__(self):
-        return self.message
-
-class ScopingViolation(Exception):
-    def __init__(self, violating_vars):
-        self.message = ("Must not make substitution with reserved variables "
-                        "(i.e., parameters of a Lambda function).\n"
-                        "These variables are in violation: %s"%str(violating_vars))
-        self.violating_vars = violating_vars
     def __str__(self):
         return self.message
 

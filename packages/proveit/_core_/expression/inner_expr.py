@@ -1,5 +1,5 @@
 from .expr import Expression, free_vars
-from .operation import Function
+from .operation import Operation, Function
 from .lambda_expr import Lambda
 from .composite import ExprTuple, Composite, NamedExprs, compositeExpression
 from proveit._core_.defaults import USE_DEFAULTS
@@ -197,9 +197,11 @@ class InnerExpr:
             except ValueError:
                 raise Exception("Expecting method, %s, to have 'assumptions' argument."%str(equiv_method))
             repl_map = self.replMap()
-            if isinstance(cur_inner_expr, ExprTuple):
-                # Replacing an entire ExprTuple needs a repl_map
-                # with a range of parameters.
+            if (isinstance(cur_inner_expr, ExprTuple)
+                    and len(self.exprHierarchy) > 2 
+                    and isinstance(self.exprHierarchy[-2], Operation)):
+                # When replace operands of an operation, we need a
+                # a repl_map with a range of parameters.
                 repl_map = self[:].replMap()
             def inner_equiv(*args, **kwargs):
                 if 'assumptions' in kwargs:
@@ -318,22 +320,24 @@ class InnerExpr:
             lambda_params = varRange(dummy_var, one, sub_tuple_len)
             lambda_body = ExprTuple(*(parent_tuple[:start] + (lambda_params,)
                                       + parent_tuple[stop:]))
+            """
         elif isinstance(cur_sub_expr, Composite):
             dummy_vars = top_level_expr.safeDummyVars(len(cur_sub_expr))
             lambda_params = dummy_vars
             cur_sub_class = cur_sub_expr.__class__
             if len(self.parameters)==0:
-                lambda_body = cur_sub_class._make(cur_sub_expr.coreInfo(), 
-                                                  cur_sub_expr.getStyles(), 
-                                                  dummy_vars)
+                lambda_body = cur_sub_class._checked_make(
+                        cur_sub_expr.coreInfo(), cur_sub_expr.getStyles(), 
+                        dummy_vars)
             else:
                 # The replacements should be a function of the 
                 # parameters encountered between the top-level 
                 # expression and the inner expression.
-                lambda_body = cur_sub_class._make(
+                lambda_body = cur_sub_class._checked_make(
                         cur_sub_expr.coreInfo(), cur_sub_expr.getStyles(), 
                         [Function(dummy_var, self.parameters) 
-                         for dummy_var in dummy_vars])                
+                         for dummy_var in dummy_vars])   
+            """             
         else:
             lambda_params = [top_level_expr.safeDummyVar()]
             if len(self.parameters)==0:
@@ -368,10 +372,10 @@ class InnerExpr:
         repl_map = self.replMap()
         lambda_params = repl_map.parameters
         cur_sub_expr = self.exprHierarchy[-1]
-        if isinstance(cur_sub_expr, Composite):
-            sub_exprs = list(cur_sub_expr.subExprIter())
-        else:
-            sub_exprs = [cur_sub_expr]
+        #if isinstance(cur_sub_expr, Composite):
+        #    sub_exprs = list(cur_sub_expr.subExprIter())
+        #else:
+        sub_exprs = [cur_sub_expr]
         named_expr_dict = [('lambda',repl_map)]
         if len(self.parameters)==0:
             named_expr_dict += [('$%s$'%lambda_param.latex(), sub_expr) 

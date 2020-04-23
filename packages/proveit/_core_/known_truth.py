@@ -934,7 +934,7 @@ class KnownTruth:
         if len(self.assumptions) > 0:
             assumptionsLatex = ExprTuple(*self.assumptions).formatted('latex', fence=False)
             return r'{' +assumptionsLatex + r'} \vdash ' + self.expr.latex()
-        return r'\vdash ' + self.expr.string()
+        return r'\vdash ' + self.expr.latex()
 
     def __str__(self):
         '''

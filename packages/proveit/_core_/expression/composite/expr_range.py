@@ -1,7 +1,7 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
                                             ImproperSubstitution)
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
-from proveit._core_.expression.composite import ExprTuple
+from proveit._core_.expression.composite import singularExpression, ExprTuple
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -54,8 +54,8 @@ class ExprRange(Expression):
         
         Expression.__init__(self, ['ExprRange'], 
                             [lambda_map, start_index, end_index])
-        self.start_index = start_index
-        self.end_index = end_index
+        self.start_index = singularExpression(start_index)
+        self.end_index = singularExpression(end_index)
         self.lambda_map = lambda_map
         # The body of the Lambda map is a Conditional that conditions the 
         # mapping according to the parameter being in the [start, end] 
@@ -93,7 +93,7 @@ class ExprRange(Expression):
         '''
         if not hasattr(self, '_first'):
             expr_map = {self.lambda_map.parameter:self.start_index}
-            self._first =  self.body.substituted(expr_map)
+            self._first =  self.body._substituted(expr_map)
         return self._first
 
     def last(self):
@@ -103,7 +103,7 @@ class ExprRange(Expression):
         '''
         if not hasattr(self, '_last'):
             expr_map = {self.lambda_map.parameter:self.end_index}
-            self._last = self.body.substituted(expr_map)
+            self._last = self.body._substituted(expr_map)
         return self._last
         
     def string(self, **kwargs):
@@ -163,17 +163,64 @@ class ExprRange(Expression):
         # map to the desired instance
         return self.lambda_map.apply(index, assumptions=assumptions,
                                      requirements=requirements)
-        
-    def substituted(self, repl_map, reserved_vars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
+    
+    def _possibly_reduced_range(self, expr_range, assumptions, requirements):
+        from proveit import KnownTruth
+        from proveit._common_ import f, i, j
+        from proveit.logic import Equals
+        from proveit.number import Add, one
+        from proveit.core_expr_types.tuples._axioms_ import empty_range_def
+        from proveit.core_expr_types.tuples._theorems_ import \
+            singular_range_reduction
+        if not defaults.automation:
+            # If automation is off, we won't do any reduction.
+            yield expr_range
+            return
+        lambda_map = expr_range.lambda_map
+        start_index = expr_range.start_index
+        end_index = expr_range.end_index
+        if defaults.reduce_singular_ranges and start_index == end_index:
+            # We can do a singular range reduction.
+            # Temporarily disable automation to avoid infinite
+            # recursion.
+            defaults.automation = False
+            try:
+                reduction = singular_range_reduction.instantiate(
+                        {f:lambda_map, i:start_index})
+            finally:
+                # Re-enable automation.
+                defaults.automation = True
+        elif (defaults.reduce_empty_ranges and 
+              Equals(Add(end_index, one), start_index).proven(assumptions)):
+            # We can do an empty range reduction
+            # Temporarily disable automation to avoid infinite
+            # recursion.
+            defaults.automation = False
+            try:
+                reduction = empty_range_def.instantiate(
+                        {f:lambda_map, i:start_index, j:end_index})
+            finally:
+                # Re-enable automation.
+                defaults.automation = True                
+        else:
+            yield expr_range # no reduction
+            return
+        assert isinstance(reduction, KnownTruth)
+        assert isinstance(reduction.expr, Equals)
+        assert len(reduction.expr.operands) == 2
+        assert reduction.expr.operands[0] == ExprTuple(expr_range)
+        reduced_tuple = reduction.expr.operands[1]
+        assert isinstance(reduced_tuple, ExprTuple)
+        requirements.append(reduction)
+        for entry in reduced_tuple:
+            yield entry
+    
+    def _substituted_entries(self, repl_map, assumptions=USE_DEFAULTS, 
+                             requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
         
-        reserved_vars is used internally to protect the "scope" of a
-        Lambda map.  For more details, see the Lambda.substitution
-        documentation.
-
         'assumptions' and 'requirements' are used when an operator is
         substituted by a Lambda map that has a range of parameters such 
         that the length of the parameters and operands must be proven 
@@ -225,20 +272,20 @@ class ExprRange(Expression):
         from proveit import safeDummyVar
         from proveit.logic import Equals #, InSet
         from proveit.number import Add, one #, Interval
-
+        
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
-            return repl_map[self]._restrictionChecked(reserved_vars)
+            return repl_map[self]
         
         assumptions = defaults.checkedAssumptions(assumptions)
         new_requirements = []
         lambda_map = self.lambda_map
         orig_parameter = self.parameter
         
-        subbed_start = self.start_index.substituted(repl_map, reserved_vars, 
-                                                    assumptions, requirements)
-        subbed_end = self.end_index.substituted(repl_map, reserved_vars, 
-                                                assumptions, requirements)
+        subbed_start = self.start_index._substituted(
+                repl_map, assumptions, requirements)
+        subbed_end = self.end_index._substituted(
+                repl_map, assumptions, requirements)
         
         # Check if any of the IndexedVars whose index is the ExprRange
         # parameter is being expanded by the repl_map.
@@ -253,7 +300,7 @@ class ExprRange(Expression):
                                           ExprRange):
                     raise ImproperSubstitution(
                             "Improper indexed variable expansion: expecting "
-                            "the repl_map value for '%s' to bean range "
+                            "the repl_map value for '%s' to be a range "
                             "of indexed variables, got '%s' instead."
                             %(indexed_var.var, indexed_var_range_tuple))
                     
@@ -263,23 +310,17 @@ class ExprRange(Expression):
         
         if not must_expand:
             # No need to worry about expanding IndexedVar's.
-            if subbed_start==subbed_end:
-                # The start and end are the same, so
-                # just get the one lambda map instance and
-                # yield this instance after calling 'substituted' on it.
-                lambda_map_instance = lambda_map.apply(
-                        subbed_start, assumptions=assumptions,
-                        requirements=requirements)
-                yield lambda_map_instance.substituted(
-                        repl_map, reserved_vars, assumptions, requirements)
-            else:
-                # Just call 'substituted' on the Lambda map 
-                # sub-expression and rebuild the ExprRange.
-                subbed_lambda_map = lambda_map.substituted(
-                        repl_map, reserved_vars, assumptions, requirements)
-                yield ExprRange(None, None, subbed_start, subbed_end, 
-                                _lambda_map = subbed_lambda_map)
-            return True
+            # However, we may perform a reduction of the range
+            # if it is known to be empty or singular.
+            subbed_lambda_map = lambda_map._substituted(
+                    repl_map, assumptions, requirements)
+            subbed_expr = ExprRange(None, None, subbed_start, subbed_end, 
+                                    _lambda_map = subbed_lambda_map)
+            for entry in self._possibly_reduced_range(subbed_expr, 
+                                                      assumptions, 
+                                                      requirements):
+                yield entry
+            return
         
         # Need to expand IndexedVar's.  The expansions must be defined 
         # over the start/end range and must be aligned with each 
@@ -354,12 +395,12 @@ class ExprRange(Expression):
         # Need to handle the change in scope within the lambda 
         # expression.  We won't use 'new_params'.  They aren't relavent 
         # after an expansion, this won't be used.
-        new_params, inner_repl_map, inner_reserved_vars, inner_assumptions \
-            = self.lambda_map._inner_scope_sub(repl_map, reserved_vars, 
-                                               assumptions, new_requirements)
+        new_params, inner_repl_map, inner_assumptions \
+            = self.lambda_map._inner_scope_sub(repl_map, assumptions, 
+                                               new_requirements)
         assert len(new_params)==1
-        # We won't use the new parameter from 'new_params', and we
-        # won't need 'inner_reserved_vars'.  To be safe, we just need a
+        # We won't use the new parameter from 'new_params'.
+        # To be safe, we just need a
         # safe dummy variable that doesn't clash with anything involved.
         new_param = safeDummyVar(self, *[repl for key, repl in repl_map.items()])
                 
@@ -400,7 +441,8 @@ class ExprRange(Expression):
                     # Relabel the entry body to use the parameter of 
                     # this ExprRange so that all the parameters will be 
                     # consistent.
-                    new_body = entry.body.substituted({entry.parameter:new_param})
+                    new_body = entry.body._substituted(
+                            {entry.parameter:new_param})
                     # For this entry, replace the IndexedVar with the 
                     # corresponding ExprRange body.
                     entry_repl_map[indexed_var] = new_body
@@ -426,19 +468,23 @@ class ExprRange(Expression):
                 entry_assumptions = inner_assumptions # + [range_assumption]
                 entry_requirements = []
                 entry_repl_map[orig_parameter] = new_param
-                # Note: we don't need to use the 'inner' reserved vars.
                 entry = ExprRange(new_param,
-                             body.substituted(entry_repl_map, reserved_vars,
-                                              entry_assumptions, 
-                                              entry_requirements),
+                             body._substituted(entry_repl_map,
+                                               entry_assumptions, 
+                                               entry_requirements),
                              start_index, end_index)
+                # We may perform a reduction of the range if it is known
+                # to be empty or singular.
+                for entry in self._possibly_reduced_range(entry, 
+                                                          assumptions, 
+                                                          requirements):
+                    yield entry
                 if indices_must_match:
                     # We need to know the new_indices to match with the
                     # original indices.
                     new_indices.append(ExprRange(new_param, new_param, 
                                             start_index, end_index))
                     next_index = Add(end_index, one).simplified(assumptions)
-                yield entry
                 # Translate from inner requirements to outer requirements
                 # in a manner that respects the change in scope w.r.t.
                 # lambda parameters.
@@ -459,8 +505,8 @@ class ExprRange(Expression):
                 if indices_must_match:
                     # The actual range parameter index is needed:
                     entry_repl_map[orig_parameter] = next_index
-                entry = body.substituted(entry_repl_map, reserved_vars,
-                                         inner_assumptions, requirements)
+                entry = body._substituted(entry_repl_map, inner_assumptions,
+                                          requirements)
                 if indices_must_match:
                     # We need to know the new_indices to match with the
                     # original indices.

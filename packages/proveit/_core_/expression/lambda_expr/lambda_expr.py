@@ -1,7 +1,7 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented, 
-                                            ImproperSubstitution, ScopingViolation,
+                                            ImproperSubstitution,
                                             free_vars)
-from proveit._core_.expression.label.var import safeDummyVars
+from proveit._core_.expression.label.var import safeDummyVar, safeDummyVars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 def getParamVar(parameter):
@@ -73,12 +73,9 @@ class Lambda(Expression):
         if len(self.parameterVarSet) != len(self.parameters):
             raise ParameterCollisionError(self.parameters)
         body = singleOrCompositeExpression(body)
-                
-        if not isinstance(body, Expression):
-            raise TypeError('A Lambda body must be of type Expression')
-        if isinstance(body, ExprRange):
-            raise TypeError('An ExprRange must be within an ExprTuple or ExprArray, '
-                            'not directly as a Lambda body')
+        # After the singleOrCompositeExpression, this assertion should
+        # not faile.
+        assert isinstance(body, Expression) and not isinstance(body, ExprRange)
         self.body = body
                 
         if _generic_expr is None:
@@ -140,7 +137,7 @@ class Lambda(Expression):
                                                      generic_body)
             repl_map = {indexed_var:repl for indexed_var, repl 
                         in zip(indexed_var_params, indexed_var_replacements)}
-            generic_body = generic_body.substituted(repl_map)
+            generic_body = generic_body._substituted(repl_map)
             generic_body_free_vars = generic_body._free_vars()
             for indexed_var_param in indexed_var_params:
                 if getParamVar(indexed_var_param) in generic_body_free_vars:
@@ -150,7 +147,7 @@ class Lambda(Expression):
                     # (a_i could have been replaced with a_n in some
                     # occurrence assuming i=n), but we do need to
                     # revert the replacement to be safe.
-                    generic_body = generic_body.substituted(
+                    generic_body = generic_body._substituted(
                             {repl_map[indexed_var_param]:indexed_var_param})
                     repl_map.pop(indexed_var_param)
         if len(repl_map) > 0:
@@ -174,8 +171,8 @@ class Lambda(Expression):
             relabel_map = {param:generic_param for param, generic_param 
                            in zip(parameter_vars, generic_param_vars)}
             generic_parameters = parameters._generic_version()
-            generic_parameters = generic_parameters.relabeled(relabel_map)
-            generic_body = generic_body.relabeled(relabel_map)
+            generic_parameters = generic_parameters._relabeled(relabel_map)
+            generic_body = generic_body._relabeled(relabel_map)
             return Lambda(generic_parameters, generic_body)
         else:
             return self
@@ -317,7 +314,7 @@ class Lambda(Expression):
         There are limitations with respect the Lambda map application involving
         iterated parameters when perfoming operation substitution in order to
         keep derivation rules (i.e., instantiation) simple.  For details,
-        see the ExprRange.substituted documentation.
+        see the ExprRange._substituted documentation.
         '''
         return Lambda._apply(self.parameters, self.body, *operands,
                              assumptions=assumptions, requirements=requirements)
@@ -450,20 +447,19 @@ class Lambda(Expression):
             # All operands were not consumed.
             raise LambdaApplicationError(parameters, body, 
                                          operands, assumptions,
-                                         "Too many arguments")       
+                                         "Too many arguments")
         except StopIteration:
             pass # Good.  All operands were consumed.
         try:
-            return body.substituted(repl_map, assumptions=assumptions, 
-                                    requirements=requirements)
+            return body._substituted(repl_map, assumptions=assumptions, 
+                                     requirements=requirements)
         except ImproperSubstitution as e:
             raise LambdaApplicationError(parameters, body, 
                                          operands, assumptions,
                                          "Improper substitution: %s "
                                          %str(e))
     
-    def _inner_scope_sub(self, repl_map, reserved_vars, 
-                         assumptions, requirements):
+    def _inner_scope_sub(self, repl_map, assumptions, requirements):
         '''
         Helper method for substituted (and used by ExprRange.substituted) which 
         handles the change in scope properly as well as parameter relabeling.
@@ -471,71 +467,63 @@ class Lambda(Expression):
         
         from proveit import Variable, ExprRange
         
+        body_free_vars = self.body._free_vars()
+        non_param_free_vars = body_free_vars - self.parameterVarSet
+                
         # Within the lambda scope, we can relabel lambda parameters
         # to a different Variable, but any other kind of substitution of
         # a variable that happens to match a Lambda parameter variable
         # must be left behind as an external substitution with no effect on
         # the inner scope of the Lambda.
         inner_repl_map = {key:value for key, value in repl_map.items()
-                          if (isinstance(value, Variable) or 
-                              key not in self.parameterVarSet)}
+                          if (key in body_free_vars and (
+                                  isinstance(value, Variable) or 
+                                  key not in self.parameterVarSet))}
         
-        # Handle relabeling and variable reservations consistent with 
-        # relabeling.
-        inner_reserved_vars = dict() if reserved_vars is None else dict(reserved_vars)
-        new_params = []
-        
-        for parameter, param_var in zip(self.parameters, self.parameterVars):
-            # Note that lambda parameters introduce a new scope and don't need 
-            # to, themselves, be restriction checked.  But they generate new 
-            # inner restrictions that disallow any substitution from a variable 
-            # that isn't in the new scope to a variable that is in the new 
-            # scope. 
-            # For example, we can relabel y to z in (x, y) -> f(x, y), but not 
-            # f to x. 
-            if param_var in inner_repl_map:
-                # The parameter is being relabeled, simultaneous with the
-                # substitution, so track the change with respect to the
-                # new_params and inner_reservations.
-                if isinstance(parameter, ExprRange):
-                    # e.g., x_1, ..., x_n -> y_1, ..., y_n.
-                    # It could also change the index range.
-                    # For example,
-                    # x_i, ..., x_j -> y_1, ..., y_n.
-                    subbed_param = parameter.substituted(inner_repl_map, 
-                                                         reserved_vars, 
-                                                         assumptions, requirements)
-                else:
-                    subbed_param = inner_repl_map[param_var]
-                inner_reserved_vars[subbed_param] = param_var
+        # Free variables of the replacements must not collide with
+        # the parameter variables.  If there are collisions, relabel
+        # the parameter variables to something safe.  First, get the
+        # free variables of the body and the replacements.
+        restricted_vars = non_param_free_vars.union(
+                *[value._free_vars() for key, value in inner_repl_map.items()
+                 if key not in self.parameterVarSet])
+        for param_var in self.parameterVarSet:
+            if inner_repl_map.get(param_var, param_var) in restricted_vars:
+                # Avoid this collision by relabeling to a safe dummy 
+                # variable.
+                inner_repl_map[param_var] = safeDummyVar(*restricted_vars)
             else:
-                # The parameter is not being relabeled.  However, if it
-                # is an iteration, there could be a substitution in the indices
-                # that we must account for:
-                # e.g., x_i, ..., x_j -> x_1, ..., x_n.
-                subbed_param = parameter.substituted(inner_repl_map, reserved_vars, 
-                                                     assumptions, requirements)
-                inner_reserved_vars[param_var] = param_var
-            # Append new_params with the substituted version of this parameter.
-            try:
-                # If subbed_param is iterable (i.e., the parameter is an ExprRange
-                # since ExprRange.substituted acts as a generator), use extend.
+                restricted_vars.add(param_var)
+        
+        # Generate the new set of parameters which may be relabeled or, 
+        # in the case of a parameter range, may be altered due a change
+        # in the start/end indices.  For example, we may have
+        # x_1, ..., x_n go to 
+        #       x_1, ..., x_3 with n:3
+        #       x_1 with n:1
+        #       or empty with n:0
+        new_params = []
+        for parameter, param_var in zip(self.parameters, self.parameterVars):
+            if isinstance(parameter, ExprRange):
+                subbed_param = parameter._substituted_entries(
+                        inner_repl_map, assumptions, requirements)
                 new_params.extend(subbed_param)
-            except TypeError:
-                # Otherwise use append.
+            else:
+                subbed_param = parameter._substituted(
+                        inner_repl_map, assumptions, requirements)
                 new_params.append(subbed_param)
         
-        if len(set(new_params)) != len(new_params):
+        if len({getParamVar(param) for param in new_params}) != len(new_params):
             raise ParameterCollisionError(new_params)
 
         # Can't use assumptions involving lambda parameter variables
         inner_assumptions = [assumption for assumption in assumptions 
                              if free_vars(assumption).isdisjoint(new_params)]
                                       
-        return new_params, inner_repl_map, inner_reserved_vars, inner_assumptions
+        return new_params, inner_repl_map, inner_assumptions
         
-    def substituted(self, repl_map, reserved_vars=None, 
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+                     requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary 
@@ -562,49 +550,45 @@ class Lambda(Expression):
         
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
-            return repl_map[self]._restrictionChecked(reserved_vars)
+            return repl_map[self]
 
         assumptions = defaults.checkedAssumptions(assumptions)
         
         # Use a helper method to handle some inner scope transformations.
-        new_params, inner_repl_map, inner_reserved_vars, inner_assumptions \
-            = self._inner_scope_sub(repl_map, reserved_vars,
-                                    assumptions, requirements)
+        new_params, inner_repl_map, inner_assumptions \
+            = self._inner_scope_sub(repl_map, assumptions, requirements)
         
-        try:
-            # The lambda body with the substitutions.
-            inner_requirements = []
-            subbed_body = self.body.substituted(inner_repl_map, inner_reserved_vars,
-                                                inner_assumptions, inner_requirements)
-            # Translate from inner requirements to outer requirements
-            # in a manner that respects the change in scope w.r.t.
-            # lambda parameters.
-            for requirement in inner_requirements:
-                if free_vars(requirement).isdisjoint(new_params):
-                    requirements.append(requirement)
-                else:
-                    # If the requirement involves any of the Lambda parameters,
-                    # it must be generalized under these parameters to ensure
-                    # there is no scoping violation since the scope of these
-                    # parameters is within the new Lambda.
-                    requirement_params = free_vars(requirement).intersection(new_params)
-                    conditions = requirement.assumptions
-                    requirement = requirement.generalize(requirement_params,
-                                                         conditions=conditions)
+        # The lambda body with the substitutions.
+        inner_requirements = []
+        subbed_body = self.body._substituted(
+                inner_repl_map, inner_assumptions, inner_requirements)
+        # Translate from inner requirements to outer requirements
+        # in a manner that respects the change in scope w.r.t.
+        # lambda parameters.
+        for requirement in inner_requirements:
+            if free_vars(requirement).isdisjoint(new_params):
                 requirements.append(requirement)
-            
-        except ScopingViolation as e:
-            raise ScopingViolation("Scoping violation while substituting "
-                                    "%s.  %s"%(str(self), e.message))
+            else:
+                # If the requirement involves any of the Lambda 
+                # parameters, it must be generalized under these
+                # parameters to ensure there is no scoping violation 
+                # since the scope of these parameters is within the new
+                # Lambda.
+                requirement_params = \
+                    free_vars(requirement).intersection(new_params)
+                conditions = requirement.assumptions
+                requirement = requirement.generalize(requirement_params,
+                                                     conditions=conditions)
+            requirements.append(requirement)
         
-            
         try:
-            newLambda = Lambda(new_params, subbed_body)
+            substituted = Lambda(new_params, subbed_body)
         except TypeError as e:
             raise ImproperSubstitution(e.args[0])
         except ValueError as e:
-            raise ImproperSubstitution(e.args[0])            
-        return newLambda
+            raise ImproperSubstitution(e.args[0])
+        
+        return substituted
     
     """
     def relabeled(self, relabel_map):
@@ -625,7 +609,7 @@ class Lambda(Expression):
             if not isinstance(val, Variable):
                 raise TypeError("relabel_map must map Variables to Variables. "
                                 "%s value is not a Variable."%val)
-        result = self.substituted(relabel_map)
+        result = self._substituted(relabel_map)
         assert result==self, "Relabeled version should be 'equal' to original"
         return result
     """
