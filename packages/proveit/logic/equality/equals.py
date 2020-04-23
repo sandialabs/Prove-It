@@ -18,9 +18,18 @@ class Equals(TransitiveRelation):
     # of simplication determined by each operation.
     simplifications = dict()
 
+    # As an alternative to the simplifications dictionary, the
+    # known_simplifications dictionary maps an Expression/Assumptions
+    # combination to a single knownEquality deemed to effect a
+    # simplification of the inner expression on the rhs according to
+    # some canonical method of simplification determined by each
+    # operation. For example ...
+    known_simplifications = dict()
+
     # Specific simplifications that simplify the inner expression to 
     # IrreducibleValue objects.
     evaluations = dict()
+    known_evaluation_sets = dict()
         
     # Record found inversions.  See the invert method.
     # Maps (lambda_map, rhs) pairs to a list of
@@ -50,20 +59,40 @@ class Equals(TransitiveRelation):
     def sideEffects(self, knownTruth):
         '''
         Record the knownTruth in Equals.knownEqualities, associated from
-        the left hand side and the right hand side.  This information may
-        be useful for concluding new equations via transitivity. 
+        the left hand side and the right hand side.  This information
+        may be useful for concluding new equations via transitivity. 
         If the right hand side is an "irreducible value" (see 
-        isIrreducibleValue), also record it in Equals.evaluations for use
-        when the evaluation method is called.   Some side-effects
+        isIrreducibleValue), also record it in Equals.evaluations for
+        use when the evaluation method is called.   Some side-effects
         derivations are also attempted depending upon the form of
         this equality.
+        IN DEVELOPMENT beginning 4/22/20:
+        If the rhs is an "irreducible value" (see
+        isIrreducibleValue), also record the knownTruth in the
+        Equals.known_simplifications and Equals.known_evaluation_sets
+        dictionaries using as a key a *combination* of the lhs
+        expression along with the assumptions in the form
+        (expr, tuple(sorted(assumptions))), for use when the
+        simplification or evaluation method is called. Some side-effects
+        derivations are also attempted depending upon the form of this
+        equality.
         '''
+        print("Entering Equals.sideEffects()!")                                 # for testing; delete later
         from proveit.logic.boolean._common_ import TRUE, FALSE
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
+
         if isIrreducibleValue(self.rhs):
             Equals.simplifications.setdefault(self.lhs, set()).add(knownTruth)
             Equals.evaluations.setdefault(self.lhs, set()).add(knownTruth)
+            lhsKey = (self.lhs, tuple(sorted(knownTruth.assumptions)))
+            rhsKey = (self.rhs, tuple(sorted(knownTruth.assumptions)))
+            print("lhsKey = {}".format(lhsKey))                                 # for testing; delete later
+            print("rhsKey = {}".format(rhsKey))                                 # for testing; delete later
+            Equals.known_simplifications.setdefault(lhsKey, set()).add(knownTruth) # for testing; delete later
+            print("Equals.known_simplifications[lhsKey] = {}".                  # for testing; delete later
+                format(Equals.known_simplifications[lhsKey]))                   # for testing; delete later
+
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
             yield self.deriveReversed

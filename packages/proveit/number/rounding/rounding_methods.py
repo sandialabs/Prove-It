@@ -202,7 +202,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
             # each addend is an int or a real, with at least one
             # int, so we should be able to rearrange and partition
             # the addends as such
-            print("We have reals and ints!")                                    # for testing; delete later
+            print("    We have just real and integer addends!")                 # for testing; delete later
             original_addends = list(subops)
             desired_order_by_index = list(
                     indices_of_reals_not_ints+indices_of_known_ints)
