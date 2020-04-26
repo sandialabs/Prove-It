@@ -112,7 +112,6 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     may be necessary to deduce the appropriate set containments for
     the operands within the Add operand x.
     '''
-    print("Entering apply_reducedSimplification()")                             # for testing; delete later
     from proveit._common_ import n, x
     from proveit.logic import InSet
     from proveit.number import Add, Integers, Reals
@@ -146,11 +145,9 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                     return expr.roundingElimination(assumptions)
 
 
-    # for updating our equivalence claim(s)
+    # for updating our equivalence claim(s) for the
+    # remaining possibilities
     eq = TransRelUpdater(expr, assumptions)
-    print("    eq = {}".format(eq))                                             # for testing; delete later
-    print("    eq.relation = {}".format(eq.relation))                           # for testing; delete later
-    print("    eq.assumptions = {}".format(eq.assumptions))                     # for testing; delete later
 
     #-- -------------------------------------------------------- --#
     #-- Case (3): F(x) = F(Add(a,b,...,n)), where operand x is   --#
@@ -158,17 +155,10 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #--           an int, but addends might be reals and ints    --#
     #-- -------------------------------------------------------- --#
     if isinstance(expr.operand, Add):
-        # Try to partition all suboperands into Integers vs. Reals
-        print("We have an Add operand … ")                                      # for testing; delete later
-        print("    expr.operand = {}".format(expr.operand))                     # for testing; delete later
-        
-        # # for convenience while updating our equation
-        # eq = TransRelUpdater(expr, assumptions)
-        # print("    eq = {}".format(eq))                                         # for testing; delete later
-        # print("    eq.relation = {}".format(eq.relation))                       # for testing; delete later
+        # Try to partition all suboperands into Integers vs. Reals,
+        # in which case we can use the extraction theorem
 
         subops = expr.operand.operands
-        print("    subops = {}".format(subops))                                 # for testing; delete later
 
         # Collect indices of operands known or assumed to be
         # ints versus reals versus neither
@@ -199,10 +189,9 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                 indices_of_unknowns.append(i)
 
         if len(indices_of_unknowns) == 0 and len(indices_of_known_ints)>0:
-            # each addend is an int or a real, with at least one
+            # Then each addend is an int or a real, with at least one
             # int, so we should be able to rearrange and partition
             # the addends as such
-            print("    We have just real and integer addends!")                 # for testing; delete later
             original_addends = list(subops)
             desired_order_by_index = list(
                     indices_of_reals_not_ints+indices_of_known_ints)
@@ -273,15 +262,10 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #-- Case (4): F(x) where operand x is not known or assumed   --#
     #--           to be an Integer and x is not an Add object    --#
     #-- -------------------------------------------------------- --#
-    # try this instead of the else:
+    # apply_reducedSimplification() function is expecting simpler
+    # operands; instead of returning an error, though, simply return
+    # the trivial equivalence of the original expression with itself
     return eq.relation
-
-    # else:
-    #     raise ValueError("The doReducedSimplification() method of the "
-    #                      "rounding function f (Ceil, Floor, or Round) is "
-    #                      "expecting simpler operands. Consider reviewing "
-    #                      "the fOfInteger and fOfRealPlusInt theorems "
-    #                      "in the proveit/number/rounding context.")
         
 
 def rounding_deduceInNumberSet(expr, number_set, roundingRealClosureThm,

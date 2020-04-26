@@ -8,8 +8,8 @@ class Equals(TransitiveRelation):
     # operator of the Equals operation
     _operator_ = Literal(stringFormat='=', context=__file__)        
     
-    # map Expressions to sets of KnownTruths of equalities that involve the Expression
-    # on the left hand or right hand side.
+    # Map Expressions to sets of KnownTruths of equalities that involve
+    # the Expression on the left hand or right hand side.
     knownEqualities = dict()
 
     # Map Expressions to a subset of knownEqualities that are 
@@ -77,14 +77,9 @@ class Equals(TransitiveRelation):
         derivations are also attempted depending upon the form of this
         equality.
         '''
-        print("Entering Equals.sideEffects()!")                                 # for testing; delete later
         from proveit.logic.boolean._common_ import TRUE, FALSE
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
-        print("    Equals.knownEqualities[self.lhs] = {}".                      # for testing; delete later
-                format(Equals.knownEqualities[self.lhs]))                       # for testing; delete later
-        print("    Equals.knownEqualities[self.rhs] = {}".                      # for testing; delete later
-                format(Equals.knownEqualities[self.rhs]))                       # for testing; delete later
 
         if isIrreducibleValue(self.rhs):
             Equals.simplifications.setdefault(self.lhs, set()).add(knownTruth)
@@ -94,16 +89,10 @@ class Equals(TransitiveRelation):
             assumptions_sorted = sorted(knownTruth.assumptions,
                                         key=lambda expr : hash(expr))
             lhsKey = (self.lhs, tuple(assumptions_sorted))
-            print("    Inside Equals.sideEffects(), lhsKey = {}".format(lhsKey))    # for testing; delete later
-            print("    Inside Equals.sideEffects(), self.lhs = {}".format(self.lhs)) # for testing; delete later
-            # try setting a single value instead of adding to a set
+            # Notice the known_simplifications consist of single truths
             Equals.known_simplifications[lhsKey]=knownTruth                     # new approach
             Equals.known_evaluation_sets.setdefault(                            # new approach
                     self.lhs, set()).add(knownTruth)
-            print("    Inside Equals.sideEffects(), Equals.known_simplifications[lhsKey] = {}". # for testing; delete later
-                format(Equals.known_simplifications[lhsKey]))                   # for testing; delete later
-            print("    Inside Equals.sideEffects(), Equals.known_evaluation_sets[self.lhs] = {}". # for testing; delete later
-                format(Equals.known_evaluation_sets[self.lhs]))                 # for testing; delete later
 
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
@@ -128,15 +117,16 @@ class Equals(TransitiveRelation):
         
     def negationSideEffects(self, knownTruth):
         '''
-        Side-effect derivations to attempt automatically for a negated equation.        
+        Side-effect derivations to attempt automatically for a negated
+        equation.        
         '''
         yield self.deduceNotEquals # A != B from not(A=B)
                 
     def conclude(self, assumptions):
         '''
         Attempt to conclude the equality various ways:
-        simple reflexivity (x=x), via an evaluation (if one side is an irreducible),
-        or via transitivity.
+        simple reflexivity (x=x), via an evaluation (if one side is an
+        irreducible), or via transitivity.
         '''
         from proveit.logic import TRUE, FALSE, Implies, Iff
         if self.lhs==self.rhs:
@@ -152,28 +142,35 @@ class Equals(TransitiveRelation):
             try:
                 evaluation = self.lhs.evaluation(assumptions)
                 if evaluation.rhs != self.rhs:
-                    raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
+                    raise ProofFailure(self, assumptions,
+                        "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation
             except SimplificationError as e:
-                raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
+                raise ProofFailure(self, assumptions,
+                        "Evaluation error: %s"%e.message)
         elif isIrreducibleValue(self.lhs):
             try:
                 evaluation = self.rhs.evaluation(assumptions)
                 if evaluation.rhs != self.lhs:
-                    raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
+                    raise ProofFailure(self, assumptions,
+                        "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation.deriveReversed()
             except SimplificationError as e:
-                raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
+                raise ProofFailure(self, assumptions,
+                        "Evaluation error: %s"%e.message)
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
             Implies(self.rhs, self.lhs).prove(assumptions, automation=False)
-            # lhs => rhs and rhs => lhs, so attempt to prove lhs = rhs via lhs <=> rhs
+            # lhs => rhs and rhs => lhs, so attempt to prove
+            # lhs = rhs via lhs <=> rhs
             # which works when they can both be proven to be Booleans.
             try:
                 return Iff(self.lhs, self.rhs).deriveEquality(assumptions)
             except:
-                from proveit.logic.boolean.implication._theorems_ import eqFromMutualImpl
-                return eqFromMutualImpl.specialize({A:self.lhs, B:self.rhs}, assumptions=assumptions)
+                from proveit.logic.boolean.implication._theorems_ import (
+                        eqFromMutualImpl)
+                return eqFromMutualImpl.specialize(
+                        {A:self.lhs, B:self.rhs}, assumptions=assumptions)
         except ProofFailure:
             pass
         
@@ -606,10 +603,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     evaluateTruth].  If operandsOnlTrue, only simplify the operands of 
     the inner expression.
     '''
-    print("Entering defaultSimplification.")                                    # for testing; delete later
-    print("    innerExpr = {}".format(innerExpr))                               # for testing; delete later
-    print("    assumptions = {}".format(assumptions))                           # for testing; delete later
-    # among other things, convert any assumptions=None                          # added 4/24/2020
+    # among other things, convert any assumptions=None
     # to assumptions=()
     assumptions = defaults.checkedAssumptions(assumptions)
 
@@ -625,7 +619,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
         if inPlace:
             try:
                 return reducedInnerExpr.exprHierarchy[0].prove(assumptions, 
-                                                                automation=False)
+                                                               automation=False)
             except:
                 assert False
         try:
@@ -688,18 +682,14 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     #         print("    simplification = {}".format(simplification))             # for testing; delete later
     #         return innerSimplification(simplification)
 
-    # See if the expression already has a proven simplification
+    # ================================================================ #
+    # See if the expression already has a proven simplification        #
+    # ================================================================ #
+
     # construct the key for the known_simplifications dictionary
     assumptions_sorted = sorted(assumptions, key=lambda expr : hash(expr))
     known_simplifications_key = (inner, tuple(assumptions_sorted))
-    print("    assumptions_sorted = {}".format(assumptions_sorted))             # for testing; delete later
-    print("    known_simplifications_key = {}".format(known_simplifications_key)) # for testing; delete later
-    print("    known_simplifications_key in Equals.known_simplifications = {}".
-            format(known_simplifications_key in Equals.known_simplifications))  # for testing; delete later
 
-    # ================================================================ #
-    # Developing/reworking the IF into two separate sections now …     #
-    # ================================================================ #
     if (inner in Equals.evaluations and mustEvaluate):
         simplifications = Equals.known_evaluation_sets[inner]
         candidates = []
@@ -710,11 +700,8 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
         if len(candidates) >= 1:
             # Return the "best" candidate with respect to fewest number
             # of steps.
-            print("    len(candidates)>=1")                                     # for testing; delete later
-            print("    candidates = {}".format(candidates))                     # for testing; delete later
             min_key = lambda knownTruth: knownTruth.proof().numSteps()
             simplification = min(candidates, key=min_key)
-            print("    simplification = {}".format(simplification))             # for testing; delete later
             return innerSimplification(simplification)
 
     elif (not mustEvaluate and
@@ -722,8 +709,6 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
         simplification = Equals.known_simplifications[known_simplifications_key]
         return innerSimplification(simplification)
 
-    # ================================================================ #
-    # End of reworking the IF into two separate sections               #
     # ================================================================ #
     
 
