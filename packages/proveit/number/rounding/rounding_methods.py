@@ -233,30 +233,12 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                 expr = eq.update(expr.roundingExtraction(1, assumptions))
             return eq.relation
 
-        # else:
-        #     # list_of_unknowns might be non-empty
-        #     # and/OR indices_of_known_ints might be empty
-        #     # Instead of returning an error, simply return the original
-        #     # rounding expression equal to itself
-        #     print("No simplification seems possible?")                          # for testing; delete later
-        #     return eq.relation
-
-
-        #     if len(indices_of_unknowns) > 0:
-        #         list_of_unknowns = [subops[i] for i in indices_of_unknowns]
-        #         msg = ("In attempting f(x).apply_reducedSimplification, "
-        #                "the operands {} are not assumed or proven to be "
-        #                "Integers or Reals.".format(list_of_unknowns))
-        #     elif len(indices_of_known_ints) == 0:
-        #         msg = ("In attempting f(x).apply_reducedSimplification, no "
-        #                "operands were found to be assumed or proven to be "
-        #                "Integers.")
-        #     else:
-        #         msg = ("In attempting f(x).apply_reducedSimplification, "
-        #                "an unknown error has occurred, probably related "
-        #                "to being able to partition the addends into reals "
-        #                "and integers.")
-        #     raise ValueError(msg)
+        else:
+            # list_of_unknowns might be non-empty
+            # and/OR indices_of_known_ints might be empty
+            # Instead of returning an error, simply return the original
+            # rounding expression equal to itself
+            return eq.relation
 
     #-- -------------------------------------------------------- --#
     #-- Case (4): F(x) where operand x is not known or assumed   --#

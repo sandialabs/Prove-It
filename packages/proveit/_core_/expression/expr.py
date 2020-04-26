@@ -802,11 +802,8 @@ class Expression(metaclass=ExprType):
                    "equality with 'self' on the left side, not %s for %s "
                    "assuming %s"%(method_called, simplification, self, assumptions))
             raise ValueError(msg)
+
         # Remember this simplification for next time:
-        Equals.simplifications.setdefault(self, set()).add(simplification)      # old method
-        # ------------------------------------------------------------ #
-        # Remember this simplification for next time (new method):     #
-        # ------------------------------------------------------------ #
         assumptions_sorted = sorted(assumptions, key=lambda expr : hash(expr))
         known_simplifications_key = (self, tuple(assumptions_sorted))
         Equals.known_simplifications[known_simplifications_key] = simplification
