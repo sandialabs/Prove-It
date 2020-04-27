@@ -24,13 +24,6 @@ class ModAbs(Operation):
         Given a number set number_set (such as Integers, Reals, etc),
         attempt to prove that the given ModAbs expression is in that
         number set using the appropriate closure theorem.
-        Created: 3/25/2020 by wdc, based on the same method in the Add,
-                 Exp, and Abs classes.
-        Last modified: 3/26/2020 by wdc.
-                       Added defaults.checkedAssumptions to avoid
-                       ProofFailure error.
-        Last modified: 3/25/2020 by wdc. Creation
-        Once established, these authorship notations can be deleted.
         '''
         from proveit._common_ import a, b
         from proveit.logic import InSet

@@ -58,14 +58,14 @@ class Abs(Operation):
 
     def distribute(self, assumptions=USE_DEFAULTS):
         '''
+        Distribute the absolute value over a product or fraction.
+        Assumptions may be needed to deduce that the sub-operands are
+        complex numbers.
         03/21/2020 wdc: a first attempt at updating this method;
         still eliciting an extractInitArgValue error related to a multi-
         variable domain condition for the Mult case. See _demos_ pg
         for an example; WW thinks this is a prob with iterations and
         we'll fix/update this later.
-        Distribute the absolute value over a product or fraction.
-        Assumptions may be needed to deduce that the sub-operands are
-        complex numbers.
         '''
         from ._theorems_ import absFrac, absProd
         from proveit._common_ import n, xx
@@ -94,18 +94,16 @@ class Abs(Operation):
         # deduceNonNeg(self.operand, assumptions) # NOT YET IMPLEMENTED
         return absElim.specialize({x:self.operand}, assumptions=assumptions)
 
+    # def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+    #     '''
+    #     '''
+    #     print("Entering doReducedSimplification()")
+
     def deduceInNumberSet(self, number_set, assumptions=USE_DEFAULTS):
         '''
         Given a number set number_set (such as Integers, Reals, etc),
         attempt to prove that the given expression is in that number
         set using the appropriate closure theorem.
-        Created: 3/21/2020 by wdc, based on the same method in the Add
-                 and Exp classes.
-        Last modified: 3/26/2020 by wdc.
-                       Added defaults.checkedAssumptions to avoid
-                       ProofFailure error.
-        Previously modified: 3/21/2020 by wdc. Creation
-        Once established, these authorship notations can be deleted.
         '''
         from proveit.logic import InSet
         from proveit.number.absolute_value._theorems_ import (

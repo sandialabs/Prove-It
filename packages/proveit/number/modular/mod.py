@@ -27,8 +27,6 @@ class Mod(Operation):
     #         return modInIntervalCO.specialize({a:self.dividend, b:self.divisor}).checked(assumptions)
 
     def deduceInInterval(self, assumptions=USE_DEFAULTS):
-        # an initial attempt to update
-        # by wdc 3/25/2020
         from ._theorems_ import modInInterval, modInIntervalCO
         # from numberSets import deduceInIntegers, deduceInReals
         try:
@@ -47,13 +45,6 @@ class Mod(Operation):
         Given a number set number_set (such as Integers, Reals, etc),
         attempt to prove that the given Mod expression is in that number
         set using the appropriate closure theorem.
-        Created: 3/25/2020 by wdc, based on the same method in the Add,
-                 Exp, and Abs classes.
-        Last modified: 3/26/2020 by wdc.
-                       Added defaults.checkedAssumptions to avoid
-                       ProofFailure error.
-        Prveiously modified: 3/25/2020 by wdc. Creation.
-        Once established, these authorship notations can be deleted.
         '''
         from proveit.logic import InSet
         from proveit.number.modular._theorems_ import (
