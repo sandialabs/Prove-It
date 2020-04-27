@@ -46,7 +46,7 @@ class Round(Function):
     def roundingExtraction(self, idx_to_extract=None, assumptions=USE_DEFAULTS):
         '''
         For the case of Round(x) where the operand x = x_real + x_int,
-        derive and return Round(x) = Round(x_real) + int (thus
+        derive and return Round(x) = Round(x_real) + x_int (thus
         'extracting' the integer component out from the Round() fxn).
         The idx_to_extract is the zero-based index of the item in the
         operands of an Add(a, b, …, n) expression to attempt to extract.

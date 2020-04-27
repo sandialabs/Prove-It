@@ -727,9 +727,10 @@ class Expression(metaclass=ExprType):
                    "not %s for %s assuming %s"
                    %(method_name, evaluation, self, assumptions))
             raise ValueError(msg)
-        # Note: No need to store in Equals.evaluations or Equals.simplifications; this
-        # is done automatically as a side-effect for proven equalities with irreducible
-        # right sides.
+        # Note: No need to store in Equals.known_evaluation_sets or
+        # Equals.known_simplifications; this is done automatically as
+        # a side-effect for proven equalities with irreducible right
+        # sides.
 
         return evaluation
     

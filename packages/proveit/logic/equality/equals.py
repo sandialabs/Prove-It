@@ -12,23 +12,17 @@ class Equals(TransitiveRelation):
     # the Expression on the left hand or right hand side.
     knownEqualities = dict()
 
-    # Map Expressions to a subset of knownEqualities that are 
-    # deemed to effect simplifications of the inner expression
-    # on the right hand side according to some canonical method 
-    # of simplication determined by each operation.
-    simplifications = dict()
-
-    # As an alternative to the simplifications dictionary, the
-    # known_simplifications dictionary maps an Expression/Assumptions
-    # combination to a single knownEquality deemed to effect a
-    # simplification of the inner expression on the rhs according to
-    # some canonical method of simplification determined by each
-    # operation. For example ...
+    # Map each Expression/Assumptions combination to a single
+    # knownEquality deemed to effect a simplification of the inner
+    # expression on the rhs according to some canonical method of
+    # simplification determined by each operation. For example, the
+    # Expression expr = Floor(Add(x, two)) under the assumption that x
+    # is a Real, would have dictionary key (expr, (InSet(x, Real))) with
+    # an eventual value of something like |- expr = Floor(x) + two.
     known_simplifications = dict()
 
     # Specific simplifications that simplify the inner expression to 
     # IrreducibleValue objects.
-    evaluations = dict()
     known_evaluation_sets = dict()
         
     # Record found inversions.  See the invert method.
@@ -82,16 +76,13 @@ class Equals(TransitiveRelation):
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
 
         if isIrreducibleValue(self.rhs):
-            Equals.simplifications.setdefault(self.lhs, set()).add(knownTruth)
-            Equals.evaluations.setdefault(self.lhs, set()).add(knownTruth)
-            # alternatively, use the new known_simplifications and
-            # known_evaluation_sets
             assumptions_sorted = sorted(knownTruth.assumptions,
                                         key=lambda expr : hash(expr))
             lhsKey = (self.lhs, tuple(assumptions_sorted))
-            # Notice the known_simplifications consist of single truths
-            Equals.known_simplifications[lhsKey]=knownTruth                     # new approach
-            Equals.known_evaluation_sets.setdefault(                            # new approach
+            # Notice carefully: the values in the known_simplifications
+            # dictionary consist of single KnownTruths not sets
+            Equals.known_simplifications[lhsKey]=knownTruth
+            Equals.known_evaluation_sets.setdefault(
                     self.lhs, set()).add(knownTruth)
 
         if (self.lhs != self.rhs):
@@ -600,8 +591,8 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     with operands substituted for simplified forms.  It also treats, 
     as a special case, evaluating the expression to be true if it is in 
     the set of assumptions [also see KnownTruth.evaluation and 
-    evaluateTruth].  If operandsOnlTrue, only simplify the operands of 
-    the inner expression.
+    evaluateTruth].  If operandsOnly = True, only simplify the operands
+    of the inner expression.
     '''
     # among other things, convert any assumptions=None
     # to assumptions=()
@@ -657,31 +648,6 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     except:
         pass
 
-    # # See if the expression already has a proven simplification
-    # if (inner in Equals.evaluations or 
-    #     (not mustEvaluate and inner in Equals.simplifications)):
-    #     if mustEvaluate:
-    #         simplifications = Equals.evaluations[inner] 
-    #     else:
-    #         print("mustEvaluate = {}".format(mustEvaluate))                     # for testing; delete later
-    #         print("inner in Equals.simplifications = {}".
-    #                 format(inner in Equals.simplifications))                    # for testing; delete later
-    #         simplifications = Equals.simplifications[inner]
-    #     candidates = []
-    #     for knownTruth in simplifications:
-    #         if knownTruth.isSufficient(assumptionsSet):
-    #             # Found existing evaluation suitable for the assumptions
-    #             candidates.append(knownTruth) 
-    #     if len(candidates) >= 1:
-    #         # Return the "best" candidate with respect to fewest number
-    #         # of steps.
-    #         print("    len(candidates)>=1")                                     # for testing; delete later
-    #         print("    candidates = {}".format(candidates))                     # for testing; delete later
-    #         min_key = lambda knownTruth: knownTruth.proof().numSteps()
-    #         simplification = min(candidates, key=min_key)
-    #         print("    simplification = {}".format(simplification))             # for testing; delete later
-    #         return innerSimplification(simplification)
-
     # ================================================================ #
     # See if the expression already has a proven simplification        #
     # ================================================================ #
@@ -690,7 +656,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     assumptions_sorted = sorted(assumptions, key=lambda expr : hash(expr))
     known_simplifications_key = (inner, tuple(assumptions_sorted))
 
-    if (inner in Equals.evaluations and mustEvaluate):
+    if (inner in Equals.known_evaluation_sets and mustEvaluate):
         simplifications = Equals.known_evaluation_sets[inner]
         candidates = []
         for knownTruth in simplifications:
@@ -801,15 +767,14 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
         eq2.prove(assumptions, automation=False)
         simplification = eq1.applyTransitivity(eq2, assumptions)
     if not inPlace and topLevel==inner:
-        # Store direct simplifications in the simplifications dictionary
-        # for next time.
-        Equals.simplifications.setdefault(topLevel, set()).add(simplification)  # old approach
-        Equals.known_simplifications[known_simplifications_key] = simplification # new approach
+        # Store direct simplifications in the known_simplifications
+        # dictionary for next time.
+        Equals.known_simplifications[known_simplifications_key] = simplification
         if isIrreducibleValue(value):
-            # also store it in the evaluations dictionary for next time
-            # since it evaluated to an irreducible value.
-            Equals.evaluations.setdefault(topLevel, set()).add(simplification)  # old approach
-            Equals.known_evaluation_sets.setdefault(topLevel, set()).add(simplification)  # new approach
+            # also store it in the known_evaluation_sets dictionary for
+            # next time, since it evaluated to an irreducible value.
+            Equals.known_evaluation_sets.setdefault(
+                    topLevel, set()).add(simplification)
     return simplification
 
 def evaluateTruth(expr, assumptions):

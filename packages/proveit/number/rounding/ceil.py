@@ -16,13 +16,13 @@ class Ceil(Function):
 
     def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
-        For the trivial case Floor(x) where the operand x is already
+        For the trivial case Ceil(x) where the operand x is already
         known to be or assumed to be an integer, derive and return this
-        Floor expression equated with the operand itself: Floor(x) = x.
+        Ceil expression equated with the operand itself: Ceil(x) = x.
         Assumptions may be necessary to deduce necessary conditions for
         the simplification. For the case where the operand is of the
-        form x = real + int, derive and return this Floor expression
-        equated with Floor(real) + int.
+        form x = real + int, derive and return this Ceil expression
+        equated with Ceil(real) + int.
         '''
         return apply_reducedSimplification(self, assumptions)
 
