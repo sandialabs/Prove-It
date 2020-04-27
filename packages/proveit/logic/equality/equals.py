@@ -60,14 +60,15 @@ class Equals(TransitiveRelation):
         use when the evaluation method is called.   Some side-effects
         derivations are also attempted depending upon the form of
         this equality.
-        IN DEVELOPMENT beginning 4/22/20:
-        If the rhs is an "irreducible value" (see
-        isIrreducibleValue), also record the knownTruth in the
-        Equals.known_simplifications and Equals.known_evaluation_sets
-        dictionaries using as a key a *combination* of the lhs
-        expression along with the assumptions in the form
-        (expr, tuple(sorted(assumptions))), for use when the
-        simplification or evaluation method is called. Some side-effects
+        If the rhs is an "irreducible value" (see isIrreducibleValue),
+        also record the knownTruth in the Equals.known_simplifications
+        and Equals.known_evaluation_sets dictionaries, for use when the
+        simplification or evaluation method is called. The key for the
+        known_simplifications dictionary is the specific *combination*
+        of the lhs expression along with the assumptions in the form
+        (expr, tuple(sorted(assumptions))); the key for the
+        known_evaluation_sets dictionary is just the lhs expression
+        without the specific assumptions. Some side-effects
         derivations are also attempted depending upon the form of this
         equality.
         '''
@@ -79,7 +80,7 @@ class Equals(TransitiveRelation):
             assumptions_sorted = sorted(knownTruth.assumptions,
                                         key=lambda expr : hash(expr))
             lhsKey = (self.lhs, tuple(assumptions_sorted))
-            # Notice carefully: the values in the known_simplifications
+            # n.b.: the values in the known_simplifications
             # dictionary consist of single KnownTruths not sets
             Equals.known_simplifications[lhsKey]=knownTruth
             Equals.known_evaluation_sets.setdefault(
@@ -656,10 +657,10 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     assumptions_sorted = sorted(assumptions, key=lambda expr : hash(expr))
     known_simplifications_key = (inner, tuple(assumptions_sorted))
 
-    if (inner in Equals.known_evaluation_sets and mustEvaluate):
-        simplifications = Equals.known_evaluation_sets[inner]
+    if (mustEvaluate and inner in Equals.known_evaluation_sets):
+        evaluations = Equals.known_evaluation_sets[inner]
         candidates = []
-        for knownTruth in simplifications:
+        for knownTruth in evaluations:
             if knownTruth.isSufficient(assumptionsSet):
                 # Found existing evaluation suitable for the assumptions
                 candidates.append(knownTruth)
@@ -677,7 +678,6 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
 
     # ================================================================ #
     
-
     if not automation:
         msg = 'Unknown evaluation (without automation): ' + str(inner)
         raise SimplificationError(msg)
