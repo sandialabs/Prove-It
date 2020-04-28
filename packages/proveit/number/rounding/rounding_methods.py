@@ -165,14 +165,17 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
         indices_of_known_ints = []
         indices_of_reals_not_ints = []
         indices_of_unknowns = []
+        indices_of_non_ints = [] # added 4/27/2020 as I try to reorg a bit
         for i in range(len(subops)):
             the_subop = subops[i]
+            print("the_subop at index {0} = {1}".format(i, the_subop))          # for testing; delete later
             # first do the easiest checks -- is the subop already known
             # to be an Integer or a Real?
             if InSet(subops[i], Integers).proven(assumptions):
                 indices_of_known_ints.append(i)
-            elif InSet(subops[i], Reals).proven(assumptions):
-                indices_of_reals_not_ints.append(i)
+                print("the_subop {} is known to be an integer".format(the_subop)) # for testing; delete later
+            # elif InSet(subops[i], Reals).proven(assumptions):
+            #     indices_of_reals_not_ints.append(i)
             # then try something just a little harder
             elif the_subop in InSet.knownMemberships.keys():
                 from proveit.logic.set_theory import Subset, SubsetEq
@@ -184,9 +187,22 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                                 proven(assumptions)):
                             InSet(the_subop, Integers).prove()
                             indices_of_known_ints.append(i)
+                            print("the_subop {} was proven to be an integer".format(the_subop)) # for testing; delete later
                             break
-            else:
+
+            # only after trying all integer variations, THEN
+            # consider the reals (moved from code about 10 lines above)
+            if (i not in indices_of_known_ints) and InSet(subops[i], Reals).proven(assumptions):
+                print("the_subop {} is known to be a real".format(the_subop)) # for testing; delete later
+                indices_of_reals_not_ints.append(i)
+
+            # finally, if i has not been placed, put it in unknowns:
+            if (i not in indices_of_known_ints) and (i not in indices_of_reals_not_ints):
                 indices_of_unknowns.append(i)
+
+        print("indices_of_known_ints = {}".format(indices_of_known_ints))       # for testing; delete later
+        print("indices_of_reals_not_ints = {}".format(indices_of_reals_not_ints))       # for testing; delete later
+        print("indices_of_unknowns = {}".format(indices_of_unknowns))       # for testing; delete later
 
         if len(indices_of_unknowns) == 0 and len(indices_of_known_ints)>0:
             # Then each addend is an int or a real, with at least one
