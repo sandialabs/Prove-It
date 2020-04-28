@@ -93,7 +93,7 @@ class ExprRange(Expression):
         '''
         if not hasattr(self, '_first'):
             expr_map = {self.lambda_map.parameter:self.start_index}
-            self._first =  self.body._substituted(expr_map)
+            self._first =  self.body.substituted(expr_map)
         return self._first
 
     def last(self):
@@ -103,7 +103,7 @@ class ExprRange(Expression):
         '''
         if not hasattr(self, '_last'):
             expr_map = {self.lambda_map.parameter:self.end_index}
-            self._last = self.body._substituted(expr_map)
+            self._last = self.body.substituted(expr_map)
         return self._last
         
     def string(self, **kwargs):
@@ -111,6 +111,20 @@ class ExprRange(Expression):
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
+    
+    def nested_range_depth(self):
+        '''
+        Return the depth of nested ranges.  For example, if this
+        is a simple range with no nesting, return 1.
+        If this is a range of simple ranges, return 2.
+        If this is a range of ranges of simple ranges, return 3.
+        '''
+        depth = 1
+        expr = self.body
+        while isinstance(expr, ExprRange):
+            depth += 1
+            expr = expr.body
+        return depth
         
     def formatted(self, formatType, fence=False, subFence=True, 
                   operator=None, **kwargs):
@@ -124,8 +138,13 @@ class ExprRange(Expression):
         formatted_sub_expressions = \
             [subExpr.formatted(formatType, fence=subFence) 
              for subExpr in (self.first(), self.last())]
-        formatted_sub_expressions.insert(1, ('\ldots' if formatType=='latex' 
-                                             else '...'))
+        ellipsis = ('\ldots' if formatType=='latex' 
+                                             else '...')
+        # When ranges are nested, double-up (or triple-up, etc)
+        # the ellipsis to make the nested structure clear.
+        ellipses = ellipsis*self.nested_range_depth()
+        
+        formatted_sub_expressions.insert(1, ellipses)
         # Normally the range will be wrapped in an ExprTuple and 
         # fencing will be handled externally.  When it isn't, we don't 
         # want to fence it  anyway.
@@ -269,10 +288,9 @@ class ExprRange(Expression):
         
         See the Lambda.apply documentation for a related discussion.
         '''
-        from proveit import safeDummyVar
         from proveit.logic import Equals #, InSet
         from proveit.number import Add, one #, Interval
-        
+                
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
             return repl_map[self]
@@ -282,9 +300,9 @@ class ExprRange(Expression):
         lambda_map = self.lambda_map
         orig_parameter = self.parameter
         
-        subbed_start = self.start_index._substituted(
+        subbed_start = self.start_index.substituted(
                 repl_map, assumptions, requirements)
-        subbed_end = self.end_index._substituted(
+        subbed_end = self.end_index.substituted(
                 repl_map, assumptions, requirements)
         
         # Check if any of the IndexedVars whose index is the ExprRange
@@ -312,7 +330,7 @@ class ExprRange(Expression):
             # No need to worry about expanding IndexedVar's.
             # However, we may perform a reduction of the range
             # if it is known to be empty or singular.
-            subbed_lambda_map = lambda_map._substituted(
+            subbed_lambda_map = lambda_map.substituted(
                     repl_map, assumptions, requirements)
             subbed_expr = ExprRange(None, None, subbed_start, subbed_end, 
                                     _lambda_map = subbed_lambda_map)
@@ -399,11 +417,8 @@ class ExprRange(Expression):
             = self.lambda_map._inner_scope_sub(repl_map, assumptions, 
                                                new_requirements)
         assert len(new_params)==1
-        # We won't use the new parameter from 'new_params'.
-        # To be safe, we just need a
-        # safe dummy variable that doesn't clash with anything involved.
-        new_param = safeDummyVar(self, *[repl for key, repl in repl_map.items()])
-                
+        new_param = new_params[0]
+        
         if indices_must_match:
             # We do need to match the new indices to the original indices.
             # Prepare to do that.
@@ -441,7 +456,7 @@ class ExprRange(Expression):
                     # Relabel the entry body to use the parameter of 
                     # this ExprRange so that all the parameters will be 
                     # consistent.
-                    new_body = entry.body._substituted(
+                    new_body = entry.body.substituted(
                             {entry.parameter:new_param})
                     # For this entry, replace the IndexedVar with the 
                     # corresponding ExprRange body.
@@ -469,9 +484,9 @@ class ExprRange(Expression):
                 entry_requirements = []
                 entry_repl_map[orig_parameter] = new_param
                 entry = ExprRange(new_param,
-                             body._substituted(entry_repl_map,
-                                               entry_assumptions, 
-                                               entry_requirements),
+                             body.substituted(entry_repl_map,
+                                              entry_assumptions, 
+                                              entry_requirements),
                              start_index, end_index)
                 # We may perform a reduction of the range if it is known
                 # to be empty or singular.
@@ -505,15 +520,21 @@ class ExprRange(Expression):
                 if indices_must_match:
                     # The actual range parameter index is needed:
                     entry_repl_map[orig_parameter] = next_index
-                entry = body._substituted(entry_repl_map, inner_assumptions,
-                                          requirements)
+                entry = body.substituted(entry_repl_map, inner_assumptions,
+                                         requirements)
                 if indices_must_match:
                     # We need to know the new_indices to match with the
                     # original indices.
                     new_indices.append(next_index)
                     next_index = Add(next_index, one).simplified(assumptions)
-                        
-                yield entry
+                
+                if isinstance(entry, ExprRange):
+                    # A nested ExprRange may need to be expanded.
+                    for subentry in entry._substituted_entries(
+                            entry_repl_map, inner_assumptions, requirements):
+                        yield subentry
+                else:
+                    yield entry
         
         if indices_must_match:
             # The range parameter appears outside of
@@ -529,6 +550,50 @@ class ExprRange(Expression):
                         "ExprRange indices failed to match expansion "
                         "which is necessary because %s: %s."
                         %(reason_indices_must_match, e))
+    
+    def _check_param_occurrences(self, param_var, allowed_forms):
+        '''
+        When a Lambda expression introduces a variable in a new scope
+        with a parameter entry that is an IndexedVar or a range
+        of IndexedVars, its occurrences must all match that
+        index or range exactly.
+        '''
+        
+        # Check the start and end indices.
+        self.start_index._check_param_occurrences(param_var, allowed_forms)
+        self.end_index._check_param_occurrences(param_var, allowed_forms)
+
+        # The parameter variables of lambda_map mask any free variables
+        # of the allowed forms and therefore we can exclude the allowed 
+        # forms that have a set of free variables that overlap with the
+        # Lambda parameters variables.
+        param_var_set = self.lambda_map.parameterVarSet
+        if param_var in param_var_set:
+            # The external parameter variable is masked by one of the
+            # local parameter variables, so there are no occurrences
+            # to worry about here.
+            return 
+        allowed_forms = {allowed_form for allowed_form in allowed_forms
+                         if allowed_form._free_vars().isdisjoint(param_var_set)}
+        
+        # If any of the allowed forms are a range that matches with
+        # the start and end index of this range, we can add a new
+        # allowed from by pealing off that outer layer and using
+        # the parameter of this ExprRange as the index.  For example,
+        # an allowed_form of x_1, ..., x_n within an ExprRange from
+        # 1 to n with parameter k can be x_k (as well as x1_, .., x_n).
+        extra_allowed_forms = set()
+        for allowed_form in allowed_forms:
+            if isinstance(allowed_form, ExprRange):
+                if (allowed_form.start_index == self.start_index and
+                            allowed_form.end_index == self.end_index):
+                   # Start and end indices match.  Let's peal off the
+                   # outer layer and add a new allowed form.
+                   param_repl_map = {allowed_form.parameter:self.parameter}
+                   extra_allowed_forms.add(
+                           allowed_form.body.substituted(param_repl_map))
+        self.body._check_param_occurrences(
+                param_var, allowed_forms.union(extra_allowed_forms))
     
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
         '''

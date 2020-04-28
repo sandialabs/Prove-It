@@ -14,8 +14,8 @@ class Variable(Label):
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
                                         
-    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
-                     requirements=None):
+    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+                    requirements=None):
         '''
         Returns this Variable possibly substituted according to the 
         replacement map (repl_map) dictionary.  See the
@@ -44,7 +44,7 @@ class Variable(Label):
             return subbed
         return self
     
-    def _relabeled(self, relabel_map):
+    def relabeled(self, relabel_map):
         '''
         Return a new expression in which variables are relabeled
         according to the 'relabel_map'.
@@ -64,6 +64,17 @@ class Variable(Label):
         if self in exclusions: 
             return set() # this is excluded
         return {self}
+    
+    def _check_param_occurrences(self, param_var, allowed_forms):
+        '''
+        When a Lambda expression introduces a variable in a new scope
+        with a parameter entry that is an IndexedVar or a range
+        of IndexedVars, its occurrences must all match that
+        index or range exactly.  Raise a ValueError if the check fails.
+        '''
+        if self==param_var and self not in allowed_forms:
+            # Invalid occurrence of the parameter variable.
+            raise ValueError("Invalid occurrence of the parameter variable")
 
 def dummyVar(n):
     '''
@@ -99,17 +110,18 @@ def dummyVar(n):
         m -= k*pow_of_26
     return Variable(letters)    
 
-def safeDummyVar(*expressions):
+def safeDummyVar(*expressions, start_index=0):
     usedVs = frozenset().union(*[expr._used_vars() for expr in expressions])
-    i = 0
+    i = start_index
     while dummyVar(i) in usedVs:
         i += 1
     return dummyVar(i)
 
-def safeDummyVars(n, *expressions):
+def safeDummyVars(n, *expressions, start_index=0):
     dummyVars = []
     for _ in range (n):
-        dummyVars.append(safeDummyVar(*(list(expressions)+list(dummyVars))))
+        dummyVars.append(safeDummyVar(*(list(expressions)+list(dummyVars)),
+                                      start_index=start_index))
     return dummyVars
             
 def safeDefaultOrDummyVar(defaultVar, *expressions):

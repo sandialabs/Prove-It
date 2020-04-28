@@ -192,10 +192,14 @@ class ExprTuple(Composite, Expression):
         if do_wrapping and formatType=='latex': 
             outStr += r'\begin{array}{%s} '%justification[0]
         
-        ellipses = r'\ldots' if formatType=='latex' else ' ... '
+        ellipsis = r'\ldots' if formatType=='latex' else '...'
+        
         formatted_sub_expressions = []
         for sub_expr in self:
             if isinstance(sub_expr, ExprRange):
+                # When ranges are nested, double-up (or triple-up, etc)
+                # the ellipsis to make the nested structure clear.
+                ellipses = ellipsis*sub_expr.nested_range_depth()
                 formatted_sub_expressions += [sub_expr.first().formatted(formatType, fence=subFence), ellipses, sub_expr.last().formatted(formatType, fence=subFence)]
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists                
@@ -255,9 +259,31 @@ class ExprTuple(Composite, Expression):
         '''
         from proveit import Len
         return Len(self).simplification(assumptions).rhs
-                
-    def _substituted(self, repl_map,
-                     assumptions=USE_DEFAULTS, requirements=None):
+    
+    def has_matching_ranges(self, other_tuple):
+        '''
+        Return True iff the `other_tuple` matches this ExprTuple
+        with respect to which entries are ExprRanges and, where they
+        are, the start and end indices of the ExprRanges match.
+        '''
+        from proveit import ExprRange, compositeExpression
+        if not isinstance(other_tuple, ExprTuple):
+            other_tuple = compositeExpression(other_tuple)
+        if len(self) != len(other_tuple):
+            return False # don't have the same number of entries
+        for entry, other_entry in zip(self, other_tuple):
+            if (isinstance(entry, ExprRange) 
+                    != isinstance(other_entry, ExprRange)):
+                return False # range vs singular mismatch
+            if isinstance(entry, ExprRange):
+                if entry.start_index != other_entry.start_index:
+                    return False # start indices don't match
+                if entry.end_index != other_entry.end_index:
+                    return False # end indices don't match
+        return True # everything matches.
+            
+    def substituted(self, repl_map,
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
@@ -285,8 +311,8 @@ class ExprTuple(Composite, Expression):
                 subbed_exprs.extend(expr._substituted_entries(
                         repl_map, assumptions, requirements))
             else:
-                subbed_expr = expr._substituted(repl_map, 
-                                               assumptions, requirements)
+                subbed_expr = expr.substituted(repl_map, 
+                                              assumptions, requirements)
                 subbed_exprs.append(subbed_expr)
         return ExprTuple(*subbed_exprs)
     

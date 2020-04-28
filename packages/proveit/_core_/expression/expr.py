@@ -21,9 +21,11 @@ class ExprType(type):
     
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_generic_version', '_setContext', '_substituted',
-                 '_make', '_check_make', '_relabeled', '_used_vars',
-                 '_free_vars', '_repr_html_', '_coreInfo',
+    protected = ('_generic_version', '_setContext', 
+                 'substituted', 'relabeled',
+                 '_make', '_check_make', '_used_vars',
+                 '_free_vars', '_check_param_occurrences',
+                 '_repr_html_', '_coreInfo',
                  '_subExpressions', '_genericExpr', 
                  '_meaningData', '_meaning_id',
                  '_styleData', '_style_id')
@@ -149,6 +151,20 @@ class Expression(metaclass=ExprType):
         """
         for subExpression in subExpressions: # update Expression.parent_expr_map
             self._styleData.addChild(self, subExpression)
+        
+        if not hasattr(self, '_max_in_scope_bound_vars'):
+            # The '_max_inscope_bound_vars' attribute is used to make 
+            # unique variable assignments for Lambda parameters in the
+            # "generic version" which is invarian under 
+            # alpha-conversion.  For a Lambda, this attribute is
+            # set ahead of time.
+            if len(self._subExpressions)==0:
+                self._max_in_scope_bound_vars = 0
+            else:
+                self._max_in_scope_bound_vars = \
+                    max(subexpr._max_in_scope_bound_vars for subexpr 
+                        in self._subExpressions)
+            
     
     def _generic_version(self):
         '''
@@ -627,22 +643,11 @@ class Expression(metaclass=ExprType):
         Lambda.apply, and Iter.substituted (which is the sequence of 
         calls involved).
         '''
-        # Call the "protected" version of 'substituted' which may only
-        # be overridden by the "primitive" core expression classes.
-        return self._substituted(repl_map, assumptions, requirements)
-
-    
-    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
-                     requirements=None):
-        '''
-        The "protected" implementation of 'substituted' which may only
-        # be overridden by the "primitive" core expression classes.
-        '''
         if len(repl_map)>0 and (self in repl_map):
             substituted = repl_map[self]
         else:
             subbed_sub_exprs = \
-                tuple(sub_expr._substituted(repl_map, assumptions, 
+                tuple(sub_expr.substituted(repl_map, assumptions, 
                                             requirements)
                       for sub_expr in self._subExpressions)
             substituted = self.__class__._checked_make(
@@ -657,30 +662,23 @@ class Expression(metaclass=ExprType):
         by the corresponding values.  The replacements must be
         Variable objects, or a TypeError will be raised.
         '''
-        return self._relabeled(relabel_map)
+        from proveit import Variable
+        for key, val in relabel_map.items():
+            if not isinstance(val, Variable):
+                raise TypeError("May only relabel Variables to Variables; "
+                                "may not relabel %s"%val)
+            if not isinstance(key, Variable):
+                raise TypeError("May only relabel Variables to Variables; "
+                                "may not relabel to %s"%key)
+        return self.substituted(relabel_map)
     
-    def _relabeled(self, relabel_map):
-        '''
-        The "protected" implementation of 'relabeled' which may only
-        # be overridden by the "primitive" core expression classes.
-        '''
-        relabeled_sub_exprs = \
-            tuple(sub_expr._relabeled(relabel_map) 
-                  for sub_expr in self._subExpressions)
-        if self._subExpressions != relabeled_sub_exprs:
-            substituted = self.__class__._checked_make(
-                    self._coreInfo, dict(self._styleData.styles),
-                    relabeled_sub_exprs)
-            return substituted
-        else:
-            return self
     
     def copy(self):
         '''
         Make a copy of the Expression with the same styles.
         '''
         # vacuous substitution makes a copy
-        expr_copy = self._substituted(expr_repl_map=dict()) 
+        expr_copy = self.substituted(expr_repl_map=dict()) 
         return expr_copy
     
     def _used_vars(self):
@@ -689,7 +687,8 @@ class Expression(metaclass=ExprType):
         included those in sub-expressions.
         Call externally via the used_vars method in expr.py.
         '''
-        return set().union(*[expr._used_vars() for expr in self.subExprIter()])
+        return set().union(*[expr._used_vars() for 
+                             expr in self._subExpressions])
         
     def _free_vars(self, exclusions=frozenset()):
         '''
@@ -702,7 +701,7 @@ class Expression(metaclass=ExprType):
         if self in exclusions: 
             return set() # this is excluded
         return set().union(*[expr._free_vars(exclusions=exclusions) 
-                             for expr in self.subExprIter()])
+                             for expr in self._subExpressions])
 
     def _free_indexed_vars(self, index):
         '''
@@ -712,7 +711,22 @@ class Expression(metaclass=ExprType):
         Call externally via the free_indexed_vars method in expr.py.
         '''
         return set().union(*[expr._free_indexed_vars(index) 
-                             for expr in self.subExprIter()])
+                             for expr in self._subExpressions])
+    
+    def _check_param_occurrences(self, param_var, valid_occurrences):
+        '''
+        When a Lambda expression introduces a variable in a new scope
+        with a parameter entry that is an IndexedVar or a range
+        of IndexedVars, its occurrences must all match that
+        index or range exactly.  Raise a ValueError if the check fails.
+        This restriction intended to strike a 
+        balance between simplicity and versatility.
+        '''
+        if self in valid_occurrences:
+            # This branch is okay if it matches a valid occurence.
+            return 
+        for sub_expr in self._subExpressions:
+            sub_expr._check_param_occurrences(param_var, valid_occurrences)
 
     def safeDummyVar(self):
         from proveit._core_.expression.label.var import safeDummyVar

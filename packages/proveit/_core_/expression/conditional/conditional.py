@@ -122,8 +122,8 @@ class Conditional(Expression):
         raise EvaluationError(self, assumptions)
     '''
     
-    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
-                     requirements=None):
+    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+                    requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
@@ -150,14 +150,14 @@ class Conditional(Expression):
         condition = self.condition        
         
         # First perform substitution on the conditions:
-        subbed_cond = condition._substituted(repl_map, 
-                                             assumptions, requirements)
+        subbed_cond = condition.substituted(repl_map, 
+                                            assumptions, requirements)
 
         # Next perform substitution on the value, adding the condition
         # as an assumption.            
         assumptions = defaults.checkedAssumptions(assumptions)
-        subbed_val = value._substituted(repl_map, assumptions+(subbed_cond,),
-                                        requirements)
+        subbed_val = value.substituted(repl_map, assumptions+(subbed_cond,),
+                                       requirements)
 
         substituted = Conditional(subbed_val, subbed_cond)
 

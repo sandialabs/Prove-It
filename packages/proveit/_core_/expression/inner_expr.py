@@ -42,7 +42,7 @@ class InnerExpr:
     For example, let "expr = [((a - 1) + b + (a - 1)/d) < e]", and let
     "inner_expr = expr.innterExpr().lhs.terms[2].numerator".  Then
     
-    1. inner_expr.replMap() will return _x_ -> [(a + b + _x_/d) < e],
+    1. inner_expr.repl_lambda() will return _x_ -> [(a + b + _x_/d) < e],
        replacing the particular innerexpr.
        (note that the second "a - 1" is singled out, distinct from
        the first "a*1" because the subexpr object tracks the
@@ -155,12 +155,12 @@ class InnerExpr:
                 # parameter is accessed by that attribute. 
                 deeper_inner_expr = InnerExpr(top_level_expr, 
                                               self.innerExprPath + (i,))       
-                repl_map = deeper_inner_expr.replMap()
-                sub_expr = repl_map.body
+                repl_lambda = deeper_inner_expr.repl_lambda()
+                sub_expr = repl_lambda .body
                 for j in self.innerExprPath[:cur_depth]:
                     sub_expr = sub_expr.subExpr(j)
                 fvars = free_vars(compositeExpression(getattr(sub_expr, attr)))
-                if repl_map.parameterVarSet.issubset(fvars):
+                if repl_lambda .parameterVarSet.issubset(fvars):
                     return deeper_inner_expr
         # No match found at this depth -- let's continue to the next 
         # depth
@@ -196,13 +196,13 @@ class InnerExpr:
                 assumptions_index = argspec.args.index('assumptions')-1
             except ValueError:
                 raise Exception("Expecting method, %s, to have 'assumptions' argument."%str(equiv_method))
-            repl_map = self.replMap()
+            repl_lambda = self.repl_lambda()
             if (isinstance(cur_inner_expr, ExprTuple)
                     and len(self.exprHierarchy) > 2 
                     and isinstance(self.exprHierarchy[-2], Operation)):
                 # When replace operands of an operation, we need a
-                # a repl_map with a range of parameters.
-                repl_map = self[:].replMap()
+                # a repl_lambda with a range of parameters.
+                repl_lambda = self[:].repl_lambda()
             def inner_equiv(*args, **kwargs):
                 if 'assumptions' in kwargs:
                     assumptions = kwargs['assumptions']
@@ -212,11 +212,11 @@ class InnerExpr:
                     assumptions = USE_DEFAULTS
                 equivalence = equiv_method(*args, **kwargs)
                 if equiv_method_type == 'equiv':
-                    return equivalence.substitution(repl_map, assumptions)
+                    return equivalence.substitution(repl_lambda, assumptions)
                 elif equiv_method_type == 'rhs':
-                    return equivalence.substitution(repl_map, assumptions).rhs
+                    return equivalence.substitution(repl_lambda, assumptions).rhs
                 elif equiv_method_type == 'action':
-                    return equivalence.subRightSideInto(repl_map, assumptions)
+                    return equivalence.subRightSideInto(repl_lambda, assumptions)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'."%equiv_method_name
             elif equiv_method_type == 'rhs':
@@ -239,12 +239,19 @@ class InnerExpr:
             inner_expr = self._getAttrAsInnerExpr(len(self.innerExprPath), attr, inner_attr_val)
             if inner_expr is not None:
                 return inner_expr
-        elif attr[:4] == 'with':
+        elif attr=='relabeled' or attr=='relabel' or attr[:4] == 'with':
             def reviseInnerExpr(*args, **kwargs):
                 cur_sub_expr = self.exprHierarchy[-1]
                 # call the 'with...' method on the inner expression:
-                getattr(cur_sub_expr, attr)(*args, **kwargs)  # this will also revise the styles of all parents recursively 
+                expr = getattr(cur_sub_expr, attr)(*args, **kwargs)
+                # Rebuild the expression (or KnownTruth) with the 
+                # inner expression replaced.
+                return self._rebuild(expr)
+            '''            
+                #getattr(cur_sub_expr, attr)(*args, **kwargs)  # this will also revise the styles of all parents recursively 
+                
                 return self.exprHierarchy[0] # return the top-level expression
+            '''
             return reviseInnerExpr
                 
         return getattr(cur_inner_expr, attr) # not a sub-expression, so just return the attribute for the actual Expression object of the sub-expression
@@ -286,7 +293,7 @@ class InnerExpr:
         equiv_rhs.__doc__ = "Return an equivalent form of this expression derived via '%s'."%equiv_method
         setattr(expr_class, past_tense_name, equiv_rhs)
     
-    def replMap(self, assumptions=USE_DEFAULTS):
+    def repl_lambda(self, assumptions=USE_DEFAULTS):
         '''
         Returns the lambda function/map that would replace this 
         particular inner expression within the top-level expression.
@@ -347,21 +354,42 @@ class InnerExpr:
                 # parameters encountered between the top-level 
                 # expression and the inner expression.
                 lambda_body = Function(lambda_params[0], self.parameters)
+        # Build the expression with replacement parameters from
+        # the inside out.
+        lambda_body = self._rebuild(lambda_body)
+        return Lambda(lambda_params, lambda_body)
+    
+    def _rebuild(self, inner_expr_replacement):
+        '''
+        Rebuild the expression replacing the inner expression with the
+        given 'inner_expr_replacement'.
+        '''
+        from proveit import KnownTruth
+        inner_expr = inner_expr_replacement
+        # Work from the inside out.
         for expr, idx in reversed(list(zip(self.exprHierarchy, 
                                            self.innerExprPath))):
             if isinstance(idx, slice): continue
             if isinstance(expr, KnownTruth):
-                # Convert from a KnownTruth to an Expression.
-                expr = expr.expr 
                 if idx < 0:
-                    raise ValueError("Cannot call an InnerExpr.replMap "
+                    raise ValueError("Cannot call an InnerExpr.repl_lambda "
                                      "for an inner expression of one of "
                                      "a KnownTruth's assumptions")
+                # Convert from a KnownTruth to an Expression.
+                expr = expr.expr 
             expr_subs = tuple(expr.subExprIter())
-            lambda_body = expr.__class__._make(
+            inner_expr = expr.__class__._make(
                     expr.coreInfo(), expr.getStyles(), 
-                    expr_subs[:idx] + (lambda_body,) + expr_subs[idx+1:])
-        return Lambda(lambda_params, lambda_body)
+                    expr_subs[:idx] + (inner_expr,) + expr_subs[idx+1:])
+        revised_expr = inner_expr
+        if (isinstance(self.exprHierarchy[0], KnownTruth) and 
+                self.exprHierarchy[0].expr==revised_expr):
+            # Make a KnownTruth with only the style modified.
+            kt = KnownTruth(revised_expr, self.exprHierarchy[0].assumptions)
+            kt._addProof(self.exprHierarchy[0].proof())
+            return kt
+        return revised_expr
+        
     
     def _expr_rep(self):
         '''
@@ -369,14 +397,14 @@ class InnerExpr:
         function but the sub-Expressions that may be accessed more 
         deeply.
         '''
-        repl_map = self.replMap()
-        lambda_params = repl_map.parameters
+        repl_lambda = self.repl_lambda()
+        lambda_params = repl_lambda.parameters
         cur_sub_expr = self.exprHierarchy[-1]
         #if isinstance(cur_sub_expr, Composite):
         #    sub_exprs = list(cur_sub_expr.subExprIter())
         #else:
         sub_exprs = [cur_sub_expr]
-        named_expr_dict = [('lambda',repl_map)]
+        named_expr_dict = [('lambda',repl_lambda)]
         if len(self.parameters)==0:
             named_expr_dict += [('$%s$'%lambda_param.latex(), sub_expr) 
                                 for lambda_param, sub_expr 

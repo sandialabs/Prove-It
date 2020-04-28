@@ -395,7 +395,7 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
                      requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
@@ -430,11 +430,11 @@ class Operation(Expression):
         
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator_or_operators = \
-            self.operator_or_operators._substituted(repl_map, assumptions, 
-                                                    requirements)
+            self.operator_or_operators.substituted(repl_map, assumptions, 
+                                                   requirements)
         subbed_operand_or_operands = \
-            self.operand_or_operands._substituted(repl_map, assumptions, 
-                                                  requirements)
+            self.operand_or_operands.substituted(repl_map, assumptions, 
+                                                 requirements)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
         
         # Check if the operator is being substituted by a Lambda map in

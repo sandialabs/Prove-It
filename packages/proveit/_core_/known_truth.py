@@ -912,9 +912,8 @@ class KnownTruth:
 
     def string(self, performUsabilityCheck=True):
         '''
-        If the KnownTruth was proven under any assumptions, display the 
-        double-turnstyle notation to show that the set of assumptions proves
-        the statement/expression.  Otherwise, simply display the expression.
+        Display the turnstile notation to show that the known truth
+        on the right derives from the set of assumptions on the left.
         '''
         from proveit import ExprTuple
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()
@@ -925,9 +924,8 @@ class KnownTruth:
 
     def latex(self, performUsabilityCheck=True):
         '''
-        If the KnownTruth was proven under any assumptions, display the 
-        double-turnstyle notation to show that the set of assumptions proves
-        the statement/expression.  Otherwise, simply display the expression.
+        Display the turnstile notation to show that the known truth
+        on the right derives from the set of assumptions on the left.
         '''
         from proveit import ExprTuple
         if performUsabilityCheck and not self.isUsable(): self.raiseUnusableProof()

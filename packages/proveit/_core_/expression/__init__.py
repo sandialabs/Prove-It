@@ -7,8 +7,9 @@ from .fencing import maybeFencedString, maybeFencedLatex, maybeFenced
 from .operation import (Operation, IndexedVar, Function, OperationSequence, 
                         OperationOverInstances, OperationError)
 from .conditional import Conditional
-from .lambda_expr import (Lambda, ParameterCollisionError,
-                          LambdaApplicationError, ArgumentExtractionError)
+from .lambda_expr import (
+        Lambda, ParameterCollisionError, InvalidParamVarOccurrence,
+        LambdaApplicationError, ArgumentExtractionError)
 from .composite import (
         Composite, compositeExpression, singleOrCompositeExpression, 
         ExprTuple, ExprTupleError, ExprArray, NamedExprs, ExprRange,

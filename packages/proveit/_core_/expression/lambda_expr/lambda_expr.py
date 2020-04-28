@@ -59,7 +59,9 @@ class Lambda(Expression):
         _generic_expr is used internally for efficiently rebuilding a Lambda.
         '''
         from proveit._core_.expression.composite import (
-                compositeExpression, singleOrCompositeExpression, ExprRange)
+                compositeExpression, singleOrCompositeExpression,
+                ExprRange)
+        from proveit._core_.expression.operation import IndexedVar
         self.parameters = compositeExpression(parameter_or_parameters)
         parameterVars = [getParamVar(parameter) for parameter in self.parameters]
         if len(self.parameters) == 1:
@@ -70,14 +72,49 @@ class Lambda(Expression):
             self.parameter_or_parameters = self.parameters
         self.parameterVars = tuple(parameterVars)
         self.parameterVarSet = frozenset(parameterVars)
+        
+        # Parameter variables may not occur multiple times.
         if len(self.parameterVarSet) != len(self.parameters):
-            raise ParameterCollisionError(self.parameters)
-        body = singleOrCompositeExpression(body)
+            raise ParameterCollisionError(
+                    self.parameters, "Parameter variables must be unique")
+        
+        # Parameter variables may not occur as free variables of
+        # any of the parameter indexes.
+        free_vars_of_param_indices = self._free_vars_of_parameter_indices()
+        if not free_vars_of_param_indices.isdisjoint(self.parameterVarSet):
+            raise ParameterCollisionError(
+                    self.parameters, ("Parameter variables may not occur as "
+                                      "free variables in parameter indices"))         
+        
+        # Note: a Lambda body may be an ExprRange which is useful
+        # for making nested ranges of ranges.
+        body = singleOrCompositeExpression(body, 
+                                           wrap_expr_range_in_tuple=False)
         # After the singleOrCompositeExpression, this assertion should
-        # not faile.
-        assert isinstance(body, Expression) and not isinstance(body, ExprRange)
+        # not fail.
+        assert isinstance(body, Expression)
         self.body = body
-                
+        for param_entry in self.parameters:
+            if (isinstance(param_entry, IndexedVar) 
+                    or isinstance(param_entry, ExprRange)):
+                try:
+                    body._check_param_occurrences(getParamVar(param_entry),
+                                                  {param_entry})
+                except ValueError:
+                    # Catch the ValueError and raise 
+                    # InvalidParamVarOccurrence with more information.
+                    raise InvalidParamVarOccurrence(param_entry, body)
+        
+        # The '_max_in_scope_bound_vars' attribute is used to make 
+        # unique variable assignments for Lambda parameters in the
+        # "generic version" which is invarian under 
+        # alpha-conversion.  For a Lambda, this attribute is
+        # set ahead of time.
+        self._max_in_scope_bound_vars = \
+            (max(self.parameters._max_in_scope_bound_vars, 
+                 self.body._max_in_scope_bound_vars)
+             + len(self.parameterVars))
+        
         if _generic_expr is None:
             # Create a "generic" version (if not already) of the Lambda 
             # expression since the choice of parameter labeling is 
@@ -112,67 +149,68 @@ class Lambda(Expression):
         return Lambda(parameters, body, _generic_expr=genericExpr)\
                     .withStyles(**styles)
 
+    def _free_vars_of_parameter_indices(self):
+        '''
+        Return the set of free variables of the indices of all
+        of the parameters of this Lambda expression.
+        '''
+        from proveit._core_.expression.composite import ExprRange
+        from proveit._core_.expression.operation.indexed_var import IndexedVar 
+        free_vars = set()
+        for parameter in self.parameters:
+            if isinstance(parameter, ExprRange) and isinstance(parameter.body, IndexedVar):
+                free_vars.update(parameter.start_index._free_vars())
+                free_vars.update(parameter.end_index._free_vars())
+            elif isinstance(parameter, IndexedVar):
+                free_vars.update(parameter.index._free_vars())
+        return free_vars
+    
     def _generic_version(self):
         '''
         Retrieve (and create if necessary) the generic version of this 
         Lambda expression in which its parameters are replaced with
         deterministic 'dummy' variables.
         '''
+        from proveit._core_.expression.composite import ExprRange
+        
         if hasattr(self, '_genericExpr'):
             return self._genericExpr
-
-        from proveit._core_.expression.operation.indexed_var import IndexedVar
-        from proveit._core_.expression.composite import ExprTuple
-        generic_body = self.body._generic_version()
         
-        # If there are any Indexed variables, try to replace them
-        # with temporary dummy variables: e.b., a_i -> q.
-        # If they don't occur any other way, we can replace them
-        # in the generic version.
-        indexed_var_params = [param for param in self.parameters 
-                              if isinstance(param, IndexedVar)]
-        repl_map = dict()
-        if len(indexed_var_params) > 0:
-            indexed_var_replacements = safeDummyVars(len(indexed_var_params),
-                                                     generic_body)
-            repl_map = {indexed_var:repl for indexed_var, repl 
-                        in zip(indexed_var_params, indexed_var_replacements)}
-            generic_body = generic_body._substituted(repl_map)
-            generic_body_free_vars = generic_body._free_vars()
-            for indexed_var_param in indexed_var_params:
-                if getParamVar(indexed_var_param) in generic_body_free_vars:
-                    # The variable of indexed_var_param occurs in other
-                    # forms than just the indexed_var_param itself.
-                    # We can't know for sure if this is incorrect
-                    # (a_i could have been replaced with a_n in some
-                    # occurrence assuming i=n), but we do need to
-                    # revert the replacement to be safe.
-                    generic_body = generic_body._substituted(
-                            {repl_map[indexed_var_param]:indexed_var_param})
-                    repl_map.pop(indexed_var_param)
-        if len(repl_map) > 0:
-            # Made indexed variable replacements.
-            parameters = \
-                ExprTuple(*[repl_map[param] if param in repl_map else param
-                            for param in self.parameters])
-            parameter_vars = [getParamVar(param) for param in parameters]
-            parameter_var_set = set(parameter_vars)
-        else:
-            parameters = self.parameters
-            parameter_vars = self.parameterVars
-            parameter_var_set = self.parameterVarSet
+        # Note: If there are any Indexed variables, replace them
+        # with the variable being indexed in the generic version
+        # noting that we have already checked (via 
+        # _check_param_occurrences) that it only occurs in this
+        # form.
+        parameters = self.parameters
+        parameter_vars = \
+            [getParamVar(param) if isinstance(param, ExprRange) else param
+             for param in parameters] # keeps IndexedVar's intact.
         
-        generic_body_vars = generic_body._used_vars()
-        disallowed_vars = (generic_body_vars-parameter_var_set)
-        generic_param_vars = tuple(safeDummyVars(len(parameter_vars), 
-                                                 *disallowed_vars))
-        if len(repl_map) > 0 or generic_param_vars != parameter_vars:
+        # Assign unique variables based upon then maximum number
+        # of bound variables in any internal scope, subtract the
+        # number of new parameters, and add the number of
+        # unbound (free) variables.
+        # To ensure assignments are deterministic (not rearranged in a 
+        # hysteretic manner), we use a starting index that is the 
+        # maximum number of in-scope bound variables plus the number
+        # of free variables, then we skip over the free variables as 
+        # they occur.
+        free_vars = self.body._free_vars() - set(parameter_vars)
+        start_index = (self._max_in_scope_bound_vars - len(parameters)
+                       + len(free_vars))
+        generic_param_vars = list(reversed(
+                safeDummyVars(len(parameter_vars), *free_vars,
+                              start_index=start_index)))
+        
+        if generic_param_vars != parameter_vars:
             # Create the generic version via relabeling.
             relabel_map = {param:generic_param for param, generic_param 
                            in zip(parameter_vars, generic_param_vars)}
             generic_parameters = parameters._generic_version()
-            generic_parameters = generic_parameters._relabeled(relabel_map)
-            generic_body = generic_body._relabeled(relabel_map)
+            generic_parameters = generic_parameters.relabeled(relabel_map)
+            generic_body = self.body._generic_version()
+            generic_body = generic_body.relabeled(relabel_map)
+            generic_body = generic_body._generic_version()
             return Lambda(generic_parameters, generic_body)
         else:
             return self
@@ -314,11 +352,11 @@ class Lambda(Expression):
         There are limitations with respect the Lambda map application involving
         iterated parameters when perfoming operation substitution in order to
         keep derivation rules (i.e., instantiation) simple.  For details,
-        see the ExprRange._substituted documentation.
+        see the ExprRange.substituted documentation.
         '''
         return Lambda._apply(self.parameters, self.body, *operands,
                              assumptions=assumptions, requirements=requirements)
-        
+    
     @staticmethod 
     def _apply(parameters, body, *operands,
                assumptions=USE_DEFAULTS, requirements=None):
@@ -383,8 +421,15 @@ class Lambda(Expression):
                         # iterated parameter.
                         param_operands = []
                         while True:
-                            param_operands_len = Len(ExprTuple(*param_operands))
+                            param_operands_tuple = ExprTuple(*param_operands)
+                            param_operands_len = Len(param_operands_tuple)
                             len_req = Equals(param_operands_len, param_len)
+                            if param_operands_tuple.has_matching_ranges(
+                                    param_indices):
+                                # If the ranges have matching start and
+                                # end indices, the lengths must match;
+                                # we just need to prove it.
+                                len_req.prove(assumptions)
                             if len_req.proven(assumptions):
                                 requirements.append(len_req.prove(assumptions))
                                 break # we have a match
@@ -451,7 +496,7 @@ class Lambda(Expression):
         except StopIteration:
             pass # Good.  All operands were consumed.
         try:
-            return body._substituted(repl_map, assumptions=assumptions, 
+            return body.substituted(repl_map, assumptions=assumptions, 
                                      requirements=requirements)
         except ImproperSubstitution as e:
             raise LambdaApplicationError(parameters, body, 
@@ -509,7 +554,7 @@ class Lambda(Expression):
                         inner_repl_map, assumptions, requirements)
                 new_params.extend(subbed_param)
             else:
-                subbed_param = parameter._substituted(
+                subbed_param = parameter.substituted(
                         inner_repl_map, assumptions, requirements)
                 new_params.append(subbed_param)
         
@@ -522,7 +567,7 @@ class Lambda(Expression):
                                       
         return new_params, inner_repl_map, inner_assumptions
         
-    def _substituted(self, repl_map, assumptions=USE_DEFAULTS, 
+    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
                      requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
@@ -547,7 +592,6 @@ class Lambda(Expression):
         For more details, see Operation.substituted, Lambda.apply, and
         ExprRange.substituted (which is the sequence of calls involved).
         '''
-        
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
             return repl_map[self]
@@ -560,7 +604,7 @@ class Lambda(Expression):
         
         # The lambda body with the substitutions.
         inner_requirements = []
-        subbed_body = self.body._substituted(
+        subbed_body = self.body.substituted(
                 inner_repl_map, inner_assumptions, inner_requirements)
         # Translate from inner requirements to outer requirements
         # in a manner that respects the change in scope w.r.t.
@@ -609,7 +653,7 @@ class Lambda(Expression):
             if not isinstance(val, Variable):
                 raise TypeError("relabel_map must map Variables to Variables. "
                                 "%s value is not a Variable."%val)
-        result = self._substituted(relabel_map)
+        result = self.substituted(relabel_map)
         assert result==self, "Relabeled version should be 'equal' to original"
         return result
     """
@@ -684,13 +728,49 @@ class Lambda(Expression):
         innerFreeVs = set(self.body._free_indexed_vars(index))
         return {indexed_var for indexed_var in innerFreeVs 
                 if indexed_var.var not in self.parameterVarSet}
+    
+    def _check_param_occurrences(self, param_var, allowed_forms):
+        '''
+        When a Lambda expression introduces a variable in a new scope
+        with a parameter entry that is an IndexedVar or a range
+        of IndexedVars, its occurrences must all match that
+        index or range exactly.
+        '''
+        # The parameter variables of this Lambda mask any free variables
+        # of the allowed forms and therefore we can exclude the allowed 
+        # forms that have a set of free variables that overlap with the
+        # Lambda parameters variables.
+        param_var_set = self.parameterVarSet
+        if param_var in param_var_set:
+            # The external parameter variable is masked by one of the
+            # local parameter variables, so there are no occurrences
+            # to worry about here.
+            return 
+        allowed_forms = {allowed_form for allowed_form in allowed_forms
+                         if allowed_form._free_vars().isdisjoint(param_var_set)}
+        return self.body._check_param_occurrences(param_var, allowed_forms)
 
 class ParameterCollisionError(Exception):
-    def __init__(self, parameters):
+    def __init__(self, parameters, main_msg):
         self.parameters = parameters
+        self.main_msg = main_msg
     def __str__(self):
-        return ("Parameter variables must be unique.  %s does not satisfy "
-                "this criterion."%self.parameters)
+        return ("%s.  %s does not satisfy this criterion."
+                %(self.main_msg, self.parameters))
+
+class InvalidParamVarOccurrence(Exception):
+    def __init__(self, param_entry, lambda_body):
+        self.param_entry = param_entry
+        self.lambda_body = lambda_body
+    def __str__(self):
+        from proveit import IndexedVar
+        if isinstance(self.param_entry, IndexedVar):            
+            return ("Indexed parameter variable, %s, may only occur "
+                    "in this form in the Lambda body: %s."
+                    %(self.param_entry, self.lambda_body))
+        return ("Parameter range, %s, may only occur in this specific "
+                "range in the Lambda body: %s."
+                %(self.param_entry, self.lambda_body))
 
 class LambdaApplicationError(Exception):
     def __init__(self, parameters, body, operands, assumptions, extra_msg):
