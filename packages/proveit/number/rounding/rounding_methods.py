@@ -117,7 +117,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     from proveit.number import Add, Integers, Reals
 
     # among other things, convert any assumptions=None
-    # to assumptions=()
+    # to assumptions=() (thus averting len(None) errors)
     assumptions = defaults.checkedAssumptions(assumptions)
 
     #-- -------------------------------------------------------- --#
@@ -155,8 +155,10 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
     #--           an int, but addends might be reals and ints    --#
     #-- -------------------------------------------------------- --#
     if isinstance(expr.operand, Add):
-        # Try to partition all suboperands into Integers vs. Reals,
-        # in which case we can use the extraction theorem
+        # Try to partition all suboperands into Integers vs.
+        # Non-Integers, and if there is at least one integer, try to
+        # apply the extraction theorem (allowing an error message
+        # if the specialization fails).
 
         subops = expr.operand.operands
 
@@ -169,13 +171,11 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
         for i in range(len(subops)):
             the_subop = subops[i]
             print("the_subop at index {0} = {1}".format(i, the_subop))          # for testing; delete later
-            # first do the easiest checks -- is the subop already known
-            # to be an Integer or a Real?
-            if InSet(subops[i], Integers).proven(assumptions):
+            # first do the easiest check: is the subop already known
+            # to be an Integer?
+            if InSet(subops[i], Integers).proven(assumptions):                  # simplify subops[i] later!
                 indices_of_known_ints.append(i)
                 print("the_subop {} is known to be an integer".format(the_subop)) # for testing; delete later
-            # elif InSet(subops[i], Reals).proven(assumptions):
-            #     indices_of_reals_not_ints.append(i)
             # then try something just a little harder
             elif the_subop in InSet.knownMemberships.keys():
                 from proveit.logic.set_theory import Subset, SubsetEq
@@ -190,27 +190,23 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                             print("the_subop {} was proven to be an integer".format(the_subop)) # for testing; delete later
                             break
 
-            # only after trying all integer variations, THEN
-            # consider the reals (moved from code about 10 lines above)
-            if (i not in indices_of_known_ints) and InSet(subops[i], Reals).proven(assumptions):
-                print("the_subop {} is known to be a real".format(the_subop)) # for testing; delete later
-                indices_of_reals_not_ints.append(i)
-
-            # finally, if i has not been placed, put it in unknowns:
-            if (i not in indices_of_known_ints) and (i not in indices_of_reals_not_ints):
-                indices_of_unknowns.append(i)
+            # then if the_subop is not an integer, note that instead
+            if (i not in indices_of_known_ints):
+                print("the_subop {} is a non-integer".format(the_subop))        # for testing; delete later
+                # we categorize it as a non-int
+                indices_of_non_ints.append(i)
 
         print("indices_of_known_ints = {}".format(indices_of_known_ints))       # for testing; delete later
-        print("indices_of_reals_not_ints = {}".format(indices_of_reals_not_ints))       # for testing; delete later
-        print("indices_of_unknowns = {}".format(indices_of_unknowns))       # for testing; delete later
+        print("indices_of_non_ints = {}".format(indices_of_non_ints))           # for testing; delete later
+        print("indices_of_unknowns = {}".format(indices_of_unknowns))           # for testing; delete later
 
-        if len(indices_of_unknowns) == 0 and len(indices_of_known_ints)>0:
-            # Then each addend is an int or a real, with at least one
-            # int, so we should be able to rearrange and partition
-            # the addends as such
+        if len(indices_of_known_ints)>0:
+            # Then we have at least one known integer addend, so we
+            # rearrange and group the addends, associating the non-ints
+            # and associating the ints
             original_addends = list(subops)
             desired_order_by_index = list(
-                    indices_of_reals_not_ints+indices_of_known_ints)
+                    indices_of_non_ints + indices_of_known_ints)
             # commute to put reals first, followed by ints
             for i in range(len(original_addends)):
                 init_idx = expr.operand.operands.index(
@@ -219,19 +215,20 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                         expr.innerExpr().operand.commutation(
                                 init_idx, i, assumptions=assumptions))
 
-            # associate the reals
-            if len(indices_of_reals_not_ints) > 1:
+            # associate the non-integers (if more than 1)
+            if len(indices_of_non_ints) > 1:
                 # associate those elements (already re-arranged to
                 # be at the front of the operand.operands):
                 expr = eq.update(
                         expr.innerExpr().operand.association(
-                                0, len(indices_of_reals_not_ints),
+                                0, len(indices_of_non_ints),
                                 assumptions=assumptions))
-            # associate the ints
+
+            # associate the known integers (if more than 1)
             if len(indices_of_known_ints) > 1:
                 # associate those elements (already re-arranged to
                 # be at the end of the operand.operands):
-                if len(indices_of_reals_not_ints) > 0:
+                if len(indices_of_non_ints) > 0:
                     start_idx = 1
                 else:
                     start_idx = 0
@@ -250,8 +247,7 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
             return eq.relation
 
         else:
-            # list_of_unknowns might be non-empty
-            # and/OR indices_of_known_ints might be empty
+            # We did not find any integers.
             # Instead of returning an error, simply return the original
             # rounding expression equal to itself
             return eq.relation
