@@ -165,18 +165,16 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
         # Collect indices of operands known or assumed to be
         # ints versus reals versus neither
         indices_of_known_ints = []
-        indices_of_reals_not_ints = []
-        indices_of_unknowns = []
-        indices_of_non_ints = [] # added 4/27/2020 as I try to reorg a bit
+        indices_of_non_ints = []
         for i in range(len(subops)):
             the_subop = subops[i]
-            print("the_subop at index {0} = {1}".format(i, the_subop))          # for testing; delete later
-            # first do the easiest check: is the subop already known
-            # to be an Integer?
-            if InSet(subops[i], Integers).proven(assumptions):                  # simplify subops[i] later!
+
+            # (a) first perform easiest check: is the subop already known
+            #     to be an Integer?
+            if InSet(the_subop, Integers).proven(assumptions):
                 indices_of_known_ints.append(i)
-                print("the_subop {} is known to be an integer".format(the_subop)) # for testing; delete later
-            # then try something just a little harder
+
+            # (b) then try something just a little harder
             elif the_subop in InSet.knownMemberships.keys():
                 from proveit.logic.set_theory import Subset, SubsetEq
                 for kt in InSet.knownMemberships[the_subop]:
@@ -187,18 +185,12 @@ def apply_reducedSimplification(expr, assumptions=USE_DEFAULTS):
                                 proven(assumptions)):
                             InSet(the_subop, Integers).prove()
                             indices_of_known_ints.append(i)
-                            print("the_subop {} was proven to be an integer".format(the_subop)) # for testing; delete later
                             break
 
-            # then if the_subop is not an integer, note that instead
+            # (c) then if the_subop is not an integer, note that instead
             if (i not in indices_of_known_ints):
-                print("the_subop {} is a non-integer".format(the_subop))        # for testing; delete later
-                # we categorize it as a non-int
+                # we categorize it as a non-integer
                 indices_of_non_ints.append(i)
-
-        print("indices_of_known_ints = {}".format(indices_of_known_ints))       # for testing; delete later
-        print("indices_of_non_ints = {}".format(indices_of_non_ints))           # for testing; delete later
-        print("indices_of_unknowns = {}".format(indices_of_unknowns))           # for testing; delete later
 
         if len(indices_of_known_ints)>0:
             # Then we have at least one known integer addend, so we

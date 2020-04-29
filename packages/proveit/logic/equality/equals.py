@@ -596,7 +596,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     of the inner expression.
     '''
     # among other things, convert any assumptions=None
-    # to assumptions=()
+    # to assumptions=() to avoid len(None) errors
     assumptions = defaults.checkedAssumptions(assumptions)
 
     from proveit.logic import TRUE, FALSE
