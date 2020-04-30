@@ -57,7 +57,8 @@ class Neg(Operation):
     def doubleNegSimplification(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import doubleNegation
         assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)
-        return doubleNegation.specialize({x:self.operand.operand}, assumptions)
+        return doubleNegation.specialize({x:self.operand.operand},
+                                          assumptions=assumptions)
         
     
     """

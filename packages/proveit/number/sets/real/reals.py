@@ -98,4 +98,5 @@ if proveit.defaults.automation:
     # imported when automation is used.
     from ._theorems_ import (
         realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
-        natsInReals, natsPosInReals, natPosInRealsPos)
+        natsInReals, natsPosInReals, natPosInRealsPos, natsInRealsNonNeg,
+        natsPosInRealsNonNeg, realsPosInRealsNonNeg)
