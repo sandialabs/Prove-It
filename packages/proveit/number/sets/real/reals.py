@@ -120,4 +120,4 @@ if proveit.defaults.automation:
     from ._theorems_ import (
         realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
         natsInReals, natsPosInReals, natPosInRealsPos, natsInRealsNonNeg,
-        natPosInRealsNonNeg)
+        natsPosInRealsNonNeg, realsPosInRealsNonNeg)
