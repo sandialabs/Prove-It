@@ -56,10 +56,10 @@ class Equals(TransitiveRelation):
         the left hand side and the right hand side.  This information
         may be useful for concluding new equations via transitivity. 
         If the right hand side is an "irreducible value" (see 
-        isIrreducibleValue), also record it in Equals.evaluations for
-        use when the evaluation method is called.   Some side-effects
-        derivations are also attempted depending upon the form of
-        this equality.
+        isIrreducibleValue), also record it in
+        Equals.known_evaluation_sets for use when the evaluation
+        method is called.   Some side-effects derivations are also
+        attempted depending upon the form of this equality.
         If the rhs is an "irreducible value" (see isIrreducibleValue),
         also record the knownTruth in the Equals.known_simplifications
         and Equals.known_evaluation_sets dictionaries, for use when the
