@@ -118,8 +118,8 @@ class Abs(Operation):
         Assumptions may be necessary to deduce necessary conditions for
         the simplification.
         '''
-        from proveit.number import Neg
-        from proveit.number import (Naturals, NaturalsPos, RealsNeg,
+        from proveit.number import Greater, GreaterEq, Neg
+        from proveit.number import (zero, Naturals, NaturalsPos, RealsNeg,
                                     RealsNonNeg, RealsPos)
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
@@ -151,9 +151,22 @@ class Abs(Operation):
         #-- Case (3): Abs(x) where entire operand x is not yet known --*
         #--           to be a non-negative Real, but can EASILY be   --#
         #--           proven to be a non-negative Real because it is --#
-        #--           known to be in a subset of the non-negative    --#
-        #--           Reals
+        #--           known or assumed to be ≥ 0 or known or assumed --#
+        #--           to be in a subset of the non-negative Reals    --#
         #-- -------------------------------------------------------- --#
+        print("self.operand = {}".format(self.operand))                         # for testing; delete later
+        print("assumptions = {}".format(assumptions))                           # for testing; delete later
+        if (Greater(self.operand, zero).proven(assumptions=assumptions) or
+            GreaterEq(self.operand, zero).proven(assumptions=assumptions)):
+            print("Inside the Greater/GreaterEq If")                            # for testing; delete later
+            GreaterEq(self.operand, zero).prove(assumptions=assumptions)
+            from proveit.number.sets.real._theorems_ import (
+                    inRealsNonNegIfGreaterEqZero)
+            inRealsNonNegIfGreaterEqZero.specialize(
+                {a: self.operand}, assumptions=assumptions)
+            return self.absElimination(operand_type='non-negative',
+                                       assumptions=assumptions)
+
         if self.operand in InSet.knownMemberships.keys():
             from proveit.logic.set_theory import Subset, SubsetEq
             for kt in InSet.knownMemberships[self.operand]:
@@ -183,7 +196,8 @@ class Abs(Operation):
         print("negated_op = {}".format(negated_op))                             # for testing; delete later
         if negated_op in InSet.knownMemberships.keys():
             from proveit.logic.set_theory import Subset, SubsetEq
-            from proveit.number.sets.real._theorems_ import ifPosNegInRealsNeg
+            from proveit.number.sets.real._theorems_ import (
+                    negInRealsNegIfPosInRealsPos)
             for kt in InSet.knownMemberships[negated_op]:
                 print("    kt = {}".format(kt))                                 # for testing; delete later
                 if kt.isSufficient(assumptions):
@@ -198,7 +212,7 @@ class Abs(Operation):
                         Subset(kt.expr.operands[1], RealsPos).proven(assumptions)):
                         InSet(negated_op, RealsPos).prove()
                         print("Proved negated_op is positive Real.")            # for testing; delete later
-                        ifPosNegInRealsNeg.specialize({a:negated_op}, assumptions=assumptions)
+                        negInRealsNegIfPosInRealsPos.specialize({a:negated_op}, assumptions=assumptions)
                         print("Specialization done.")                           # for testing; delete later
                         return self.absElimination(operand_type='negative',
                                                    assumptions=assumptions)
