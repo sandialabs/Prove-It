@@ -1,6 +1,8 @@
 from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit._common_ import a, b, x
 from proveit.logic import InSet
+from proveit.logic.set_theory import Subset, SubsetEq
+from proveit.number import Add
 
 class Abs(Operation):
     # operator of the Abs operation.
@@ -149,12 +151,19 @@ class Abs(Operation):
         #-- Case (3): Abs(x) where entire operand x is not yet known --*
         #--           to be a non-negative Real, but can easily be   --#
         #--           proven to be a non-negative Real because it is --#
-        #--           known or assumed to be ≥ 0 or known or assumed --#
-        #--           to be in a subset of the non-negative Reals    --#
+        #--           (a) known or assumed to be ≥ 0 or
+        #--           (b) known or assumed to be in a subset of the  --#
+        #--               non-negative Reals, or                     --#
+        #--           (c) the addition or product of operands, all   --#
+        #--               of which are known or assumed to be non-   --#
+        #--               negative reals.
         #-- -------------------------------------------------------- --#
-        if (Greater(self.operand, zero).proven(assumptions=assumptions) or
-            GreaterEq(self.operand, zero).proven(assumptions=assumptions)):
+        if (Greater(self.operand, zero).proven(assumptions=assumptions) and
+            not GreaterEq(self.operand, zero).proven(assumptions=assumptions)):
             GreaterEq(self.operand, zero).prove(assumptions=assumptions)
+            # and then it will get picked up in the next if() below
+
+        if GreaterEq(self.operand, zero).proven(assumptions=assumptions):
             from proveit.number.sets.real._theorems_ import (
                     inRealsNonNegIfGreaterEqZero)
             inRealsNonNegIfGreaterEqZero.specialize(
@@ -163,29 +172,32 @@ class Abs(Operation):
                                        assumptions=assumptions)
 
         if self.operand in InSet.knownMemberships.keys():
-            from proveit.logic.set_theory import Subset, SubsetEq
             for kt in InSet.knownMemberships[self.operand]:
                 if kt.isSufficient(assumptions):
-                    if (SubsetEq(kt.expr.operands[1], Naturals).proven(assumptions)
+                    if (SubsetEq(kt.expr.operands[1], Naturals).proven(
+                            assumptions)
                         or 
-                        Subset(kt.expr.operands[1], NaturalsPos).proven(assumptions)
+                        Subset(kt.expr.operands[1], NaturalsPos).proven(
+                            assumptions)
                         or 
-                        Subset(kt.expr.operands[1], RealsPos).proven(assumptions)):
+                        Subset(kt.expr.operands[1], RealsPos).proven(
+                            assumptions)):
                         InSet(self.operand, RealsNonNeg).prove()
                         return self.absElimination(operand_type='non-negative',
                                                    assumptions=assumptions)
 
+
         #-- -------------------------------------------------------- --#
         #-- Case (4): Abs(x) where entire operand x is not yet known --*
         #--           to be a negative Real, but can easily be       --#
-        #--           proven to be a negative Real because it -x is  --#
+        #--           proven to be a negative Real because -x is     --#
         #--           known to be in a subset of the positive Reals  --#
         #-- -------------------------------------------------------- --#
         negOp = Neg(self.operand)
         negOpSimp = negOp.simplification(assumptions=assumptions)
         negated_op = Neg(self.operand).simplification().rhs
         if negated_op in InSet.knownMemberships.keys():
-            from proveit.logic.set_theory import Subset, SubsetEq
+            # from proveit.logic.set_theory import Subset, SubsetEq
             from proveit.number.sets.real._theorems_ import (
                     negInRealsNegIfPosInRealsPos)
             for kt in InSet.knownMemberships[negated_op]:
