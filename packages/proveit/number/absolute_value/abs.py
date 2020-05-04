@@ -124,8 +124,6 @@ class Abs(Operation):
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
         assumptions = defaults.checkedAssumptions(assumptions)
-        print("Entering doReducedSimplification()")                             # for testing; delete later
-        print("    The assumptions = {}".format(assumptions))                   # for testing; delete later
 
         #-- -------------------------------------------------------- --#
         #-- Case (1): Abs(x) where entire operand x is known or      --#
@@ -149,16 +147,13 @@ class Abs(Operation):
 
         #-- -------------------------------------------------------- --#
         #-- Case (3): Abs(x) where entire operand x is not yet known --*
-        #--           to be a non-negative Real, but can EASILY be   --#
+        #--           to be a non-negative Real, but can easily be   --#
         #--           proven to be a non-negative Real because it is --#
         #--           known or assumed to be ≥ 0 or known or assumed --#
         #--           to be in a subset of the non-negative Reals    --#
         #-- -------------------------------------------------------- --#
-        print("self.operand = {}".format(self.operand))                         # for testing; delete later
-        print("assumptions = {}".format(assumptions))                           # for testing; delete later
         if (Greater(self.operand, zero).proven(assumptions=assumptions) or
             GreaterEq(self.operand, zero).proven(assumptions=assumptions)):
-            print("Inside the Greater/GreaterEq If")                            # for testing; delete later
             GreaterEq(self.operand, zero).prove(assumptions=assumptions)
             from proveit.number.sets.real._theorems_ import (
                     inRealsNonNegIfGreaterEqZero)
@@ -182,27 +177,19 @@ class Abs(Operation):
 
         #-- -------------------------------------------------------- --#
         #-- Case (4): Abs(x) where entire operand x is not yet known --*
-        #--           to be a negative Real, but can EASILY be       --#
+        #--           to be a negative Real, but can easily be       --#
         #--           proven to be a negative Real because it -x is  --#
         #--           known to be in a subset of the positive Reals  --#
         #-- -------------------------------------------------------- --#
-        print("self.operand = {}".format(self.operand))                         # for testing; delete later
         negOp = Neg(self.operand)
-        print("negOp = {}".format(negOp))                                       # for testing; delete later
         negOpSimp = negOp.simplification(assumptions=assumptions)
-        print("negOpSimp = {}".format(negOpSimp))                               # for testing; delete later
-        print("negOpSimp.rhs = {}".format(negOpSimp.rhs))                       # for testing; delete later
         negated_op = Neg(self.operand).simplification().rhs
-        print("negated_op = {}".format(negated_op))                             # for testing; delete later
         if negated_op in InSet.knownMemberships.keys():
             from proveit.logic.set_theory import Subset, SubsetEq
             from proveit.number.sets.real._theorems_ import (
                     negInRealsNegIfPosInRealsPos)
             for kt in InSet.knownMemberships[negated_op]:
-                print("    kt = {}".format(kt))                                 # for testing; delete later
                 if kt.isSufficient(assumptions):
-                    print("    kt.expr = {}".format(kt.expr))                   # for testing; delete later
-                    print("    kt.expr.operands[1] = {}".format(kt.expr.operands[1])) # for testing; delete later
                     if (SubsetEq(kt.expr.operands[1], NaturalsPos).proven(assumptions)
                         or 
                         Subset(kt.expr.operands[1], NaturalsPos).proven(assumptions)
@@ -211,9 +198,7 @@ class Abs(Operation):
                         or
                         Subset(kt.expr.operands[1], RealsPos).proven(assumptions)):
                         InSet(negated_op, RealsPos).prove()
-                        print("Proved negated_op is positive Real.")            # for testing; delete later
                         negInRealsNegIfPosInRealsPos.specialize({a:negated_op}, assumptions=assumptions)
-                        print("Specialization done.")                           # for testing; delete later
                         return self.absElimination(operand_type='negative',
                                                    assumptions=assumptions)
 
