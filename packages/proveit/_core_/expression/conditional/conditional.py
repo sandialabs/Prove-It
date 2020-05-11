@@ -122,8 +122,8 @@ class Conditional(Expression):
         raise EvaluationError(self, assumptions)
     '''
     
-    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
-                    requirements=None):
+    def substituted(self, repl_map, allow_relabeling=False,
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
@@ -150,13 +150,14 @@ class Conditional(Expression):
         condition = self.condition        
         
         # First perform substitution on the conditions:
-        subbed_cond = condition.substituted(repl_map, 
+        subbed_cond = condition.substituted(repl_map, allow_relabeling,
                                             assumptions, requirements)
 
         # Next perform substitution on the value, adding the condition
         # as an assumption.            
         assumptions = defaults.checkedAssumptions(assumptions)
-        subbed_val = value.substituted(repl_map, assumptions+(subbed_cond,),
+        subbed_val = value.substituted(repl_map, allow_relabeling,
+                                       assumptions+(subbed_cond,),
                                        requirements)
 
         substituted = Conditional(subbed_val, subbed_cond)
@@ -189,12 +190,16 @@ class Conditional(Expression):
         elif defaults.reduce_conditionals_with_singular_conditions and \
                 isinstance(subbed_cond, And) and len(subbed_cond.operands)==1 \
                 and not isinstance(subbed_cond.operands[0], ExprRange):
-            from proveit.core_expr_types.conditionals._theorems_ import \
-                single_condition_reduction
-            try:     
+            try:
+                from proveit.core_expr_types.conditionals._theorems_ import \
+                    single_condition_reduction
                 defaults.reduce_conditionals_with_singular_conditions = False
                 reduction = single_condition_reduction.instantiate(
                         {a:subbed_val, b:subbed_cond.operands[0]})
+            except ImportError:
+                # Avoids an error while building 
+                # 'single_condition_reduction' itself.
+                pass
             finally:
                 defaults.reduce_conditionals_with_singular_conditions = True
 

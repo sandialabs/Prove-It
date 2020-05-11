@@ -1,5 +1,5 @@
 import inspect
-from proveit._core_.expression.expr import Expression
+from proveit._core_.expression.expr import Expression, ImproperSubstitution
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.defaults import USE_DEFAULTS
 
@@ -324,12 +324,12 @@ class Operation(Expression):
     
     def string(self, **kwargs):
         if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
-            return self.operator.string(fence=True) +  '(' + self.operand_or_operands.string(fence=False, subFence=False) + ')'            
+            return self._function_formatted('string', **kwargs)
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
-            return self.operator.latex(fence=True) +  r'\left(' + self.operand_or_operands.latex(fence=False, subFence=False) + r'\right)'
+            return self._function_formatted('latex', **kwargs)
         return self._formatted('latex', **kwargs)
     
     def wrapPositions(self):
@@ -337,6 +337,16 @@ class Operation(Expression):
         Return a list of wrap positions according to the current style setting.
         '''
         return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
+    
+    def _function_formatted(self, formatType, **kwargs):
+        formatted_operator = self.operator.formatted(formatType, fence=True)
+        if hasattr(self, 'operand'):
+            return '%s(%s)'%(formatted_operator, 
+                             self.operand.formatted(formatType, fence=False))
+        return '%s(%s)'%(formatted_operator, 
+                         self.operand_or_operands.formatted(
+                                 formatType, fence=False, subFence=False))
+        
     
     def _formatted(self, formatType, **kwargs):
         '''
@@ -395,26 +405,28 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
-                     requirements=None):
+    def substituted(self, repl_map, allow_relabeling=False,
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
         
-        When an operater of an Operation is substituted by a Lambda map, the 
-        operation itself will be substituted with the Lambda map applied to the
-        operands.  For example, substituting 
+        When an operater of an Operation is substituted by a Lambda map, 
+        the operation itself will be substituted with the Lambda map 
+        applied to the operands.  For example, substituting 
         f : (x,y) -> x+y
         on f(a, b) will result in a+b.  When performing operation
-        substitution with iterated parameters, the Lambda map application
-        will require the length of the iterated parameters to equal with 
-        the number of corresponding operand elements.  For example,
+        substitution with a range of parameters, the Lambda map 
+        application will require the number of these parameters 
+        to equal with the number of corresponding operand elements.  
+        For example,
         f : (a, b_1, ..., b_n) -> a*b_1 + ... + a*b_n
         n : 3
-        applied to f(w, x, y, z) will result in w*x + w*y + w*z provided that
-        |(b_1, ..., b_3)| = |(x, y, z)| is proven.
-        Assumptions may be needed to prove such requirements.  Requirements
-        will be appended to the 'requirements' list if one is provided.
+        applied to f(w, x, y, z) will result in w*x + w*y + w*z provided
+        that |(b_1, ..., b_3)| = |(x, y, z)| is proven.
+        Assumptions may be needed to prove such requirements.  
+        Requirements will be appended to the 'requirements' list if one 
+        is provided.
         
         There are limitations with respect the Lambda map application involving
         iterated parameters when perfoming operation substitution in order to
@@ -430,11 +442,11 @@ class Operation(Expression):
         
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator_or_operators = \
-            self.operator_or_operators.substituted(repl_map, assumptions, 
-                                                   requirements)
+            self.operator_or_operators.substituted(repl_map, allow_relabeling,
+                                                   assumptions, requirements)
         subbed_operand_or_operands = \
-            self.operand_or_operands.substituted(repl_map, assumptions, 
-                                                 requirements)
+            self.operand_or_operands.substituted(repl_map, allow_relabeling,
+                                                 assumptions, requirements)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
         
         # Check if the operator is being substituted by a Lambda map in
@@ -446,6 +458,12 @@ class Operation(Expression):
                 # application.  For example, f(x, y) -> x + y,
                 # or g(a, b_1, ..., b_n) -> a * b_1 + ... + a * b_n.
                 
+                if isinstance(subbed_operator.body, ExprRange):
+                    raise ImproperSubstitution(
+                            "The function %s cannot be defined using this "
+                            "lambda, %s, that has an ExprRange for its body; "
+                            "that could lead to tuple length contradictions."
+                            %(self.operator, subbed_operator))
                 if len(self.operands)==1 and \
                         not isinstance(self.operands[0], ExprRange):
                     # A single operand case (even if that operand 

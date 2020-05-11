@@ -1,5 +1,6 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
-                                            ImproperSubstitution)
+                                            ImproperSubstitution, 
+                                            DisallowedIndexing)
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
 from proveit._core_.expression.composite import singularExpression, ExprTuple
 from proveit._core_.expression.conditional import Conditional
@@ -27,7 +28,8 @@ class ExprRange(Expression):
     represents multiple elements.
     '''
 
-    def __init__(self, parameter, body, start_index, end_index, _lambda_map=None):
+    def __init__(self, parameter, body, start_index, end_index, 
+                 lambda_map=None):
         '''
         Create an ExprRange that represents a range of expressions
         to be embedded within an ExprTuple.  Each element of the
@@ -38,16 +40,17 @@ class ExprRange(Expression):
         The start and end indices with be the second and third
         sub-expressions.
         
-        _lambda_map is used internally for efficiently rebuilding an 
-        ExprRange.
+        The lambda_map may be used instead of supplying the parameter 
+        and body, in which case the 'parameter' and 'body' arguments
+        must both be None.
         '''
-        if _lambda_map is not None:
+        if lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
-            lambda_map = _lambda_map
+            lambda_map = lambda_map
             if (parameter, body) != (None, None):
                 raise ValueError("'parameter' and 'body' arguments of the "
                                  "ExprRange constructor should be None if "
-                                 "_lambda_map is provided.")
+                                 "lambda_map is provided.")
             parameter = lambda_map.parameter
         else:
             lambda_map = Lambda(parameter, body)
@@ -73,7 +76,7 @@ class ExprRange(Expression):
                              "exactly one item: 'ExprRange'")
         lambda_map, start_index, end_index = subExpressions
         return ExprRange(None, None, start_index, end_index, 
-                         _lambda_map=lambda_map) \
+                         lambda_map=lambda_map) \
                 .withStyles(**styles)
             
     def remakeArguments(self):
@@ -188,9 +191,6 @@ class ExprRange(Expression):
         from proveit._common_ import f, i, j
         from proveit.logic import Equals
         from proveit.number import Add, one
-        from proveit.core_expr_types.tuples._axioms_ import empty_range_def
-        from proveit.core_expr_types.tuples._theorems_ import \
-            singular_range_reduction
         if not defaults.automation:
             # If automation is off, we won't do any reduction.
             yield expr_range
@@ -202,6 +202,8 @@ class ExprRange(Expression):
             # We can do a singular range reduction.
             # Temporarily disable automation to avoid infinite
             # recursion.
+            from proveit.core_expr_types.tuples._theorems_ import \
+                singular_range_reduction
             defaults.automation = False
             try:
                 reduction = singular_range_reduction.instantiate(
@@ -214,6 +216,7 @@ class ExprRange(Expression):
             # We can do an empty range reduction
             # Temporarily disable automation to avoid infinite
             # recursion.
+            from proveit.core_expr_types.tuples._axioms_ import empty_range_def
             defaults.automation = False
             try:
                 reduction = empty_range_def.instantiate(
@@ -234,7 +237,8 @@ class ExprRange(Expression):
         for entry in reduced_tuple:
             yield entry
     
-    def _substituted_entries(self, repl_map, assumptions=USE_DEFAULTS, 
+    def _substituted_entries(self, repl_map, allow_relabeling=False,
+                             assumptions=USE_DEFAULTS, 
                              requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
@@ -252,34 +256,40 @@ class ExprRange(Expression):
         
         First, ExprRange parameter variables must only be contained in 
         an IndexedVar with indices covering the same range (same 
-        start and end argument) as the ExprRange parameter itself.  
+        start and end argument) as the ExprRange parameter itself,
+        up to constant, integer shifts.
         The following example meets this restriction.
         
         Applying the Lambda
-        (x, y_1, ..., y_3, z_i, ..., z_j) -> 
-            x*y_1 + ... + x*y_3 + z_i + ... + z_j
+        (x, y_1, ..., y_3, z_i, ..., z_{j+1}) -> 
+            x*y_1 + ... + x*y_3 + z_i*z_{i+1} + ... + z_j*z_{j+1}
         to operands (a, b, c, d, e_m, ..., e_n, f)
-        will result in a*b + a*c + a*d + e_m + ... _ e_n + f provided 
-        that
-        |(b, c, d)| = |(1, ..., 3)| is proven in advance and that
-        |(e_m, ..., e_n, f)| = |(i, ..., j)| can be proven via 
-        automation.            
+        will result in 
+           a*b + a*c + a*d + e_m*e_{m+1} + ... _ e_{n-1}*e_n + e_n*f 
+        under the following requirements
+        |(b, c, d)| = |(1, ..., 3)| 
+        |(e_m, ..., e_n, f)| = |(i, ..., j+1)| 
+        (e_m, ..., e_n) = (e_m, ..., e_{n-1}, e_n)
+        (proven in advance or via automation).
         
         A counter-example not meeting the restriction is
         (x_1, ..., x_n) -> x_1 * ... * x_j
         since the 'n' and 'j' do not match.
         
         Second, all expanded indexed variables within an ExprRange must
-        have matching expansions in that corresponding entries must
-        mutually be singular or ExprRanges and the range start/end
-        must match.  For example,
+        have matching expansions up to constant, integer shifts of
+        the ExprRange's of the expansions.  For example,
         (x_1, ..., x_n, y_1, ..., y_n) -> x_1*y_1 + ... + x_n*y_n
         may be applied to
         (a_1, ..., a_{n-1}, b, c_1, ..., c_{n-1}, d)
         to produce 
         a_1*c_1 + ... + a_{n-1}*c_{n-1} + b*d
-        but may not be applied to
+        and may be applied to
         (a, b_1, ..., b_{n-1}, c_1, ..., c_{n-1}, d)
+        to produce
+        a*c_1 + b_1*c_{1+1} * ... * b_{n-2}*c_{(n-2)+1} + b_{n-1}*d
+        but may NOT be applied to
+        (a_1, ..., a_n, c_1, ..., c__k)
         
         In order to handle these restricted cases, transformations must 
         be made to bring the ranges of indexed variables into alignment.
@@ -290,7 +300,9 @@ class ExprRange(Expression):
         '''
         from proveit.logic import Equals #, InSet
         from proveit.number import Add, one #, Interval
-                
+        from proveit.number import (const_shift_decomposition,
+                                    const_shift_composition)
+                        
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be substituted.
             return repl_map[self]
@@ -301,29 +313,26 @@ class ExprRange(Expression):
         orig_parameter = self.parameter
         
         subbed_start = self.start_index.substituted(
-                repl_map, assumptions, requirements)
+                repl_map, allow_relabeling, assumptions, requirements)
         subbed_end = self.end_index.substituted(
-                repl_map, assumptions, requirements)
+                repl_map, allow_relabeling, assumptions, requirements)
         
         # Check if any of the IndexedVars whose index is the ExprRange
-        # parameter is being expanded by the repl_map.
+        # parameter (or a shifted version of this parameter)
+        # is being expanded by the repl_map.
         must_expand = False
-        first_expanded_var = None
+        first_expanded_indexed_var = None
         indexed_vars_of_range = self.body._free_indexed_vars(self.parameter)
         for indexed_var in indexed_vars_of_range:
-            indexed_var_range_tuple = repl_map.get(indexed_var.var, None)
-            if isinstance(indexed_var_range_tuple, ExprTuple):
-                if len(indexed_var_range_tuple) != 1 \
-                        or not isinstance(indexed_var_range_tuple[0], 
-                                          ExprRange):
-                    raise ImproperSubstitution(
-                            "Improper indexed variable expansion: expecting "
-                            "the repl_map value for '%s' to be a range "
-                            "of indexed variables, got '%s' instead."
-                            %(indexed_var.var, indexed_var_range_tuple))
-                    
-                        
-                first_expanded_var = indexed_var.var
+            indexed_var_repl = repl_map.get(indexed_var.var, None)
+            # When being expanded, replacement of an indexed_var.var 
+            # should be the broadest contiguous range over which its
+            # indices here are free.  For example:
+            # x : (x_1, ..., x_{n+1})
+            # The corresponding value will be a key in repl_map for
+            # the real expansion in correspondence with these indices.
+            if isinstance(indexed_var_repl, ExprTuple):
+                first_expanded_indexed_var = indexed_var
                 must_expand = True
         
         if not must_expand:
@@ -331,9 +340,9 @@ class ExprRange(Expression):
             # However, we may perform a reduction of the range
             # if it is known to be empty or singular.
             subbed_lambda_map = lambda_map.substituted(
-                    repl_map, assumptions, requirements)
+                    repl_map, allow_relabeling, assumptions, requirements)
             subbed_expr = ExprRange(None, None, subbed_start, subbed_end, 
-                                    _lambda_map = subbed_lambda_map)
+                                    lambda_map = subbed_lambda_map)
             for entry in self._possibly_reduced_range(subbed_expr, 
                                                       assumptions, 
                                                       requirements):
@@ -344,12 +353,6 @@ class ExprRange(Expression):
         # over the start/end range and must be aligned with each 
         # other.
         
-        def raise_failed_range_match(indexed_var_range):
-            raise ImproperSubstitution(
-                    "The expansion of a range of parameters is only allowed "
-                    "where the start/end of the ranges are aligned. "
-                    "The range of %s does not match %s"
-                    %(self, indexed_var_range))
         # If the range parameter is used for anything other than an
         # IndexedVar, or not all of the IndexedVars that are indexed by
         # the range parameter, all of the new indices must match the 
@@ -361,23 +364,40 @@ class ExprRange(Expression):
             reason_indices_must_match = (
                     "the ExprRange parameter appears outside of IndexedVar "
                     "indices")
+        
+        # Separate the 'base' from any constant integer shift
+        # for the subbed start and end indices.
+        start_base, start_shift = const_shift_decomposition(subbed_start)
+        end_base, end_shift = const_shift_decomposition(subbed_end)
 
-        # The repl_map should map each variable being indexed to the 
-        # same range of indices covered by this ExprRange.  For example,
-        # x : (x_i, ..., x_j).  These mappings keep track that the 
-        # ExprRange has the correct corresponding range.
-        # Map indexed variables to their respective expansions, if they
-        # are being expanded.
+        # When being expanded, replacement of an indexed_var.var 
+        # should be the broadest contiguous range over which its
+        # indices here are free.  For example:
+        # x : (x_1, ..., x_{n+1})
+        # The corresponding value will be a key in repl_map for
+        # the real expansion in correspondence with these indices.
+        # The 'base' of the start and end indices of this
+        # range must match those of this ExprRange for a proper 
+        # substitution.
         indexed_var_expansion = dict() 
         for indexed_var in indexed_vars_of_range:
             # indexed_var_range_tuple should be something like 
             # (x_i, ..., x_j)
-            # where i and j match the start and end arguments of this
-            # ExprRange.
+            # where the 'base' of i and j match the 'base' of 
+            # the start and end indices of this ExprRange (the 'base'
+            # excludes any constant integer offset).
             indexed_var_range_tuple = repl_map.get(indexed_var.var, None)
-            if (not isinstance(indexed_var_range_tuple, ExprTuple)
-                    or len(indexed_var_range_tuple) != 1
-                    or not isinstance(indexed_var_range_tuple[0], ExprRange)):
+            if isinstance(indexed_var_range_tuple, ExprTuple):
+                if len(indexed_var_range_tuple) != 1 \
+                        or not isinstance(indexed_var_range_tuple[0], 
+                                          ExprRange):
+                    raise ImproperSubstitution(
+                            "Improper indexed variable expansion: expecting "
+                            "the repl_map value for '%s' to be an "
+                            "ExprTuple with a single ExprRange "
+                            "of indexed variables, got '%s' instead."
+                            %(indexed_var.var, indexed_var_range_tuple))
+                
                 # If the IndexedVars are not all expanded together,
                 # we must match the new indices with the old indices, 
                 # not just the length.
@@ -387,29 +407,66 @@ class ExprRange(Expression):
                             "not all of the indexed variables being indexed "
                             "by the ExprRange parameter are being expanded "
                             "(%s is expanded but %s is not)"
-                            %(indexed_var.var, first_expanded_var))
+                            %(first_expanded_indexed_var.var, indexed_var.var))
                 continue
+            
+            # Check that the 'bases' match appropriately.
             indexed_var_range = indexed_var_range_tuple[0]
-            if indexed_var_range.start_index != subbed_start:
-                raise raise_failed_range_match(indexed_var_range)
-            if indexed_var_range.end_index != subbed_end:
-                raise raise_failed_range_match(indexed_var_range)
-            indexed_var_expansion[indexed_var] = \
-                repl_map.get(indexed_var_range_tuple, 
-                             indexed_var_range_tuple)
-        
-        def raise_failed_expansion_match(first_expansion, expansion):
+            repl_start_base, repl_start_shift = \
+                const_shift_decomposition(indexed_var_range.start_index)
+            repl_end_base, repl_end_shift = \
+                const_shift_decomposition(indexed_var_range.end_index)
+            if repl_start_base != start_base or repl_end_base != end_base:
+                raise ImproperSubstitution(
+                        "Improper indexed variable expansion: "
+                        "the range of %s .. %s for the expansion of %s "
+                        "must match %s .. %s up to explicit contant integer "
+                        "shifts (e.g., n+1 has a shift of 1)."
+                        %(indexed_var_range.start_index, 
+                          indexed_var_range.end_iundex, indexed_var.var,
+                          subbed_start, subbed_end))
+            index_base, index_shift = const_shift_decomposition(
+                    indexed_var.index)
+            assert index_base==self.parameter
+            
+            repl = repl_map.get(indexed_var_range_tuple, 
+                                indexed_var_range_tuple)
+            rel_start_idx = start_shift+index_shift-repl_start_shift
+            rel_end_idx = end_shift+index_shift-repl_end_shift
+            repl = repl.extract_portion(
+                    rel_start_idx, rel_end_idx, assumptions=assumptions,
+                    requirements=requirements)
+            indexed_var_expansion[indexed_var] = repl.entries()
+    
+        def raise_failed_simultaneous_finish(finished_expression, 
+                                             unfinished_expression):
             raise ImproperSubstitution(
-                    "When expanding IndexedVar's within an ExprRange whose "
-                    "parameter is the index, their expansion ExprRange "
-                    "indices must all match. %s vs %s do not match."
-                    %(first_expansion, expansion))
+                    "IndexedVar expansions failed to finish simultanously; "
+                    "%s have finished while %s have not."
+                    %(finished_expression, unfinished_expression))
         
-        first_expanded_var_repl = repl_map[first_expanded_var]
-        first_expansion = repl_map.get(first_expanded_var_repl, 
-                                       first_expanded_var_repl)
+        def raise_failed_base_match(indexed_var1, start_base1, end_base1,
+                                    indexed_var2, start_base2, end_base2):
+            raise ImproperSubstitution(
+                    "When expanding IndexedVar's within an ExprRange with "
+                    "indices dependent upon the ExprRange parameter, their "
+                    "expansion ExprRange indices must all match up to "
+                    "explicit constant shifts. %s..%s for %s does not "
+                    "match with %s vs %s for %s."
+                    %(start_base1, end_base1, indexed_var1,
+                      start_base2, end_base2, indexed_var2))
 
-
+        def raise_failed_length_match(indexed_var1, start_index1, end_index1,
+                                      indexed_var2, start_index2, end_index2):
+            raise ImproperSubstitution(
+                    "When expanding IndexedVar's within an ExprRange with "
+                    "indices dependent upon the ExprRange parameter, their "
+                    "expansion ExprRange lengths must all match. " 
+                    "%s..%s for %s does not match in length with "
+                    "with %s vs %s for %s."
+                    %(start_index1, end_index1, indexed_var1,
+                      start_index2, end_index2, indexed_var2))
+        
         # Need to handle the change in scope within the lambda 
         # expression.  We won't use 'new_params'.  They aren't relavent 
         # after an expansion, this won't be used.
@@ -424,35 +481,122 @@ class ExprRange(Expression):
             # Prepare to do that.
             new_indices = []
             next_index = subbed_start
-
+        
         # Loop over the entries of the first expansion which must be
         # in correspondence (same ExprRange range or the same in being 
         # singular) with the other expansions.
         body = self.body
-        for k, first_expansion_entry in enumerate(first_expansion):
-            entry_repl_map = dict(inner_repl_map)  
-            # Loop over all of the IndexedVar's being expanded and make
-            # sure their kth entry is in correspondence with the first
-            # expansions kth entry (with respect to ExprRange range or 
-            # being singular).
-            for indexed_var, expansion in indexed_var_expansion.items():
-                if len(expansion) != len(first_expansion):
-                    # Failing to have the same number of entries.
-                    raise_failed_expansion_match(first_expansion, expansion)
-                entry = expansion[k]
-                if isinstance(entry, ExprRange) != isinstance(first_expansion_entry, 
-                                                         ExprRange):
-                    # Failing to match w.r.t. being singular or not.
-                    raise_failed_expansion_match(first_expansion, expansion)
-                if isinstance(entry, ExprRange):
-                    if entry.start_index !=  first_expansion_entry.start_index:
-                        # Failed to have the same ExprRange range 
-                        # (different start).
-                        raise_failed_expansion_match(first_expansion, expansion)
-                    if entry.end_index !=  first_expansion_entry.end_index:
-                        # Failed to have the same ExprRange range 
-                        # (different end).
-                        raise_failed_expansion_match(first_expansion, expansion)
+        orig_expansions = list(indexed_var_expansion.values())
+        first_indexed_var = indexed_var_expansion.keys()[0]
+        while True:
+            next_entries = [expansion[0] for expansion 
+                             in indexed_var_expansion.values()
+                             if len(expansion) > 0]
+            if len(next_entries) == 0:
+                break # everything finished
+            if len(next_entries) < len(indexed_var_expansion):
+                # One (or some) of the expansions finished before 
+                # others.  That is is failure.
+                finished_expansions = []
+                unfinished_expansions = []
+                for orig_expansion, expansion in zip(
+                        orig_expansions, indexed_var_expansion.values()):
+                    if len(expansion) == 0: 
+                        finished_expansions.append(orig_expansion)
+                    else:
+                        unfinished_expansions.append(orig_expansion)
+                raise_failed_simultaneous_finish(
+                        finished_expansions, unfinished_expansions)                
+                
+            if any(not isinstance(entry, ExprRange) for entry in next_entries):
+                # If any of the next entries are singular entries,
+                # peel singular entries all of all of them.
+                entry_repl_map = dict(inner_repl_map)
+                for indexed_var, entry in zip(indexed_var_expansion.keys(), 
+                                              next_entries):
+                    if isinstance(entry, ExprRange):
+                        # Partition to peel off a singular entry.
+                        req = entry.partition(entry.start_index, assumptions)
+                        requirements.append(req)
+                        partitioned = req.rhs
+                        assert isinstance(partitioned, ExprTuple)
+                        assert len(partitioned) == 2
+                        # Use the peeled-off singular entry.
+                        entry_repl_map[indexed_var] = partitioned[0]
+                        # Insert the remainder of the range as the
+                        # next, next entry.
+                        indexed_var_expansion[indexed_var].insert(
+                                0, partitioned[1])
+                # For a singular element entry, yield the substituted
+                # element.
+                if indices_must_match:
+                    # The actual range parameter index is needed:
+                    entry_repl_map[orig_parameter] = next_index
+                if isinstance(body, ExprRange):
+                    # A nested ExprRange may need to be expanded.
+                    for subentry in body._substituted_entries(
+                            entry_repl_map, inner_assumptions, requirements):
+                        yield subentry
+                else:
+                    yield body.substituted(entry_repl_map, allow_relabeling,
+                                           inner_assumptions, requirements)
+                if indices_must_match:
+                    # We need to know the new_indices to match with the
+                    # original indices.
+                    new_indices.append(next_index)
+                    next_index = Add(next_index, one).simplified(assumptions)            
+            else:
+                # The next entries are all ExprRange's.
+                # Make sure they all have the same start and end
+                # index 'bases'.
+                start_base, end_base = None, None
+                shift_delta = None
+                start_shifts = set()
+                for entry in next_entries:
+                    kth_start_base, kth_start_shift = \
+                        const_shift_decomposition(entry.start_index)
+                    kth_end_base, kth_end_shift = \
+                        const_shift_decomposition(entry.end_index)
+                    start_shifts.add(kth_start_shift)
+                    if start_base is None:
+                        start_base, end_base = kth_start_base, kth_end_base
+                    elif (kth_start_base != start_base 
+                            or kth_end_base != end_base):
+                        # Start/end bases fail to match.
+                        raise_failed_base_match(
+                                first_indexed_var, start_base, end_base,
+                                indexed_var, kth_start_base, kth_end_base)
+                    if shift_delta is None:
+                        shift_delta = kth_end_shift-kth_start_shift
+                    elif shift_delta != kth_end_shift-kth_start_shift:
+                        # Range spans given start/end shifts fail
+                        # to match.
+                        raise_failed_length_match(
+                                first_indexed_var, next_entries[0].start_index,
+                                next_entries[0].end_index, indexed_var,
+                                entry.start_index, entry.end_index)
+                # We need to choose actual start and end indices.
+                # By convention, we'll choose the minimum start shift.
+                start_shift = min(start_shifts)
+                start_index = const_shift_composition(start_base, start_shift)
+                end_index = const_shift_composition(start_base, 
+                                                    start_shift+shift_delta)
+                for indexed_var, entry in zip(indexed_var_expansion.keys(), 
+                                              next_entries):
+                    if entry.start_index != start_index:
+                        # Do a shift so the start/end indices match
+                        # exactly.
+                        _, old_shift = \
+                            const_shift_composition(indexed_var.index)
+                        req = entry.shift_equivalence(
+                                old_shift=old_shift, new_start=start_index, 
+                                new_end=end_index, assumptions=assumptions)
+                        requirements.append(req)
+                        shifted = req.rhs
+                        assert isinstance(shifted, ExprTuple)
+                        assert len(shifted) == 1
+                        # Use the shifted version.
+                        entry = shifted
                     # Relabel the entry body to use the parameter of 
                     # this ExprRange so that all the parameters will be 
                     # consistent.
@@ -460,17 +604,7 @@ class ExprRange(Expression):
                             {entry.parameter:new_param})
                     # For this entry, replace the IndexedVar with the 
                     # corresponding ExprRange body.
-                    entry_repl_map[indexed_var] = new_body
-                else:
-                    # For this entry, replace the IndexedVar with the
-                    # corresponding singular element.
-                    entry_repl_map[indexed_var] = entry
-            # Now yield the substitution corresponding to this entry.
-            if isinstance(first_expansion_entry, ExprRange):
-                # For an ExprRange entry, yield a new ExprRange using 
-                # the entry_repl_map.
-                start_index = first_expansion_entry.start_index
-                end_index = first_expansion_entry.end_index
+                    entry_repl_map[indexed_var] = new_body                        
                 
                 # Let's keep this simple.  If it isn't really necessary
                 # to be so fancy with this internal assumption about
@@ -514,27 +648,6 @@ class ExprRange(Expression):
                         requirement = requirement.generalize(
                                 new_param, conditions=conditions)
                     requirements.append(requirement)
-            else:
-                # For a singular element entry, yield the substituted
-                # element.
-                if indices_must_match:
-                    # The actual range parameter index is needed:
-                    entry_repl_map[orig_parameter] = next_index
-                entry = body.substituted(entry_repl_map, inner_assumptions,
-                                         requirements)
-                if indices_must_match:
-                    # We need to know the new_indices to match with the
-                    # original indices.
-                    new_indices.append(next_index)
-                    next_index = Add(next_index, one).simplified(assumptions)
-                
-                if isinstance(entry, ExprRange):
-                    # A nested ExprRange may need to be expanded.
-                    for subentry in entry._substituted_entries(
-                            entry_repl_map, inner_assumptions, requirements):
-                        yield subentry
-                else:
-                    yield entry
         
         if indices_must_match:
             # The range parameter appears outside of
@@ -551,49 +664,48 @@ class ExprRange(Expression):
                         "which is necessary because %s: %s."
                         %(reason_indices_must_match, e))
     
-    def _check_param_occurrences(self, param_var, allowed_forms):
+    def _free_var_indices(self):
         '''
-        When a Lambda expression introduces a variable in a new scope
-        with a parameter entry that is an IndexedVar or a range
-        of IndexedVars, its occurrences must all match that
-        index or range exactly.
+        Returns a dictionary that maps indexed variables to
+        a tuple with (start_base, start_shifts, end_base, end_shifts)
+        indicating the indices for which an indexed variable is free.
+        The start_shifts and end_shifts are constant integers.
+        The included indices are each start_base + start_shift,
+        each end_base + end_shift plus the range going from
+        start_base + max(start_shifts) .. end_base + min(end_shifts).
         '''
-        
-        # Check the start and end indices.
-        self.start_index._check_param_occurrences(param_var, allowed_forms)
-        self.end_index._check_param_occurrences(param_var, allowed_forms)
-
-        # The parameter variables of lambda_map mask any free variables
-        # of the allowed forms and therefore we can exclude the allowed 
-        # forms that have a set of free variables that overlap with the
-        # Lambda parameters variables.
-        param_var_set = self.lambda_map.parameterVarSet
-        if param_var in param_var_set:
-            # The external parameter variable is masked by one of the
-            # local parameter variables, so there are no occurrences
-            # to worry about here.
-            return 
-        allowed_forms = {allowed_form for allowed_form in allowed_forms
-                         if allowed_form._free_vars().isdisjoint(param_var_set)}
-        
-        # If any of the allowed forms are a range that matches with
-        # the start and end index of this range, we can add a new
-        # allowed from by pealing off that outer layer and using
-        # the parameter of this ExprRange as the index.  For example,
-        # an allowed_form of x_1, ..., x_n within an ExprRange from
-        # 1 to n with parameter k can be x_k (as well as x1_, .., x_n).
-        extra_allowed_forms = set()
-        for allowed_form in allowed_forms:
-            if isinstance(allowed_form, ExprRange):
-                if (allowed_form.start_index == self.start_index and
-                            allowed_form.end_index == self.end_index):
-                   # Start and end indices match.  Let's peal off the
-                   # outer layer and add a new allowed form.
-                   param_repl_map = {allowed_form.parameter:self.parameter}
-                   extra_allowed_forms.add(
-                           allowed_form.body.substituted(param_repl_map))
-        self.body._check_param_occurrences(
-                param_var, allowed_forms.union(extra_allowed_forms))
+        from proveit.number import const_shift_decomposition
+        # Start from the default:
+        results = Expression._free_var_indices(self)
+        print('default results', results)
+        body_free_var_indices = self.body._free_var_indices()
+        for var, (start_base, start_shifts, end_base, end_shifts) \
+                in body_free_var_indices.items():
+            if start_base == end_base == self.parameter:
+                # The index base is the range parameter, so we
+                # need to upgrade the indices to cover the range.
+                start_base, start_shift = \
+                    const_shift_decomposition(self.start_index)
+                end_base, end_shift = \
+                    const_shift_decomposition(self.end_index)
+                # When the start and end bases are the same, the
+                # shifts are expected to be the same.
+                assert start_shifts==end_shifts
+                start_shifts = {start_shift+shift for shift in start_shifts}
+                end_shifts = {end_shift+shift for shift in end_shifts}
+                results[var] = (start_base, start_shifts, end_base, end_shifts)
+            elif (self.parameter in start_base._free_vars()
+                    or self.parameter in end_base._free_vars()):
+                raise DisallowedIndexing(
+                        var, 'range', start_base, end_base,
+                        range_parameter=self.parameter)     
+            else:
+                # Indices don't involve the ExprRange parameter,
+                # so let them through
+                results[var] = \
+                    (start_base, start_shifts, end_base, end_shifts)
+        print('new ExprRange results', results)
+        return results
     
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
         '''
@@ -620,13 +732,13 @@ class ExprRange(Expression):
                     {f:lambda_map, i:start_index, j:before_split_idx},
                     assumptions=assumptions)
         elif before_split_idx == self.start_index:
-            # special case when pealing off the front
+            # special case when peeling off the front
             return partition_front.specialize(
                     {f:lambda_map, i:self.start_index, j:self.end_index},
                      assumptions=assumptions)
         elif (before_split_idx == subtract(end_index, one) or
               Equals(before_split_idx, subtract(end_index, one)).proven(assumptions)):
-            # special case when pealing off the back
+            # special case when peeling off the back
             return partition_back.specialize(
                     {f:lambda_map, i:start_index, j:end_index},
                      assumptions=assumptions)
@@ -634,7 +746,89 @@ class ExprRange(Expression):
             return partition.specialize(
                     {f:lambda_map, i:start_index, j:before_split_idx,
                      k:end_index}, assumptions=assumptions)
+    
+    def shift_equivalence(self, *, old_shift=None, new_start=None, 
+                          new_end=None, new_shift=None, 
+                          assumptions=USE_DEFAULTS):
+        '''
+        Return the equation between this range within an ExprTuple
+        and a shifted version in the following manner: 
+            (f(self.start_index+old_shift), ..., f(self.end_index+old_shift)) =
+            (f(new_start+new_shift), ..., f(new_start+new_shift))
+        where f is adapted from self.lambda_map according to 'old_shift'.
+        If any of the 'new' parameters are unspecified, we attempt 
+        to deduce them from the other parameters.
+        '''
+        from proveit._common_ import a, b, f, i, j, k, l
+        from proveit.number import Add, Neg, subtract
+        from proveit._core_.expression.label.var import safeDummyVar
+        from proveit.core_expr_types.tuples._theorems_ import (
+                shift_equivalence, shift_equivalence_both)
         
+        if old_shift is None:
+            _f = self.lambda_map
+        else:
+            old_shifted_param = Add(self.parameter, old_shift)
+            safe_var = safeDummyVar(self.body)
+            shifted_body = self.body.substituted({old_shifted_param:safe_var})
+            if self.parameter in shifted_body._free_vars():
+                raise ValueError("The given 'old_shift' of %s does apply "
+                                 "to %s"%(old_shift, self.lambda_map))
+            _f = Lambda(self.parameter, 
+                        shifted_body.substituted({safe_var:self.parameter}))
+        
+        _i, _j = self.start_index, self.end_index
+        
+        if new_shift is not None:
+            net_shift = new_shift
+            if old_shift is not None:
+                net_shift = subtract(new_shift, old_shift).simplified(
+                        assumptions=assumptions)
+            if new_start is None:
+                # new start = _i - new_shift
+                new_start = subtract(_i, net_shift).simplified(
+                        assumptions=assumptions)
+            if new_end is None:
+                # new_end = _j - new_shift
+                new_end = subtract(_j, net_shift).simplified(
+                        assumptions=assumptions)
+        elif new_start is None:
+            # new_start = new_end + i - j
+            new_end = Add(new_start, _i, Neg(_j)).simplified(
+                                  assumptions=assumptions)
+        elif new_end is None:
+            # new_end = new_start + j - i
+            new_end = Add(new_start, _j, Neg(_i)).simplified(
+                                  assumptions=assumptions)
+        
+        _k, _l = new_start, new_end
+        
+        if new_shift is None:
+            # Compute the new shift based upon the other parameters.
+            if old_shift is None:
+                new_shift = subtract(_i, _k).simplified(assumptions=assumptions)
+            else:
+                new_shift = Add(_i, old_shift, Neg(_k)).simplified(
+                        assumptions=assumptions)
+        
+        if old_shift is None:
+            return shift_equivalence.instantiate(
+                    {f:_f, a:new_shift, i:_i, j:_j, k:_k, l:_l}, 
+                    assumptions=assumptions)
+        else:
+            return shift_equivalence_both.instantiate(
+                    {f:_f, a:old_shift, b:new_shift, i:_i, j:_j, k:_k, l:_l},
+                     assumptions=assumptions)    
+    def _var_index_shifts_in_ranges(self, var, shifts):
+        '''
+        Given a 'var' (e.g., 'x'), pass back, via the set 'shifts', 
+        all of the constant indexed shifts to the ExprRange parameter
+        within ExprRanges (e.g., 'x_{1+1}, ..., x_{n+1}' would have
+        presumably have a shift of 1).
+        '''
+        self.body._indexed_var_shifts(var, self.parameter, shifts)
+        Expression._var_index_shifts_in_ranges(self, var, shifts)
+    
     """
     TODO: change register_equivalence_method to allow and fascilitate these
     method stubs for purposes of generating useful documentation.

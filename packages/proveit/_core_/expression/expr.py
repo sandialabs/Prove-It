@@ -24,7 +24,8 @@ class ExprType(type):
     protected = ('_generic_version', '_setContext', 
                  'substituted', 'relabeled',
                  '_make', '_check_make', '_used_vars',
-                 '_free_vars', '_check_param_occurrences',
+                 '_free_vars', '_free_var_const_index_shifts',
+                 '_check_param_occurrences',
                  '_repr_html_', '_coreInfo',
                  '_subExpressions', '_genericExpr', 
                  '_meaningData', '_meaning_id',
@@ -384,8 +385,7 @@ class Expression(metaclass=ExprType):
         Return the number of sub-expressions of this expression.
         '''
         return len(self._subExpressions)
-
-
+    
     def innerExpr(self):
         '''
         Return an InnerExpr object to wrap the expression and
@@ -619,36 +619,39 @@ class Expression(metaclass=ExprType):
         '''
         return iter(())
     
-    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
-                    requirements=None):
+    def substituted(self, repl_map, allow_relabeling=False,
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary 
         which maps Expressions to Expressions.  When used for 
-        instantiation, this should specifically map Variables to
-        Expressions.  When there is a replacement for a Lambda parameter
-        variable, it only impacts the inner scope of the Lambda if the 
-        replacement is also a variable and thus only a relabeling of the
-        parameter.  Otherwise, only occurrences of the Variable external
-        to the Lambda map will be substituted.
+        instantiation, this should specifically map variables,
+        indexed variables, or ranges of indexed variables to
+        Expressions.
         
-        reserved_vars is used internally to protect the "scope" of a
-        Lambda map.  For more details, see the Lambda.substitution
-        documentation.
-
+        If allow_relabeling is True then internal Lambda parameters
+        may be replaced when it is a valid replacement of parameter(s) 
+        (i.e., Variable's, IndexedVar's, or an ExprRange of 
+        IndexedVar's, and unique parameter variables).
+        Otherwise, the Lambda parameter variables will be masked
+        within its scope.  Partial masked of a range of indexed
+        varaibles is not allowed and will cause an error.
+        For example, we cannot replace (x_1, ..., x_{n+1}) within 
+        (x_1, ..., x_n) -> f(x_1, ..., x_n).
+        
         'assumptions' and 'requirements' are used when an operator is
-        substituted by a Lambda map that has iterated parameters such 
-        that the length of the parameters and operands must be proven to
-        be equal.  For more details, see Operation.substituted, 
-        Lambda.apply, and Iter.substituted (which is the sequence of 
-        calls involved).
+        substituted by a Lambda map that has a range of parameters 
+        (e.g., x_1, ..., x_n) such that the length of the parameters 
+        and operands must be proven to be equal.  For more details, 
+        see Operation.substituted, Lambda.apply, and Iter.substituted 
+        (which is the sequence of calls involved).
         '''
         if len(repl_map)>0 and (self in repl_map):
             substituted = repl_map[self]
         else:
             subbed_sub_exprs = \
-                tuple(sub_expr.substituted(repl_map, assumptions, 
-                                            requirements)
+                tuple(sub_expr.substituted(repl_map, allow_relabeling,
+                                           assumptions, requirements)
                       for sub_expr in self._subExpressions)
             substituted = self.__class__._checked_make(
                     self._coreInfo, dict(self._styleData.styles),
@@ -662,15 +665,19 @@ class Expression(metaclass=ExprType):
         by the corresponding values.  The replacements must be
         Variable objects, or a TypeError will be raised.
         '''
-        from proveit import Variable
+        from proveit import Variable, IndexedVar
         for key, val in relabel_map.items():
-            if not isinstance(val, Variable):
-                raise TypeError("May only relabel Variables to Variables; "
+            if (not isinstance(val, Variable) 
+                    and not isinstance(val, IndexedVar)):
+                raise TypeError("May only relabel Variables/IndexedVars "
+                                "to Variables/IndexedVars; "
                                 "may not relabel %s"%val)
-            if not isinstance(key, Variable):
-                raise TypeError("May only relabel Variables to Variables; "
+            if (not isinstance(val, Variable) 
+                    and not isinstance(val, IndexedVar)):
+                raise TypeError("May only relabel Variables/IndexedVars "
+                                "to Variables/IndexedVars; "
                                 "may not relabel to %s"%key)
-        return self.substituted(relabel_map)
+        return self.substituted(relabel_map, allow_relabeling=True)
     
     
     def copy(self):
@@ -693,8 +700,8 @@ class Expression(metaclass=ExprType):
     def _free_vars(self, exclusions=frozenset()):
         '''
         Return all of the free Variables of this Expression,
-        included those in sub-expressions but excluding those with internal
-        bindings within Lambda expressions.  If this Expression
+        included those in sub-expressions but excluding those with 
+        internal bindings within Lambda expressions.  If this Expression
         is in the exclusions set, skip over it.
         Call externally via the free_vars method in expr.py.
         '''
@@ -703,17 +710,119 @@ class Expression(metaclass=ExprType):
         return set().union(*[expr._free_vars(exclusions=exclusions) 
                              for expr in self._subExpressions])
 
-    def _free_indexed_vars(self, index):
+    def _free_var_indices(self):
         '''
-        Return all of the free IndexeVars of this Expression with the
-        given index, included those in sub-expressions but excluding those
-        with internal bindings within Lambda expressions.
-        Call externally via the free_indexed_vars method in expr.py.
+        Returns a dictionary that maps indexed variables to
+        a tuple with (start_base, start_shifts, end_base, end_shifts)
+        indicating the indices for which an indexed variable is free.
+        The start_shifts and end_shifts are constant integers.
+        The included indices are each start_base + start_shift,
+        each end_base + end_shift plus the range going from
+        start_base + max(start_shifts) .. end_base + min(end_shifts).
         '''
-        return set().union(*[expr._free_indexed_vars(index) 
-                             for expr in self._subExpressions])
+        results = dict()
+        for expr in self._subExpressions:
+            sub_expr_results = expr._free_var_indices()
+            print('expr', expr, 'sub_expr_results', sub_expr_results)
+            for var, (start_base, start_shifts, end_base, end_shifts) \
+                    in sub_expr_results.items():
+                if var in results:
+                    (prev_start_base, prev_start_shifts, 
+                     prev_end_base, prev_end_shifts) = results[var]
+                    new_start_base, new_start_shifts = None, set()
+                    new_end_base, new_end_shifts = None, set()
+                    if start_base == prev_start_base:
+                        # Matching start bases; union the shifts.
+                        new_start_base = start_base
+                        new_start_shifts = \
+                            prev_start_shifts.union(start_shifts)
+                    if end_base == prev_end_base:
+                        # Matching end bases; union the shifts
+                        new_end_base = end_base
+                        new_end_shifts = \
+                            prev_end_shifts.union(end_shifts)                    
+                    if new_start_base is None and new_end_base is None:
+                        raise DisallowedIndexing(
+                                var, 'join', prev_start_base, prev_end_base, 
+                                start_base, end_base)
+                    elif new_start_base is None or new_end_base is None:
+                        # Only one side matches (start or end).
+                        # This is only allowed if one of them has a
+                        # start and end with the same base.
+                        if start_base == end_base:
+                            # The new range is the one with the same
+                            # base, so the previous one determines the 
+                            # unknown endpoint.
+                            if new_start_base is None: 
+                                new_start_base = prev_start_base
+                                new_start_shifts = prev_start_shifts
+                            if new_end_base is None: 
+                                new_end_base = prev_end_base
+                                new_end_shifts = prev_end_shifts
+                        elif prev_start_base == prev_end_base:
+                            # The previous range is the one with the 
+                            # same base, so the previous one determines 
+                            # the unknown endpoint.
+                            if new_start_base is None: 
+                                new_start_base = start_base
+                                new_start_shifts = start_shifts
+                            if new_end_base is None: 
+                                new_end_base = end_base
+                                new_end_shifts = end_shifts
+                        else:
+                            raise DisallowedIndexing(
+                                    var, 'join', prev_start_base, 
+                                    prev_end_base, start_base, end_base)
+                    if new_start_base != new_end_base:
+                        # Remove unnecessary shifts that are covered
+                        # in new_start_base + max(new_start_shifts) .. 
+                        #    new_end_base + min(new_end_shifts)
+                        # (assuming none of the starts come after the
+                        # ends which is reasonable to assume for these
+                        # purposes; if not, the error will come when
+                        # trying to do an instantiation).
+                        while max(new_start_shifts)-1 in new_start_shifts:
+                            new_start_shifts.remove(max(new_start_shifts))
+                        while min(new_end_shifts)+1 in new_end_shifts:
+                            new_end_shifts.remove(max(new_end_shifts))
+                    results[var] = (new_start_base, new_start_shifts, 
+                                    new_end_base, new_end_shifts)
+                else:
+                    results[var] = (start_base, start_shifts, 
+                                    end_base, end_shifts)
+        print('new Expression results', results)
+        return results
     
-    def _check_param_occurrences(self, param_var, valid_occurrences):
+    def _free_indexed_vars(self, range_param):
+        '''
+        Return all of the free IndexedVars of this Expression with an
+        index that is the range_param with a possible constant shift.
+        '''
+        return set().union(*[expr._free_indexed_vars(range_param) 
+                             for expr in self._subExpressions])
+
+    def _var_index_shifts_in_ranges(self, var, shifts):
+        '''
+        Given a 'var' (e.g., 'x'), pass back, via the set 'shifts', 
+        all of the constant index shifts to the ExprRange parameter
+        that occur within ExprRanges (e.g., 'x_{1+1}, ..., x_{n+1}' 
+        would have presumably have a shift of 1).
+        '''
+        for sub_expr in self._subExpressions:
+            sub_expr._var_index_shifts_in_ranges(var, shifts)
+
+    def _indexed_var_shifts(self, var, range_param, shifts):
+        '''
+        Given a 'var' (e.g., 'x') and 'range_param' (e.g., 'k'), pass 
+        back, via the set 'shifts', all of the constant integer shifts
+        to the 'range_param' of the index on the 'var' (e.g., 
+        'x_{k+1}' would have a shift of 1).  This is a helper method
+        for Expression._var_index_shifts_in_ranges.
+        '''
+        for sub_expr in self._subExpressions:
+            sub_expr._var_index_shifts_in_ranges(var, shifts)
+    
+    def _check_param_occurrences(self, param_var, allowed_forms):
         '''
         When a Lambda expression introduces a variable in a new scope
         with a parameter entry that is an IndexedVar or a range
@@ -722,11 +831,11 @@ class Expression(metaclass=ExprType):
         This restriction intended to strike a 
         balance between simplicity and versatility.
         '''
-        if self in valid_occurrences:
+        if self in allowed_forms:
             # This branch is okay if it matches a valid occurence.
             return 
         for sub_expr in self._subExpressions:
-            sub_expr._check_param_occurrences(param_var, valid_occurrences)
+            sub_expr._check_param_occurrences(param_var, allowed_forms)
 
     def safeDummyVar(self):
         from proveit._core_.expression.label.var import safeDummyVar
@@ -886,6 +995,33 @@ class Expression(metaclass=ExprType):
         '''
         raise NotImplementedError("'doReducedSimplification' not implemented for %s class"%str(self.__class__))             
     
+    def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
+                       minimal_automation=False):
+        '''
+        Under the given assumptions, attempt to prove the given 
+        'equality' where the left-side is 'self', returning the
+        proven KnownTruth.  If minimal_automation is True, don't do
+        anything "fancy" to attempt to prove this.  If
+        minimal_automation is False, this default version attempts
+        to deduce equality by simplifying both sides and proving
+        that the simplified forms are equal.
+        '''
+        from proveit.logic import Equals
+        assert isinstance(equality, Equals) and equality.lhs == self
+        if minimal_automation:
+            return equality.prove(assumptions, automation=False)
+
+        # Try to prove equality via simplifying both sides.
+        lhs_simplification = equality.lhs.simplification(assumptions)
+        rhs_simplification = equality.rhs.simplification(assumptions)
+        simplified_lhs = lhs_simplification.rhs
+        simplified_rhs = rhs_simplification.rhs
+        if simplified_lhs != equality.lhs or simplified_rhs != equality.rhs:
+            simplified_eq = Equals(simplified_lhs, simplified_rhs).prove(assumptions)
+            return Equals.applyTransitivities(
+                    [lhs_simplification, simplified_eq, rhs_simplification],
+                    assumptions)
+    
     """
     # Generated automatically via InnerExpr.register_equivalence_method.
     def simplified(self, assumptions=USE_DEFAULTS):
@@ -918,6 +1054,8 @@ class Expression(metaclass=ExprType):
         (%end_[common/axioms/theorems] has not been called yet in the special 
         expressions notebook).
         '''
+        if not defaults.display_latex:
+            return None # No LaTeX display at this time.
         if context is None:
             context = Context()
         if not hasattr(self._styleData,'png'):
@@ -961,14 +1099,6 @@ def free_vars(expr, exclusions=frozenset()):
     '''
     return expr._free_vars(exclusions=exclusions)
 
-def free_indexed_vars(expr, index):
-    '''
-    Return all of the free IndexeVars of this Expression with the
-    given index, included those in sub-expressions but excluding those
-    with internal bindings within Lambda expressions.
-    '''
-    return expr._free_indexed_vars(index)
-
 def expressionDepth(expr):
     '''
     Returns the depth of the expression tree for the given expression.
@@ -989,6 +1119,41 @@ class ImproperSubstitution(Exception):
         self.message = message
     def __str__(self):
         return self.message
+
+class DisallowedIndexing(Exception):
+    def __init__(self, var, action, start1_base, end1_base, 
+                 start2_base=None, end2_base=None,
+                 range_parameter=None):
+        self.var = var
+        self.action = action
+        self.start1_base = start1_base
+        self.end1_base = end1_base
+        self.start2_base = start2_base
+        self.end2_base = end2_base
+        self.range_parameter=None
+    def __str__(self):
+        if self.action=='join':
+            preposition = 'with'
+        elif self.action=='eliminate':
+            preposition = 'from'
+        elif self.action=='range':
+            return ("To keep the ranges of indices of IndexedVar's clear "
+                    "and simple, IndexedVar's within am ExprRange that "
+                    "are parameterized by the range parameter must use "
+                    "simple constant shifts relative to the range parameter."
+                    "For %s, this is violated for indices around %s..%s "
+                    "over the range parameter %s."
+                    %(self.var, self.action, self.start1_base, self.end1_base, 
+                      self.range_parameter))
+        else:
+            raise ValueError("Not a valid action: %s"%self.action)
+        return ("To keep the ranges of indices of IndexedVar's clear "
+                "and simple, different ranges may only have constant "
+                "shifts with respect to each other.  For %s, this is "
+                "violated when attempting to %s a range around %s..%s "
+                "%s a range around %s..%s"
+                %(self.var, self.action, self.start1_base, self.end1_base, 
+                  preposition, self.start2_base, self.end2_base))
 
 class _NoExpandedIteration(Exception):
     '''

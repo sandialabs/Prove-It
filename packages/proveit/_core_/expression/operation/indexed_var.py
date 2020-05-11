@@ -104,8 +104,49 @@ class IndexedVar(Operation):
             else: return '(' + result + ')'
         return result
 
-    def _free_indexed_vars(self, index):
-        if self.index == index:
+    def _free_var_indices(self):
+        '''
+        Returns a dictionary that maps indexed variables to
+        a tuple with (start_base, start_shifts, end_base, end_shifts)
+        indicating the indices for which an indexed variable is free.
+        The start_shifts and end_shifts are constant integers.
+        The included indices are each start_base + start_shift,
+        each end_base + end_shift plus the range going from
+        start_base + max(start_shifts) .. end_base + min(end_shifts).
+        '''
+        from proveit.number import const_shift_decomposition
+        index_base, index_shift = const_shift_decomposition(self.index)
+        # The start and end are the same so we have repetition below.
+        return {self.var:(index_base, {index_shift}, 
+                          index_base, {index_shift})}
+
+    def _free_indexed_vars(self, range_param):
+        from proveit.number import const_shift_decomposition
+        if self.index == range_param:
             return {self}
         else:
-            return Expression._free_indexed_vars(self, index)
+            index_base, shift = const_shift_decomposition(self.index)
+            if index_base == range_param:
+                return {self}
+            return Expression._free_indexed_vars(self, range_param)
+    
+    def _indexed_var_shifts(self, var, range_param, shifts):
+        if self.var==var:
+            shift = self._indexed_var_shift(range_param)
+            if shift is not None:
+                shifts.add(shift)
+            return
+        Expression._indexed_var_shifts(self, var, range_param, shifts)
+
+    def _indexed_var_shift(self, range_param):
+        '''
+        If the IndexedVar's index is a const-shifted form of
+        'range_param', return the shift.  Otherwise, return None.
+        For "const-shifted", use the convention that the constant
+        shift comes after (e.g., "k+1" rather than "1+k").
+        '''
+        from proveit.number import const_shift_decomposition
+        index_base, shift = const_shift_decomposition(self.index)
+        if index_base == range_param:
+            return shift
+        return None

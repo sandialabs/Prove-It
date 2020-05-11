@@ -14,8 +14,8 @@ class Variable(Label):
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
                                         
-    def substituted(self, repl_map, assumptions=USE_DEFAULTS, 
-                    requirements=None):
+    def substituted(self, repl_map, allow_relabeling=False,
+                    assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this Variable possibly substituted according to the 
         replacement map (repl_map) dictionary.  See the
@@ -29,9 +29,9 @@ class Variable(Label):
                 raise TypeError('Must substitute a Variable with an '
                                 'Expression (not %s)'%subbed.__class__)
             if isinstance(subbed, ExprTuple) and subbed in repl_map:
-                # We surmise that this is a substitution of iterated 
-                # variables  which must only reside in IndexedVar's of 
-                # an Iter over a  matching range of indices to be a 
+                # We surmise that this is a substitution of a range 
+                # of variables which must only reside in IndexedVar's of 
+                # an ExprRange over a  matching range of indices to be a 
                 # proper substitution.
                 raise ImproperSubstitution(
                         "Iterated parameter substitution can only be "
@@ -43,20 +43,7 @@ class Variable(Label):
                         %subbed)
             return subbed
         return self
-    
-    def relabeled(self, relabel_map):
-        '''
-        Return a new expression in which variables are relabeled
-        according to the 'relabel_map'.
-        '''
-        if self in relabel_map:
-            relabeled_var = relabel_map[self]
-            if not isinstance(relabeled_var, Variable):
-                raise TypeError("'relabel_map' must only map a Variable "
-                                "to another Variable.")
-            return relabeled_var
-        return self
-    
+        
     def _used_vars(self):
         return {self}
         

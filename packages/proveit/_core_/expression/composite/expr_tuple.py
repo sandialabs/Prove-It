@@ -127,14 +127,14 @@ class ExprTuple(Composite, Expression):
         '''
         return len(self.entries)
 
-    def __getitem__(self, i):
+    def __getitem__(self, idx):
         '''
         Return the list entry at the ith index.
         This is a relative entry-wise index where
         entries may represent multiple elements
         via iterations (Iter).
         '''
-        return self.entries[i]
+        return self.entries[idx]
     
     def __add__(self, other):
         '''
@@ -282,7 +282,7 @@ class ExprTuple(Composite, Expression):
                     return False # end indices don't match
         return True # everything matches.
             
-    def substituted(self, repl_map,
+    def substituted(self, repl_map, allow_relabeling=False,
                     assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
@@ -309,9 +309,9 @@ class ExprTuple(Composite, Expression):
                 # ExprRange.substituted is a generator that yields items
                 # to be embedded into the tuple.
                 subbed_exprs.extend(expr._substituted_entries(
-                        repl_map, assumptions, requirements))
+                        repl_map, allow_relabeling, assumptions, requirements))
             else:
-                subbed_expr = expr.substituted(repl_map, 
+                subbed_expr = expr.substituted(repl_map, allow_relabeling,
                                               assumptions, requirements)
                 subbed_exprs.append(subbed_expr)
         return ExprTuple(*subbed_exprs)
