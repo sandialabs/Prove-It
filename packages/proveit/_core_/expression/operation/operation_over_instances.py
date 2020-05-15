@@ -181,9 +181,10 @@ class OperationOverInstances(Operation):
             if len(instance_params) > 1 and nestMultiIvars:
                 
                 # Figure out how many "non-domain" conditions belong at
-                # each level.  At each level, "non-domain" conditions are
-                # included up to the first one that has any free variables that 
-                # include any of the "inner" instance variable parameters.
+                # each level.  At each level, "non-domain" conditions 
+                # are  included up to the first one that has any free 
+                # variables that include any of the "inner" instance 
+                # variable parameters.
                 cond_free_vars = {cond:free_vars(cond) 
                                   for cond in nondomain_conditions}
                 num_nondomain_conditions_vs_level = [0]*len(instance_params)

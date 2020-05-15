@@ -122,26 +122,26 @@ class Conditional(Expression):
         raise EvaluationError(self, assumptions)
     '''
     
-    def substituted(self, repl_map, allow_relabeling=False,
+    def replaced(self, repl_map, allow_relabeling=False,
                     assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Returns this expression with sub-expressions substituted 
+        Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary.
         
         'assumptions' and 'requirements' are used when an operator is
-        substituted by a Lambda map that has iterated parameters such that 
+        replaced by a Lambda map that has iterated parameters such that 
         the length of the parameters and operands must be proven to be equal.
-        For more details, see Operation.substituted, Lambda.apply, and
-        Iter.substituted (which is the sequence of calls involved).
+        For more details, see Operation.replaced, Lambda.apply, and
+        Iter.replaced (which is the sequence of calls involved).
         
         For a Conditional, the 'condition' is added to the assumptions 
-        when 'substituted' is called on the 'value'.
+        when 'replaced' is called on the 'value'.
         '''
         from proveit import ExprRange
         from proveit._common_ import a, b
         from proveit.logic import And, TRUE
         if len(repl_map)>0 and (self in repl_map):
-            # The full expression is to be substituted.
+            # The full expression is to be replaced.
             return repl_map[self]
         
         if requirements is None: requirements = []
@@ -150,17 +150,17 @@ class Conditional(Expression):
         condition = self.condition        
         
         # First perform substitution on the conditions:
-        subbed_cond = condition.substituted(repl_map, allow_relabeling,
+        subbed_cond = condition.replaced(repl_map, allow_relabeling,
                                             assumptions, requirements)
 
         # Next perform substitution on the value, adding the condition
         # as an assumption.            
         assumptions = defaults.checkedAssumptions(assumptions)
-        subbed_val = value.substituted(repl_map, allow_relabeling,
+        subbed_val = value.replaced(repl_map, allow_relabeling,
                                        assumptions+(subbed_cond,),
                                        requirements)
 
-        substituted = Conditional(subbed_val, subbed_cond)
+        replaced = Conditional(subbed_val, subbed_cond)
 
         reduction = None
 
@@ -168,7 +168,7 @@ class Conditional(Expression):
                 isinstance(subbed_cond, And) and len(subbed_cond.operands)==0:
             # Automatically reduce a conditional with no conditions
             # (just an empty conjunction which evaluates to True)
-            # to just the substituted value.
+            # to just the replaced value.
             from proveit.core_expr_types.conditionals._theorems_ import \
                 no_condition_reduction
             try:
@@ -179,7 +179,7 @@ class Conditional(Expression):
         elif defaults.reduce_conditionals_with_true_condition and \
                 subbed_cond == TRUE:
             # Automatically reduce a conditional with a TRUE
-            # condition to just the substituted value.
+            # condition to just the replaced value.
             from proveit.core_expr_types.conditionals._axioms_ import \
                 true_condition_reduction
             try:
@@ -209,9 +209,9 @@ class Conditional(Expression):
             from proveit.logic import Equals
             assert(isinstance(reduction, KnownTruth))
             assert(isinstance(reduction.expr, Equals))
-            assert(reduction.expr.lhs == substituted)
+            assert(reduction.expr.lhs == replaced)
             requirements.append(reduction)
             return reduction.expr.rhs
         
-        return substituted        
+        return replaced        
 

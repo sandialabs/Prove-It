@@ -80,20 +80,20 @@ class IndexedVar(Operation):
             return self.var.getBaseVar()
         return self.var
     
-    def getIndices(self):
+    def indices(self):
         '''
         Return the indices of the IndexedVar, starting from the inner-most
         nested IndexedVar going out.
         '''
         if isinstance(self.var, IndexedVar):
-            return self.var.getIndices() + (self.index,)
+            return self.var.indices() + (self.index,)
         return (self.index,)
     
     def _formatted(self, formatType, **kwargs):
         if self.getStyle('multi_indexed_var', 'nested') == 'flat' and \
                 isinstance(self.var, IndexedVar):
             indices_str = ','.join(index.formatted(formatType) 
-                                   for index in self.getIndices())
+                                   for index in self.indices())
             result = self.getBaseVar().formatted(formatType) + '_{'+indices_str+'}'
         else:
             index_str = self.index.formatted(formatType, fence=False)
@@ -103,7 +103,8 @@ class IndexedVar(Operation):
                 return r'\left(' + result + r'\right)'
             else: return '(' + result + ')'
         return result
-
+    
+    """
     def _free_var_indices(self):
         '''
         Returns a dictionary that maps indexed variables to
@@ -119,17 +120,30 @@ class IndexedVar(Operation):
         # The start and end are the same so we have repetition below.
         return {self.var:(index_base, {index_shift}, 
                           index_base, {index_shift})}
+    """
 
-    def _free_indexed_vars(self, range_param):
-        from proveit.number import const_shift_decomposition
-        if self.index == range_param:
-            return {self}
-        else:
-            index_base, shift = const_shift_decomposition(self.index)
-            if index_base == range_param:
-                return {self}
-            return Expression._free_indexed_vars(self, range_param)
+    def _free_var_ranges(self, exclusions=None):
+        '''
+        Return the dictionary mapping Variables to forms w.r.t. ranges
+        of indices (or solo) in which the variable occurs as free or 
+        not explicitly and completely masked.  Examples of "forms":
+            x
+            x_i
+            x_1, ..., x_n
+            x_{i, 1}, ..., x_{i, n_i}
+            x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
+        '''
+        if exclusions is not None and self in exclusions: 
+            return dict() # this is excluded
+        var = self
+        while isinstance(var, IndexedVar):
+            var = var.var
+        forms_dict = {var:{self}}
+        forms_dict.update(self.index._free_var_ranges(exclusions=exclusions))
+        return forms_dict
     
+    
+    """
     def _indexed_var_shifts(self, var, range_param, shifts):
         if self.var==var:
             shift = self._indexed_var_shift(range_param)
@@ -150,3 +164,23 @@ class IndexedVar(Operation):
         if index_base == range_param:
             return shift
         return None
+    """
+
+def indexed_var(var, index_or_indices):
+    '''
+    Create an IndexedVar with the given index_or_indices.  When there
+    are multiple indices, make a nested IndexedVar.
+    '''
+    try:
+        if len(index_or_indices) > 1:
+            # multiple indices
+            indices = index_or_indices
+            return IndexedVar(indexed_var(indices[1:]), indices[0])
+        else:
+            # single index.
+            index = indices[0]
+    except TypeError:
+        # single index.
+        index = index_or_indices
+    return IndexedVar(var, index)
+ 

@@ -282,37 +282,38 @@ class ExprTuple(Composite, Expression):
                     return False # end indices don't match
         return True # everything matches.
             
-    def substituted(self, repl_map, allow_relabeling=False,
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def replaced(self, repl_map, allow_relabeling=False,
+                 assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Returns this expression with sub-expressions substituted 
+        Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary.
         
         'assumptions' and 'requirements' are used when an operator is
-        substituted by a Lambda map that has iterated parameters such that 
-        the length of the parameters and operands must be proven to be equal.
-        For more details, see Operation.substituted, Lambda.apply, and
-        Iter.substituted (which is the sequence of calls involved).
+        replaced by a Lambda map that has a range of parameters 
+        (e.g., x_1, ..., x_n) such that the length of the parameters 
+        and operands must be proven to be equal.  For more details, 
+        see Operation.replaced, Lambda.apply, and Iter.replaced 
+        (which is the sequence of calls involved).        
         
-        For an ExprTuple, each entry is 'substituted' independently.  For an
-        entry that is an Iter, its results are embedded as one or more entries 
-        of the ExprTuple.
+        For an ExprTuple, each entry is 'replaced' independently.  
+        For an entry that is an ExprRange, its "replaced entries" are 
+        embedded as one or more entries of the ExprTuple.
         '''
         from .expr_range import ExprRange
         if len(repl_map)>0 and (self in repl_map):
-            # The full expression is to be substituted.
+            # The full expression is to be replaced.
             return repl_map[self]
         
         subbed_exprs = []
         for expr in self:
             if isinstance(expr, ExprRange):
-                # ExprRange.substituted is a generator that yields items
+                # ExprRange.replaced is a generator that yields items
                 # to be embedded into the tuple.
-                subbed_exprs.extend(expr._substituted_entries(
+                subbed_exprs.extend(expr._replaced_entries(
                         repl_map, allow_relabeling, assumptions, requirements))
             else:
-                subbed_expr = expr.substituted(repl_map, allow_relabeling,
-                                              assumptions, requirements)
+                subbed_expr = expr.replaced(repl_map, allow_relabeling,
+                                            assumptions, requirements)
                 subbed_exprs.append(subbed_expr)
         return ExprTuple(*subbed_exprs)
     
@@ -435,6 +436,27 @@ class ExprTuple(Composite, Expression):
                         "only to be applied to an InnerExpr object.")
     """
 
+def extract_indices(indexed_var_tuple):
+    '''
+    Given an ExprTuple of only IndexedVar and ExprRange entries, returns
+    an ExprTuple of just the corresponding indices (including ranges of 
+    indices).
+    '''
+    from proveit import IndexedVar, ExprRange
+    indices = []
+    if not isinstance(indexed_var_tuple, ExprTuple):
+        raise TypeError("'indexed_var_tuple' must be an ExprTuple")
+    for entry in indexed_var_tuple:
+        if isinstance(entry, IndexedVar):
+            indices.append(entry.index)
+        elif isinstance(entry, ExprRange):
+            indices.append(ExprRange(entry.parameter, entry.parameter,
+                                     entry.start_index, entry.end_index))
+        else:
+            raise TypeError("'indexed_var_tuple' must be an ExprTuple "
+                            "only of IndexedVar or ExprRange entries.")
+    return ExprTuple(*indices)
+            
 
 class ExprTupleError(Exception):
     def __init__(self, msg):

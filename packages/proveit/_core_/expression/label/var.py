@@ -1,12 +1,13 @@
 from .label import Label
-from proveit._core_.expression.expr import MakeNotImplemented, ImproperSubstitution
+from proveit._core_.expression.expr import ImproperReplacement
 from proveit._core_.defaults import USE_DEFAULTS
 
 class Variable(Label):
     """
-    A Variable is an interchangeable label.  They may be relabeled Variable to Variable.
-    Through specialization of a Forall statement over one or more Variables, those Variables
-    may each be substituted with a general Expression.
+    A Variable is an interchangeable label.  They may be relabeled 
+    Variable to Variable.  Through specialization of a Forall statement 
+    over one or more Variables, those Variables may each be replaced 
+    with a general Expression.
     """    
     def __init__(self, stringFormat, latexFormat=None):
         '''
@@ -14,26 +15,26 @@ class Variable(Label):
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
                                         
-    def substituted(self, repl_map, allow_relabeling=False,
+    def replaced(self, repl_map, allow_relabeling=False,
                     assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Returns this Variable possibly substituted according to the 
+        Returns this Variable possibly replaced according to the 
         replacement map (repl_map) dictionary.  See the
-        Expr.substituted documentation.
+        Expr.replaced documentation.
         '''
         from proveit._core_.expression.expr import Expression
-        from proveit._core_.expression.composite.expr_tuple import ExprTuple
         if len(repl_map)>0 and (self in repl_map):
             subbed = repl_map[self]
             if not isinstance(subbed, Expression):
                 raise TypeError('Must substitute a Variable with an '
                                 'Expression (not %s)'%subbed.__class__)
-            if isinstance(subbed, ExprTuple) and subbed in repl_map:
+            if isinstance(subbed, set):
                 # We surmise that this is a substitution of a range 
                 # of variables which must only reside in IndexedVar's of 
                 # an ExprRange over a  matching range of indices to be a 
-                # proper substitution.
-                raise ImproperSubstitution(
+                # proper replaced.
+                raise ImproperReplacement(
+                        self, repl_map,
                         "Iterated parameter substitution can only be "
                         "performed when the parameter variable is only "
                         "ever contained in an IndexedVar with indices "
@@ -46,7 +47,23 @@ class Variable(Label):
         
     def _used_vars(self):
         return {self}
-        
+    
+    def _free_var_ranges(self, exclusions=None):
+        '''
+        Return the dictionary mapping Variables to forms w.r.t. ranges
+        of indices (or solo) in which the variable occurs as free or 
+        not explicitly and completely masked.  Examples of "forms":
+            x
+            x_i
+            x_1, ..., x_n
+            x_{i, 1}, ..., x_{i, n_i}
+            x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
+        '''
+        if exclusions is not None and self in exclusions: 
+            return dict() # this is excluded      
+        return {self:{self}}
+
+    """
     def _free_vars(self, exclusions=frozenset()):
         if self in exclusions: 
             return set() # this is excluded
@@ -62,6 +79,7 @@ class Variable(Label):
         if self==param_var and self not in allowed_forms:
             # Invalid occurrence of the parameter variable.
             raise ValueError("Invalid occurrence of the parameter variable")
+    """
 
 def dummyVar(n):
     '''

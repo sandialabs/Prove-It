@@ -1,5 +1,5 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented, 
-                                            ImproperSubstitution,
+                                            ImproperReplacement,
                                             DisallowedIndexing,
                                             free_vars)
 from proveit._core_.expression.label.var import safeDummyVar, safeDummyVars
@@ -37,6 +37,25 @@ def getParamVar(parameter):
                         'range (ExprRange) over Indexed variables.  %s fails '
                         'to meet this requirement.'%parameter)
 
+def valid_params(expr_tuple):
+    '''
+    Return True iff all the entries of the given "expr_tuple" form a
+    valid tuple of parameters.
+    '''
+    # See if this is an allowed expansion of a 
+    # range of parameters.
+    try:
+        expanded_vars = {getParamVar(expanded_param)
+                         for expanded_param in expr_tuple.entries}
+        if len(expanded_vars)!=len(expr_tuple.entries):
+            # Parameter variables must be unique to be valid.
+            return False
+        # All valid and unique parameter entries.
+        return True
+    except TypeError:
+        # One of the entries is not valid.
+        return False
+
 class Lambda(Expression):
     '''
     A lambda-function Expression.  A lambda function maps parameter(s) to
@@ -60,8 +79,7 @@ class Lambda(Expression):
         _generic_expr is used internally for efficiently rebuilding a Lambda.
         '''
         from proveit._core_.expression.composite import (
-                compositeExpression, singleOrCompositeExpression,
-                ExprRange)
+                compositeExpression, singleOrCompositeExpression)
         self.parameters = compositeExpression(parameter_or_parameters)
         parameterVars = [getParamVar(parameter) for parameter in self.parameters]
         if len(self.parameters) == 1:
@@ -135,11 +153,15 @@ class Lambda(Expression):
             (max(self.parameters._max_in_scope_bound_vars, 
                  self.body._max_in_scope_bound_vars)
              + len(self.parameterVars))
-
-        # Parameter variables that are indexed and not fully covered
-        # under the currently introduced range cannot be relabeled.
-        self.free_param_var_indices = \
-            {var:indices for var, indices in self._free_var_indices().items()
+        
+        # Parameter variables that are indexed and not fully and
+        # explicitly covered under the currently introduced range 
+        # cannot be relabeled.
+        explicitly_free_var_ranges = \
+            Lambda._explicitly_free_var_ranges(
+                    self.parameters, self.parameterVars, self.body)
+        self.nonrelabelable_param_vars = \
+            {var for var, var_form in explicitly_free_var_ranges.items()
             if var in self.parameterVarSet}
         
         if _generic_expr is None:
@@ -175,7 +197,7 @@ class Lambda(Expression):
         parameters, body = subExpressions
         return Lambda(parameters, body, _generic_expr=genericExpr)\
                     .withStyles(**styles)
-
+    
     def _free_vars_of_parameter_indices(self):
         '''
         Return the set of free variables of the indices of all
@@ -183,14 +205,15 @@ class Lambda(Expression):
         '''
         from proveit._core_.expression.composite import ExprRange
         from proveit._core_.expression.operation.indexed_var import IndexedVar 
-        free_vars = set()
+        free_vars_of_indices = set()
         for parameter in self.parameters:
-            if isinstance(parameter, ExprRange) and isinstance(parameter.body, IndexedVar):
-                free_vars.update(parameter.start_index._free_vars())
-                free_vars.update(parameter.end_index._free_vars())
+            if (isinstance(parameter, ExprRange) and 
+                    isinstance(parameter.body, IndexedVar)):
+                free_vars_of_indices.update(free_vars(parameter.start_index))
+                free_vars_of_indices.update(free_vars(parameter.end_index))
             elif isinstance(parameter, IndexedVar):
-                free_vars.update(parameter.index._free_vars())
-        return free_vars
+                free_vars_of_indices.update(free_vars(parameter.index))
+        return free_vars_of_indices
     
     def _generic_version(self):
         '''
@@ -203,21 +226,19 @@ class Lambda(Expression):
         if hasattr(self, '_genericExpr'):
             return self._genericExpr
         
-        # Except for the variables in self._free_var_indices(),
+        # Except for the variables in self.nonrelabelable_param_vars,
         # relabel them to something deterministic independent of the
         # original labels.
-        
-        # Note: If there are any Indexed variables, replace them
-        # with the variable being indexed in the generic version
-        # noting that we have already checked (via 
-        # _check_param_occurrences) that it only occurs in this
-        # form.
+        # Note: If there are any direct indexed variable parameters
+        # (as opposed to a range of indexed variables) that are 
+        # relabelable, replace them with the variable being indexed 
+        # in the generic version
         parameterVars = self.parameterVars
         parameters = self.parameters
         bound_parameter_vars = \
             [param_var if isinstance(param, ExprRange) else param
              for param_var, param in zip(parameterVars, parameters)
-             if param_var not in self.free_param_var_indices] 
+             if param_var not in self.nonrelabelable_param_vars] 
         
         # Assign unique variables based upon then maximum number
         # of bound variables in any internal scope, subtract the
@@ -228,11 +249,11 @@ class Lambda(Expression):
         # maximum number of in-scope bound variables plus the number
         # of free variables, then we skip over the free variables as 
         # they occur.
-        free_vars = self.body._free_vars() - set(bound_parameter_vars)
-        start_index = (self._max_in_scope_bound_vars - len(parameters)
-                       + len(free_vars))
+        lambda_free_vars = free_vars(self.body) - set(bound_parameter_vars)
+        start_index = (self._max_in_scope_bound_vars - len(parameters) + 
+                       len(lambda_free_vars))
         generic_param_vars = list(reversed(
-                safeDummyVars(len(bound_parameter_vars), *free_vars,
+                safeDummyVars(len(bound_parameter_vars), *lambda_free_vars,
                               start_index=start_index)))
         
         if generic_param_vars != bound_parameter_vars:
@@ -421,28 +442,26 @@ class Lambda(Expression):
         |(a_{1+1}, ..., a_{k+1}, b_1, b_{1+1}, ..., b_{(n-k-1)+1})|
             = |(1+1, ..., n+1)|        
         
-        If allow relabeling is True
+        If allow relabeling is True then inn
         
         There are limitations with respect the Lambda map application
         involving parameter ranges when perfoming operation 
         substitution in order to keep derivation rules (i.e., 
         instantiation) simple.  For details, see the 
-        ExprRange.substituted documentation.
+        ExprRange.replaced documentation.
         '''
         return Lambda._apply(
                 self.parameters, self.body, *operands, 
                 equiv_alt_expansions=equiv_alt_expansions,
                 allow_relabeling=allow_relabeling,
                 assumptions=assumptions, requirements=requirements,
-                parameter_vars=self.parameterVars,
-                             free_param_var_indices=self.free_param_var_indices)
+                parameter_vars=self.parameterVars)
     
     @staticmethod 
     def _apply(parameters, body, *operands, equiv_alt_expansions=None,
                allow_relabeling=False,
                assumptions=USE_DEFAULTS, requirements=None,
-               parameter_vars = None,
-               free_param_var_indices = None):
+               parameter_vars=None):
         '''
         Static method version of Lambda.apply which is convenient for 
         doing 'apply' with an 'on-the-fly' effective Lambda that does 
@@ -451,33 +470,12 @@ class Lambda(Expression):
         an initial 'repl_map' to start with, which will me amended 
         according to paramater:operand mappings.
         '''
-        from proveit import (ExprTuple, ExprRange, ProofFailure, 
-                             safeDummyVar, Len)
-        from proveit.logic import Equals, EvaluationError
+        from proveit import (ExprTuple, extract_indices)
+        from proveit.logic import Equals
         
         if parameter_vars is None:
             parameter_vars = \
                 [getParamVar(parameter) for parameter in parameters]
-        print('apply', 'parameters', parameters, 'body', body,
-              'on operands', operands)
-        if free_param_var_indices is None:
-            parameter_var_set = set(parameter_vars)
-            free_var_indices = \
-                Lambda._free_var_indices_static(body, parameters, 
-                                                parameter_vars)
-            free_param_var_indices = \
-                {var:indices for var, indices in free_var_indices.items()
-                 if var in parameter_var_set}
-
-
-        if len(free_param_var_indices) > 0:
-            raise LambdaApplicationError(
-                    parameters, body, operands, assumptions,
-                    "Lambda application is not allowed when any of "
-                    "the parameter ranges fail to cover the entire range "
-                    "of occurrences.  There are some indices of "
-                    "IndexedVar's that remain free: %s"
-                    %free_param_var_indices)
         
         # We will be appending to the requirements list if it is given
         # (or a throw-away list if it is not).
@@ -487,134 +485,85 @@ class Lambda(Expression):
         # We will be matching operands with parameters in the proper 
         # order and adding corresponding entries to the replacement map.
         repl_map = dict()
-        operands_iter = iter(operands)
+        extract_param_replacements(
+                parameters, parameter_vars, body, operands,
+                assumptions, requirements, repl_map)
+        
+        # Add repl_map entries resulting from equiv_alt_expansions.
+        repl_map_extensions = dict()
+        print('equiv_alt_expansions', equiv_alt_expansions)
+        if equiv_alt_expansions is not None:
+            if not isinstance(equiv_alt_expansions, dict):
+                raise TypeError("'equiv_alt_expansions' must be a dict")
+            for var_tuple, expansion_tuple in equiv_alt_expansions.items():
+                if not isinstance(var_tuple, ExprTuple):
+                    raise TypeError("'equiv_alt_expansions' keys must be "
+                                    "ExprTuple objects; %s is a %s."
+                                    %(var_tuple, var_tuple.__class__))
+                if not isinstance(expansion_tuple, ExprTuple):
+                    raise TypeError("'equiv_alt_expansions' values must be "
+                                    "ExprTuple objects; %s is a %s."
+                                    %(expansion_tuple, 
+                                      expansion_tuple.__class__))
+                param_var = None
+                for var_tuple_entry in var_tuple:
+                    try:
+                        if param_var is None:
+                            param_var = getParamVar(var_tuple_entry)
+                        else:
+                            if getParamVar(var_tuple_entry) != param_var:
+                                raise ValueError
+                    except (TypeError, ValueError):
+                        raise ValueError(
+                                "'equiv_alt_expansions' values must be "
+                                "a tuple containing variables, indexed "
+                                "variables, or ranges of indexed variables "
+                                "all of the same variable.  %s does not "
+                                "meet this requirement."%var_tuple)
+                expansion_set = repl_map.get(param_var, None)
+                if expansion_set is None:
+                    raise LambdaApplicationError(
+                            parameters, body, operands, assumptions,
+                            "'equiv_alt_expansions' values must each "
+                            "correspond with a range of the lambda "
+                            "parameters.  %s does not meet this "
+                            "requirement"%var_tuple)
+                assert len(expansion_set)==1
+                # We need to ensure that the tuples of indices match.
+                orig_params = list(expansion_set)[0]
+                indices_eq_req = Equals(extract_indices(var_tuple),
+                                        extract_indices(orig_params))
+                requirements.append(indices_eq_req.prove(assumptions))
+                # We need to ensure that the tuple expansions are equal.
+                orig_expansion = repl_map[orig_params]
+                eq_expansion_req = Equals(expansion_tuple, orig_expansion)
+                requirements.append(eq_expansion_req.prove(assumptions))
+                # Now add new entries to repl_map for the new
+                # expansion and components corresponding to the
+                # components of the var_tuple.
+                expansion_set.add(var_tuple)
+                repl_map_extensions[var_tuple] = expansion_tuple
+                try:
+                    extract_param_replacements(
+                            var_tuple, [param_var]*len(var_tuple), 
+                            var_tuple, expansion_tuple, assumptions, 
+                            requirements, repl_map_extensions)
+                except LambdaApplicationError as e:
+                    raise LambdaApplicationError(
+                            parameters, body, operands, assumptions,
+                            "Unable to match 'equiv_alt_expansions' "
+                            "key entries to a value entry for key & value "
+                            "%s & %s.  Got error %s."
+                            %(var_tuple, expansion_tuple, str(e)))
+        repl_map.update(repl_map_extensions)
         try:
-            # Loop through each parameter entry and match it with corresponding
-            # operand(s).  Singular parameter entries match with singular
-            # operand entries.  Iterated parameter entries match with
-            # one or more operand entries which match in element-wise length
-            # For example, (x_1, ..., x_n, y) has an element-wise lenght of
-            # n+1.
-            for parameter, param_var in zip(parameters, parameter_vars):
-                if isinstance(parameter, ExprRange):
-                    from proveit.number import zero, one
-                    # This is a iterated parameter which corresponds with
-                    # one or more operand entries in order to match the
-                    # element-wise length.
-                    idx_var = safeDummyVar(*parameters, body)
-                    param_indices = ExprRange(idx_var, idx_var, 
-                                              parameter.start_index, 
-                                              parameter.end_index)
-                    param_len = Len(ExprTuple(param_indices))
-                    if parameters[-1] == parameter:
-                        # This iterated parameter is the last entry,
-                        # so it must encompass all remaining operands.
-                        # We can attempt to prove the length requirement
-                        # via automation.
-                        param_operands = list(operands_iter)
-                        param_operands_len = Len(ExprTuple(*param_operands))
-                        len_req = Equals(param_operands_len, param_len)
-                        try:
-                            requirements.append(len_req.prove(assumptions))
-                        except ProofFailure as e:
-                            raise LambdaApplicationError(parameters, body, 
-                                                         operands, assumptions,
-                                                         "Failed to prove operand "
-                                                         "length requirement: %s"
-                                                         %str(e))
-                    else:
-                        # Collect enough operands to match the length of the
-                        # iterated parameter.
-                        param_operands = []
-                        while True:
-                            param_operands_tuple = ExprTuple(*param_operands)
-                            param_operands_len = Len(param_operands_tuple)
-                            len_req = Equals(param_operands_len, param_len)
-                            try:
-                                # Try to prove len_req using minimal
-                                # automation since we do not know if
-                                # this is the right match or if we need
-                                # to go further with more operands.
-                                len_req.lhs.deduceEquality(
-                                        len_req, assumptions, 
-                                        minimal_automation=True)
-                                assert len_req.proven(assumptions)
-                            except ProofFailure:
-                                pass
-                            if len_req.proven(assumptions):
-                                requirements.append(len_req.prove(assumptions))
-                                break # we have a match
-                            param_operands.append(next(operands_iter))
-                    # For the iterated parameter replacement, we map the 
-                    # parameter variable to the parameter iteration tuple
-                    # (e.g., x : (x_i, ..., x_n)) to indicate the index
-                    # range and then map that iteration tuple to the
-                    # actual operands to be replaced.
-                    param_tuple = ExprTuple(parameter)
-                    repl_map[param_var] = param_tuple
-                    repl_map[param_tuple] = ExprTuple(*param_operands)
-                else:
-                    # This is a singular parameter which should match
-                    # with a singular operator or range(s) with known
-                    # length summing up to 1 (may have zero length
-                    # ranges).
-                    operand = next(operands_iter)
-                    if isinstance(operand, ExprRange):
-                        # Rangle lengths must be known values and sum 
-                        # to 1.
-                        try:
-                            while True:
-                                operand_len_evaluation = \
-                                    Len(operand).evaluation(
-                                            assumptions=assumptions)
-                                requirements.append(operand_len_evaluation)
-                                operand_len_val = operand_len_evaluation.rhs
-                                if operand_len_val == one:
-                                    break # Good to go.
-                                elif operand_len_val == zero:
-                                    # Keep going until we get a length
-                                    # of 1.
-                                    operand = next(operands_iter)
-                                else:
-                                    # No good.
-                                    raise LambdaApplicationError(
-                                            parameter, body, operands,
-                                            assumptions,
-                                            "Parameter/argument length "
-                                            "mismatch 1 vs %s"
-                                            %operand_len_evaluation.rhs)
-                        except EvaluationError:                                                        
-                            raise LambdaApplicationError(
-                                    parameters, body, operands, assumptions,
-                                    "Singular parameters must correspond "
-                                    "with singular operands or ranges with "
-                                    "lengths known to sum to 1: %s vs %s."
-                                    %(parameter, operand))
-                    repl_map[parameter] = operand
-        except StopIteration:
-            raise LambdaApplicationError(parameters, body, 
-                                         operands, assumptions,
-                                         "Parameter/argument length mismatch "
-                                         "or unproven length equality for "
-                                         "correspondence with %s."
-                                         %str(parameter))
-        # Make sure all of the operands were consumed.
-        try:
-            next(operands_iter)
-            # All operands were not consumed.
-            raise LambdaApplicationError(parameters, body, 
-                                         operands, assumptions,
-                                         "Too many arguments")
-        except StopIteration:
-            pass # Good.  All operands were consumed.
-        try:
-            return body.substituted(repl_map, allow_relabeling,
+            return body.replaced(repl_map, allow_relabeling,
                                     assumptions=assumptions, 
                                     requirements=requirements)
-        except ImproperSubstitution as e:
+        except ImproperReplacement as e:
             raise LambdaApplicationError(
                     parameters, body, operands, assumptions,
-                    "Improper substitution: %s "%str(e))
+                    "Improper replacement: %s "%str(e))
         except TypeError as e:
             raise LambdaApplicationError(
                     parameters, body, operands, assumptions,
@@ -743,10 +692,10 @@ class Lambda(Expression):
                         
     """
         
-    def substituted(self, repl_map, allow_relabeling=False,
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def replaced(self, repl_map, allow_relabeling=False,
+                 assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Returns this expression with sub-expressions substituted 
+        Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary 
         which maps Expressions to Expressions.
         
@@ -761,13 +710,13 @@ class Lambda(Expression):
         (x_1, ..., x_n) -> f(x_1, ..., x_n).        
         
         'assumptions' and 'requirements' are used when an operator is
-        substituted with a lambda map that has iterated parameters such that 
+        replaced with a lambda map that has iterated parameters such that 
         the length of the parameters and operands are required to be equal.
-        For more details, see Operation.substituted, Lambda.apply, and
-        ExprRange.substituted (which is the sequence of calls involved).
+        For more details, see Operation.replaced, Lambda.apply, and
+        ExprRange.replaced (which is the sequence of calls involved).
         '''
         if len(repl_map)>0 and (self in repl_map):
-            # The full expression is to be substituted.
+            # The full expression is to be replaced.
             return repl_map[self]
         
         assumptions = defaults.checkedAssumptions(assumptions)
@@ -779,7 +728,7 @@ class Lambda(Expression):
         
         # The lambda body with the substitutions.
         inner_requirements = []
-        subbed_body = self.body.substituted(
+        subbed_body = self.body.replaced(
                 inner_repl_map, allow_relabeling,
                 inner_assumptions, inner_requirements)
         
@@ -803,24 +752,23 @@ class Lambda(Expression):
             requirements.append(requirement)
         
         try:
-            substituted = Lambda(new_params, subbed_body)
+            replaced = Lambda(new_params, subbed_body)
         except TypeError as e:
-            raise ImproperSubstitution(e.args[0])
+            raise ImproperReplacement(self, repl_map, e.args[0])
         except ValueError as e:
-            raise ImproperSubstitution(e.args[0])
+            raise ImproperReplacement(self, repl_map, e.args[0])
         
-        return substituted
+        return replaced
 
     def _inner_scope_sub(self, repl_map, allow_relabeling,
                          assumptions, requirements):
         '''
-        Helper method for substituted (and used by ExprRange.substituted) which 
-        handles the change in scope properly as well as parameter relabeling.
+        Helper method for replaced (and used by ExprRange.replaced) 
+        which handles the change in scope properly as well as parameter 
+        relabeling.
         '''
         
-        from proveit import Variable, ExprTuple, ExprRange, IndexedVar
-        
-        self_free_vars = self._free_vars()
+        from proveit import Variable, ExprRange, IndexedVar
         
         # Within the lambda scope, we can instantiate lambda parameters
         # in a manner that retains the validity of the parameters as
@@ -833,17 +781,94 @@ class Lambda(Expression):
         # disallowing such substitutions.
         inner_repl_map = dict()
         for key, value in repl_map.items():
-            if not key._free_vars().isdisjoint(self.parameterVarSet):
+            if not _guaranteed_to_be_independent(key, self.parameterVarSet):
                 # If any of the free variables of the key occur as
                 # parameter variables, either that replacement is
                 # masked within this scope, or there is an allowed
                 # relabeling or parameter range expansion.
-                if isinstance(key, Variable) and isinstance(value, Variable):
+                
+                # First, let's see if there is an associated
+                # expansion for this key.
+                key_repl = repl_map.get(key, None)
+                if isinstance(key_repl, set):
+                    # There are one or more expansions for a variable
+                    # that occurs as a local Lambda parameter.
+                    # It may be fully or partially masked.  We have to
+                    # be careful about partial masks, making sure
+                    # there is no masking outside of the covered range 
+                    # of indices but there is masking otherwise.
+                    var = key
+                    assert isinstance(var, Variable)
+                    param_of_var = None
+                    for param, param_var in zip(self.parameters, 
+                                                self.parameterVars):
+                        if param_var==var:
+                            param_of_var = param
+                    if param_of_var is None:
+                        # The key is not being masked in any way.
+                        continue
+                    if isinstance(param_of_var, Variable):
+                        # The parameter is the Variable itself, so
+                        # it masks all occurrences of that Variable.
+                        continue # No inner replacement for this.
+                    if isinstance(param_of_var, ExprRange):
+                        mask_start = param_of_var.start_indices()
+                        mask_end = param_of_var.end_indices()
+                    else:
+                        assert isinstance(param_of_var, IndexedVar)
+                        mask_start = mask_end = [param_of_var.index]
+                    # We may only use the variable-tuples of key_repl 
+                    # that carve out the masked indices (e.g.
+                    # (x_1, ..., x_n, x_{n+1}) is usable if the masked
+                    # indices are (1, ..., n) or (n+1) but not 
+                    # otherwise).
+                    # In the multiple index setting, we need to check
+                    # all of the indices.  Consider
+                    # (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
+                    #  x_{n, i_{n}}, ..., x_{n, j_{n}}).
+                    # Here, we need to match with all indices:
+                    # (m, i_m) for the start and (n, j_n) for the end.
+                    try:
+                        valid_var_tuples, masked_entries, full_masked_entry \
+                        = _extract_specific_expansions_and_entries(
+                                    var, key_repl, repl_map, 
+                                    mask_start, mask_end, inner_repl_map,
+                                    assumptions, requirements)
+                    except ValueError as e:
+                        raise ImproperReplacement(
+                                self, repl_map, str(e))    
+
+                    # Discard the masked entries from the inner_repl_map
+                    # (since they are masked), with one possible 
+                    # exception: if relabeling is allowed and there is 
+                    # an entry that covers the entire masked portion 
+                    # with an expansion that is a valid parameter 
+                    # relabeling, we will keep that one masked entries.  
+                    # Otherwise, we must discard them (as masked).
+                    for entry in masked_entries:
+                        if allow_relabeling and entry == full_masked_entry:
+                            if valid_params(inner_repl_map[entry]):
+                                # This is the exception.  Keep this
+                                # relabeling expansion of the masked
+                                # region.
+                                continue
+                        inner_repl_map.pop(entry)
+                    if len(valid_var_tuples)==0:
+                        # No valid expansion where we can carve
+                        # out the masked portion.  All we can do
+                        # is indicate that the 'param_of_var' is
+                        # unchanged and no other expansion is 
+                        # allowed.
+                        inner_repl_map[var] = {param_of_var}
+                        inner_repl_map[param_of_var] = param_of_var
+                    else:
+                        inner_repl_map[var] = valid_var_tuples                    
+                elif isinstance(key, Variable) and isinstance(value, Variable):
                     # A simple relabeling is allowed to propagate
                     # through as long as the variable is not indexed
                     # over a range that is not covered here.
                     if (allow_relabeling and 
-                            key not in self.free_param_var_indices):
+                            key not in self.nonrelabelable_param_vars):
                         inner_repl_map[key] = value
                     # Otherwise, it is a simple, fair masking.
                 elif isinstance(key, IndexedVar) and key in self.parameters:
@@ -854,45 +879,9 @@ class Lambda(Expression):
                             # IndexedVar or a Variable.
                             inner_repl_map[key] = value
                     # Otherwise, it is a simple, fair masking.
-                else:
-                    key_var = getParamVar(key)
-                    # ??? about multiple indices ??? TODO
-                    if key_var in self.free_param_var_indices:
-                        raise ImproperSubstitution(
-                                "Substitution of a range of indexed "
-                                "variables is not allowed when there is "
-                                "partial masking (or extension) of indices;"
-                                "%s fails this restriction in %s"
-                                %(key_var, self))
-                    elif (allow_relabeling
-                              and isinstance(value, ExprTuple) 
-                              and key in self.parameters):
-                        # See if this is an allowed expansion of a 
-                        # range of parameters.
-                        try:
-                            expanded_vars = {getParamVar(expanded_param)
-                                             for expanded_param in value.entries}
-                            if len(expanded_vars)!=len(value.entries):
-                                # This raise exception will be
-                                # immediately caught below.
-                                raise ValueError("non-unique parameters")
-                            # An allowed instantiation of
-                            # a range of parameters, yielding
-                            # valid expanded parameters (unless
-                            # the parameter variables are not
-                            # unique among the other replacements
-                            # which will just lead to an error
-                            # later.
-                            inner_repl_map[key] = value
-                        except (TypeError, ValueError):
-                            # Not an allowed expansion of a range of
-                            # parameters.  But the variable range is 
-                            # properly masked and we can safely ignore 
-                            # this replacement.
-                            pass
-                    # In all remaining cases where the key is not
-                    # inserted into inner_repl_map, the replacement
-                    # is deemed to be safely masked within this scope.
+                # In all remaining cases where the key is not
+                # inserted into inner_repl_map, the replacement
+                # is deemed to be safely masked within this scope.
             else:
                 # No conflict -- propagate the replacement.
                 inner_repl_map[key] = value
@@ -901,14 +890,16 @@ class Lambda(Expression):
         # the parameter variables.  If there are collisions, relabel
         # the parameter variables to something safe.  First, get the
         # free variables of the body and the replacements.
-        # (Note: a repl_map 'value' may be a set of it indicating
+        # (Note: a repl_map 'value' may be a set indicating
         # possible expansions for an indexed variable over a range,
         # e.g., x : {(x_1, .., x_{n+1}), ({x_1, .., x_n}), 
-        # ({x_{1+1}, ..., x_{n+1}})}); we can ignore those for this
-        # purpose as the real replacements will be what the members
-        # of this set map t)o.
-        restricted_vars = self_free_vars.union(
-                *[value._free_vars() for key, value in inner_repl_map.items()
+        #            (x_{1+1}, ..., x_{n+1})} 
+        # we can ignore those for this purpose as the real replacements 
+        # will be what the members of this set map to.
+        non_param_body_free_vars = (free_vars(self.body) - 
+                                    self.parameterVarSet)
+        restricted_vars = non_param_body_free_vars.union(
+                *[free_vars(value) for key, value in inner_repl_map.items()
                  if (key not in self.parameterVarSet 
                      and not isinstance(value, set))])
         for param_var in self.parameterVarSet:
@@ -933,12 +924,12 @@ class Lambda(Expression):
         new_params = []
         for parameter, param_var in zip(self.parameters, self.parameterVars):
             if isinstance(parameter, ExprRange):
-                subbed_param = parameter._substituted_entries(
+                subbed_param = parameter._replaced_entries(
                         inner_repl_map, allow_relabeling, 
                         assumptions, requirements)
                 new_params.extend(subbed_param)
             else:
-                subbed_param = parameter.substituted(
+                subbed_param = parameter.replaced(
                         inner_repl_map, allow_relabeling, 
                         assumptions, requirements)
                 new_params.append(subbed_param)
@@ -952,6 +943,7 @@ class Lambda(Expression):
                              if free_vars(assumption).isdisjoint(new_params)]
                                       
         return new_params, inner_repl_map, inner_assumptions
+    
     
     """
     def relabeled(self, relabel_map):
@@ -972,7 +964,7 @@ class Lambda(Expression):
             if not isinstance(val, Variable):
                 raise TypeError("relabel_map must map Variables to Variables. "
                                 "%s value is not a Variable."%val)
-        result = self.substituted(relabel_map)
+        result = self.replaced(relabel_map)
         assert result==self, "Relabeled version should be 'equal' to original"
         return result
     """
@@ -995,7 +987,7 @@ class Lambda(Expression):
             # g(x)
             relabeledExpr2 = lambda2.body.relabeled({lambda2.parameters[0]:lambda1.parameters[0]})
             # x -> f(g(x))
-            return Lambda(lambda1.parameters[0], lambda1.body.substituted({lambda1.parameters[0]:relabeledExpr2}))
+            return Lambda(lambda1.parameters[0], lambda1.body.replaced({lambda1.parameters[0]:relabeledExpr2}))
         else:
             if len(lambda2) != len(lambda1.parameters):
                 raise TypeError("Must supply a list of lambda2s with the same length as the number of lambda1 parameters")
@@ -1005,10 +997,10 @@ class Lambda(Expression):
                     raise TypeError("Each lambda2 must have the same number of parameters as lambda1")
                 # gi(x1, x2, ..., xn)
                 paramReplMap = {param2:param1 for param1, param2 in zip(lambda1.parameters, lambda2elem.parameters)}
-                relabeledExpr2s.append(lambda2elem.body.substituted(paramReplMap))
+                relabeledExpr2s.append(lambda2elem.body.replaced(paramReplMap))
             # x1, x2, ..., xn -> f(g1(x1, x2, ..., xn), g2(x1, x2, ..., xn), ..., gn(x1, x2, ..., xn)).
             lambda1ExprSubMap = {param1:relabeledExpr2 for param1, relabeledExpr2 in zip(lambda1.parameters, relabeledExpr2s)}
-            return Lambda(lambda1.parameters, lambda1.body.substituted(lambda1ExprSubMap))
+            return Lambda(lambda1.parameters, lambda1.body.replaced(lambda1ExprSubMap))
     
     @staticmethod
     def globalRepl(masterExpr, subExpr):
@@ -1017,26 +1009,86 @@ class Lambda(Expression):
         everywhere that it occurs in the master Expression.
         '''
         lambdaParam = masterExpr.safeDummyVar()
-        return Lambda(lambdaParam, masterExpr.substituted({subExpr:lambdaParam}))
+        return Lambda(lambdaParam, masterExpr.replaced({subExpr:lambdaParam}))
     
-    def _used_vars(self):
+    @staticmethod
+    def _explicitly_free_var_ranges(parameters, parameterVars, body,
+                                    exclusions=None):
         '''
-        The used variables of the lambda function are the used variables of the 
-        body plus the lambda parameter variables.
+        Like _free_var_ranges but doesn't account for eliminating
+        ranges with internally bound variables.
         '''
-        return self.body._used_vars().union(set(self.parameterVarSet))
+        forms_dict = dict()
+        for expr in (parameters, body):
+            forms_dict.update(expr._free_var_ranges(exclusions=exclusions))
+        for param, param_var in zip(parameters, parameterVars):
+            if param_var in forms_dict.keys():
+                forms_dict[param_var].discard(param)
+                # Note: If you have a parameter of x_1 or a parameter of
+                # x_1, ..., x_n, then 'x' itself is masked although
+                # x_{n+1} would not be masked.  Therfore, remove 'x':
+                forms_dict[param_var].discard(param_var)
+                if len(forms_dict[param_var])==0:
+                    forms_dict.pop(param_var)
+        return forms_dict        
         
+    
+    def _free_var_ranges(self, exclusions=None):
+        '''
+        Return the dictionary mapping Variables to forms w.r.t. ranges
+        of indices (or solo) in which the variable occurs as free or 
+        not explicitly and completely masked.  Examples of "forms":
+            x
+            x_i
+            x_1, ..., x_n
+            x_{i, 1}, ..., x_{i, n_i}
+            x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
+
+        If any of the ranges have indices with internally
+        bound variables, they will not be reported as free since
+        part of it is bound.  For example,
+        (k, n) -> [(x_1, ..., x_n) -> 
+                   x_1 + ... + x_k + x_{k+1} + ... + x_{n}]
+        would not report anything.
+        '''
+        forms_dict = dict()
+        if exclusions is not None and self in exclusions: 
+            return forms_dict # this is excluded        
+        
+        relabelable_param_vars \
+        = {param_var for param_var in self.parameterVars
+           if param_var not in self.nonrelabelable_param_vars}
+        
+        # Use the _explicitly_free_var_ranges but skip anything that
+        # is has any of the relabelable parameter variables as free
+        # (if it changes under relabeling, it cannot be reported as 
+        # free).
+        for var, forms in Lambda._explicitly_free_var_ranges(
+                self.parameters, self.parameterVars, self.body, 
+                exclusions=exclusions).items():
+            for form in forms:
+                if relabelable_param_vars.isdisjoint(free_vars(form)):
+                    forms_dict.setdefault(var, set()).add(form)        
+        return forms_dict
+    
+            
+    """
+    
     def _free_vars(self, exclusions=frozenset()):
         '''
-        The free variables the lambda function are the free variables of the 
-        body minus the lambda parameter variables.  The lambda 
-        function binds those variables.
+        The free variables the lambda function are the free variables of
+        the body and parameters (e.g., parameter range indices) minus 
+        the lambda parameter variables. The lambda function binds those 
+        variables.
         '''
         if self in exclusions:         
             return set() # this is excluded
-        innerFreeVs = set(self.body._free_vars(exclusions=exclusions))
-        return innerFreeVs - self.parameterVarSet
-    
+        inner_free_vars = \
+            set(Expression._free_vars(self, exclusions=exclusions))
+        return inner_free_vars - self.parameterVarSet
+    """
+        
+    """
     def _free_var_indices(self):
         return Lambda._free_var_indices_static(
                 self.body, self.parameters, self.parameterVars)
@@ -1123,8 +1175,21 @@ class Lambda(Expression):
                     results.pop(param_var)
         print('lambda results', results)
         return results
-        
-    def _free_indexed_vars(self, index):
+    """
+    """
+    def _unmasked_indexed_var_occurrences(self):
+        '''
+        Return the set of IndexedVars and ranges of IndexedVars that
+        occur as free or not explicitly and completely masked within 
+        this expression.  For the Lambda expression, we simply
+        remove the exact occurrences of the parameters (that's what
+        is meant by explicit masking).
+        '''
+        inner_free_vars = \
+            set(Expression._free_vars(self, exclusions=exclusions))
+        return inner_free_vars - self.parameters
+            
+    def _free_indexed_vars(self, index=None):
         '''
         The free indexed variables of the lambda function are the free 
         indexed variables of the body minus any whose 'var' is in the
@@ -1214,6 +1279,242 @@ class Lambda(Expression):
         allowed_forms = {allowed_form for allowed_form in allowed_forms
                          if allowed_form._free_vars().isdisjoint(param_var_set)}
         return self.body._check_param_occurrences(param_var, allowed_forms)
+    """
+
+def _guaranteed_to_be_independent(expr, parameter_vars):
+    '''
+    Return True if we can guarantee that the given expression
+    is independent of the given parameters.  It may not be clear
+    in some cases.  For example, if 
+    expr : x_1 + ... + x_n
+    parameters : x_i, ..., x_j
+    In such a case, we must return False since there is no guarantee
+    of independence.
+    '''
+    from proveit._core_.expression.expr import free_vars
+    if free_vars(expr).isdisjoint(parameter_vars):
+        return True
+    return False
+
+def extract_param_replacements(parameters, parameter_vars, body,
+                               operands, assumptions, requirements,
+                               repl_map):
+    '''
+    Match the operands with parameters in order by checking
+    tuple lengths.  Add a repl_map entry to map each
+    parameter entry (or ExprTuple-wrapped entry) to corresponding
+    operand(s) (ExprTuple-wrapped as appropriate).
+    '''
+    from proveit import (ExprTuple, ExprRange, ProofFailure, 
+                         safeDummyVar, Len)
+    from proveit.logic import Equals, EvaluationError
+    # Loop through each parameter entry and match it with corresponding
+    # operand(s).  Singular parameter entries match with singular
+    # operand entries.  Iterated parameter entries match with
+    # one or more operand entries which match in element-wise length
+    # For example, (x_1, ..., x_n, y) has an element-wise lenght of
+    # n+1.
+    operands_iter = iter(operands)
+    try:
+        for parameter, param_var in zip(parameters, parameter_vars):
+            if isinstance(parameter, ExprRange):
+                from proveit.number import zero, one
+                # This is a iterated parameter which corresponds with
+                # one or more operand entries in order to match the
+                # element-wise length.
+                idx_var = safeDummyVar(*parameters, body)
+                param_indices = ExprRange(idx_var, idx_var, 
+                                          parameter.start_index, 
+                                          parameter.end_index)
+                param_len = Len(ExprTuple(param_indices))
+                if parameters[-1] == parameter:
+                    # This iterated parameter is the last entry,
+                    # so it must encompass all remaining operands.
+                    # We can attempt to prove the length requirement
+                    # via automation.
+                    param_operands = list(operands_iter)
+                    param_operands_len = Len(ExprTuple(*param_operands))
+                    len_req = Equals(param_operands_len, param_len)
+                    try:
+                        requirements.append(len_req.prove(assumptions))
+                    except ProofFailure as e:
+                        raise LambdaApplicationError(
+                                parameters, body, operands, assumptions,
+                                "Failed to prove operand length "
+                                "requirement: %s"%str(e))
+                else:
+                    # Collect enough operands to match the length of
+                    # the range of parameters.
+                    param_operands = []
+                    while True:
+                        param_operands_tuple = ExprTuple(*param_operands)
+                        param_operands_len = Len(param_operands_tuple)
+                        len_req = Equals(param_operands_len, param_len)
+                        try:
+                            # Try to prove len_req using minimal
+                            # automation since we do not know if
+                            # this is the right match or if we need
+                            # to go further with more operands.
+                            len_req.lhs.deduceEquality(
+                                    len_req, assumptions, 
+                                    minimal_automation=True)
+                            assert len_req.proven(assumptions)
+                        except ProofFailure:
+                            pass
+                        if len_req.proven(assumptions):
+                            requirements.append(len_req.prove(assumptions))
+                            break # we have a match
+                        param_operands.append(next(operands_iter))
+                # For the parameter range replacement, we map the 
+                # parameter variable to a set of parameter range
+                # tuples (e.g., x : {(x_i, ..., x_n)}) to indicate 
+                # the index range and then map that iteration tuple 
+                # to the actual operands to be replaced.
+                param_tuple = ExprTuple(parameter)
+                repl_map[param_var] = {param_tuple}
+                repl_map[param_tuple] = ExprTuple(*param_operands)
+            else:
+                # This is a singular parameter which should match
+                # with a singular operator or range(s) with known
+                # length summing up to 1 (may have zero length
+                # ranges).
+                operand = next(operands_iter)
+                if isinstance(operand, ExprRange):
+                    # Rangle lengths must be known values and sum 
+                    # to 1.
+                    try:
+                        while True:
+                            operand_len_evaluation = \
+                                Len(operand).evaluation(
+                                        assumptions=assumptions)
+                            requirements.append(operand_len_evaluation)
+                            operand_len_val = operand_len_evaluation.rhs
+                            if operand_len_val == one:
+                                break # Good to go.
+                            elif operand_len_val == zero:
+                                # Keep going until we get a length
+                                # of 1.
+                                operand = next(operands_iter)
+                            else:
+                                # No good.
+                                raise LambdaApplicationError(
+                                        parameter, body, operands,
+                                        assumptions,
+                                        "Parameter/argument length "
+                                        "mismatch 1 vs %s"
+                                        %operand_len_evaluation.rhs)
+                    except EvaluationError:                                                        
+                        raise LambdaApplicationError(
+                                parameters, body, operands, assumptions,
+                                "Singular parameters must correspond "
+                                "with singular operands or ranges with "
+                                "lengths known to sum to 1: %s vs %s."
+                                %(parameter, operand))
+                repl_map[parameter] = operand
+    except StopIteration:
+        raise LambdaApplicationError(parameters, body, 
+                                     operands, assumptions,
+                                     "Parameter/argument length mismatch "
+                                     "or unproven length equality for "
+                                     "correspondence with %s."
+                                     %str(parameter))
+    # Make sure all of the operands were consumed.
+    try:
+        next(operands_iter)
+        # All operands were not consumed.
+        raise LambdaApplicationError(parameters, body, 
+                                     operands, assumptions,
+                                     "Too many arguments")
+    except StopIteration:
+        pass # Good.  All operands were consumed.
+
+def _extract_specific_expansions_and_entries(
+        var, possible_var_tuples, orig_repl_map,
+        start_indices, end_indices, new_repl_map,
+        assumptions, requirements,
+        restrict_map_to_contained_entries=True):
+    '''
+    Given a variable 'var' (e.g., 'x') and a set of possible tuples
+    covering the same range of indices of this variable
+    (e.g., {(x_1, ..., x_{n+1}), (x_1, x_2, ..., x_n, x_{n+1})}) and
+    an original replacement map with keys for each of the possible 
+    expansions, hone in on expansions for the specific start and end 
+    indices that are provided.  
+    Return a tuple with 3 items:
+        1. The subset of the 'possible_var_tuples' with explicit 
+           coverage of the specific range (e.g., if start_index==1 and 
+           end_index==n then only (x_1, x_2, ..., x_n, x_{n+1}) would be 
+           returned).
+        2. A list of the specific entries of the tuples from #1 that are 
+           covered within the specific range (in our example, 
+           [x_1, x_2, ..., x_n]).
+        3. One specific entry that covers the full range.  In
+           our example, there is no such entry, so None would be
+           returned.
+    Entries will be added to 'new_repl_map' for all of the replacements
+    of the restricted expansions, using the given assumptions and
+    passing back specific requirements in making this determination.
+    
+    If restrict_map_to_contained_entries is True, just put the
+    "contained" region in the 'new_repl_map' and keep the "contained"
+    region whole (rather than broken into individual entries).  
+    Otherwise, include each individual entry in the map whether it
+    is contained or not.
+    '''
+    from proveit import IndexedVar, ExprTuple, ExprRange
+    valid_var_tuples = set()
+    contained_entries = []
+    full_covering_entry = None
+    for var_tuple in possible_var_tuples:
+        var_tuple_contained_entries = []
+        has_start = has_end = False
+        for entry in var_tuple:
+            if isinstance(entry, IndexedVar):
+                entry_start_indices = entry_end_indices \
+                    = [entry.index]
+            else:
+                assert isinstance(entry, ExprRange)
+                entry_start_indices = entry.start_indices()
+                entry_end_indices = entry.end_indices()
+            if entry_start_indices == start_indices:
+                has_start = True
+            if has_start and not has_end:
+                var_tuple_contained_entries.append(entry)
+            if entry_end_indices == end_indices:
+                has_end = True
+        if has_start and has_end:
+            # Collect "entries" of valid_var_tuples
+            # that are in the "contained" region.
+            print('var_tuple_contained_entries', var_tuple_contained_entries)
+            if len(var_tuple_contained_entries)==1:
+                full_covering_entry = var_tuple_contained_entries[0]
+            contained_entries.extend(var_tuple_contained_entries)
+            valid_var_tuples.add(var_tuple)                
+            expansion = orig_repl_map[var_tuple]
+            # Add inner_repl_map entries for this
+            # var_tuple expansion.  (Masked portions
+            # will be removed nexted if necessary).
+            cur_repl_map = dict()
+            try:
+                extract_param_replacements(
+                        var_tuple, [var]*len(var_tuple), var_tuple, 
+                        expansion, assumptions, requirements, cur_repl_map)
+            except LambdaApplicationError as e:
+                raise ValueError(
+                        "Unable to match the tuple of indexed "
+                        "variables %s to its expansion %s.  "
+                        "Got error %s."
+                        %(var_tuple, expansion, str(e)))    
+            print('var_tuple', var_tuple, 'expansion', expansion,
+                  'cur_repl_map', new_repl_map)
+            if restrict_map_to_contained_entries:
+                new_repl_map[ExprTuple(*var_tuple_contained_entries)] = \
+                    ExprTuple(cur_repl_map[entry] for entry 
+                              in var_tuple_contained_entries)
+            else:
+                new_repl_map[var_tuple] = expansion
+                new_repl_map.update(cur_repl_map)
+    return valid_var_tuples, contained_entries, full_covering_entry
 
 class ParameterCollisionError(Exception):
     def __init__(self, parameters, main_msg):
@@ -1250,7 +1551,7 @@ class LambdaApplicationError(Exception):
         assumption_str = ''
         if len(self.assumptions) > 0:
             assumption_str = ' assuming %s'%str(self.assumptions)
-        return ("Failure to apply %s to %s%s: %s"
+        return ("Failure to apply %s to %s%s:\n%s"
                 %(Lambda._string(self.parameters, self.body), 
                   self.operands, assumption_str, self.extra_msg))
 

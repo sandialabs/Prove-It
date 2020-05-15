@@ -22,10 +22,9 @@ class ExprType(type):
     # These attributes should not be overridden by classes outside
     # of the core.
     protected = ('_generic_version', '_setContext', 
-                 'substituted', 'relabeled',
+                 'replaced', 'relabeled',
                  '_make', '_check_make', '_used_vars',
-                 '_free_vars', '_free_var_const_index_shifts',
-                 '_check_param_occurrences',
+                 '_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_coreInfo',
                  '_subExpressions', '_genericExpr', 
                  '_meaningData', '_meaning_id',
@@ -619,10 +618,10 @@ class Expression(metaclass=ExprType):
         '''
         return iter(())
     
-    def substituted(self, repl_map, allow_relabeling=False,
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def replaced(self, repl_map, allow_relabeling=False,
+                 assumptions=USE_DEFAULTS, requirements=None):
         '''
-        Returns this expression with sub-expressions substituted 
+        Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary 
         which maps Expressions to Expressions.  When used for 
         instantiation, this should specifically map variables,
@@ -640,23 +639,23 @@ class Expression(metaclass=ExprType):
         (x_1, ..., x_n) -> f(x_1, ..., x_n).
         
         'assumptions' and 'requirements' are used when an operator is
-        substituted by a Lambda map that has a range of parameters 
+        replaced by a Lambda map that has a range of parameters 
         (e.g., x_1, ..., x_n) such that the length of the parameters 
         and operands must be proven to be equal.  For more details, 
-        see Operation.substituted, Lambda.apply, and Iter.substituted 
+        see Operation.replaced, Lambda.apply, and Iter.replaced 
         (which is the sequence of calls involved).
         '''
         if len(repl_map)>0 and (self in repl_map):
-            substituted = repl_map[self]
+            replaced = repl_map[self]
         else:
             subbed_sub_exprs = \
-                tuple(sub_expr.substituted(repl_map, allow_relabeling,
+                tuple(sub_expr.replaced(repl_map, allow_relabeling,
                                            assumptions, requirements)
                       for sub_expr in self._subExpressions)
-            substituted = self.__class__._checked_make(
+            replaced = self.__class__._checked_make(
                     self._coreInfo, dict(self._styleData.styles),
                     subbed_sub_exprs)
-        return substituted
+        return replaced
     
     def relabeled(self, relabel_map):
         '''
@@ -677,7 +676,7 @@ class Expression(metaclass=ExprType):
                 raise TypeError("May only relabel Variables/IndexedVars "
                                 "to Variables/IndexedVars; "
                                 "may not relabel to %s"%key)
-        return self.substituted(relabel_map, allow_relabeling=True)
+        return self.replaced(relabel_map, allow_relabeling=True)
     
     
     def copy(self):
@@ -685,7 +684,7 @@ class Expression(metaclass=ExprType):
         Make a copy of the Expression with the same styles.
         '''
         # vacuous substitution makes a copy
-        expr_copy = self.substituted(expr_repl_map=dict()) 
+        expr_copy = self.replaced(expr_repl_map=dict()) 
         return expr_copy
     
     def _used_vars(self):
@@ -696,7 +695,51 @@ class Expression(metaclass=ExprType):
         '''
         return set().union(*[expr._used_vars() for 
                              expr in self._subExpressions])
+
+    def _free_var_ranges(self, exclusions=None):
+        '''
+        Return the dictionary mapping Variables to forms w.r.t. ranges
+        of indices (or solo) in which the variable occurs as free or 
+        not explicitly and completely masked.  Examples of "forms":
+            x
+            x_i
+            x_1, ..., x_n
+            x_{i, 1}, ..., x_{i, n_i}
+            x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
+        For example,
+        (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
+        would report {x_{n+1}} for the x entry but not x_1, ..., x_n.
+        In another example,
+        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
+        would report {x_1, ..., x_k, x_{k+1}, ..., x_{n}} for the x
+        entry because the masking is not "explicit" (obvious).  
         
+        However, if any of the ranges have indices with internally
+        bound variables, they will not be reported as free since
+        part of it is bound.  For example,
+        (k, n) -> [(x_1, ..., x_n) -> 
+                   x_1 + ... + x_k + x_{k+1} + ... + x_{n}]
+        would not report anything.
+        
+        If this Expression is in the exclusion set, or contributes 
+        directly to a form that is in the exclusions set, skip over it.
+        For example, given the expression
+            a*x_{i, 1} + ... + a*x_{i, n_1}
+        if x_{i, 1}, ..., x_{i, n_i} is in the exclusion set,
+        then 'a' will be the only free variable reported.
+        
+        Call externally via the free_var_forms method in expr.py.
+        '''
+        forms_dict = dict()
+        if exclusions is not None and self in exclusions: 
+            return forms_dict # this is excluded
+        for expr in self._subExpressions:
+            for var, forms in \
+                    expr._free_var_ranges(exclusions=exclusions).items():
+                forms_dict.setdefault(var, set()).update(forms)
+        return forms_dict
+    
+    """
     def _free_vars(self, exclusions=frozenset()):
         '''
         Return all of the free Variables of this Expression,
@@ -706,10 +749,11 @@ class Expression(metaclass=ExprType):
         Call externally via the free_vars method in expr.py.
         '''
         if self in exclusions: 
-            return set() # this is excluded
+            return dict() # this is excluded
         return set().union(*[expr._free_vars(exclusions=exclusions) 
                              for expr in self._subExpressions])
-
+    """
+    """
     def _free_var_indices(self):
         '''
         Returns a dictionary that maps indexed variables to
@@ -792,15 +836,20 @@ class Expression(metaclass=ExprType):
                                     end_base, end_shifts)
         print('new Expression results', results)
         return results
+    """
     
-    def _free_indexed_vars(self, range_param):
+    """
+    def _free_indexed_vars(self, range_param=None):
         '''
-        Return all of the free IndexedVars of this Expression with an
+        Return all of the free IndexedVars or ranges of IndexedVars
+        of this Expression with an
         index that is the range_param with a possible constant shift.
         '''
         return set().union(*[expr._free_indexed_vars(range_param) 
-                             for expr in self._subExpressions])
-
+                             for expr in self._subExpressions])    
+    """
+    
+    """
     def _var_index_shifts_in_ranges(self, var, shifts):
         '''
         Given a 'var' (e.g., 'x'), pass back, via the set 'shifts', 
@@ -836,6 +885,7 @@ class Expression(metaclass=ExprType):
             return 
         for sub_expr in self._subExpressions:
             sub_expr._check_param_occurrences(param_var, allowed_forms)
+    """
 
     def safeDummyVar(self):
         from proveit._core_.expression.label.var import safeDummyVar
@@ -1090,6 +1140,51 @@ def used_vars(expr):
     '''
     return expr._used_vars(expr)
 
+def free_var_ranges(expr, exclusions=None):
+    '''
+    Return the dictionary mapping Variables to forms w.r.t. ranges
+    of indices (or solo) in which the variable occurs as free or 
+    not explicitly and completely masked.  Examples of "forms":
+        x
+        x_i
+        x_1, ..., x_n
+        x_{i, 1}, ..., x_{i, n_i}
+        x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
+    For example,
+    (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
+    would report {x_{n+1}} for the x entry but not x_1, ..., x_n.
+    In another example,
+    (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
+    would report {x_1, ..., x_k, x_{k+1}, ..., x_{n}} for the x
+    entry because the masking is not "explicit" and actually depends
+    upon what may be assumed about k.
+    
+    If this Expression is in the exclusion set, or contributes 
+    directly to a form that is in the exclusions set, skip over it.
+    For example, given the expression
+        a*x_{i, 1} + ... + a*x_{i, n_1}
+    if x_{i, 1}, ..., x_{i, n_i} is in the exclusion set,
+    then 'a' will be the only free variable reported.
+    '''
+    return expr._free_var_ranges(exclusions=exclusions)
+
+def free_vars(expr):
+    '''
+    Returns the set of variables that are free, the variable itself
+    or potential indexed ranges of the variable, in the given 
+    expression.
+    For example, given
+        (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
+    x and n are both free.
+    Also, given
+        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
+    x, n, and k are free.  Even though x is technically not free
+    under some assumptions about k, we must error on the side of
+    saying that it is free.
+    '''
+    return set(expr._free_var_ranges().keys())
+
+"""
 def free_vars(expr, exclusions=frozenset()):
     '''
     Return all of the free Variables of this Expression,
@@ -1098,6 +1193,7 @@ def free_vars(expr, exclusions=frozenset()):
     is in the exclusions set, skip over it.
     '''
     return expr._free_vars(exclusions=exclusions)
+"""
 
 def expressionDepth(expr):
     '''
@@ -1114,11 +1210,14 @@ class MakeNotImplemented(NotImplementedError):
     def __str__(self):
         return "make method not implemented for " + str(self.exprSubClass)
 
-class ImproperSubstitution(Exception):
-    def __init__(self, message):
+class ImproperReplacement(Exception):
+    def __init__(self, orig_expr, repl_map, message):
+        self.orig_expr = orig_expr
+        self.repl_map = repl_map
         self.message = message
     def __str__(self):
-        return self.message
+        return ("Improper replacement of %s via %s: %s"
+                %(self.orig_expr, self.repl_map, self.message))
 
 class DisallowedIndexing(Exception):
     def __init__(self, var, action, start1_base, end1_base, 

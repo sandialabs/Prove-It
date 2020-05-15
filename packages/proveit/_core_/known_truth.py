@@ -741,6 +741,8 @@ class KnownTruth:
         from proveit import (Variable, Operation, Conditional, Lambda, 
                              singleOrCompositeExpression, 
                              ExprTuple, ExprRange, IndexedVar)
+        from proveit._core_.expression.lambda_expr.lambda_expr import \
+            getParamVar
         from proveit.logic import Forall
         from .proof import Instantiation, ProofFailure
         
@@ -780,12 +782,29 @@ class KnownTruth:
             '''
             if isinstance(key, Variable) or isinstance(key, IndexedVar):
                 processed_repl_map[key] = replacement
-            elif (isinstance(key, ExprTuple) and len(key)==1 
-                  and isinstance(key[0], ExprRange) 
-                  and isinstance(key[0].body, IndexedVar)):
-                # Replacement key of the form (x_i, ..., x_j)
-                # which is valid for replacing a range of variables.
+            elif isinstance(key, ExprTuple) and len(key)>0:
+                if len(key)==1:
+                  if not (isinstance(key[0], ExprRange) 
+                          and isinstance(key[0].body, IndexedVar)):
+                    raise TypeError("%s is not the expected kind of "
+                                    "Expression as a repl_map key.  An "
+                                    "ExprTuple with one entry is expected "
+                                    "to contain an ExprRange of IndexedVars."
+                                    %key)
+                    # Replacement key of the form (x_i, ..., x_j)
+                    # which is valid for replacing a range of variables.
+                else:
+                    assert len(key)>1
+                    # An "alternative equivalent expansion" of
+                    # some (x_i, ..., x_j).  For example,
+                    # (x_i, x_{i+1}, ..., x_j).
+                # Add an entry for the replacement, and, for the
+                # variable itself (e.g. 'x'), map it to a set containing all
+                # of the expansions. For example,
+                # x : {(x_i, ..., x_j), (x_i, x_{i+1}, ..., x_j)}
                 processed_repl_map[key] = replacement
+                key_var = getParamVar(key[0])
+                processed_repl_map.setdefault(key_var, set()).add(key)
             elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
                 operation = key
                 repl_var = operation.operator
@@ -799,11 +818,17 @@ class KnownTruth:
                                 "containing a single iterated IndexedVar "
                                 "like (x_i, ..., x_j)."%key)
         
+        def get_repl_var(repl_key):
+            if isinstance(repl_key, ExprTuple):
+                return getParamVar(repl_key.entries[0])
+            return getParamVar(repl_key)
+        
         # Determine the number of Forall eliminations.  
         # The number is determined by the instance variables that occur as 
         # keys in repl_map.
         expr = self.expr
-        remaining_repl_vars = set(processed_repl_map.keys())
+        remaining_repl_vars = \
+            {get_repl_var(repl_key) for repl_key in processed_repl_map.keys()}
         forall_depth = 0
         num_forall_eliminations = 0
         while len(remaining_repl_vars) > 0:
@@ -813,23 +838,23 @@ class KnownTruth:
             lambda_expr = expr.operand
             assert isinstance(lambda_expr, Lambda), ("Forall Operation operand "
                                                      "must be a Lambda function")
-            instance_vars, expr  = lambda_expr.parameterVars, lambda_expr.body
+            instance_param_vars = lambda_expr.parameterVars
+            expr = lambda_expr.body
             if isinstance(expr, Conditional):
                 # Skip over the "conditions" of the Forall expression.
                 expr = expr.value
             forall_depth += 1
-            for ivar in instance_vars:
-                if ivar in remaining_repl_vars:
-                    # Remove this instance variable from the remaining 
-                    # variables to replace.
-                    remaining_repl_vars.remove(ivar)
+            for iparam_var in instance_param_vars:
+                if iparam_var in remaining_repl_vars:
+                    # Remove this instance parameter variable from the 
+                    # remaining variables to replace.
+                    remaining_repl_vars.remove(iparam_var)
                     # Eliminate to this depth at least since there is
                     # a replacement map for the instance variable:
                     num_forall_eliminations = forall_depth
-                elif ivar not in processed_repl_map:
+                else:
                     # default is to map instance variables to themselves
-                    processed_repl_map[ivar] = ivar
-        
+                    processed_repl_map[iparam_var] = iparam_var
         return self._checkedTruth(
                 Instantiation(self, num_forall_eliminations=num_forall_eliminations, 
                               repl_map=processed_repl_map, assumptions=assumptions))
@@ -956,6 +981,8 @@ class KnownTruth:
         expr.ipynb notebooks for displaying the expression information.
         '''
         from proveit.logic import Set
+        if not defaults.display_latex:
+            return None # No LaTeX display at this time.
         if not self.isUsable(): self.raiseUnusableProof()
         html = ''
         proof = self.proof()
