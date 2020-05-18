@@ -10,23 +10,15 @@ class Defaults:
         self.assumptions = tuple()
         self.automation = True
         
-        # Reduction flags to determine whether or not certain
-        # reductions should be performed while performing substitutions.
+        # Display LaTeX versions of expressions.
+        self.display_latex = True
         
-        # e.g., (a, b_1, ... b_0, c) -> (a, c)
-        self.reduce_empty_ranges = True
-
-        # e.g., (a, b_1, ... b_1, c) -> (a, b_1, c)
-        self.reduce_singular_ranges = True
-        
-        # e.g., {x if And[y]. -> {x if y.
-        self.reduce_conditionals_with_singular_conditions = True
-
-        # e.g., {x if And[]. -> x
-        self.reduce_conditionals_with_no_conditions = True
-
-        # e.g., {x if TRUE. -> x
-        self.reduce_conditionals_with_true_condition = True
+        # Automatic reductions may be applied to expressions that
+        # have an "auto_reduction" method if 'auto_reduce' is True
+        # and the Expression class is not in 
+        # 'disabled_auto_reduction_types'.
+        self.auto_reduce = True
+        self.disabled_auto_reduction_types = set()
         
         Defaults.consideredAssumptionSets.clear()
     

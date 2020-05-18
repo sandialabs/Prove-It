@@ -122,8 +122,19 @@ class Conditional(Expression):
         raise EvaluationError(self, assumptions)
     '''
     
-    def replaced(self, repl_map, allow_relabeling=False,
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def auto_reduction(self, assumptions=USE_DEFAULTS):
+        '''
+        Automatically reduce a conditional with a TRUE condition.
+        '''
+        from proveit._common_ import a
+        from proveit.logic import TRUE
+        if self.condition == TRUE:
+            from proveit.core_expr_types.conditionals._axioms_ import \
+                true_condition_reduction
+            return true_condition_reduction.instantiate({a:self.value})
+    
+    def _replaced(self, repl_map, allow_relabeling=False,
+                  assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary.
@@ -137,14 +148,9 @@ class Conditional(Expression):
         For a Conditional, the 'condition' is added to the assumptions 
         when 'replaced' is called on the 'value'.
         '''
-        from proveit import ExprRange
-        from proveit._common_ import a, b
-        from proveit.logic import And, TRUE
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be replaced.
             return repl_map[self]
-        
-        if requirements is None: requirements = []
         
         value = self.value
         condition = self.condition        
@@ -157,61 +163,8 @@ class Conditional(Expression):
         # as an assumption.            
         assumptions = defaults.checkedAssumptions(assumptions)
         subbed_val = value.replaced(repl_map, allow_relabeling,
-                                       assumptions+(subbed_cond,),
-                                       requirements)
+                                    assumptions+(subbed_cond,),
+                                    requirements)
 
-        replaced = Conditional(subbed_val, subbed_cond)
-
-        reduction = None
-
-        if defaults.reduce_conditionals_with_no_conditions and \
-                isinstance(subbed_cond, And) and len(subbed_cond.operands)==0:
-            # Automatically reduce a conditional with no conditions
-            # (just an empty conjunction which evaluates to True)
-            # to just the replaced value.
-            from proveit.core_expr_types.conditionals._theorems_ import \
-                no_condition_reduction
-            try:
-                defaults.reduce_conditionals_with_no_conditions = False
-                reduction = no_condition_reduction.instantiate({a:subbed_val})
-            finally:
-                defaults.reduce_conditionals_with_no_conditions = True
-        elif defaults.reduce_conditionals_with_true_condition and \
-                subbed_cond == TRUE:
-            # Automatically reduce a conditional with a TRUE
-            # condition to just the replaced value.
-            from proveit.core_expr_types.conditionals._axioms_ import \
-                true_condition_reduction
-            try:
-                defaults.reduce_conditionals_with_true_condition = False
-                reduction = true_condition_reduction.instantiate({a:subbed_val})
-            finally:
-                defaults.reduce_conditionals_with_true_condition = True
-        elif defaults.reduce_conditionals_with_singular_conditions and \
-                isinstance(subbed_cond, And) and len(subbed_cond.operands)==1 \
-                and not isinstance(subbed_cond.operands[0], ExprRange):
-            try:
-                from proveit.core_expr_types.conditionals._theorems_ import \
-                    single_condition_reduction
-                defaults.reduce_conditionals_with_singular_conditions = False
-                reduction = single_condition_reduction.instantiate(
-                        {a:subbed_val, b:subbed_cond.operands[0]})
-            except ImportError:
-                # Avoids an error while building 
-                # 'single_condition_reduction' itself.
-                pass
-            finally:
-                defaults.reduce_conditionals_with_singular_conditions = True
-
-
-        if reduction is not None:
-            from proveit import KnownTruth
-            from proveit.logic import Equals
-            assert(isinstance(reduction, KnownTruth))
-            assert(isinstance(reduction.expr, Equals))
-            assert(reduction.expr.lhs == replaced)
-            requirements.append(reduction)
-            return reduction.expr.rhs
-        
-        return replaced        
+        return Conditional(subbed_val, subbed_cond)
 

@@ -192,15 +192,22 @@ class ExprTuple(Composite, Expression):
         if do_wrapping and formatType=='latex': 
             outStr += r'\begin{array}{%s} '%justification[0]
         
-        ellipsis = r'\ldots' if formatType=='latex' else '...'
-        
         formatted_sub_expressions = []
+        # Track whether or not ExprRange operands are using
+        # "explicit" parameterization, becuase the operators must
+        # follow suit.
+        using_explicit_parameterization = []
         for sub_expr in self:
             if isinstance(sub_expr, ExprRange):
-                # When ranges are nested, double-up (or triple-up, etc)
-                # the ellipsis to make the nested structure clear.
-                ellipses = ellipsis*sub_expr.nested_range_depth()
-                formatted_sub_expressions += [sub_expr.first().formatted(formatType, fence=subFence), ellipses, sub_expr.last().formatted(formatType, fence=subFence)]
+                # Handle an ExprRange entry; here the "sub-expressions"
+                # are really ExprRange "checkpoints" (first, last, as
+                # well as the ExprRange body in the middle if using
+                # an 'explicit' style for 'parameterization) as well as
+                # ellipses between the checkpoints..
+                using_explicit_parameterization.append(
+                        sub_expr._use_explicit_parameterization(formatType))
+                formatted_sub_expressions += sub_expr._formatted_checkpoints(
+                        formatType, fence=subFence, with_ellipses=True)
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists                
                 formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=True))
@@ -228,7 +235,16 @@ class ExprTuple(Composite, Expression):
             formatted_operators = []
             for operator in operatorOrOperators:
                 if isinstance(operator, ExprRange):
-                    formatted_operators += [operator.first().formatted(formatType), '', operator.last().formatted(formatType)]
+                    # Handle an ExprRange entry; here the "operators"
+                    # are really ExprRange "checkpoints" (first, last, 
+                    # as well as the ExprRange body in the middle if 
+                    # using an 'explicit' style for 'parameterization).
+                    # For the 'ellipses', we will just use a 
+                    # placeholder.
+                    be_explicit = using_explicit_parameterization.pop(0)
+                    formatted_operators += operator._formatted_checkpoints(
+                        formatType, fence=subFence, ellipses='',
+                        use_explicit_parameterization=be_explicit)
                 else:
                     formatted_operators.append(operator.formatted(formatType))
             if len(formatted_sub_expressions) == len(formatted_operators):
@@ -282,8 +298,8 @@ class ExprTuple(Composite, Expression):
                     return False # end indices don't match
         return True # everything matches.
             
-    def replaced(self, repl_map, allow_relabeling=False,
-                 assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling=False,
+                  assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary.
@@ -305,14 +321,14 @@ class ExprTuple(Composite, Expression):
             return repl_map[self]
         
         subbed_exprs = []
-        for expr in self:
+        for expr in self.entries:
             if isinstance(expr, ExprRange):
                 # ExprRange.replaced is a generator that yields items
                 # to be embedded into the tuple.
                 subbed_exprs.extend(expr._replaced_entries(
                         repl_map, allow_relabeling, assumptions, requirements))
             else:
-                subbed_expr = expr.replaced(repl_map, allow_relabeling,
+                subbed_expr = expr.replaced(repl_map, allow_relabeling, 
                                             assumptions, requirements)
                 subbed_exprs.append(subbed_expr)
         return ExprTuple(*subbed_exprs)
@@ -416,6 +432,39 @@ class ExprTuple(Composite, Expression):
             eq.update(front_merger.substitution(self.innerExpr()[:2], 
                                                 assumptions=assumptions))
     
+    def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
+                       minimal_automation=False):
+        from proveit import ExprRange
+        from proveit.logic import Equals
+        if not isinstance(equality, Equals):
+            raise ValueError("The 'equality' should be an Equals expression")        
+        if equality.lhs != self:
+            raise ValueError("The left side of 'equality' should be 'self'")
+
+        from proveit.number import num, one
+        
+        # Handle the special counting cases.  For example,
+        #   (1, 2, 3, 4) = (1, ..., 4)
+        _n = len(self)
+        if all(self[_k] == num(_k+1) for _k in range(_n)):
+            if (isinstance(equality.rhs, ExprTuple)
+                    and len(equality.rhs)==1 
+                    and isinstance(equality.rhs[0], ExprRange)):
+                expr_range = equality.rhs[0]
+                if (expr_range.start_index == one and
+                        expr_range.end_index == num(_n)):
+                    if len(self) >= 10:
+                        raise NotImplementedError("counting range equality "
+                                                  "not implemented for more "
+                                                  "then 10 elements")
+                    import proveit.number.numeral.deci
+                    equiv_thm = proveit.number.numeral.deci._theorems_\
+                                .__getattr__('count_to_%d_range'%_n)
+                    return equiv_thm
+        raise NotImplementedError("ExprTuple.deduceEquality not implemented "
+                                  "for this case: %s."%self)
+        
+        
     """
     TODO: change register_equivalence_method to allow and fascilitate these
     method stubs for purposes of generating useful documentation.

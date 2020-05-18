@@ -22,8 +22,8 @@ class ExprType(type):
     # These attributes should not be overridden by classes outside
     # of the core.
     protected = ('_generic_version', '_setContext', 
-                 'replaced', 'relabeled',
-                 '_make', '_check_make', '_used_vars',
+                 'replaced', '_replaced', '_replaced_entries', 'relabeled',
+                 '_make', '_checked_make', '_auto_reduced', '_used_vars',
                  '_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_coreInfo',
                  '_subExpressions', '_genericExpr', 
@@ -291,6 +291,36 @@ class Expression(metaclass=ExprType):
             raise Exception("Attempting to alter read-only value '%s'"%attr)
         self.__dict__[attr] = value
     
+    def __getattribute__(self, name):
+        '''
+        Intercept the application of 'auto_reduction', not executing
+        it if the reduction is disabled for its particular type, and
+        temporarily disabling it during the execution to avoid
+        infinite recursion
+        '''
+        attr = object.__getattribute__(self, name)
+        if name=='auto_reduction':
+            # The class where the "auto_reduction" method is actually
+            # defined (which may be different than self.__class__ and
+            # is more appropriate):
+            attr_self_class = attr.__self__.__class__
+            if (attr_self_class
+                    in defaults.disabled_auto_reduction_types):
+                # This specific auto reduction is disabled, so skip it.
+                return lambda expr, assumptions : None
+            def safe_auto_reduction(assumptions=USE_DEFAULTS):
+                try:
+                    # The specific auto reduction must be disabled
+                    # to avoid infinite recursion.
+                    defaults.disabled_auto_reduction_types.add(attr_self_class)
+                    return attr.__call__(assumptions=assumptions)
+                finally:
+                    # Re-enable the reduction.
+                    defaults.disabled_auto_reduction_types.remove(
+                            attr_self_class)
+            return safe_auto_reduction
+        return attr
+
     def __repr__(self):
         return str(self) # just use the string representation
     
@@ -364,6 +394,30 @@ class Expression(metaclass=ExprType):
                 "%s vs %s"%(made._subExpressions, subExpressions))
         return made
     
+    
+    def _auto_reduced(self, assumptions, requirements):
+        if defaults.auto_reduce and hasattr(self, 'auto_reduction'):
+            from proveit import KnownTruth
+            from proveit.logic import Equals
+            reduction = self.auto_reduction(assumptions=assumptions)
+            if reduction is not None:
+                if not isinstance(reduction, KnownTruth):
+                    raise TypeError("'auto_reduction' must return a "
+                                    "proven equality as a KnownTruth.")
+                if not isinstance(reduction.expr, Equals):
+                    raise TypeError("'auto_reduction' must return a "
+                                    "proven equality.")
+                if reduction.expr.lhs != Equals:
+                    raise TypeError("'auto_reduction' must return a "
+                                    "proven equality with 'self' on the "
+                                    "left side.")
+                # TODO: MUST INDICATE THAT THIS REQUIREMENT IS A
+                # REDUCTION SO IT IS EASY TO VERIFY CORRECTNESS OF
+                # AN INSTANTIATION.
+                requirements.append(reduction)
+                return reduction.expr.rhs
+        return self # No reduction, just return 'self'.
+    
     def coreInfo(self):
         '''
         Copy out the core information.
@@ -411,6 +465,20 @@ class Expression(metaclass=ExprType):
         styles = dict(self._styleData.styles)
         # update the _styles, _style_rep, and _style_id
         styles.update(kwargs)
+        if styles == self._styleData.styles:
+            return self # no change in styles, so just use the original
+        self._styleData.updateStyles(self, styles)
+        return self
+
+    def withoutStyle(self, name):
+        '''
+        Remove one of the styles from the styles dictionary for this
+        expression.  Sometimes you want to remove a style and use
+        default behavior (which is allowed to be different for string 
+        and LaTeX formatting).
+        '''
+        styles = dict(self._styleData.styles)
+        styles.remove(name)
         if styles == self._styleData.styles:
             return self # no change in styles, so just use the original
         self._styleData.updateStyles(self, styles)
@@ -644,6 +712,22 @@ class Expression(metaclass=ExprType):
         and operands must be proven to be equal.  For more details, 
         see Operation.replaced, Lambda.apply, and Iter.replaced 
         (which is the sequence of calls involved).
+        
+        Also applies any enabled automatic reductions.
+        '''
+        if requirements is None: 
+            requirements = [] # Not passing back requirements.
+        return self._replaced(repl_map, allow_relabeling=allow_relabeling,
+                             assumptions=assumptions, 
+                             requirements=requirements)._auto_reduced(
+                                     assumptions=assumptions,
+                                     requirements=requirements)
+    
+    def _replaced(self, repl_map, allow_relabeling=False,
+                 assumptions=USE_DEFAULTS, requirements=None):
+        '''
+        Implementation for Expression.replaced except for the
+        final automatic reduction (if applicalbe).
         '''
         if len(repl_map)>0 and (self in repl_map):
             replaced = repl_map[self]
@@ -739,154 +823,6 @@ class Expression(metaclass=ExprType):
                 forms_dict.setdefault(var, set()).update(forms)
         return forms_dict
     
-    """
-    def _free_vars(self, exclusions=frozenset()):
-        '''
-        Return all of the free Variables of this Expression,
-        included those in sub-expressions but excluding those with 
-        internal bindings within Lambda expressions.  If this Expression
-        is in the exclusions set, skip over it.
-        Call externally via the free_vars method in expr.py.
-        '''
-        if self in exclusions: 
-            return dict() # this is excluded
-        return set().union(*[expr._free_vars(exclusions=exclusions) 
-                             for expr in self._subExpressions])
-    """
-    """
-    def _free_var_indices(self):
-        '''
-        Returns a dictionary that maps indexed variables to
-        a tuple with (start_base, start_shifts, end_base, end_shifts)
-        indicating the indices for which an indexed variable is free.
-        The start_shifts and end_shifts are constant integers.
-        The included indices are each start_base + start_shift,
-        each end_base + end_shift plus the range going from
-        start_base + max(start_shifts) .. end_base + min(end_shifts).
-        '''
-        results = dict()
-        for expr in self._subExpressions:
-            sub_expr_results = expr._free_var_indices()
-            print('expr', expr, 'sub_expr_results', sub_expr_results)
-            for var, (start_base, start_shifts, end_base, end_shifts) \
-                    in sub_expr_results.items():
-                if var in results:
-                    (prev_start_base, prev_start_shifts, 
-                     prev_end_base, prev_end_shifts) = results[var]
-                    new_start_base, new_start_shifts = None, set()
-                    new_end_base, new_end_shifts = None, set()
-                    if start_base == prev_start_base:
-                        # Matching start bases; union the shifts.
-                        new_start_base = start_base
-                        new_start_shifts = \
-                            prev_start_shifts.union(start_shifts)
-                    if end_base == prev_end_base:
-                        # Matching end bases; union the shifts
-                        new_end_base = end_base
-                        new_end_shifts = \
-                            prev_end_shifts.union(end_shifts)                    
-                    if new_start_base is None and new_end_base is None:
-                        raise DisallowedIndexing(
-                                var, 'join', prev_start_base, prev_end_base, 
-                                start_base, end_base)
-                    elif new_start_base is None or new_end_base is None:
-                        # Only one side matches (start or end).
-                        # This is only allowed if one of them has a
-                        # start and end with the same base.
-                        if start_base == end_base:
-                            # The new range is the one with the same
-                            # base, so the previous one determines the 
-                            # unknown endpoint.
-                            if new_start_base is None: 
-                                new_start_base = prev_start_base
-                                new_start_shifts = prev_start_shifts
-                            if new_end_base is None: 
-                                new_end_base = prev_end_base
-                                new_end_shifts = prev_end_shifts
-                        elif prev_start_base == prev_end_base:
-                            # The previous range is the one with the 
-                            # same base, so the previous one determines 
-                            # the unknown endpoint.
-                            if new_start_base is None: 
-                                new_start_base = start_base
-                                new_start_shifts = start_shifts
-                            if new_end_base is None: 
-                                new_end_base = end_base
-                                new_end_shifts = end_shifts
-                        else:
-                            raise DisallowedIndexing(
-                                    var, 'join', prev_start_base, 
-                                    prev_end_base, start_base, end_base)
-                    if new_start_base != new_end_base:
-                        # Remove unnecessary shifts that are covered
-                        # in new_start_base + max(new_start_shifts) .. 
-                        #    new_end_base + min(new_end_shifts)
-                        # (assuming none of the starts come after the
-                        # ends which is reasonable to assume for these
-                        # purposes; if not, the error will come when
-                        # trying to do an instantiation).
-                        while max(new_start_shifts)-1 in new_start_shifts:
-                            new_start_shifts.remove(max(new_start_shifts))
-                        while min(new_end_shifts)+1 in new_end_shifts:
-                            new_end_shifts.remove(max(new_end_shifts))
-                    results[var] = (new_start_base, new_start_shifts, 
-                                    new_end_base, new_end_shifts)
-                else:
-                    results[var] = (start_base, start_shifts, 
-                                    end_base, end_shifts)
-        print('new Expression results', results)
-        return results
-    """
-    
-    """
-    def _free_indexed_vars(self, range_param=None):
-        '''
-        Return all of the free IndexedVars or ranges of IndexedVars
-        of this Expression with an
-        index that is the range_param with a possible constant shift.
-        '''
-        return set().union(*[expr._free_indexed_vars(range_param) 
-                             for expr in self._subExpressions])    
-    """
-    
-    """
-    def _var_index_shifts_in_ranges(self, var, shifts):
-        '''
-        Given a 'var' (e.g., 'x'), pass back, via the set 'shifts', 
-        all of the constant index shifts to the ExprRange parameter
-        that occur within ExprRanges (e.g., 'x_{1+1}, ..., x_{n+1}' 
-        would have presumably have a shift of 1).
-        '''
-        for sub_expr in self._subExpressions:
-            sub_expr._var_index_shifts_in_ranges(var, shifts)
-
-    def _indexed_var_shifts(self, var, range_param, shifts):
-        '''
-        Given a 'var' (e.g., 'x') and 'range_param' (e.g., 'k'), pass 
-        back, via the set 'shifts', all of the constant integer shifts
-        to the 'range_param' of the index on the 'var' (e.g., 
-        'x_{k+1}' would have a shift of 1).  This is a helper method
-        for Expression._var_index_shifts_in_ranges.
-        '''
-        for sub_expr in self._subExpressions:
-            sub_expr._var_index_shifts_in_ranges(var, shifts)
-    
-    def _check_param_occurrences(self, param_var, allowed_forms):
-        '''
-        When a Lambda expression introduces a variable in a new scope
-        with a parameter entry that is an IndexedVar or a range
-        of IndexedVars, its occurrences must all match that
-        index or range exactly.  Raise a ValueError if the check fails.
-        This restriction intended to strike a 
-        balance between simplicity and versatility.
-        '''
-        if self in allowed_forms:
-            # This branch is okay if it matches a valid occurence.
-            return 
-        for sub_expr in self._subExpressions:
-            sub_expr._check_param_occurrences(param_var, allowed_forms)
-    """
-
     def safeDummyVar(self):
         from proveit._core_.expression.label.var import safeDummyVar
         return safeDummyVar(self)
@@ -1216,43 +1152,8 @@ class ImproperReplacement(Exception):
         self.repl_map = repl_map
         self.message = message
     def __str__(self):
-        return ("Improper replacement of %s via %s: %s"
+        return ("Improper replacement of %s via %s:\n%s"
                 %(self.orig_expr, self.repl_map, self.message))
-
-class DisallowedIndexing(Exception):
-    def __init__(self, var, action, start1_base, end1_base, 
-                 start2_base=None, end2_base=None,
-                 range_parameter=None):
-        self.var = var
-        self.action = action
-        self.start1_base = start1_base
-        self.end1_base = end1_base
-        self.start2_base = start2_base
-        self.end2_base = end2_base
-        self.range_parameter=None
-    def __str__(self):
-        if self.action=='join':
-            preposition = 'with'
-        elif self.action=='eliminate':
-            preposition = 'from'
-        elif self.action=='range':
-            return ("To keep the ranges of indices of IndexedVar's clear "
-                    "and simple, IndexedVar's within am ExprRange that "
-                    "are parameterized by the range parameter must use "
-                    "simple constant shifts relative to the range parameter."
-                    "For %s, this is violated for indices around %s..%s "
-                    "over the range parameter %s."
-                    %(self.var, self.action, self.start1_base, self.end1_base, 
-                      self.range_parameter))
-        else:
-            raise ValueError("Not a valid action: %s"%self.action)
-        return ("To keep the ranges of indices of IndexedVar's clear "
-                "and simple, different ranges may only have constant "
-                "shifts with respect to each other.  For %s, this is "
-                "violated when attempting to %s a range around %s..%s "
-                "%s a range around %s..%s"
-                %(self.var, self.action, self.start1_base, self.end1_base, 
-                  preposition, self.start2_base, self.end2_base))
 
 class _NoExpandedIteration(Exception):
     '''

@@ -1,5 +1,5 @@
 from .expr import (Expression, used_vars, free_var_ranges, free_vars,
-                   expressionDepth, DisallowedIndexing, MakeNotImplemented, 
+                   expressionDepth, MakeNotImplemented, 
                    ImproperReplacement)
 from .style_options import StyleOptions
 from .inner_expr import InnerExpr
@@ -17,7 +17,7 @@ from .composite import (
         ExprArray, NamedExprs, ExprRange,
         varRange, RangeInstanceError)
 from .label import (Label, Literal, Variable, DuplicateLiteralError, 
-                    safeDummyVar, safeDefaultOrDummyVar)
+                    safeDummyVar, safeDummyVars, safeDefaultOrDummyVar)
 
 InnerExpr.register_equivalence_method(ExprRange, 'partition', 'partitioned', 'split')
 InnerExpr.register_equivalence_method(ExprTuple, 'merger', 'merged', 'merge')

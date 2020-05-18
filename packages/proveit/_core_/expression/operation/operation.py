@@ -405,8 +405,8 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def replaced(self, repl_map, allow_relabeling=False,
-                 assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling=False,
+                  assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
@@ -497,7 +497,7 @@ class Operation(Expression):
         # operands
         if len(subbed_operators)==1:
             # If it is a single operator that is a literal operator of 
-            # an Operation class  defined via an "_operator_" class 
+            # an Operation class defined via an "_operator_" class 
             # attribute, then create the Operation of that class.
             operator = subbed_operators[0]
             if operator in Operation.operationClassOfOperator:
@@ -510,13 +510,14 @@ class Operation(Expression):
                     substituted = op_class._checked_make(
                             ['Operation'], styles=None, 
                             subExpressions=subbed_sub_exprs)
-                    return substituted
+                    return substituted.replaced(assumptions, 
+                                                requirements)
         
         subbed_sub_exprs = (subbed_operator_or_operators, 
                             subbed_operand_or_operands)
         substituted = self.__class__._checked_make(
                 self._coreInfo, self.getStyles(), subbed_sub_exprs)
-        return substituted
+        return substituted._auto_reduced(assumptions, requirements)
 
         
     

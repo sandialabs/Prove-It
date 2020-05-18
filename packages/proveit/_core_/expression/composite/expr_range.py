@@ -1,6 +1,6 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
-                                            ImproperReplacement, 
-                                            DisallowedIndexing)
+                                            ImproperReplacement)
+from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
 from proveit._core_.expression.composite import singularExpression, ExprTuple
 from proveit._core_.expression.conditional import Conditional
@@ -28,8 +28,8 @@ class ExprRange(Expression):
     represents multiple elements.
     '''
 
-    def __init__(self, parameter, body, start_index, end_index, 
-                 lambda_map=None):
+    def __init__(self, parameter, body, start_index, end_index, *,
+                 parameterization=None, lambda_map=None):
         '''
         Create an ExprRange that represents a range of expressions
         to be embedded within an ExprTuple.  Each element of the
@@ -39,6 +39,12 @@ class ExprRange(Expression):
         A Lambda expression will be created as its first sub-expression.
         The start and end indices with be the second and third
         sub-expressions.
+        
+        The 'parameterization' sets the style for formatting the
+        ExprRange.  The default is "implicit" for LaTeX formatting
+        but "explicit" for string formatting.  Since string formatting
+        is most often used for error messages, it is useful to have
+        the full "explicit" version.
         
         The lambda_map may be used instead of supplying the parameter 
         and body, in which case the 'parameter' and 'body' arguments
@@ -54,9 +60,15 @@ class ExprRange(Expression):
             parameter = lambda_map.parameter
         else:
             lambda_map = Lambda(parameter, body)
+        if parameterization not in (None, 'implicit', 'explicit'):
+            raise ValueError("'parameterization' must be 'implicit', "
+                             "'explicit', or None; not %s"%parameterization)
+        styles = ({'parameterization':parameterization} if
+                  parameterization is not None else dict())
         
         Expression.__init__(self, ['ExprRange'], 
-                            [lambda_map, start_index, end_index])
+                            [lambda_map, start_index, end_index],
+                            styles=styles)
         self.start_index = singularExpression(start_index)
         self.end_index = singularExpression(end_index)
         self.lambda_map = lambda_map
@@ -88,6 +100,47 @@ class ExprRange(Expression):
         yield self.lambda_map.body
         yield self.start_index
         yield self.end_index
+
+    def styleOptions(self):
+        options = StyleOptions(self)
+        options.addOption(
+                'parameterization', 
+                ("'implicit' (default for LaTeX formatting) hides "
+                 "the parameter the ExprRange so the parameterization "
+                 "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
+                 "'explicit' (default for string formatting) reveals "
+                 "the parameterization "
+                 "(e.g. x_{1+1}, ..., x_{k+1}, ..., x_{n+1})."))
+        return options
+    
+    def withExplicitParameterization(self):
+        '''
+        The 'parameterization':'explicit' style shows the 
+        parameterization of the ExprRange explicitly.  For example,
+        x_{1+1}, ..., x_{k+1}, ..., x_{n+1}).
+        '''
+        self.withStyles({'parameterization':'explicit'})
+
+    def withImplicitParameterization(self):
+        '''
+        The 'parameterization':'implicit' style does not show the
+        parameterization of the ExprRange explicitly and such that the
+        parameterization may be ambiguous but is more compact.  
+        For example, x_{1+1}, ..., x_{n+1} could be
+        x_{1+1}, ..., x_{k+1}, ... x_{n+1}
+        or could be
+        x_{1+1}, ..., x_{k}, ... x_{n+1}.
+        '''
+        self.withStyles({'parameterization':'implicit'})
+
+    def withDefaultParameterizationStyle(self):
+        '''
+        The default is to use an 'implicit' parameterization for
+        string formatting (see 'withImplicitParameterization') and
+        and 'explicit' parameterization for LaTeX formatting
+        (see 'withExplicitParameterization').
+        '''
+        self.withoutStyle('parameterization')
         
     def first(self):
         '''
@@ -109,44 +162,6 @@ class ExprRange(Expression):
             self._last = self.body.replaced(expr_map)
         return self._last
     
-    def start_indices(self):
-        '''
-        Return a list of starting indices, one for each nested
-        ExprRange.  For example,
-            (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
-             x_{n, i_{n}}, ..., x_{n, j_{n}}).
-        has start indices (m, i_m).      
-        '''
-        indices = []
-        expr = self
-        repl_map = dict()
-        while isinstance(expr, ExprRange):
-            start_index = expr.start_index
-            subbed_index = start_index.replaced(repl_map)
-            indices.append(subbed_index)
-            repl_map[self.parameter] = subbed_index
-            expr = expr.body
-        return indices
-    
-    def end_indices(self):
-        '''
-        Return a list of ending indices, one for each nested
-        ExprRange.  For example,
-            (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
-             x_{n, i_{n}}, ..., x_{n, j_{n}}).
-        has end indices (n, j_n).      
-        '''
-        indices = []
-        expr = self
-        repl_map = dict()
-        while isinstance(expr, ExprRange):
-            end_index = expr.end_index
-            subbed_index = end_index.replaced(repl_map)
-            indices.append(subbed_index)
-            repl_map[self.parameter] = subbed_index
-            expr = expr.body
-        return indices
-    
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -166,6 +181,42 @@ class ExprRange(Expression):
             depth += 1
             expr = expr.body
         return depth
+    
+    def _use_explicit_parameterization(self, formatType):
+        '''
+        Return True iff explicit parameterization should be used
+        for the given format type given the 'style' settings.
+        The default using 'explicit' for 'string' format and 'implicit'
+        for 'latex' format.
+        '''
+        default_style = ("explicit" if formatType=='string' else 'implicit')
+        if self.getStyle("parameterization", default_style) == "explicit":
+            return True
+        return False
+    
+    def _formatted_checkpoints(self, formatType, *, 
+                               use_explicit_parameterization=None,
+                               ellipses=None, **kwargs):
+        if use_explicit_parameterization is None:
+            use_explicit_parameterization = (
+                    self._use_explicit_parameterization(formatType))
+        if use_explicit_parameterization:
+            check_points = (self.first(), self.body, self.last())
+        else:
+            check_points = (self.first(), self.last())        
+        formatted_sub_expressions = \
+            [subExpr.formatted(formatType, **kwargs) 
+             for subExpr in check_points]
+        if ellipses is None:
+            ellipsis = ('\ldots' if formatType=='latex' 
+                        else '...')
+            # When ranges are nested, double-up (or triple-up, etc)
+            # the ellipsis to make the nested structure clear.
+            ellipses = ellipsis*self.nested_range_depth()
+        # Insert the ellipses between every other "checkpoint".
+        for _ in range(1, 2*len(check_points)-1, 2):
+            formatted_sub_expressions.insert(_, ellipses)
+        return formatted_sub_expressions
         
     def formatted(self, formatType, fence=False, subFence=True, 
                   operator=None, **kwargs):
@@ -176,16 +227,8 @@ class ExprRange(Expression):
             formatted_operator = operator
         else:
             formatted_operator = operator.formatted(formatType)
-        formatted_sub_expressions = \
-            [subExpr.formatted(formatType, fence=subFence) 
-             for subExpr in (self.first(), self.last())]
-        ellipsis = ('\ldots' if formatType=='latex' 
-                                             else '...')
-        # When ranges are nested, double-up (or triple-up, etc)
-        # the ellipsis to make the nested structure clear.
-        ellipses = ellipsis*self.nested_range_depth()
-        
-        formatted_sub_expressions.insert(1, ellipses)
+        formatted_sub_expressions = self._formatted_checkpoints(
+                formatType, fence=subFence, with_ellipses=True)
         # Normally the range will be wrapped in an ExprTuple and 
         # fencing will be handled externally.  When it isn't, we don't 
         # want to fence it  anyway.
@@ -319,44 +362,52 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
     
-    def _possibly_reduced_range(self, expr_range, assumptions, requirements):
+    def _possibly_reduced_range_entries(self, expr_range, assumptions, requirements):
+        '''
+        Yield the entries corresponding to the given expr_range after
+        the possible reduction.  If there is no reduction, the
+        'expr_range' itself is yielded.
+        Note: this cannot be done via the regular 'auto_reduction' 
+        method because the reductions are of the form of reducing 'self' 
+        wrapped in an ExprTuple rather than 'self' itself.
+        '''
         from proveit import KnownTruth
         from proveit._common_ import f, i, j
         from proveit.logic import Equals
         from proveit.number import Add, one
-        if not defaults.automation:
-            # If automation is off, we won't do any reduction.
+        if (not defaults.auto_reduce 
+                or ExprRange in defaults.disabled_auto_reduction_types):
+            # Auto-reduction for this is disabled.
             yield expr_range
             return
         lambda_map = expr_range.lambda_map
         start_index = expr_range.start_index
         end_index = expr_range.end_index
-        if defaults.reduce_singular_ranges and start_index == end_index:
+        if start_index == end_index:
             # We can do a singular range reduction.
             # Temporarily disable automation to avoid infinite
             # recursion.
             from proveit.core_expr_types.tuples._theorems_ import \
                 singular_range_reduction
-            defaults.automation = False
+            defaults.disabled_auto_reduction_types.add(ExprRange)
             try:
                 reduction = singular_range_reduction.instantiate(
                         {f:lambda_map, i:start_index})
             finally:
                 # Re-enable automation.
-                defaults.automation = True
-        elif (defaults.reduce_empty_ranges and 
-              Equals(Add(end_index, one), start_index).proven(assumptions)):
+                defaults.disabled_auto_reduction_types.remove(ExprRange)
+        elif Equals(Add(end_index, one), start_index).proven(assumptions):
             # We can do an empty range reduction
             # Temporarily disable automation to avoid infinite
             # recursion.
             from proveit.core_expr_types.tuples._axioms_ import empty_range_def
-            defaults.automation = False
+            defaults.disabled_auto_reduction_types.add(ExprRange)
             try:
                 reduction = empty_range_def.instantiate(
                         {f:lambda_map, i:start_index, j:end_index})
             finally:
                 # Re-enable automation.
-                defaults.automation = True                
+                defaults.disabled_auto_reduction_types.remove(ExprRange)               
         else:
             yield expr_range # no reduction
             return
@@ -425,6 +476,8 @@ class ExprRange(Expression):
         
         See the Lambda.apply documentation for a related discussion.
         '''
+        from proveit._core_.expression.operation.indexed_var import \
+            extract_indices
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             getParamVar
         from proveit.logic import Equals #, InSet
@@ -438,11 +491,6 @@ class ExprRange(Expression):
         new_requirements = []
         lambda_map = self.lambda_map
         orig_parameter = self.parameter
-        
-        subbed_start = self.start_index.replaced(
-                repl_map, allow_relabeling, assumptions, requirements)
-        subbed_end = self.end_index.replaced(
-                repl_map, allow_relabeling, assumptions, requirements)
         
         # Check if any of the IndexedVars whose index is the ExprRange
         # parameter (or a shifted version of this parameter)
@@ -459,16 +507,19 @@ class ExprRange(Expression):
             # No need to worry about expanding IndexedVar's.
             # However, we may perform a reduction of the range
             # if it is known to be empty or singular.
+            subbed_start = self.start_index.replaced(
+                    repl_map, allow_relabeling, assumptions, requirements)
+            subbed_end = self.end_index.replaced(
+                    repl_map, allow_relabeling, assumptions, requirements)
             subbed_lambda_map = lambda_map.replaced(
                     repl_map, allow_relabeling, assumptions, requirements)
             subbed_expr = ExprRange(None, None, subbed_start, subbed_end, 
                                     lambda_map = subbed_lambda_map)
-            for entry in self._possibly_reduced_range(subbed_expr, 
-                                                      assumptions, 
-                                                      requirements):
+            for entry in self._possibly_reduced_range_entries(
+                    subbed_expr, assumptions, requirements):
                 yield entry
             return
-        
+
         # Need to expand IndexedVar's.  The expansions must be defined 
         # over the start/end range and must be aligned with each 
         # other.
@@ -491,7 +542,11 @@ class ExprRange(Expression):
         # expanded and get their expansions.  If they are not all
         # being expanded, turn on the indices_must_match flag.
         expansions_dict = dict() 
-        
+        orig_parameters = extract_parameters(self)
+        subbed_starts = ExprTuple(*extract_start_indices(self)).replaced(
+                repl_map, allow_relabeling, assumptions, requirements)
+        subbed_ends = ExprTuple(*extract_end_indices(self)).replaced(
+                repl_map, allow_relabeling, assumptions, requirements)        
         for indexed_var_or_range in parameterized_var_ranges:
             # indexed_var_range_tuple should be something like 
             # (x_i, ..., x_j)
@@ -510,10 +565,28 @@ class ExprRange(Expression):
                             "(%s is expanded but %s is not)"
                             %(first_expanded_var, indexed_var_or_range.var))
                 continue
-            var_range = ExprRange(orig_parameter, indexed_var_or_range,
-                                  self.start_index, self.end_index)
+            # We need to create a proper "variable range" with simple
+            # parameterized indices.  Any shifts of the indices of
+            # the indexed_var_or_range must be absorbed into the
+            # starting/ending indices.  For example
+            # x_{k+1} with k going from 1 to n should change to
+            # x_k with k going from 1+1 to n+1.
+            indexed_var = innermost_body(indexed_var_or_range)
+            var_indices = extract_indices(indexed_var)
+            subbed_starts_with_any_shift = (
+                    idx.replaced({param:start_idx}) for (idx, param, start_idx)
+                    in zip(var_indices, orig_parameters, subbed_starts))
+            subbed_ends_with_any_shift = (
+                    idx.replaced({param:end_idx}) for (idx, param, end_idx)
+                    in zip(var_indices, orig_parameters, subbed_ends))
+            var_range = varRange(indexed_var.var,
+                                 subbed_starts_with_any_shift, 
+                                 subbed_ends_with_any_shift)
+            
             var_tuple = ExprTuple(var_range)
             if var_tuple not in repl_map:
+                defaults.repl_map = repl_map
+                defaults.var_tuple = var_tuple
                 raise ImproperReplacement(
                         self, repl_map,
                         "%s may not be expanded without an explicit "
@@ -551,7 +624,7 @@ class ExprRange(Expression):
             # We do need to match the new indices to the original indices.
             # Prepare to do that.
             new_indices = []
-            next_index = subbed_start
+            next_index = subbed_starts[0]
         
         # Loop over the entries of the first expansion which must be
         # in correspondence (same ExprRange range or the same in being 
@@ -615,7 +688,7 @@ class ExprRange(Expression):
                 
                 entry_assumptions = inner_assumptions # + [range_assumption]
                 entry_requirements = []
-                entry_repl_map[orig_parameter] = new_param
+                entry_repl_map[orig_parameters[0]] = new_param
                 entry = ExprRange(new_param,
                              body.replaced(entry_repl_map, allow_relabeling,
                                            entry_assumptions,
@@ -623,9 +696,8 @@ class ExprRange(Expression):
                              start_index, end_index)
                 # We may perform a reduction of the range if it is known
                 # to be empty or singular.
-                for entry in self._possibly_reduced_range(entry, 
-                                                          assumptions, 
-                                                          requirements):
+                for entry in self._possibly_reduced_range_entries(
+                        entry, assumptions, requirements):
                     yield entry
                 if indices_must_match:
                     # We need to know the new_indices to match with the
@@ -676,7 +748,8 @@ class ExprRange(Expression):
             # and original indices precisely, not just their length.
             requirement = Equals(ExprTuple(*new_indices), 
                                  ExprTuple(ExprRange(new_param, new_param,
-                                                     subbed_start, subbed_end)))
+                                                     subbed_starts[0], 
+                                                     subbed_ends[0])))
             try:
                 requirements.append(requirement.prove(assumptions))
             except ProofFailure as e:
@@ -685,51 +758,6 @@ class ExprRange(Expression):
                         "ExprRange indices failed to match expansion "
                         "which is necessary because %s: %s."
                         %(reason_indices_must_match, e))
-    
-    """
-    def _free_var_indices(self):
-        '''
-        Returns a dictionary that maps indexed variables to
-        a tuple with (start_base, start_shifts, end_base, end_shifts)
-        indicating the indices for which an indexed variable is free.
-        The start_shifts and end_shifts are constant integers.
-        The included indices are each start_base + start_shift,
-        each end_base + end_shift plus the range going from
-        start_base + max(start_shifts) .. end_base + min(end_shifts).
-        '''
-        from proveit.number import const_shift_decomposition
-        # Start from the default:
-        results = Expression._free_var_indices(self)
-        print('default results', results)
-        body_free_var_indices = self.body._free_var_indices()
-        for var, (start_base, start_shifts, end_base, end_shifts) \
-                in body_free_var_indices.items():
-            if start_base == end_base == self.parameter:
-                # The index base is the range parameter, so we
-                # need to upgrade the indices to cover the range.
-                start_base, start_shift = \
-                    const_shift_decomposition(self.start_index)
-                end_base, end_shift = \
-                    const_shift_decomposition(self.end_index)
-                # When the start and end bases are the same, the
-                # shifts are expected to be the same.
-                assert start_shifts==end_shifts
-                start_shifts = {start_shift+shift for shift in start_shifts}
-                end_shifts = {end_shift+shift for shift in end_shifts}
-                results[var] = (start_base, start_shifts, end_base, end_shifts)
-            elif (self.parameter in start_base._free_vars()
-                    or self.parameter in end_base._free_vars()):
-                raise DisallowedIndexing(
-                        var, 'range', start_base, end_base,
-                        range_parameter=self.parameter)     
-            else:
-                # Indices don't involve the ExprRange parameter,
-                # so let them through
-                results[var] = \
-                    (start_base, start_shifts, end_base, end_shifts)
-        print('new ExprRange results', results)
-        return results
-    """
     
     def partition(self, before_split_idx, assumptions=USE_DEFAULTS):
         '''
@@ -890,25 +918,89 @@ def _has_expansion(var_form, repl_map):
     #                        (x_1, ..., x_n, x_{n+1})}).
     return isinstance(var_repl, set)   
 
+def extract_start_indices(expr_range):
+    '''
+    Return a list of starting indices, one for each nested
+    ExprRange.  For example,
+        (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
+         x_{n, i_{n}}, ..., x_{n, j_{n}}).
+    has start indices (m, i_m).      
+    '''
+    indices = []
+    expr = expr_range
+    repl_map = dict()
+    while isinstance(expr, ExprRange):
+        start_index = expr.start_index
+        subbed_index = start_index.replaced(repl_map)
+        indices.append(subbed_index)
+        repl_map[expr.parameter] = subbed_index
+        expr = expr.body
+    return indices
+
+def extract_end_indices(expr_range):
+    '''
+    Return a list of ending indices, one for each nested
+    ExprRange.  For example,
+        (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
+         x_{n, i_{n}}, ..., x_{n, j_{n}}).
+    has end indices (n, j_n).      
+    '''
+    indices = []
+    expr = expr_range
+    repl_map = dict()
+    while isinstance(expr, ExprRange):
+        end_index = expr.end_index
+        subbed_index = end_index.replaced(repl_map)
+        indices.append(subbed_index)
+        repl_map[expr.parameter] = subbed_index
+        expr = expr.body
+    return indices
+
+def extract_parameters(expr_range):
+    '''
+    Return a list of parameters, one for each nested
+    ExprRange.
+    '''
+    parameters = []
+    expr = expr_range
+    while isinstance(expr, ExprRange):
+        parameters.append(expr.parameter)
+        expr = expr.body
+    return parameters
+
+def innermost_body(expr_range):
+    '''
+    Return the innermost body of a nested ExprRange.
+    '''
+    expr = expr_range
+    while isinstance(expr, ExprRange):
+        expr = expr.body
+    return expr
+
+def nestedRange(parameters, body, start_indices, end_indices):
+    if len(parameters) > 1:
+        # multiple levels
+        return ExprRange(parameters[0], 
+                         nestedRange(parameters[1:], body,
+                                     start_indices[1:], end_indices[1:]),
+                         start_indices[0], end_indices[0])
+    else:
+        # single level
+        param = parameters[0]
+        start_index, end_index = (start_indices[0],
+                                  end_indices[0])
+        return ExprRange(param, body, start_index, end_index)
+
+    
 def varRange(var, start_index_or_indices, end_index_or_indices):
-    from proveit import safeDummyVar, IndexedVar
-    param = safeDummyVar(var)
-    try:
-        if len(start_index_or_indices) > 1:
-            # multiple indices.
-            start_indices, end_indices = \
-                start_index_or_indices, end_index_or_indices
-            return ExprRange(param, 
-                             varRange(var, start_indices[1:], end_indices[1:]),
-                             start_indices[0], end_indices[0])
-        else:
-            # single start and end index.
-            start_index, end_index = (start_index_or_indices[0],
-                                      end_index_or_indices[0])
-    except TypeError:
-        # single start and end index.
-        start_index, end_index = start_index_or_indices, end_index_or_indices
-    return ExprRange(param, IndexedVar(var, param), start_index, end_index)
+    from proveit import (safeDummyVars, compositeExpression,
+                         indexed_var)
+    start_indices = compositeExpression(start_index_or_indices)
+    end_indices = compositeExpression(end_index_or_indices)
+    parameters = safeDummyVars(len(start_indices), var, start_indices, 
+                               end_indices)
+    return nestedRange(parameters, indexed_var(var, parameters),
+                       start_indices, end_indices)
 
 class RangeInstanceError(Exception):
     def __init__(self, msg):

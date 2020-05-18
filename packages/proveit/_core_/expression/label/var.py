@@ -15,8 +15,8 @@ class Variable(Label):
         '''
         Label.__init__(self, stringFormat, latexFormat, 'Variable')
                                         
-    def replaced(self, repl_map, allow_relabeling=False,
-                    assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling=False,
+                  assumptions=USE_DEFAULTS, requirements=None):
         '''
         Returns this Variable possibly replaced according to the 
         replacement map (repl_map) dictionary.  See the
@@ -25,9 +25,6 @@ class Variable(Label):
         from proveit._core_.expression.expr import Expression
         if len(repl_map)>0 and (self in repl_map):
             subbed = repl_map[self]
-            if not isinstance(subbed, Expression):
-                raise TypeError('Must substitute a Variable with an '
-                                'Expression (not %s)'%subbed.__class__)
             if isinstance(subbed, set):
                 # We surmise that this is a substitution of a range 
                 # of variables which must only reside in IndexedVar's of 
@@ -35,13 +32,16 @@ class Variable(Label):
                 # proper replaced.
                 raise ImproperReplacement(
                         self, repl_map,
-                        "Iterated parameter substitution can only be "
+                        "Replacing a range of parameters can only be "
                         "performed when the parameter variable is only "
                         "ever contained in an IndexedVar with indices "
                         "iterated over the same range as the iterated "
                         "parameter, %s "
                         "(see Lambda.apply documentation)"
                         %subbed)
+            if not isinstance(subbed, Expression):
+                raise TypeError('Must substitute a Variable with an '
+                                'Expression (not %s)'%subbed.__class__)
             return subbed
         return self
         

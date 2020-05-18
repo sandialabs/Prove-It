@@ -2,11 +2,11 @@
 
 from .expression import (
         Expression, used_vars, free_var_ranges, free_vars,
-        expressionDepth, DisallowedIndexing, MakeNotImplemented, 
+        expressionDepth, MakeNotImplemented, 
         ImproperReplacement, 
         InnerExpr,
         Label, Literal, Variable, DuplicateLiteralError,
-        safeDummyVar, safeDefaultOrDummyVar,
+        safeDummyVar, safeDummyVars, safeDefaultOrDummyVar,
         Operation, IndexedVar, indexed_var, Function, OperationSequence, 
         OperationOverInstances, OperationError, 
         Conditional, 

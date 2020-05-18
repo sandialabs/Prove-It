@@ -2,7 +2,7 @@ from .expr import Expression, free_var_ranges
 from .operation import Operation, Function
 from .lambda_expr import Lambda
 from .composite import ExprTuple, Composite, NamedExprs, compositeExpression
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 import inspect
 
 class InnerExpr:
@@ -211,12 +211,22 @@ class InnerExpr:
                 else:
                     assumptions = USE_DEFAULTS
                 equivalence = equiv_method(*args, **kwargs)
-                if equiv_method_type == 'equiv':
-                    return equivalence.substitution(repl_lambda, assumptions)
-                elif equiv_method_type == 'rhs':
-                    return equivalence.substitution(repl_lambda, assumptions).rhs
-                elif equiv_method_type == 'action':
-                    return equivalence.subRightSideInto(repl_lambda, assumptions)
+                # We need to disable the auto-reduction as we
+                # are making this substitution to ensure we do not
+                # much with anything other than the specific 
+                # "inner expression".
+                was_auto_reduce_enabled = defaults.auto_reduce
+                try:
+                    defaults.auto_reduce = False
+                    if equiv_method_type == 'equiv':
+                        return equivalence.substitution(repl_lambda, assumptions)
+                    elif equiv_method_type == 'rhs':
+                        return equivalence.substitution(repl_lambda, assumptions).rhs
+                    elif equiv_method_type == 'action':
+                        return equivalence.subRightSideInto(repl_lambda, assumptions)
+                finally:
+                    # Restore the 'auto_reduction' default.
+                    defaults.auto_reduce = was_auto_reduce_enabled
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'."%equiv_method_name
             elif equiv_method_type == 'rhs':
