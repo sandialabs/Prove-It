@@ -794,7 +794,7 @@ class HypotheticalReasoning(Proof):
 
 class Instantiation(Proof):
     def __init__(self, orig_known_truth, num_forall_eliminations, 
-                 repl_map, assumptions):
+                 repl_map, equiv_alt_expansions, assumptions):
         '''
         Create the specialization+instantiation proof step that eliminates
         some number of nested Forall operations (specialization) and 
@@ -817,7 +817,6 @@ class Instantiation(Proof):
         # Prepare the 'parameters' and 'operands' for a lambda map
         # application (beta reduction) to perform the replacements.
         parameters = []
-        equiv_alt_expansions=dict()
         for key, repl in repl_map.items():
             if isinstance(repl, set):
                 # When the replacement is a set, it indicates a set
@@ -833,19 +832,11 @@ class Instantiation(Proof):
                 # single range of an indexed variable for a full
                 # expansion, or it is an "equivalent alternative
                 # expansion".
-                if len(key)==1:
-                    # Should already have been checked in 
-                    # KnownTruth.instantiate.
-                    assert (isinstance(key[0], ExprRange) 
-                        and isinstance(key[0].body, IndexedVar))
-                    parameters.append(key[0])
-                else:
-                    equiv_alt_expansions[key] = repl
-                    # TODO: what to do if 'x' is in the repl_map
-                    # as well as "alternative expansions". Maybe an
-                    # error -- make it explicit.  Also, providing
-                    # some automation of "alternative expansions"
-                    # as needed when just 'x' is provided would be good.
+                # Should already have been checked in 
+                # KnownTruth.instantiate:
+                assert (len(key)==1 and isinstance(key[0], ExprRange) 
+                    and isinstance(key[0].body, IndexedVar))
+                parameters.append(key[0])
             else:
                 parameters.append(key)
         try:
@@ -874,6 +865,7 @@ class Instantiation(Proof):
             for assumption in orig_known_truth.assumptions:
                 subbed_assumption = Lambda._apply(
                         parameters, assumption, *operands,
+                        allow_relabeling=True,
                         equiv_alt_expansions=equiv_alt_expansions,
                         assumptions=assumptions, requirements=requirements)
                 if isinstance(assumption, ExprRange):
@@ -896,7 +888,7 @@ class Instantiation(Proof):
                         orig_known_truth, num_forall_eliminations,
                         parameters, repl_map, equiv_alt_expansions,
                         assumptions, requirements)
-            
+                        
             # Remove duplicates in the requirements.
             requirements = list(OrderedDict.fromkeys(requirements))
             
@@ -922,7 +914,20 @@ class Instantiation(Proof):
             repl_vars = list(orig_known_truth.orderOfAppearance(repl_vars))
             # And remove duplicates.
             repl_vars = list(OrderedDict.fromkeys(repl_vars))
-                
+
+            # Map variables to sets of equivalent variable ranges
+            # from equiv_alt_expansions in repl_map in preparation
+            # for getting the mappings.  We don't do this before the
+            # `_instantiated_expr` call because there may be an
+            # implicit instantiation such as
+            # x : (a, b, c, d)
+            # corresponding to something like (x_1, ..., x_n) in
+            # an elminated universal quantifier.
+            for var_range_form, expansion in equiv_alt_expansions.items():
+                var = getParamVar(var_range_form[0])
+                repl_map.setdefault(var, set()).add(var_range_form)
+                repl_map[var_range_form] = expansion
+            
             # We have what we need; set up the Instantiation Proof
             self.orig_known_truth = orig_known_truth
             # Exclude anything in the repl_map that does not appear in 
@@ -942,19 +947,13 @@ class Instantiation(Proof):
                 if isinstance(repl, set):
                     # Must be a set of equivalent ExprTuples of
                     # indexed variables.
+                    repl.update(equiv_alt_expansions.get(var, set()))
                     # We'll show each of the explicit ExprTuple
                     # to ExprTuple expansions, in an order going 
                     # from the fewest # of entries to the most.
                     for var_tuple in sorted(repl, key=var_tuple_sort):
                         mapping[var_tuple] = repl_map[var_tuple]
                         mapping_var_order.append(var_tuple)
-                elif isinstance(repl, tuple):
-                    # tuple's in the repl_map are used to indicate
-                    # explicit expansion from implicit ones.  For
-                    # example, 
-                    # x : (x_1, ..., x_n, )
-                    # Well use the explicit instantiations here.
-                    pass
                 else:
                     mapping[var] = repl
                     mapping_var_order.append(var)
@@ -1055,6 +1054,10 @@ class Instantiation(Proof):
                                        assumptions, msg)        
         instantiation_param_vars = [getParamVar(param) for param
                                     in instantiation_params]
+        # When an implicit range of indexed variables becomes explicit,
+        # map this correspondence, e.g., 'x' to 'x_1, ..., x_n' when
+        # eliminated \forall_{x_1, ..., x_n}.
+        explicit_ranges = dict()
         
         def instantiate(expr, exclusion=None):
             '''
@@ -1075,24 +1078,21 @@ class Instantiation(Proof):
                     # replacement for its tuple form.
                     for entry in repl_map[ExprTuple(param)]:
                         operands.append(entry)
+                elif param_var in explicit_ranges:
+                    # When an implicit range is mapped to an 
+                    # explicit one, a variable instantiation 
+                    # should be replaced by the corresponding range 
+                    # of variables.
+                    # For example
+                    #   x : (x_1, ..., x_n, )
+                    # which may be introduced after eliminating a
+                    #   \forall_{x_1, ..., x_n} ...
+                    # universal quantifier.
+                    param = explicit_ranges[param_var]
+                    for entry in repl_map[ExprTuple(param)]:
+                        operands.append(entry)
                 else:
-                    repl = repl_map[param]
-                    if isinstance(repl, tuple):
-                        # A tuple 'repl' is used to indicate that
-                        # a variable instantiation should be replaced
-                        # by the corresponding range of variables
-                        # indicated by the one element of the tuple.
-                        # For example
-                        #   x : [x_1, ..., x_n]
-                        # which may be introduced after eliminating a
-                        #   \forall_{x_1, ..., x_n} ...
-                        # universal quantifier.
-                        assert len(repl)==1
-                        param = repl[0]
-                        for entry in repl_map[ExprTuple(param)]:
-                            operands.append(entry)
-                    else:
-                        operands.append(repl_map[param])
+                    operands.append(repl_map[param])
                 params.append(param)
             if len(params)==0:
                 return expr
@@ -1114,9 +1114,12 @@ class Instantiation(Proof):
             # that need to be made explicit.  For example, 
             # if we have an instantiation for 'x' that is an ExprTuple
             # and 'x' is universally quantified over a range here
-            # (e.g., x_1, ..., x_n), then we will update the
-            # repl_map to make the substitutione explicit via:
-            # x : (x_1, ..., x_n, )
+            # (e.g., x_1, ..., x_n), then we will record the 
+            # correspondence (e.g., x : x_1, ..., x_n) in
+            # `explicit_ranges` (used when generating parameters
+            # for ad-hoc Lambda expressions) and update
+            # repl_map to record the assignments.  For example,
+            # x : {(x_1, ..., x_n)}
             # (x_1, ..., x_n) : <the-actual-replacement>
             for param in lambda_expr.parameters:
                 if isinstance(param, ExprRange):
@@ -1125,8 +1128,23 @@ class Instantiation(Proof):
                     if isinstance(param_var_repl, ExprTuple):
                         subbed_param = instantiate(param, exclusion=param_var)
                         if subbed_param not in repl_map:
-                            repl_map[ExprTuple(subbed_param)] = param_var_repl
-                            repl_map[param_var] = (subbed_param,)
+                            subbed_param_tuple = ExprTuple(subbed_param)
+                            if (subbed_param_tuple in repl_map and 
+                                    repl_map[subbed_param_tuple] != 
+                                        param_var_repl):
+                                raiseFailure("Inconsistent assignment of "
+                                             "%s: %s, from instantiation of "
+                                             "%s, versus %s."
+                                             %(subbed_param_tuple, 
+                                               param_var_repl, param_var,
+                                               repl_map[subbed_param_tuple]))
+                            explicit_ranges[param_var] = subbed_param
+                            repl_map[subbed_param_tuple] = param_var_repl
+                            # The following update gets passed back to 
+                            # Instantiation.__init__ for the purposes
+                            # of recording the explicit mappings.
+                            repl_map[param_var] = \
+                                set([ExprTuple(subbed_param)])
             
             # If there is a condition of the universal quantifier 
             # being eliminated, produce the instantiated condition,

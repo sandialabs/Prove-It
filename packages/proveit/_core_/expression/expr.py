@@ -439,7 +439,7 @@ class Expression(metaclass=ExprType):
         '''
         return len(self._subExpressions)
     
-    def innerExpr(self):
+    def innerExpr(self, assumptions=USE_DEFAULTS):
         '''
         Return an InnerExpr object to wrap the expression and
         access any inner sub-expression for the purpose of replacing
@@ -447,7 +447,7 @@ class Expression(metaclass=ExprType):
         variables.
         '''
         from .inner_expr import InnerExpr
-        return InnerExpr(self)
+        return InnerExpr(self, assumptions=assumptions)
         
     def styleOptions(self):
         '''
@@ -740,28 +740,6 @@ class Expression(metaclass=ExprType):
                     self._coreInfo, dict(self._styleData.styles),
                     subbed_sub_exprs)
         return replaced
-    
-    def relabeled(self, relabel_map):
-        '''
-        Return a new expression in which all instances of the
-        variables as keys in the 'relabel_map' dictionary are replaced 
-        by the corresponding values.  The replacements must be
-        Variable objects, or a TypeError will be raised.
-        '''
-        from proveit import Variable, IndexedVar
-        for key, val in relabel_map.items():
-            if (not isinstance(val, Variable) 
-                    and not isinstance(val, IndexedVar)):
-                raise TypeError("May only relabel Variables/IndexedVars "
-                                "to Variables/IndexedVars; "
-                                "may not relabel %s"%val)
-            if (not isinstance(val, Variable) 
-                    and not isinstance(val, IndexedVar)):
-                raise TypeError("May only relabel Variables/IndexedVars "
-                                "to Variables/IndexedVars; "
-                                "may not relabel to %s"%key)
-        return self.replaced(relabel_map, allow_relabeling=True)
-    
     
     def copy(self):
         '''

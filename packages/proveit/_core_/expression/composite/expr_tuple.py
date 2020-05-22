@@ -7,34 +7,21 @@ from proveit._core_.expression.style_options import StyleOptions
 
 class ExprTuple(Composite, Expression):
     """
-    An ExprTuple is a composite Exporession composed of an ordered list 
-    of member Expressions.
+    An ExprTuple is a composite Expression composed of an ordered list 
+    of member Expression "entries".  The ExprTuple represents a 
+    mathematical tuple as an ordered collection of "elements".
+    Each entry may either represent a single element or a "range"
+    of elements.  An entry that is an ExprRange represents a range
+    of elements.  For example,
+    (a, b, x_1, ..., x_n, c, d)
+    Is represented by an ExprTuple with 5 entries representing
+    n+4 elements.
     """
     
     def __init__(self, *expressions, styles=None):
         '''
         Initialize an ExprTuple from an iterable over Expression 
-        objects.  When subsequent iterations in the tuple form a
-        self-evident continuation, these iterations will be joined.
-        For example, (a_1, ..., a_n, a_{n+1}, ..., a_m) will join to
-        form (a_1, ..., a_m).  "Self-evident" falls under two 
-        categories: the start of the second iteration is the
-        successor to the end of the first iteration (e.g., n and n+1)
-        or the end of the first iteration is the predecessor of the
-        start of the second iteration (e.g., n-1 and n).  To be a
-        valid ExprTuple, all iterations must span a range whose
-        extent is a natural number.  In the above example with the
-        tuple of "a"-indexed iterations, n must be a natural number
-        and m-n must be a natural number for the ExprTuple to be
-        valid (note that iterations may have an extent of zero).
-        When an ExprTuple is created, there is not a general check
-        that it is valid.  However, when deriving new known truths
-        from valid existing known truths, validity is guaranteed to
-        be maintained (in particular, specializations that transform
-        ExprTuples ensure that validity is maintained).  The joining
-        of iterations is valid as long as the original iterations
-        are valid, so this process is also one that maintains validity
-        which is the thing that is important.
+        objects.
         '''
         from proveit._core_ import KnownTruth
         from .composite import singleOrCompositeExpression
@@ -114,7 +101,7 @@ class ExprTuple(Composite, Expression):
     def __iter__(self):
         '''
         Iterator over the entries of the list.
-        Some entries may be iterations (Iter) that 
+        Some entries may be ranges (ExprRange) that 
         represent multiple elements of the list.
         '''
         return iter(self.entries)
@@ -122,7 +109,7 @@ class ExprTuple(Composite, Expression):
     def __len__(self):
         '''
         Return the number of entries of the list.
-        Some entries may be iterations (Iter) that 
+        Some entries may be ranges (ExprRange) that 
         represent multiple elements of the list.
         '''
         return len(self.entries)
@@ -132,7 +119,7 @@ class ExprTuple(Composite, Expression):
         Return the list entry at the ith index.
         This is a relative entry-wise index where
         entries may represent multiple elements
-        via iterations (Iter).
+        via ranges (ExprRange).
         '''
         return self.entries[idx]
     
@@ -147,7 +134,7 @@ class ExprTuple(Composite, Expression):
     def singular(self):
         '''
         Return True if this has a single element that is not an
-        iteration.
+        ExprRange.
         '''
         from .expr_range import ExprRange
         return len(self)==1 and not isinstance(self[0], ExprRange)
@@ -229,7 +216,12 @@ class ExprTuple(Composite, Expression):
         if isinstance(operatorOrOperators, str):
             # single operator
             formatted_operator = operatorOrOperators
-            outStr += (' '+formatted_operator+' ').join(formatted_sub_expressions)
+            if operatorOrOperators == ',':
+                # e.g.: a, b, c, d
+                outStr += (formatted_operator+' ').join(formatted_sub_expressions)
+            else:
+                # e.g.: a + b + c + d
+                outStr += (' '+formatted_operator+' ').join(formatted_sub_expressions)
         else:
             # assume all different operators
             formatted_operators = []
@@ -260,7 +252,7 @@ class ExprTuple(Composite, Expression):
                 outStr = ' '.join(formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in zip(formatted_sub_expressions, formatted_operators))
                 outStr += ' ' + formatted_sub_expressions[-1]
             elif len(formatted_sub_expressions) != len(formatted_operators):
-                raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator iterations must be in correpsondence with operand iterations.")
+                raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator ranges must be in correpsondence with operand ranges.")
 
         if do_wrapping and formatType=='latex': 
             outStr += r' \end{array}'
@@ -270,11 +262,11 @@ class ExprTuple(Composite, Expression):
     
     def length(self, assumptions=USE_DEFAULTS):
         '''
-        Return the proven length of this tuple as an Expression.  This
-        length includes the extent of all contained iterations. 
+        Return the proven length of this ExprTuple as an Expression.  
+        This length includes the extent of all contained ranges. 
         '''
         from proveit import Len
-        return Len(self).simplification(assumptions).rhs
+        return Len(self).computed(assumptions)
     
     def has_matching_ranges(self, other_tuple):
         '''
@@ -308,7 +300,7 @@ class ExprTuple(Composite, Expression):
         replaced by a Lambda map that has a range of parameters 
         (e.g., x_1, ..., x_n) such that the length of the parameters 
         and operands must be proven to be equal.  For more details, 
-        see Operation.replaced, Lambda.apply, and Iter.replaced 
+        see Operation._replaced, Lambda.apply, and ExprRange._replaced 
         (which is the sequence of calls involved).        
         
         For an ExprTuple, each entry is 'replaced' independently.  
@@ -354,34 +346,37 @@ class ExprTuple(Composite, Expression):
         # transitivities (starting with self=self).
         eq = TransRelUpdater(self, assumptions)
         
-        # Determine the position of the first Iter item and get the 
+        # Determine the position of the first ExprRange item and get the 
         # lambda map.
-        first_iter_pos = len(self)
+        first_range_pos = len(self)
         lambda_map = None
         for _k, item in enumerate(self):
             if isinstance(item, ExprRange):
-                lambda_map = Lambda(item.lambda_map.parameter, item.lambda_map.body)
-                first_iter_pos = _k
+                lambda_map = Lambda(item.lambda_map.parameter, 
+                                    item.lambda_map.body)
+                first_range_pos = _k
                 break
         
-        if 1 < first_iter_pos:
+        if 1 < first_range_pos:
             if lambda_map is None:
-                raise NotImplementedError("Means of extracting a lambda map has not been implemented")
+                raise NotImplementedError("Means of extracting a lambda "
+                                          "map has not been implemented")
                 pass # need the lambda map
             # Collapse singular items at the beginning.
-            front_singles = ExprTuple(eq.expr[:first_iter_pos])
+            front_singles = ExprTuple(eq.expr[:first_range_pos])
             i_sub = lambda_map.extractArgument(front_singles[0])
             j_sub = lambda_map.extractArgument(front_singles[-1])
             if len(front_singles)==2:
                 # Merge a pair of singular items.
-                front_merger = merge_pair.specialize({f:lambda_map, i:i_sub, j:j_sub}, 
-                                                     assumptions=assumptions)
+                front_merger = merge_pair.specialize(
+                        {f:lambda_map, i:i_sub, j:j_sub}, 
+                        assumptions=assumptions)
             else:
                 # Merge a series of singular items in one shot.
-                front_merger = merge_series.specialize({f:lambda_map, x:front_singles,
-                                                        i:i_sub, j:j_sub}, 
-                                                       assumptions=assumptions)
-            eq.update(front_merger.substitution(self.innerExpr()[:first_iter_pos], 
+                front_merger = merge_series.specialize(
+                        {f:lambda_map, x:front_singles, i:i_sub, j:j_sub}, 
+                        assumptions=assumptions)
+            eq.update(front_merger.substitution(self.innerExpr()[:first_range_pos], 
                                                 assumptions=assumptions))
             
         if len(eq.expr) == 1:
@@ -392,22 +387,22 @@ class ExprTuple(Composite, Expression):
             # Merge a pair.
             if isinstance(eq.expr[0], ExprRange):
                 if isinstance(eq.expr[1], ExprRange):
-                    # Merge a pair of Iters.
+                    # Merge a pair of ExprRanges.
                     item = eq.expr[1]
                     other_lambda_map = Lambda(item.lambda_map.parameter, 
                                               item.lambda_map.body)
                     if other_lambda_map != lambda_map:
-                        raise ExprTupleError("Cannot merge together iterations "
+                        raise ExprTupleError("Cannot merge together ExprRanges "
                                              "with different lambda maps: %s vs %s"
                                              %(lambda_map, other_lambda_map))
-                    iSub, jSub = eq.expr[0].start_index, eq.expr[0].end_index
-                    kSub, lSub = eq.expr[1].start_index, eq.expr[1].end_index
+                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
+                    _k, _l = eq.expr[1].start_index, eq.expr[1].end_index
                     merger = \
-                        merge.specialize({f:lambda_map, i:iSub, j:jSub, k:kSub, 
-                                          l:lSub}, assumptions=assumptions)
+                        merge.specialize({f:lambda_map, i:_i, j:_j, k:_k, l:_l},
+                                         assumptions=assumptions)
                 else:
-                    # Merge an Iter and a singular item.
-                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index                        
+                    # Merge an ExprRange and a singular item.
+                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index    
                     _k = lambda_map.extractArgument(eq.expr[1])
                     if _k == Add(_j, one):
                         merger = merge_extension.specialize(
@@ -418,7 +413,7 @@ class ExprTuple(Composite, Expression):
                                 {f:lambda_map, i:_i, j:_j, k:_k}, 
                                 assumptions=assumptions)                    
             else:
-                # Merge a singular item and Iter.
+                # Merge a singular item and ExprRange.
                 iSub = lambda_map.extractArgument(eq.expr[0])
                 jSub, kSub = eq.expr[1].start_index, eq.expr[1].end_index
                 merger = \
@@ -428,9 +423,11 @@ class ExprTuple(Composite, Expression):
             return eq.relation
         
         while len(eq.expr) > 1:
-            front_merger = ExprTuple(eq.expr[:2]).merger(assumptions)
-            eq.update(front_merger.substitution(self.innerExpr()[:2], 
-                                                assumptions=assumptions))
+            front_merger = ExprTuple(*eq.expr[:2]).merger(assumptions)
+            eq.update(front_merger.substitution(
+                    eq.expr.innerExpr(assumptions)[:2], 
+                    assumptions=assumptions))
+        return eq.relation
     
     def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
                        minimal_automation=False):

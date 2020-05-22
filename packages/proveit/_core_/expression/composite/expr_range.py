@@ -110,14 +110,14 @@ class ExprRange(Expression):
                  "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
                  "'explicit' (default for string formatting) reveals "
                  "the parameterization "
-                 "(e.g. x_{1+1}, ..., x_{k+1}, ..., x_{n+1})."))
+                 "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."))
         return options
     
     def withExplicitParameterization(self):
         '''
         The 'parameterization':'explicit' style shows the 
         parameterization of the ExprRange explicitly.  For example,
-        x_{1+1}, ..., x_{k+1}, ..., x_{n+1}).
+        x_{1+1}, ..x_{k+1}.., x_{n+1}).
         '''
         self.withStyles({'parameterization':'explicit'})
 
@@ -127,9 +127,9 @@ class ExprRange(Expression):
         parameterization of the ExprRange explicitly and such that the
         parameterization may be ambiguous but is more compact.  
         For example, x_{1+1}, ..., x_{n+1} could be
-        x_{1+1}, ..., x_{k+1}, ... x_{n+1}
+        x_{1+1}, ..x_{k+1}.., x_{n+1}
         or could be
-        x_{1+1}, ..., x_{k}, ... x_{n+1}.
+        x_{1+1}, ..x_{k}.., x_{n+1}.
         '''
         self.withStyles({'parameterization':'implicit'})
 
@@ -208,21 +208,35 @@ class ExprRange(Expression):
             [subExpr.formatted(formatType, **kwargs) 
              for subExpr in check_points]
         if ellipses is None:
-            ellipsis = ('\ldots' if formatType=='latex' 
-                        else '...')
+            if use_explicit_parameterization:
+                # Use the format:
+                # x_1, ..x_k.., x_n
+                # Or for nested ExprRanges:
+                # x_{1,1}, ..x_{1,k}.., x_{1,n}, 
+                # ....x_{j,1}, ..x_{j,k}.., x_{j,n}....,
+                # x_{m,1}, ..x_{m,k}.., x_{m,n}
+                ellipsis = '..'
+            else:
+                ellipsis = ('\ldots' if formatType=='latex' 
+                            else '...')
             # When ranges are nested, double-up (or triple-up, etc)
             # the ellipsis to make the nested structure clear.
             ellipses = ellipsis*self.nested_range_depth()
-        # Insert the ellipses between every other "checkpoint".
-        for _ in range(1, 2*len(check_points)-1, 2):
-            formatted_sub_expressions.insert(_, ellipses)
+        if use_explicit_parameterization:
+            # e.g., ..x_k..
+            formatted_sub_expressions[1] = \
+                ellipses+formatted_sub_expressions[1]+ellipses
+        else:
+            # Insert the ellipses between the two "checkpoints".
+            # e.g., x_1, ..., x_n
+            formatted_sub_expressions.insert(1, ellipses)
         return formatted_sub_expressions
         
     def formatted(self, formatType, fence=False, subFence=True, 
                   operator=None, **kwargs):
         if operator is None:
              # comma is the default formatted operator
-            formatted_operator = ','
+            formatted_operator = ', '
         elif isinstance(operator, str):
             formatted_operator = operator
         else:
@@ -362,7 +376,8 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
     
-    def _possibly_reduced_range_entries(self, expr_range, assumptions, requirements):
+    def _possibly_reduced_range_entries(self, expr_range, assumptions, 
+                                        requirements):
         '''
         Yield the entries corresponding to the given expr_range after
         the possible reduction.  If there is no reduction, the
@@ -489,42 +504,68 @@ class ExprRange(Expression):
         
         assumptions = defaults.checkedAssumptions(assumptions)
         new_requirements = []
-        lambda_map = self.lambda_map
         orig_parameter = self.parameter
+        # We will turn on the `indices_must_match` flag when the
+        # replacement index ranges must match the original range of
+        # indices and not just match in length:
+        indices_must_match = False
         
-        # Check if any of the IndexedVars whose index is the ExprRange
-        # parameter (or a shifted version of this parameter)
-        # is being expanded by the repl_map.
-        must_expand = False
-        first_expanded_indexed_var_or_range = None
+        # `var_range_forms` maps variables to the set of equivalent 
+        # forms of indexing over a range pertinent to getting the 
+        # replaced entries of this ExprRange.  
+        # Remove them from the `repl_map` temporarily.
+        var_range_forms = dict()
+        expanding_occurrences = set()
         parameterized_var_ranges = list(self._parameterized_var_ranges())
-        for var_form in parameterized_var_ranges:
-            if _has_expansion(var_form, repl_map):
-                first_expanded_indexed_var_or_range = var_form
-                must_expand = True
+        for occurrence in parameterized_var_ranges:
+            # `occurrence` may be something like x_k or
+            # x_{k,1}, ..., x_{k,n}
+            # where `k` is `self.parameter`.
+            # If repl_map maps `x` to a set, in this example, 
+            # then it has an expansion for any of the forms that
+            # are contained in the set.
+            var = getParamVar(occurrence)
+            if var in var_range_forms: 
+                expanding_occurrences.add(occurrence)
+                # Already added this `var` to `var_expansion_forms` and 
+                # removed it from `repl_map`:
+                continue
+            repl = repl_map.get(var, None)
+            if isinstance(repl, set):
+                expanding_occurrences.add(occurrence)
+                var_range_forms[var] = repl
+                repl_map.pop(var)
+            elif not indices_must_match:
+                # If some variables are expanded but others are not,
+                # our replacement index ranges will need to match the 
+                # original range of indices to be a valid replacement.
+                indices_must_match = True
+                reason_indices_must_match = var # temporary assignment
+        if len(var_range_forms) > 0:
+            expanding_var = next(iter(var_range_forms))
+            if indices_must_match:
+                # `reason_indices_must_match` was temporarily assigned
+                # to a Variable that is not being expanded.  Change it
+                # to a proper message now that we have a variable that
+                # is being expanded.
+                reason_indices_must_match = (
+                        "not all of the indexed variables being indexed "
+                        "by the ExprRange parameter are being expanded "
+                        "(%s is expanded but %s is not)"
+                        %(expanding_var, reason_indices_must_match))
         
-        if not must_expand:
-            # No need to worry about expanding IndexedVar's.
+        # Make all of the replacements except for the variables
+        # being expanded.
+        subbed_expr_range = self.replaced(
+                repl_map, allow_relabeling, assumptions, requirements)
+        if len(var_range_forms) == 0:
+            # Nothing to expand.
             # However, we may perform a reduction of the range
             # if it is known to be empty or singular.
-            subbed_start = self.start_index.replaced(
-                    repl_map, allow_relabeling, assumptions, requirements)
-            subbed_end = self.end_index.replaced(
-                    repl_map, allow_relabeling, assumptions, requirements)
-            subbed_lambda_map = lambda_map.replaced(
-                    repl_map, allow_relabeling, assumptions, requirements)
-            subbed_expr = ExprRange(None, None, subbed_start, subbed_end, 
-                                    lambda_map = subbed_lambda_map)
             for entry in self._possibly_reduced_range_entries(
-                    subbed_expr, assumptions, requirements):
+                    subbed_expr_range, assumptions, requirements):
                 yield entry
-            return
-
-        # Need to expand IndexedVar's.  The expansions must be defined 
-        # over the start/end range and must be aligned with each 
-        # other.
-        first_expanded_var = \
-            getParamVar(first_expanded_indexed_var_or_range)
+            return # Done.
         
         # If the range parameter is used for anything other than an
         # index of an indexed variable, or not all of the 
@@ -532,76 +573,62 @@ class ExprRange(Expression):
         # must match the original indices, not just the length.
         excluded_var_ranges = \
             self.body._free_var_ranges(exclusions=parameterized_var_ranges)
-        indices_must_match = (len(excluded_var_ranges) > 0)
-        if indices_must_match:
+        if len(excluded_var_ranges) > 0:
+            indices_must_match = True
             reason_indices_must_match = (
                     "the ExprRange parameter appears outside of IndexedVar "
                     "indices")
         
-        # Find all of the parameterized_var_ranges that are being
-        # expanded and get their expansions.  If they are not all
-        # being expanded, turn on the indices_must_match flag.
-        expansions_dict = dict() 
+        # Create `expansions_dict` to map each of the variables being
+        # expanded to the expansion that is relevent for this ExprRange.
+        expansions_dict = dict()
         orig_parameters = extract_parameters(self)
-        subbed_starts = ExprTuple(*extract_start_indices(self)).replaced(
-                repl_map, allow_relabeling, assumptions, requirements)
-        subbed_ends = ExprTuple(*extract_end_indices(self)).replaced(
-                repl_map, allow_relabeling, assumptions, requirements)        
-        for indexed_var_or_range in parameterized_var_ranges:
-            # indexed_var_range_tuple should be something like 
-            # (x_i, ..., x_j)
-            # where the 'base' of i and j match the 'base' of 
-            # the start and end indices of this ExprRange (the 'base'
-            # excludes any constant integer offset).
-            if not _has_expansion(indexed_var_or_range, repl_map):
-                # If the IndexedVars are not all expanded together,
-                # we must match the new indices with the old indices, 
-                # not just the length.
-                if not indices_must_match:
-                    indices_must_match = True
-                    reason_indices_must_match = (
-                            "not all of the indexed variables being indexed "
-                            "by the ExprRange parameter are being expanded "
-                            "(%s is expanded but %s is not)"
-                            %(first_expanded_var, indexed_var_or_range.var))
-                continue
+        starts = extract_start_indices(subbed_expr_range)
+        ends = extract_end_indices(subbed_expr_range)
+        for occurrence in expanding_occurrences:
             # We need to create a proper "variable range" with simple
             # parameterized indices.  Any shifts of the indices of
             # the indexed_var_or_range must be absorbed into the
             # starting/ending indices.  For example
             # x_{k+1} with k going from 1 to n should change to
             # x_k with k going from 1+1 to n+1.
-            indexed_var = innermost_body(indexed_var_or_range)
+            indexed_var = innermost_body(occurrence)
             var_indices = extract_indices(indexed_var)
-            subbed_starts_with_any_shift = (
+            starts_with_absorbed_shift = (
                     idx.replaced({param:start_idx}) for (idx, param, start_idx)
-                    in zip(var_indices, orig_parameters, subbed_starts))
-            subbed_ends_with_any_shift = (
+                    in zip(var_indices, orig_parameters, starts))
+            ends_with_absorbed_shift = (
                     idx.replaced({param:end_idx}) for (idx, param, end_idx)
-                    in zip(var_indices, orig_parameters, subbed_ends))
+                    in zip(var_indices, orig_parameters, ends))
             var_range = varRange(indexed_var.var,
-                                 subbed_starts_with_any_shift, 
-                                 subbed_ends_with_any_shift)
-            
+                                 starts_with_absorbed_shift, 
+                                 ends_with_absorbed_shift)
+            # Now wrap this "variable range" in an ExprTuple and see
+            # if it has a known expansion.
             var_tuple = ExprTuple(var_range)
+            var = getParamVar(occurrence)
             if var_tuple not in repl_map:
-                defaults.repl_map = repl_map
-                defaults.var_tuple = var_tuple
+                key_var = lambda key : (getParamVar(key[0]) if 
+                                        isinstance(key, ExprTuple) 
+                                        else getParamVar(key))
+                var_replacements = \
+                    {key:value for key, value in repl_map.items() if 
+                     key_var(key)==var}
                 raise ImproperReplacement(
                         self, repl_map,
-                        "%s may not be expanded without an explicit "
-                        "replacement for %s within %s (Note that multiple, "
-                        "equivalent expansion forms may be provided to "
-                        "fulfill this requirement)."
-                        %(getParamVar(indexed_var_or_range), var_tuple,
-                          self))
+                        "Failure to expand %s because there is no explicit "
+                        "expansion for %s.  The known expansions are for "
+                        "this variable are %s.  "
+                        "(Note that multiple, equivalent expansion forms "
+                        "may be provided to fulfill this requirement)."
+                        %(self, var_tuple, var_replacements))
             repl = repl_map[var_tuple]
             if not isinstance(repl, ExprTuple):
                 raise ImproperReplacement(
                         self, repl_map,
                         "Invalid replacement %s for %s; it must be an "
                         "ExprTuple."%(var_tuple, repl))                
-            expansions_dict[indexed_var_or_range] = repl.entries
+            expansions_dict[occurrence] = repl.entries
 
         def raise_failed_expansion_match(first_expansion, expansion):
             raise ImproperReplacement(
@@ -612,26 +639,25 @@ class ExprRange(Expression):
                     %(first_expansion, expansion))
         
         # Need to handle the change in scope within the lambda 
-        # expression.  We won't use 'new_params'.  They aren't relavent 
-        # after an expansion, this won't be used.
+        # expression.
         new_params, inner_repl_map, inner_assumptions \
             = self.lambda_map._inner_scope_sub(
                     repl_map, allow_relabeling, assumptions, new_requirements)
         assert len(new_params)==1
         new_param = new_params[0]
         
+        # Do we need to match the new indices to the original indices?
         if indices_must_match:
-            # We do need to match the new indices to the original indices.
-            # Prepare to do that.
+            # Yes.  Prepare to do that.
             new_indices = []
-            next_index = subbed_starts[0]
+            next_index = starts[0]
         
         # Loop over the entries of the first expansion which must be
         # in correspondence (same ExprRange range or the same in being 
         # singular) with the other expansions.
         body = self.body
-        first_expansion = \
-            expansions_dict[first_expanded_indexed_var_or_range]
+        first_expanding_occurrence = next(iter(expanding_occurrences))
+        first_expansion = expansions_dict[first_expanding_occurrence]
         for k, first_expansion_entry in enumerate(first_expansion):
             entry_repl_map = dict(inner_repl_map)  
             # Loop over all of the IndexedVar's being expanded and make
@@ -742,14 +768,18 @@ class ExprRange(Expression):
                 else:
                     yield entry
         
+        # Add the variable expansions back into `repl_map`.
+        for var in var_range_forms:
+            repl_map[var] = var_range_forms[var]
+        
         if indices_must_match:
             # The range parameter appears outside of
             # IndexedVars.  That means that we must match new
             # and original indices precisely, not just their length.
             requirement = Equals(ExprTuple(*new_indices), 
                                  ExprTuple(ExprRange(new_param, new_param,
-                                                     subbed_starts[0], 
-                                                     subbed_ends[0])))
+                                                     starts[0], 
+                                                     ends[0])))
             try:
                 requirements.append(requirement.prove(assumptions))
             except ProofFailure as e:

@@ -1,3 +1,3 @@
 from .lambda_expr import (
-        Lambda, ParameterCollisionError, InvalidParamVarOccurrence,
+        Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError)

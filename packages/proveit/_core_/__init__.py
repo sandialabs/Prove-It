@@ -10,7 +10,7 @@ from .expression import (
         Operation, IndexedVar, indexed_var, Function, OperationSequence, 
         OperationOverInstances, OperationError, 
         Conditional, 
-        Lambda, ParameterCollisionError, InvalidParamVarOccurrence,
+        Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError, 
         Composite, compositeExpression, 
         singleOrCompositeExpression, 

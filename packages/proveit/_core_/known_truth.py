@@ -771,6 +771,7 @@ class KnownTruth:
         # Also, convert to composite expressions as needed
         # (via singleOrCompositeExpression).
         processed_repl_map = dict()
+        equiv_alt_expansions = dict()
         for key, replacement in repl_map.items():
             replacement = singleOrCompositeExpression(replacement)
             '''
@@ -784,27 +785,28 @@ class KnownTruth:
                 processed_repl_map[key] = replacement
             elif isinstance(key, ExprTuple) and len(key)>0:
                 if len(key)==1:
-                  if not (isinstance(key[0], ExprRange) 
+                    if not (isinstance(key[0], ExprRange) 
                           and isinstance(key[0].body, IndexedVar)):
-                    raise TypeError("%s is not the expected kind of "
-                                    "Expression as a repl_map key.  An "
-                                    "ExprTuple with one entry is expected "
-                                    "to contain an ExprRange of IndexedVars."
-                                    %key)
+                        raise TypeError("%s is not the expected kind of "
+                                        "Expression as a repl_map key.  An "
+                                        "ExprTuple with one entry is expected "
+                                        "to contain an ExprRange of IndexedVars."
+                                        %key)
                     # Replacement key of the form (x_i, ..., x_j)
                     # which is valid for replacing a range of variables.
+                    processed_repl_map[key] = replacement
+                    # Although this is redundant (not really necessary
+                    # as an entry in `equiv_alt_expansions` as far
+                    # as Lambda.apply is concerned) it is useful for
+                    # bookkeeping to extract all of the instantiation
+                    # mappings:
+                    equiv_alt_expansions[key] = replacement
                 else:
                     assert len(key)>1
                     # An "alternative equivalent expansion" of
                     # some (x_i, ..., x_j).  For example,
                     # (x_i, x_{i+1}, ..., x_j).
-                # Add an entry for the replacement, and, for the
-                # variable itself (e.g. 'x'), map it to a set containing all
-                # of the expansions. For example,
-                # x : {(x_i, ..., x_j), (x_i, x_{i+1}, ..., x_j)}
-                processed_repl_map[key] = replacement
-                key_var = getParamVar(key[0])
-                processed_repl_map.setdefault(key_var, set()).add(key)
+                    equiv_alt_expansions[key] = replacement
             elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
                 operation = key
                 repl_var = operation.operator
@@ -857,7 +859,9 @@ class KnownTruth:
                     processed_repl_map[iparam_var] = iparam_var
         return self._checkedTruth(
                 Instantiation(self, num_forall_eliminations=num_forall_eliminations, 
-                              repl_map=processed_repl_map, assumptions=assumptions))
+                              repl_map=processed_repl_map, 
+                              equiv_alt_expansions=equiv_alt_expansions,
+                              assumptions=assumptions))
         
     def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
         '''

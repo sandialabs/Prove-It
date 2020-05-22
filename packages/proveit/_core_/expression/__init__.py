@@ -9,7 +9,7 @@ from .operation import (
         OperationOverInstances, OperationError)
 from .conditional import Conditional
 from .lambda_expr import (
-        Lambda, ParameterCollisionError, InvalidParamVarOccurrence,
+        Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError)
 from .composite import (
         Composite, compositeExpression, singleOrCompositeExpression, 
