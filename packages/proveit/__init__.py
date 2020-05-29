@@ -10,7 +10,7 @@ from ._core_ import (
         Operation, IndexedVar, indexed_var, Function, OperationSequence, 
         OperationOverInstances, OperationError,
         Conditional, 
-        Lambda, ParameterCollisionError, InvalidParamVarOccurrence,
+        Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError, 
         Label, Variable, Literal, DuplicateLiteralError,
         safeDummyVar, safeDummyVars, safeDefaultOrDummyVar, 

@@ -865,7 +865,7 @@ class Instantiation(Proof):
             for assumption in orig_known_truth.assumptions:
                 subbed_assumption = Lambda._apply(
                         parameters, assumption, *operands,
-                        allow_relabeling=True,
+                        allow_relabeling=False,
                         equiv_alt_expansions=equiv_alt_expansions,
                         assumptions=assumptions, requirements=requirements)
                 if isinstance(assumption, ExprRange):
@@ -915,18 +915,14 @@ class Instantiation(Proof):
             # And remove duplicates.
             repl_vars = list(OrderedDict.fromkeys(repl_vars))
 
-            # Map variables to sets of equivalent variable ranges
-            # from equiv_alt_expansions in repl_map in preparation
-            # for getting the mappings.  We don't do this before the
-            # `_instantiated_expr` call because there may be an
-            # implicit instantiation such as
-            # x : (a, b, c, d)
-            # corresponding to something like (x_1, ..., x_n) in
-            # an elminated universal quantifier.
+            # Map variables to sets of tuples that represent the
+            # same range of indexing for equivalent alternative 
+            # expansions.  For example, 
+            #   {x_1, ..., x_{n+1}, x_1, ..., x_n, x_{n+1}}.
+            var_range_forms = dict()
             for var_range_form, expansion in equiv_alt_expansions.items():
                 var = getParamVar(var_range_form[0])
-                repl_map.setdefault(var, set()).add(var_range_form)
-                repl_map[var_range_form] = expansion
+                var_range_forms.setdefault(var, set()).add(var_range_form)
             
             # We have what we need; set up the Instantiation Proof
             self.orig_known_truth = orig_known_truth
@@ -934,7 +930,7 @@ class Instantiation(Proof):
             # the original KnownTruth:
             mapping = dict()
             mapping_var_order = []
-            def var_tuple_sort(var_tuple):
+            def var_range_form_sort(var_tuple):
                 # For sorting equivalent ExprTuples of indexed
                 # variables (e.g., {(x_1, ..., x_{n+1}), 
                 #                   (x_1, ..., x_n, x_{n+1})})
@@ -942,21 +938,20 @@ class Instantiation(Proof):
                 # but break ties arbitrarily via the "meaning id".
                 return (len(var_tuple), var_tuple._meaning_id)
             for var in repl_vars:
-                assert var in repl_map
-                repl = repl_map[var]
-                if isinstance(repl, set):
-                    # Must be a set of equivalent ExprTuples of
-                    # indexed variables.
-                    repl.update(equiv_alt_expansions.get(var, set()))
-                    # We'll show each of the explicit ExprTuple
-                    # to ExprTuple expansions, in an order going 
+                if var in repl_map:
+                    # The variable itself is in the replacement map.
+                    mapping[var] = repl_map[var]
+                    mapping_var_order.append(var)                
+                if var in var_range_forms:
+                    # There are replacements for various forms of the 
+                    # variable indexed over the same range.
+                    # We'll sort these in an order going 
                     # from the fewest # of entries to the most.
-                    for var_tuple in sorted(repl, key=var_tuple_sort):
-                        mapping[var_tuple] = repl_map[var_tuple]
-                        mapping_var_order.append(var_tuple)
-                else:
-                    mapping[var] = repl
-                    mapping_var_order.append(var)
+                    for var_range_form in sorted(var_range_forms[var], 
+                                                 key=var_range_form_sort):
+                        mapping[var_range_form] = \
+                            equiv_alt_expansions[var_range_form]
+                        mapping_var_order.append(var_range_form)
             self.mapping_var_order = mapping_var_order
             self.mapping = mapping
             instantiated_truth = KnownTruth(instantiated_expr, assumptions)
@@ -1140,11 +1135,6 @@ class Instantiation(Proof):
                                                repl_map[subbed_param_tuple]))
                             explicit_ranges[param_var] = subbed_param
                             repl_map[subbed_param_tuple] = param_var_repl
-                            # The following update gets passed back to 
-                            # Instantiation.__init__ for the purposes
-                            # of recording the explicit mappings.
-                            repl_map[param_var] = \
-                                set([ExprTuple(subbed_param)])
             
             # If there is a condition of the universal quantifier 
             # being eliminated, produce the instantiated condition,

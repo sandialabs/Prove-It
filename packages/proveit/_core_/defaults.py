@@ -8,6 +8,11 @@ class Defaults:
     
     def reset(self):
         self.assumptions = tuple()
+        
+        # Enable/disable `automation` by performing automatic
+        # side-effects (via `sideEffects` methods) when proving 
+        # statements as well as automatically concluding 
+        # statements (via `conclude` methods) when possible.
         self.automation = True
         
         # Display LaTeX versions of expressions.

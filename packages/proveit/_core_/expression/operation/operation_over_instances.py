@@ -101,7 +101,8 @@ class OperationOverInstances(Operation):
             if isinstance(lambda_map.body, Conditional):
                 # Has conditions.
                 instanceExpr = lambda_map.body.value
-                if isinstance(lambda_map.body.condition, And):
+                if (isinstance(lambda_map.body.condition, And) and
+                        not lambda_map.body.condition.operands.singular()):
                     conditions = compositeExpression(lambda_map.body.condition.operands)
                 else:
                     conditions = compositeExpression(lambda_map.body.condition)

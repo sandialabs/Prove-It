@@ -179,7 +179,6 @@ class KnownTruth:
         from .proof import ProofFailure
         if not defaults.automation:
             return # automation disabled
-        #print("proven", self)
         # Sort the assumptions according to hash key so that sets of assumptions
         # are unique for determining which side-effects have been processed already.
         sorted_assumptions = tuple(sorted(assumptions, key=lambda expr : hash(expr)))
@@ -657,7 +656,7 @@ class KnownTruth:
         return self
     
     @staticmethod
-    def findKnownTruth(expression, assumptionsSet):
+    def findKnownTruth(expression, assumptions_set):
         '''
         Try to find a KnownTruth for this expression that applies to
         the given set of assumptions (its assumptions are a subset
@@ -669,11 +668,28 @@ class KnownTruth:
         suitableTruths = []
         for truth in truths:
             proof = truth.proof()
-            if proof is not None and proof.isUsable() and truth.assumptionsSet.issubset(assumptionsSet):
+            if (proof is not None and proof.isUsable() and 
+                    truth.assumptionsSet.issubset(assumptions_set)):
                 suitableTruths.append(truth)
         if len(suitableTruths)==0: return None # no suitable truth
         # return one wih the shortest proof, and among those the fewest assumptions
-        return min(suitableTruths, key=lambda truth : (truth.proof().numSteps(), len(truth.assumptions)))
+        best_known_truth = min(suitableTruths, 
+                               key=lambda truth : (truth.proof().numSteps(), 
+                                                   len(truth.assumptions)))
+        # Make sure we get the desired style (and labels) for the
+        # assumptions and 'truth'.
+        # Although this looks vacuous, it will map an assumption of
+        # any style to the assumption of the desired style.
+        assumptions_with_style = {assumption:assumption for 
+                                  assumption in assumptions_set}
+        if (best_known_truth.expr._style_id != expression._style_id or
+                any(assumption._style_id != assumptions_with_style[assumption]
+                    for assumption in best_known_truth.assumptions)):
+            assumptions = [assumptions_with_style[assumption] for assumption in
+                           best_known_truth.assumptions]
+            return best_known_truth.withMatchingStyles(expression,
+                                                       assumptions)
+        return best_known_truth
     
     @staticmethod
     def forgetKnownTruths():
@@ -863,7 +879,8 @@ class KnownTruth:
                               equiv_alt_expansions=equiv_alt_expansions,
                               assumptions=assumptions))
         
-    def generalize(self, forallVarLists, domainLists=None, domain=None, conditions=tuple()):
+    def generalize(self, forall_var_or_vars_or_var_lists, 
+                   domain_lists=None, domain=None, conditions=tuple()):
         '''
         Performs a generalization derivation step.  Returns the
         proven generalized KnownTruth.  Can introduce any number of
@@ -873,35 +890,60 @@ class KnownTruth:
         be provided to introduce a single Forall wrapper.
         '''
         from proveit._core_.proof import Generalization
-        from proveit import Variable, compositeExpression
+        from proveit._core_.expression.lambda_expr.lambda_expr import \
+            valid_params
+        from proveit._core_.expression.composite.composite import \
+            compositeExpression
         from proveit.logic import InSet
         
-        if isinstance(forallVarLists, Variable):
-            forallVarLists = [[forallVarLists]] # a single Variable to convert into a list of variable lists
-        else:
-            if not hasattr(forallVarLists, '__len__'):
-                raise ValueError("Must supply 'generalize' with a Variable, list of Variables, or list of Variable lists.")
-            if len(forallVarLists) == 0:
-                raise ValueError("Must provide at least one Variable to generalize over")
-            if all(isinstance(x, Variable) for x in forallVarLists):
-                # convert a list of Variable/MultiVariables to a list of lists
-                forallVarLists = [forallVarLists]
+        # Convert all forms of `forall_var_or_vars_or_var_lists` to
+        # forall_var_lists, the most general form.  Start with the
+        # default:
+        forall_var_lists = forall_var_or_vars_or_var_lists
+        try:
+            forall_vars = compositeExpression(forall_var_or_vars_or_var_lists)
+            if valid_params(forall_vars):
+                forall_var_lists = [forall_vars]
+        except:
+            pass # don't change the default
+            
+        if not hasattr(forall_var_lists, '__len__'):
+            raise ValueError("Must supply 'generalize' with a Variable, "
+                             "list of Variables (or variable ranges), or "
+                             "list of lists of Variables (or variable "
+                             "ranges).")
+        if len(forall_var_lists) == 0:
+            raise ValueError("Must provide at least one Variable to generalize over")
+        
+        for forall_var_list in forall_var_lists:
+            if not hasattr(forall_var_lists, '__iter__'):
+                raise ValueError(
+                        "`forallVarLists` must be a list of lists specifying "
+                        "instance parameters of forall operations to "
+                        "introduce (or, for convenience it may be a single "
+                        "variable)")
         
         # Add domain conditions as appropriate
-        if domain is not None and domainLists is not None:
-            raise ValueError("Either specify a 'domain' or a list of 'domainLists' but not both")
+        if domain is not None and domain_lists is not None:
+            raise ValueError("Either specify a `domain` or "
+                             "'domain_lists' but not both")
         if domain is not None:
-            domainLists = [[domain]*len(forallVarList) for forallVarList in forallVarLists]
-        if domainLists is not None:
-            domainConditions = []
-            for domainList, forallVarList in zip(domainLists, forallVarLists):
-                domainList = compositeExpression(domainList)
-                if len(domainList)==1:
-                    domainList = [domainList[0]]*len(forallVarList)
-                domainConditions += [InSet(instanceVar, domain) for instanceVar, domain in zip(forallVarList, domainList)]
-            conditions = domainConditions + list(conditions)
+            domain_lists = [[domain]*len(forall_var_lists) for 
+                            forall_var_list in forall_var_lists]
+        if domain_lists is not None:
+            domain_conditions = []
+            for domain_list, forall_var_list in zip(domain_lists, 
+                                                     forall_var_lists):
+                domain_list = compositeExpression(domain_list)
+                if len(domain_list)==1:
+                    domain_list = [domain_list[0]]*len(forall_var_list)
+                domain_conditions += [InSet(instanceVar, domain) for 
+                                      instanceVar, domain in 
+                                      zip(forall_var_list, domain_list)]
+            conditions = domain_conditions + list(conditions)
         
-        return self._checkedTruth(Generalization(self, forallVarLists, conditions))
+        return self._checkedTruth(Generalization(self, forall_var_lists, 
+                                                 conditions))
 
     def asImplication(self, hypothesis):
         '''

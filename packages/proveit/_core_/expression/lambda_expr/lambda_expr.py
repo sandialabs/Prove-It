@@ -1,6 +1,7 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented, 
                                             ImproperReplacement,
-                                            free_vars)
+                                            free_vars,
+                                            traverse_inner_expressions)
 from proveit._core_.expression.label.var import safeDummyVar, safeDummyVars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 
@@ -118,31 +119,6 @@ class Lambda(Expression):
         assert isinstance(body, Expression)
         self.body = body
         
-        """
-        # For each ExprRange parameter entry, map the corresponding
-        # parameter variable to the set of constant index shifts of
-        # are employed (e.g., x_{k+2} has a constant shift of 2).
-        # The span is the max-min of the constant shifts.  Denoting this
-        # span as s, then the first s elements and last s elements
-        # of any replacement must be singuler elements and not ranges.
-        param_var_index_shifts = dict()
-        for param_var, param in zip(self.parameterVars, self.parameters):
-            if isinstance(param, ExprRange):
-                index_shifts = {0}
-                self.body._var_index_shifts_in_ranges(param_var,
-                                                      index_shifts)
-                param_var_index_shifts[param_var] = index_shifts
-        self.param_var_index_shifts = param_var_index_shifts
-        
-        # When a Lambda expression introduces a variable in a new scope
-        # with a parameter entry that is an IndexedVar or a range
-        # of IndexedVars, its occurrences must all match that
-        # index or range or shifts as specified via 
-        # self.param_var_index_shift_range.
-        Lambda._check_all_param_occurrences(self.parameters, body,
-                                            self.param_var_index_shifts)
-        """
-        
         # The '_max_in_scope_bound_vars' attribute is used to make 
         # unique variable assignments for Lambda parameters in the
         # "generic version" which is invarian under 
@@ -156,11 +132,11 @@ class Lambda(Expression):
         # Parameter variables that are indexed and not fully and
         # explicitly covered under the currently introduced range 
         # cannot be relabeled.
-        explicitly_free_var_ranges = \
-            Lambda._explicitly_free_var_ranges(
+        free_var_ranges = \
+            Lambda._free_var_ranges_static(
                     self.parameters, self.parameterVars, self.body)
         self.nonrelabelable_param_vars = \
-            {var for var, var_form in explicitly_free_var_ranges.items()
+            {var for var, var_form in free_var_ranges.items()
             if var in self.parameterVarSet}
         
         if _generic_expr is None:
@@ -255,19 +231,26 @@ class Lambda(Expression):
                 safeDummyVars(len(bound_parameter_vars), *lambda_free_vars,
                               start_index=start_index)))
         
-        if generic_param_vars != bound_parameter_vars:
-            # Create the generic version via relabeling.
-            relabel_map = \
-                {param_var:generic_param_var for param_var, generic_param_var
-                 in zip(bound_parameter_vars, generic_param_vars)}
-            generic_parameters = parameters._generic_version()
-            generic_parameters = generic_parameters.replaced(relabel_map)
-            generic_body = self.body._generic_version()
-            generic_body = generic_body.replaced(relabel_map)
-            generic_body = generic_body._generic_version()
-            return Lambda(generic_parameters, generic_body)
-        else:
-            return self
+        orig_auto_reduce = defaults.auto_reduce
+        try:
+            # Don't auto-reduce when making the generic version.
+            defaults.auto_reduce = False
+            if generic_param_vars != bound_parameter_vars:
+                # Create the generic version via relabeling.
+                relabel_map = \
+                    {param_var:generic_param_var 
+                     for param_var, generic_param_var
+                     in zip(bound_parameter_vars, generic_param_vars)}
+                generic_parameters = parameters._generic_version()
+                generic_parameters = generic_parameters.replaced(relabel_map)
+                generic_body = self.body._generic_version()
+                generic_body = generic_body.replaced(relabel_map)
+                generic_body = generic_body._generic_version()
+                return Lambda(generic_parameters, generic_body)
+            else:
+                return self
+        finally:
+            defaults.auto_reduce = orig_auto_reduce
     
     def extractArgument(self, mappedExpr):
         '''
@@ -598,129 +581,6 @@ class Lambda(Expression):
                     equiv_alt_expansions,
                     "TypeError: %s "%str(e))
     
-    """
-    @staticmethod
-    def _add_range_to_repl_map(parameter, param_var, param_operands, 
-                               index_shifts, repl_map, requirements):
-        '''
-        For the iterated parameter replacement, we map the 
-        parameter variable to a tuple with the parameter iteration 
-        ExprTuple and the set of constant 'index_shifts' employed by
-        that parameter.
-        (e.g., x : ((x_i, ..., x_n), index_shifts))
-        Then map that iteration tuple to the
-        actual operands to be replaced
-        (e.g., (x_i, ..., x_n) : <whatever>).
-        If there are index shifts for the parameter, also add
-        the shifted versions
-        (e.g., (x_{i+1}, ..., x_{(n-1}+1}) : <whatever-shifted>)
-        where the range starts & ends of the shifted/non-shifted 
-        versions are all in correspondence with each other.  
-        For example, given
-        param_operands = (y_1, ..., y_{k+1}, q, z_1, ..., z_{k+1})
-        and index_shifts of {-1, 0, 1}.  Then
-        for shift 0 we have
-        (x_1, ..., x_{n+1}) : 
-                (y_1, ..., y_{k+1}, q, z_1, ..., z_{k+1})
-        for shift 1 we have
-        (x_1, ..., x_n) : 
-                (y_1, ..., y_k, y_{k+1}, q, z_1, ..., z_k)
-        (x_{1+1}, ..., x_{n+1}) : 
-                (y_{1+1}, ..., y_{k+1}, q, z_1, z_{1+1}, ..., z_{k+1})
-        for shift -1 we have
-        (x_2, ..., x_{n+1}) : 
-                (y_2, ..., y_{k+1}, q, z_1, z_2, ..., z_k)
-        (x_{2-1}, ..., x_{(n+1)-1}) : 
-                (y_{2-1}, ..., y_{(k+1)-1}, y_{k+1}, 
-                 q, z_{2-1}, ..., z_{(k+1)-1})
-        Note that among the group for each shift, the expression
-        ranges have the same pattern.  In this example, for shift 1, 
-        the pattern is (1 to k range, singular element, 1 to k range) 
-        and for shift -1 the pattern is 
-        (2 to k+1 range, singular element, 2 to k+1 range).
-            
-        As requirements, in this example, we would have
-            (y_1, ..., y_{k+1}, q, z_1, ..., z_{k+1}) =
-            (y_1, ..., y_k, y_{k+1}, q, z_1, ..., z_k, z_{k+1});
-            (y_1, ..., y_{k+1}, q, z_1, ..., z_{k+1}) =
-            (y_1, y_{1+1}, ..., y_{k+1}, q, z_1, z_{1+1}, ..., z_{k+1});
-            (y_1, ..., y_{k+1}, q, z_1, ..., z_{k+1}) =
-            (y_1, y_2, ..., y_{k+1}, q, z_1, z_2, ..., z_k);
-            (y_1, ..., y_{k+1}, q, z_1, ..., z_{k+1}) =
-            (y_{2-1}, ..., y_{(k+1)-1}, q, y_{k+1},
-             z_{2-1}, ..., z_{(k+1)-1}, q, z_{k+1})
-        '''
-        from proveit import ExprTuple, ExprRange
-        from proveit.relation import TransRelUpdater
-        from proveit.number import (const_shift_decomposition,
-                                    const_shift_composition)
-        assert isinstance(parameter, ExprRange)
-        start_decomp = const_shift_decomposition(parameter.start_index)
-        end_decomp = const_shift_decomposition(parameter.end_index)
-        param_var = getParamVar(parameter)
-        param_tuple = ExprTuple(parameter)
-        repl_map[param_var] = set([param_tuple])
-        repl_map[param_tuple] = ExprTuple(*param_operands)
-        assert 0 in index_shifts
-        nonzero_index_shifts = index_shifts.difference({0})
-        # For each index shift, we'll generate replacements from
-        # zero to the extreme of that index shift that will match
-        # range patterns.
-        for extreme_shift in nonzero_index_shifts:
-            # Figure out the start/end indices for this 
-            # "extreme_shift" that allows the full range of 
-            # shiftin out to the extreme.
-            start_index = parameter.start_index
-            end_index = parameter.start_index
-            if extreme_shift < 0:
-                start_index = const_shift_composition(
-                        start_decomp[0], start_decomp[1]-extreme_shift)
-            else:
-                end_index = const_shift_composition(
-                        end_decomp[0], end_decomp[1]-extreme_shift)
-            param_tuple = ExprRange(parameter.parameter, param_var,
-                                    start_index, end_index)
-            sgn = -1 if extreme_shift < 0 else 1
-            for index_shift in range(abs(extreme_shift)+1):
-                index_shift = sgn*index_shift
-                eq = TransRelUpdater(param_tuple)
-                for entry in param_operands:
-                    if isinstance(entry, ExprRange):
-                        if extreme_shift > 0:
-                            n_front_partition = index_shift
-                            n_back_partition = extreme_shift - index_shift
-                        else:
-                            n_front_partition = -extreme_shift + index_shift
-                            n_back_partition = -index_shift
-                        operand_start_decomp = \
-                            const_shift_decomposition(entry.start_index)
-                        operand_end_decomp = \
-                            const_shift_decomposition(entry.end_index)
-                        start_index = entry.start_index
-                        end_index = entry.start_index
-                        if index_shift < 0:
-                            start_index = const_shift_composition(
-                                    operand_start_decomp[0], 
-                                    operand_start_decomp[1]-index_shift)
-                        else:
-                            end_index = const_shift_composition(
-                                    operand_end_decomp[0], 
-                                    operand_end_decomp[1]-index_shift)
-                        # partition then shift as appropriate.
-                        
-                        
-                # Add another replacemen.
-                requirements.append(eq.relation)
-                repl_map[param_var].add(param_tuple)
-                shifted_operands = eq.expr.entries
-                if index_shift < 0:
-                    shifted_operands = shifted_operands[:index_shift]
-                elif index_shift > 0:
-                    shifted_operands = shifted_operands[index_shift:]
-                repl_map[param_tuple] = ExprTuple(*shifted_operands)
-                        
-    """
-        
     def _replaced(self, repl_map, allow_relabeling=False,
                   assumptions=USE_DEFAULTS, requirements=None):
         '''
@@ -952,7 +812,6 @@ class Lambda(Expression):
         # Can't use assumptions involving lambda parameter variables
         inner_assumptions = [assumption for assumption in assumptions 
                              if free_vars(assumption).isdisjoint(new_params)]
-                                      
         return new_params, inner_repl_map, inner_assumptions
     
 
@@ -1023,20 +882,55 @@ class Lambda(Expression):
             return Lambda(lambda1.parameters, lambda1.body.replaced(lambda1ExprSubMap))
     
     @staticmethod
-    def globalRepl(masterExpr, subExpr):
+    def globalRepl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
         '''
         Returns the Lambda map for replacing the given sub-Expression
         everywhere that it occurs in the master Expression.
+        
+        When replacing an ExprTuple of operands, we will return a
+        lambda expression with a range of parameters for replacing the 
+        operands individually.
+        For example,
+            master_expr : a + b + c
+            sub_expr : (a, b, c)
+            will return something equal to
+                (a_1, ..., a_3) -> a_1 + ... + a_3
+        
+        'assumptions' may be required for computing the number of
+        operands (which may contain ranges themselves) in this latter
+        process.
         '''
-        lambdaParam = masterExpr.safeDummyVar()
-        return Lambda(lambdaParam, masterExpr.replaced({subExpr:lambdaParam}))
+        from proveit import ExprTuple, Operation
+        
+        if isinstance(sub_expr, ExprTuple):
+            # If we are replacing an ExprTuple which are operands
+            # that transform to a single operand, we need to instead
+            # use a multi-parameter map.
+            for inner_expr in traverse_inner_expressions(master_expr):
+                if (isinstance(inner_expr, Operation) and 
+                        inner_expr.operands == sub_expr):
+                    # We should use a multi-parameter map
+                    from proveit import safeDummyVar, varRange
+                    from proveit.core_expr_types import Len
+                    from proveit.number import one
+                    n = Len(sub_expr).computed(assumptions)
+                    parameters = varRange(safeDummyVar(master_expr),
+                                          one, n)
+                    body = master_expr.replaced({sub_expr:parameters},
+                                                assumptions=assumptions)
+                    return Lambda(parameters, body)
+        
+        # Just make a single parameter replacement map.
+        lambda_param = master_expr.safeDummyVar()
+        return Lambda(lambda_param, master_expr.replaced(
+                {sub_expr:lambda_param}))
+        
     
     @staticmethod
-    def _explicitly_free_var_ranges(parameters, parameterVars, body,
-                                    exclusions=None):
+    def _free_var_ranges_static(parameters, parameterVars, body,
+                                exclusions=None):
         '''
-        Like _free_var_ranges but doesn't account for eliminating
-        ranges with internally bound variables.
+        Static method version of _free_var_ranges.
         '''
         forms_dict = dict()
         for expr in (parameters, body):
@@ -1046,7 +940,7 @@ class Lambda(Expression):
                 forms_dict[param_var].discard(param)
                 # Note: If you have a parameter of x_1 or a parameter of
                 # x_1, ..., x_n, then 'x' itself is masked although
-                # x_{n+1} would not be masked.  Therfore, remove 'x':
+                # x_{n+1} would not be masked.  Therefore, remove 'x':
                 forms_dict[param_var].discard(param_var)
                 if len(forms_dict[param_var])==0:
                     forms_dict.pop(param_var)
@@ -1063,33 +957,13 @@ class Lambda(Expression):
             x_1, ..., x_n
             x_{i, 1}, ..., x_{i, n_i}
             x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
-
-        If any of the ranges have indices with internally
-        bound variables, they will not be reported as free since
-        part of it is bound.  For example,
-        (k, n) -> [(x_1, ..., x_n) -> 
-                   x_1 + ... + x_k + x_{k+1} + ... + x_{n}]
-        would not report anything.
         '''
         forms_dict = dict()
         if exclusions is not None and self in exclusions: 
-            return forms_dict # this is excluded        
-        
-        relabelable_param_vars \
-        = {param_var for param_var in self.parameterVars
-           if param_var not in self.nonrelabelable_param_vars}
-        
-        # Use the _explicitly_free_var_ranges but skip anything that
-        # is has any of the relabelable parameter variables as free
-        # (if it changes under relabeling, it cannot be reported as 
-        # free).
-        for var, forms in Lambda._explicitly_free_var_ranges(
+            return forms_dict # this is excluded    
+        return Lambda._free_var_ranges_static(
                 self.parameters, self.parameterVars, self.body, 
-                exclusions=exclusions).items():
-            for form in forms:
-                if relabelable_param_vars.isdisjoint(free_vars(form)):
-                    forms_dict.setdefault(var, set()).add(form)        
-        return forms_dict
+                exclusions=exclusions)
 
 def _guaranteed_to_be_independent(expr, parameter_vars):
     '''
@@ -1128,7 +1002,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
     try:
         for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
-                from proveit.number import zero, one
+                from proveit.number import zero, one, isLiteralInt
                 # This is a iterated parameter which corresponds with
                 # one or more operand entries in order to match the
                 # element-wise length.
@@ -1137,6 +1011,14 @@ def extract_param_replacements(parameters, parameter_vars, body,
                                           parameter.start_index, 
                                           parameter.end_index)
                 param_len = Len(ExprTuple(param_indices))
+                if (isLiteralInt(parameter.start_index) and
+                        isLiteralInt(parameter.end_index)):
+                    # Known integer value for param_len.
+                    int_param_len = (parameter.end_index.asInt() -
+                                     parameter.start_index.asInt() + 1)
+                else:
+                    # Unknown integer value for param_len.
+                    int_param_len = None
                 if parameters[-1] == parameter:
                     # This iterated parameter is the last entry,
                     # so it must encompass all remaining operands.
@@ -1156,25 +1038,64 @@ def extract_param_replacements(parameters, parameter_vars, body,
                     # Collect enough operands to match the length of
                     # the range of parameters.
                     param_operands = []
+                    # To the extent they are known, track the minimum
+                    # and maximum number of param-operand elements.
+                    min_int_param_operands_len = 0
+                    max_int_param_operands_len = 0
                     while True:
                         param_operands_tuple = ExprTuple(*param_operands)
                         param_operands_len = Len(param_operands_tuple)
                         len_req = Equals(param_operands_len, param_len)
-                        try:
-                            # Try to prove len_req using minimal
-                            # automation since we do not know if
-                            # this is the right match or if we need
-                            # to go further with more operands.
-                            len_req.lhs.deduceEquality(
-                                    len_req, assumptions, 
-                                    minimal_automation=True)
-                            assert len_req.proven(assumptions)
-                        except ProofFailure:
-                            pass
-                        if len_req.proven(assumptions):
-                            requirements.append(len_req.prove(assumptions))
-                            break # we have a match
-                        param_operands.append(next(operands_iter))
+                        # Check for obvious failure of len_req
+                        if (int_param_len is not None and
+                                min_int_param_operands_len > int_param_len):
+                            # No good. Too many arguments for parameter.
+                            raise LambdaApplicationError(
+                                    parameter, body, operands,
+                                    assumptions, [],
+                                    "Too many arguments, %s, for parameter"
+                                    "%s."%(param_operands, parameter))
+                        elif (max_int_param_operands_len is None or
+                                  int_param_len is None or
+                                  max_int_param_operands_len==int_param_len):
+                            # A possible match to check.
+                            if not len_req.proven(assumptions):
+                                try:
+                                    # Try to prove len_req using minimal
+                                    # automation since we do not know if
+                                    # this is the right match or if we 
+                                    # need to go further with more 
+                                    # operands.
+                                    len_req.lhs.deduceEquality(
+                                            len_req, assumptions, 
+                                            minimal_automation=True)
+                                    assert len_req.proven(assumptions)
+                                except ProofFailure:
+                                    pass
+                            if len_req.proven(assumptions):
+                                requirements.append(len_req.prove(assumptions))
+                                break # we have a match
+                        operand_entry = next(operands_iter)
+                        param_operands.append(operand_entry)
+                        # Update min/max number of param-operand 
+                        # elements.
+                        if isinstance(operand_entry, ExprRange):
+                            if (isLiteralInt(operand_entry.start_index) and
+                                    isLiteralInt(operand_entry.end_index)):
+                                # Known integer ExprRange length.
+                                entry_len = (operand_entry.end_index.asInt() -
+                                             operand_entry.start_index.asInt()+1)
+                                min_int_param_operands_len += entry_len
+                                if max_int_param_operands_len is not None:
+                                    max_int_param_operands_len += entry_len
+                            else:
+                                # Unnown ExprRange length, but >= 0.
+                                max_int_param_operands_len = None
+                        else:
+                            # Single element operand.
+                            min_int_param_operands_len += 1
+                            if max_int_param_operands_len is not None:
+                                max_int_param_operands_len += 1
                 # For the parameter range replacement, we map the 
                 # parameter variable to a set of parameter range
                 # tuples (e.g., x : {(x_i, ..., x_n)}) to indicate 

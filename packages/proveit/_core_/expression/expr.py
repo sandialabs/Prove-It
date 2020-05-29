@@ -155,7 +155,7 @@ class Expression(metaclass=ExprType):
         if not hasattr(self, '_max_in_scope_bound_vars'):
             # The '_max_inscope_bound_vars' attribute is used to make 
             # unique variable assignments for Lambda parameters in the
-            # "generic version" which is invarian under 
+            # "generic version" which is invariant under 
             # alpha-conversion.  For a Lambda, this attribute is
             # set ahead of time.
             if len(self._subExpressions)==0:
@@ -307,7 +307,7 @@ class Expression(metaclass=ExprType):
             if (attr_self_class
                     in defaults.disabled_auto_reduction_types):
                 # This specific auto reduction is disabled, so skip it.
-                return lambda expr, assumptions : None
+                return lambda assumptions : None
             def safe_auto_reduction(assumptions=USE_DEFAULTS):
                 try:
                     # The specific auto reduction must be disabled
@@ -403,14 +403,17 @@ class Expression(metaclass=ExprType):
             if reduction is not None:
                 if not isinstance(reduction, KnownTruth):
                     raise TypeError("'auto_reduction' must return a "
-                                    "proven equality as a KnownTruth.")
+                                    "proven equality as a KnownTruth: "
+                                    "got %s for %s"%(reduction, self))
                 if not isinstance(reduction.expr, Equals):
                     raise TypeError("'auto_reduction' must return a "
-                                    "proven equality.")
-                if reduction.expr.lhs != Equals:
+                                    "proven equality: got %s for %s"
+                                    %(reduction, self))
+                if reduction.expr.lhs != self:
                     raise TypeError("'auto_reduction' must return a "
                                     "proven equality with 'self' on the "
-                                    "left side.")
+                                    "left side: got %s for %s"
+                                    %(reduction, self))
                 # TODO: MUST INDICATE THAT THIS REQUIREMENT IS A
                 # REDUCTION SO IT IS EASY TO VERIFY CORRECTNESS OF
                 # AN INSTANTIATION.
@@ -775,14 +778,7 @@ class Expression(metaclass=ExprType):
         (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
         would report {x_1, ..., x_k, x_{k+1}, ..., x_{n}} for the x
         entry because the masking is not "explicit" (obvious).  
-        
-        However, if any of the ranges have indices with internally
-        bound variables, they will not be reported as free since
-        part of it is bound.  For example,
-        (k, n) -> [(x_1, ..., x_n) -> 
-                   x_1 + ... + x_k + x_{k+1} + ... + x_{n}]
-        would not report anything.
-        
+                
         If this Expression is in the exclusion set, or contributes 
         directly to a form that is in the exclusions set, skip over it.
         For example, given the expression
@@ -1117,6 +1113,17 @@ def expressionDepth(expr):
     if len(subDepths)==0: 
         return 1 # no sub-expressions
     return max(subDepths)+1 # add 1 to the maximum of the sub-expression depths
+
+def traverse_inner_expressions(expr):
+    '''
+    A simple algorithm to yield all inner expressions of an expression,
+    including the expression itself.  These will be reported in a depth-
+    first order.
+    '''
+    yield expr
+    for sub_expr in expr.subExprIter():
+        for inner_expr in traverse_inner_expressions(sub_expr):
+            yield inner_expr
 
 class MakeNotImplemented(NotImplementedError):
     def __init__(self, exprSubClass):
