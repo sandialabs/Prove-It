@@ -192,11 +192,11 @@ class ExprTuple(Composite, Expression):
                 using_explicit_parameterization.append(
                         sub_expr._use_explicit_parameterization(formatType))
                 if isinstance(sub_expr.body, ExprTuple):
-                    fence=True
+                    _fence=True
                 else:
-                    fence=subFence
+                    _fence=subFence
                 formatted_sub_expressions += sub_expr._formatted_checkpoints(
-                        formatType, fence=fence, with_ellipses=True,
+                        formatType, fence=_fence, with_ellipses=True,
                         operator=operatorOrOperators)
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists                
