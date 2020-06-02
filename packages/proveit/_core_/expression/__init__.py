@@ -13,7 +13,7 @@ from .lambda_expr import (
         LambdaApplicationError, ArgumentExtractionError)
 from .composite import (
         Composite, compositeExpression, singleOrCompositeExpression, 
-        ExprTuple, ExprTupleError, extract_indices, 
+        ExprTuple, extract_var_tuple_indices, ExprTupleError, 
         ExprArray, NamedExprs, ExprRange,
         varRange, RangeInstanceError)
 from .label import (Label, Literal, Variable, DuplicateLiteralError, 

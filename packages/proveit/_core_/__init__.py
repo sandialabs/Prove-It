@@ -14,7 +14,7 @@ from .expression import (
         LambdaApplicationError, ArgumentExtractionError, 
         Composite, compositeExpression, 
         singleOrCompositeExpression, 
-        ExprTuple, ExprTupleError, extract_indices,
+        ExprTuple, ExprTupleError, extract_var_tuple_indices,
         ExprArray, NamedExprs, ExprRange, 
         varRange, RangeInstanceError,
         StyleOptions, maybeFencedString, 

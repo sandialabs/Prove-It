@@ -17,7 +17,7 @@ from ._core_ import (
         MakeNotImplemented, ImproperReplacement, 
         ProofFailure,
         Composite, compositeExpression, singleOrCompositeExpression,
-        ExprTuple, ExprTupleError, extract_indices, 
+        ExprTuple, ExprTupleError, extract_var_tuple_indices, 
         ExprArray, NamedExprs, ExprRange, 
         varRange, RangeInstanceError,
         KnownTruth, asExpression, asExpressions,
