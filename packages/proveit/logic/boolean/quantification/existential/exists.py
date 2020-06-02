@@ -6,8 +6,9 @@ class Exists(OperationOverInstances):
     # operator of the Exists operation
     _operator_ = Literal(stringFormat='exists', latexFormat=r'\exists', context=__file__)
     
-    def __init__(self, instanceParamOrParams, instanceExpr, domain=None, domains=None, 
-                 conditions=tuple(), _lambda_map=None):
+    def __init__(self, instanceParamOrParams, instanceExpr, *, 
+                 domain=None, domains=None, condition=None,
+                 conditions=None, _lambda_map=None):
         '''
         Create a exists (there exists) expression:
         exists_{instanceParamOrParams | condition} instanceExpr
@@ -19,9 +20,11 @@ class Exists(OperationOverInstances):
         # nestMultiIvars=True will cause it to treat multiple instance 
         # variables as nested Exists operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Exists._operator_, instanceParamOrParams, 
-                                        instanceExpr, domain, domains, conditions, 
-                                        nestMultiIvars=True, _lambda_map=_lambda_map)
+        OperationOverInstances.__init__(
+                self, Exists._operator_, instanceParamOrParams, instanceExpr, 
+                domain=domain, domains=domains, condition=condition,
+                conditions=conditions, nestMultiIvars=True,
+                _lambda_map=_lambda_map)
 
     def sideEffects(self, knownTruth):
         '''

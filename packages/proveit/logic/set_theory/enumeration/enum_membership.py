@@ -1,7 +1,7 @@
 from proveit import USE_DEFAULTS
 from proveit.logic import Membership, Nonmembership
 from proveit.number import num
-from proveit._common_ import l, x, y, yy
+from proveit._common_ import n, x, y
 
 class EnumMembership(Membership):
     '''
@@ -28,7 +28,7 @@ class EnumMembership(Membership):
         if len(enum_elements) == 1:
             return foldSingleton.specialize({x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return fold.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements}, assumptions=assumptions)
+            return fold.specialize({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
     
     def equivalence(self, assumptions=USE_DEFAULTS):
         '''
@@ -42,7 +42,7 @@ class EnumMembership(Membership):
         if len(enum_elements) == 1:
             return singletonDef.specialize({x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return enumSetDef.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements}, assumptions=assumptions)
+            return enumSetDef.specialize({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
 
     def deriveInSingleton(self, expression, assumptions=USE_DEFAULTS):
         # implemented by JML 6/28/19
@@ -62,7 +62,7 @@ class EnumMembership(Membership):
         if len(enum_elements) == 1:
             return unfoldSingleton.specialize({x:self.element, y:enum_elements[0]},assumptions=assumptions)
         else:
-            return unfold.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements}, assumptions=assumptions)
+            return unfold.specialize({n:num(len(enum_elements)), x:self.element, y:enum_elements}, assumptions=assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import inSingletonIsBool

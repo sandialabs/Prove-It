@@ -1,5 +1,5 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
-from proveit._common_ import A, B, C, D, AA, BB, CC, DD, EE, i,j,k,l, m, n
+from proveit._common_ import A, B, C, D, E, i, j, k, l, m, n
 from proveit.logic.boolean.booleans import inBool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, groupCommute
 
@@ -33,6 +33,22 @@ class Or(Operation):
             except:
                 pass
 
+    def auto_reduction(self, assumptions=USE_DEFAULTS):
+        '''
+        Automatically reduce "Or() = FALSE" and "Or(a) = a".
+        '''
+        if len(self.operands) == 0:
+            from proveit.logic.boolean.disjunction._axioms_ import \
+                emptyDisjunction
+            return emptyDisjunction
+        elif self.operands.singular():
+            try:
+                return self.unaryReduction(assumptions)
+            except:
+                # Cannot do the reduction if the operand is not known
+                # to be a boolean.
+                pass
+
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Try to automatically conclude this disjunction.  If any of its
@@ -49,10 +65,10 @@ class Or(Operation):
         # we don't waste time trying to prove operands when we already know one to be true
         for useAutomationForOperand in [False, True]:
             provenOperandIndices = []
-            for k, operand in enumerate(self.operands):
+            for _k, operand in enumerate(self.operands):
                 try:
                     operand.prove(assumptions, automation=useAutomationForOperand)
-                    provenOperandIndices.append(k)
+                    provenOperandIndices.append(_k)
                     self.concludeViaExample(operand, assumptions=assumptions) # possible way to prove it
                 except ProofFailure:
                     pass
@@ -118,7 +134,7 @@ class Or(Operation):
             return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             from proveit.number import num
-            return notOrIfNotAny.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+            return notOrIfNotAny.specialize({m: num(len(self.operands)), A: self.operands}, assumptions=assumptions)
     
     def concludeViaBoth(self, assumptions):
         from ._theorems_ import orIfBoth
@@ -145,7 +161,7 @@ class Or(Operation):
         if len(self.operands) == 2:
             return demorgansLawAndToOrBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return demorgansLawAndToOr.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+            return demorgansLawAndToOr.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
                 
     def deriveInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -180,7 +196,7 @@ class Or(Operation):
         if len(self.operands) == 2:
             return singularConstructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion}, assumptions=assumptions)
         from proveit.number import num
-        return singularConstructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: self.operands, C:conclusion}, assumptions=assumptions)
+        return singularConstructiveMultiDilemma.specialize({m: num(len(self.operands)), A: self.operands, C:conclusion}, assumptions=assumptions)
 
     def deriveViaMultiDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -201,14 +217,14 @@ class Or(Operation):
             # Iterated destructive case.  From (Not(A) or Not(B) or Not(C) or Not(D)) as self
             negatedOperandsSelf = [operand.operand for operand in self.operands]
             negatedOperandsConc = [operand.operand for operand in conclusion.operands]
-            return destructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: negatedOperandsSelf, BB: negatedOperandsConc}, assumptions=assumptions)
+            return destructiveMultiDilemma.specialize({m: num(len(self.operands)), A: negatedOperandsSelf, B: negatedOperandsConc}, assumptions=assumptions)
         else:
             # constructive case.
             if len(self.operands) == 2:
                 # From (A or B), A => C, B => D, conclude C or D.
                 return constructiveDilemma.specialize({A:self.operands[0], B:self.operands[1], C:conclusion.operands[0], D:conclusion.operands[1]}, assumptions=assumptions)
             #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
-            return constructiveMultiDilemma.specialize({m: num(len(self.operands)), AA: self.operands, BB: conclusion.operands},assumptions=assumptions)
+            return constructiveMultiDilemma.specialize({m: num(len(self.operands)), A: self.operands, B: conclusion.operands},assumptions=assumptions)
 
     def deriveViaDilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
@@ -244,8 +260,8 @@ class Or(Operation):
         Deduce A in Booleans, B in Booleans, ..., Z in Booleans
         from (A or B or ... or Z) in Booleans.
         '''
-        for i in range(len(self.operands)):
-            self.deducePartInBool(i, assumptions)        
+        for _i in range(len(self.operands)):
+            self.deducePartInBool(_i, assumptions)        
 
     def deducePartInBool(self, indexOrExpr, assumptions=USE_DEFAULTS):
         '''
@@ -261,7 +277,7 @@ class Or(Operation):
             if idx==0: return self.deduceLeftInBool(assumptions)
             elif idx==1: return self.deduceRightInBool(assumptions)
         #attempt to replace with AA and CC over Amulti and Cmulti    
-        return eachInBool.specialize({m:num(idx), n:num(len(self.operands)-idx-1), AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
+        return eachInBool.specialize({m:num(idx), n:num(len(self.operands)-idx-1), A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}, assumptions=assumptions)
                 
     def deduceNotLeftIfNeither(self, assumptions=USE_DEFAULTS):
         '''
@@ -316,7 +332,7 @@ class Or(Operation):
             return binaryOrContradiction.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             from proveit.number import num
-            return orContradiction.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+            return orContradiction.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def deriveGroup(self, beg, end, assumptions=USE_DEFAULTS):
         '''
@@ -329,9 +345,9 @@ class Or(Operation):
             raise IndexError ("Beginning and end value must be of the form beginning < end.")
         if end > len(self.operands) -1:
             raise IndexError("End value must be less than length of expression.")
-        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), AA:self.operands[:beg], BB:self.operands[beg : end], CC: self.operands[end :]}, assumptions=assumptions)
+        return group.specialize({l :num(beg), m:num(end - beg), n: num(len(self.operands) - end), A:self.operands[:beg], B:self.operands[beg : end], C: self.operands[end :]}, assumptions=assumptions)
 
-    def deriveSwap(self, i, j, assumptions=USE_DEFAULTS):
+    def deriveSwap(self, idx1, idx2, assumptions=USE_DEFAULTS):
         '''
         From (A or ... or H or I or J or ... or L or M or N or ... or Q), assuming in Booleans and given
         the beginning and end of the groups to be switched,
@@ -339,8 +355,8 @@ class Or(Operation):
         '''
         from ._theorems_ import swap
         from proveit.number import num
-        if 0 < i < j < len(self.operands) - 1:
-            return swap.specialize({l: num(i), m: num(j - i - 1), n: num(len(self.operands)-j - 1), AA: self.operands[:i], B: self.operands[i], CC: self.operands[i+1:j], D: self.operands[j], EE: self.operands[j + 1:]}, assumptions=assumptions)
+        if 0 < idx1 < idx2 < len(self.operands) - 1:
+            return swap.specialize({l: num(idx1), m: num(idx2 - idx1 - 1), n: num(len(self.operands)-idx2 - 1), A: self.operands[:i], B: self.operands[i], C: self.operands[i+1:j], D: self.operands[j], E: self.operands[j + 1:]}, assumptions=assumptions)
         else:
             raise IndexError("Beginnings and ends must be of the type: 0<i<j<length.")
 
@@ -370,7 +386,7 @@ class Or(Operation):
         if len(self.operands) == 2:
             return binaryClosure.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return closure.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+            return closure.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
         
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
@@ -385,14 +401,16 @@ class Or(Operation):
                 return orIfLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
             elif index == 1:
                 return orIfRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)                
-        return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
+        return orIfAny.specialize({m:num(index), n:num(len(self.operands)-index-1), A:self.operands[:index], B:self.operands[index], C:self.operands[index+1:]}, assumptions=assumptions)
 
-    def deduceUnaryEquiv(self, assumptions=USE_DEFAULTS):
-        from proveit.logic.boolean.disjunction._theorems_ import unaryDisjunctionDef
-        if len(self.operands) != 1:
-            raise ValueError("Expression must have a single operand in order to invoke unaryDisjunctionDef")
+    def unaryReduction(self, assumptions=USE_DEFAULTS):
+        from proveit.logic.boolean.disjunction._theorems_ import \
+            unaryOrReduction
+        if not self.operands.singular():
+            raise ValueError("Expression must have a single operand in "
+                             "order to invoke unaryReduction")
         operand = self.operands[0]
-        return unaryDisjunctionDef.specialize({A:operand}, assumptions = assumptions)
+        return unaryOrReduction.specialize({A:operand}, assumptions = assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''

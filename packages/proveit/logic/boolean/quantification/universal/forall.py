@@ -6,8 +6,9 @@ class Forall(OperationOverInstances):
     # operator of the Forall operation
     _operator_ = Literal(stringFormat='forall', latexFormat=r'\forall', context=__file__)
     
-    def __init__(self, instanceParamOrParams, instanceExpr, domain=None, domains=None, 
-                 conditions = tuple(), _lambda_map=None):
+    def __init__(self, instanceParamOrParams, instanceExpr, *,
+                 domain=None, domains=None, condition=None, 
+                 conditions=None, _lambda_map=None):
         '''
         Create a Forall expression:
         forall_{instanceParamOrParams | conditions} instanceExpr.
@@ -19,15 +20,18 @@ class Forall(OperationOverInstances):
         # nestMultiIvars=True will cause it to treat multiple instance 
         # variables as nested Forall operations internally
         # and only join them together as a style consequence.
-        OperationOverInstances.__init__(self, Forall._operator_, instanceParamOrParams, 
-                                        instanceExpr, domain, domains, conditions, 
-                                        nestMultiIvars=True, _lambda_map=_lambda_map)
+        OperationOverInstances.__init__(
+                self, Forall._operator_, instanceParamOrParams, 
+                instanceExpr, domain=domain, domains=domains,
+                condition=condition, conditions=conditions, 
+                #nestMultiIvars=True, _lambda_map=_lambda_map)
+                nestMultiIvars=False, _lambda_map=_lambda_map)
         
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically for this forall operation.
         '''
-        if self.hasDomain() and hasattr(self.domain, 'unfoldForall'):
+        if hasattr(self, 'instanceParam') and self.hasDomain() and hasattr(self.domain, 'unfoldForall'):
             if len(self.conditions)==0:
                 yield self.unfold # derive an unfolded version (dependent upon the domain)
         

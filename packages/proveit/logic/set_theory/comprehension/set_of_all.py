@@ -4,11 +4,14 @@ from proveit._common_ import x, y, f, P, Q, QQ, S, yy
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
-    _operator_ = Literal(stringFormat='Set', context=__file__)    
+    _operator_ = Literal(stringFormat='SetOfAll', 
+                         latexFormat=r'\textrm{SetOfAll}', context=__file__)    
     _init_argname_mapping_ = {'instanceElement':'instanceExpr'}
     
-    def __init__(self, instanceParamOrParams, instanceElement, domain=None,
-                 domains=None, conditions=tuple(), _lambda_map=None):
+    # MAYBE ONLY ALLOW A SINGLE PARAMETER??
+    def __init__(self, instanceParamOrParams, instanceElement,
+                 domain=None, *, domains=None, condition=None, 
+                 conditions=None, _lambda_map=None):
         '''
         Create an expression representing the set of all
         instanceElement for instance parameter(s) such that the conditions
@@ -19,12 +22,11 @@ class SetOfAll(OperationOverInstances):
         # instance variables as nested SetOfAll operations -- that
         # would not make sense (unlike forall, exists, summation, and
         # product where it does make sense).
-        OperationOverInstances.__init__(self, SetOfAll._operator_,
-                                        instanceParamOrParams, instanceElement,
-                                        domain=domain, domains=domains,
-                                        conditions=conditions,
-                                        nestMultiIvars=False,
-                                        _lambda_map=_lambda_map)
+        OperationOverInstances.__init__(
+                self, SetOfAll._operator_, instanceParamOrParams,
+                instanceElement, domain=domain, domains=domains,
+                condition=condition, conditions=conditions,
+                nestMultiIvars=False, _lambda_map=_lambda_map)
         self.instanceElement = self.instanceExpr
         if hasattr(self, 'instanceParam'):
             if not hasattr(self, 'domain'):

@@ -35,8 +35,9 @@ class TransitiveRelation(Operation):
     
     def __init__(self, operator, lhs, rhs):
         Operation.__init__(self,operator, (lhs, rhs))
-        self.lhs = lhs
-        self.rhs = rhs
+        assert(len(self.operands)==2)
+        self.lhs = self.operands[0]
+        self.rhs = self.operands[1]
 
     def sideEffects(self, knownTruth):
         '''

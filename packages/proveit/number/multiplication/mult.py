@@ -48,16 +48,16 @@ class Mult(Operation):
                 thm = multIntClosure
         elif numberSet == Naturals:
             if len(self.operands) == 2:
-                thm = multNatsClosureBin
+                thm = multNatClosureBin
                 bin = True
             else:
                 thm = multNatsClosure
         elif numberSet == NaturalsPos:
             if len(self.operands) == 2:
-                thm = multNatsPosClosureBin
+                thm = multNatPosClosureBin
                 bin = True
             else:
-                thm = multNatsPosClosure
+                thm = multNatPosClosure
         elif numberSet == Reals:
             if len(self.operands) == 2:
                 thm = multRealClosureBin

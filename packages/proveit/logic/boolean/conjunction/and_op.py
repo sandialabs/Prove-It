@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
 from proveit.logic.equality import SimplificationError
-from proveit._common_ import j,k,l,m, n, A, B, C, D, E, F, G,  AA, BB, CC, DD, EE
+from proveit._common_ import j,k,l,m, n, A, B, C, D, E, F, G
 from proveit.logic.boolean.booleans import inBool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, groupCommute
 
@@ -13,6 +13,22 @@ class And(Operation):
         And together any number of operands: :math:`A \land B \land C`
         '''
         Operation.__init__(self, And._operator_, operands)
+    
+    def auto_reduction(self, assumptions=USE_DEFAULTS):
+        '''
+        Automatically reduce "And() = TRUE" and "And(a) = a".
+        '''
+        if len(self.operands) == 0:
+            from proveit.logic.boolean.conjunction._axioms_ import \
+                emptyConjunction
+            return emptyConjunction
+        elif self.operands.singular():
+            try:
+                return self.unaryReduction(assumptions)
+            except:
+                # Cannot do the reduction if the operand is not known
+                # to be a boolean.
+                pass
     
     def conclude(self, assumptions):
         '''
@@ -36,10 +52,10 @@ class And(Operation):
         # we don't waste time trying to prove operands when we already know one to be false
         for useAutomationForOperand in [False, True]:
             disprovenOperandIndices = []
-            for k, operand in enumerate(self.operands):
+            for _k, operand in enumerate(self.operands):
                 try:
                     operand.disprove(assumptions, automation=useAutomationForOperand)
-                    disprovenOperandIndices.append(k)
+                    disprovenOperandIndices.append(_k)
                     self.concludeViaExample(operand, assumptions=assumptions)  # possible way to prove it
                 except ProofFailure:
                     pass
@@ -52,7 +68,6 @@ class And(Operation):
                     elif disprovenOperandIndices[0] == 0:
                         return nandIfLeftButNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                     else:
-                        from ._theorems_ import nandIfNotLeft
                         return nandIfRightButNotLeft.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                 except:
                     pass
@@ -121,7 +136,7 @@ class And(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
         yield self.deriveInBool
-        yield self.deriveParts
+        #yield self.deriveParts
         #yield self.deriveCommutation
 
     def negationSideEffects(self, knownTruth):
@@ -154,49 +169,76 @@ class And(Operation):
         From (A and B and ... and Z)` derive each operand:
         A, B, ..., Z.
         '''
-        for i in range(len(self.operands)):
-            self.deriveInPart(i, assumptions)
+        from proveit import ExprRange
+        for i, operand in enumerate(self.operands):
+            if isinstance(operand, ExprRange):
+                pass
+            else:
+                self.deriveAny(i, assumptions)            
 
-    def deriveInPart(self, indexOrExpr, assumptions=USE_DEFAULTS):
+    def deriveAny(self, index_or_expr, assumptions=USE_DEFAULTS):
         r'''
-        From (A and ... and X and ... and Z)` derive X.  indexOrExpr specifies 
-        :math:`X` either by index or the expr.
-        edited by JML 7/9/19 implement someFromAnd for side effect use
+        From (A and ... and X and ... and Z) derive X.  
+        indexOrExpr specifies X, either by index or the expression.
         '''
-        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd, someFromAnd
-        idx = indexOrExpr if isinstance(indexOrExpr, int) else list(self.operands).index(indexOrExpr)
+        from proveit import ExprRange
+        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
+        if isinstance(index_or_expr, int):
+            idx = index_or_expr
+        else:
+            idx = list(self.operands).index(index_or_expr)
         if idx < 0 or idx >= len(self.operands):
             raise IndexError("Operand out of range: " + str(idx))
-        if len(self.operands)==2:
+        has_range_operands = any(isinstance(operand, ExprRange) 
+                                 for operand in self.operands)
+        if len(self.operands)==2 and not has_range_operands:
+            # Two operand special case:
             if idx==0:
-                return leftFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+                return leftFromAnd.instantiate(
+                        {A:self.operands[0], B:self.operands[1]}, 
+                        assumptions=assumptions)
             elif idx==1:
-                return rightFromAnd.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
+                return rightFromAnd.instantiate(
+                        {A:self.operands[0], B:self.operands[1]}, 
+                        assumptions=assumptions)
         else:
-            pass # Need to grab Joaquin's ExprTuple len method
-            '''
-            from proveit import ExprTuple
-            from proveit.number import num
-            try:
-                mVal, nVal = num(idx), num(len(self.operands)-idx-1)
-                print(mVal,nVal)
-                mVal, nVal = ExprTuple(*self.operands[:idx]).len(), ExprTuple(*self.operands[idx + 1:]).len()
-                print(mVal, nVal)
-                return anyFromAnd.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
-            except ProofFailure:
-                self.deriveSomeFromAnd(idx, assumptions)
-            '''
-    def deriveSomeFromAnd(self, idx, assumptions=USE_DEFAULTS):
+            # Multiple operands.
+            from proveit.core_expr_types import Len
+            operand_to_extract = self.operands[idx]
+            if isinstance(operand_to_extract, ExprRange):
+                # Derive the conjunction of a range of operands.
+                return self.deriveSomeFromAnd(idx, assumptions)
+            else:
+                A_sub = self.operands[:idx]
+                B_sub = self.operands[idx]
+                C_sub = self.operands[idx+1:]
+                m_val = Len(A_sub).computed()
+                n_val = Len(C_sub).computed()
+                return anyFromAnd.specialize(
+                        {m:m_val, n:n_val, A:A_sub, B:B_sub, C:C_sub},
+                        assumptions=assumptions)
+    
+    def deriveSome(self, start_idx, end_idx=None, assumptions=USE_DEFAULTS):
         '''
-        added by JML 7/8/19
-        From (A and ... and B and ... C) derive any one index even if it is an iteration. 
+        From (A and ... and B and ... Z) derive a range of the
+        conjunction, such as (C and ... and F).  Specify the range
+        by providing the start and end indices (inclusive) w.r.t. 
+        operand entries.  If end_idx is not provided, it defaults
+        to start_idx for a single entry which should be an ExprRange.
         '''
-        from proveit import ExprTuple
+        from proveit.core_expr_types import Len
         from proveit.logic.boolean.conjunction._theorems_ import someFromAnd
-        lVal = ExprTuple(*self.operands[:idx]).len()
-        mVal = ExprTuple(self.operands[idx]).len()
-        nVal = ExprTuple(*self.operands[idx + 1:]).len()
-        return someFromAnd.specialize({l: lVal, m: mVal, n: nVal, AA:self.operands[:idx], BB:self.operands[idx], CC:self.operands[idx + 1:]}, assumptions = assumptions)
+        if end_idx is None:
+            end_idx = start_idx
+        A_sub = self.operands[:start_idx]
+        B_sub = self.operands[start_idx:end_idx+1]
+        C_sub = self.operands[end_idx+1:]
+        l_val = Len(A_sub).computed()
+        m_val = Len(B_sub).computed()
+        n_val = Len(C_sub).computed()
+        return someFromAnd.instantiate({l:l_val, m: m_val, n: n_val, 
+                                       A:A_sub, B:B_sub, C:C_sub}, 
+                                       assumptions = assumptions)
 
     def deriveLeft(self, assumptions=USE_DEFAULTS):
         r'''
@@ -204,7 +246,7 @@ class And(Operation):
         '''
         if len(self.operands) != 2:
             raise Exception('deriveLeft only applicable for binary conjunction operations')
-        return self.deriveInPart(0, assumptions)
+        return self.deriveAny(0, assumptions)
 
     def deriveRight(self, assumptions=USE_DEFAULTS):
         r'''
@@ -212,7 +254,17 @@ class And(Operation):
         '''
         if len(self.operands) != 2:
             raise Exception('deriveRight only applicable for binary conjunction operations')
-        return self.deriveInPart(1, assumptions)
+        return self.deriveAny(1, assumptions)
+    
+    def unaryReduction(self, assumptions=USE_DEFAULTS):
+        from proveit.logic.boolean.conjunction._theorems_ import \
+            unary_and_reduction
+        if not self.operands.singular():
+            raise ValueError("Expression must have a single operand in "
+                             "order to invoke unaryReduction")
+        operand = self.operands[0]
+        return unary_and_reduction.specialize({A:operand},
+                                              assumptions=assumptions)
 
     def concludeViaComposition(self, assumptions=USE_DEFAULTS):
         '''
@@ -262,7 +314,7 @@ class And(Operation):
         else:
             from proveit.number import num
             mVal, nVal = num(idx), num(len(self.operands)-idx-1)
-            return eachInBool.specialize({m:mVal, n:nVal, AA:self.operands[:idx], B:self.operands[idx], CC:self.operands[idx+1:]}, assumptions=assumptions)
+            return eachInBool.specialize({m:mVal, n:nVal, A:self.operands[:idx], B:self.operands[idx], C:self.operands[idx+1:]}, assumptions=assumptions)
 
     def concludeViaDemorgans(self, assumptions=USE_DEFAULTS):
         '''
@@ -274,7 +326,7 @@ class And(Operation):
         if len(self.operands) == 2:
             return demorgansLawOrToAndBin.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
-            return demorgansLawOrToAnd.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+            return demorgansLawOrToAnd.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def concludeViaExample(self, trueOperand, assumptions=USE_DEFAULTS):
         '''
@@ -289,7 +341,7 @@ class And(Operation):
                 return nandIfNotLeft.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
             elif index == 1:
                 return nandIfNotRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
-        return nandIfNotOne.specialize({m:num(index), n:num(len(self.operands)-index-1), AA:self.operands[:index], B:self.operands[index], CC:self.operands[index+1:]}, assumptions=assumptions)
+        return nandIfNotOne.specialize({m:num(index), n:num(len(self.operands)-index-1), A:self.operands[:index], B:self.operands[index], C:self.operands[index+1:]}, assumptions=assumptions)
 
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
@@ -309,7 +361,7 @@ class And(Operation):
             return binaryClosure.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
             from proveit.number import num    
-        return closure.specialize({m:num(len(self.operands)), AA:self.operands}, assumptions=assumptions)
+        return closure.specialize({m:num(len(self.operands)), A:self.operands}, assumptions=assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
@@ -399,7 +451,7 @@ def compose(expressions, assumptions=USE_DEFAULTS):
     else:
         from proveit.number import num
         from ._theorems_ import andIfAll
-        return andIfAll.specialize({m:num(len(expressions)), AA:expressions}, assumptions=assumptions)
+        return andIfAll.specialize({m:num(len(expressions)), A:expressions}, assumptions=assumptions)
 
 # Register these expression equivalence methods:
 InnerExpr.register_equivalence_method(And, 'commutation', 'commuted', 'commute')
