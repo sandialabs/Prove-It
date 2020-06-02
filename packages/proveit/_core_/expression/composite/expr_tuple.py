@@ -39,8 +39,6 @@ class ExprTuple(Composite, Expression):
         self._lastQueriedEntryIndex = 0
         
         if styles is None: styles = dict()
-        if 'operation' not in styles:
-            styles['operation'] = 'normal' # vs 'function
         if 'wrapPositions' not in styles:
             styles['wrapPositions'] = '()' # no wrapping by default
         if 'justification' not in styles:
@@ -159,7 +157,7 @@ class ExprTuple(Composite, Expression):
         return self.formatted('latex', **kwargs)
         
     def formatted(self, formatType, fence=True, subFence=False, operatorOrOperators=None, implicitFirstOperator=False, 
-                  wrapPositions=None, justification=None):
+                  wrapPositions=None, justification=None, **kwargs):
         from .expr_range import ExprRange
 
         outStr = ''
@@ -194,7 +192,8 @@ class ExprTuple(Composite, Expression):
                 using_explicit_parameterization.append(
                         sub_expr._use_explicit_parameterization(formatType))
                 formatted_sub_expressions += sub_expr._formatted_checkpoints(
-                        formatType, fence=subFence, with_ellipses=True)
+                        formatType, fence=subFence, with_ellipses=True,
+                        operator=operatorOrOperators)
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists                
                 formatted_sub_expressions.append(sub_expr.formatted(formatType, fence=True))
@@ -230,7 +229,7 @@ class ExprTuple(Composite, Expression):
                     # Handle an ExprRange entry; here the "operators"
                     # are really ExprRange "checkpoints" (first, last, 
                     # as well as the ExprRange body in the middle if 
-                    # using an 'explicit' style for 'parameterization).
+                    # using an 'explicit' style for 'parameterization').
                     # For the 'ellipses', we will just use a 
                     # placeholder.
                     be_explicit = using_explicit_parameterization.pop(0)
@@ -318,7 +317,8 @@ class ExprTuple(Composite, Expression):
                 # ExprRange.replaced is a generator that yields items
                 # to be embedded into the tuple.
                 subbed_exprs.extend(expr._replaced_entries(
-                        repl_map, allow_relabeling, assumptions, requirements))
+                        repl_map, allow_relabeling, 
+                        assumptions=assumptions, requirements=requirements))
             else:
                 subbed_expr = expr.replaced(repl_map, allow_relabeling, 
                                             assumptions, requirements)
@@ -482,25 +482,33 @@ class ExprTuple(Composite, Expression):
                         "only to be applied to an InnerExpr object.")
     """
 
-def extract_indices(indexed_var_tuple):
+def extract_var_tuple_indices(indexed_var_tuple):
     '''
     Given an ExprTuple of only IndexedVar and ExprRange entries, returns
     an ExprTuple of just the corresponding indices (including ranges of 
-    indices).
+    indices and nested ranges of indices).
     '''
     from proveit import IndexedVar, ExprRange
+    from proveit._core_.expression.operation.indexed_var import extract_indices
     indices = []
     if not isinstance(indexed_var_tuple, ExprTuple):
         raise TypeError("'indexed_var_tuple' must be an ExprTuple")
     for entry in indexed_var_tuple:
         if isinstance(entry, IndexedVar):
-            indices.append(entry.index)
+            entry_indices = extract_indices(entry)
+            if len(entry_indices)==1: 
+                indices.append(entry_indices[0])
+            else:
+                indices.append(entry_indices)
         elif isinstance(entry, ExprRange):
-            indices.append(ExprRange(entry.parameter, entry.parameter,
+            inner_indices = extract_var_tuple_indices(ExprTuple(entry.body))
+            assert len(inner_indices)==1
+            body = inner_indices[0]
+            indices.append(ExprRange(entry.parameter, body,
                                      entry.start_index, entry.end_index))
         else:
-            raise TypeError("'indexed_var_tuple' must be an ExprTuple "
-                            "only of IndexedVar or ExprRange entries.")
+            raise TypeError("'var_range' must be an ExprTuple only of "
+                            "IndexedVar or (nested) ExprRange entries.")
     return ExprTuple(*indices)
             
 
