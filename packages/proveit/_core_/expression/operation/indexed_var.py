@@ -106,7 +106,7 @@ class IndexedVar(Operation):
             # Start with the inner-most index, so reverse the order
             # relative to the "indices" function.
             indices_str = ','.join(index.formatted(formatType) 
-                                   for index in reversed(extract_indices(self)))
+                                   for index in extract_indices(self))
             result = (extract_base_var(self).formatted(formatType) + 
                       '_{'+indices_str+'}')
         else:
@@ -211,7 +211,7 @@ def indexed_var(var, index_or_indices):
         if len(index_or_indices) > 1:
             # multiple indices
             indices = index_or_indices
-            return IndexedVar(indexed_var(indices[1:]), indices[0])
+            return IndexedVar(indexed_var(var, indices[1:]), indices[0])
         else:
             # single index.
             index = index_or_indices[0]
