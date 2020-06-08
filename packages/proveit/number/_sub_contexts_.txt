@@ -1,4 +1,5 @@
 sets
+rounding
 numeral
 addition
 negation
@@ -12,3 +13,4 @@ summation
 product
 differentiation
 integration
+absolute_value

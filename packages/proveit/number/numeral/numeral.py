@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import defaults, Literal, Operation, USE_DEFAULTS
 from proveit.logic import IrreducibleValue, Equals
 from proveit._common_ import a, b
 

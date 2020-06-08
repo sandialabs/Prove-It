@@ -679,7 +679,7 @@ class Add(Operation):
                 # may fail before the relevent _commons_ and _theorems_ have been generated
                 pass # and that's okay
         # Should have an evaluation now.
-        if self not in Equals.evaluations:
+        if self not in Equals.known_evaluation_sets:
             raise Exception("Should have an evaluation for %s now.  Why not?  "
                               "Perhaps we were not able to prove that the involved numbers "
                               "are in the Complexes set."%self)

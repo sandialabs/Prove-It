@@ -8,19 +8,22 @@ class Equals(TransitiveRelation):
     # operator of the Equals operation
     _operator_ = Literal(stringFormat='=', context=__file__)        
     
-    # map Expressions to sets of KnownTruths of equalities that involve the Expression
-    # on the left hand or right hand side.
+    # Map Expressions to sets of KnownTruths of equalities that involve
+    # the Expression on the left hand or right hand side.
     knownEqualities = dict()
 
-    # Map Expressions to a subset of knownEqualities that are 
-    # deemed to effect simplifications of the inner expression
-    # on the right hand side according to some canonical method 
-    # of simplication determined by each operation.
-    simplifications = dict()
+    # Map each Expression/Assumptions combination to a single
+    # knownEquality deemed to effect a simplification of the inner
+    # expression on the rhs according to some canonical method of
+    # simplification determined by each operation. For example, the
+    # Expression expr = Floor(Add(x, two)) under the assumption that x
+    # is a Real, would have dictionary key (expr, (InSet(x, Real))) with
+    # an eventual value of something like |- expr = Floor(x) + two.
+    known_simplifications = dict()
 
     # Specific simplifications that simplify the inner expression to 
     # IrreducibleValue objects.
-    evaluations = dict()
+    known_evaluation_sets = dict()
         
     # Record found inversions.  See the invert method.
     # Maps (lambda_map, rhs) pairs to a list of
@@ -50,20 +53,39 @@ class Equals(TransitiveRelation):
     def sideEffects(self, knownTruth):
         '''
         Record the knownTruth in Equals.knownEqualities, associated from
-        the left hand side and the right hand side.  This information may
-        be useful for concluding new equations via transitivity. 
+        the left hand side and the right hand side.  This information
+        may be useful for concluding new equations via transitivity. 
         If the right hand side is an "irreducible value" (see 
-        isIrreducibleValue), also record it in Equals.evaluations for use
-        when the evaluation method is called.   Some side-effects
-        derivations are also attempted depending upon the form of
-        this equality.
+        isIrreducibleValue), also record it in
+        Equals.known_evaluation_sets for use when the evaluation
+        method is called.   Some side-effects derivations are also
+        attempted depending upon the form of this equality.
+        If the rhs is an "irreducible value" (see isIrreducibleValue),
+        also record the knownTruth in the Equals.known_simplifications
+        and Equals.known_evaluation_sets dictionaries, for use when the
+        simplification or evaluation method is called. The key for the
+        known_simplifications dictionary is the specific *combination*
+        of the lhs expression along with the assumptions in the form
+        (expr, tuple(sorted(assumptions))); the key for the
+        known_evaluation_sets dictionary is just the lhs expression
+        without the specific assumptions. Some side-effects
+        derivations are also attempted depending upon the form of this
+        equality.
         '''
         from proveit.logic.boolean._common_ import TRUE, FALSE
         Equals.knownEqualities.setdefault(self.lhs, set()).add(knownTruth)
         Equals.knownEqualities.setdefault(self.rhs, set()).add(knownTruth)
+
         if isIrreducibleValue(self.rhs):
-            Equals.simplifications.setdefault(self.lhs, set()).add(knownTruth)
-            Equals.evaluations.setdefault(self.lhs, set()).add(knownTruth)
+            assumptions_sorted = sorted(knownTruth.assumptions,
+                                        key=lambda expr : hash(expr))
+            lhsKey = (self.lhs, tuple(assumptions_sorted))
+            # n.b.: the values in the known_simplifications
+            # dictionary consist of single KnownTruths not sets
+            Equals.known_simplifications[lhsKey]=knownTruth
+            Equals.known_evaluation_sets.setdefault(
+                    self.lhs, set()).add(knownTruth)
+
         if (self.lhs != self.rhs):
             # automatically derive the reversed form which is equivalent
             yield self.deriveReversed
@@ -87,15 +109,16 @@ class Equals(TransitiveRelation):
         
     def negationSideEffects(self, knownTruth):
         '''
-        Side-effect derivations to attempt automatically for a negated equation.        
+        Side-effect derivations to attempt automatically for a negated
+        equation.        
         '''
         yield self.deduceNotEquals # A != B from not(A=B)
                 
     def conclude(self, assumptions):
         '''
         Attempt to conclude the equality various ways:
-        simple reflexivity (x=x), via an evaluation (if one side is an irreducible),
-        or via transitivity.
+        simple reflexivity (x=x), via an evaluation (if one side is an
+        irreducible), or via transitivity.
         '''
         from proveit.logic import TRUE, FALSE, Implies, Iff
         if self.lhs==self.rhs:
@@ -111,28 +134,35 @@ class Equals(TransitiveRelation):
             try:
                 evaluation = self.lhs.evaluation(assumptions)
                 if evaluation.rhs != self.rhs:
-                    raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
+                    raise ProofFailure(self, assumptions,
+                        "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation
             except SimplificationError as e:
-                raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
+                raise ProofFailure(self, assumptions,
+                        "Evaluation error: %s"%e.message)
         elif isIrreducibleValue(self.lhs):
             try:
                 evaluation = self.rhs.evaluation(assumptions)
                 if evaluation.rhs != self.lhs:
-                    raise ProofFailure(self, assumptions, "Does not match with evaluation: %s"%str(evaluation))
+                    raise ProofFailure(self, assumptions,
+                        "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation.deriveReversed()
             except SimplificationError as e:
-                raise ProofFailure(self, assumptions, "Evaluation error: %s"%e.message)
+                raise ProofFailure(self, assumptions,
+                        "Evaluation error: %s"%e.message)
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
             Implies(self.rhs, self.lhs).prove(assumptions, automation=False)
-            # lhs => rhs and rhs => lhs, so attempt to prove lhs = rhs via lhs <=> rhs
+            # lhs => rhs and rhs => lhs, so attempt to prove
+            # lhs = rhs via lhs <=> rhs
             # which works when they can both be proven to be Booleans.
             try:
                 return Iff(self.lhs, self.rhs).deriveEquality(assumptions)
             except:
-                from proveit.logic.boolean.implication._theorems_ import eqFromMutualImpl
-                return eqFromMutualImpl.specialize({A:self.lhs, B:self.rhs}, assumptions=assumptions)
+                from proveit.logic.boolean.implication._theorems_ import (
+                        eqFromMutualImpl)
+                return eqFromMutualImpl.specialize(
+                        {A:self.lhs, B:self.rhs}, assumptions=assumptions)
         except ProofFailure:
             pass
         
@@ -562,9 +592,13 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     with operands substituted for simplified forms.  It also treats, 
     as a special case, evaluating the expression to be true if it is in 
     the set of assumptions [also see KnownTruth.evaluation and 
-    evaluateTruth].  If operandsOnlTrue, only simplify the operands of 
-    the inner expression.
+    evaluateTruth].  If operandsOnly = True, only simplify the operands
+    of the inner expression.
     '''
+    # among other things, convert any assumptions=None
+    # to assumptions=() to avoid len(None) errors
+    assumptions = defaults.checkedAssumptions(assumptions)
+
     from proveit.logic import TRUE, FALSE
     from proveit.logic.boolean._axioms_ import trueAxiom
     topLevel = innerExpr.exprHierarchy[0]
@@ -577,7 +611,7 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
         if inPlace:
             try:
                 return reducedInnerExpr.exprHierarchy[0].prove(assumptions, 
-                                                                automation=False)
+                                                               automation=False)
             except:
                 assert False
         try:
@@ -615,18 +649,21 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     except:
         pass
 
-    # See if the expression already has a proven simplification
-    if inner in Equals.evaluations or (not mustEvaluate and 
-                                        inner in Equals.simplifications):
-        if mustEvaluate:
-            simplifications = Equals.evaluations[inner] 
-        else:
-            simplifications = Equals.simplifications[inner]
+    # ================================================================ #
+    # See if the expression already has a proven simplification        #
+    # ================================================================ #
+
+    # construct the key for the known_simplifications dictionary
+    assumptions_sorted = sorted(assumptions, key=lambda expr : hash(expr))
+    known_simplifications_key = (inner, tuple(assumptions_sorted))
+
+    if (mustEvaluate and inner in Equals.known_evaluation_sets):
+        evaluations = Equals.known_evaluation_sets[inner]
         candidates = []
-        for knownTruth in simplifications:
+        for knownTruth in evaluations:
             if knownTruth.isSufficient(assumptionsSet):
                 # Found existing evaluation suitable for the assumptions
-                candidates.append(knownTruth) 
+                candidates.append(knownTruth)
         if len(candidates) >= 1:
             # Return the "best" candidate with respect to fewest number
             # of steps.
@@ -634,6 +671,13 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
             simplification = min(candidates, key=min_key)
             return innerSimplification(simplification)
 
+    elif (not mustEvaluate and
+          known_simplifications_key in Equals.known_simplifications):
+        simplification = Equals.known_simplifications[known_simplifications_key]
+        return innerSimplification(simplification)
+
+    # ================================================================ #
+    
     if not automation:
         msg = 'Unknown evaluation (without automation): ' + str(inner)
         raise SimplificationError(msg)
@@ -723,13 +767,14 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
         eq2.prove(assumptions, automation=False)
         simplification = eq1.applyTransitivity(eq2, assumptions)
     if not inPlace and topLevel==inner:
-        # Store direct simplifications in the simplifications dictionary
-        # for next time.
-        Equals.simplifications.setdefault(topLevel, set()).add(simplification)
+        # Store direct simplifications in the known_simplifications
+        # dictionary for next time.
+        Equals.known_simplifications[known_simplifications_key] = simplification
         if isIrreducibleValue(value):
-            # also store it in the evaluations dictionary for next time
-            # since it evaluated to an irreducible value.
-            Equals.evaluations.setdefault(topLevel, set()).add(simplification)
+            # also store it in the known_evaluation_sets dictionary for
+            # next time, since it evaluated to an irreducible value.
+            Equals.known_evaluation_sets.setdefault(
+                    topLevel, set()).add(simplification)
     return simplification
 
 def evaluateTruth(expr, assumptions):
