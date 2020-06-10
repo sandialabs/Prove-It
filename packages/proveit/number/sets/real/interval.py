@@ -63,19 +63,22 @@ class IntervalOO(RealInterval):
 
     def deduceLeftRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOO_left
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
         return relax_IntervalOO_left.specialize(
-                {a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceRightRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOO_right
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
         return relax_IntervalOO_right.specialize(
-                {a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
+
+    def deduceLeftRightRelaxedMembership(self, member,
+                                         assumptions=USE_DEFAULTS):
+        from ._theorems_ import relax_IntervalOO_left_right
+        return relax_IntervalOO_left_right.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
 class IntervalOC(RealInterval):
     # operator of the IntervalOC operation.
@@ -127,9 +130,6 @@ class IntervalOC(RealInterval):
 
     def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOC
-        # from proveit.number.numberSets import deduceInReals
-        # dIR_lower = deduceInReals(self.lowerBound, assumptions=assumptions)
-        # dIR_upper = deduceInReals(self.upperBound, assumptions=assumptions)
         return relax_IntervalOC.specialize(
                 {a:self.lowerBound, b:self.upperBound, x:member},
                 assumptions=assumptions)
@@ -184,11 +184,9 @@ class IntervalCO(RealInterval):
 
     def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalCO
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
         return relax_IntervalCO.specialize(
-                {a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
 class IntervalCC(RealInterval):
     # operator of the IntervalCC operation.
@@ -201,7 +199,8 @@ class IntervalCC(RealInterval):
         return '['+self.lowerBound.string() +','+ self.upperBound.string()+']'
 
     def latex(self, **kwargs):
-        return r'\left['+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right]'
+        return (r'\left['+self.lowerBound.latex() +','
+               + self.upperBound.latex()+r'\right]')
 
     def deduceElemInSet(self, member):
         from ._theorems_ import in_IntervalCC
