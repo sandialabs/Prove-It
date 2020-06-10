@@ -35,31 +35,27 @@ class IntervalOO(RealInterval):
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOO_lower_bound
         return intervalOO_lower_bound.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOO_upper_bound
         return intervalOO_upper_bound.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalOO_in_Reals
         return all_in_IntervalOO_in_Reals.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalOO
         return rescale_in_IntervalOO.specialize(
-            {a:self.lowerBound, b:self.upperBound, c:scaleFactor},
-            assumptions=assumptions
-            ).specialize({x:member}, assumptions=assumptions)
+            {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
+            assumptions=assumptions)
 
     def deduceLeftRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOO_left
@@ -102,31 +98,27 @@ class IntervalOC(RealInterval):
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOC_lower_bound
         return intervalOC_lower_bound.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                    {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOC_upper_bound
         return intervalOC_upper_bound.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalOC_in_Reals
         return all_in_IntervalOC_in_Reals.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalOC
         return rescale_in_IntervalOC.specialize(
-                {a:self.lowerBound, b:self.upperBound, c:scaleFactor},
-                assumptions=assumptions
-                ).specialize({x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
+                assumptions=assumptions)
 
     def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOC
@@ -156,31 +148,27 @@ class IntervalCO(RealInterval):
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCO_lower_bound
         return intervalCO_lower_bound.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCO_upper_bound
         return intervalCO_upper_bound.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalCO_in_Reals
         return all_in_IntervalCO_in_Reals.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalCO
         return rescale_in_IntervalCO.specialize(
-                {a:self.lowerBound, b:self.upperBound, c:scaleFactor},
-                assumptions=assumptions
-                ).specialize({x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
+                assumptions=assumptions)
 
     def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalCO
@@ -210,29 +198,25 @@ class IntervalCC(RealInterval):
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCC_lower_bound
         return intervalCC_lower_bound.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
     
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCC_upper_bound
         return intervalCC_upper_bound.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalCC_in_Reals
         return all_in_IntervalCC_in_Reals.specialize(
-                {a:self.lowerBound, b:self.upperBound},
-                assumptions=assumptions).specialize(
-                        {x:member}, assumptions=assumptions)
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalCC
         return rescale_in_IntervalCC.specialize(
-            {a:self.lowerBound, b:self.upperBound, c:scaleFactor},
-            assumptions=assumptions
-            ).specialize({x:member}, assumptions=assumptions)
+            {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
+            assumptions=assumptions)
 
