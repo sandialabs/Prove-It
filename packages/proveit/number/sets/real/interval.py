@@ -48,11 +48,10 @@ class IntervalOO(RealInterval):
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalOO_in_Reals
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
         return all_in_IntervalOO_in_Reals.specialize(
-                {a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound},
+                assumptions=assumptions).specialize(
+                        {x:member}, assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
@@ -114,13 +113,12 @@ class IntervalOC(RealInterval):
                 assumptions=assumptions).specialize(
                         {x:member}, assumptions=assumptions)
 
-    def deduceMemberInIntegers(self, member, assumptions=USE_DEFAULTS):
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalOC_in_Reals
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
         return all_in_IntervalOC_in_Reals.specialize(
-                {a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound},
+                assumptions=assumptions).specialize(
+                        {x:member}, assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
@@ -177,11 +175,10 @@ class IntervalCO(RealInterval):
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalCO_in_Reals
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
         return all_in_IntervalCO_in_Reals.specialize(
-                {a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound},
+                assumptions=assumptions).specialize(
+                        {x:member}, assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor, assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalCO
@@ -235,11 +232,10 @@ class IntervalCC(RealInterval):
 
     def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import all_in_IntervalCC_in_Reals
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
         return all_in_IntervalCC_in_Reals.specialize(
-                {a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound},
+                assumptions=assumptions).specialize(
+                        {x:member}, assumptions=assumptions)
 
     def deduceRescaledMembership(self, member, scaleFactor, assumptions=USE_DEFAULTS):
         from real._theorems_ import rescale_in_IntervalCC
