@@ -1,6 +1,6 @@
 from proveit import Literal, Operation, USE_DEFAULTS
 import proveit._common_
-from proveit._common_ import a, b, x
+from proveit._common_ import a, b, c, x
 
 class RealInterval(Operation):
     r'''
@@ -56,13 +56,10 @@ class IntervalOO(RealInterval):
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalOO
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        deduceInReals(scaleFactor, assumptions=assumptions)
         return rescale_in_IntervalOO.specialize(
-            {a:self.lowerBound, b:self.upperBound, c:scaleFactor}
-            ).specialize({x:member})
+            {a:self.lowerBound, b:self.upperBound, c:scaleFactor},
+            assumptions=assumptions
+            ).specialize({x:member}, assumptions=assumptions)
 
     def deduceLeftRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOO_left
@@ -123,13 +120,10 @@ class IntervalOC(RealInterval):
     def deduceRescaledMembership(self, member, scaleFactor,
                                  assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalOC
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        deduceInReals(scaleFactor, assumptions=assumptions)
         return rescale_in_IntervalOC.specialize(
-                {a:self.lowerBound, b:self.upperBound, c:scaleFactor}
-                ).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound, c:scaleFactor},
+                assumptions=assumptions
+                ).specialize({x:member}, assumptions=assumptions)
 
     def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalOC
@@ -180,15 +174,13 @@ class IntervalCO(RealInterval):
                 assumptions=assumptions).specialize(
                         {x:member}, assumptions=assumptions)
 
-    def deduceRescaledMembership(self, member, scaleFactor, assumptions=USE_DEFAULTS):
+    def deduceRescaledMembership(self, member, scaleFactor,
+                                 assumptions=USE_DEFAULTS):
         from ._theorems_ import rescale_in_IntervalCO
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        deduceInReals(scaleFactor, assumptions=assumptions)
         return rescale_in_IntervalCO.specialize(
-                {a:self.lowerBound, b:self.upperBound, c:scaleFactor}
-                ).specialize({x:member})
+                {a:self.lowerBound, b:self.upperBound, c:scaleFactor},
+                assumptions=assumptions
+                ).specialize({x:member}, assumptions=assumptions)
 
     def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import relax_IntervalCO
@@ -237,11 +229,11 @@ class IntervalCC(RealInterval):
                 assumptions=assumptions).specialize(
                         {x:member}, assumptions=assumptions)
 
-    def deduceRescaledMembership(self, member, scaleFactor, assumptions=USE_DEFAULTS):
-        from real._theorems_ import rescale_in_IntervalCC
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        deduceInReals(scaleFactor, assumptions=assumptions)
-        return rescale_in_IntervalCC.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+    def deduceRescaledMembership(self, member, scaleFactor,
+                                 assumptions=USE_DEFAULTS):
+        from ._theorems_ import rescale_in_IntervalCC
+        return rescale_in_IntervalCC.specialize(
+            {a:self.lowerBound, b:self.upperBound, c:scaleFactor},
+            assumptions=assumptions
+            ).specialize({x:member}, assumptions=assumptions)
 
