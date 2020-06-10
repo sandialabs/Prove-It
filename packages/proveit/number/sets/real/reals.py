@@ -17,10 +17,11 @@ class RealPosSet(NumberSet):
         NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from real.theorems import inRealsPos_iff_positive
+        # from real.theorems import inRealsPos_iff_positive
+        from ._theorems_ import inRealsPos_iff_positive
         return inRealsPos_iff_positive.specialize(
-            {a:member},
-            assumptions=assumptions).deriveRightImplication(assumptions)
+                {a:member},assumptions=assumptions).deriveRightImplication(
+                        assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
@@ -46,10 +47,11 @@ class RealNegSet(NumberSet):
         NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
 
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
-        from real.theorems import inRealsNeg_iff_negative
+        # from real.theorems import inRealsNeg_iff_negative
+        from ._theorems_ import inRealsNeg_iff_negative
         return inRealsNeg_iff_negative.specialize(
-            {a:member},
-            assumptions=assumptions).deriveRightImplication(assumptions)
+                {a:member},assumptions=assumptions).deriveRightImplication(
+                        assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
@@ -74,10 +76,13 @@ class RealNonNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{0^{+}}',
                            context=__file__)
-
-    # def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
-    #     from real.theorems import inRealsNeg_iff_negative
-    #     return inRealsNeg_iff_negative.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)
+        
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
+        # from real.theorems import inRealsPos_iff_positive
+        from ._theorems_ import inRealsNonNeg_iff_non_negative
+        return inRealsNonNeg_iff_non_negative.specialize(
+                {a:member},assumptions=assumptions).deriveRightImplication(
+                        assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
