@@ -27,10 +27,11 @@ class IntervalOO(RealInterval):
         return (r'\left('+self.lowerBound.latex() + ','
                 + self.upperBound.latex()+r'\right)')
 
-    def deduceElemInSet(self, member):
+    def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import in_IntervalOO
         return in_IntervalOO.specialize(
-                {a:self.lowerBound, b:self.upperBound, x:member})
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOO_lower_bound
@@ -90,10 +91,11 @@ class IntervalOC(RealInterval):
         return (r'\left('+self.lowerBound.latex() + ','
                 + self.upperBound.latex()+r'\right]')
         
-    def deduceElemInSet(self, member):
+    def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import in_IntervalOC
         return in_IntervalOC.specialize(
-                {a:self.lowerBound, b:self.upperBound, x:member})
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalOC_lower_bound
@@ -140,10 +142,11 @@ class IntervalCO(RealInterval):
         return (r'\left['+self.lowerBound.latex() + ','
                 + self.upperBound.latex()+r'\right)')
 
-    def deduceElemInSet(self, member):
+    def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import in_IntervalCO
         return in_IntervalCO.specialize(
-                {a:self.lowerBound, b:self.upperBound, x:member})
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCO_lower_bound
@@ -190,10 +193,11 @@ class IntervalCC(RealInterval):
         return (r'\left['+self.lowerBound.latex() +','
                + self.upperBound.latex()+r'\right]')
 
-    def deduceElemInSet(self, member):
+    def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import in_IntervalCC
         return in_IntervalCC.specialize(
-                {a:self.lowerBound, b:self.upperBound, x:member})
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import intervalCC_lower_bound
