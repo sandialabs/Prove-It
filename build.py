@@ -7,9 +7,6 @@ from __future__ import print_function
 import sys
 import os
 import re
-import time
-import lxml#Comment in for Python 3
-from lxml import etree#Comment in for Python 3
 import shutil
 import argparse
 import nbformat
