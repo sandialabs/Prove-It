@@ -727,9 +727,10 @@ class Expression(metaclass=ExprType):
                    "not %s for %s assuming %s"
                    %(method_name, evaluation, self, assumptions))
             raise ValueError(msg)
-        # Note: No need to store in Equals.evaluations or Equals.simplifications; this
-        # is done automatically as a side-effect for proven equalities with irreducible
-        # right sides.
+        # Note: No need to store in Equals.known_evaluation_sets or
+        # Equals.known_simplifications; this is done automatically as
+        # a side-effect for proven equalities with irreducible right
+        # sides.
 
         return evaluation
     
@@ -764,6 +765,10 @@ class Expression(metaclass=ExprType):
         '''
         from proveit.logic import Equals, defaultSimplification, SimplificationError
         from proveit import KnownTruth, ProofFailure
+
+        # among other things, convert any assumptions=None
+        # to assumptions=()
+        assumptions = defaults.checkedAssumptions(assumptions)
         
         method_called = None
         try:
@@ -798,8 +803,11 @@ class Expression(metaclass=ExprType):
                    "equality with 'self' on the left side, not %s for %s "
                    "assuming %s"%(method_called, simplification, self, assumptions))
             raise ValueError(msg)
+
         # Remember this simplification for next time:
-        Equals.simplifications.setdefault(self, set()).add(simplification)
+        assumptions_sorted = sorted(assumptions, key=lambda expr : hash(expr))
+        known_simplifications_key = (self, tuple(assumptions_sorted))
+        Equals.known_simplifications[known_simplifications_key] = simplification
              
         return simplification
     
