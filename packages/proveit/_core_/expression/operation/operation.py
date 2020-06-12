@@ -279,15 +279,37 @@ class Operation(Expression):
         if justification != 'center':
             call_strs.append('withJustification(' + justification + ')')
         return call_strs
-    
+
     def string(self, **kwargs):
-        if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
-            return self.operator.string(fence=True) +  '(' + self.operand_or_operands.string(fence=False, subFence=False) + ')'            
+        if self.getStyle('operation')=='function' and hasattr(self, 'operand'):
+            # When there is a single operand, we must use the
+            # "function"-style formatting.
+            return (self.operator.string(fence=True) + '(' +
+                    self.operand_or_operands.string(fence=False, subFence=True)
+                    + ')')
+        if (self.getStyle('operation')=='function'
+            or not hasattr(self, 'operands')):
+            # When there is a single operand, we must use the
+            # "function"-style formatting.
+            return (self.operator.string(fence=True) +  '(' +
+                self.operand_or_operands.string(fence=False, subFence=False)
+                + ')')
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
-            return self.operator.latex(fence=True) +  r'\left(' + self.operand_or_operands.latex(fence=False, subFence=False) + r'\right)'
+        if self.getStyle('operation')=='function' and hasattr(self, 'operand'):
+            # When there is a single operand, we must use the
+            # "function"-style formatting.
+            return (self.operator.latex(fence=True) +  r'\left(' +
+                    self.operand_or_operands.latex(fence=False, subFence=True)
+                    + r'\right)')
+        if (self.getStyle('operation')=='function' or
+            not hasattr(self, 'operands')):
+            # When there is a single operand, we must use the
+            # "function"-style formatting.
+            return (self.operator.latex(fence=True) +  r'\left(' +
+                    self.operand_or_operands.latex(fence=False, subFence=False)
+                    + r'\right)')
         return self._formatted('latex', **kwargs)
     
     def wrapPositions(self):
