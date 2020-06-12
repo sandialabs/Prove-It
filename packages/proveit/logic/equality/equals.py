@@ -569,7 +569,7 @@ def reduceOperands(innerExpr, inPlace=True, mustEvaluate=False, assumptions=USE_
     '''
     # Any of the operands that can be simplified must be replaced with 
     # their simplification.
-    from proveit import InnerExpr
+    from proveit import InnerExpr, ExprRange
     assert isinstance(innerExpr, InnerExpr), \
         "Expecting 'innerExpr' to be of type 'InnerExpr'"
     inner = innerExpr.exprHierarchy[-1]
@@ -577,7 +577,8 @@ def reduceOperands(innerExpr, inPlace=True, mustEvaluate=False, assumptions=USE_
     while True:
         allReduced = True
         for operand in inner.operands:
-            if not isIrreducibleValue(operand):
+            if (not isIrreducibleValue(operand) and 
+                    not isinstance(operand, ExprRange)):
                 # The operand isn't already irreducible, so try to
                 # simplify it.
                 if mustEvaluate:
