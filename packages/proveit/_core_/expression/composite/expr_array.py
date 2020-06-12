@@ -80,23 +80,17 @@ class ExprArray(ExprTuple):
                 count = 0
                 for entry in expr:
                     if isinstance(entry, ExprRange):
-                        print('its a range!')
                         if m == 0:
                             placeholder = []
                             placeholder.append(i)
                             placeholder.append(entry.first().subExpr(1))
                             placeholder.append(entry.last().subExpr(1))
-                            print('adding info ' + str(placeholder))
                             pos.append(placeholder)
                         else:
                             if len(pos) == 0:
                                 raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
-
-                            print('checking')
-
                             for item in pos:
                                 if item[0] == i:
-                                    print('asserting')
                                     if entry.first().subExpr(1) != item[1]:
                                         raise ValueError('Columns containing ExprRanges '
                                                          'must agree for every row. %s is '
