@@ -1148,7 +1148,6 @@ class Instantiation(Proof):
 
                 # Instantiate the condition.
                 subbed_cond = instantiate(condition)
-                
                 if isinstance(subbed_cond, And):
                     # It is important to deal with a conjunction 
                     # condition in this implicit manner here or we would
