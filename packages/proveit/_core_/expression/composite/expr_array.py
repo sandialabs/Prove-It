@@ -273,7 +273,7 @@ class ExprArray(ExprTuple):
                                                             ellipses='vert',
                                                             operator=operatorOrOperators):
                     # if orientation is 'vertical' replace all \vdots with \cdots and vice versa.
-                    if i == 0 & isinstance(sub_expr.first(), ExprTuple):
+                    if i == 0 and isinstance(sub_expr.first(), ExprTuple):
                         # only do this once, right away
                         m = 0
                         for entry in sub_expr.first().entries:
@@ -401,8 +401,9 @@ class ExprArray(ExprTuple):
                                                                                                     fence=False))
                                             vell.append(r'& \cdots')
                             m += 1
+
                     elif (expr == sub_expr.last().formatted(formatType, fence=False)) \
-                            & isinstance(sub_expr.last(), ExprTuple):
+                            and isinstance(sub_expr.last(), ExprTuple):
                         # if orientation is 'horizontal' this is the last row
                         # if orientation is 'vertical' this is the last column
                         m = 0
@@ -442,10 +443,10 @@ class ExprArray(ExprTuple):
                                 else:
                                     if orientation == 'horizontal':
                                         formatted_sub_expressions.append(entry.formatted(formatType,
-                                                                                                fence=False))
+                                                                                         fence=False))
                                     else:
                                         formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                     fence=False))
+                                                                         fence=False))
                             else:
                                 if isinstance(entry, ExprTuple):
                                     for var in entry:
@@ -466,12 +467,48 @@ class ExprArray(ExprTuple):
                                     # this is not the first entry for either orientation so we include an '&'
                                     formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False))
                             m += 1
-                    elif expr == 'vert':
+                    elif expr == 'vert' and isinstance(sub_expr.first(), ExprTuple):
                         if orientation == 'horizontal':
                             formatted_sub_expressions.append(r' \\ ' + '\n ' + ell + r' \\ ' + '\n ')
                         else:
                             for entry in vell:
                                 formatted_sub_expressions.append(entry)
+                    elif isinstance(sub_expr.first(), ExprRange):
+
+                        # this is first for both orientations so don't include the '&' for either
+                        if i == 0:
+                            entry = sub_expr.first()
+                            formatted_sub_expressions.append(entry.first().formatted(formatType, fence=False))
+                            if orientation == 'horizontal':
+                                formatted_sub_expressions.append(r'& \cdots')
+                                formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                               fence=False))
+                                formatted_sub_expressions.append(r'\\ ' + '\n' + r' \vdots & & \vdots \\ ' + '\n')
+                            else:
+                                # we add an '&' after the \vdots because this is a range of a tuple of a range
+                                formatted_sub_expressions.append(r'\vdots')
+
+                                formatted_sub_expressions.append(entry.last().formatted(formatType,
+                                                                                        fence=False))
+                                formatted_sub_expressions.append(r'& \cdots')
+                                formatted_sub_expressions.append('&')
+                                formatted_sub_expressions.append(r'& \cdots')
+                        if i == 2:
+                            entry = sub_expr.last()
+                            formatted_sub_expressions.append(entry.first().formatted(formatType, fence=False))
+                            if orientation == 'horizontal':
+                                formatted_sub_expressions.append(r'& \cdots')
+                                formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
+                                                                                               fence=False))
+
+                            else:
+                                # we add an '&' after the \vdots because this is a range of a tuple of a range
+                                formatted_sub_expressions.append(r'\vdots')
+
+                                formatted_sub_expressions.append(entry.last().formatted(formatType,
+                                                                                        fence=False))
+
+
                     i += 1
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists
