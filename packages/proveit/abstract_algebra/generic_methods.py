@@ -33,30 +33,41 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm, right
     return thm.specialize({l:lSub, m:mSub, n:nSub, A:Asub, B:Bsub, C:Csub, D:Dsub}, assumptions=assumptions) 
 
 def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS):
+    from proveit import ExprTuple
     from proveit.logic import Equals
-    from proveit.number import num
     beg, end = startIdx, startIdx+length
     if beg < 0: beg = len(expr.operands)+beg # use wrap-around indexing
-    if not length >= 2:
-        raise IndexError ("The 'length' must be 2 or more when applying association.")
     if end > len(expr.operands):
         raise IndexError("'startIdx+length' out of bounds: %d > %d."%(end, len(expr.operands)))
     if beg==0 and end==len(expr.operands):
         # association over the entire range is trivial:
         return Equals(expr, expr).prove() # simply the self equality
-    l, m, n, AA, BB, CC = thm.allInstanceVars()
-    return thm.specialize({l :num(beg), m:num(end - beg), n: num(len(expr.operands) - end), AA:expr.operands[:beg], BB:expr.operands[beg : end], CC: expr.operands[end :]}, assumptions=assumptions)
+    i, j, k, A, B, C = thm.allInstanceVars()
+    _A = ExprTuple(*expr.operands[:beg])
+    _B = ExprTuple(*expr.operands[beg:end])
+    _C = ExprTuple(*expr.operands[end:])
+    _i = _A.length(assumptions)
+    _j = _B.length(assumptions)
+    _k = _C.length(assumptions)
+    return thm.specialize({i:_i, j:_j, k:_k, A:_A, B:_B, C:_C}, 
+                          assumptions=assumptions)
 
 def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
-    from proveit.number import num
+    from proveit import ExprTuple
     if idx < 0: idx = len(expr.operands)+idx # use wrap-around indexing
     if idx >= len(expr.operands):
         raise IndexError("'idx' out of range for disassociation")
     if not isinstance(expr.operands[idx], expr.__class__):
         raise ValueError("Expecting %d index of %s to be grouped (i.e., a nested expression of the same type)"%(idx, str(expr)))
-    l, m, n, AA, BB, CC = thm.allInstanceVars()
-    length = len(expr.operands[idx].operands)
-    return thm.specialize({l:num(idx), m:num(length), n: num(len(expr.operands) - idx - 1), AA:expr.operands[:idx], BB:expr.operands[idx].operands, CC:expr.operands[idx+1:]}, assumptions=assumptions)
+    i, j, k, A, B, C = thm.allInstanceVars()
+    _A = ExprTuple(*expr.operands[:idx])
+    _B = expr.operands[idx].operands
+    _C = ExprTuple(*expr.operands[idx+1:])
+    _i = _A.length(assumptions)
+    _j = _B.length(assumptions)
+    _k = _C.length(assumptions)
+    return thm.specialize({i:_i, j:_j, k:_k, A:_A, B:_B, C:_C}, 
+                          assumptions=assumptions)
             
 def groupCommutation(expr, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
     '''
