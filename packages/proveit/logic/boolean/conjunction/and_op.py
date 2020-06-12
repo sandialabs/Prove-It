@@ -36,8 +36,13 @@ class And(Operation):
         That is, conclude some :math:`A \land B \and ... \land Z` via
         :math:'A', :math:'B', ..., :math:'Z' individually.
         '''
+        from proveit import ExprRange
         from ._theorems_ import trueAndTrue
         if self == trueAndTrue.expr: return trueAndTrue # simple special case
+        if (len(self.operands) == 1 and 
+                isinstance(self.operands[0], ExprRange) and
+                self.operands[0].is_parameter_independent):
+            return self.concludeAsRedundant(assumptions)
         return self.concludeViaComposition(assumptions)
 
     def concludeNegation(self, assumptions=USE_DEFAULTS):
@@ -342,6 +347,30 @@ class And(Operation):
             elif index == 1:
                 return nandIfNotRight.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         return nandIfNotOne.specialize({m:num(index), n:num(len(self.operands)-index-1), A:self.operands[:index], B:self.operands[index], C:self.operands[index+1:]}, assumptions=assumptions)
+    
+    def concludeAsRedundant(self, assumptions=USE_DEFAULTS):
+        '''
+        Conclude an expression of the form
+        A and ..n repeats.. and A
+        given n in Naturals and A is TRUE.
+        '''
+        from proveit import ExprRange
+        from proveit.number import one
+        from ._theorems_ import redundant_conjunction
+        if (len(self.operands) != 1 or 
+                not isinstance(self.operands[0], ExprRange) or
+                not self.operands[0].is_parameter_independent):
+            raise ValueError("`And.concludeAsRedundant` only allowed for a "
+                             "conjunction of the form "
+                             "A and ..n repeats.. and A, not %s"%self)
+        if self.operands[0].start_index != one:
+            raise NotImplementedError("'concludeAsRedundant' only implemented "
+                                      "when the start index is 1.  Just need to "
+                                      "do an ExprRange shift to implement it more "
+                                      "completely")
+        _A = self.operands[0].body
+        return redundant_conjunction.instantiate(
+                {n:self.operands[0].end_index, A:_A}, assumptions=assumptions)
 
     def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
         '''
