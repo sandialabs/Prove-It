@@ -77,14 +77,10 @@ class InSet(Operation):
     def conclude(self, assumptions):
         '''
         Attempt to conclude that the element is in the domain.
-        First, see if it is known to be contained in a known subset of the 
-        domain.  Next, check if the element has a known simplification; if so,
-        try to derive membership via this simplification.
-        If there isn't a known simplification, next try to call
-        the 'self.domain.membershipObject.conclude(..)' method to prove
-        the membership.  If that fails, try simplifying the element
-        again, this time using automation to push the simplification through
-        if possible.
+        First, see if it is contained in a subset of the domain.  
+        If that fails and the domain has a 'membershipObject' method,
+        try calling 'conclude' on the object it generates.
+        try conclude(self, assumptions, minimal_automation=False)
         '''
         from proveit.logic import SubsetEq
         from proveit import ProofFailure

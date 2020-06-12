@@ -933,8 +933,9 @@ class Expression(metaclass=ExprType):
         "doReducedSimplication" when necessary.
         '''
         from proveit import KnownTruth, ProofFailure
-        from proveit.logic import (Equals, defaultSimplification, 
-                                   SimplificationError, EvaluationError)
+
+        # among other things, convert any assumptions=None
+        # to assumptions=()
         assumptions = defaults.checkedAssumptions(assumptions)
         
         method_called = None

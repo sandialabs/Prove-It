@@ -844,11 +844,12 @@ class Add(Operation):
         number set using the appropriate closure theorem
         '''
 
-        from proveit.number.addition._theorems_ import addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure, addNatPosClosure, addRealClosureBin, addRealClosure, addComplexClosureBin, addComplexClosure
-        from proveit.number.addition.subtraction._theorems_ import (
-                subtractNatClosureBin, subOneInNats)
-        from proveit.number import (zero, one, num, Neg, Greater, Integers, 
-                                    Naturals, Reals, Complexes, NaturalsPos)
+        from proveit.number.addition._theorems_ import (
+                addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure,
+                addNatPosClosure, addRealClosureBin, addRealClosure,
+                addComplexClosureBin, addComplexClosure, addRealPosClosure)
+        from proveit.number import (num, Greater, Integers, Naturals, Reals,
+                                    RealsPos, Complexes, NaturalsPos, zero)
         from proveit.logic import InSet
         if number_set == Integers:
             if len(self.operands) == 2:
@@ -856,24 +857,9 @@ class Add(Operation):
             return addIntClosure.specialize({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
         if number_set == Naturals:
             if len(self.operands) == 2:
-                if isinstance(self.operands[1], Neg):
-                    # A subtraction case:
-                    if self.operands[1].operand==one:
-                        # Special a-1 in Naturals case.  If a is
-                        # in NaturalsPos, we are good.
-                        return subOneInNats.instantiate(
-                                {a:self.operands[0]}, assumptions=assumptions)
-                    # (a-b) in Naturals requires that b <= a.
-                    return subtractNatClosureBin.instantiate(
-                            {a:self.operands[0], b:self.operands[1].operand}, 
-                            assumptions=assumptions)
-                return addNatClosureBin.instantiate(
-                        {a: self.operands[0], b: self.operands[1]}, 
-                        assumptions=assumptions)
-            return addNatClosure.instantiate(
-                    {i: num(len(self.operands)), a: self.operands}, 
-                    assumptions=assumptions)
-        if number_set == NaturalsPos:
+                return addNatClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addNatClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
+        if number_set == NaturalsPos or number_set == RealsPos:
             val = -1
             for _i, operand in enumerate(self.operands):
                 try:
@@ -888,7 +874,11 @@ class Add(Operation):
                                    "Expecting at least one value to be "
                                    "greater than zero")
             # print(len(self.operands))
-            return addNatPosClosure.specialize({i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]}, assumptions=assumptions)
+            if number_set == NaturalsPos:
+                temp_thm = addNatPosClosure
+            else:
+                temp_thm = addRealPosClosure
+            return temp_thm.specialize({m: num(val), n:num(len(self.operands) - val - 1), AA:self.operands[:val], B: self.operands[val], CC: self.operands[val + 1:]}, assumptions=assumptions)
         if number_set == Reals:
             if len(self.operands) == 2:
                 return addRealClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)

@@ -76,15 +76,15 @@ class RealNegSet(NumberSet):
 
 class RealNonNegSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{0^{+}}',
+        NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{\ge 0}',
                            context=__file__)
-        
+    
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import inRealsNonNeg_iff_non_negative
-        return inRealsNonNeg_iff_non_negative.specialize(
-                {a:member},assumptions=assumptions).deriveRightImplication(
-                        assumptions)
-
+        from ._theorems_ import inRealsNonNeg_iff_nonNegative
+        return inRealsNonNeg_iff_nonNegative.specialize(
+                {a:member},
+                assumptions=assumptions).deriveRightImplication(assumptions)
+    
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
         # only fence if forceFence=True (nested exponents is an

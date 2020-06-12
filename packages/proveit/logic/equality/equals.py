@@ -137,9 +137,9 @@ class Equals(TransitiveRelation):
                     raise ProofFailure(self, assumptions,
                         "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation
-            except EvaluationError as e:
-                raise ProofFailure(self, assumptions, 
-                                   "Evaluation error: %s"%e.message)
+            except SimplificationError as e:
+                raise ProofFailure(self, assumptions,
+                        "Evaluation error: %s"%e.message)
         elif isIrreducibleValue(self.lhs):
             try:
                 evaluation = self.rhs.evaluation(assumptions)
@@ -147,22 +147,9 @@ class Equals(TransitiveRelation):
                     raise ProofFailure(self, assumptions,
                         "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation.deriveReversed()
-            except EvaluationError as e:
-                raise ProofFailure(self, assumptions, 
-                                   "Evaluation error: %s"%e.message)
-        if hasattr(self.lhs, 'deduceEquality'):
-            # Try the 'deduceEquality' method if there is one.
-            try:
-                eq = self.lhs.deduceEquality(self, assumptions)
-            except ProofFailure:
-                eq = None
-            if eq is not None:
-                if eq.expr != self:
-                    raise ValueError("'deduceEquality' not implemented "
-                                     "correctly; must deduce the 'equality' "
-                                     "that it is given if it can: "
-                                     "'%s' != '%s'"%(eq.expr, self))
-                return eq
+            except SimplificationError as e:
+                raise ProofFailure(self, assumptions,
+                        "Evaluation error: %s"%e.message)
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
             Implies(self.rhs, self.lhs).prove(assumptions, automation=False)
