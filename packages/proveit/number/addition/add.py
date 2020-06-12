@@ -247,11 +247,20 @@ class Add(Operation):
         the equivalence as a multiplication. For example,
         a + a + a = 3 * a
         '''
-        from proveit.number import num
-        from proveit.number.multiplication._theorems_ import multDefRev
+        from proveit import ExprRange
+        from proveit.number import one
+        from proveit.number.multiplication._theorems_ import (
+                multDefRev, repeated_addition_to_mult)
         if not all(operand==self.operands[0] for operand in self.operands):
             raise ValueError("'asMult' is only applicable on an 'Add' expression if all operands are the same: %s"%str(self))
-        _n = num(len(self.operands))
+        if (len(self.operands)==1 and isinstance(self.operands[0], ExprRange)
+                and self.operands[0].is_parameter_independent
+                and self.operands[0].start_index==one):
+            expr_range = self.operands[0]
+            return repeated_addition_to_mult.instantiate(
+                    {x:expr_range.body, n:expr_range.end_index},
+                    assumptions=assumptions)
+        _n = self.operands.length(assumptions)
         _a = self.operands
         _x = self.operands[1]
         return multDefRev.specialize({n:_n, a:_a, x:_x}, 
@@ -533,8 +542,11 @@ class Add(Operation):
 
     def doReducedSimplification(self, assumptions=USE_DEFAULTS):
         '''
-        created by JML on 7/24/19. modified by WMW on 9/7/19.
-        combine like terms.
+        Perform a number of possible simplification of a Add
+        expression after the operands have individually been
+        simplified.  Disassociate grouped terms, eliminate zero terms, 
+        cancel common terms that are subtracted, combine like terms,
+        convert repeated addition to multiplication, etc.
         '''
         from proveit.number import one, Neg, Mult
         
@@ -544,12 +556,20 @@ class Add(Operation):
         # ungroup the expression (disassociate nested additions).
         _n = 0
         length = len(expr.operands) - 1
+        # loop through all operands
         while _n < length:
-            # loop through all operands
+            operand = expr.operands[_n]
+            if (isinstance(operand, ExprRange) and 
+                    operand.is_parameter_independent):
+                # A range of repeated terms may be simplified to
+                # a multiplication, but we need to group it first.
+                expr = eq.update(expr.association(_n, 1, assumptions))
+                expr = eq.update(expr.innerExpr().operands[_n].simplification(
+                        assumptions))
             # print("n, length", n, length)
-            if (isinstance(expr.operands[_n], Add) or
-                    (isinstance(expr.operands[_n], Neg) and 
-                     isinstance(expr.operands[_n].operand, Add))):
+            if (isinstance(operand, Add) or
+                    (isinstance(operand, Neg) and 
+                     isinstance(operand.operand, Add))):
                 # if it is grouped, ungroup it
                 expr = eq.update(expr.disassociation(_n, assumptions))
             length = len(expr.operands)
@@ -620,13 +640,18 @@ class Add(Operation):
                     expr = eq.update(expr.association(
                             _m, length=len(hold[key]), 
                             assumptions=assumptions))
-
-        if expr==self and len(order)==1:
+        
+        if len(order)==1:
             # All operands are like terms.  Simplify by combining them.
             
             # If all the operands are the same, combine via multiplication.
-            if all(operand==self.operands[0] for operand in self.operands):
-                return self.conversionToMultiplication(assumptions)
+            if (all(operand==expr.operands[0] for operand in expr.operands)
+                    and not (len(expr.operands) == 1 and
+                             isinstance(expr.operands[0], ExprRange) and
+                             not expr.operands[0].is_parameter_independent)):
+                expr = eq.update(expr.conversionToMultiplication(assumptions))
+                expr = eq.update(expr.simplification(assumptions))
+                return eq.relation
             elif key != one:
                 # for all the keys that are not basic numbers, derive the multiplication from the addition
                 # make sure all the operands in the key are products (multiplication)
@@ -939,9 +964,11 @@ class Add(Operation):
         from proveit.number.multiplication._theorems_ import distributeThroughSum
         from proveit.number import num, one, Mult
         expr = self
+        eq = TransRelUpdater(expr, assumptions) # for convenience updating our equation
         _b = []
         # factor theFactor from each term
-        for _i, term in enumerate(self.terms):
+        for _i in range(len(expr.terms)):
+            term = expr.terms[_i]
             if hasattr(term, 'factorization'):
                 termFactorization = term.factorization(theFactor, pull, groupFactor=groupFactor, groupRemainder=True, assumptions=assumptions)
                 if not isinstance(termFactorization.rhs, Mult):
@@ -958,9 +985,9 @@ class Add(Operation):
                 factoredTerm = Mult(one, term) if pull=='right' else Mult(term, one)
                 termFactorization = factoredTerm.simplification(assumptions).deriveReversed(assumptions)
                 _b.append(one)
-                
             # substitute in the factorized term
-            return termFactorization.substitution(expr.innerExpr().terms[_i], assumptions=assumptions)
+            expr = eq.update(termFactorization.substitution(
+                    expr.innerExpr().terms[_i], assumptions=assumptions))
         if not groupFactor and isinstance(theFactor, Mult):
             factorSub = theFactor.operands
         else:
@@ -974,9 +1001,10 @@ class Add(Operation):
         _i = num(len(_a))
         _j = num(len(_b))
         _k = num(len(_c))
-        return distributeThroughSum.specialize(
+        eq.update(distributeThroughSum.specialize(
                 {i:_i,j:_j,k:_k,a:_a, b:_b, c:_c}, 
-                assumptions=assumptions).deriveReversed(assumptions)
+                assumptions=assumptions).deriveReversed(assumptions))
+        return eq.relation
     
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
