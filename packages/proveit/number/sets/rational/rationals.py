@@ -42,8 +42,8 @@ class RationalsNonNegSet(NumberSet):
                 {x:member}, assumptions=assumptions)
     
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import inRationalsPos_iff_positive
-        return inRationalsPos_iff_positive.specialize(
+        from ._theorems_ import inRationalsNonNeg_iff_nonNeg
+        return inRationalsNonNeg_iff_nonNeg.specialize(
                 {q:member}, assumptions=assumptions).deriveRightImplication(
                         assumptions)
 
