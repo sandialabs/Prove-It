@@ -1,1 +1,1 @@
-theory pertaining to some of the core exression types
+theories pertaining to some of the core exression types
