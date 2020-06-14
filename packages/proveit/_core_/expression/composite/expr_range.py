@@ -889,6 +889,10 @@ class ExprRange(Expression):
             requirement = Equals(ExprTuple(*new_indices), 
                                  ExprTuple(ExprRange(new_param, new_param,
                                                      starts[0], ends[0])))
+            if requirement.lhs==requirement.rhs:
+                # No need for the requirement if it is a trivial
+                # reflexive identity.
+                return
             try:
                 requirements.append(requirement.prove(assumptions))
             except ProofFailure as e:
