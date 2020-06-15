@@ -289,6 +289,7 @@ class ExprArray(ExprTuple):
                 for expr in sub_expr._formatted_checkpoints(formatType,
                                                             fence=False, subFence=False,
                                                             operator=operatorOrOperators):
+                    print(expr)
                     # if orientation is 'vertical' replace all \vdots with \cdots and vice versa.
                     if i == 0 and isinstance(sub_expr.first(), ExprTuple):
                         # only do this once, right away
@@ -997,6 +998,7 @@ class ExprArray(ExprTuple):
             outStr += r' \end{array}' + ' \n'
         if fence:
             outStr += ')' if formatType == 'string' else r'\right)'
+        print(using_explicit_parameterization)
         return outStr
 
 
