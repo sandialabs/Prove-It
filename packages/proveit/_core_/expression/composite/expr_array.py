@@ -117,13 +117,13 @@ class ExprArray(ExprTuple):
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
                             if first is None:
-                                first = entry.first().subExpr(1)
-                            if first != entry.first().subExpr(1):
+                                first = entry.first().subExpr(0).subExpr(1)
+                            if first != entry.first().subExpr(0).subExpr(1):
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.first().subExpr(1)))
-                            if first != entry.last().subExpr(1):
+                                                 'not equal to %s.' % (first, entry.first().subExpr(0).subExpr(1)))
+                            if first != entry.last().subExpr(0).subExpr(1):
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.last().subExpr(1)))
+                                                 'not equal to %s.' % (first, entry.last().subExpr(0).subExpr(1)))
                         else:
                             if first is None:
                                 first = entry.subExpr(1)
@@ -136,13 +136,13 @@ class ExprArray(ExprTuple):
                                              'extraneous feature for the ExprArray class.')
                         elif isinstance(entry, ExprRange):
                             if last is None:
-                                last = entry.first().subExpr(1)
-                            if last != entry.first().subExpr(1):
+                                last = entry.first().subExpr(0).subExpr(1)
+                            if last != entry.first().subExpr(0).subExpr(1):
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.first().subExpr(1)))
-                            if last != entry.last().subExpr(1):
+                                                 'not equal to %s.' % (first, entry.first().subExpr(0).subExpr(1)))
+                            if last != entry.last().subExpr(0).subExpr(1):
                                 raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
-                                                 'not equal to %s.' % (first, entry.last().subExpr(1)))
+                                                 'not equal to %s.' % (first, entry.last().subExpr(0).subExpr(1)))
                         else:
                             if last is None:
                                 last = entry.subExpr(1)
