@@ -270,8 +270,8 @@ class ExprArray(ExprTuple):
                 # the horizontal ellipses for the vertical orientation
                 for expr in sub_expr._formatted_checkpoints(formatType,
                                                             fence=False, subFence=False,
-                                                            ellipses='vert',
                                                             operator=operatorOrOperators):
+                    print(expr)
                     # if orientation is 'vertical' replace all \vdots with \cdots and vice versa.
                     if i == 0 and isinstance(sub_expr.first(), ExprTuple):
                         # only do this once, right away
@@ -317,6 +317,8 @@ class ExprArray(ExprTuple):
                                         n += 1
                                 elif isinstance(entry, ExprRange):
                                     # this is first for both orientations so don't include the '&' for either
+                                    using_explicit_parameterization.append(
+                                        entry._use_explicit_parameterization(formatType))
                                     formatted_sub_expressions.append(entry.first().formatted(formatType, fence=False))
                                     if orientation == 'horizontal':
                                         formatted_sub_expressions.append(r'& \cdots')
@@ -366,6 +368,8 @@ class ExprArray(ExprTuple):
                                                                                                       fence=False))
                                                 vell.append(r'& \cdots')
                                 elif isinstance(entry, ExprRange):
+                                    using_explicit_parameterization.append(
+                                        entry._use_explicit_parameterization(formatType))
                                     if orientation == 'horizontal':
                                         formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
                                                                                                         fence=False))
@@ -426,6 +430,8 @@ class ExprArray(ExprTuple):
                                                                                                       fence=False))
                                         n += 1
                                 elif isinstance(sub_expr.last().entries[0], ExprRange):
+                                    using_explicit_parameterization.append(
+                                        entry._use_explicit_parameterization(formatType))
                                     if orientation == 'horizontal':
                                         # this is the first of the last row so we omit the '&'
                                         formatted_sub_expressions.append(entry.first().formatted(formatType,
@@ -454,6 +460,8 @@ class ExprArray(ExprTuple):
                                         formatted_sub_expressions.append('& ' + var.formatted(formatType, fence=False))
 
                                 elif isinstance(entry, ExprRange):
+                                    using_explicit_parameterization.append(
+                                        entry._use_explicit_parameterization(formatType))
                                     # this is not the first entry for either orientation so we include an '&'
                                     formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
                                                                                                     fence=False))
@@ -467,7 +475,7 @@ class ExprArray(ExprTuple):
                                     # this is not the first entry for either orientation so we include an '&'
                                     formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False))
                             m += 1
-                    elif expr == 'vert' and isinstance(sub_expr.first(), ExprTuple):
+                    elif i == 1 and isinstance(sub_expr.first(), ExprTuple):
                         if orientation == 'horizontal':
                             formatted_sub_expressions.append(r' \\ ' + '\n ' + ell + r' \\ ' + '\n ')
                         else:
@@ -502,13 +510,10 @@ class ExprArray(ExprTuple):
                                                                                                fence=False))
 
                             else:
-                                # we add an '&' after the \vdots because this is a range of a tuple of a range
                                 formatted_sub_expressions.append(r'\vdots')
 
                                 formatted_sub_expressions.append(entry.last().formatted(formatType,
                                                                                         fence=False))
-
-
                     i += 1
             elif isinstance(sub_expr, ExprTuple):
                 # always fence nested expression lists
@@ -684,6 +689,7 @@ class ExprArray(ExprTuple):
             outStr += r' \end{array}' + ' \n'
         if fence:
             outStr += ')' if formatType == 'string' else r'\right)'
+        print(using_explicit_parameterization)
         return outStr
 
 
