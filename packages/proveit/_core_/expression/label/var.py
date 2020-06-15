@@ -113,7 +113,7 @@ def dummyVar(n):
         k = int(m / pow_of_26)
         letters += chr(ord('a') + k)
         m -= k*pow_of_26
-    return Variable(letters)    
+    return Variable('_' + letters, latexFormat = r'{_{-}' + letters + r'}')
 
 def safeDummyVar(*expressions, start_index=0):
     usedVs = frozenset().union(*[expr._used_vars() for expr in expressions])

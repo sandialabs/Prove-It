@@ -26,7 +26,10 @@ class Len(Operation):
     @staticmethod
     def extractInitArgValue(argName, operator_or_operators, operand_or_operands):
         if argName=='operand':
-            return operand_or_operands[0]
+            if isinstance(operand_or_operands, ExprTuple):
+                return operand_or_operands[0]
+            else:
+                return operand_or_operands
         
     def string(self, **kwargs):
         return '|' + self.operand.string() + '|'
@@ -130,8 +133,12 @@ class Len(Operation):
                          i:range_start, j:range_end},
                         assumptions=assumptions)
         else:
-            # Handle the general case via general_len_val.
-            from proveit.core_expr_types.tuples._theorems_ import general_len
+            # Handle the general cases via general_len_val,
+            # len_of_ranges_with_repeated_indices, or
+            # len_of_ranges_with_repeated_indices_from_1
+            from proveit.core_expr_types.tuples._theorems_ import (
+                    general_len, len_of_ranges_with_repeated_indices,
+                    len_of_ranges_with_repeated_indices_from_1)
             _x = safeDummyVar(self)
             def entry_map(entry):
                 if isinstance(entry, ExprRange):
@@ -172,10 +179,33 @@ class Len(Operation):
             _f = [entry_map(entry) for entry in entries]
             _i = [entry_start(entry) for entry in entries]
             _j = [entry_end(entry) for entry in entries]
-            _n = Len(_i).computed(assumptions=assumptions)
-            general_computation = general_len.instantiate(
+            _n = Len(_i).computed(assumptions=assumptions, simplify=False)
+            if all(_==_i[0] for _ in _i) and all(_==_j[0] for _ in _j):
+                if isinstance(_i[0], ExprRange):
+                    if _i[0].is_parameter_independent:
+                        # A parameter independent range means they
+                        # are all the same.
+                        _i = [_i[0].body]
+                if isinstance(_j[0], ExprRange):
+                    if _j[0].is_parameter_independent:
+                        # A parameter independent range means they
+                        # are all the same.
+                        _j = [_j[0].body]
+                if (not isinstance(_i[0], ExprRange) and
+                    not isinstance(_j[0], ExprRange)):
+                    # special cases where the indices are repeated
+                    if _i[0] == one:
+                        thm = len_of_ranges_with_repeated_indices_from_1
+                        return thm.instantiate(
+                                {n:_n, f:_f, i:_j[0]}, 
+                                assumptions=assumptions)
+                    else:
+                        thm = len_of_ranges_with_repeated_indices
+                        return thm.instantiate(
+                                {n:_n, f:_f, i:_i[0], j:_j[0]}, 
+                                assumptions=assumptions)
+            return general_len.instantiate(
                     {n:_n, f:_f, i:_i, j:_j}, assumptions=assumptions)
-            return general_computation
     
     def typical_equiv(self, assumptions=USE_DEFAULTS):
         '''
@@ -200,13 +230,11 @@ class Len(Operation):
                              %self)
 
         entries = self.operand
-        if (len(entries) > 0  and isinstance(entries[0], ExprRange) and
+        if (len(entries)==1  and isinstance(entries[0], ExprRange) and
                 not isinstance(entries[0].body, ExprRange)):
-            # In the special case of needing the length of an
-            # iteration of the form (1, ..., n) where n is a decimal,
-            # import theorems that may be relevant.  For example:
-            # (1, 2, 3) = (1, ..., 3)
-            # |(1, 2, 3)| = |(1, ..., 3)|
+            # Treat the special case something of the form
+            # |(f(i), ..., f(j))}.  For example:
+            # |(f(i), ..., f(j)| = (i, ..., j)
             range_entry = entries[0]
             start_index = range_entry.start_index
             end_index = range_entry.end_index
@@ -303,20 +331,19 @@ class Len(Operation):
             raise ValueError("The 'equality' should be an Equals expression")        
         if equality.lhs != self:
             raise ValueError("The left side of 'equality' should be 'self'")
-        
         # Try a special-case "typical equivalence".
         if isinstance(equality.rhs, Len):
             if (isinstance(equality.rhs.operand, ExprTuple)
-                    and isinstance(self, ExprTuple)):
-                if len(equality.rhs.operand) == 1:
-                    if isinstance(equality.rhs.operand[0], ExprRange):
-                        try:
-                            equiv = \
-                                self.typical_equiv(assumptions=assumptions)
-                            if equiv==equality:
-                                return equiv
-                        except (NotImplementedError, ValueError):
-                            pass
+                    and isinstance(self.operand, ExprTuple)):
+                if (len(equality.rhs.operand) == 1 and 
+                        isinstance(equality.rhs.operand[0], ExprRange)):
+                    try:
+                        equiv = \
+                            self.typical_equiv(assumptions=assumptions)
+                        if equiv==equality:
+                            return equiv
+                    except (NotImplementedError, ValueError):
+                        pass
         
         # Next try to compute each side, simplify each side, and
         # prove they are equal.

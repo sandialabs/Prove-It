@@ -18,8 +18,6 @@ class Operation(Expression):
         '''
         Operation.operationClassOfOperator.clear()
     
-    # NEED CAPABILITY TO SPECIFY A SINGLE OPERAND THAT IS AN ExprTuple.
-    
     def __init__(self, operator_or_operators, operand_or_operands, styles=None):
         '''
         Create an operation with the given operator(s) and operand(s).
@@ -85,7 +83,7 @@ class Operation(Expression):
             # wrap a single operand in a composite for convenience
             self.operands = compositeExpression(self.operand)
         if 'operation' not in styles:
-            styles['operation'] = 'normal' # vs 'function
+            styles['operation'] = 'infix' # vs 'function'
         if 'wrapPositions' not in styles:
             styles['wrapPositions'] = '()' # no wrapping by default
         if 'justification' not in styles:
@@ -99,6 +97,8 @@ class Operation(Expression):
 
     def styleOptions(self):
         options = StyleOptions(self)
+        options.addOption('operation', 
+                          ("'infix' or 'function' style formatting"))
         options.addOption('wrapPositions', 
                           ("position(s) at which wrapping is to occur; '2 n - 1' "
                            "is after the nth operand, '2 n' is after the nth "
@@ -339,8 +339,9 @@ class Operation(Expression):
         return [int(pos_str) for pos_str in self.getStyle('wrapPositions').strip('()').split(' ') if pos_str != '']
     
     def _function_formatted(self, formatType, **kwargs):
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
         formatted_operator = self.operator.formatted(formatType, fence=True)
-        if hasattr(self, 'operand'):
+        if hasattr(self, 'operand') and not isinstance(self.operand, ExprTuple):
             return '%s(%s)'%(formatted_operator, 
                              self.operand.formatted(formatType, fence=False))
         return '%s(%s)'%(formatted_operator, 
@@ -369,7 +370,8 @@ class Operation(Expression):
         if isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
             operator = operatorOrOperators
             # Single operator case.
-            # Different formatting when there is 0 or 1 element, unless it is an Iter
+            # Different formatting when there is 0 or 1 element, unless
+            # it is an ExprRange.
             if len(operands) < 2:
                 if len(operands) == 0 or not isinstance(operands[0], ExprRange):
                     if formatType == 'string':
@@ -484,7 +486,7 @@ class Operation(Expression):
             # If a singular operand is replaced with an ExprTuple,
             # we must wrap an extra ExprTuple around it to indicate
             # that it is still a singular operand with the operand
-            # as the ExprTuple (rather than expanding to multip 
+            # as the ExprTuple (rather than expanding to multiple
             # operands).
             subbed_operand_or_operands = ExprTuple(subbed_operand_or_operands)
         else:

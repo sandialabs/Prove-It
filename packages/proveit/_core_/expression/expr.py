@@ -28,7 +28,8 @@ class ExprType(type):
                  '_repr_html_', '_coreInfo',
                  '_subExpressions', '_genericExpr', 
                  '_meaningData', '_meaning_id',
-                 '_styleData', '_style_id')
+                 '_styleData', '_style_id',
+                 'is_parameter_independent')
     
     def __new__(meta, name, bases, attrs):
         # Tip from

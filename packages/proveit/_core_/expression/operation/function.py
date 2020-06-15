@@ -10,3 +10,6 @@ class Function(Operation):
         if styles is None: styles = dict()
         styles['operation']='function'
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
+        if not hasattr(self, 'operator'):
+            raise ValueError("A Function must be given a single `operator`. "
+                             "%s is not a valid `operator`."%str(operator))

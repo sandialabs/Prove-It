@@ -150,10 +150,12 @@ class IndexedVar(Operation):
         if exclusions is not None and self in exclusions: 
             return dict() # this is excluded
         var = self
+        forms_dict = dict()
         while isinstance(var, IndexedVar):
+            forms_dict.update(
+                    var.index._free_var_ranges(exclusions=exclusions))
             var = var.var
-        forms_dict = {var:{self}}
-        forms_dict.update(self.index._free_var_ranges(exclusions=exclusions))
+        forms_dict.update({var:{self}})
         return forms_dict
     
     
@@ -200,7 +202,7 @@ def extract_indices(indexed_var):
     while isinstance(expr, IndexedVar):
         indices.append(expr.index)
         expr = expr.var
-    return indices
+    return list(reversed(indices))
 
 def indexed_var(var, index_or_indices):
     '''
@@ -211,7 +213,7 @@ def indexed_var(var, index_or_indices):
         if len(index_or_indices) > 1:
             # multiple indices
             indices = index_or_indices
-            return IndexedVar(indexed_var(var, indices[1:]), indices[0])
+            return IndexedVar(indexed_var(var, indices[:-1]), indices[-1])
         else:
             # single index.
             index = index_or_indices[0]
