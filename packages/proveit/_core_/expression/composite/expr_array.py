@@ -313,12 +313,18 @@ class ExprArray(ExprTuple):
                                                 if k == 0:
                                                     formatted_sub_expressions.append(var.formatted(formatType,
                                                                                                    fence=False))
-                                                    vell.append(r'& \cdots')
+                                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                                        vell.append(r'& ..')
+                                                    else:
+                                                        vell.append(r'& \cdots')
                                                 else:
                                                     formatted_sub_expressions.append('& '
                                                                                      + var.formatted(formatType,
                                                                                                      fence=False))
-                                                    vell.append(r'& \cdots')
+                                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                                        vell.append(r'& ..')
+                                                    else:
+                                                        vell.append(r'& \cdots')
                                         else:
                                             # for the first entry, don't include '&' for formatting purposes
 
@@ -333,11 +339,17 @@ class ExprArray(ExprTuple):
                                                 if k == 0:
                                                     formatted_sub_expressions.append(var.formatted(formatType,
                                                                                                    fence=False))
-                                                    vell.append(r'& \cdots')
+                                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                                        vell.append(r'& ..')
+                                                    else:
+                                                        vell.append(r'& \cdots')
                                                 else:
                                                     formatted_sub_expressions.append('& ' + var.formatted(formatType,
                                                                                                           fence=False))
-                                                    vell.append(r'& \cdots')
+                                                    if self.getStyle('parameterization', default_style) == 'explicit':
+                                                        vell.append(r'& ..')
+                                                    else:
+                                                        vell.append(r'& \cdots')
                                         n += 1
                                 elif isinstance(entry, ExprRange):
                                     # this is first for both orientations so don't include the '&' for either
@@ -369,7 +381,10 @@ class ExprArray(ExprTuple):
                                         vell.append('&')
                                         formatted_sub_expressions.append(entry.last().formatted(formatType,
                                                                                                 fence=False))
-                                        vell.append(r'& \cdots')
+                                        if self.getStyle('parameterization', default_style) == 'explicit':
+                                            vell.append(r'& ..')
+                                        else:
+                                            vell.append(r'& \cdots')
                                 else:
                                     if orientation == 'horizontal':
                                         formatted_sub_expressions.append(entry.formatted(formatType,
@@ -383,12 +398,18 @@ class ExprArray(ExprTuple):
                                         if k == 0:
                                             formatted_sub_expressions.append(entry.formatted(formatType,
                                                                                              fence=False))
-                                            vell.append(r'& \cdots')
+                                            if self.getStyle('parameterization', default_style) == 'explicit':
+                                                vell.append(r'& ..')
+                                            else:
+                                                vell.append(r'& \cdots')
                                         else:
                                             formatted_sub_expressions.append('& '
                                                                              + entry.formatted(formatType,
                                                                                                fence=False))
-                                            vell.append(r'& \cdots')
+                                            if self.getStyle('parameterization', default_style) == 'explicit':
+                                                vell.append(r'& ..')
+                                            else:
+                                                vell.append(r'& \cdots')
                             else:
                                 if isinstance(entry, ExprTuple):
                                     for var in entry:
@@ -405,11 +426,17 @@ class ExprArray(ExprTuple):
                                                 # this is still technically the first column so we don't include
                                                 # the '&' for formatting purposes
                                                 formatted_sub_expressions.append(var.formatted(formatType, fence=False))
-                                                vell.append(r'& \cdots')
+                                                if self.getStyle('parameterization', default_style) == 'explicit':
+                                                    vell.append(r'& ..')
+                                                else:
+                                                    vell.append(r'& \cdots')
                                             else:
                                                 formatted_sub_expressions.append('& ' + var.formatted(formatType,
                                                                                                       fence=False))
-                                                vell.append(r'& \cdots')
+                                                if self.getStyle('parameterization', default_style) == 'explicit':
+                                                    vell.append(r'& ..')
+                                                else:
+                                                    vell.append(r'& \cdots')
                                 elif isinstance(entry, ExprRange):
                                     using_explicit_parameterization.append(
                                         entry._use_explicit_parameterization(formatType))
@@ -459,11 +486,17 @@ class ExprArray(ExprTuple):
                                             # this is still technically the first column so we don't include
                                             # the '&' for formatting purposes
                                             formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
-                                            vell.append(r'& \cdots')
+                                            if self.getStyle('parameterization', default_style) == 'explicit':
+                                                vell.append(r'& ..')
+                                            else:
+                                                vell.append(r'& \cdots')
                                         else:
                                             formatted_sub_expressions.append('& ' + entry.formatted(formatType,
                                                                                                     fence=False))
-                                            vell.append(r'& \cdots')
+                                            if self.getStyle('parameterization', default_style) == 'explicit':
+                                                vell.append(r'& ..')
+                                            else:
+                                                vell.append(r'& \cdots')
                             m += 1
 
                     elif (expr == sub_expr.last().formatted(formatType, fence=False)) \
@@ -917,6 +950,7 @@ class ExprArray(ExprTuple):
                 raise ValueError("Expressions must be wrapped in either an ExprTuple or ExprRange")
             k += 1
 
+        print(formatted_sub_expressions)
         if orientation == "vertical":
             # up until now, the formatted_sub_expression is still
             # in the order of the horizontal orientation regardless of orientation type
