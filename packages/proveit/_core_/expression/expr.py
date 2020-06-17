@@ -634,6 +634,17 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
+    def proven(self, assumptions=USE_DEFAULTS):
+        '''
+        Return True if and only if the expression is known to be true.
+        '''
+        from proveit import ProofFailure
+        try:
+            self.prove(assumptions, automation=False)
+            return True
+        except ProofFailure:
+            return False
+
     def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
         '''
         Attempt to prove the logical negation (Not) of this expression. 
@@ -874,9 +885,10 @@ class Expression(metaclass=ExprType):
                    "not %s for %s assuming %s"
                    %(method_called, evaluation, self, assumptions))
             raise ValueError(msg)
-        # Note: No need to store in Equals.evaluations or Equals.simplifications; this
-        # is done automatically as a side-effect for proven equalities with irreducible
-        # right sides.
+        # Note: No need to store in Equals.known_evaluation_sets or
+        # Equals.known_simplifications; this is done automatically as
+        # a side-effect for proven equalities with irreducible right
+        # sides.
 
         return evaluation
     
@@ -912,7 +924,6 @@ class Expression(metaclass=ExprType):
         from proveit import KnownTruth, ProofFailure
         from proveit.logic import (Equals, defaultSimplification, 
                                    SimplificationError, EvaluationError)
-        
         assumptions = defaults.checkedAssumptions(assumptions)
         
         method_called = None
@@ -955,8 +966,11 @@ class Expression(metaclass=ExprType):
                    "equality with 'self' on the left side, not %s for %s "
                    "assuming %s"%(method_called, simplification, self, assumptions))
             raise ValueError(msg)
+
         # Remember this simplification for next time:
-        Equals.simplifications.setdefault(self, set()).add(simplification)
+        assumptions_sorted = sorted(assumptions, key=lambda expr : hash(expr))
+        known_simplifications_key = (self, tuple(assumptions_sorted))
+        Equals.known_simplifications[known_simplifications_key] = simplification
              
         return simplification
     

@@ -321,7 +321,7 @@ class Operation(Expression):
         if justification != 'center':
             call_strs.append('withJustification("' + justification + '")')
         return call_strs
-    
+
     def string(self, **kwargs):
         if self.getStyle('operation')=='function' or not hasattr(self, 'operands'): # When there is a single operand, we must use the "function"-style formatting.
             return self._function_formatted('string', **kwargs)

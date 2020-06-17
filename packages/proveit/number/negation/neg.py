@@ -66,7 +66,6 @@ class Neg(Operation):
         assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)
         return doubleNegation.specialize({x:self.operand.operand}, 
                                          assumptions=assumptions)
-        
     
     """
     def _closureTheorem(self, numberSet):
