@@ -25,7 +25,7 @@ class AssignmentBehaviorModifier:
             # remember the original version of 'run_cell'
             ipython.orig_run_cell = ipython.run_cell
     
-    def _setBehavior(self, assignmentFn):
+    def _setBehavior(self, assignmentFn, lastLineFn):
         ipython = self.ipython
         def new_run_cell(self, raw_cell, *args, **kwargs):
             lines = raw_cell.split('\n')
@@ -44,6 +44,9 @@ class AssignmentBehaviorModifier:
                     lhs = lhs.strip(); rhs = rhs.strip()
                     if lhs != 'context' and rhs.find("proveit.Context('.')") != 0:
                         lines.append(assignmentFn([varname.strip() for varname in lhs.split(',') ]))
+            elif re.match("[a-zA-Z_][a-zA-Z0-9_\.]*$", last_python_stmt) is not None:
+                # We may alter the last line for dispaly purposes.
+                lines.append(lastLineFn(last_python_stmt))
             new_raw_cell = '\n'.join(lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
 #        ipython.run_cell = new.instancemethod(new_run_cell, ipython)#Comment out for python 3
@@ -56,7 +59,8 @@ class AssignmentBehaviorModifier:
     def displayAssignments(self, shell):
 #        shell.ex("from proveit._core_.magics import Assignments")#Comment out for Python 3
         shell.ex("import proveit.magics")#Comment in for Python 3
-        self._setBehavior(lambda varnames: "proveit.magics.Assignments([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])")
+        self._setBehavior(lambda varnames: "proveit.magics.Assignments([" + ','.join("'%s'"%varname for varname in varnames) + "], [" + ','.join(varnames) + "])",
+                          lambda orig_last_line: "proveit.magics.possibly_wrap_html_display_objects(%s)"%orig_last_line)
 
 class ContextInterface:
     '''
@@ -662,7 +666,8 @@ class Assignments:
                 try:
                     # try to combine a composite expression if the right side is a
                     # list or dictionary that should convert to an expression.
-                    rightSide = singleOrCompositeExpression(rightSide)
+                    rightSide = singleOrCompositeExpression(
+                            rightSide, wrap_expr_range_in_tuple=False)
                 except:
                     pass
             if proveItMagic.kind in ('axioms', 'theorems', 'common'):
@@ -729,7 +734,7 @@ class Assignments:
             prev = proveItMagic.expr_names[rightSide][-2]
             if kind == 'theorem':
                 html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)<br>'%(prev, prev)
-            else:
+            elif kind=='axiom':
                 print('WARNING: Duplicate of', prev)
         return html
 
@@ -742,7 +747,39 @@ class Assignments:
         
     def __repr__(self):
         return '\n'.join('%s: %s'%(name, repr(rightSide)) for name, rightSide in zip(self.names, self.rightSides))
-        
+
+def possibly_wrap_html_display_objects(orig):
+    from proveit import ExprTuple
+    try:
+        if hasattr(orig, '_repr_html_'):
+            # No need to wrap.  Already has _repr_html.
+            return orig
+        all_expr_objs = True
+        for obj in orig:
+            if not isinstance(obj, Expression):
+                all_expr_objs = False
+            if not hasattr(obj, '_repr_html_'):
+                return orig
+        if all_expr_objs:
+            # If they are all expression objects, wrap it in
+            # an ExprTuple.
+            return ExprTuple(*orig)
+        return HTML_DisplayObjects(orig)
+    except:
+        return orig
+
+class HTML_DisplayObjects:
+    def __init__(self, objects):
+        self.objects = objects
+    
+    def _repr_html_(self):
+        try:
+            return '<br>\n'.join(obj._repr_html_() for obj in self.objects)
+        except Exception as e:
+            print(e)
+    
+    
+
 
 # This class must then be registered with a manually created instance,
 # since its constructor has different arguments from the default:
