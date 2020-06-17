@@ -263,9 +263,11 @@ class Lambda(Expression):
                      for param_var, generic_param_var
                      in zip(bound_parameter_vars, generic_param_vars)}
                 generic_parameters = parameters._generic_version()
-                generic_parameters = generic_parameters.replaced(relabel_map)
+                generic_parameters = generic_parameters.replaced(
+                        relabel_map, assumptions=tuple())
                 generic_body = self.body._generic_version()
-                generic_body = generic_body.replaced(relabel_map)
+                generic_body = generic_body.replaced(
+                        relabel_map, assumptions=tuple())
                 generic_body = generic_body._generic_version()
                 return Lambda(generic_parameters, generic_body)
             else:
@@ -394,7 +396,7 @@ class Lambda(Expression):
     
     def apply(self, *operands, equiv_alt_expansions=None,
               allow_relabeling=False, assumptions=USE_DEFAULTS, 
-              requirements=None):
+              requirements=None, equality_repl_requirements=None):
         '''
         Apply this lambda map onto the given operands (a beta reduction
         in the lambda calculus terminology), returning the
@@ -456,18 +458,28 @@ class Lambda(Expression):
         substitution in order to keep derivation rules (i.e., 
         instantiation) simple.  For details, see the 
         ExprRange.replaced documentation.
+        
+        There may be additional requirements introduced when expanding
+        ranges.  For example, indices may need to match, not just
+        lengths.  Also, we may perform automatic equality replacement
+        in the process of performing the lambda application.  For
+        example, "And() = TRUE".  Any employed replacements will be
+        added to the requirements list and added to the
+        'equality_repl_requirements' set (if one is provided).
         '''
         return Lambda._apply(
                 self.parameters, self.body, *operands, 
                 equiv_alt_expansions=equiv_alt_expansions,
                 allow_relabeling=allow_relabeling,
                 assumptions=assumptions, requirements=requirements,
+                equality_repl_requirements=equality_repl_requirements,
                 parameter_vars=self.parameterVars)
     
     @staticmethod 
     def _apply(parameters, body, *operands, equiv_alt_expansions=None,
                allow_relabeling=False,
                assumptions=USE_DEFAULTS, requirements=None,
+               equality_repl_requirements=None,
                parameter_vars=None):
         '''
         Static method version of Lambda.apply which is convenient for 
@@ -590,7 +602,8 @@ class Lambda(Expression):
         try:
             return body.replaced(
                     repl_map, allow_relabeling, assumptions=assumptions, 
-                    requirements=requirements)
+                    requirements=requirements, 
+                    equality_repl_requirements=equality_repl_requirements)
         except ImproperReplacement as e:
             raise LambdaApplicationError(
                     parameters, body, operands, assumptions,
@@ -602,8 +615,9 @@ class Lambda(Expression):
                     equiv_alt_expansions,
                     "TypeError: %s "%str(e))
     
-    def _replaced(self, repl_map, allow_relabeling=False,
-                  assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling,
+                  assumptions, requirements,
+                  equality_repl_requirements):
         '''
         Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary 
@@ -634,32 +648,14 @@ class Lambda(Expression):
         # Use a helper method to handle some inner scope transformations.
         new_params, inner_repl_map, inner_assumptions \
             = self._inner_scope_sub(repl_map, allow_relabeling,
-                                    assumptions, requirements)
+                                    assumptions, requirements,
+                                    equality_repl_requirements)
         
         # The lambda body with the substitutions.
-        inner_requirements = []
         subbed_body = self.body.replaced(
                 inner_repl_map, allow_relabeling,
-                inner_assumptions, inner_requirements)
-        
-        # Translate from inner requirements to outer requirements
-        # in a manner that respects the change in scope w.r.t.
-        # lambda parameters.
-        for requirement in inner_requirements:
-            if free_vars(requirement).isdisjoint(new_params):
-                requirements.append(requirement)
-            else:
-                # If the requirement involves any of the Lambda 
-                # parameters, it must be generalized under these
-                # parameters to ensure there is no scoping violation 
-                # since the scope of these parameters is within the new
-                # Lambda.
-                requirement_params = \
-                    free_vars(requirement).intersection(new_params)
-                conditions = requirement.assumptions
-                requirement = requirement.generalize(requirement_params,
-                                                     conditions=conditions)
-            requirements.append(requirement)
+                inner_assumptions, requirements,
+                equality_repl_requirements)
         
         try:
             replaced = Lambda(new_params, subbed_body)
@@ -671,7 +667,8 @@ class Lambda(Expression):
         return replaced
 
     def _inner_scope_sub(self, repl_map, allow_relabeling,
-                         assumptions, requirements):
+                         assumptions, requirements,
+                         equality_repl_requirements):
         '''
         Helper method for replaced (and used by ExprRange.replaced) 
         which handles the change in scope properly as well as parameter 
@@ -818,12 +815,14 @@ class Lambda(Expression):
             if isinstance(parameter, ExprRange):
                 subbed_param = parameter._replaced_entries(
                         inner_repl_map, allow_relabeling, 
-                        assumptions=assumptions, requirements=requirements)
+                        assumptions, requirements,
+                        equality_repl_requirements)
                 new_params.extend(subbed_param)
             else:
                 subbed_param = parameter.replaced(
                         inner_repl_map, allow_relabeling, 
-                        assumptions, requirements)
+                        assumptions, requirements,
+                        equality_repl_requirements)
                 new_params.append(subbed_param)
         
         if len({getParamVar(param) for param in new_params}) != len(new_params):
@@ -831,9 +830,11 @@ class Lambda(Expression):
                     new_params, "Parameter variables must be unique")
 
         # Can't use assumptions involving lambda parameter variables
-        inner_assumptions = [assumption for assumption in assumptions 
-                             if free_vars(assumption).isdisjoint(new_params)]
-        return new_params, inner_repl_map, inner_assumptions
+        new_param_vars = [getParamVar(new_param) for new_param in new_params]
+        inner_assumptions = [assumption for assumption in assumptions if
+                             free_vars(assumption).isdisjoint(new_param_vars)]
+                
+        return new_params, inner_repl_map, tuple(inner_assumptions)
     
 
     def relabeled(self, relabel_map):

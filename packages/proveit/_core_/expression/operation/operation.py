@@ -407,8 +407,8 @@ class Operation(Expression):
             if fence: formatted_str += ')' if formatType=='string' else  r'\right)'
             return formatted_str            
             
-    def _replaced(self, repl_map, allow_relabeling=False,
-                  assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling,
+                  assumptions, requirements, equality_repl_requirements):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
@@ -445,10 +445,12 @@ class Operation(Expression):
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator_or_operators = \
             self.operator_or_operators.replaced(repl_map, allow_relabeling,
-                                                assumptions, requirements)
+                                                assumptions, requirements,
+                                                equality_repl_requirements)
         subbed_operand_or_operands = \
             self.operand_or_operands.replaced(repl_map, allow_relabeling,
-                                              assumptions, requirements)
+                                              assumptions, requirements,
+                                              equality_repl_requirements)
         subbed_operators = compositeExpression(subbed_operator_or_operators)
         
         # Check if the operator is being substituted by a Lambda map in
@@ -477,7 +479,8 @@ class Operation(Expression):
                 return Lambda._apply(
                         subbed_operator.parameters, subbed_operator.body,
                         *subbed_operands, assumptions=assumptions, 
-                        requirements=requirements)
+                        requirements=requirements,
+                        equality_repl_requirements=equality_repl_requirements)
         
         had_singular_operand = hasattr(self, 'operand')
         if (had_singular_operand and isinstance(subbed_operand_or_operands, 
@@ -512,14 +515,16 @@ class Operation(Expression):
                     substituted = op_class._checked_make(
                             ['Operation'], styles=None, 
                             subExpressions=subbed_sub_exprs)
-                    return substituted.replaced(assumptions, 
-                                                requirements)
+                    return substituted._auto_reduced(
+                            assumptions, requirements,
+                            equality_repl_requirements)
         
         subbed_sub_exprs = (subbed_operator_or_operators, 
                             subbed_operand_or_operands)
         substituted = self.__class__._checked_make(
                 self._coreInfo, self.getStyles(), subbed_sub_exprs)
-        return substituted._auto_reduced(assumptions, requirements)
+        return substituted._auto_reduced(assumptions, requirements,
+                                         equality_repl_requirements)
 
         
     

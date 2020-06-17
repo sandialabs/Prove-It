@@ -70,8 +70,9 @@ class IndexedVar(Operation):
         if self.getStyle('multi_indexed_var', 'flat') == 'nested':
             yield ('flatten_nested_indexing', False)       
     
-    def _replaced(self, repl_map, allow_relabeling=False,
-                  assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling,
+                  assumptions, requirements,
+                  equality_repl_requirements):
         '''
         Returns this expression with sub-expressions substituted 
         according to the replacement map (repl_map) dictionary.
@@ -85,7 +86,8 @@ class IndexedVar(Operation):
         base_var_sub = repl_map.pop(base_var, None)
         replaced_sans_base_var_sub = \
             Expression._replaced(self, repl_map, allow_relabeling, 
-                                 assumptions, requirements)
+                                 assumptions, requirements,
+                                 equality_repl_requirements)
         if base_var_sub is None:
             # base_var wasn't in repl_map in the first place, so
             # attempting to remove it had no effect.
@@ -98,7 +100,8 @@ class IndexedVar(Operation):
         # As the last resort, do the replacement with the
         # base_var in the repl_map.
         return Expression._replaced(self, repl_map, allow_relabeling, 
-                                    assumptions, requirements)
+                                    assumptions, requirements,
+                                    equality_repl_requirements)
     
     def _formatted(self, formatType, **kwargs):
         if self.getStyle('multi_indexed_var', 'nested') == 'flat' and \

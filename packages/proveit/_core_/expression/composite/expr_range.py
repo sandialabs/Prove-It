@@ -271,8 +271,8 @@ class ExprRange(Expression):
         # want to fence it  anyway.
         return formatted_operator.join(formatted_sub_expressions)
     
-    def getInstance(self, index, assumptions = USE_DEFAULTS, 
-                    requirements = None):
+    def getInstance(self, index, assumptions=USE_DEFAULTS, 
+                    requirements=None, equality_repl_requirements=None):
         '''
         Return the range instance with the given Lambda map
         index as an Expression, using the given assumptions as 
@@ -301,8 +301,9 @@ class ExprRange(Expression):
             requirements.append(relation)
         
         # map to the desired instance
-        return self.lambda_map.apply(index, assumptions=assumptions,
-                                     requirements=requirements)
+        return self.lambda_map.apply(
+                index, assumptions=assumptions, requirements=requirements,
+                equality_repl_requirements=equality_repl_requirements)
 
     def _free_var_ranges(self, exclusions=None):
         '''
@@ -435,21 +436,30 @@ class ExprRange(Expression):
             finally:
                 # Re-enable automation.
                 defaults.disabled_auto_reduction_types.remove(ExprRange)
-        elif Equals(Add(end_index, one), start_index).proven(assumptions):
-            # We can do an empty range reduction
-            # Temporarily disable automation to avoid infinite
-            # recursion.
-            from proveit.core_expr_types.tuples._axioms_ import empty_range_def
-            defaults.disabled_auto_reduction_types.add(ExprRange)
-            try:
-                reduction = empty_range_def.instantiate(
-                        {f:lambda_map, i:start_index, j:end_index},
-                        assumptions=assumptions)
-            finally:
-                # Re-enable automation.
-                defaults.disabled_auto_reduction_types.remove(ExprRange)               
         else:
-            yield expr_range # no reduction
+            # If the start and end are literal ints and form an
+            # empty range, then it should be straightforward to
+            # prove that the range is empty.
+            from proveit.number import isLiteralInt
+            if isLiteralInt(start_index) and isLiteralInt(end_index):
+                if end_index.asInt()+1 == start_index.asInt():
+                    Equals(Add(end_index, one), start_index).prove()
+            if Equals(Add(end_index, one), start_index).proven(assumptions):
+                # We can do an empty range reduction
+                # Temporarily disable automation to avoid infinite
+                # recursion.
+                from proveit.core_expr_types.tuples._axioms_ import \
+                    empty_range_def
+                defaults.disabled_auto_reduction_types.add(ExprRange)
+                try:
+                    reduction = empty_range_def.instantiate(
+                            {f:lambda_map, i:start_index, j:end_index},
+                            assumptions=assumptions)
+                finally:
+                    # Re-enable automation.
+                    defaults.disabled_auto_reduction_types.remove(ExprRange)               
+            else:
+                yield expr_range # no reduction
             return
         assert isinstance(reduction, KnownTruth)
         assert isinstance(reduction.expr, Equals)
@@ -461,9 +471,9 @@ class ExprRange(Expression):
         for entry in reduced_tuple:
             yield entry
     
-    def _replaced_entries(self, repl_map, allow_relabeling=False,
-                             assumptions=USE_DEFAULTS, 
-                             requirements=None):
+    def _replaced_entries(self, repl_map, allow_relabeling,
+                          assumptions, requirements,
+                          equality_repl_requirements):
         '''
         Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary.
@@ -520,15 +530,15 @@ class ExprRange(Expression):
             IndexedVar
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             getParamVar, extract_param_replacements
-        from proveit.logic import Equals #, InSet
-        from proveit.number import Add, one #, Interval
+        from proveit.logic import Equals#, InSet
+        from proveit.number import Add, one#, Interval
                         
         if len(repl_map)>0 and (self in repl_map):
             # The full expression is to be replaced.
             return repl_map[self]
         
+        if requirements is None: requirements = []
         assumptions = defaults.checkedAssumptions(assumptions)
-        new_requirements = []
         # We will turn on the `indices_must_match` flag when the
         # replacement index ranges must match the original range of
         # indices and not just match in length:
@@ -585,7 +595,8 @@ class ExprRange(Expression):
         # result will be used for getting the start and end indices
         # ('starts' and 'ends').
         subbed_expr_range = self.replaced(
-                repl_map, allow_relabeling, assumptions, requirements)
+                repl_map, allow_relabeling, assumptions, requirements,
+                equality_repl_requirements)
         if len(var_range_forms) == 0:
             # Nothing to expand.
             # However, we may perform a reduction of the range
@@ -597,9 +608,20 @@ class ExprRange(Expression):
         
         # Need to handle the change in scope within the lambda 
         # expression.
+        # Note, we should have already gotten requirements
+        # when calling self.replaced.
+        dummy_reqs = []
+        dummy_equality_repl_reqs = set()
         new_params, inner_repl_map, inner_assumptions \
             = self.lambda_map._inner_scope_sub(
-                    repl_map, allow_relabeling, assumptions, new_requirements)
+                    repl_map, allow_relabeling, assumptions,
+                    dummy_reqs, dummy_equality_repl_reqs)
+        # Sanity check that we didn't introduce new requirements.
+        # "_inner_scope_sub" should not introduce anything that
+        # wasn't introduced when we called `self.replaced`.
+        prev_reqs = set(requirements)
+        for req in dummy_reqs: assert req in prev_reqs
+        
         assert len(new_params)==1
         new_param = new_params[0]
         # Restore the repl_map, adding back in what was temporarily
@@ -818,22 +840,23 @@ class ExprRange(Expression):
                 start_index = first_expansion_entry.start_index
                 end_index = first_expansion_entry.end_index
                 
-                # Let's keep this simple.  If it isn't really necessary
-                # to be so fancy with this internal assumption about
-                # being in the [start, end] interval, let's not do it.
+                # Let's keep this simple and not worry about this
+                # "range assumptions".
                 # If needed, we can use explicit axioms/theorems to
                 # make use of this property rather than in the core.
+                # If we change our minds, the range assumption should
+                # also be employed in the ExprRange._replaced method.
                 #range_assumption = InSet(new_param, 
                 #                         Interval(start_index, end_index))
                 
                 entry_assumptions = inner_assumptions # + [range_assumption]
-                entry_requirements = []
                 full_entry_repl_map[orig_parameters[0]] = new_param
                 entry = ExprRange(new_param,
                                   body.replaced(full_entry_repl_map, 
                                                 allow_relabeling,
                                                 entry_assumptions,
-                                                entry_requirements),
+                                                requirements,
+                                                equality_repl_requirements),
                                   start_index, end_index)
                 # We may perform a reduction of the range if it is known
                 # to be empty or singular.
@@ -846,20 +869,6 @@ class ExprRange(Expression):
                     new_indices.append(ExprRange(new_param, new_param, 
                                             start_index, end_index))
                     next_index = Add(end_index, one).simplified(assumptions)
-                # Translate from inner requirements to outer requirements
-                # in a manner that respects the change in scope w.r.t.
-                # lambda parameters.
-                for requirement in entry_requirements:
-                    if new_param in free_vars(requirement):
-                        # If the requirement involves the ExprRange 
-                        # parameter, it must be generalized under these
-                        # parameters to ensure there is no scoping 
-                        # violation since this parameter's scope is
-                        # within the new ExprRange.
-                        conditions = requirement.assumptions
-                        requirement = requirement.generalize(
-                                new_param, conditions=conditions)
-                    requirements.append(requirement)
             else:
                 # For a singular element entry, yield the replaced
                 # element.
@@ -870,11 +879,13 @@ class ExprRange(Expression):
                     # A nested ExprRange may need to be expanded.
                     for subentry in body._replaced_entries(
                             full_entry_repl_map, allow_relabeling,
-                            inner_assumptions, requirements):
+                            inner_assumptions, requirements,
+                            equality_repl_requirements):
                         yield subentry
                 else:
                     yield body.replaced(full_entry_repl_map, allow_relabeling,
-                                        inner_assumptions, requirements)
+                                        inner_assumptions, requirements,
+                                        equality_repl_requirements)
                     
                 if indices_must_match:
                     # We need to know the new_indices to match with the

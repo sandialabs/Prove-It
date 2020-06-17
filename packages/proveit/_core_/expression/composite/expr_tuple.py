@@ -1,5 +1,5 @@
 import types
-from .composite import Composite, _simplifiedCoord
+from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import USE_DEFAULTS
@@ -293,8 +293,8 @@ class ExprTuple(Composite, Expression):
                     return False # end indices don't match
         return True # everything matches.
             
-    def _replaced(self, repl_map, allow_relabeling=False,
-                  assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling, assumptions, 
+                  requirements, equality_repl_requirements):
         '''
         Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary.
@@ -321,11 +321,12 @@ class ExprTuple(Composite, Expression):
                 # ExprRange.replaced is a generator that yields items
                 # to be embedded into the tuple.
                 subbed_exprs.extend(expr._replaced_entries(
-                        repl_map, allow_relabeling, 
-                        assumptions=assumptions, requirements=requirements))
+                        repl_map, allow_relabeling, assumptions, 
+                        requirements, equality_repl_requirements))
             else:
                 subbed_expr = expr.replaced(repl_map, allow_relabeling, 
-                                            assumptions, requirements)
+                                            assumptions, requirements,
+                                            equality_repl_requirements)
                 subbed_exprs.append(subbed_expr)
         return ExprTuple(*subbed_exprs)
     

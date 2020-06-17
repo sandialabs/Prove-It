@@ -133,8 +133,8 @@ class Conditional(Expression):
                 true_condition_reduction
             return true_condition_reduction.instantiate({a:self.value})
     
-    def _replaced(self, repl_map, allow_relabeling=False,
-                  assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling,
+                  assumptions, requirements, equality_repl_requirements):
         '''
         Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary.
@@ -157,14 +157,15 @@ class Conditional(Expression):
         
         # First perform substitution on the conditions:
         subbed_cond = condition.replaced(repl_map, allow_relabeling,
-                                            assumptions, requirements)
+                                         assumptions, requirements,
+                                         equality_repl_requirements)
 
         # Next perform substitution on the value, adding the condition
-        # as an assumption.            
-        assumptions = defaults.checkedAssumptions(assumptions)
+        # as an assumption.
         subbed_val = value.replaced(repl_map, allow_relabeling,
                                     assumptions+(subbed_cond,),
-                                    requirements)
+                                    requirements,
+                                    equality_repl_requirements)
 
         return Conditional(subbed_val, subbed_cond)
 

@@ -32,7 +32,8 @@ class Proof:
         Theorem.allTheorems.clear()
         _ShowProof.show_proof_by_id.clear()
         
-    def __init__(self, provenTruth, requiredTruths):
+    def __init__(self, provenTruth, requiredTruths,
+                 markedRequiredTruthIndices=None):
         
         '''
         # Uncomment to print useful debugging information when tracking side-effects.
@@ -46,6 +47,15 @@ class Proof:
         # note: the contained KnownTruth and Proofs are subject to style changes on a Proof instance basis.       
         self.provenTruth = provenTruth 
         self.requiredTruths = tuple(requiredTruths)
+        if markedRequiredTruthIndices is None:
+            self.markedRequiredTruthIndices = set()
+        else:
+            self.markedRequiredTruthIndices = \
+                set(markedRequiredTruthIndices)
+        for idx in self.markedRequiredTruthIndices:
+            if not isinstance(idx, int) or idx < 0 or idx > len(requiredTruths):
+                raise ValueError("markedRequiredTruthIndices must be a set "
+                                 "of integers indexing requiredTruths")
                    
         # The meaning data is shared among Proofs with the same structure disregarding style
         self._meaningData = meaningData(self._generate_unique_rep(lambda obj : hex(obj._meaning_id)))
@@ -159,9 +169,16 @@ class Proof:
         # Internally, for self._meaning_rep and self._style_rep, we will use self.requiredTruths in the unique representation
         # and the proofs are subject to change (if anything is disabled).
         # For external storage (see _context_storage.py), we will use self.requiredProofs, locking the mapping from KnonwTruths of self.requiredTruths to Proofs.
-        requiredObjs = self.requiredProofs if hasattr(self, 'requiredProofs') else self.requiredTruths
-        return self._generate_step_info(objectRepFn) + '[' + objectRepFn(self.provenTruth) + '];[' + ','.join(objectRepFn(requiredObj) for requiredObj in requiredObjs) + ']'
-            
+        required_objs = (self.requiredProofs 
+                         if hasattr(self, 'requiredProofs') 
+                         else self.requiredTruths)
+        required_obj_marks = [('*' if k in self.markedRequiredTruthIndices
+                             else '') for k in range(len(required_objs))]
+        required_objs_str = ','.join(objectRepFn(obj)+mark for obj, mark
+                                     in zip(required_objs, required_obj_marks))
+        return (self._generate_step_info(objectRepFn) + 
+                '[%s];[%s]'
+                %(objectRepFn(self.provenTruth), required_objs_str))
 
     def _generate_step_info(self, objectRepFn):
         '''
@@ -183,7 +200,9 @@ class Proof:
         # Everything else coming between the punctuation, 
         # ';', ':', ',', '{', '}', '[', ']', is a represented object.
         objIds = re.split("\{|\[|,|:|;|\]|\}",remaining) 
-        return [objId for objId in objIds if len(objId) > 0]  
+        # Remove the '*' marks, marking the "equality replacement
+        # requirements".
+        return [objId.rstrip('*') for objId in objIds if len(objId) > 0]  
 
     @staticmethod
     def _showProof(context, proof_id, unique_rep):
@@ -360,18 +379,29 @@ class Proof:
             amendedProofSteps.append(proof)
         proofSteps = amendedProofSteps
         
+        any_marked = False
+        def req_link(proof, req_idx, n):
+            nonlocal any_marked
+            is_marked = (req_idx in proof.markedRequiredTruthIndices)
+            if is_marked: any_marked=True
+            mark_str = r'<sup>*</sup>' if is_marked else ''
+            return ('<a href="#%s_step%d">%d</a>%s'
+                    %(proof_id, n, n, mark_str))
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
         for k, proof in enumerate(proofSteps):
             html += '<tr><td><a name="%s_step%d">%d</a></td>'%(proof_id,k,k)
-            def reqLink(n):
-                return '<a href="#%s_step%d">%d</a>'%(proof_id, n, n)
             if k==0:
                 # The first (top-level) proof has requirements at the
                 # top by design (though some of these may be references to
                 # later steps).
-                requiredProofNums = ', '.join(reqLink(k+1) for k, _ in enumerate(proof.requiredProofs))
+                requiredProofNums = \
+                    ', '.join(req_link(proof, k, k+1) for k, _ 
+                              in enumerate(proof.requiredProofs))
             else:
-                requiredProofNums = ', '.join(reqLink(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
+                requiredProofNums = \
+                    ', '.join(req_link(proof, k, proofNumMap[requiredProof]) 
+                              for k, requiredProof 
+                              in enumerate(proof.requiredProofs))
             html += '<td>%s</td><td>%s</td>'%(proof.stepType(), requiredProofNums)
             html += '<td>%s</td>'%proof.provenTruth._repr_html_()
             html += '</tr>\n'
@@ -381,23 +411,39 @@ class Proof:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">'%proof.getLink() + str(proof.context) + '.' + proof.name + '</a>'
                 html += '</td></tr>'
+        if any_marked:
+            html += ('<tr><td colspan=4 style="text-align:left">'   
+                     r'<sup>*</sup>equality replacement requirements'
+                     '</td></tr>')
         html += '</table>'
         return html
     
     def __repr__(self):
         proofSteps = self.enumeratedProofSteps()
         proofNumMap = {proof:k for k, proof in enumerate(proofSteps)}
+        any_marked = False
+        def req_ref(proof, req_idx):
+            global any_marked
+            req = proof.requiredProofs[req_idx]
+            is_marked = (req_idx in proof.markedRequiredTruthIndices)
+            if is_marked: any_marked=True
+            mark_str = r'*' if is_marked else ''
+            return ('%d%s'%(proofNumMap[req], mark_str))        
         out_str = '\tstep type\trequirements\tstatement\n'
         for k, proof in enumerate(proofSteps):
             out_str += str(k) + '\t'
-            requiredProofNums = ', '.join(str(proofNumMap[requiredProof]) for requiredProof in proof.requiredProofs)
-            out_str += proof.stepType() + '\t' + requiredProofNums + '\t'
+            required_proof_refs = \
+                ', '.join(req_ref(proof, k) for k 
+                          in range(len(proof.requiredProofs)))
+            out_str += proof.stepType() + '\t' + required_proof_refs + '\t'
             out_str += proof.provenTruth.string(performUsabilityCheck=False)
             out_str += '\n'
             if proof.stepType()=='instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
             if proof.stepType()=='axiom' or proof.stepType()=='theorem':
                 out_str += '\t' + str(proof.context) + '.' + proof.name + '\n'
+        if any_marked:
+            out_str += ('* equality replacement requirements\n')                
         return out_str
 
 class _ProofReference:
@@ -410,6 +456,7 @@ class _ProofReference:
     def __init__(self, ref):
         self.requiredProofs = [ref]
         self.provenTruth = ref.provenTruth
+        self.markedRequiredTruthIndices = set() # nothing marked
     
     def stepType(self):
         # only used in the HTML version
@@ -810,9 +857,6 @@ class Instantiation(Proof):
                              IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (getParamVar, LambdaApplicationError)
-        prev_default_assumptions = defaults.assumptions
-        # These assumptions will be used for deriving any side-effects:
-        defaults.assumptions = assumptions 
         
         # Prepare the 'parameters' and 'operands' for a lambda map
         # application (beta reduction) to perform the replacements.
@@ -839,7 +883,11 @@ class Instantiation(Proof):
                 parameters.append(key[0])
             else:
                 parameters.append(key)
+        prev_default_assumptions = set(defaults.assumptions)
         try:
+            # These assumptions will be used for deriving any 
+            # side-effects:
+            defaults.assumptions = set(assumptions)
             if not isinstance(orig_known_truth, KnownTruth):
                 raise TypeError("May only 'instantiate' a KnownTruth")
             if orig_known_truth.proof() is None:
@@ -850,6 +898,7 @@ class Instantiation(Proof):
             # this derivation step.
             orig_subbed_assumptions = []
             requirements = []
+            equality_repl_requirements = set()
             
             # Make possible substitutions in the "original" KnownTruth 
             # assumption.
@@ -867,7 +916,8 @@ class Instantiation(Proof):
                         parameters, assumption, *operands,
                         allow_relabeling=False,
                         equiv_alt_expansions=equiv_alt_expansions,
-                        assumptions=assumptions, requirements=requirements)
+                        assumptions=assumptions, requirements=requirements,
+                        equality_repl_requirements=equality_repl_requirements)
                 if isinstance(assumption, ExprRange):
                     # An iteration of assumptions to expand.
                     orig_subbed_assumptions.extend(subbed_assumption)
@@ -882,24 +932,28 @@ class Instantiation(Proof):
             assumptions = tuple(OrderedDict.fromkeys(assumptions)) 
             # Make this the new default (for side-effects).
             defaults.assumptions = assumptions
-                        
+            
             instantiated_expr = \
                 Instantiation._instantiated_expr(
                         orig_known_truth, num_forall_eliminations,
                         parameters, repl_map, equiv_alt_expansions,
-                        assumptions, requirements)
+                        assumptions, requirements,
+                        equality_repl_requirements)
                         
             # Remove duplicates in the requirements.
             requirements = list(OrderedDict.fromkeys(requirements))
             
             # Remove any unnecessary assumptions (but keep the order 
             # that was provided).  Note that some assumptions of 
-            # requirements may not be in the 'assumptions' list 
+            # requirements may not be in the 'applied_assumptions_set'
             # if they made use of internal assumptions from a 
-            # Conditional.
+            # Conditional and can be eliminated.
+            applied_assumptions_set = set(assumptions)
             assumptions = list(orig_subbed_assumptions)
             for requirement in requirements:
-                assumptions.extend(requirement.assumptionsSet)
+                for assumption in requirement.assumptions:
+                    if assumption in applied_assumptions_set:
+                        assumptions.append(assumption)
             assumptions = list(OrderedDict.fromkeys(assumptions))
             
             # Sort the replaced variables in order of their appearance 
@@ -955,8 +1009,15 @@ class Instantiation(Proof):
             self.mapping_var_order = mapping_var_order
             self.mapping = mapping
             instantiated_truth = KnownTruth(instantiated_expr, assumptions)
-            Proof.__init__(self, instantiated_truth, 
-                           [orig_known_truth] + requirements)
+            # Make the 'original known truth' be the 1st requirement.
+            requirements.insert(0, orig_known_truth)
+            # Mark the requirements that are "equality replacements".
+            marked_req_indices = set()
+            for k, req in enumerate(requirements):
+                if req in equality_repl_requirements:
+                    marked_req_indices.add(k)
+            Proof.__init__(self, instantiated_truth, requirements,
+                           marked_req_indices)
         except LambdaApplicationError as e:
             raise InstantiationFailure(orig_known_truth, repl_map,
                                        assumptions, str(e))
@@ -1026,7 +1087,8 @@ class Instantiation(Proof):
     def _instantiated_expr(original_known_truth, num_forall_eliminations, 
                            instantiation_params, repl_map, 
                            equiv_alt_expansions,
-                           assumptions, requirements):
+                           assumptions, requirements,
+                           equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
         original_known_truth.  The assumptions on the left side of
@@ -1091,11 +1153,11 @@ class Instantiation(Proof):
                 params.append(param)
             if len(params)==0:
                 return expr
-            return Lambda._apply(params, expr, *operands,
-                                 allow_relabeling=True,
-                                 equiv_alt_expansions=equiv_alt_expansions,
-                                 assumptions=assumptions, 
-                                 requirements=requirements)    
+            return Lambda._apply(
+                    params, expr, *operands, allow_relabeling=True,
+                    equiv_alt_expansions=equiv_alt_expansions,
+                    assumptions=assumptions, requirements=requirements,
+                    equality_repl_requirements=equality_repl_requirements)    
         
         remaining_forall_eliminations = num_forall_eliminations
         while remaining_forall_eliminations>0:
@@ -1313,7 +1375,11 @@ class _ShowProof:
         self.provenTruth = context.getStoredKnownTruth(refObjIdGroups[-2][0])
         self.provenTruth._meaningData._proof = self
         self.requiredProofs = \
-            [context.getShowProof(obj_id) for obj_id in refObjIdGroups[-1]]
+            [context.getShowProof(obj_id.rstrip('*')) for obj_id 
+             in refObjIdGroups[-1]]
+        self.markedRequiredTruthIndices = \
+            {k for k, obj_id in enumerate(refObjIdGroups[-1])
+             if obj_id[-1]=='*'}
         _ShowProof.show_proof_by_id[proof_id] = self
     
     def _repr_html_(self):

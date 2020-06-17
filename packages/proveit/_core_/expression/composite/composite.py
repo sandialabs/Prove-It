@@ -98,23 +98,6 @@ def singleOrCompositeExpression(expr_or_exprs,
             return expr_or_exprs[0]
     return expr_or_exprs
 
-
-def _simplifiedCoord(coord, assumptions, requirements):
-    '''
-    Simplify the given coordinate under the given assumptions and append
-    the equality of the simplified and original indices as a requirement
-    if they are not the same.
-    '''
-    from proveit.logic import Equals
-    #from proveit.number import Add
-    try:
-        simplified_coord = coord.simplification(assumptions=assumptions).rhs
-    except:
-        simplified_coord = coord # unable to simplify.  that's okay.
-    if simplified_coord != coord and requirements is not None:
-        requirements.append(Equals(coord, simplified_coord))
-    return simplified_coord
-
 def _generateCoordOrderAssumptions(coords):
     from proveit.number import LessEq, GreaterEq
     for prev_coord, next_coord in zip(coords[:-1], coords[1:]):

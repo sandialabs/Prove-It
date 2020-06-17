@@ -396,7 +396,8 @@ class Expression(metaclass=ExprType):
         return made
     
     
-    def _auto_reduced(self, assumptions, requirements):
+    def _auto_reduced(self, assumptions, requirements,
+                      equality_repl_requirements):
         if defaults.auto_reduce and hasattr(self, 'auto_reduction'):
             from proveit import KnownTruth
             from proveit.logic import Equals
@@ -415,10 +416,8 @@ class Expression(metaclass=ExprType):
                                     "proven equality with 'self' on the "
                                     "left side: got %s for %s"
                                     %(reduction, self))
-                # TODO: MUST INDICATE THAT THIS REQUIREMENT IS A
-                # REDUCTION SO IT IS EASY TO VERIFY CORRECTNESS OF
-                # AN INSTANTIATION.
                 requirements.append(reduction)
+                equality_repl_requirements.add(reduction)
                 return reduction.expr.rhs
         return self # No reduction, just return 'self'.
     
@@ -691,7 +690,8 @@ class Expression(metaclass=ExprType):
         return iter(())
     
     def replaced(self, repl_map, allow_relabeling=False,
-                 assumptions=USE_DEFAULTS, requirements=None):
+                 assumptions=USE_DEFAULTS, requirements=None,
+                 equality_repl_requirements=None):
         '''
         Returns this expression with sub-expressions replaced 
         according to the replacement map (repl_map) dictionary 
@@ -715,20 +715,35 @@ class Expression(metaclass=ExprType):
         (e.g., x_1, ..., x_n) such that the length of the parameters 
         and operands must be proven to be equal.  For more details, 
         see Operation.replaced, Lambda.apply, and Iter.replaced 
-        (which is the sequence of calls involved).
+        (which is the sequence of calls involved).  They may also
+        be used to ensure indices match when performing parameter-
+        dependent ExprRange expansions that require indices to match.
+        'requirements' are also needed to perform ExprRange
+        reductions (for empty or singular ExprRanges).  They are
+        also used for automatic equality replacements; for example,
+        "And() = TRUE".  Such requirements are also recorded in the
+        'equality_repl_requirements' set if one is provided.
         
         Also applies any enabled automatic reductions.
         '''
         if requirements is None: 
             requirements = [] # Not passing back requirements.
-        return self._replaced(repl_map, allow_relabeling=allow_relabeling,
-                             assumptions=assumptions, 
-                             requirements=requirements)._auto_reduced(
-                                     assumptions=assumptions,
-                                     requirements=requirements)
+        if assumptions is None:
+            assumptions = defaults.checkedAssumptions(assumptions)
+        if equality_repl_requirements is None:
+            # Not passing back the equality replacement requirements.
+            equality_repl_requirements = set()
+        return self._replaced(
+                repl_map, allow_relabeling=allow_relabeling,
+                assumptions=assumptions, requirements=requirements,
+                equality_repl_requirements=equality_repl_requirements)\
+                    ._auto_reduced(
+                            assumptions=assumptions, requirements=requirements,
+                            equality_repl_requirements=\
+                            equality_repl_requirements)
     
-    def _replaced(self, repl_map, allow_relabeling=False,
-                 assumptions=USE_DEFAULTS, requirements=None):
+    def _replaced(self, repl_map, allow_relabeling,
+                  assumptions, requirements, equality_repl_requirements):
         '''
         Implementation for Expression.replaced except for the
         final automatic reduction (if applicalbe).
@@ -738,7 +753,8 @@ class Expression(metaclass=ExprType):
         else:
             subbed_sub_exprs = \
                 tuple(sub_expr.replaced(repl_map, allow_relabeling,
-                                           assumptions, requirements)
+                                        assumptions, requirements,
+                                        equality_repl_requirements)
                       for sub_expr in self._subExpressions)
             replaced = self.__class__._checked_make(
                     self._coreInfo, dict(self._styleData.styles),
