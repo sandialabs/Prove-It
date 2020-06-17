@@ -3,8 +3,8 @@ from proveit._common_ import a, b, x
 
 class Abs(Operation):
     # operator of the Abs operation.
-    _operator_ = Literal(stringFormat='Abs', context=__file__)    
-    
+    _operator_ = Literal(stringFormat='Abs', context=__file__)
+
     def __init__(self, A):
         Operation.__init__(self, Abs._operator_, A)
 
@@ -13,12 +13,12 @@ class Abs(Operation):
         if numberSet == Reals:
             return theorems.absComplexClosure # complex in, real out
         elif numberSet == RealsPos:
-            return theorems.absNonzeroClosure # nonzero in, real positive out    
+            return theorems.absNonzeroClosure # nonzero in, real positive out
 
     def _notEqZeroTheorem(self):
         from . import theorems
         return theorems.absNotEqZero
-    
+
     def string(self, **kwargs):
         return '|'+self.operand.string()+'|'
 
@@ -29,7 +29,7 @@ class Abs(Operation):
         from .theorems import absIsNonNeg
         deduceInComplexes(self.operand, assumptions)
         return absIsNonNeg.specialize({a:self.operand}).checked(assumptions)
-    
+
     def distribute(self, assumptions=frozenset()):
         '''
         Distribute the absolute value over a product or fraction.
@@ -46,7 +46,7 @@ class Abs(Operation):
             return absProd.specialize({xEtc:self.operand.operands}).checked(assumptions)
         else:
             raise ValueError('Unsupported operand type for absolution value distribution: ', str(self.operand.__class__))
-    
+
     def absElimination(self, assumptions=frozenset()):
         '''
         For some |x| expression, deduce |x| = x after trying to deduce x >= 0.

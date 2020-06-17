@@ -16,10 +16,22 @@ from .irreducible_value import IrreducibleValue, isIrreducibleValue
 
 import proveit
 
+# if proveit.defaults.automation:
+#     # Import some fundamental theorems without quantifiers that are
+#     # imported when automation is used.
+#     from .boolean.negation._theorems_ import notFalse, notF, notT, notTimpliesF
+#     from .boolean.implication._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse
+#     from .boolean._axioms_ import trueAxiom, boolsDef, falseNotTrue
+#     from .boolean._theorems_ import trueEqTrue, falseEqFalse, trueNotFalse, trueInBool, falseInBool
+
 if proveit.defaults.automation:
-    # Import some fundamental theorems without quantifiers that are
-    # imported when automation is used.
-    from .boolean.negation._theorems_ import notFalse, notF, notT, notTimpliesF
-    from .boolean.implication._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse
-    from .boolean._axioms_ import trueAxiom, boolsDef, falseNotTrue
-    from .boolean._theorems_ import trueEqTrue, falseEqFalse, trueNotFalse, trueInBool, falseInBool
+		try:
+		    # Import some fundamental theorems without quantifiers that are
+		    # imported when automation is used.
+		    # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+		    from .boolean.negation._theorems_ import notFalse, notF, notT, notTimpliesF
+		    from .boolean.implication._theorems_ import trueImpliesTrue, falseImpliesTrue, falseImpliesFalse
+		    from .boolean._axioms_ import trueAxiom, boolsDef, falseNotTrue
+		    from .boolean._theorems_ import trueEqTrue, falseEqFalse, trueNotFalse, trueInBool, falseInBool
+		except:
+		    pass
