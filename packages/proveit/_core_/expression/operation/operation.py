@@ -5,7 +5,7 @@ from proveit._core_.defaults import USE_DEFAULTS
 
 class Operation(Expression):
     # Map _operator_ Literals to corresponding Operation classes.
-    # This is populated automatcally when the _operator_ attribute
+    # This is populated automatically when the _operator_ attribute
     # is accessed (see ExprType in proveit._core_.expression.expr).
     operationClassOfOperator = dict()
     
@@ -13,8 +13,9 @@ class Operation(Expression):
     def _clear_():
         '''
         Clear all references to Prove-It information under
-        the Expression jurisdiction.  All Expression classes that store Prove-It
-        state information must implement _clear_ to clear that information.
+        the Expression jurisdiction.  All Expression classes that store
+        Prove-It state information must implement _clear_ to clear that
+        information.
         '''
         Operation.operationClassOfOperator.clear()
     

@@ -26,7 +26,16 @@ class RationalsPosSet(NumberSet):
         return inRationalsPos_iff_positive.specialize({a:member},
                                                       assumptions=assumptions).deriveRightImplication(assumptions)
 
+# if proveit.defaults.automation:
+#     # Import some fundamental theorems without quantifiers that are
+#     # imported when automation is used.
+#     from ._theorems_ import rationalsPosInRationals, intsInRationals, natsInRationals, natsPosInRationals
+
 if proveit.defaults.automation:
-    # Import some fundamental theorems without quantifiers that are
-    # imported when automation is used.
-    from ._theorems_ import rationalsPosInRationals, intsInRationals, natsInRationals, natsPosInRationals
+    try:
+        # Import some fundamental theorems without quantifiers that are
+        # imported when automation is used.
+        # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+        from ._theorems_ import rationalsPosInRationals, intsInRationals, natsInRationals, natsPosInRationals
+    except:
+        pass
