@@ -56,7 +56,8 @@ def _defineTheorems():
                                                             Circuit(Aetc, Gates(IsB, H, Is, H, IsC), Gates(multiB, CTRL_DN, Is, Target(X), Cetc), Gates(IsB, H, Is, H, IsC), multiD)))
     return _firstTheorem, locals()
 """
-            
+
+
 class Input(Operation):
     '''
     Represents an input state entering from the left-hand side of a
@@ -81,6 +82,10 @@ class Input(Operation):
             return Operation._formatted(self, formatType, fence=fence)
 
 
+INPUT = Literal(pkg, 'INPUT', operationMaker=lambda operands: Input(*operands))
+# An input state (entering the left of the circuit)
+
+
 class Output(Operation):
     '''
     Represents an output state exiting from the right-hand side of
@@ -101,6 +106,10 @@ class Output(Operation):
         if formatType == 'latex':
             return r'\rstick{' + formattedState + r'} \qw' 
         else: return Operation._formatted(self, formatType, fence)
+
+
+OUTPUT = Literal(pkg, 'OUTPUT', operationMaker=lambda operands: Output(*operands))
+# An output state (exiting the right of the circuit)
 
 
 class Gate(Operation):
@@ -715,6 +724,3 @@ class ForallWithImplicitIdentities(Forall):
         return Forall.specialize(self, subMap)
             
 """            
-        
-
-        
