@@ -212,8 +212,6 @@ class ExprArray(ExprTuple):
                                 output += 3
             if isinstance(expr, ExprTuple):
                 for value in expr:
-                    if isinstance(value, Variable) or isinstance(value, IndexedVar):
-                        output += 1
                     if isinstance(value, ExprTuple):
                         for var in value:
                             if isinstance(var, Variable) or isinstance(var, IndexedVar):
@@ -225,11 +223,13 @@ class ExprArray(ExprTuple):
                                                          'accurate row length. Please consolidate your ExprTuple')
                                     else:
                                         output += 1
-                    if isinstance(value, ExprRange):
+                    elif isinstance(value, ExprRange):
                         if explicit:
                             output += 5
                         else:
                             output += 3
+                    else:
+                        output += 1
             break
         return output
 
