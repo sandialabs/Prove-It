@@ -1,5 +1,5 @@
 import types
-from .composite import Composite, _simplifiedCoord
+
 from .expr_tuple import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
