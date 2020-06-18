@@ -233,35 +233,13 @@ class ExprArray(ExprTuple):
             break
         return output
 
-    def formatted(self, formatType, fence=False, subFence=False, operatorOrOperators=None, implicitFirstOperator=False,
-                  wrapPositions=None, justification=None, orientation=None, **kwargs):
+    def getFormattedSubExpressions(self, formatType, orientation, default_style, operatorOrOperators):
+        '''
+        Used to cycle through the ExprArray and format the output accordingly
+        '''
         from .expr_range import ExprRange
-        default_style = ("explicit" if formatType == 'string' else 'implicit')
-
-        outStr = ''
-        if len(self) == 0 and fence:
-            # for an empty list, show the parenthesis to show something.
-            return '()'
-
-        if justification is None:
-            justification = self.getStyle('justification', 'center')
-        if orientation is None:
-            orientation = self.getStyle('orientation', 'horizontal')
-
-        if fence:
-            outStr = '(' if formatType == 'string' else r'\left('
-
-        if orientation == 'horizontal':
-            length = self.getRowLength()
-        else:
-            if self.getStyle('parameterization', default_style):
-                length = self.getColHeight(True)
-            else:
-                length = self.getColHeight()
-        if formatType == 'latex':
-            outStr += r'\begin{array} {%s} ' % (justification[0] * length) + '\n '
-
         formatted_sub_expressions = []
+
         # Track whether or not ExprRange operands are using
         # "explicit" parameterization, because the operators must
         # follow suit.
@@ -522,7 +500,7 @@ class ExprArray(ExprTuple):
                                                                                          fence=False))
                                     else:
                                         formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                         fence=False))
+                                                                                                fence=False))
                             else:
                                 if isinstance(entry, ExprTuple):
                                     for var in entry:
@@ -901,7 +879,7 @@ class ExprArray(ExprTuple):
                             if orientation == 'horizontal':
                                 # this is following along the row so we include '&'
                                 formatted_sub_expressions.append('& ' + expr.formatted(formatType,
-                                                                                       fence=False, subFence=False))
+                                                                                       fence=False))
                             else:
                                 if k == 0:
                                     # this is the first column so we don't include '&'
@@ -915,6 +893,41 @@ class ExprArray(ExprTuple):
             else:
                 raise ValueError("Expressions must be wrapped in either an ExprTuple or ExprRange")
             k += 1
+
+        return formatted_sub_expressions, using_explicit_parameterization
+
+    def formatted(self, formatType, fence=False, subFence=False, operatorOrOperators=None, implicitFirstOperator=False,
+                  wrapPositions=None, justification=None, orientation=None, **kwargs):
+        from .expr_range import ExprRange
+        default_style = ("explicit" if formatType == 'string' else 'implicit')
+
+        outStr = ''
+        if len(self) == 0 and fence:
+            # for an empty list, show the parenthesis to show something.
+            return '()'
+
+        if justification is None:
+            justification = self.getStyle('justification', 'center')
+        if orientation is None:
+            orientation = self.getStyle('orientation', 'horizontal')
+
+        if fence:
+            outStr = '(' if formatType == 'string' else r'\left('
+
+        if orientation == 'horizontal':
+            length = self.getRowLength()
+        else:
+            if self.getStyle('parameterization', default_style):
+                length = self.getColHeight(True)
+            else:
+                length = self.getColHeight()
+        if formatType == 'latex':
+            outStr += r'\begin{array} {%s} ' % (justification[0] * length) + '\n '
+
+        formatted_sub_expressions, using_explicit_parameterization = self.getFormattedSubExpressions(formatType,
+                                                                                                     orientation,
+                                                                                                     default_style,
+                                                                                                    operatorOrOperators)
 
         if orientation == "vertical":
             # up until now, the formatted_sub_expression is still
