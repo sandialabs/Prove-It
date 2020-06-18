@@ -98,7 +98,7 @@ class Exp(Operation):
             deduceInReals(self.base, assumptions)
             deduceNotZero(self.base, assumptions)
             return real.theorems.sqrdClosure.specialize(
-                {a:self.base}).checked(as5sumptions)
+                {a:self.base}).checked(assumptions)
         # only treating certain special case(s) in this manner
         raise DeduceInNumberSetException(self, RealsPos, assumptions)
 

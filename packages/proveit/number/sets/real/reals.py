@@ -18,17 +18,21 @@ class RealPosSet(NumberSet):
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from real.theorems import inRealsPos_iff_positive
-        return inRealsPos_iff_positive.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)
+        return inRealsPos_iff_positive.specialize(
+            {a:member},
+            assumptions=assumptions).deriveRightImplication(assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        # only fence if forceFence=True (nested exponents is an example
+        # of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
         return maybeFencedString(inner_str, **kwargs)
 
     def latex(self, **kwargs):
         inner_str = NumberSet.latex(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        # only fence if forceFence=True (nested exponents is an example
+        # of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
         return maybeFencedString(inner_str, **kwargs)
 
@@ -43,17 +47,21 @@ class RealNegSet(NumberSet):
 
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from real.theorems import inRealsNeg_iff_negative
-        return inRealsNeg_iff_negative.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)
+        return inRealsNeg_iff_negative.specialize(
+            {a:member},
+            assumptions=assumptions).deriveRightImplication(assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        # only fence if forceFence=True (nested exponents is an example
+        # of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
         return maybeFencedString(inner_str, **kwargs)
 
     def latex(self, **kwargs):
         inner_str = NumberSet.latex(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an example of when fencing must be forced)
+        # only fence if forceFence=True (nested exponents is an example
+        # of when fencing must be forced)
         kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
         return maybeFencedString(inner_str, **kwargs)
 
@@ -78,7 +86,7 @@ class RealNonNegSet(NumberSet):
         # only fence if forceFence=True (nested exponents is an
         # example of when fencing must be forced)
         kwargs['fence'] = (
-            kwargs['forceFence'] if 'forceFence' in kwargs else False)       
+            kwargs['forceFence'] if 'forceFence' in kwargs else False)
         return maybeFencedString(inner_str, **kwargs)
 
     def latex(self, **kwargs):
@@ -86,7 +94,7 @@ class RealNonNegSet(NumberSet):
         # only fence if forceFence=True (nested exponents is an
         # example of when fencing must be forced)
         kwargs['fence'] = (
-            kwargs['forceFence'] if 'forceFence' in kwargs else False)       
+            kwargs['forceFence'] if 'forceFence' in kwargs else False)
         return maybeFencedString(inner_str, **kwargs)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
@@ -95,10 +103,29 @@ class RealNonNegSet(NumberSet):
         return xInRealsNonNegInBool.specialize({x:member},
                                                assumptions=assumptions)
 
+# if proveit.defaults.automation:
+#     # Import some fundamental theorems without quantifiers that are
+#     # imported when automation is used.
+#     from ._theorems_ import (
+#         realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
+#         natsInReals, natsPosInReals, natPosInRealsPos)
+
 if proveit.defaults.automation:
+<<<<<<< HEAD
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     from ._theorems_ import (
         realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
         natsInReals, natsPosInReals, natPosInRealsPos, natsInRealsNonNeg,
         natsPosInRealsNonNeg, realsPosInRealsNonNeg)
+=======
+    try:
+        # Import some fundamental theorems without quantifiers that are
+        # imported when automation is used.
+        # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
+        from ._theorems_ import (
+            realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
+            natsInReals, natsPosInReals, natPosInRealsPos)
+    except:
+        pass
+>>>>>>> dd338c454ebe016de170a37f623bb6d5d5f5b448

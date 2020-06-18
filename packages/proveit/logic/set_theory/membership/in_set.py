@@ -21,7 +21,7 @@ class InSet(Operation):
                                 "is not derived from %s as it should be."
                                 %(self.domain, self.membershipObject.__class__, 
                                   Membership))
-    
+
     def __dir__(self):
         '''
         If the domain has a 'membershipObject' method, include methods from the

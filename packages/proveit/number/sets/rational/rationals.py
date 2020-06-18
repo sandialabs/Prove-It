@@ -47,6 +47,11 @@ class RationalsNonNegSet(NumberSet):
                 {q:member}, assumptions=assumptions).deriveRightImplication(
                         assumptions)
 
+# if proveit.defaults.automation:
+#     # Import some fundamental theorems without quantifiers that are
+#     # imported when automation is used.
+#     from ._theorems_ import rationalsPosInRationals, intsInRationals, natsInRationals, natsPosInRationals
+
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
