@@ -72,13 +72,15 @@ class RealNegSet(NumberSet):
 
 class RealNonNegSet(NumberSet):
     def __init__(self):
-        NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{0^{+}}',
+        NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{\ge 0}',
                            context=__file__)
-
-    # def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
-    #     from real.theorems import inRealsNeg_iff_negative
-    #     return inRealsNeg_iff_negative.specialize({a:member},assumptions=assumptions).deriveRightImplication(assumptions)
-
+    
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import inRealsNonNeg_iff_nonNegative
+        return inRealsNonNeg_iff_nonNegative.specialize(
+                {a:member},
+                assumptions=assumptions).deriveRightImplication(assumptions)
+    
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
         # only fence if forceFence=True (nested exponents is an
@@ -109,12 +111,9 @@ class RealNonNegSet(NumberSet):
 #         natsInReals, natsPosInReals, natPosInRealsPos)
 
 if proveit.defaults.automation:
-    try:
-        # Import some fundamental theorems without quantifiers that are
-        # imported when automation is used.
-        # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-        from ._theorems_ import (
-            realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
-            natsInReals, natsPosInReals, natPosInRealsPos)
-    except:
-        pass
+    # Import some fundamental theorems without quantifiers that are
+    # imported when automation is used.
+    from ._theorems_ import (
+        realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
+        natsInReals, natsPosInReals, natPosInRealsPos, natsInRealsNonNeg,
+        natsPosInRealsNonNeg, realsPosInRealsNonNeg)

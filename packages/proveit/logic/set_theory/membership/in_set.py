@@ -80,6 +80,7 @@ class InSet(Operation):
         First, see if it is contained in a subset of the domain.  
         If that fails and the domain has a 'membershipObject' method,
         try calling 'conclude' on the object it generates.
+        try conclude(self, assumptions, minimal_automation=False)
         '''
         from proveit.logic import SubsetEq
         from proveit import ProofFailure
