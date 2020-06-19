@@ -1,9 +1,7 @@
 import types
 
 from .expr_tuple import ExprTuple
-from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.proof import ProofFailure
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.expression.expr import Expression
 from proveit._core_.expression.style_options import StyleOptions
 
 
@@ -69,7 +67,6 @@ class ExprArray(ExprTuple):
         every item in the same column MUST agree in length
         of the ExprRange.  If not, raise an error.
         '''
-        from proveit import IndexedVar
         from .expr_range import ExprRange
         from proveit.physics.quantum.circuit import MultiQubitGate
         pos = []
