@@ -812,7 +812,7 @@ class ExprArray(ExprTuple):
                             if orientation == 'horizontal':
                                 # this is the first item in the first row so we do not include the '&'
                                 formatted_sub_expressions.append(expr.formatted(formatType,
-                                                                                fence=False, subFence=False))
+                                                                                fence=False))
                             else:
                                 if k == 0:
                                     # this is still the first column
