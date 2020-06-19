@@ -17,23 +17,25 @@ class RealPosSet(NumberSet):
         NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from real.theorems import inRealsPos_iff_positive
+        from ._theorems_ import inRealsPos_iff_positive
         return inRealsPos_iff_positive.specialize(
-            {a:member},
-            assumptions=assumptions).deriveRightImplication(assumptions)
+                {a:member},assumptions=assumptions).deriveRightImplication(
+                        assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an example
-        # of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = (
+            kwargs['forceFence'] if 'forceFence' in kwargs else False)
         return maybeFencedString(inner_str, **kwargs)
 
     def latex(self, **kwargs):
         inner_str = NumberSet.latex(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an example
-        # of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = (
+            kwargs['forceFence'] if 'forceFence' in kwargs else False)
         return maybeFencedString(inner_str, **kwargs)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
@@ -46,23 +48,25 @@ class RealNegSet(NumberSet):
         NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
 
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
-        from real.theorems import inRealsNeg_iff_negative
+        from ._theorems_ import inRealsNeg_iff_negative
         return inRealsNeg_iff_negative.specialize(
-            {a:member},
-            assumptions=assumptions).deriveRightImplication(assumptions)
+                {a:member},assumptions=assumptions).deriveRightImplication(
+                        assumptions)
 
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an example
-        # of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = (
+            kwargs['forceFence'] if 'forceFence' in kwargs else False)
         return maybeFencedString(inner_str, **kwargs)
 
     def latex(self, **kwargs):
         inner_str = NumberSet.latex(self, **kwargs)
-        # only fence if forceFence=True (nested exponents is an example
-        # of when fencing must be forced)
-        kwargs['fence'] = kwargs['forceFence'] if 'forceFence' in kwargs else False
+        # only fence if forceFence=True (nested exponents is an
+        # example of when fencing must be forced)
+        kwargs['fence'] = (
+            kwargs['forceFence'] if 'forceFence' in kwargs else False)
         return maybeFencedString(inner_str, **kwargs)
 
     def deduceMembershipInBool(self, member, assumptions=USE_DEFAULTS):
@@ -74,13 +78,13 @@ class RealNonNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{\ge 0}',
                            context=__file__)
-    
+
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
-        from ._theorems_ import inRealsNonNeg_iff_nonNegative
-        return inRealsNonNeg_iff_nonNegative.specialize(
-                {a:member},
-                assumptions=assumptions).deriveRightImplication(assumptions)
-    
+        from ._theorems_ import inRealsNonNeg_iff_non_negative
+        return inRealsNonNeg_iff_non_negative.specialize(
+                {a:member},assumptions=assumptions).deriveRightImplication(
+                        assumptions)
+
     def string(self, **kwargs):
         inner_str = NumberSet.string(self, **kwargs)
         # only fence if forceFence=True (nested exponents is an
@@ -117,3 +121,4 @@ if proveit.defaults.automation:
         realsPosInReals, realsNegInReals, realsNonNegInReals, intsInReals,
         natsInReals, natsPosInReals, natPosInRealsPos, natsInRealsNonNeg,
         natsPosInRealsNonNeg, realsPosInRealsNonNeg)
+
