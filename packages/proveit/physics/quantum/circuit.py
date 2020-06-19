@@ -1,10 +1,11 @@
 import sys
 from proveit import Lambda, Literal, Operation
+from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 # not clear yet what to substitute for ExpressionTensor -- perhaps ExprArray
 # and Block is not being used in the active code
 # from proveit.multiExpression import ExpressionTensor, Block
-from proveit.logic import Forall, Equals, InSet
-#from proveit.computer_science.regular_expressions import KleeneRepetition
+# from proveit.logic import Forall, Equals, InSet
+# from proveit.computer_science.regular_expressions import KleeneRepetition
 
 pkg = __package__ # can probably delete later
 
@@ -82,7 +83,7 @@ class Input(Operation):
             return Operation._formatted(self, formatType, fence=fence)
 
 
-INPUT = Literal(pkg, 'INPUT', operationMaker=lambda operands: Input(*operands))
+INPUT = Literal(pkg, 'INPUT')  # , operationMaker=lambda operands: Input(*operands))
 # An input state (entering the left of the circuit)
 
 
@@ -108,14 +109,13 @@ class Output(Operation):
         else: return Operation._formatted(self, formatType, fence)
 
 
-OUTPUT = Literal(pkg, 'OUTPUT', operationMaker=lambda operands: Output(*operands))
+OUTPUT = Literal(pkg, 'OUTPUT')  # , operationMaker=lambda operands: Output(*operands))
 # An output state (exiting the right of the circuit)
 
 
 class Gate(Operation):
     '''
     Represents a gate in a quantum circuit.
-    Updated 1/26/2020 by wdc.
     '''
     # the literal operator of the Gate operation class
     _operator_ = Literal('GATE', context=__file__)
@@ -126,20 +126,20 @@ class Gate(Operation):
         '''    
         Operation.__init__(self, Gate._operator_, gate_operation)
         self.gate_operation = self.operands[0]
-        print("self.gate_operation = {}".format(self.gate_operation))             # for testing; delete later
-        print("type(self.gate_operation) = {}".format(type(self.gate_operation))) # for testing; delete later
 
-    # look here more carefully later, some changes during the project meeting
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+
     def formatted(self, formatType, **kwargs):
-        print("Entering Gate.formatted.")                                       # for testing; delete later
-        print("  formatType = {}".format(formatType))                           # for testing; delete later
         formattedGateOperation = (
                 self.gate_operation.formatted(formatType, fence=False))
-        print("  formattedGateOperation = {}".format(formattedGateOperation))   # for testing; delete later
         if formatType == 'latex':
-            print("    inside if formatType=latex block")                       # for testing; delete later
-            return r'\gate{' + formattedGateOperation + r'}' 
-        else: return Operation._formatted(self, formatType)
+            return r'\gate{' + formattedGateOperation + r'}'
+        else:
+            return Operation._formatted(self, formatType)
 
     # original below
     # def formatted(self, formatType, fence=false):
@@ -167,14 +167,18 @@ class Target(Operation):
         '''    
         Operation.__init__(self, Target._operator_, target_gate)
         self.target_gate = target_gate
-        print("target_gate = {}".format(self.target_gate))                      # for testing; delete later
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
 
     def formatted(self, formatType, fence=False):
-        print("Entering Target.formatted().")                                   # for testing; delete later
-        formattedGateOperation = self.target_gate.formatted(formatType, fence=False)
         if formatType == 'latex':
-            return r'\gate{' + formattedGateOperation + r'}' 
-        else: return Operation._formatted(self, formatType, fence)
+            return r'\targ'
+        else:
+            return Operation._formatted(self, formatType)
 
 # TARGET = Literal(pkg, 'TARGET', {STRING:'TARGET', LATEX:r'\targ'}, lambda operands : Target(*operands))
 
@@ -197,6 +201,146 @@ class Target(Operation):
 #         else: return Operation.formatted(self, formatType, fence)
 
 # MULTI_WIRE = Literal(pkg, 'MULTI_WIRE', operationMaker = lambda operands : MultiWire(*operands))
+
+
+class Circuit(ExprArray):
+    '''
+    Represents a quantum circuit as a 2-D ExprArray
+    '''
+
+    def __init__(self, *expressions, styles=None):
+        '''
+        Initialize an ExprTuple from an iterable over Expression
+        objects.
+        '''
+        if styles is None: styles = dict()
+        if 'orientation' not in styles:
+            styles['orientation'] = 'horizontal'
+
+        ExprTuple.__init__(self, *expressions, styles=styles)
+
+        for entry in self:
+            if not isinstance(entry, ExprTuple) and not isinstance(entry, ExprRange):
+                raise ValueError("Contents of an ExprArray must be wrapped in either an ExprRange or ExprTuple.")
+
+        # check each column for same expression throughout
+        self.checkRange()
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+
+    def formatted(self, formatType, fence=False, subFence=False, operatorOrOperators=None, implicitFirstOperator=False,
+                  wrapPositions=None, orientation=None, **kwargs):
+        from proveit._core_.expression.expr import Expression
+        default_style = ("explicit" if formatType == 'string' else 'implicit')
+
+        outStr = ''
+        if len(self) == 0 and fence:
+            # for an empty list, show the parenthesis to show something.
+            return '()'
+
+        if orientation is None:
+            orientation = self.getStyle('orientation', 'horizontal')
+
+        if formatType == 'latex':
+            outStr += r'\Qcircuit @C=1em @R=.7em {' + '\n'
+
+        formatted_sub_expressions, using_explicit_parameterization = self.getFormattedSubExpressions(formatType,
+                                                                                                     orientation,
+                                                                                                     default_style,
+                                                                                                    operatorOrOperators)
+
+        if orientation == "vertical":
+            # up until now, the formatted_sub_expression is still
+            # in the order of the horizontal orientation regardless of orientation type
+            k = 1
+            vert = []
+            if self.getStyle('parameterization', default_style) == 'explicit':
+                ex = True
+            else:
+                ex = False
+            m = self.getColHeight(ex)
+            while k <= self.getRowLength(ex):
+                i = 1
+                j = k
+                for var in formatted_sub_expressions:
+                    if i == j:
+                        vert.append(var)
+                        m -= 1
+                        if m == 0:
+                            vert.append(r' \\' + ' \n ')
+                            m = self.getColHeight(ex)
+                        j += self.getRowLength(ex)
+                    i += 1
+                k += 1
+            formatted_sub_expressions = vert
+
+        if operatorOrOperators is None:
+            operatorOrOperators = ','
+        elif isinstance(operatorOrOperators, Expression) and not isinstance(operatorOrOperators, ExprTuple):
+            operatorOrOperators = operatorOrOperators.formatted(formatType, fence=False)
+        if isinstance(operatorOrOperators, str):
+            # single operator
+            formatted_operator = operatorOrOperators
+            if operatorOrOperators == ',':
+                # e.g.: a, b, c, d
+                outStr += (' ').join(formatted_sub_expressions)
+            else:
+                # e.g.: a + b + c + d
+                outStr += (' '+formatted_operator+' ').join(formatted_sub_expressions)
+        else:
+            # assume all different operators
+            formatted_operators = []
+            for operator in operatorOrOperators:
+                if isinstance(operator, ExprRange):
+                    # Handle an ExprRange entry; here the "operators"
+                    # are really ExprRange "checkpoints" (first, last,
+                    # as well as the ExprRange body in the middle if
+                    # using an 'explicit' style for 'parameterization').
+                    # For the 'ellipses', we will just use a
+                    # placeholder.
+                    be_explicit = using_explicit_parameterization.pop(0)
+                    formatted_operators += operator._formatted_checkpoints(
+                        formatType, fence=False, subFence=False, ellipses='',
+                        use_explicit_parameterization=be_explicit)
+                else:
+                    formatted_operators.append(operator.formatted(formatType, fence=False, subFence=False))
+            if len(formatted_sub_expressions) == len(formatted_operators):
+                # operator preceeds each operand
+                if implicitFirstOperator:
+                    outStr = formatted_sub_expressions[0]  # first operator is implicit
+                else:
+                    outStr = formatted_operators[0] + formatted_sub_expressions[0]  # no space after first operator
+                outStr += ' '  # space before next operator
+                outStr += ' '.join(
+                    formatted_operator + ' ' + formatted_operand for formatted_operator, formatted_operand in
+                    zip(formatted_operators[1:], formatted_sub_expressions[1:]))
+            elif len(formatted_sub_expressions) == len(formatted_operators) + 1:
+                # operator between each operand
+                outStr = ' '.join(
+                    formatted_operand + ' ' + formatted_operator for formatted_operand, formatted_operator in
+                    zip(formatted_sub_expressions, formatted_operators))
+                outStr += ' ' + formatted_sub_expressions[-1]
+            elif len(formatted_sub_expressions) != len(formatted_operators):
+                raise ValueError(
+                    "May only perform ExprTuple formatting if the number of operators is equal to the number "
+                    "of operands(precedes each operand) or one less (between each operand); "
+                    "also, operator ranges must be in correspondence with operand ranges.")
+
+        if formatType == 'latex':
+            outStr += ' \n' + '}'
+        print(outStr)
+        return outStr
+
+    def _config_latex_tool(self, lt):
+        print('config latex!!')
+        Operation._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
+
 
 # class Circuit(Operation):
 #     '''
@@ -231,7 +375,8 @@ class Target(Operation):
 #         # determine which sub-tensor, if there are any, has the deepest nesting.
 #         # This will impact how we iterate over nested rows to flatten the display of a nested tensors. 
 #         tensor = self.tensor
-#         self.deepestNestedTensorAlongRow = dict() # map nested tensor (including self) to a list that indicates the deepest nested tensor per row     
+#         self.deepestNestedTensorAlongRow = dict()
+#           # map nested tensor (including self) to a list that indicates the deepest nested tensor per row
 #         def determineDeepestNestedTensors(tensor):            
 #             '''
 #             Determine and set the deepest nested tensor along each row of tensor,
@@ -257,7 +402,8 @@ class Target(Operation):
 #         #print "deepestNestedTensors", self.deepestNestedTensorAlongRow
     
 #     #def substituted(self, exprMap, operationMap=None, relabelMap=None, reservedVars=None):
-#     #    return Circuit(ExpressionTensor.substituted(self, exprMap, operationMap=operationMap, relabelMap=relabelMap, reservedVars=reservedVars))
+#     #    return Circuit(ExpressionTensor.substituted(self, exprMap, operationMap=operationMap,
+#     relabelMap=relabelMap, reservedVars=reservedVars))
         
 #     def _config_latex_tool(self, lt):
 #         Operation._config_latex_tool(self, lt)
