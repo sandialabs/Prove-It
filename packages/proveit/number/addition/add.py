@@ -793,8 +793,12 @@ class Add(Operation):
         number set using the appropriate closure theorem
         '''
 
-        from proveit.number.addition._theorems_ import addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure, addNatPosClosure, addRealClosureBin, addRealClosure, addComplexClosureBin, addComplexClosure
-        from proveit.number import num, Greater, Integers, Naturals, Reals, Complexes, NaturalsPos, zero
+        from proveit.number.addition._theorems_ import (
+                addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure,
+                addNatPosClosure, addRealClosureBin, addRealClosure,
+                addComplexClosureBin, addComplexClosure, addRealPosClosure)
+        from proveit.number import (num, Greater, Integers, Naturals, Reals,
+                                    RealsPos, Complexes, NaturalsPos, zero)
         from proveit.logic import InSet
         if number_set == Integers:
             if len(self.operands) == 2:
@@ -804,7 +808,7 @@ class Add(Operation):
             if len(self.operands) == 2:
                 return addNatClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
             return addNatClosure.specialize({m: num(len(self.operands)), AA: self.operands}, assumptions=assumptions)
-        if number_set == NaturalsPos:
+        if number_set == NaturalsPos or number_set == RealsPos:
             val = -1
             for i, operand in enumerate(self.operands):
                 try:
@@ -817,7 +821,11 @@ class Add(Operation):
             if val == -1:
                 raise ValueError("Expecting at least one value to be greater than zero")
             # print(len(self.operands))
-            return addNatPosClosure.specialize({m: num(val), n:num(len(self.operands) - val - 1), AA:self.operands[:val], B: self.operands[val], CC: self.operands[val + 1:]}, assumptions=assumptions)
+            if number_set == NaturalsPos:
+                temp_thm = addNatPosClosure
+            else:
+                temp_thm = addRealPosClosure
+            return temp_thm.specialize({m: num(val), n:num(len(self.operands) - val - 1), AA:self.operands[:val], B: self.operands[val], CC: self.operands[val + 1:]}, assumptions=assumptions)
         if number_set == Reals:
             if len(self.operands) == 2:
                 return addRealClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)

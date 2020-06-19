@@ -1,7 +1,8 @@
 from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
 from proveit.logic import Equals, InSet
 from proveit.number import num
-from proveit.number.sets import Integers, Naturals, NaturalsPos, Reals, RealsPos, Complexes
+from proveit.number.sets import (Integers, Naturals, NaturalsPos, Reals,
+                                 RealsNonNeg, RealsPos, Complexes)
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
 from proveit._common_ import a, b, c, d, l, m, n, v, w, x, y, z, vv, ww, xx, yy, zz, S, A, B, C, D, E, AA, BB, CC, DD, EE
@@ -35,7 +36,12 @@ class Mult(Operation):
     
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
         # edited by JML 7/20/19
-        from ._theorems_ import multIntClosure, multIntClosureBin, multNatClosure, multNatClosureBin, multNatPosClosure, multNatClosureBin, multRealClosure, multRealClosureBin, multRealPosClosure, multRealPosClosureBin, multComplexClosure, multComplexClosureBin
+        from ._theorems_ import (multIntClosure, multIntClosureBin,
+            multNatClosure, multNatClosureBin, multNatPosClosure,
+            multNatClosureBin, multRealClosure, multRealClosureBin,
+            multRealPosClosure, multRealPosClosureBin,
+            multComplexClosure, multComplexClosureBin,
+            multRealNonNegClosure, multRealNonNegClosureBin)
         from proveit.number import num
         if hasattr(self, 'number_set'):
             numberSet = numberSet.number_set
@@ -76,16 +82,25 @@ class Mult(Operation):
                 bin = True
             else:
                 thm = multComplexClosure
+        elif numberSet == RealsNonNeg:
+            if len(self.operands) == 2:
+                thm = multRealNonNegClosureBin
+                bin = True
+            else:
+                thm = multRealNonNegClosure
         else:
-            msg = "'deduceInNumberSet' not implemented for the %s set"%str(numberSet)
+            msg = ("'Mult.deduceInNumberSet()' not implemented for the "
+                   "%s set"%str(numberSet))
             raise ProofFailure(InSet(self, numberSet), assumptions, msg)
         from proveit._common_ import AA
         # print("thm", thm)
         # print("self in deduce in number set", self)
         # print("self.operands", self.operands)
         if bin:
-            return thm.specialize({a:self.operands[0], b:self.operands[1]}, assumptions=assumptions)
-        return thm.specialize({m:num(len(self.operands)),AA:self.operands}, assumptions=assumptions)
+            return thm.specialize({a:self.operands[0], b:self.operands[1]},
+                                  assumptions=assumptions)
+        return thm.specialize({m:num(len(self.operands)),AA:self.operands},
+                              assumptions=assumptions)
     
     def notEqual(self, rhs, assumptions=USE_DEFAULTS):
         from ._theorems_ import multNotEqZero

@@ -21,7 +21,7 @@ class InSet(Operation):
                                 "is not derived from %s as it should be."
                                 %(self.domain, self.membershipObject.__class__, 
                                   Membership))
-    
+
     def __dir__(self):
         '''
         If the domain has a 'membershipObject' method, include methods from the
@@ -80,6 +80,7 @@ class InSet(Operation):
         First, see if it is contained in a subset of the domain.  
         If that fails and the domain has a 'membershipObject' method,
         try calling 'conclude' on the object it generates.
+        try conclude(self, assumptions, minimal_automation=False)
         '''
         from proveit.logic import SubsetEq
         from proveit import ProofFailure
