@@ -477,7 +477,6 @@ class OperationOverInstances(Operation):
         '''
         # iVarStyle = self.getStyle('instance_vars', '')
         iVarStyle = self.getStyle('instance_vars')
-        print('iVarStyle = %s'%iVarStyle)                                       # for testing; delete later
         if iVarStyle == 'join_next':
             return self.instanceExpr.explicitInstanceExpr()
         return self.instanceExpr
@@ -532,45 +531,46 @@ class OperationOverInstances(Operation):
         explicitIvars = list(self.explicitInstanceVars()) # the (joined) instance vars to show explicitly
         explicitConditions = ExprTuple(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
         explicitDomains = ExprTuple(*self.explicitDomains()) # the (joined) domains
-        explicitInstanceExpr = self.explicitInstanceExpr() # left over after joining instance vars according to the style
+        explicitInstanceExpr = self.explicitInstanceExpr() # left over after joining instnace vars according to the style
         hasExplicitIvars = (len(explicitIvars) > 0)
         hasExplicitConditions = (len(explicitConditions) > 0)
-        hasMultiDomain = (len(explicitDomains)>1 and explicitDomains != ExprList(*[self.domain]*len(explicitDomains)))
-        domain_conditions = ExprList(*self.domainConditions())
+        hasMultiDomain = (len(explicitDomains)>1 and explicitDomains != ExprTuple(*[self.domain]*len(explicitDomains)))
         outStr = ''
         formattedVars = ', '.join([var.formatted(formatType, abbrev=True) for var in explicitIvars])
         if formatType == 'string':
             if fence: outStr += '['
             outStr += self.operator.formatted(formatType) + '_{'
-            if hasExplicitIvars:
-                if hasMultiDomain: outStr += domain_conditions.formatted(formatType, operatorOrOperators=',')
+            if hasExplicitIvars: 
+                if hasMultiDomain: outStr += '(' + formattedVars +')'
                 else: outStr += formattedVars
-            if not hasMultiDomain and self.domain is not None:
+            if hasMultiDomain or self.domain is not None:
                 outStr += ' in '
                 if hasMultiDomain:
-                    print("Do we ever get here?")                               # for testing; delete later
                     outStr += explicitDomains.formatted(formatType, operatorOrOperators='*', fence=False)
                 else:
-                    outStr += self.domain.formatted(formatType, fence=False)
+                    outStr += self.domain.formatted(formatType, fence=False)                    
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += " | "
-                outStr += explicitConditions.formatted(formatType, fence=False)
-                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions)
+                outStr += explicitConditions.formatted(formatType, fence=False)                
+                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             outStr += '} ' + explicitInstanceExpr.formatted(formatType,fence=True)
             if fence: outStr += ']'
         if formatType == 'latex':
             if fence: outStr += r'\left['
             outStr += self.operator.formatted(formatType) + '_{'
-            if hasExplicitIvars:
-                if hasMultiDomain: outStr += domain_conditions.formatted(formatType,  operatorOrOperators=',')
+            if hasExplicitIvars: 
+                if hasMultiDomain: outStr += '(' + formattedVars +')'
                 else: outStr += formattedVars
-            if not hasMultiDomain and self.domain is not None:
+            if hasMultiDomain or self.domain is not None:
                 outStr += r' \in '
-                outStr += self.domain.formatted(formatType, fence=False)
+                if hasMultiDomain:
+                    outStr += explicitDomains.formatted(formatType, operatorOrOperators=r'\times', fence=False)
+                else:
+                    outStr += self.domain.formatted(formatType, fence=False)
             if hasExplicitConditions:
                 if hasExplicitIvars: outStr += "~|~"
-                outStr += explicitConditions.formatted(formatType, fence=False)
-                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions)
+                outStr += explicitConditions.formatted(formatType, fence=False)                
+                #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
             outStr += '}~' + explicitInstanceExpr.formatted(formatType,fence=True)
             if fence: outStr += r'\right]'
 
