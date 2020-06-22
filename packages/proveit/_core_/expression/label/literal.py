@@ -120,6 +120,8 @@ class Literal(Label):
             yield arg
         import inspect
         init_args = inspect.getargspec(self.__class__.__init__)[0]
+        if len(init_args)==1:
+            return # nothing more
         if (len(init_args)==5 and init_args[3]=='extraCoreInfo' \
                 and init_args[4]=='context'):
             core_info = self.coreInfo()
