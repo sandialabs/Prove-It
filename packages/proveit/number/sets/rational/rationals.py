@@ -84,6 +84,8 @@ try:
     from ._theorems_ import (rationalsInReals,
                              rationalsPosInRationals,
                              rationalsNegInRationals, 
-                             rationalsNonNegInRationals)
+                             rationalsNonNegInRationals,
+                             rationalsPosInRationalsNonNeg
+                             zeroInRationals)
 except:
     pass
