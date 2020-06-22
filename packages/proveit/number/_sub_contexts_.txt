@@ -7,6 +7,7 @@ ordering
 multiplication
 division
 divisibility
+absolute_value
 modular
 exponentiation
 summation

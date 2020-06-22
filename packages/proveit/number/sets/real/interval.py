@@ -1,9 +1,12 @@
-from proveit import Literal, Operation
+from proveit import Literal, Operation, USE_DEFAULTS
+import proveit._common_
+from proveit._common_ import a, b, c, x
 
 class RealInterval(Operation):
     r'''
     Base class for all permutations of closed and open intervals.  
-    Do not construct an object of this class directly!  Instead, use IntervalOO or IntervalOC etc.
+    Do not construct an object of this class directly!
+    Instead, use IntervalOO or IntervalOC etc.
     '''
     def __init__(self,operator,lowerBound,upperBound):
         Operation.__init__(self,operator,(lowerBound,upperBound))
@@ -21,54 +24,58 @@ class IntervalOO(RealInterval):
         return '('+self.lowerBound.string() +','+ self.upperBound.string()+')'
 
     def latex(self, **kwargs):
-        return r'\left('+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right)'
+        return (r'\left('+self.lowerBound.latex() + ','
+                + self.upperBound.latex()+r'\right)')
 
-    def deduceElemInSet(self, member):
-        from real.theorems import inIntervalOO
-        return inIntervalOO.specialize({a:self.lowerBound, b:self.upperBound, x:member})
+    def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import in_IntervalOO
+        return in_IntervalOO.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceMemberLowerBound(self, member, assumptions=frozenset()):
-        from real.theorems import intervalOOLowerBound
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return intervalOOLowerBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import intervalOO_lower_bound
+        return intervalOO_lower_bound.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
     
-    def deduceMemberUpperBound(self, member, assumptions=frozenset()):
-        from real.theorems import intervalOOUpperBound
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return intervalOOUpperBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import intervalOO_upper_bound
+        return intervalOO_upper_bound.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceMemberInReals(self, member, assumptions=frozenset()):
-        from real.theorems import allInIntervalOO_InReals
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return allInIntervalOO_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import all_in_IntervalOO_in_Reals
+        return all_in_IntervalOO_in_Reals.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceRescaledMembership(self, member, scaleFactor, assumptions=frozenset()):
-        from real.theorems import rescaleInIntervalOO
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        deduceInReals(scaleFactor, assumptions=assumptions)
-        return rescaleInIntervalOO.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+    def deduceRescaledMembership(self, member, scaleFactor,
+                                 assumptions=USE_DEFAULTS):
+        from ._theorems_ import rescale_in_IntervalOO
+        return rescale_in_IntervalOO.specialize(
+            {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
+            assumptions=assumptions)
 
-    def deduceLeftRelaxedMembership(self, member, assumptions=frozenset()):
-        from real.theorems import relaxIntervalOOleft
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return relaxIntervalOOleft.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceLeftRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import relax_IntervalOO_left
+        return relax_IntervalOO_left.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceRightRelaxedMembership(self, member, assumptions=frozenset()):
-        from real.theorems import relaxIntervalOOright
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return relaxIntervalOOright.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceRightRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import relax_IntervalOO_right
+        return relax_IntervalOO_right.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
+
+    def deduceLeftRightRelaxedMembership(self, member,
+                                         assumptions=USE_DEFAULTS):
+        from ._theorems_ import relax_IntervalOO_left_right
+        return relax_IntervalOO_left_right.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
 class IntervalOC(RealInterval):
     # operator of the IntervalOC operation.
@@ -81,47 +88,45 @@ class IntervalOC(RealInterval):
         return '('+self.lowerBound.string() +','+ self.upperBound.string()+']'
 
     def latex(self, **kwargs):
-        return r'\left('+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right]'
+        return (r'\left('+self.lowerBound.latex() + ','
+                + self.upperBound.latex()+r'\right]')
         
-    def deduceElemInSet(self, member):
-        from real.theorems import inIntervalOC
-        return inIntervalOC.specialize({a:self.lowerBound, b:self.upperBound, x:member})
+    def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import in_IntervalOC
+        return in_IntervalOC.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceMemberLowerBound(self, member, assumptions=frozenset()):
-        from real.theorems import intervalOCLowerBound
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return intervalOCLowerBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import intervalOC_lower_bound
+        return intervalOC_lower_bound.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
     
-    def deduceMemberUpperBound(self, member, assumptions=frozenset()):
-        from real.theorems import intervalOCUpperBound
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return intervalOCUpperBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import intervalOC_upper_bound
+        return intervalOC_upper_bound.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceMemberInIntegers(self, member, assumptions=frozenset()):
-        from real.theorems import allInIntervalOC_InReals
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return allInIntervalOC_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import all_in_IntervalOC_in_Reals
+        return all_in_IntervalOC_in_Reals.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceRescaledMembership(self, member, scaleFactor, assumptions=frozenset()):
-        from real.theorems import rescaleInIntervalOC
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        deduceInReals(scaleFactor, assumptions=assumptions)
-        return rescaleInIntervalOC.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+    def deduceRescaledMembership(self, member, scaleFactor,
+                                 assumptions=USE_DEFAULTS):
+        from ._theorems_ import rescale_in_IntervalOC
+        return rescale_in_IntervalOC.specialize(
+                {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
+                assumptions=assumptions)
 
-    def deduceRelaxedMembership(self, member, assumptions=frozenset()):
-        from real.theorems import relaxIntervalOC
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return relaxIntervalOC.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import relax_IntervalOC
+        return relax_IntervalOC.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
 class IntervalCO(RealInterval):
     # operator of the IntervalCO operation.
@@ -134,47 +139,45 @@ class IntervalCO(RealInterval):
         return '['+self.lowerBound.string() +','+ self.upperBound.string()+')'
 
     def latex(self, **kwargs):
-        return r'\left['+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right)'
+        return (r'\left['+self.lowerBound.latex() + ','
+                + self.upperBound.latex()+r'\right)')
 
-    def deduceElemInSet(self, member):
-        from real.theorems import inIntervalCO
-        return inIntervalCO.specialize({a:self.lowerBound, b:self.upperBound, x:member})
+    def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import in_IntervalCO
+        return in_IntervalCO.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceMemberLowerBound(self, member, assumptions=frozenset()):
-        from real.theorems import intervalCOLowerBound
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return intervalCOLowerBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import intervalCO_lower_bound
+        return intervalCO_lower_bound.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
     
-    def deduceMemberUpperBound(self, member, assumptions=frozenset()):
-        from real.theorems import intervalCOUpperBound
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return intervalCOUpperBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import intervalCO_upper_bound
+        return intervalCO_upper_bound.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceMemberInReals(self, member, assumptions=frozenset()):
-        from real.theorems import allInIntervalCO_InReals
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return allInIntervalCO_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import all_in_IntervalCO_in_Reals
+        return all_in_IntervalCO_in_Reals.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceRescaledMembership(self, member, scaleFactor, assumptions=frozenset()):
-        from real.theorems import rescaleInIntervalCO
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        deduceInReals(scaleFactor, assumptions=assumptions)
-        return rescaleInIntervalCO.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+    def deduceRescaledMembership(self, member, scaleFactor,
+                                 assumptions=USE_DEFAULTS):
+        from ._theorems_ import rescale_in_IntervalCO
+        return rescale_in_IntervalCO.specialize(
+                {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
+                assumptions=assumptions)
 
-    def deduceRelaxedMembership(self, member, assumptions=frozenset()):
-        from real.theorems import relaxIntervalCO
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return relaxIntervalCO.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceRelaxedMembership(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import relax_IntervalCO
+        return relax_IntervalCO.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
 class IntervalCC(RealInterval):
     # operator of the IntervalCC operation.
@@ -187,38 +190,37 @@ class IntervalCC(RealInterval):
         return '['+self.lowerBound.string() +','+ self.upperBound.string()+']'
 
     def latex(self, **kwargs):
-        return r'\left['+self.lowerBound.latex() +','+ self.upperBound.latex()+r'\right]'
+        return (r'\left['+self.lowerBound.latex() +','
+               + self.upperBound.latex()+r'\right]')
 
-    def deduceElemInSet(self, member):
-        from real.theorems import inIntervalCC
-        return inIntervalCC.specialize({a:self.lowerBound, b:self.upperBound, x:member})
+    def deduceElemInSet(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import in_IntervalCC
+        return in_IntervalCC.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceMemberLowerBound(self, member, assumptions=frozenset()):
-        from real.theorems import intervalCCLowerBound
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return intervalCCLowerBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import intervalCC_lower_bound
+        return intervalCC_lower_bound.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
     
-    def deduceMemberUpperBound(self, member, assumptions=frozenset()):
-        from real.theorems import intervalCCUpperBound
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return intervalCCUpperBound.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import intervalCC_upper_bound
+        return intervalCC_upper_bound.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceMemberInReals(self, member, assumptions=frozenset()):
-        from real.theorems import allInIntervalCC_InReals
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        return allInIntervalCC_InReals.specialize({a:self.lowerBound, b:self.upperBound}).specialize({x:member})
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import all_in_IntervalCC_in_Reals
+        return all_in_IntervalCC_in_Reals.specialize(
+                {a:self.lowerBound, b:self.upperBound, x:member},
+                assumptions=assumptions)
 
-    def deduceRescaledMembership(self, member, scaleFactor, assumptions=frozenset()):
-        from real.theorems import rescaleInIntervalCC
-        from numberSets import deduceInReals
-        deduceInReals(self.lowerBound, assumptions=assumptions)
-        deduceInReals(self.upperBound, assumptions=assumptions)
-        deduceInReals(scaleFactor, assumptions=assumptions)
-        return rescaleInIntervalCC.specialize({a:self.lowerBound, b:self.upperBound, c:scaleFactor}).specialize({x:member})
+    def deduceRescaledMembership(self, member, scaleFactor,
+                                 assumptions=USE_DEFAULTS):
+        from ._theorems_ import rescale_in_IntervalCC
+        return rescale_in_IntervalCC.specialize(
+            {a:self.lowerBound, b:self.upperBound, c:scaleFactor, x:member},
+            assumptions=assumptions)
 
