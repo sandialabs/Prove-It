@@ -233,7 +233,7 @@ class ExprArray(ExprTuple):
             break
         return output
 
-    def getFormattedSubExpressions(self, formatType, orientation, default_style, operatorOrOperators):
+    def get_formatted_sub_expressions(self, formatType, orientation, default_style, operatorOrOperators):
         '''
         Used to cycle through the ExprArray and format the output accordingly
         '''
@@ -801,7 +801,7 @@ class ExprArray(ExprTuple):
 
         formatted_sub_expressions = []
 
-        for entry in self.getFormattedSubExpressions(formatType, orientation, default_style,
+        for entry in self.get_formatted_sub_expressions(formatType, orientation, default_style,
                                                                     operatorOrOperators):
             formatted_sub_expressions.append(entry)
 
@@ -818,7 +818,8 @@ class ExprArray(ExprTuple):
             while k <= self.getRowLength(ex):
                 i = 1
                 j = k
-                for var in self.getFormattedSubExpressions(formatType, orientation, default_style, operatorOrOperators):
+                for var in self.get_formatted_sub_expressions(formatType, orientation, default_style,
+                                                              operatorOrOperators):
                     if i == j:
                         vert.append(var)
                         m -= 1
