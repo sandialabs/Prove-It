@@ -1,6 +1,8 @@
 import sys
 from proveit import Lambda, Literal, Operation
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
+from proveit.logic import Set
+ # from proveit.physics.quantum._common_ import Xgate, Ygate, Zgate, Hgate
 # not clear yet what to substitute for ExpressionTensor -- perhaps ExprArray
 # and Block is not being used in the active code
 # from proveit.multiExpression import ExpressionTensor, Block
@@ -82,8 +84,13 @@ class Input(Operation):
         else:
             return Operation._formatted(self, formatType, fence=fence)
 
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
 
-INPUT = Literal(pkg, 'INPUT')  # , operationMaker=lambda operands: Input(*operands))
+
+# INPUT = Literal(pkg, 'INPUT')  # , operationMaker=lambda operands: Input(*operands))
 # An input state (entering the left of the circuit)
 
 
@@ -106,10 +113,16 @@ class Output(Operation):
         formattedState = self.state.formatted(formatType, fence=False)
         if formatType == 'latex':
             return r'\rstick{' + formattedState + r'} \qw' 
-        else: return Operation._formatted(self, formatType, fence)
+        else:
+            return Operation._formatted(self, formatType)
+
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
 
 
-OUTPUT = Literal(pkg, 'OUTPUT')  # , operationMaker=lambda operands: Output(*operands))
+# OUTPUT = Literal(pkg, 'OUTPUT')  # , operationMaker=lambda operands: Output(*operands))
 # An output state (exiting the right of the circuit)
 
 
@@ -140,6 +153,104 @@ class Gate(Operation):
             return r'\gate{' + formattedGateOperation + r'}'
         else:
             return Operation._formatted(self, formatType)
+
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
+
+
+class MultiQubitGate(Gate):
+    '''
+    Represents a connection of multiple gates.  Depending on the type of gate,
+    they will either be connected by a wire or enclosed in a box.
+    '''
+    wires = []
+
+    def __init__(self, gate, indices, styles=None):
+        '''
+        Create a quantum circuit gate performing the given operation.
+        '''
+        if not isinstance(gate, Gate):
+            raise TypeError('Expected first input to be a \'Gate\' object, got \'' + gate.__class__.__name__ + '\' instead.')
+        if not isinstance(indices, Set):
+            raise TypeError('Expected second input to be a \'Set\' got \'' + indices.__class__.__name__ + '\' instead.')
+        self.indices = indices.operands
+        self.gate = gate
+
+        if styles is None:
+            styles = dict()
+        if 'representation' not in styles:
+            styles['representation'] = 'implicit'
+
+        Gate.__init__(self, gate.gate_operation)
+
+    def styleOptions(self):
+        from proveit._core_.expression.style_options import StyleOptions
+
+        options = StyleOptions(self)
+        options.addOption('representation',
+                          ("'implicit' representation displays Z Gates as a solid dot and X gates as a target, while"
+                           "'explicit' representation always displays the type of gate in a box. Ex. |Z|"))
+        return options
+
+    def add_wire_direction(self, value):
+        self.wires.append(value)
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+
+    def formatted(self, formatType, representation=None, **kwargs):
+        if representation is None:
+            representation = self.getStyle('representation', 'implicit')
+        formattedGateOperation = (
+            self.gate_operation.formatted(formatType, fence=False))
+
+        if formatType == 'latex':
+            out_str = ''
+            if representation != 'implicit':
+                if len(self.wires) == 0 or self.wires[0] == 'PASS':
+                    out_str += r'\gate{' + formattedGateOperation + r'}'
+                    if len(self.wires) != 0:
+                        self.wires.pop(0)
+                else:
+                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) + r'}'
+            else:
+                if formattedGateOperation == 'Z':
+                    if len(self.wires) == 0 or self.wires[0] == 'PASS':
+                        out_str += r'\control \qw'
+                        if len(self.wires) != 0:
+                            self.wires.pop(0)
+                    else:
+                        out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
+                elif formattedGateOperation == 'X':
+                    if len(self.wires) == 0 or self.wires[0] == 'PASS':
+                        out_str += r'\targ'
+                        if len(self.wires) != 0:
+                            self.wires.pop(0)
+                    else:
+                        out_str += r'\targ \qwx{-' + str(self.wires.pop(0)) + r'}'
+                else:
+                    if len(self.wires) == 0 or self.wires[0] == 'PASS':
+                        out_str += r'\gate{' + formattedGateOperation + r'}'
+                        if len(self.wires) != 0:
+                            self.wires.pop(0)
+                    else:
+                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) \
+                                   + r'}'
+            return out_str
+        else:
+            return Operation._formatted(self, formatType)
+
+    def _config_latex_tool(self, lt):
+        Operation._config_latex_tool(self, lt)
+        if 'qcircuit' not in lt.packages:
+            lt.packages.append('qcircuit')
+
+
 
     # original below
     # def formatted(self, formatType, fence=false):
@@ -225,6 +336,36 @@ class Circuit(ExprArray):
 
         # check each column for same expression throughout
         self.checkRange()
+        self.check_indices()
+
+    def check_indices(self):
+        '''
+        If there is a MultiQubitGate, checks if all indices match up with additional
+         MultiQubitGates with identical indices.
+        '''
+
+        for k, entry in enumerate(self, 0):
+            # cycle through each ExprTuple
+            i = 0
+            # i keeps track of what position in the row each MultiQubitGate is in
+            if isinstance(entry, ExprTuple):
+                for value in entry:
+                    # cycle through each space
+                    if isinstance(value, MultiQubitGate):
+                        for n, num in enumerate(value.indices, 0):
+                            # cycle through each row location of each QubitGate
+                            if self.entries[num.asInt() - 1].entries[i].indices != value.indices:
+                                # each list of indices for each MultiQubitGate must match the current one (starting
+                                # at 0)
+                                raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
+                                                 'linked MultiQubitGate')
+                            if k == num.asInt() and n < len(value.indices):
+                                # Define the wireDirection for the multiQubitGate by taking the next index and
+                                # subtracting the current one.
+                                value.add_wire_direction(value.indices[n + 1].asInt() - k)
+                            elif k == len(value.indices) - 1:
+                                value.add_wire_direction('PASS')
+                    i += 1
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -336,7 +477,6 @@ class Circuit(ExprArray):
         return outStr
 
     def _config_latex_tool(self, lt):
-        print('config latex!!')
         Operation._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
