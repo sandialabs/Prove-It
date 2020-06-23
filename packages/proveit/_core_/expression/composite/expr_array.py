@@ -238,7 +238,6 @@ class ExprArray(ExprTuple):
         Used to cycle through the ExprArray and format the output accordingly
         '''
         from .expr_range import ExprRange
-        formatted_sub_expressions = []
 
         # Track whether or not ExprRange operands are using
         # "explicit" parameterization, because the operators must
@@ -248,7 +247,7 @@ class ExprArray(ExprTuple):
         for sub_expr in self:
             if k != 0 and orientation == 'horizontal':
                 # wrap before each expression, excluding the first.
-                formatted_sub_expressions.append(r' \\' + ' \n ')
+                yield r' \\' + ' \n '
             if isinstance(sub_expr, ExprRange):
                 # Handle an ExprRange entry; here the "sub-expressions"
                 # are really ExprRange "checkpoints" (first, last, as
@@ -279,8 +278,7 @@ class ExprArray(ExprTuple):
                                     for var in entry:
                                         if n != 0:
                                             if orientation == 'horizontal':
-                                                formatted_sub_expressions.append('& ' + var.formatted(formatType,
-                                                                                                      fence=False))
+                                                yield '& ' + var.formatted(formatType, fence=False)
                                                 if self.getStyle('parameterization', default_style) == 'explicit':
                                                     ell += r' & \colon'
                                                 else:
@@ -288,19 +286,16 @@ class ExprArray(ExprTuple):
                                             else:
                                                 # if the orientation is 'vertical', include the ellipses
                                                 if k == 0:
-                                                    formatted_sub_expressions.append(var.formatted(formatType,
-                                                                                                   fence=False))
+                                                    yield var.formatted(formatType, fence=False)
                                                     vell.append(r'& \cdots')
                                                 else:
-                                                    formatted_sub_expressions.append('& '
-                                                                                     + var.formatted(formatType,
-                                                                                                     fence=False))
+                                                    yield '& ' + var.formatted(formatType, fence=False)
                                                     vell.append(r'& \cdots')
                                         else:
                                             # for the first entry, don't include '&' for formatting purposes
 
                                             if orientation == 'horizontal':
-                                                formatted_sub_expressions.append(var.formatted(formatType, fence=False))
+                                                yield var.formatted(formatType, fence=False)
                                                 if self.getStyle('parameterization', default_style) == 'explicit':
                                                     ell += r'\colon'
                                                 else:
@@ -308,49 +303,41 @@ class ExprArray(ExprTuple):
                                             else:
                                                 # if the orientation is 'vertical', include the ellipses
                                                 if k == 0:
-                                                    formatted_sub_expressions.append(var.formatted(formatType,
-                                                                                                   fence=False))
+                                                    yield var.formatted(formatType, fence=False)
                                                     vell.append(r'& \cdots')
                                                 else:
-                                                    formatted_sub_expressions.append('& ' + var.formatted(formatType,
-                                                                                                          fence=False))
+                                                    yield '& ' + var.formatted(formatType, fence=False)
                                                     vell.append(r'& \cdots')
                                         n += 1
                                 elif isinstance(entry, ExprRange):
                                     # this is first for both orientations so don't include the '&' for either
                                     using_explicit_parameterization.append(
                                         entry._use_explicit_parameterization(formatType))
-                                    formatted_sub_expressions.append(entry.first().formatted(formatType, fence=False))
+                                    yield entry.first().formatted(formatType, fence=False)
                                     if orientation == 'horizontal':
                                         if self.getStyle('parameterization', default_style) == 'explicit':
-                                            formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
-                                                                                                           fence=False)
-                                                                             + '..')
+                                            yield '& ..' + entry.body.formatted(formatType,fence=False) + '..'
                                             ell += r'\colon & \colon & \colon'
                                         else:
-                                            formatted_sub_expressions.append(r'& \cdots')
+                                            yield r'& \cdots'
                                             ell += r'\vdots & & \vdots'
 
-                                        formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
-                                                                                                       fence=False))
+                                        yield '& ' + entry.last().formatted(formatType, fence=False)
                                     else:
                                         # we add an '&' after the \vdots because this is a range of a tuple of a range
                                         if self.getStyle('parameterization', default_style) == 'explicit':
-                                            formatted_sub_expressions.append(r'\colon')
-                                            formatted_sub_expressions.append(entry.body.formatted(formatType,
-                                                                                                  fence=False))
-                                            formatted_sub_expressions.append(r'\colon')
+                                            yield r'\colon'
+                                            yield entry.body.formatted(formatType, fence=False)
+                                            yield r'\colon'
                                         else:
-                                            formatted_sub_expressions.append(r'\vdots')
+                                            yield r'\vdots'
                                         vell.append(r'& \cdots')
                                         vell.append('&')
-                                        formatted_sub_expressions.append(entry.last().formatted(formatType,
-                                                                                                fence=False))
+                                        yield entry.last().formatted(formatType, fence=False)
                                         vell.append(r'& \cdots')
                                 else:
                                     if orientation == 'horizontal':
-                                        formatted_sub_expressions.append(entry.formatted(formatType,
-                                                                                         fence=False))
+                                        yield entry.formatted(formatType, fence=False)
                                         if self.getStyle('parameterization', default_style) == 'explicit':
                                             ell += r'\colon'
                                         else:
@@ -358,21 +345,17 @@ class ExprArray(ExprTuple):
                                     else:
                                         # if the orientation is 'vertical', include the ellipses
                                         if k == 0:
-                                            formatted_sub_expressions.append(entry.formatted(formatType,
-                                                                                             fence=False))
+                                            yield entry.formatted(formatType, fence=False)
                                             vell.append(r'& \cdots')
                                         else:
-                                            formatted_sub_expressions.append('& '
-                                                                             + entry.formatted(formatType,
-                                                                                               fence=False))
+                                            yield '& ' + entry.formatted(formatType, fence=False)
                                             vell.append(r'& \cdots')
                             else:
                                 if isinstance(entry, ExprTuple):
                                     for var in entry:
                                         if orientation == 'horizontal':
                                             # this is not the first so we add '&'
-                                            formatted_sub_expressions.append('& ' + var.formatted(formatType,
-                                                                                                  fence=False))
+                                            yield '& ' + var.formatted(formatType, fence=False)
                                             if self.getStyle('parameterization', default_style) == 'explicit':
                                                 ell += r' & \colon'
                                             else:
@@ -381,52 +364,43 @@ class ExprArray(ExprTuple):
                                             if k == 0:
                                                 # this is still technically the first column so we don't include
                                                 # the '&' for formatting purposes
-                                                formatted_sub_expressions.append(var.formatted(formatType, fence=False))
+                                                yield var.formatted(formatType, fence=False)
                                                 vell.append(r'& \cdots')
                                             else:
-                                                formatted_sub_expressions.append('& ' + var.formatted(formatType,
-                                                                                                      fence=False))
+                                                yield '& ' + var.formatted(formatType, fence=False)
                                                 vell.append(r'& \cdots')
                                 elif isinstance(entry, ExprRange):
                                     using_explicit_parameterization.append(
                                         entry._use_explicit_parameterization(formatType))
                                     if orientation == 'horizontal':
-                                        formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
-                                                                                                        fence=False))
+                                        yield '& ' + entry.first().formatted(formatType, fence=False)
                                         if self.getStyle('parameterization', default_style) == 'explicit':
                                             ell += r' & \colon &\colon & \colon'
-                                            formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
-                                                                                                           fence=False)
-                                                                             + '..')
+                                            yield '& ..' + entry.body.formatted(formatType, fence=False) + '..'
                                         else:
                                             ell += r' & \vdots & & \vdots'
-                                            formatted_sub_expressions.append(r'& \cdots')
-                                        formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
-                                                                                                       fence=False))
+                                            yield r'& \cdots'
+                                        yield '& ' + entry.last().formatted(formatType, fence=False)
 
                                     else:
                                         # this is still technically the first column so we don't include
                                         # the '&' for formatting purposes
-                                        formatted_sub_expressions.append(entry.first().formatted(formatType,
-                                                                                                 fence=False))
+                                        yield entry.first().formatted(formatType, fence=False)
 
                                         if self.getStyle('parameterization', default_style) == 'explicit':
-                                            formatted_sub_expressions.append(r'\colon')
-                                            formatted_sub_expressions.append(entry.body.formatted(formatType,
-                                                                                                  fence=False))
-                                            formatted_sub_expressions.append(r'\colon')
+                                            yield r'\colon'
+                                            yield entry.body.formatted(formatType, fence=False)
+                                            yield r'\colon'
                                         else:
-                                            formatted_sub_expressions.append(r'\vdots')
-                                        formatted_sub_expressions.append(entry.last().formatted(formatType,
-                                                                                                fence=False))
+                                            yield r'\vdots'
+                                        yield entry.last().formatted(formatType, fence=False)
                                         vell.append(r'& \cdots ')
                                         vell.append('&')
                                         vell.append(r'& \cdots ')
                                 else:
                                     if orientation == 'horizontal':
                                         # this is not the first so we add '&'
-                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                fence=False))
+                                        yield '& ' + entry.formatted(formatType, fence=False)
                                         if self.getStyle('parameterization', default_style) == 'explicit':
                                             ell += r' & \colon'
                                         else:
@@ -435,11 +409,10 @@ class ExprArray(ExprTuple):
                                         if k == 0:
                                             # this is still technically the first column so we don't include
                                             # the '&' for formatting purposes
-                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                            yield entry.formatted(formatType, fence=False)
                                             vell.append(r'& \cdots')
                                         else:
-                                            formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                    fence=False))
+                                            yield '& ' + entry.formatted(formatType, fence=False)
                                             vell.append(r'& \cdots')
                             m += 1
 
@@ -455,141 +428,108 @@ class ExprArray(ExprTuple):
                                     for var in entry:
                                         if n != 0:
                                             # regardless of orientation add the '&'
-                                            formatted_sub_expressions.append('& ' + var.formatted(formatType,
-                                                                                                  fence=False))
+                                            yield '& ' + var.formatted(formatType, fence=False)
                                         else:
                                             if orientation == 'horizontal':
                                                 # if its the first one, omit '&' for formatting purposes
-                                                formatted_sub_expressions.append(var.formatted(formatType, fence=False))
+                                                yield var.formatted(formatType, fence=False)
                                             else:
                                                 # add the '&' because this is technically the last column
-                                                formatted_sub_expressions.append('& ' + var.formatted(formatType,
-                                                                                                      fence=False))
+                                                yield '& ' + var.formatted(formatType, fence=False)
                                         n += 1
                                 elif isinstance(sub_expr.last().entries[0], ExprRange):
                                     using_explicit_parameterization.append(
                                         entry._use_explicit_parameterization(formatType))
                                     if orientation == 'horizontal':
                                         # this is the first of the last row so we omit the '&'
-                                        formatted_sub_expressions.append(entry.first().formatted(formatType,
-                                                                                                 fence=False))
+                                        yield entry.first().formatted(formatType, fence=False)
                                         if self.getStyle('parameterization', default_style) == 'explicit':
-                                            formatted_sub_expressions.append(r'& ..' + entry.body.formatted(formatType,
-                                                                                                            fence=False)
-                                                                             + '..')
+                                            yield r'& ..' + entry.body.formatted(formatType, fence=False) + '..'
                                         else:
-                                            formatted_sub_expressions.append(r'& \cdots')
-                                        formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
-                                                                                                       fence=False))
+                                            yield r'& \cdots'
+                                        yield '& ' + entry.last().formatted(formatType, fence=False)
                                     else:
                                         # this is the last column so we include all '&'
-                                        formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
-                                                                                                        fence=False))
+                                        yield '& ' + entry.first().formatted(formatType, fence=False)
                                         if self.getStyle('parameterization', default_style) == 'explicit':
-                                            formatted_sub_expressions.append(r'& \colon')
-                                            formatted_sub_expressions.append('& ' + entry.body.formatted(formatType,
-                                                                                                         fence=False))
-                                            formatted_sub_expressions.append(r'& \colon')
+                                            yield r'& \colon'
+                                            yield '& ' + entry.body.formatted(formatType, fence=False)
+                                            yield r'& \colon'
                                         else:
-                                            formatted_sub_expressions.append(r'& \vdots')
-                                        formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
-                                                                                                       fence=False))
+                                            yield r'& \vdots'
+                                        yield '& ' + entry.last().formatted(formatType,fence=False)
                                 else:
                                     if orientation == 'horizontal':
-                                        formatted_sub_expressions.append(entry.formatted(formatType,
-                                                                                         fence=False))
+                                        yield entry.formatted(formatType, fence=False)
                                     else:
-                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                fence=False))
+                                        yield '& ' + entry.formatted(formatType, fence=False)
                             else:
                                 if isinstance(entry, ExprTuple):
                                     for var in entry:
                                         # this is not the first entry for either orientation so we include an '&'
-                                        formatted_sub_expressions.append('& ' + var.formatted(formatType, fence=False))
+                                        yield '& ' + var.formatted(formatType, fence=False)
 
                                 elif isinstance(entry, ExprRange):
                                     using_explicit_parameterization.append(
                                         entry._use_explicit_parameterization(formatType))
                                     # this is not the first entry for either orientation so we include an '&'
-                                    formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
-                                                                                                    fence=False))
+                                    yield '& ' + entry.first().formatted(formatType, fence=False)
 
                                     if self.getStyle('parameterization', default_style) == 'explicit':
                                         if orientation == 'horizontal':
-                                            formatted_sub_expressions.append(r'& ..' + entry.body.formatted(formatType,
-                                                                                                            fence=False)
-                                                                             + '..')
+                                            yield r'& ..' + entry.body.formatted(formatType, fence=False) + '..'
                                         else:
-                                            formatted_sub_expressions.append(r'& \colon')
-                                            formatted_sub_expressions.append('& ' + entry.body.formatted(formatType,
-                                                                                                         fence=False))
-                                            formatted_sub_expressions.append(r'& \colon')
+                                            yield r'& \colon'
+                                            yield '& ' + entry.body.formatted(formatType, fence=False)
+                                            yield r'& \colon'
                                     else:
                                         if orientation == 'horizontal':
-                                            formatted_sub_expressions.append(r'& \cdots')
+                                            yield r'& \cdots'
                                         else:
-                                            formatted_sub_expressions.append(r'& \vdots')
-                                    formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
-                                                                                                   fence=False))
+                                            yield r'& \vdots'
+                                    yield '& ' + entry.last().formatted(formatType, fence=False)
                                 else:
                                     # this is not the first entry for either orientation so we include an '&'
-                                    formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False))
+                                    yield '& ' + entry.formatted(formatType, fence=False)
                             m += 1
                     elif i == 1 and isinstance(sub_expr.first(), ExprTuple):
                         if self.getStyle('parameterization', default_style) == 'explicit':
                             if orientation == 'horizontal':
-                                formatted_sub_expressions.append(r' \\ ' + '\n ' + ell + r' \\ ' + '\n ')
+                                yield r' \\ ' + '\n ' + ell + r' \\ ' + '\n '
                                 n = 0
                                 for entry in sub_expr.body:
                                     if n == 0:
                                         if isinstance(entry, ExprRange):
-                                            formatted_sub_expressions.append(entry.first().formatted(formatType,
-                                                                                                     fence=False))
-                                            formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
-                                                                                                           fence=False)
-                                                                             + '..')
-                                            formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
-                                                                                                           fence=False))
+                                            yield entry.first().formatted(formatType, fence=False)
+                                            yield '& ..' + entry.body.formatted(formatType, fence=False) + '..'
+                                            yield '& ' + entry.last().formatted(formatType, fence=False)
                                         else:
-                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                            yield entry.formatted(formatType, fence=False)
                                     else:
                                         if isinstance(entry, ExprRange):
-                                            formatted_sub_expressions.append('& ' + entry.first().formatted(formatType,
-                                                                                                            fence=False)
-                                                                             )
-                                            formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
-                                                                                                           fence=False)
-                                                                             + '..')
-                                            formatted_sub_expressions.append('& ' + entry.last().formatted(formatType,
-                                                                                                           fence=False))
+                                            yield '& ' + entry.first().formatted(formatType, fence=False)
+                                            yield '& ..' + entry.body.formatted(formatType, ence=False) + '..'
+                                            yield '& ' + entry.last().formatted(formatType, fence=False)
                                         else:
-                                            formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                    fence=False))
+                                            yield '& ' + entry.formatted(formatType, fence=False)
                                     n += 1
-                                formatted_sub_expressions.append(r' \\ ' + '\n ' + ell + r' \\ ' + '\n ')
+                                yield r' \\ ' + '\n ' + ell + r' \\ ' + '\n '
                             else:
                                 for entry in sub_expr.body:
                                     if isinstance(entry, ExprRange):
-                                        formatted_sub_expressions.append('& ..' + entry.first().formatted(formatType,
-                                                                                                          fence=False)
-                                                                         + '..')
-                                        formatted_sub_expressions.append(r'& \colon')
-                                        formatted_sub_expressions.append('& ..' + entry.body.formatted(formatType,
-                                                                                                       fence=False)
-                                                                         + '..')
-                                        formatted_sub_expressions.append(r'& \colon')
-                                        formatted_sub_expressions.append('& ..' + entry.last().formatted(formatType,
-                                                                                                         fence=False)
-                                                                         + '..')
+                                        yield '& ..' + entry.first().formatted(formatType, fence=False) + '..'
+                                        yield r'& \colon'
+                                        yield '& ..' + entry.body.formatted(formatType, fence=False) + '..'
+                                        yield r'& \colon'
+                                        yield '& ..' + entry.last().formatted(formatType, fence=False) + '..'
                                     else:
-                                        formatted_sub_expressions.append('& ..' + entry.formatted(formatType,
-                                                                                                  fence=False) + '..')
+                                        yield '& ..' + entry.formatted(formatType, fence=False) + '..'
                         else:
                             if orientation == 'horizontal':
-                                formatted_sub_expressions.append(r' \\ ' + '\n ' + ell + r' \\ ' + '\n ')
+                                yield r' \\ ' + '\n ' + ell + r' \\ ' + '\n '
                             else:
                                 for entry in vell:
-                                    formatted_sub_expressions.append(entry)
+                                    yield entry
                     elif isinstance(sub_expr.first(), ExprRange):
                         # ExprRange of an ExprRange
                         if isinstance(sub_expr.first().first(), ExprTuple):
@@ -601,7 +541,7 @@ class ExprArray(ExprTuple):
                                 n = 0
                                 for entry in sub_expr.first().first():
                                     if n == 0:
-                                        formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                        yield entry.formatted(formatType, fence=False)
                                         if self.getStyle('parameterization', default_style) == 'explicit':
                                             vell += r'\colon'
                                         else:
@@ -610,10 +550,9 @@ class ExprArray(ExprTuple):
 
                                     else:
                                         if orientation == 'horizontal':
-                                            formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                    fence=False))
+                                            yield '& ' + entry.formatted(formatType, fence=False)
                                         else:
-                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                            yield entry.formatted(formatType, fence=False)
                                         if self.getStyle('parameterization', default_style) == 'explicit':
                                             vell += r' & \colon'
                                         else:
@@ -621,77 +560,64 @@ class ExprArray(ExprTuple):
                                             ell.append(r' & \cdots')
                                     n += 1
                                 if orientation == 'horizontal':
-                                    formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                    yield r'\\ ' + '\n ' + vell + r'\\ ' + '\n'
                                 else:
                                     for item in ell:
-                                        formatted_sub_expressions.append(item)
+                                        yield item
 
                                 if self.getStyle('parameterization', default_style) == 'explicit':
                                     n = 0
                                     for entry in sub_expr.first().body:
                                         if n == 0 and orientation == 'horizontal':
-                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                            yield entry.formatted(formatType, fence=False)
                                         else:
                                             if orientation == 'horizontal':
-                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                        fence=False))
+                                                yield '& ' + entry.formatted(formatType, fence=False)
                                             else:
-                                                formatted_sub_expressions.append('& ..' + entry.formatted(formatType,
-                                                                                                          fence=False)
-                                                                                 + '..')
+                                                yield '& ..' + entry.formatted(formatType, fence=False) + '..'
                                         n += 1
                                     if orientation == 'horizontal':
-                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                        yield r'\\ ' + '\n ' + vell + r'\\ ' + '\n'
                                     else:
                                         for item in ell:
-                                            formatted_sub_expressions.append(item)
+                                            yield item
                                 n = 0
                                 for entry in sub_expr.first().last():
                                     if n == 0 and orientation == 'horizontal':
-                                        formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                        yield entry.formatted(formatType, fence=False)
                                     else:
-                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False)
-                                                                         )
+                                        yield '& ' + entry.formatted(formatType, fence=False)
                                     n += 1
                                 if orientation == 'horizontal':
-                                    formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                    yield r'\\ ' + '\n ' + vell + r'\\ ' + '\n'
                                     if self.getStyle('parameterization', default_style) == 'explicit':
-                                        formatted_sub_expressions.append(vell + r'\\ ' + '\n')
+                                        yield vell + r'\\ ' + '\n'
                                         n = 0
                                         for entry in sub_expr.body.first():
                                             if n == 0:
-                                                formatted_sub_expressions.append(entry.formatted(formatType,
-                                                                                                 fence=False))
+                                                yield entry.formatted(formatType, fence=False)
                                             else:
-                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                        fence=False)
-                                                                                 )
+                                                yield '& ' + entry.formatted(formatType, fence=False)
                                             n += 1
-                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                        yield r'\\ ' + '\n ' + vell + r'\\ ' + '\n'
                                         n = 0
                                         for entry in sub_expr.body.body:
                                             if n == 0:
-                                                formatted_sub_expressions.append(entry.formatted(formatType,
-                                                                                                 fence=False))
+                                                yield entry.formatted(formatType, fence=False)
                                             else:
-                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                        fence=False)
-                                                                                 )
+                                                yield '& ' + entry.formatted(formatType, fence=False)
                                             n += 1
                                         n = 0
-                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                        yield r'\\ ' + '\n ' + vell + r'\\ ' + '\n'
                                         for entry in sub_expr.body.last():
                                             if n == 0:
-                                                formatted_sub_expressions.append(entry.formatted(formatType,
-                                                                                                 fence=False))
+                                                yield entry.formatted(formatType, fence=False)
                                             else:
-                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                        fence=False)
-                                                                                 )
+                                                yield '& ' + entry.formatted(formatType, fence=False)
                                             n += 1
-                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                        yield r'\\ ' + '\n ' + vell + r'\\ ' + '\n'
 
-                                    formatted_sub_expressions.append(vell + r'\\ ' + '\n')
+                                    yield vell + r'\\ ' + '\n'
                                 else:
                                     if self.getStyle('parameterization', default_style) == 'explicit':
 
@@ -705,50 +631,45 @@ class ExprArray(ExprTuple):
                                             placeholder += '..' + sub_expr.body.last().entries[n].formatted(
                                                 formatType, fence=False) + '....'
                                             n += 1
-                                            formatted_sub_expressions.append(placeholder)
+                                            yield placeholder
                                     else:
                                         for item in ell:
-                                            formatted_sub_expressions.append(item)
-                                            formatted_sub_expressions.append(item)
+                                            yield item
+                                            yield item
                                 n = 0
                                 for entry in sub_expr.last().first():
                                     if n == 0 and orientation == 'horizontal':
-                                        formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                        yield entry.formatted(formatType, fence=False)
                                     else:
-                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False)
-                                                                         )
+                                        yield '& ' + entry.formatted(formatType, fence=False)
                                     n += 1
                                 if orientation == 'horizontal':
-                                    formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                    yield r'\\ ' + '\n ' + vell + r'\\ ' + '\n'
                                 else:
                                     for item in ell:
-                                        formatted_sub_expressions.append(item)
+                                        yield item
                                 if self.getStyle('parameterization', default_style) == 'explicit':
                                     n = 0
                                     for entry in sub_expr.last().body:
                                         if n == 0 and orientation == 'horizontal':
-                                            formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                            yield entry.formatted(formatType, fence=False)
                                         else:
                                             if orientation == 'horizontal':
-                                                formatted_sub_expressions.append('& ' + entry.formatted(formatType,
-                                                                                                        fence=False))
+                                                yield '& ' + entry.formatted(formatType, fence=False)
                                             else:
-                                                formatted_sub_expressions.append('& ..' + entry.formatted(formatType,
-                                                                                                          fence=False)
-                                                                                 + '..')
+                                                yield '& ..' + entry.formatted(formatType, fence=False) + '..'
                                         n += 1
                                     if orientation == 'horizontal':
-                                        formatted_sub_expressions.append(r'\\ ' + '\n ' + vell + r'\\ ' + '\n')
+                                        yield r'\\ ' + '\n ' + vell + r'\\ ' + '\n'
                                     else:
                                         for item in ell:
-                                            formatted_sub_expressions.append(item)
+                                            yield item
                                 n = 0
                                 for entry in sub_expr.last().last():
                                     if n == 0 and orientation == 'horizontal':
-                                        formatted_sub_expressions.append(entry.formatted(formatType, fence=False))
+                                        yield entry.formatted(formatType, fence=False)
                                     else:
-                                        formatted_sub_expressions.append('& ' + entry.formatted(formatType, fence=False)
-                                                                         )
+                                        yield '& ' + entry.formatted(formatType, fence=False)
                                     n += 1
                         else:
                             raise ValueError('ExprArrays of ExprRanges of ExprRanges are one-dimensional and therefore '
@@ -765,136 +686,90 @@ class ExprArray(ExprTuple):
                             using_explicit_parameterization.append(
                                 expr._use_explicit_parameterization(formatType))
                             if orientation == 'horizontal':
-                                formatted_sub_expressions.append(expr.first().formatted(formatType,
-                                                                                        fence=False, subFence=False))
+                                yield expr.first().formatted(formatType, fence=False, subFence=False)
                                 if self.getStyle('parameterization', default_style) == 'explicit':
-                                    formatted_sub_expressions.append(r'& ..' + expr.body.formatted(formatType,
-                                                                                                   fence=False,
-                                                                                                   subFence=False)
-                                                                     + '..')
+                                    yield r'& ..' + expr.body.formatted(formatType, fence=False, subFence=False) + '..'
                                 else:
-                                    formatted_sub_expressions.append(r'& \cdots')
-                                formatted_sub_expressions.append('& ' + expr.last().formatted(formatType,
-                                                                                              fence=False,
-                                                                                              subFence=False))
+                                    yield r'& \cdots'
+                                yield '& ' + expr.last().formatted(formatType, fence=False, subFence=False)
                             else:
                                 if k == 0:
                                     # this is the first column so we don't include '&'
-                                    formatted_sub_expressions.append(expr.first().formatted(formatType,
-                                                                                            fence=False,
-                                                                                            subFence=False))
+                                    yield expr.first().formatted(formatType, fence=False, subFence=False)
                                     if self.getStyle('parameterization', default_style) == 'explicit':
-                                        formatted_sub_expressions.append(r'\colon')
-                                        formatted_sub_expressions.append(expr.body.formatted(formatType, fence=False,
-                                                                                             subFence=False))
-                                        formatted_sub_expressions.append(r'\colon')
+                                        yield r'\colon'
+                                        yield expr.body.formatted(formatType, fence=False, subFence=False)
+                                        yield r'\colon'
                                     else:
-                                        formatted_sub_expressions.append(r'\vdots')
-                                    formatted_sub_expressions.append(expr.last().formatted(formatType,
-                                                                                           fence=False,
-                                                                                           subFence=False))
+                                        yield r'\vdots'
+                                    yield expr.last().formatted(formatType, fence=False, subFence=False)
                                 else:
-                                    formatted_sub_expressions.append('& ' + expr.first().formatted(formatType,
-                                                                                                   fence=False,
-                                                                                                   subFence=False))
+                                    yield '& ' + expr.first().formatted(formatType, fence=False, subFence=False)
                                     if self.getStyle('parameterization', default_style) == 'explicit':
-                                        formatted_sub_expressions.append(r'& \colon')
-                                        formatted_sub_expressions.append(r'& ' + expr.body.formatted(formatType,
-                                                                                                     fence=False,
-                                                                                                     subFence=False))
-                                        formatted_sub_expressions.append(r'& \colon')
+                                        yield r'& \colon'
+                                        yield r'& ' + expr.body.formatted(formatType, fence=False, subFence=False)
+                                        yield r'& \colon'
                                     else:
-                                        formatted_sub_expressions.append(r'& \vdots')
-                                    formatted_sub_expressions.append('& ' + expr.last().formatted(formatType,
-                                                                                                  fence=False,
-                                                                                                  subFence=False))
+                                        yield r'& \vdots'
+                                    yield '& ' + expr.last().formatted(formatType, fence=False, subFence=False)
                         else:
                             if orientation == 'horizontal':
                                 # this is the first item in the first row so we do not include the '&'
-                                formatted_sub_expressions.append(expr.formatted(formatType,
-                                                                                fence=False))
+                                yield expr.formatted(formatType, fence=False)
                             else:
                                 if k == 0:
                                     # this is still the first column
-                                    formatted_sub_expressions.append(expr.formatted(formatType,
-                                                                                    fence=False, subFence=False))
+                                    yield expr.formatted(formatType, fence=False, subFence=False)
                                 else:
                                     # this is not the first column
-                                    formatted_sub_expressions.append('& ' + expr.formatted(formatType,
-                                                                                           fence=False,
-                                                                                           subFence=False))
+                                    yield '& ' + expr.formatted(formatType, fence=False, subFence=False)
                     else:
                         if isinstance(expr, ExprRange):
                             using_explicit_parameterization.append(
                                 expr._use_explicit_parameterization(formatType))
                             if orientation == 'horizontal':
                                 # for this orientation this is not the first so we add '&'
-                                formatted_sub_expressions.append('& ' + expr.first().formatted(formatType,
-                                                                                               fence=False,
-                                                                                               subFence=False))
+                                yield '& ' + expr.first().formatted(formatType, fence=False, subFence=False)
                                 if self.getStyle('parameterization', default_style) == 'explicit':
-                                    formatted_sub_expressions.append(r'& ..' + expr.body.formatted(formatType,
-                                                                                                   fence=False,
-                                                                                                   subFence=False)
-                                                                     + '..')
+                                    yield r'& ..' + expr.body.formatted(formatType, fence=False, subFence=False) + '..'
                                 else:
-                                    formatted_sub_expressions.append(r'& \cdots')
-                                formatted_sub_expressions.append('& ' + expr.last().formatted(formatType,
-                                                                                              fence=False,
-                                                                                              subFence=False))
+                                    yield r'& \cdots'
+                                yield '& ' + expr.last().formatted(formatType, fence=False, subFence=False)
                             else:
                                 if k == 0:
                                     # this is still the first column so we don't add '&'
-                                    formatted_sub_expressions.append(expr.first().formatted(formatType,
-                                                                                            fence=False,
-                                                                                            subFence=False))
+                                    yield expr.first().formatted(formatType, fence=False, subFence=False)
                                     if self.getStyle('parameterization', default_style) == 'explicit':
-                                        formatted_sub_expressions.append(r'\colon')
-                                        formatted_sub_expressions.append(expr.body.formatted(formatType,
-                                                                                             fence=False,
-                                                                                             subFence=False))
-                                        formatted_sub_expressions.append(r'\colon')
+                                        yield r'\colon'
+                                        yield expr.body.formatted(formatType, fence=False, subFence=False)
+                                        yield r'\colon'
                                     else:
-                                        formatted_sub_expressions.append(r'\vdots')
-                                    formatted_sub_expressions.append(expr.last().formatted(formatType,
-                                                                                           fence=False,
-                                                                                           subFence=False))
+                                        yield r'\vdots'
+                                    yield expr.last().formatted(formatType, fence=False, subFence=False)
                                 else:
-                                    formatted_sub_expressions.append('& ' + expr.first().formatted(formatType,
-                                                                                                   fence=False,
-                                                                                                   subFence=False))
+                                    yield '& ' + expr.first().formatted(formatType, fence=False, subFence=False)
                                     if self.getStyle('parameterization', default_style) == 'explicit':
-                                        formatted_sub_expressions.append(r'& \colon')
-                                        formatted_sub_expressions.append('& ' + expr.body.formatted(formatType,
-                                                                                                    fence=False,
-                                                                                                    subFence=False))
-                                        formatted_sub_expressions.append(r'& \colon')
+                                        yield r'& \colon'
+                                        yield '& ' + expr.body.formatted(formatType, fence=False, subFence=False)
+                                        yield r'& \colon'
                                     else:
-                                        formatted_sub_expressions.append(r'& \vdots')
-                                    formatted_sub_expressions.append('& ' + expr.last().formatted(formatType,
-                                                                                                  fence=False,
-                                                                                                  subFence=False))
-
+                                        yield r'& \vdots'
+                                    yield '& ' + expr.last().formatted(formatType, fence=False, subFence=False)
                         else:
                             if orientation == 'horizontal':
                                 # this is following along the row so we include '&'
-                                formatted_sub_expressions.append('& ' + expr.formatted(formatType,
-                                                                                       fence=False))
+                                yield '& ' + expr.formatted(formatType, fence=False)
                             else:
                                 if k == 0:
                                     # this is the first column so we don't include '&'
-                                    formatted_sub_expressions.append(expr.formatted(formatType,
-                                                                                    fence=False, subFence=False))
+                                    yield expr.formatted(formatType, fence=False, subFence=False)
                                 else:
                                     # this is not the first column so we do include '&'
-                                    formatted_sub_expressions.append('& ' + expr.formatted(formatType,
-                                                                                           fence=False, subFence=False))
+                                    yield '& ' + expr.formatted(formatType, fence=False, subFence=False)
                     inc += 1
             else:
                 raise ValueError("Expressions must be wrapped in either an ExprTuple or ExprRange")
             k += 1
-
-        return formatted_sub_expressions, using_explicit_parameterization
 
     def formatted(self, formatType, fence=False, subFence=False, operatorOrOperators=None, implicitFirstOperator=False,
                   wrapPositions=None, justification=None, orientation=None, **kwargs):
@@ -924,10 +799,11 @@ class ExprArray(ExprTuple):
         if formatType == 'latex':
             outStr += r'\begin{array} {%s} ' % (justification[0] * length) + '\n '
 
-        formatted_sub_expressions, using_explicit_parameterization = self.getFormattedSubExpressions(formatType,
-                                                                                                     orientation,
-                                                                                                     default_style,
-                                                                                                    operatorOrOperators)
+        formatted_sub_expressions = []
+
+        for entry in self.getFormattedSubExpressions(formatType, orientation, default_style,
+                                                                    operatorOrOperators):
+            formatted_sub_expressions.append(entry)
 
         if orientation == "vertical":
             # up until now, the formatted_sub_expression is still
@@ -942,7 +818,7 @@ class ExprArray(ExprTuple):
             while k <= self.getRowLength(ex):
                 i = 1
                 j = k
-                for var in formatted_sub_expressions:
+                for var in self.getFormattedSubExpressions(formatType, orientation, default_style, operatorOrOperators):
                     if i == j:
                         vert.append(var)
                         m -= 1
@@ -978,7 +854,7 @@ class ExprArray(ExprTuple):
                     # using an 'explicit' style for 'parameterization').
                     # For the 'ellipses', we will just use a
                     # placeholder.
-                    be_explicit = using_explicit_parameterization.pop(0)
+                    be_explicit = self.getStyle('parameterization', default_style)
                     formatted_operators += operator._formatted_checkpoints(
                         formatType, fence=False, subFence=False, ellipses='',
                         use_explicit_parameterization=be_explicit)
