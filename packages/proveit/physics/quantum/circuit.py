@@ -212,7 +212,7 @@ class MultiQubitGate(Gate):
         if formatType == 'latex':
             out_str = ''
             if representation != 'implicit':
-                if len(self.wires) == 0 or self.wires[0] == 'PASS':
+                if len(self.wires) == 0 or self.wires[0] == 'skip':
                     out_str += r'\gate{' + formattedGateOperation + r'}'
                     if len(self.wires) != 0:
                         self.wires.pop(0)
@@ -220,21 +220,21 @@ class MultiQubitGate(Gate):
                     out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) + r'}'
             else:
                 if formattedGateOperation == 'Z':
-                    if len(self.wires) == 0 or self.wires[0] == 'PASS':
+                    if len(self.wires) == 0 or self.wires[0] == 'skip':
                         out_str += r'\control \qw'
                         if len(self.wires) != 0:
                             self.wires.pop(0)
                     else:
                         out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
                 elif formattedGateOperation == 'X':
-                    if len(self.wires) == 0 or self.wires[0] == 'PASS':
+                    if len(self.wires) == 0 or self.wires[0] == 'skip':
                         out_str += r'\targ'
                         if len(self.wires) != 0:
                             self.wires.pop(0)
                     else:
                         out_str += r'\targ \qwx{-' + str(self.wires.pop(0)) + r'}'
                 else:
-                    if len(self.wires) == 0 or self.wires[0] == 'PASS':
+                    if len(self.wires) == 0 or self.wires[0] == 'skip':
                         out_str += r'\gate{' + formattedGateOperation + r'}'
                         if len(self.wires) != 0:
                             self.wires.pop(0)
@@ -364,7 +364,7 @@ class Circuit(ExprArray):
                                 # subtracting the current one.
                                 value.add_wire_direction(value.indices[n + 1].asInt() - k)
                             elif k == len(value.indices) - 1:
-                                value.add_wire_direction('PASS')
+                                value.add_wire_direction('skip')
                     i += 1
 
     def string(self, **kwargs):
@@ -389,10 +389,13 @@ class Circuit(ExprArray):
         if formatType == 'latex':
             outStr += r'\Qcircuit @C=1em @R=.7em {' + '\n'
 
-        formatted_sub_expressions, using_explicit_parameterization = self.getFormattedSubExpressions(formatType,
-                                                                                                     orientation,
-                                                                                                     default_style,
-                                                                                                    operatorOrOperators)
+        formatted_sub_expressions = []
+        for entry in self.get_formatted_sub_expressions(formatType, orientation, default_style, operatorOrOperators):
+            if entry != '& PASS':
+                # we have to include the & because it has already been formatted according to an ExprArray
+                formatted_sub_expressions.append(entry)
+            else:
+                formatted_sub_expressions.append(' ')
 
         if orientation == "vertical":
             # up until now, the formatted_sub_expression is still
@@ -443,7 +446,7 @@ class Circuit(ExprArray):
                     # using an 'explicit' style for 'parameterization').
                     # For the 'ellipses', we will just use a
                     # placeholder.
-                    be_explicit = using_explicit_parameterization.pop(0)
+                    be_explicit = self.getStyle('parameterization', default_style)
                     formatted_operators += operator._formatted_checkpoints(
                         formatType, fence=False, subFence=False, ellipses='',
                         use_explicit_parameterization=be_explicit)
