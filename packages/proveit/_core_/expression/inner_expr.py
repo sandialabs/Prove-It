@@ -1,4 +1,4 @@
-from .expr import Expression, free_var_ranges
+from .expr import Expression, free_vars
 from .operation import Operation, Function
 from .lambda_expr import Lambda
 from .composite import ExprTuple, Composite, NamedExprs, compositeExpression
@@ -173,8 +173,9 @@ class InnerExpr:
                 sub_expr = repl_lambda .body
                 for j in self.innerExprPath[:cur_depth]:
                     sub_expr = sub_expr.subExpr(j)
-                fvars = free_var_ranges(compositeExpression(getattr(sub_expr, attr)))
-                if repl_lambda.parameterVarSet.issubset(fvars.keys()):
+                fvars = free_vars(compositeExpression(getattr(sub_expr, attr)),
+                                  err_inclusively=False)
+                if repl_lambda.parameterVarSet.issubset(fvars):
                     return deeper_inner_expr
         # No match found at this depth -- let's continue to the next 
         # depth

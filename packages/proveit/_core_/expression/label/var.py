@@ -49,7 +49,7 @@ class Variable(Label):
     def _used_vars(self):
         return {self}
     
-    def _free_var_ranges(self, exclusions=None):
+    def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
         of indices (or solo) in which the variable occurs as free or 

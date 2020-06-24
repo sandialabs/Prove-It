@@ -1,6 +1,5 @@
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented, 
-                                            ImproperReplacement,
-                                            free_vars,
+                                            ImproperReplacement, free_vars,
                                             traverse_inner_expressions)
 from proveit._core_.expression.label.var import safeDummyVar, safeDummyVars
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -119,7 +118,8 @@ class Lambda(Expression):
         
         # Parameter variables may not occur as free variables of
         # any of the parameter indexes.
-        free_vars_of_param_indices = self._free_vars_of_parameter_indices()
+        free_vars_of_param_indices = \
+            self._possibly_free_vars_of_parameter_indices()
         if not free_vars_of_param_indices.isdisjoint(self.parameterVarSet):
             raise ParameterCollisionError(
                     self.parameters, ("Parameter variables may not occur as "
@@ -154,7 +154,7 @@ class Lambda(Expression):
         # explicitly covered under the currently introduced range 
         # cannot be relabeled.
         free_var_ranges = \
-            Lambda._free_var_ranges_static(
+            Lambda._possibly_free_var_ranges_static(
                     self.parameters, self.parameterVars, self.body)
         self.nonrelabelable_param_vars = \
             {var for var, var_form in free_var_ranges.items()
@@ -194,9 +194,9 @@ class Lambda(Expression):
         return Lambda(parameters, body, _generic_expr=genericExpr)\
                     .withStyles(**styles)
     
-    def _free_vars_of_parameter_indices(self):
+    def _possibly_free_vars_of_parameter_indices(self):
         '''
-        Return the set of free variables of the indices of all
+        Return the set of (possibly) free variables of the indices of all
         of the parameters of this Lambda expression.
         '''
         from proveit._core_.expression.composite import ExprRange
@@ -205,10 +205,13 @@ class Lambda(Expression):
         for parameter in self.parameters:
             if (isinstance(parameter, ExprRange) and 
                     isinstance(parameter.body, IndexedVar)):
-                free_vars_of_indices.update(free_vars(parameter.start_index))
-                free_vars_of_indices.update(free_vars(parameter.end_index))
+                free_vars_of_indices.update(
+                        free_vars(parameter.start_index, err_inclusively=True))
+                free_vars_of_indices.update(
+                        free_vars(parameter.end_index, err_inclusively=True))
             elif isinstance(parameter, IndexedVar):
-                free_vars_of_indices.update(free_vars(parameter.index))
+                free_vars_of_indices.update(
+                        free_vars(parameter.index, err_inclusively=True))
         return free_vars_of_indices
     
     def _generic_version(self):
@@ -245,7 +248,8 @@ class Lambda(Expression):
         # maximum number of in-scope bound variables plus the number
         # of free variables, then we skip over the free variables as 
         # they occur.
-        lambda_free_vars = free_vars(self.body) - set(bound_parameter_vars)
+        lambda_free_vars = (free_vars(self.body, err_inclusively=True) - 
+                            set(bound_parameter_vars))
         start_index = (self._max_in_scope_bound_vars - len(parameters) + 
                        len(lambda_free_vars))
         generic_param_vars = list(reversed(
@@ -779,12 +783,13 @@ class Lambda(Expression):
         #            (x_{1+1}, ..., x_{n+1})} 
         # we can ignore those for this purpose as the real replacements 
         # will be what the members of this set map to.
-        non_param_body_free_vars = (free_vars(self.body) - 
-                                    self.parameterVarSet)
+        non_param_body_free_vars = (free_vars(self.body, err_inclusively=True)
+                                    - self.parameterVarSet)
         restricted_vars = non_param_body_free_vars.union(
-                *[free_vars(value) for key, value in inner_repl_map.items()
-                 if (key not in self.parameterVarSet 
-                     and not isinstance(value, set))])
+                *[free_vars(value, err_inclusively=True) for key, value 
+                  in inner_repl_map.items()
+                  if (key not in self.parameterVarSet 
+                      and not isinstance(value, set))])
         for param_var in self.parameterVarSet:
             if inner_repl_map.get(param_var, param_var) in restricted_vars:
                 # Avoid this collision by relabeling to a safe dummy 
@@ -831,8 +836,10 @@ class Lambda(Expression):
 
         # Can't use assumptions involving lambda parameter variables
         new_param_vars = [getParamVar(new_param) for new_param in new_params]
-        inner_assumptions = [assumption for assumption in assumptions if
-                             free_vars(assumption).isdisjoint(new_param_vars)]
+        inner_assumptions = \
+            [assumption for assumption in assumptions if
+             free_vars(assumption, err_inclusively=True).isdisjoint(
+                     new_param_vars)]
                 
         return new_params, inner_repl_map, tuple(inner_assumptions)
     
@@ -949,14 +956,15 @@ class Lambda(Expression):
         
     
     @staticmethod
-    def _free_var_ranges_static(parameters, parameterVars, body,
-                                exclusions=None):
+    def _possibly_free_var_ranges_static(parameters, parameterVars, body,
+                                         exclusions=None):
         '''
-        Static method version of _free_var_ranges.
+        Static method version of _possibly_free_var_ranges.
         '''
         forms_dict = dict()
         for expr in (parameters, body):
-            forms_dict.update(expr._free_var_ranges(exclusions=exclusions))
+            forms_dict.update(expr._possibly_free_var_ranges(
+                    exclusions=exclusions))
         for param, param_var in zip(parameters, parameterVars):
             if param_var in forms_dict.keys():
                 forms_dict[param_var].discard(param)
@@ -969,7 +977,7 @@ class Lambda(Expression):
         return forms_dict        
         
     
-    def _free_var_ranges(self, exclusions=None):
+    def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
         of indices (or solo) in which the variable occurs as free or 
@@ -983,7 +991,7 @@ class Lambda(Expression):
         forms_dict = dict()
         if exclusions is not None and self in exclusions: 
             return forms_dict # this is excluded    
-        return Lambda._free_var_ranges_static(
+        return Lambda._possibly_free_var_ranges_static(
                 self.parameters, self.parameterVars, self.body, 
                 exclusions=exclusions)
 
@@ -997,8 +1005,7 @@ def _guaranteed_to_be_independent(expr, parameter_vars):
     In such a case, we must return False since there is no guarantee
     of independence.
     '''
-    from proveit._core_.expression.expr import free_vars
-    if free_vars(expr).isdisjoint(parameter_vars):
+    if free_vars(expr, err_inclusively=True).isdisjoint(parameter_vars):
         return True
     return False
 

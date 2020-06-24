@@ -24,7 +24,7 @@ class ExprType(type):
     protected = ('_generic_version', '_setContext', 
                  'replaced', '_replaced', '_replaced_entries', 'relabeled',
                  '_make', '_checked_make', '_auto_reduced', '_used_vars',
-                 '_free_var_ranges', '_parameterized_var_ranges',
+                 '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_coreInfo',
                  '_subExpressions', '_genericExpr', 
                  '_meaningData', '_meaning_id',
@@ -778,7 +778,7 @@ class Expression(metaclass=ExprType):
         return set().union(*[expr._used_vars() for 
                              expr in self._subExpressions])
 
-    def _free_var_ranges(self, exclusions=None):
+    def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
         of indices (or solo) in which the variable occurs as free or 
@@ -810,7 +810,8 @@ class Expression(metaclass=ExprType):
             return forms_dict # this is excluded
         for expr in self._subExpressions:
             for var, forms in \
-                    expr._free_var_ranges(exclusions=exclusions).items():
+                    expr._possibly_free_var_ranges(
+                            exclusions=exclusions).items():
                 forms_dict.setdefault(var, set()).update(forms)
         return forms_dict
     
@@ -1068,9 +1069,9 @@ def used_vars(expr):
     Return all of the used Variables of this Expression,
     included those in sub-expressions.
     '''
-    return expr._used_vars(expr)
+    return expr._used_vars()
 
-def free_var_ranges(expr, exclusions=None):
+def possibly_free_var_ranges(expr, exclusions=None):
     '''
     Return the dictionary mapping Variables to forms w.r.t. ranges
     of indices (or solo) in which the variable occurs as free or 
@@ -1096,34 +1097,57 @@ def free_var_ranges(expr, exclusions=None):
     if x_{i, 1}, ..., x_{i, n_i} is in the exclusion set,
     then 'a' will be the only free variable reported.
     '''
-    return expr._free_var_ranges(exclusions=exclusions)
+    return expr._guaranteed_free_var_ranges(exclusions=exclusions)
 
-def free_vars(expr):
+def free_vars(expr, *, err_inclusively):
     '''
     Returns the set of variables that are free, the variable itself
-    or potential indexed ranges of the variable, in the given 
-    expression.
+    or some indices of the variable.  
+    For example, 
+        (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
+    x and n are both free.  And in
+        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
+    n, and k are free assuming 1 <= k <= n.
+    What actually gets reported depends upon the "err_inclusively"
+    flag.  If "err_inclusively" is True, the latter example
+    will report x, n, and k because it is not clear that
+    x is completely bound without assumptions on k.  If
+    "err_inclusively" is False, the first example will just report
+    n because it requires some extra work to determine that x
+    is not comletely bound.
+    '''
+    # Exclude TemporaryLabels to avoid errors when doing a clean
+    # rebuild.
+    from proveit._core_.expression.label.label import TemporaryLabel
+    if err_inclusively:
+        return {var for var in expr._possibly_free_var_ranges().keys()
+                if not isinstance(var, TemporaryLabel)}
+    else:
+        return _entirely_unbound_vars(expr)
+
+def _entirely_unbound_vars(expr):
+    '''
+    Returns the set of variables for that are entirely unbound in
+    the given expression.
     For example, given
         (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
-    x and n are both free.
-    Also, given
-        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
-    x, n, and k are free.  Even though x is technically not free
-    under some assumptions about k, we must error on the side of
-    saying that it is free.
+    n is entirely unbound.  Even though there is an index for which
+    x is unbound, it is partially bound and therefore not returned.
+    Axioms and theorems must not have any variables that are
+    entirely unbound.  They should not have any partially unbound
+    variables either, but Prove-It does not check for this since
+    the check would be more involved and it isn't so critical.
     '''
-    return set(expr._free_var_ranges().keys())
-
-"""
-def free_vars(expr, exclusions=frozenset()):
-    '''
-    Return all of the free Variables of this Expression,
-    included those in sub-expressions but excluding those with internal
-    bindings within Lambda expressions.  If this Expression
-    is in the exclusions set, skip over it.
-    '''
-    return expr._free_vars(exclusions=exclusions)
-"""
+    from proveit._core_.expression.label.var import Variable
+    from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
+    if isinstance(expr, Variable):
+        return {expr}
+    ubound_vars = set()
+    for sub_expr in expr._subExpressions:
+        ubound_vars.update(_entirely_unbound_vars(sub_expr))
+    if isinstance(expr, Lambda):
+        return ubound_vars.difference(expr.parameterVars)
+    return ubound_vars
 
 def expressionDepth(expr):
     '''
@@ -1140,6 +1164,9 @@ def traverse_inner_expressions(expr):
     including the expression itself.  These will be reported in a depth-
     first order.
     '''
+    from proveit import KnownTruth
+    if isinstance(expr, KnownTruth):
+        expr = expr.expr
     yield expr
     for sub_expr in expr.subExprIter():
         for inner_expr in traverse_inner_expressions(sub_expr):
