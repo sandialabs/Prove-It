@@ -64,7 +64,16 @@ class Subset(SubsetRelation):
         '''
         from ._theorems_ import relaxSubset
         return relaxSubset.specialize({A:self.subset, B:self.superset}, assumptions=assumptions)
-            
+
+    def deriveSupsersetMembership(self, element, assumptions=USE_DEFAULTS):
+        '''
+        From A subset B and x in A, derive x in B.
+        '''
+        from ._theorems_ import supersetMembershipFromSubset
+        return supersetMembershipFromSubset.instantiate(
+                {A:self.subset, B:self.superset, x:element}, 
+                assumptions=assumptions)
+    
     def applyTransitivity(self, other, assumptions=USE_DEFAULTS):
         '''
         Apply a transitivity rule to derive from this A subset B expression 
