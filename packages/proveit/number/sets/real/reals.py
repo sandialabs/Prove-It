@@ -15,6 +15,13 @@ class RealSet(NumberSet):
 class RealPosSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsPos', r'\mathbb{R}^+', context=__file__)
+    
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'n in RealsPos' for a given n.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
 
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import inRealsPos_iff_positive
@@ -42,10 +49,21 @@ class RealPosSet(NumberSet):
         from ._theorems_ import xInRealsPosInBool
         from proveit._common_ import x
         return xInRealsPosInBool.specialize({x:member}, assumptions=assumptions)
+    
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import realsPosInReals
+        return realsPosInReals.deriveSupsersetMembership(member, assumptions)
 
 class RealNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNeg', r'\mathbb{R}^-', context=__file__)
+
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'n in RealsNeg' for a given n.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
 
     def deduceMemberUpperBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import inRealsNeg_iff_negative
@@ -73,12 +91,23 @@ class RealNegSet(NumberSet):
         from ._theorems_ import xInRealsNegInBool
         from proveit._common_ import x
         return xInRealsNegInBool.specialize({x:member}, assumptions=assumptions)
+    
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import realsNegInReals
+        return realsNegInReals.deriveSupsersetMembership(member, assumptions)
 
 class RealNonNegSet(NumberSet):
     def __init__(self):
         NumberSet.__init__(self, 'RealsNonNeg', r'\mathbb{R}^{\ge 0}',
                            context=__file__)
-
+    
+    def membershipSideEffects(self, knownTruth):
+        '''
+        Yield side-effects when proving 'n in RealsNonNeg' for a given n.
+        '''
+        member = knownTruth.element
+        yield lambda assumptions : self.deduceMemberInReals(member, assumptions)
+    
     def deduceMemberLowerBound(self, member, assumptions=USE_DEFAULTS):
         from ._theorems_ import inRealsNonNeg_iff_non_negative
         return inRealsNonNeg_iff_non_negative.specialize(
@@ -106,6 +135,10 @@ class RealNonNegSet(NumberSet):
         from proveit._common_ import x
         return xInRealsNonNegInBool.specialize({x:member},
                                                assumptions=assumptions)
+
+    def deduceMemberInReals(self, member, assumptions=USE_DEFAULTS):
+        from ._theorems_ import realsNonNegInReals
+        return realsNonNegInReals.deriveSupsersetMembership(member, assumptions)
 
 # if proveit.defaults.automation:
 #     # Import some fundamental theorems without quantifiers that are
