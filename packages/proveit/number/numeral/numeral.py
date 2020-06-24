@@ -48,7 +48,9 @@ class Numeral(Literal, IrreducibleValue):
         Make the DigitLiteral that matches the core information.
         '''
         from proveit import Context
-        assert context==Context(__file__), 'Expecting a different Context for a DigitLiteral'
+        assert context==Context(__file__), (
+                "Expecting a different Context for a DigitLiteral: "
+                "%s vs %s"%(context.name, Context(__file__).name))
         n = int(extra_core_info[0])
         return Numeral(n, string_format, latex_format)
      
