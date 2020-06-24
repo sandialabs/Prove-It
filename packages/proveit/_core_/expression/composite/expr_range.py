@@ -1,7 +1,8 @@
 import more_itertools
 
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
-                                            ImproperReplacement, free_vars)
+                                            ImproperReplacement, 
+                                            free_vars)
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
 from proveit._core_.expression.composite import singularExpression, ExprTuple
@@ -80,8 +81,9 @@ class ExprRange(Expression):
         # conditional.
         self.parameter = self.lambda_map.parameter
         self.body = self.lambda_map.body
-        self.is_parameter_independent = (self.parameter not in 
-                                         free_vars(self.body))
+        self.is_parameter_independent = (
+                self.parameter not in 
+                free_vars(self.body, err_inclusively=True))
     
     @classmethod
     def _make(subClass, coreInfo, styles, subExpressions):
@@ -305,7 +307,7 @@ class ExprRange(Expression):
                 index, assumptions=assumptions, requirements=requirements,
                 equality_repl_requirements=equality_repl_requirements)
 
-    def _free_var_ranges(self, exclusions=None):
+    def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
         of indices (or solo) in which the variable occurs as free or 
@@ -346,12 +348,12 @@ class ExprRange(Expression):
         else:
             body_exclusions = None
         body_forms_dict = \
-            self.body._free_var_ranges(exclusions=body_exclusions)
+            self.body._possibly_free_var_ranges(exclusions=body_exclusions)
         forms_dict = dict(body_forms_dict)
         for expr in self._subExpressions:
             if expr == self.body: continue # already did that one
             for var, forms in \
-                    expr._free_var_ranges(exclusions=exclusions).items():
+                    expr._possibly_free_var_ranges(exclusions=exclusions).items():
                 forms_dict.setdefault(var, set()).update(forms)        
         param = self.parameter
         # Eliminate the parameter; it is not a free variable.
@@ -375,7 +377,7 @@ class ExprRange(Expression):
         
     def _parameterized_var_ranges(self, body_forms_dict=None):
         '''
-        Yield each of body._free_var_ranges() that involves the
+        Yield each of body._possibly_free_var_ranges() that involves the
         ExprRange parameter as a free variable.
         For example, for ((x_1 < x_{1+1}) and ... and (x_n < x_{n+1})),
         the following will be yielded if k is the ExprRange parameter:
@@ -388,14 +390,14 @@ class ExprRange(Expression):
         if i is the ExprRange parameter.
         '''
         if body_forms_dict is None:
-            body_forms_dict = self.body._free_var_ranges()
+            body_forms_dict = self.body._possibly_free_var_ranges()
         param = self.parameter
         for var, forms in body_forms_dict.items():
             for form in forms:
                 if form==self: continue
                 if form==self.parameter: 
                     continue # don't count the parameter itself.
-                var_forms_of_form = form._free_var_ranges()
+                var_forms_of_form = form._possibly_free_var_ranges()
                 if (param in var_forms_of_form
                         and param in var_forms_of_form[param]):
                     yield form
@@ -633,7 +635,8 @@ class ExprRange(Expression):
         # parameterized_var_ranges are expanded, all of the new indices
         # must match the original indices, not just the length.
         excluded_var_ranges = \
-            self.body._free_var_ranges(exclusions=parameterized_var_ranges)
+            self.body._possibly_free_var_ranges(
+                    exclusions=parameterized_var_ranges)
         if len(excluded_var_ranges) > 0:
             indices_must_match = True
             reason_indices_must_match = (
@@ -977,7 +980,7 @@ class ExprRange(Expression):
             old_shifted_param = Add(self.parameter, old_shift)
             safe_var = safeDummyVar(self.body)
             shifted_body = self.body.replaced({old_shifted_param:safe_var})
-            if self.parameter in free_vars(shifted_body):
+            if self.parameter in free_vars(shifted_body, err_inclusively=True):
                 raise ValueError("The given 'old_shift' of %s does apply "
                                  "to %s"%(old_shift, self.lambda_map))
             _f = Lambda(self.parameter, 

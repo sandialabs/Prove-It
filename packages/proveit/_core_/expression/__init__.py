@@ -1,4 +1,5 @@
-from .expr import (Expression, used_vars, free_var_ranges, free_vars,
+from .expr import (Expression, traverse_inner_expressions, used_vars, 
+                   possibly_free_var_ranges, free_vars,
                    expressionDepth, MakeNotImplemented, 
                    ImproperReplacement)
 from .style_options import StyleOptions

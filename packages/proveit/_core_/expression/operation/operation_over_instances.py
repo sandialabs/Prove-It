@@ -1,5 +1,6 @@
 import inspect
-from proveit._core_.expression.expr import Expression, MakeNotImplemented, free_vars
+from proveit._core_.expression.expr import (
+        Expression, MakeNotImplemented, free_vars)
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda, getParamVar
 from proveit._core_.expression.composite import (
         ExprTuple, singleOrCompositeExpression, compositeExpression, 
@@ -186,7 +187,7 @@ class OperationOverInstances(Operation):
                 # are  included up to the first one that has any free 
                 # variables that include any of the "inner" instance 
                 # variable parameters.
-                cond_free_vars = {cond:free_vars(cond) 
+                cond_free_vars = {cond:free_vars(cond, err_inclusively=True) 
                                   for cond in nondomain_conditions}
                 num_nondomain_conditions_vs_level = [0]*len(instance_params)
                 remaining_nondomain_conditions = list(nondomain_conditions)
