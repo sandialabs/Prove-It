@@ -367,7 +367,8 @@ def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=F
                 nb = nbformat.read(f, as_version=4)
         # export to HTML
         (body, resources) = html_exporter.from_notebook_node(nb)
-        with open(os.path.splitext(notebook_path)[0] + '.html', 'wt') as f:
+        with open(os.path.splitext(notebook_path)[0] + '.html', 'wt',
+                  encoding='utf8') as f:
             f.write(body)
         generate_css_if_missing(os.path.split(notebook_path)[0]) # add notebook.css if needed
     finally:
