@@ -696,8 +696,18 @@ class Assignments:
                 proveItMagic.keys.remove(name)
                 continue
             if proveItMagic.kind == 'axioms' or proveItMagic.kind == 'theorems':
-                if len(free_vars(rightSide)) > 0:
-                    raise ValueError('%s should not have free variables; variables must all be bound (e.g. universally quantified).  Free variables: %s'%(proveItMagic.kind, free_vars(rightSide)))
+                # Axiom and theorem variables should all be bound
+                # though we will only check for variables that are
+                # entirely unbound because it would be challenging
+                # to consider partially bound instances and it isn't
+                # so critical -- it's just a good convention.
+                if len(free_vars(rightSide, err_inclusively=False)) > 0:
+                    raise ValueError(
+                            '%s should not have free variables; variables '
+                            'must all be bound (e.g. universally quantified). '
+                            ' Free variables: %s'
+                            %(proveItMagic.kind, 
+                              free_vars(rightSide, err_inclusively=False)))
                 if name in proveItMagic.definitions:
                     if proveItMagic.definitions[name] != rightSide:
                         print('WARNING: Redefining', name)
