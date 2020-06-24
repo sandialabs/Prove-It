@@ -392,7 +392,7 @@ class Circuit(ExprArray):
         formatted_sub_expressions = []
         for entry in self.get_formatted_sub_expressions(formatType, orientation, default_style, operatorOrOperators):
             if entry != '& PASS':
-                # we have to include the & because it has already been formatted according to an ExprArray
+                # we have to include the '& ' because it has already been formatted according to an ExprArray
                 formatted_sub_expressions.append(entry)
             else:
                 formatted_sub_expressions.append(' ')
