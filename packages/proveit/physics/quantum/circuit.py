@@ -390,30 +390,31 @@ class Circuit(ExprArray):
         If there is a MultiQubitGate, checks if all indices match up with additional
          MultiQubitGates with identical indices.
         '''
-
-        for k, entry in enumerate(self, 0):
-            # cycle through each ExprTuple
+        from proveit.number.numeral import num
+        for k, entry in enumerate(self, 1):
+            # cycle through each ExprTuple; k keeps track of which row we are on.
             i = 0
-            # i keeps track of what position in the row each MultiQubitGate is in
+            # i keeps track of what position in the row each MultiQubitGate is in.
             if isinstance(entry, ExprTuple):
                 for value in entry:
                     # cycle through each space
                     if isinstance(value, MultiQubitGate):
-                        for n, num in enumerate(value.indices, 0):
-                            # cycle through each row location of each QubitGate
-                            if self.entries[num.asInt() - 1].entries[i].indices != value.indices:
+                        for n, number in enumerate(value.indices, 0):
+                            # cycle through each row location of each QubitGate; n keeps track of which gate we are on.
+                            if self.entries[number.asInt() - 1].entries[i].indices != value.indices:
                                 # each list of indices for each MultiQubitGate must match the current one (starting
-                                # at 0)
+                                # at 0).
                                 raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
                                                  'linked MultiQubitGate')
-                            if n == 0:
-                                value.add_wire_direction('first')
-                            if k == num.asInt() and n < len(value.indices):
-                                # Define the wireDirection for the multiQubitGate by taking the next index and
-                                # subtracting the current one.
-                                value.add_wire_direction(value.indices[n + 1].asInt() - k)
-                            elif k == len(value.indices) - 1:
-                                value.add_wire_direction('skip')
+
+                        index = value.indices.index(num(k))
+                        if index == len(value.indices) - 1:
+                            value.add_wire_direction('skip')
+                        else:
+                            # Define the wireDirection for the multiQubitGate by taking the next index and
+                            # subtracting the current one.
+                            value.add_wire_direction(value.indices[index + 1].asInt() - k)
+
                     i += 1
 
     def string(self, **kwargs):
