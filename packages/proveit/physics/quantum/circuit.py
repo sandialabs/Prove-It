@@ -172,7 +172,8 @@ class MultiQubitGate(Gate):
         Create a quantum circuit gate performing the given operation.
         '''
         if not isinstance(gate, Gate):
-            raise TypeError('Expected first input to be a \'Gate\' object, got \'' + gate.__class__.__name__ + '\' instead.')
+            raise TypeError('Expected first input to be a \'Gate\' object, got \'' + gate.__class__.__name__ +
+                            '\' instead.')
         if not isinstance(indices, Set):
             raise TypeError('Expected second input to be a \'Set\' got \'' + indices.__class__.__name__ + '\' instead.')
         self.indices = indices.operands
@@ -182,6 +183,8 @@ class MultiQubitGate(Gate):
             styles = dict()
         if 'representation' not in styles:
             styles['representation'] = 'implicit'
+        if 'connection' not in styles:
+            styles['connection'] = 'wire'
 
         Gate.__init__(self, gate.gate_operation)
 
@@ -192,6 +195,9 @@ class MultiQubitGate(Gate):
         options.addOption('representation',
                           ("'implicit' representation displays Z Gates as a solid dot and X gates as a target, while"
                            "'explicit' representation always displays the type of gate in a box. Ex. |Z|"))
+        options.addOption('connection',
+                          ("'wire' connection displays a MultiQubitGate with wires connecting each gate.  'block' "
+                           "connection contains all gates into a rectangle and displays the name of each Gate."))
         return options
 
     def add_wire_direction(self, value):
@@ -203,44 +209,87 @@ class MultiQubitGate(Gate):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, formatType, representation=None, **kwargs):
+    def formatted(self, formatType, representation=None, connection=None, **kwargs):
         if representation is None:
             representation = self.getStyle('representation', 'implicit')
+        if connection is None:
+            connection = self.getStyle('connection', 'wire')
         formattedGateOperation = (
             self.gate_operation.formatted(formatType, fence=False))
 
         if formatType == 'latex':
             out_str = ''
-            if representation != 'implicit':
-                if len(self.wires) == 0 or self.wires[0] == 'skip':
-                    out_str += r'\gate{' + formattedGateOperation + r'}'
-                    if len(self.wires) != 0:
-                        self.wires.pop(0)
-                else:
-                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) + r'}'
-            else:
-                if formattedGateOperation == 'Z':
-                    if len(self.wires) == 0 or self.wires[0] == 'skip':
-                        out_str += r'\control \qw'
-                        if len(self.wires) != 0:
-                            self.wires.pop(0)
+            if connection == 'wire':
+                i = 0
+                while i < len(self.wires):
+                    # we cycle through self.wires and remove the 'first' which is only used if connection != 'wire'
+                    if self.wires[i] == 'first':
+                        self.wires.pop(i)
                     else:
-                        out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
-                elif formattedGateOperation == 'X':
+                        i += 1
+                if representation != 'implicit':
+                    # we want to explicitly see the type of gate as a 'letter' representation
                     if len(self.wires) == 0 or self.wires[0] == 'skip':
-                        out_str += r'\targ'
-                        if len(self.wires) != 0:
-                            self.wires.pop(0)
-                    else:
-                        out_str += r'\targ \qwx{-' + str(self.wires.pop(0)) + r'}'
-                else:
-                    if len(self.wires) == 0 or self.wires[0] == 'skip':
+                        # if we are not adding wires
                         out_str += r'\gate{' + formattedGateOperation + r'}'
                         if len(self.wires) != 0:
                             self.wires.pop(0)
+                            # if we are just skipping this one, we need to remove the 'skip' from the list.
                     else:
-                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) \
-                                   + r'}'
+                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) + \
+                                   r'}'
+                        # if we are adding wires, we add the length according to self.wires
+                else:
+                    if formattedGateOperation == 'Z':
+                        # this is formatted as a solid dot using \control, or \ctrl if there is a wire
+                        if len(self.wires) == 0 or self.wires[0] == 'skip':
+                            # if we are not adding wires
+                            out_str += r'\control \qw'
+                            if len(self.wires) != 0:
+                                self.wires.pop(0)
+                                # if we are just skipping this one, we need to remove the 'skip' from the list.
+                        else:
+                            out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
+                            # if we are adding wires, we add the length according to self.wires
+                    elif formattedGateOperation == 'X':
+                        # this is formatted as a target.
+                        if len(self.wires) == 0 or self.wires[0] == 'skip':
+                            # if we are not adding wires
+                            out_str += r'\targ'
+                            if len(self.wires) != 0:
+                                self.wires.pop(0)
+                                # if we are just skipping this one, we need to remove the 'skip' from the list.
+                        else:
+                            out_str += r'\targ \qwx{-' + str(self.wires.pop(0)) + r'}'
+                            # if we are adding wires, we add the length according to self.wires
+                    elif formattedGateOperation == r'CLASSICAL\_CONTROL':
+                        # this is formatted as a solid dot, but with classical wires.
+                        if len(self.wires) == 0 or self.wires[0] == 'skip':
+                            # if we are not adding wires
+                            out_str += r'\control \cw'
+                            if len(self.wires) != 0:
+                                self.wires.pop(0)
+                                # if we are just skipping this one, we need to remove the 'skip' from the list.
+                        else:
+                            out_str += r'\control \cw \cwx[' + str(self.wires.pop(0)) + r']'
+                            # if we are adding wires, we add the length according to self.wires
+                    else:
+                        # everything else is formatted as a 'block' containing the explicit input.
+                        if len(self.wires) == 0 or self.wires[0] == 'skip':
+                            # if we are not adding wires
+                            out_str += r'\gate{' + formattedGateOperation + r'}'
+                            if len(self.wires) != 0:
+                                self.wires.pop(0)
+                                # if we are just skipping this one, we need to remove the 'skip' from the list.
+                        else:
+                            out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) \
+                                       + r'}'
+                            # if we are adding wires, we add the length according to self.wires
+            elif connection == 'block':
+                if self.wires[0] == 'first':
+                    out_str += r'\multigate{' + str(len(self.indices) - 1) + r'}'
+                else:
+                    pass
             return out_str
         else:
             return Operation._formatted(self, formatType)
@@ -249,8 +298,6 @@ class MultiQubitGate(Gate):
         Operation._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
-
-
 
     # original below
     # def formatted(self, formatType, fence=false):
@@ -359,6 +406,8 @@ class Circuit(ExprArray):
                                 # at 0)
                                 raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
                                                  'linked MultiQubitGate')
+                            if n == 0:
+                                value.add_wire_direction('first')
                             if k == num.asInt() and n < len(value.indices):
                                 # Define the wireDirection for the multiQubitGate by taking the next index and
                                 # subtracting the current one.
