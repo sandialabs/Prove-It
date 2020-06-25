@@ -80,7 +80,6 @@ class Set(Operation):
     def permutation(self, new_order=None, cycles=None,
                     assumptions=USE_DEFAULTS):
         '''
-        PERHAPS CALL THIS ONE just permutation
         Deduce that this Set expression is set-equivalent to a Set
         in which the elements at indices 0, 1, …, n-1 have been
         reordered as specified EITHER by the new_order list OR by the
@@ -152,18 +151,20 @@ class Set(Operation):
         {a, b, c, d}.deduceEnumSubsetEq(subset_indices=[1, 3]) and
         {a, b, c, d}.deduceEnumSubsetEq(subset=Set(b, d))
         return |– {b, d} subsetEq {a, b, c, d}.
-        Currently this approach interprets the subset input param as a
+        This process is complicated by the fact that the Set class
+        allows for multiplicity of elements without actually
+        representing a multi-set (thus, for example, {a, a} = {a}).
+        CURRENTLY this approach interprets the subset input param as a
         possible multiset and then treats it as such! But that needs
-        to change!
+        to change! And what about empty sets?
         '''
 
-        from ._theorems_ import subsetEqOfSuperset
-        from proveit._common_ import m, n, aa, bb
-        from proveit.number import num
         from proveit.logic import Set
 
-        # check that user has specified subset_indices OR subset
-        # but NOT both
+        # Before bothering with much processing, quickly check that:
+        # (1) user has specified subset_indices OR subset but not both;
+        # (2) subset specification has the correct form;
+        # (3) subset_indices are plausible.
         if subset_indices is None and subset is None:
             raise ValueError("Need to specify the desired subset by "
                              "specifying the list of indices (subset_indices) "
@@ -173,20 +174,85 @@ class Set(Operation):
             raise ValueError("Need to specify the desired subset by "
                              "specifying the list of indices (subset_indices) "
                              "OR an actual subset, but NOT both.")
-
-        # if subset has been specified, check that:
-        # (1) it is a valid Set()
-        # (2) has a valid cardinality
         if subset is not None and not isinstance(subset, Set):
             raise ValueError("Specified subset {} does not appear to be a "
                              "valid Set object.".format(subset))
-        if (isinstance(subset, Set) and 
-            len(subset.operands) > len(self.operands)):
-            raise ValueError("Specified subset {0} with length {1} appears to "
-                             "be too large to be a subset of the superset "
-                             "{2} with length {3}.".
-                             format(subset, len(subset.operands),
-                                self.operands, len(self.operands)))
+        self_list = list(self.operands)
+        print("self_list: {}".format(self_list))                                # for testing; delete later
+
+        # If subset has been specified, check that it is a
+        # plausible subset (it should only have elements found in
+        # the original Set)
+        if subset is not None:
+            subset_list = list(subset.operands)
+            print("subset_list = {}".format(subset_list))                       # for testing; delete later
+            error_elems = []
+            for elem in subset_list:
+                if elem not in self_list:
+                    error_elems.append(elem)
+            if len(error_elems)>0:
+                raise ValueError(
+                        "Specified subset {0} does not appear to be a subset "
+                        "of the original set {1}. The following elements "
+                        "appear in the supposed subset Set but not in the "
+                        "original Set: {2}.".
+                        format(subset, self, error_elems))
+
+        valid_indices_list = list(range(0, len(self.operands)))
+        subset_list_from_indices = []
+        if subset_indices is not None:
+            # We must have had subset=None
+            self._check_subset_indices(valid_indices_list, subset_indices)
+            subset_list_from_indices = [self_list[i] for i in subset_indices]
+            print("subset_list_from_indices: {}".                               # for testing; delete later
+                  format(subset_list_from_indices))                             # for testing; delete later
+            subset_from_indices = Set(*subset_list_from_indices)
+            print("subset_from_indices: {}".format(subset_from_indices))        # for testingl delete later
+            subset = subset_from_indices
+            print("subset is derived from indices and is now: {}".              # for testingl delete later
+                  format(subset))                                               # for testingl delete later
+
+        # Derive the reduced form of the self Set. We could have done
+        # this earlier, but delayed until after param checking.
+        # The eventual subset relationship will be based on the
+        # reduced forms of the specified Sets.
+        self_to_support_kt = self.reduction(assumptions=assumptions)
+        print("self_to_support_kt: {}".format(self_to_support_kt))              # for testing; delete later
+        self_reduced = self_to_support_kt.rhs
+        self_reduced_list = list(self_reduced.operands)
+        print("self_reduced: {}".format(self_reduced))                          # for testing; delete later
+        print("self_reduced_list: {}".format(self_reduced_list))                # for testing; delete later
+
+        
+
+
+
+        from ._theorems_ import subsetEqOfSuperset
+        from proveit._common_ import m, n, aa, bb
+        from proveit.number import num
+
+        # If we make it this far we should have an explicit subset Set,
+        # either explicitly provided or derived from the
+        # subset_indices. We now derive the reduced form of the subset
+        # Set. The eventual subset relationship will be based on the
+        # reduced forms of the specified Sets.
+        subset_to_support_kt = subset.reduction(assumptions=assumptions)
+        print("subset_to_support_kt: {}".format(subset_to_support_kt))          # for testing; delete later
+        subset_reduced = subset_to_support_kt.rhs
+        print("subset_reduced: {}".format(subset_reduced))                      # for testing; delete later
+        subset_reduced_list = list(subset_reduced.operands)
+        print("subset_reduced_list: {}".format(subset_reduced_list))            # for testing; delete later
+        
+
+        # For convenience, convert the subset_reduced_list to indices
+        # of the self_reduced_list. Because of earlier checks, the
+        # subset_reduced_list should not contain any items not also
+        # contained in self_reduced_list.
+        subset_reduced_indices_list = (
+            [self_reduced_list.index(elem) for elem in subset_reduced_list])
+        print("subset_reduced_indices_list: {}".format(subset_reduced_indices_list))      # for testing; delete later
+
+
 
         # if we make it this far and we have a subset provided,
         # convert the provided subset to indices of the superset to
@@ -209,34 +275,67 @@ class Set(Operation):
                                      "multiplicity.".
                                      format(elem, superset_list))
 
+        # if subset is not None:
+        #     # use the Set-based generated subset indices
+        #     subset_indices = list(subset_indices_list)
+        #     # else use the user-provided indices
+
+        # full_indices_list = list(range(0, len(self.operands)))
+
+        # # construct the complement of the subset indices
+        # # avoiding using sets to preserve order just in case
+        # remaining_indices = list(full_indices_list) # clone
+        # for elem in subset_indices:
+        #     remaining_indices.remove(elem)
+
+        # new_order = subset_indices + remaining_indices
+        # # find superset permutation needed for thm application
+        # supersetPermRelation = generic_permutation(self, new_order, assumptions)
+        # # construct the desired list of subset elems
+        # desired_subset_list = []
+        # for elem in subset_indices:
+        #     desired_subset_list.append(self.operands[elem])
+        # # construct the desired complement list of elems
+        # desired_complement_list = []
+        # for elem in remaining_indices:
+        #     desired_complement_list.append(self.operands[elem])
+        # # organize info for theorem specialization
+        # m, n, a, b = subsetEqOfSuperset.allInstanceVars()
+        # a_sub, b_sub = (desired_subset_list, desired_complement_list)
+        # m_sub, n_sub = num(len(a_sub)), num(len(b_sub))
+        # subset_of_permuted_superset = subsetEqOfSuperset.specialize(
+        #         {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
+        #         assumptions=assumptions)
+        
+        # return supersetPermRelation.subLeftSideInto(
+        #         subset_of_permuted_superset.innerExpr().rhs
+        #         )
+
         if subset is not None:
             # use the Set-based generated subset indices
             subset_indices = list(subset_indices_list)
             # else use the user-provided indices
 
-        # check validity of provided subset_indices:
-        valid_indices_list = list(range(0, len(self.operands)))
-        self._check_subset_indices(valid_indices_list, subset_indices)
-
-        full_indices_list = list(range(0, len(self.operands)))
+        full_indices_list = list(range(0, len(self_reduced_list)))
 
         # construct the complement of the subset indices
         # avoiding using sets to preserve order just in case
         remaining_indices = list(full_indices_list) # clone
-        for elem in subset_indices:
+        for elem in subset_reduced_indices_list:
             remaining_indices.remove(elem)
 
-        new_order = subset_indices + remaining_indices
+        new_order = subset_reduced_indices_list + remaining_indices
         # find superset permutation needed for thm application
-        supersetPermRelation = generic_permutation(self, new_order, assumptions)
+        supersetPermRelation = generic_permutation(
+                self_reduced, new_order, assumptions)
         # construct the desired list of subset elems
-        desired_subset_list = []
-        for elem in subset_indices:
-            desired_subset_list.append(self.operands[elem])
+        desired_subset_list = subset_reduced_list
+        # for elem in subset_indices:
+        #     desired_subset_list.append(self.operands[elem])
         # construct the desired complement list of elems
         desired_complement_list = []
         for elem in remaining_indices:
-            desired_complement_list.append(self.operands[elem])
+            desired_complement_list.append(self_reduced_list[elem])
         # organize info for theorem specialization
         m, n, a, b = subsetEqOfSuperset.allInstanceVars()
         a_sub, b_sub = (desired_subset_list, desired_complement_list)
@@ -244,10 +343,22 @@ class Set(Operation):
         subset_of_permuted_superset = subsetEqOfSuperset.specialize(
                 {m:m_sub, n:n_sub, a:a_sub, b:b_sub},
                 assumptions=assumptions)
+        # We now have reduced_subset \subseteq reduced_superset
+        # Now, replace permuted superset with unpermuted reduced
+        # superset:
+        reduced_subset_of_reduced_superset = (
+                supersetPermRelation.subLeftSideInto(
+                        subset_of_permuted_superset.innerExpr().rhs))
+        # Then, replace reduced superset with original superset:
+        reduced_subset_of_orig_superset = (
+                self_to_support_kt.subLeftSideInto(
+                        reduced_subset_of_reduced_superset))
+        # Finally, replace the reduced subset with original subset:
+        orig_subset_of_orig_superset = (
+                subset_to_support_kt.subLeftSideInto(
+                        reduced_subset_of_orig_superset))
         
-        return supersetPermRelation.subLeftSideInto(
-                subset_of_permuted_superset.innerExpr().rhs
-                )
+        return orig_subset_of_orig_superset
 
 
     def deduceEnumProperSubset(self, subset_indices=None,
