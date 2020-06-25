@@ -162,8 +162,14 @@ class Gate(Operation):
 
 class MultiQubitGate(Gate):
     '''
-    Represents a connection of multiple gates.  Depending on the type of gate,
-    they will either be connected by a wire or enclosed in a box.
+    Represents a connection of multiple gates.  In a circuit(), each row that contains a member of a MultiQubitGate
+    must contain a MultiQubitGate() where the arguments are 1- the gate, and 2- the indices of the other gates involved
+    in the MultiQubitGate contained in a Set() starting at index 1, NOT 0.
+    For example,  |1> \\control |1> \\ |0> |x| |0> would be represented as
+    Circuit(ExprTuple(Input, MultiQubitGate(Gate(CONTROL), Set(one, two), Output),
+            ExprTuple(Input, MultiQubitGate(Gate(X), Set(one, two), Output).
+    If there are consecutive rows that contain the same type of gate, they will
+    be represented as a block.
     '''
     wires = []
 
@@ -172,7 +178,8 @@ class MultiQubitGate(Gate):
         Create a quantum circuit gate performing the given operation.
         '''
         if not isinstance(gate, Gate):
-            raise TypeError('Expected first input to be a \'Gate\' object, got \'' + gate.__class__.__name__ + '\' instead.')
+            raise TypeError('Expected first input to be a \'Gate\' object, got \'' + gate.__class__.__name__ +
+                            '\' instead.')
         if not isinstance(indices, Set):
             raise TypeError('Expected second input to be a \'Set\' got \'' + indices.__class__.__name__ + '\' instead.')
         self.indices = indices.operands
@@ -181,7 +188,7 @@ class MultiQubitGate(Gate):
         if styles is None:
             styles = dict()
         if 'representation' not in styles:
-            styles['representation'] = 'implicit'
+            styles['representation'] = 'explicit'
 
         Gate.__init__(self, gate.gate_operation)
 
@@ -190,8 +197,8 @@ class MultiQubitGate(Gate):
 
         options = StyleOptions(self)
         options.addOption('representation',
-                          ("'implicit' representation displays Z Gates as a solid dot and X gates as a target, while"
-                           "'explicit' representation always displays the type of gate in a box. Ex. |Z|"))
+                          ("'implicit' representation displays X gates as a target, while"
+                           "'explicit' representation always displays the type of gate in a box. Ex. |X|"))
         return options
 
     def add_wire_direction(self, value):
@@ -205,42 +212,80 @@ class MultiQubitGate(Gate):
 
     def formatted(self, formatType, representation=None, **kwargs):
         if representation is None:
-            representation = self.getStyle('representation', 'implicit')
+            representation = self.getStyle('representation', 'explicit')
+
         formattedGateOperation = (
             self.gate_operation.formatted(formatType, fence=False))
 
         if formatType == 'latex':
             out_str = ''
-            if representation != 'implicit':
-                if len(self.wires) == 0 or self.wires[0] == 'skip':
-                    out_str += r'\gate{' + formattedGateOperation + r'}'
-                    if len(self.wires) != 0:
-                        self.wires.pop(0)
-                else:
-                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) + r'}'
-            else:
-                if formattedGateOperation == 'Z':
+
+            if formattedGateOperation == 'X':
+                if representation != 'implicit':
+                    # we want to explicitly see the type of gate as a 'letter' representation
                     if len(self.wires) == 0 or self.wires[0] == 'skip':
-                        out_str += r'\control \qw'
-                        if len(self.wires) != 0:
-                            self.wires.pop(0)
-                    else:
-                        out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
-                elif formattedGateOperation == 'X':
-                    if len(self.wires) == 0 or self.wires[0] == 'skip':
-                        out_str += r'\targ'
-                        if len(self.wires) != 0:
-                            self.wires.pop(0)
-                    else:
-                        out_str += r'\targ \qwx{-' + str(self.wires.pop(0)) + r'}'
-                else:
-                    if len(self.wires) == 0 or self.wires[0] == 'skip':
+                        # if we are not adding wires
                         out_str += r'\gate{' + formattedGateOperation + r'}'
                         if len(self.wires) != 0:
                             self.wires.pop(0)
+                            # if we are just skipping this one, we need to remove the 'skip' from the list.
                     else:
-                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) \
-                                   + r'}'
+                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) + \
+                                   r'}'
+                        # if we are adding wires, we add the length according to self.wires
+                else:
+                    # this is formatted as a target.
+                    if len(self.wires) == 0 or self.wires[0] == 'skip':
+                        # if we are not adding wires
+                        out_str += r'\targ'
+                        if len(self.wires) != 0:
+                            self.wires.pop(0)
+                            # if we are just skipping this one, we need to remove the 'skip' from the list.
+                    else:
+                        out_str += r'\targ \qwx{-' + str(self.wires.pop(0)) + r'}'
+                        # if we are adding wires, we add the length according to self.wires
+            elif formattedGateOperation == 'CONTROL':
+                # this is formatted as a solid dot using \control, or \ctrl if there is a wire
+                if len(self.wires) == 0 or self.wires[0] == 'skip':
+                    # if we are not adding wires
+                    out_str += r'\control \qw'
+                    if len(self.wires) != 0:
+                        self.wires.pop(0)
+                        # if we are just skipping this one, we need to remove the 'skip' from the list.
+                else:
+                    out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
+                    # if we are adding wires, we add the length according to self.wires
+            elif formattedGateOperation == r'CLASSICAL\_CONTROL':
+                # this is formatted as a solid dot, but with classical wires.
+                if len(self.wires) == 0 or self.wires[0] == 'skip':
+                    # if we are not adding wires
+                    out_str += r'\control \cw'
+                    if len(self.wires) != 0:
+                        self.wires.pop(0)
+                        # if we are just skipping this one, we need to remove the 'skip' from the list.
+                else:
+                    out_str += r'\control \cw \cwx[' + str(self.wires.pop(0)) + r']'
+                    # if we are adding wires, we add the length according to self.wires
+            else:
+                # everything else is formatted as a 'block' containing the explicit input.
+                if len(self.wires) == 0 or self.wires[0] == 'skip':
+                    # if we are not adding wires
+                    out_str += r'\gate{' + formattedGateOperation + r'}'
+                    if len(self.wires) != 0:
+                        self.wires.pop(0)
+                        # if we are just skipping this one, we need to remove the 'skip' from the list.
+                elif self.wires[0] == 'first':
+                    # this is the first in a block multiqubit gate
+                    self.wires.pop(0)
+                    out_str += r'\multigate{' + str(self.wires.pop(0)) + r'}{' + formattedGateOperation + r'}'
+                elif self.wires[0] == 'ghost':
+                    # this is a member of a block multiqubit gate
+                    self.wires.pop(0)
+                    out_str += r'\ghost{' + formattedGateOperation + '}'
+                else:
+                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) \
+                               + r'}'
+                    # if we are adding wires, we add the length according to self.wires
             return out_str
         else:
             return Operation._formatted(self, formatType)
@@ -249,8 +294,6 @@ class MultiQubitGate(Gate):
         Operation._config_latex_tool(self, lt)
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
-
-
 
     # original below
     # def formatted(self, formatType, fence=false):
@@ -343,28 +386,68 @@ class Circuit(ExprArray):
         If there is a MultiQubitGate, checks if all indices match up with additional
          MultiQubitGates with identical indices.
         '''
-
-        for k, entry in enumerate(self, 0):
-            # cycle through each ExprTuple
+        from proveit.number.numeral import num
+        for k, entry in enumerate(self, 1):
+            # cycle through each ExprTuple; k keeps track of which row we are on.
             i = 0
-            # i keeps track of what position in the row each MultiQubitGate is in
+            # i keeps track of what position in the row each MultiQubitGate is in.
             if isinstance(entry, ExprTuple):
                 for value in entry:
                     # cycle through each space
                     if isinstance(value, MultiQubitGate):
-                        for n, num in enumerate(value.indices, 0):
-                            # cycle through each row location of each QubitGate
-                            if self.entries[num.asInt() - 1].entries[i].indices != value.indices:
+                        for n, number in enumerate(value.indices, 0):
+                            # cycle through each row location of each QubitGate; n keeps track of which gate we are on.
+                            if self.entries[number.asInt() - 1].entries[i].indices != value.indices:
                                 # each list of indices for each MultiQubitGate must match the current one (starting
-                                # at 0)
+                                # at 0).
                                 raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
                                                  'linked MultiQubitGate')
-                            if k == num.asInt() and n < len(value.indices):
+
+                        index = value.indices.index(num(k))
+                        if index == len(value.indices) - 1:
+                            # this is the last gate in the MultiQubitGate, so we skip adding the wires.
+                            if index != 0 and value.gate == \
+                                    self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
+                                # this is part of a block gate even thought it is the last element
+                                value.add_wire_direction('ghost')
+                            else:
+                                # this is the end of a wired gate so we skip adding the wires.
+                                value.add_wire_direction('skip')
+                        elif value.gate.gate_operation.string() != 'CONTROL' and \
+                                value.gate.gate_operation.string() != 'CLASSICAL\\_CONTROL':
+                            # control gates should not be inside of a MultiQubit block gate
+                            if index + 1 < len(value.indices) and \
+                                    value.gate == self.entries[value.indices[index + 1].asInt() - 1].entries[i].gate:
+                                # if this gate is the same as the next
+                                if index == 0 or value.gate != \
+                                        self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
+                                    # This is the first in the multiQubit block gate!
+                                    value.add_wire_direction('first')
+                                    length = 0
+                                    n = index
+                                    while n < len(value.indices) - 1 and \
+                                            value.gate == self.entries[value.indices[n].asInt() - 1].entries[i].gate:
+                                        length += 1
+                                        n += 1
+                                        # count the number of gates that are the same and then add it to the wire
+                                        # direction array
+                                    value.add_wire_direction(length)
+                                else:
+                                    # this is not the first in the multiQubit block gate
+                                    value.add_wire_direction('ghost')
+                            elif index != 0 and value.gate == \
+                                    self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
+                                # this is not the first in the block gate, but it is a member
+                                value.add_wire_direction('ghost')
+                            else:
                                 # Define the wireDirection for the multiQubitGate by taking the next index and
                                 # subtracting the current one.
-                                value.add_wire_direction(value.indices[n + 1].asInt() - k)
-                            elif k == len(value.indices) - 1:
-                                value.add_wire_direction('skip')
+                                value.add_wire_direction(value.indices[index + 1].asInt() - k)
+                        else:
+                            # Define the wireDirection for the multiQubitGate by taking the next index and
+                            # subtracting the current one.
+                            value.add_wire_direction(value.indices[index + 1].asInt() - k)
+
                     i += 1
 
     def string(self, **kwargs):
