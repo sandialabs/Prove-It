@@ -316,11 +316,12 @@ class ExprArray(ExprTuple):
                                     yield entry.first().formatted(formatType, fence=False)
                                     if orientation == 'horizontal':
                                         if self.getStyle('parameterization', default_style) == 'explicit':
-                                            yield '& ..' + entry.body.formatted(formatType,fence=False) + '..'
+                                            yield '& ..' + entry.body.formatted(formatType, fence=False) + '..'
                                             ell += r'\colon & \colon & \colon'
                                         else:
                                             yield r'& \cdots'
-                                            ell += r'\vdots & & \vdots'
+                                            ell += r'\vdots & ' + entry.body.formatted(formatType, fence=False)\
+                                                   + r'& \vdots'
 
                                         yield '& ' + entry.last().formatted(formatType, fence=False)
                                     else:
@@ -332,7 +333,7 @@ class ExprArray(ExprTuple):
                                         else:
                                             yield r'\vdots'
                                         vell.append(r'& \cdots')
-                                        vell.append('&')
+                                        vell.append('& ' + entry.body.formatted(formatType, fence=False))
                                         yield entry.last().formatted(formatType, fence=False)
                                         vell.append(r'& \cdots')
                                 else:
@@ -378,7 +379,8 @@ class ExprArray(ExprTuple):
                                             ell += r' & \colon &\colon & \colon'
                                             yield '& ..' + entry.body.formatted(formatType, fence=False) + '..'
                                         else:
-                                            ell += r' & \vdots & & \vdots'
+                                            ell += r' & \vdots & ' + entry.body.formatted(formatType, fence=False) \
+                                                   + r'& \vdots'
                                             yield r'& \cdots'
                                         yield '& ' + entry.last().formatted(formatType, fence=False)
 
@@ -395,7 +397,7 @@ class ExprArray(ExprTuple):
                                             yield r'\vdots'
                                         yield entry.last().formatted(formatType, fence=False)
                                         vell.append(r'& \cdots ')
-                                        vell.append('&')
+                                        vell.append('& ' + entry.body.formatted(formatType, fence=False))
                                         vell.append(r'& \cdots ')
                                 else:
                                     if orientation == 'horizontal':
