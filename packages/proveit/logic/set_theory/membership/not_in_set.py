@@ -10,13 +10,14 @@ class NotInSet(Operation):
     def __init__(self, element, domain):
         Operation.__init__(self, NotInSet._operator_, (element, domain))
         self.element = self.operands[0]
-        self.domain = self.operands[1]  
-        """
+        self.domain = self.operands[1]
+
+        # the following was previously commented out
         if hasattr(self.domain, 'nonmembershipObject'):
             self.nonmembershipObject = self.domain.nonmembershipObject(element)
             if not isinstance(self.nonmembershipObject, Nonmembership):
                 raise TypeError("The 'nonmembershipObject' of %s should be from a class derived from 'embership'"%str(self.domain))
-        """
+        
     
     def __dir__(self):
         '''
@@ -36,7 +37,8 @@ class NotInSet(Operation):
         defined in 'nonmembershipObject').
         '''
         if 'nonmembershipObject' in self.__dict__:
-            return getattr(self.membershipObject, attr)
+            # return getattr(self.membershipObject, attr)
+            return getattr(self.nonmembershipObject, attr)
         elif attr=='unfold':
             return self.unfoldNotIn # the default 'unfold' method
         raise AttributeError 
@@ -79,6 +81,9 @@ class NotInSet(Operation):
         '''
         if hasattr(self, 'nonmembershipObject'):
             return self.nonmembershipObject.conclude(assumptions)
+        # if hasattr(self.domain, 'nonmembershipObject'):
+        #     print("{} has a nonmembershipObject!".format(self.domain))          # for testing; delete later
+        #     return self.domain.nonmembershipObject(self.element).conclude(assumptions)
         return self.concludeAsFolded(assumptions=assumptions)
 
     def concludeAsFolded(self, assumptions=USE_DEFAULTS):
