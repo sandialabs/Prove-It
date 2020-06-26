@@ -272,62 +272,9 @@ class MultiQubitGate(Gate):
 
         if formatType == 'latex':
             out_str = ''
-
-            if formattedGateOperation == 'X':
-                if representation != 'implicit':
-                    # we want to explicitly see the type of gate as a 'letter' representation
-                    if len(self.wires) == 0 or self.wires[0] == 'skip':
-                        # if we are not adding wires
-                        out_str += r'\gate{' + formattedGateOperation + r'}'
-                        if len(self.wires) != 0:
-                            self.wires.pop(0)
-                            # if we are just skipping this one, we need to remove the 'skip' from the list.
-                    else:
-                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx[' + str(self.wires.pop(0)) + \
-                                   r']'
-                        # if we are adding wires, we add the length according to self.wires
-                else:
-                    # this is formatted as a target.
-                    if len(self.wires) == 0 or self.wires[0] == 'skip':
-                        # if we are not adding wires
-                        out_str += r'\targ'
-                        if len(self.wires) != 0:
-                            self.wires.pop(0)
-                            # if we are just skipping this one, we need to remove the 'skip' from the list.
-                    else:
-                        out_str += r'\targ \qwx[' + str(self.wires.pop(0)) + r']'
-                        # if we are adding wires, we add the length according to self.wires
-            elif formattedGateOperation == 'CONTROL':
-                # this is formatted as a solid dot using \control, or \ctrl if there is a wire
-                if len(self.wires) == 0 or self.wires[0] == 'skip':
-                    # if we are not adding wires
-                    out_str += r'\control \qw'
-                    if len(self.wires) != 0:
-                        self.wires.pop(0)
-                        # if we are just skipping this one, we need to remove the 'skip' from the list.
-                else:
-                    out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
-                    # if we are adding wires, we add the length according to self.wires
-            elif formattedGateOperation == r'CLASSICAL\_CONTROL':
-                # this is formatted as a solid dot, but with classical wires.
-                if len(self.wires) == 0 or self.wires[0] == 'skip':
-                    # if we are not adding wires
-                    out_str += r'\control \cw'
-                    if len(self.wires) != 0:
-                        self.wires.pop(0)
-                        # if we are just skipping this one, we need to remove the 'skip' from the list.
-                else:
-                    out_str += r'\control \cw \cwx[' + str(self.wires.pop(0)) + r']'
-                    # if we are adding wires, we add the length according to self.wires
-            else:
-                # everything else is formatted as a 'block' containing the explicit input.
-                if len(self.wires) == 0 or self.wires[0] == 'skip':
-                    # if we are not adding wires
-                    out_str += r'\gate{' + formattedGateOperation + r'}'
-                    if len(self.wires) != 0:
-                        self.wires.pop(0)
-                        # if we are just skipping this one, we need to remove the 'skip' from the list.
-                elif self.wires[0] == 'first':
+            if len(self.wires) != 0:
+                # this is not the last gate in the mutiqubitgate
+                if self.wires[0] == 'first':
                     # this is the first in a block multiqubit gate
                     self.wires.pop(0)
                     out_str += r'\multigate{' + str(self.wires.pop(0)) + r'}{' + formattedGateOperation + r'}'
@@ -335,10 +282,41 @@ class MultiQubitGate(Gate):
                     # this is a member of a block multiqubit gate
                     self.wires.pop(0)
                     out_str += r'\ghost{' + formattedGateOperation + '}'
+                elif self.wires[0] == 'skip':
+                    # if we are skipping, we are not adding wires
+                    self.wires.pop(0)
+                    # if we are just skipping this one, we need to remove the 'skip' from the list.
+                    if formattedGateOperation == 'X':
+                        if representation != 'implicit':
+                            # we want to explicitly see the type of gate as a 'letter' representation
+                            out_str += r'\gate{' + formattedGateOperation + r'}'
+                        else:
+                            # this is formatted as a target.
+                            out_str += r'\targ'
+                    elif formattedGateOperation == 'CONTROL':
+                        # this is formatted as a solid dot using \control
+                        out_str += r'\control \qw'
+                    elif formattedGateOperation == r'CLASSICAL\_CONTROL':
+                        # this is formatted as a solid dot, but with classical wires.
+                        out_str += r'\control \cw'
+                    else:
+                        out_str += r'\gate{' + formattedGateOperation + r'}'
+                # if we are adding wires, we add the length according to self.wires
+                elif formattedGateOperation == 'X':
+                    if representation != 'implicit':
+                        # we want to explicitly see the type of gate as a 'letter' representation
+                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx[' + str(self.wires.pop(0)) + r']'
+                    else:
+                        # this is formatted as a target.
+                        out_str += r'\targ \qwx[' + str(self.wires.pop(0)) + r']'
+                elif formattedGateOperation == 'CONTROL':
+                    # this is formatted as a solid dot using \ctrl since there is a wire
+                    out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
+                elif formattedGateOperation == r'CLASSICAL\_CONTROL':
+                    # this is formatted as a solid dot using \ctrl and \cw since there is a classical wire
+                    out_str += r'\control \cw \cwx[' + str(self.wires.pop(0)) + r']'
                 else:
-                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx[' + str(self.wires.pop(0)) \
-                               + r']'
-                    # if we are adding wires, we add the length according to self.wires
+                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx[' + str(self.wires.pop(0)) + r']'
             return out_str
         else:
             return Operation._formatted(self, formatType)
@@ -462,14 +440,22 @@ class Circuit(ExprArray):
                         if not inset:
                             raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
                         index = value.indices.index(num(k))
+                        # the index of the current position within the MultiQubitGate.indices.  This should be the same
+                        # across all gates in the MultiQubitGate
                         if index == len(value.indices) - 1:
                             # this is the last gate in the MultiQubitGate, so we skip adding the wires.
-                            if index != 0 and value.gate == \
-                                    self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
-                                # this is part of a block gate even thought it is the last element
-                                value.add_wire_direction('ghost')
+                            if index != 0:
+                                # as long as this is not the only gate in the MultiQubitGate
+                                if value.gate.gate_operation.string() != 'CONTROL' and \
+                                        value.gate.gate_operation.string() != 'CLASSICAL\\_CONTROL':
+                                    # and as long as it is not a control wire
+                                    if value.indices[index - 1].asInt() == k - 1 and value.gate == \
+                                            self.entries[k - 1].entries[i].gate:
+                                        # if this gate equals the gate right above it then this is part of a block gate
+                                        # even though it is the last element
+                                        value.add_wire_direction('ghost')
                             else:
-                                # this is the end of a wired gate so we skip adding the wires.
+                                # this is the only gate in the MultiQubitGate so we skip adding the wires.
                                 value.add_wire_direction('skip')
                         elif value.gate.gate_operation.string() != 'CONTROL' and \
                                 value.gate.gate_operation.string() != 'CLASSICAL\\_CONTROL':
