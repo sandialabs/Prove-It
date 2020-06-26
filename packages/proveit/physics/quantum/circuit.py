@@ -122,6 +122,59 @@ class Output(Operation):
             lt.packages.append('qcircuit')
 
 
+class IdentityOp(Literal):
+    '''
+    The quantum identity operator 'I'
+    '''
+
+    def __init__(self, styles=None):
+        '''
+        Create the Literal 'I'
+        '''
+
+        if styles is None:
+            styles = dict()
+        if 'gate' not in styles:
+            styles['gate'] = 'wire'
+
+        Literal.__init__(self, 'I')
+
+    def styleOptions(self):
+        from proveit._core_.expression.style_options import StyleOptions
+
+        options = StyleOptions(self)
+        options.addOption('gate',
+                          ("The 'wire' option formats the identity operation as a quantum wire and the 'explicit'"
+                           "option formats it as a box containing the I literal"))
+        return options
+
+    def remakeArguments(self):
+        '''
+        Yield the argument values or (name, value) pairs
+        that could be used to recreate the ExprTuple.
+        '''
+        yield 'I'
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+
+    def formatted(self, formatType, gate=None, fence=False):
+        if gate is None:
+            gate = self.getStyle('gate', 'wire')
+        if formatType == 'latex':
+            if gate == 'wire':
+                return r'\qw'
+            else:
+                return r'\gate{I}'
+        else:
+            if gate == 'wire':
+                return '--'
+            else:
+                return '[I]'
+
 # OUTPUT = Literal(pkg, 'OUTPUT')  # , operationMaker=lambda operands: Output(*operands))
 # An output state (exiting the right of the circuit)
 
@@ -230,8 +283,8 @@ class MultiQubitGate(Gate):
                             self.wires.pop(0)
                             # if we are just skipping this one, we need to remove the 'skip' from the list.
                     else:
-                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) + \
-                                   r'}'
+                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx[' + str(self.wires.pop(0)) + \
+                                   r']'
                         # if we are adding wires, we add the length according to self.wires
                 else:
                     # this is formatted as a target.
@@ -242,7 +295,7 @@ class MultiQubitGate(Gate):
                             self.wires.pop(0)
                             # if we are just skipping this one, we need to remove the 'skip' from the list.
                     else:
-                        out_str += r'\targ \qwx{-' + str(self.wires.pop(0)) + r'}'
+                        out_str += r'\targ \qwx[' + str(self.wires.pop(0)) + r']'
                         # if we are adding wires, we add the length according to self.wires
             elif formattedGateOperation == 'CONTROL':
                 # this is formatted as a solid dot using \control, or \ctrl if there is a wire
@@ -283,8 +336,8 @@ class MultiQubitGate(Gate):
                     self.wires.pop(0)
                     out_str += r'\ghost{' + formattedGateOperation + '}'
                 else:
-                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx{-' + str(self.wires.pop(0)) \
-                               + r'}'
+                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx[' + str(self.wires.pop(0)) \
+                               + r']'
                     # if we are adding wires, we add the length according to self.wires
             return out_str
         else:
@@ -395,6 +448,8 @@ class Circuit(ExprArray):
                 for value in entry:
                     # cycle through each space
                     if isinstance(value, MultiQubitGate):
+                        inset = False
+                        # a check to see if the current row index is in the set of MultiQubitGate indices
                         for n, number in enumerate(value.indices, 0):
                             # cycle through each row location of each QubitGate; n keeps track of which gate we are on.
                             if self.entries[number.asInt() - 1].entries[i].indices != value.indices:
@@ -402,7 +457,10 @@ class Circuit(ExprArray):
                                 # at 0).
                                 raise ValueError('Each linked MultiQubitGate must contain the indices of all other '
                                                  'linked MultiQubitGate')
-
+                            if number.asInt() == k:
+                                inset = True
+                        if not inset:
+                            raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
                         index = value.indices.index(num(k))
                         if index == len(value.indices) - 1:
                             # this is the last gate in the MultiQubitGate, so we skip adding the wires.
@@ -473,12 +531,22 @@ class Circuit(ExprArray):
             outStr += r'\Qcircuit @C=1em @R=.7em {' + '\n'
 
         formatted_sub_expressions = []
+
         for entry in self.get_formatted_sub_expressions(formatType, orientation, default_style, operatorOrOperators):
-            if entry != '& PASS':
+            if entry == '& SPACE':
                 # we have to include the '& ' because it has already been formatted according to an ExprArray
-                formatted_sub_expressions.append(entry)
+                # SPACE is formatted as an empty space in the circuit, denoted by '&' for latex and SPACE for string
+                if formatType == 'latex':
+                    formatted_sub_expressions.append('&')
+                else:
+                    formatted_sub_expressions.append(entry)
+            elif entry == '& WIRE':
+                if formatType == 'latex':
+                    formatted_sub_expressions.append(r'& \cw')
+                else:
+                    formatted_sub_expressions.append(entry)
             else:
-                formatted_sub_expressions.append(' ')
+                formatted_sub_expressions.append(entry)
 
         if orientation == "vertical":
             # up until now, the formatted_sub_expression is still
