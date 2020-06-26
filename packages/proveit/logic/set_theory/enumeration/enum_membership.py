@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS
+from proveit import defaults, USE_DEFAULTS
 from proveit.logic import Membership, Nonmembership
 from proveit.number import num
 from proveit._common_ import l, x, y, yy
@@ -65,9 +65,15 @@ class EnumMembership(Membership):
             return unfold.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements}, assumptions=assumptions)
 
     def deduceInBool(self, assumptions=USE_DEFAULTS):
-        from ._theorems_ import inSingletonIsBool
+        from ._theorems_ import inSingletonIsBool, inEnumSetIsBool
         enum_elements = self.domain.elements
-        return inSingletonIsBool.specialize({x:self.element, y:enum_elements[0]}, assumptions=assumptions)
+        if len(enum_elements) == 1:
+            return inSingletonIsBool.specialize(
+                {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
+        else:
+            return inEnumSetIsBool.specialize(
+                {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+                assumptions=assumptions)
                         
 class EnumNonmembership(Nonmembership):
     '''
@@ -78,14 +84,70 @@ class EnumNonmembership(Nonmembership):
         Nonmembership.__init__(self, element)
         self.domain = domain
 
+    def sideEffects(self, knownTruth):
+        '''
+        Unfold the enumerated set nonmembership, and ....
+        '''
+        yield self.unfold
+
     def equivalence(self):
         '''
-        Deduce and return and [element not in {x, y, ..}] = [(element != x) and (element != y) and ...]
-        where self = {y}.
+        Deduce and return
+        |– [element not in {a, ..., n}] =
+           [(element != a) and ... and (element != n)]
+        where self is the EnumNonmembership object.
         '''
         from ._theorems_ import notInSingletonEquiv, nonmembershipEquiv
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
-            return notInSingletonEquiv.specialize({x:self.element, y:enum_elements})
+            return notInSingletonEquiv.specialize(
+                    {x:self.element, y:enum_elements})
         else:
-            return nonmembershipEquiv.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements})
+            return nonmembershipEquiv.specialize(
+                    {l:num(len(enum_elements)), x:self.element,
+                    yy:enum_elements})
+
+    def conclude(self, assumptions=USE_DEFAULTS):
+        '''
+        From [element != a] AND ... AND [element != n],
+        derive and return [element not in {a, b, ..., n}],
+        where self is the EnumNonmembership object. 
+        '''
+        # among other things, convert any assumptions=None
+        # to assumptions=()
+        assumptions = defaults.checkedAssumptions(assumptions)
+        from ._theorems_ import nonmembershipFold
+        enum_elements = self.domain.elements
+        element = self.element
+        operands = self.domain.operands
+        return nonmembershipFold.specialize(
+            {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+            assumptions=assumptions)
+
+    def unfold(self, assumptions=USE_DEFAULTS):
+        '''
+        From [element not-in {a, b, ..., n}], derive and return
+        [(element!=a) AND (element!=b) AND ... AND (element!=n)].
+        '''
+        from ._theorems_ import (
+                nonmembershipUnfold, nonmembershipUnfoldSingleton)
+        enum_elements = self.domain.elements
+        if len(enum_elements) == 1:
+            return nonmembershipUnfoldSingleton.specialize(
+                    {x:self.element, y:enum_elements[0]},
+                    assumptions=assumptions)
+        else:
+            return nonmembershipUnfold.specialize(
+                {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+                assumptions=assumptions)
+
+    def deduceInBool(self, assumptions=USE_DEFAULTS):
+        from ._theorems_ import notInSingletonIsBool, notInEnumSetIsBool
+        enum_elements = self.domain.elements
+        if len(enum_elements) == 1:
+            return notInSingletonIsBool.specialize(
+                {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
+        else:
+            return notInEnumSetIsBool.specialize(
+                {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+                assumptions=assumptions)
