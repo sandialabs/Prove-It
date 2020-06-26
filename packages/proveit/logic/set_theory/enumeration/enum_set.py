@@ -178,14 +178,12 @@ class Set(Operation):
             raise ValueError("Specified subset {} does not appear to be a "
                              "valid Set object.".format(subset))
         self_list = list(self.operands)
-        print("self_list: {}".format(self_list))                                # for testing; delete later
 
         # If subset has been specified, check that it is a
         # plausible subset (it should only have elements found in
         # the original Set)
         if subset is not None:
             subset_list = list(subset.operands)
-            print("subset_list = {}".format(subset_list))                       # for testing; delete later
             error_elems = []
             for elem in subset_list:
                 if elem not in self_list:
@@ -204,24 +202,16 @@ class Set(Operation):
             # We must have had subset=None
             self._check_subset_indices(valid_indices_list, subset_indices)
             subset_list_from_indices = [self_list[i] for i in subset_indices]
-            print("subset_list_from_indices: {}".                               # for testing; delete later
-                  format(subset_list_from_indices))                             # for testing; delete later
             subset_from_indices = Set(*subset_list_from_indices)
-            print("subset_from_indices: {}".format(subset_from_indices))        # for testingl delete later
             subset = subset_from_indices
-            print("subset is derived from indices and is now: {}".              # for testingl delete later
-                  format(subset))                                               # for testingl delete later
 
         # Derive the reduced form of the self Set. We could have done
         # this earlier, but delayed until after param checking.
         # The eventual subset relationship will be based on the
         # reduced forms of the specified Sets.
         self_to_support_kt = self.reduction(assumptions=assumptions)
-        print("self_to_support_kt: {}".format(self_to_support_kt))              # for testing; delete later
         self_reduced = self_to_support_kt.rhs
         self_reduced_list = list(self_reduced.operands)
-        print("self_reduced: {}".format(self_reduced))                          # for testing; delete later
-        print("self_reduced_list: {}".format(self_reduced_list))                # for testing; delete later
 
         
 
@@ -237,11 +227,8 @@ class Set(Operation):
         # Set. The eventual subset relationship will be based on the
         # reduced forms of the specified Sets.
         subset_to_support_kt = subset.reduction(assumptions=assumptions)
-        print("subset_to_support_kt: {}".format(subset_to_support_kt))          # for testing; delete later
         subset_reduced = subset_to_support_kt.rhs
-        print("subset_reduced: {}".format(subset_reduced))                      # for testing; delete later
         subset_reduced_list = list(subset_reduced.operands)
-        print("subset_reduced_list: {}".format(subset_reduced_list))            # for testing; delete later
         
 
         # For convenience, convert the subset_reduced_list to indices
@@ -250,7 +237,6 @@ class Set(Operation):
         # contained in self_reduced_list.
         subset_reduced_indices_list = (
             [self_reduced_list.index(elem) for elem in subset_reduced_list])
-        print("subset_reduced_indices_list: {}".format(subset_reduced_indices_list))      # for testing; delete later
 
 
 
