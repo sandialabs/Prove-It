@@ -281,7 +281,10 @@ class MultiQubitGate(Gate):
                 elif self.wires[0] == 'ghost':
                     # this is a member of a block multiqubit gate
                     self.wires.pop(0)
-                    out_str += r'\ghost{' + formattedGateOperation + '}'
+                    if len(self.wires) != 0 and self.wires[0] != 'ghost':
+                        out_str += r'\ghost{' + formattedGateOperation + r'} \qwx[' + str(self.wires.pop(0)) + r']'
+                    else:
+                        out_str += r'\ghost{' + formattedGateOperation + '}'
                 elif self.wires[0] == 'skip':
                     # if we are skipping, we are not adding wires
                     self.wires.pop(0)
@@ -439,59 +442,73 @@ class Circuit(ExprArray):
                                 inset = True
                         if not inset:
                             raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
+
+
                         index = value.indices.index(num(k))
+                        print(index)
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
                         # across all gates in the MultiQubitGate
-                        if index == len(value.indices) - 1:
-                            # this is the last gate in the MultiQubitGate, so we skip adding the wires.
-                            if index != 0:
-                                # as long as this is not the only gate in the MultiQubitGate
-                                if value.gate.gate_operation.string() != 'CONTROL' and \
-                                        value.gate.gate_operation.string() != 'CLASSICAL\\_CONTROL':
-                                    # and as long as it is not a control wire
-                                    if value.indices[index - 1].asInt() == k - 1 and value.gate == \
-                                            self.entries[k - 1].entries[i].gate:
-                                        # if this gate equals the gate right above it then this is part of a block gate
-                                        # even though it is the last element
-                                        value.add_wire_direction('ghost')
-                            else:
-                                # this is the only gate in the MultiQubitGate so we skip adding the wires.
-                                value.add_wire_direction('skip')
-                        elif value.gate.gate_operation.string() != 'CONTROL' and \
+                        if value.gate.gate_operation.string() != 'CONTROL' and \
                                 value.gate.gate_operation.string() != 'CLASSICAL\\_CONTROL':
                             # control gates should not be inside of a MultiQubit block gate
-                            if index + 1 < len(value.indices) and \
-                                    value.gate == self.entries[value.indices[index + 1].asInt() - 1].entries[i].gate:
-                                # if this gate is the same as the next
-                                if index == 0 or value.gate != \
+                            if index < len(value.indices) - 1:
+                                # if this is not the last gate in the multiQubitGate
+                                if value.indices[index + 1].asInt() == k + 1 and value.gate == \
+                                        self.entries[value.indices[index + 1].asInt() - 1].entries[i].gate:
+                                    # if this gate is the same as the next and the current gate is not the last one in
+                                    # the multiQubit gate
+                                    if index == 0 or value.indices[index - 1].asInt() != k - 1 or value.gate != \
+                                            self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
+                                        # This is the first in the multiQubit block gate!
+                                        value.add_wire_direction('first')
+                                        length = 0
+                                        n = index
+                                        while n + 1 < len(value.indices) and value.indices[n + 1].asInt() == \
+                                                k + length + 1 and value.gate == \
+                                                self.entries[value.indices[n + 1].asInt() - 1].entries[i].gate:
+                                            length += 1
+                                            n += 1
+                                            # count the number of gates that are the same and then add it to the wire
+                                            # direction array
+                                        value.add_wire_direction(length)
+                                    else:
+                                        # this is not the first in the multiQubit block gate
+                                        value.add_wire_direction('ghost')
+                                elif index != 0 and value.indices[index - 1].asInt() == k - 1and value.gate == \
                                         self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
-                                    # This is the first in the multiQubit block gate!
-                                    value.add_wire_direction('first')
-                                    length = 0
-                                    n = index
-                                    while n < len(value.indices) - 1 and \
-                                            value.gate == self.entries[value.indices[n].asInt() - 1].entries[i].gate:
-                                        length += 1
-                                        n += 1
-                                        # count the number of gates that are the same and then add it to the wire
-                                        # direction array
-                                    value.add_wire_direction(length)
-                                else:
-                                    # this is not the first in the multiQubit block gate
+                                    # this is the last in the block gate, but it is not the last gate in the
+                                    # MultiQubitGate
                                     value.add_wire_direction('ghost')
-                            elif index != 0 and value.gate == \
-                                    self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
-                                # this is not the first in the block gate, but it is a member
-                                value.add_wire_direction('ghost')
+                                    value.add_wire_direction(value.indices[index + 1].asInt() - k)
+                                else:
+                                    # Define the wireDirection for the multiQubitGate by taking the next index and
+                                    # subtracting the current one
+                                    value.add_wire_direction(value.indices[index + 1].asInt() - k)
                             else:
-                                # Define the wireDirection for the multiQubitGate by taking the next index and
-                                # subtracting the current one.
-                                value.add_wire_direction(value.indices[index + 1].asInt() - k)
+                                # this is the last gate in the MultiQubitGate, so we skip adding the wires
+                                if index != 0:
+                                    # as long as this is not the only gate in the MultiQubitGate
+                                    if value.indices[index - 1].asInt() == k - 1 and value.gate == \
+                                            self.entries[k - 2].entries[i].gate:
+                                        # if this gate equals the gate right above it then this is part of a
+                                        # block gate even though it is the last element
+                                        # (we have to subtract 2 because just one takes us to the base 0 index and we
+                                        # want the one before the index)
+                                        value.add_wire_direction('ghost')
+                                    else:
+                                        value.add_wire_direction('skip')
+                                else:
+                                    # this is the only gate in the MultiQubitGate so we skip adding the wires
+                                    value.add_wire_direction('skip')
                         else:
                             # Define the wireDirection for the multiQubitGate by taking the next index and
-                            # subtracting the current one.
-                            value.add_wire_direction(value.indices[index + 1].asInt() - k)
-
+                            # subtracting the current one
+                            if index < len(value.indices) - 1:
+                                # this is not the last gate so we add a wire index
+                                value.add_wire_direction(value.indices[index + 1].asInt() - k)
+                            else:
+                                # this is the last gate so we skip adding a wire
+                                value.add_wire_direction('skip')
                     i += 1
 
     def string(self, **kwargs):
