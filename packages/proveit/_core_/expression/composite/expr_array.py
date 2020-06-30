@@ -311,7 +311,7 @@ class ExprArray(ExprTuple):
                                             ell += r'\colon & \colon & \colon'
                                         else:
                                             yield r'& \cdots'
-                                            ell += r'\vdots & ' + sub_expr.body.entries[0].body.formatted(formatType,
+                                            ell += r'\vdots & ' + sub_expr.body.entries[m].body.formatted(formatType,
                                                                                                           fence=False) \
                                                    + r'& \vdots'
 
@@ -325,7 +325,7 @@ class ExprArray(ExprTuple):
                                         else:
                                             yield r'\vdots'
                                         vell.append(r'& \cdots')
-                                        vell.append('& ' + sub_expr.body.entries[0].body.formatted(formatType,
+                                        vell.append('& ' + sub_expr.body.entries[m].body.formatted(formatType,
                                                                                                    fence=False))
                                         yield entry.last().formatted(formatType, fence=False)
                                         vell.append(r'& \cdots')
@@ -373,7 +373,7 @@ class ExprArray(ExprTuple):
                                             yield '& ..' + entry.body.formatted(formatType, fence=False) + '..'
                                         else:
                                             ell += r' & \vdots & ' + \
-                                                   sub_expr.body.entries[0].body.formatted(formatType, fence=False) \
+                                                   sub_expr.body.entries[m].body.formatted(formatType, fence=False) \
                                                    + r'& \vdots'
                                             yield r'& \cdots'
                                         yield '& ' + entry.last().formatted(formatType, fence=False)
@@ -391,7 +391,7 @@ class ExprArray(ExprTuple):
                                             yield r'\vdots'
                                         yield entry.last().formatted(formatType, fence=False)
                                         vell.append(r'& \cdots ')
-                                        vell.append('& ' + sub_expr.body.entries[0].body.formatted(formatType,
+                                        vell.append('& ' + sub_expr.body.entries[m].body.formatted(formatType,
                                                                                                    fence=False))
                                         vell.append(r'& \cdots ')
                                 else:
