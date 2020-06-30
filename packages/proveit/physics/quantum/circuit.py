@@ -224,8 +224,6 @@ class MultiQubitGate(Gate):
     If there are consecutive rows that contain the same type of gate, they will
     be represented as a block.
     '''
-    wires = []
-
     def __init__(self, gate, indices, styles=None):
         '''
         Create a quantum circuit gate performing the given operation.
@@ -254,9 +252,6 @@ class MultiQubitGate(Gate):
                            "'explicit' representation always displays the type of gate in a box. Ex. |X|"))
         return options
 
-    def add_wire_direction(self, value):
-        self.wires.append(value)
-
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -272,54 +267,21 @@ class MultiQubitGate(Gate):
 
         if formatType == 'latex':
             out_str = ''
-            if len(self.wires) != 0:
-                # this is not the last gate in the mutiqubitgate
-                if self.wires[0] == 'first':
-                    # this is the first in a block multiqubit gate
-                    self.wires.pop(0)
-                    out_str += r'\multigate{' + str(self.wires.pop(0)) + r'}{' + formattedGateOperation + r'}'
-                elif self.wires[0] == 'ghost':
-                    # this is a member of a block multiqubit gate
-                    self.wires.pop(0)
-                    if len(self.wires) != 0 and self.wires[0] != 'ghost':
-                        out_str += r'\ghost{' + formattedGateOperation + r'} \qwx[' + str(self.wires.pop(0)) + r']'
-                    else:
-                        out_str += r'\ghost{' + formattedGateOperation + '}'
-                elif self.wires[0] == 'skip':
-                    # if we are skipping, we are not adding wires
-                    self.wires.pop(0)
-                    # if we are just skipping this one, we need to remove the 'skip' from the list.
-                    if formattedGateOperation == 'X':
-                        if representation != 'implicit':
-                            # we want to explicitly see the type of gate as a 'letter' representation
-                            out_str += r'\gate{' + formattedGateOperation + r'}'
-                        else:
-                            # this is formatted as a target.
-                            out_str += r'\targ'
-                    elif formattedGateOperation == 'CONTROL':
-                        # this is formatted as a solid dot using \control
-                        out_str += r'\control \qw'
-                    elif formattedGateOperation == r'CLASSICAL\_CONTROL':
-                        # this is formatted as a solid dot, but with classical wires.
-                        out_str += r'\control \cw'
-                    else:
-                        out_str += r'\gate{' + formattedGateOperation + r'}'
-                # if we are adding wires, we add the length according to self.wires
-                elif formattedGateOperation == 'X':
-                    if representation != 'implicit':
-                        # we want to explicitly see the type of gate as a 'letter' representation
-                        out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx[' + str(self.wires.pop(0)) + r']'
-                    else:
-                        # this is formatted as a target.
-                        out_str += r'\targ \qwx[' + str(self.wires.pop(0)) + r']'
-                elif formattedGateOperation == 'CONTROL':
-                    # this is formatted as a solid dot using \ctrl since there is a wire
-                    out_str += r'\ctrl{' + str(self.wires.pop(0)) + r'}'
-                elif formattedGateOperation == r'CLASSICAL\_CONTROL':
-                    # this is formatted as a solid dot using \ctrl and \cw since there is a classical wire
-                    out_str += r'\control \cw \cwx[' + str(self.wires.pop(0)) + r']'
+            if formattedGateOperation == 'X':
+                if representation != 'implicit':
+                    # we want to explicitly see the type of gate as a 'letter' representation
+                    out_str += formattedGateOperation
                 else:
-                    out_str += r'\gate{' + formattedGateOperation + r'}' + r' \qwx[' + str(self.wires.pop(0)) + r']'
+                    # this is formatted as a target.
+                    out_str += r'\targ'
+            elif formattedGateOperation == 'CONTROL':
+                # this is formatted as a solid dot using \control
+                out_str += r'\control \qw'
+            elif formattedGateOperation == r'CLASSICAL\_CONTROL':
+                # this is formatted as a solid dot, but with classical wires.
+                out_str += r'\control \cw'
+            else:
+                out_str += formattedGateOperation
             return out_str
         else:
             return Operation._formatted(self, formatType)
@@ -331,8 +293,6 @@ class MultiQubitGate(Gate):
 
     # original below
     # def formatted(self, formatType, fence=false):
-    #     print("Entering Gate.formatted.")                                       # for testing; delete later
-    #     print("  formatType = {}".format(formatType))                           # for testing; delete later
     #     formattedGateOperation = (
     #             self.gate_operation.formatted(formatType, fence=False))
     #     if formatType == 'latex':
@@ -420,14 +380,11 @@ class Circuit(ExprArray):
         If there is a MultiQubitGate, checks if all indices match up with additional
          MultiQubitGates with identical indices.
         '''
-        from proveit.number.numeral import num
         for k, entry in enumerate(self, 1):
             # cycle through each ExprTuple; k keeps track of which row we are on.
-            i = 0
-            # i keeps track of what position in the row each MultiQubitGate is in.
             if isinstance(entry, ExprTuple):
-                for value in entry:
-                    # cycle through each space
+                for i, value in enumerate(entry):
+                    # cycle through each row; i keeps track of which column we are on.
                     if isinstance(value, MultiQubitGate):
                         inset = False
                         # a check to see if the current row index is in the set of MultiQubitGate indices
@@ -443,9 +400,22 @@ class Circuit(ExprArray):
                         if not inset:
                             raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
 
-
+    def _find_wires(self):
+        '''
+        Takes a Circuit object and determines where wires should be
+        placed and returns a nested array with the indices. This method
+        also determines if and where there will be a block gate.
+        '''
+        from proveit.number.numeral import num
+        wire_placement = []
+        for k, entry in enumerate(self, 1):
+            # cycle through each ExprTuple; k keeps track of which row we are on.
+            row = dict()
+            if isinstance(entry, ExprTuple):
+                for i, value in enumerate(entry):
+                    # cycle through each row; i keeps track of which column we are on.
+                    if isinstance(value, MultiQubitGate):
                         index = value.indices.index(num(k))
-                        print(index)
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
                         # across all gates in the MultiQubitGate
                         if value.gate.gate_operation.string() != 'CONTROL' and \
@@ -460,7 +430,6 @@ class Circuit(ExprArray):
                                     if index == 0 or value.indices[index - 1].asInt() != k - 1 or value.gate != \
                                             self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
                                         # This is the first in the multiQubit block gate!
-                                        value.add_wire_direction('first')
                                         length = 0
                                         n = index
                                         while n + 1 < len(value.indices) and value.indices[n + 1].asInt() == \
@@ -470,20 +439,19 @@ class Circuit(ExprArray):
                                             n += 1
                                             # count the number of gates that are the same and then add it to the wire
                                             # direction array
-                                        value.add_wire_direction(length)
+                                        row[i] = ['first', length]
                                     else:
                                         # this is not the first in the multiQubit block gate
-                                        value.add_wire_direction('ghost')
-                                elif index != 0 and value.indices[index - 1].asInt() == k - 1and value.gate == \
+                                        row[i] = 'ghost'
+                                elif index != 0 and value.indices[index - 1].asInt() == k - 1 and value.gate == \
                                         self.entries[value.indices[index - 1].asInt() - 1].entries[i].gate:
                                     # this is the last in the block gate, but it is not the last gate in the
                                     # MultiQubitGate
-                                    value.add_wire_direction('ghost')
-                                    value.add_wire_direction(value.indices[index + 1].asInt() - k)
+                                    row[i] = ['ghost', value.indices[index + 1].asInt() - k]
                                 else:
                                     # Define the wireDirection for the multiQubitGate by taking the next index and
                                     # subtracting the current one
-                                    value.add_wire_direction(value.indices[index + 1].asInt() - k)
+                                    row[i] = value.indices[index + 1].asInt() - k
                             else:
                                 # this is the last gate in the MultiQubitGate, so we skip adding the wires
                                 if index != 0:
@@ -494,22 +462,23 @@ class Circuit(ExprArray):
                                         # block gate even though it is the last element
                                         # (we have to subtract 2 because just one takes us to the base 0 index and we
                                         # want the one before the index)
-                                        value.add_wire_direction('ghost')
+                                        row[i] = 'ghost'
                                     else:
-                                        value.add_wire_direction('skip')
+                                        row[i] = 'skip'
                                 else:
                                     # this is the only gate in the MultiQubitGate so we skip adding the wires
-                                    value.add_wire_direction('skip')
+                                    row[i] = 'skip'
                         else:
                             # Define the wireDirection for the multiQubitGate by taking the next index and
                             # subtracting the current one
                             if index < len(value.indices) - 1:
                                 # this is not the last gate so we add a wire index
-                                value.add_wire_direction(value.indices[index + 1].asInt() - k)
+                                row[i] = value.indices[index + 1].asInt() - k
                             else:
                                 # this is the last gate so we skip adding a wire
-                                value.add_wire_direction('skip')
-                    i += 1
+                                row[i] = 'skip'
+            wire_placement.append(row)
+        return wire_placement
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -530,12 +499,29 @@ class Circuit(ExprArray):
         if orientation is None:
             orientation = self.getStyle('orientation', 'horizontal')
 
+        spacing = '@C=1em @R=.7em'
+        for entry in self.entries:
+            if isinstance(entry, ExprTuple):
+                for item in entry:
+                    if isinstance(item, ExprRange):
+                        spacing = '@C=2em @R=1.5em'
+            elif isinstance(entry, ExprRange):
+                spacing = '@C=2em @R=1.5em'
+
         if formatType == 'latex':
-            outStr += r'\Qcircuit @C=1em @R=.7em {' + '\n'
+            outStr += r'\Qcircuit' + spacing + '{' + '\n'
 
+        wires = self._find_wires()
         formatted_sub_expressions = []
-
+        row = 0
+        column = 0
+        add = ' '
+        # what we add in front of the entry
         for entry in self.get_formatted_sub_expressions(formatType, orientation, default_style, operatorOrOperators):
+            if column == self.getRowLength() + 1:
+                # we add one to compensate for the added wrapping slash
+                row += 1
+                column = 0
             if entry == '& SPACE':
                 # we have to include the '& ' because it has already been formatted according to an ExprArray
                 # SPACE is formatted as an empty space in the circuit, denoted by '&' for latex and SPACE for string
@@ -548,8 +534,59 @@ class Circuit(ExprArray):
                     formatted_sub_expressions.append(r'& \cw')
                 else:
                     formatted_sub_expressions.append(entry)
+            elif formatType == 'latex':
+                if entry[0] == '&':
+                    entry = entry[2:]
+                    add = '& '
+                else:
+                    add = ' '
+                out_str = ''
+                if column in wires[row]:
+                    if isinstance(wires[row][column], list):
+                        # this is the first in a block multiqubit gate
+                        if wires[row][column][0] == 'first':
+                            out_str += add + r'\multigate{' + str(wires[row][column][1]) + r'}{' + entry + r'}'
+                        else:
+                            # we assume this to be a ghost since there are only two lists: first and ghost
+                            out_str += add + r'\ghost{' + entry + r'} \qwx[' + wires[row][column][1] + r']'
+                    elif wires[row][column] == 'ghost':
+                        # this is a member of a block multiqubit gate
+                        out_str += add + r'\ghost{' + entry + '}'
+                    elif wires[row][column] == 'skip':
+                        # if we are skipping, we are not adding wires
+                        if entry == 'X':
+                            out_str += add + r'\gate{X}'
+                        elif entry == r'\control \qw':
+                            # this is formatted as a solid dot using \control
+                            out_str += add + r'\control \qw'
+                        elif entry == r'\control \cw':
+                            # this is formatted as a solid dot, but with classical wires.
+                            out_str += add + r'\control \cw'
+                        else:
+                            out_str += add + r'\gate{' + entry + r'}'
+                    # if we are adding wires, we add the length according to self.wires
+                    elif entry == 'X':
+                        if entry != 'implicit':
+                            # we want to explicitly see the type of gate as a 'letter' representation
+                            out_str += add + r'\gate{' + entry + r'}' + r' \qwx[' + str(wires[row][column]) + r']'
+                        else:
+                            # this is formatted as a target.
+                            out_str += add + r'\targ \qwx[' + wires[row][column] + r']'
+                    elif entry == r'\control \qw':
+                        # this is formatted as a solid dot using \ctrl since there is a wire
+                        out_str += add + r'\ctrl{' + str(wires[row][column]) + r'}'
+                    elif entry == r'\control \cw':
+                        # this is formatted as a solid dot using \ctrl and \cw since there is a classical wire
+                        out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
+                    else:
+                        out_str += add + r'\gate{' + entry + r'}' + r' \qwx[' + str(wires[row][column]) + r']'
+
+                    formatted_sub_expressions.append(out_str)
+                else:
+                    formatted_sub_expressions.append(add + entry)
             else:
-                formatted_sub_expressions.append(entry)
+                formatted_sub_expressions.append(add + entry)
+            column += 1
 
         if orientation == "vertical":
             # up until now, the formatted_sub_expression is still
@@ -696,8 +733,7 @@ class Circuit(ExprArray):
 #                 deepestNestedTensorAlongRow.append(deepestNestedTensor)
 #             return maxDepth
 #         determineDeepestNestedTensors(self.tensor)
-#         #print "deepestNestedTensors", self.deepestNestedTensorAlongRow
-    
+
 #     #def substituted(self, exprMap, operationMap=None, relabelMap=None, reservedVars=None):
 #     #    return Circuit(ExpressionTensor.substituted(self, exprMap, operationMap=operationMap,
 #     relabelMap=relabelMap, reservedVars=reservedVars))
@@ -791,7 +827,6 @@ class Circuit(ExprArray):
 #             yield r'\begin{array}{cc}' + '\n'
 #             yield r'\Qcircuit @C=1em @R=.7em {' # + '\n'
 #             for nestedRowIdx in self.generateNestedRowIndices():
-#                 #print "nestedRowIdx", nestedRowIdx
 #                 if sum(nestedRowIdx) > 0: yield r' \\ ' # previous row has ended
 #                 for level, circuitTensor, row, column in self.generateCircuitElementsAlongRow(nestedRowIdx):
 #                     if not (row, column) in circuitTensor:
