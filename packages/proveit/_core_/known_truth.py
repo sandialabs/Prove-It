@@ -117,7 +117,7 @@ class KnownTruth:
         for assumption in assumptions:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
-        
+                
         # note: these contained expressions are subject to style changes on a KnownTruth instance basis
         self.expr = expression
         # store the assumptions as an ordered list (with the desired order for display)
@@ -605,28 +605,37 @@ class KnownTruth:
                                  "attribute.") 
         attr = getattr(self.expr, name)
         
-        if (hasattr(attr, '__call__') 
-                and 'assumptions' in inspect.getargspec(attr).args):
-            # The attribute is a callable function with 'assumptions' as an argument.
-            # Automatically include the KnownTruth assumptions.
-
-            # note, index zero is self.
-            assumptionsIndex = inspect.getargspec(attr).args.index('assumptions')-1
-            
-            def call_method_with_known_truth_assumptions(*args, **kwargs):
-                if len(args) > assumptionsIndex:
-                    args = list(args)
-                    assumptions = args[assumptionsIndex]
-                    assumptions = defaults.checkedAssumptions(assumptions)                    
-                    assumptions += self.assumptions
-                    args[assumptionsIndex] = defaults.checkedAssumptions(assumptions)
+        if hasattr(attr, '__call__'):
+            argspec = inspect.getfullargspec(attr)
+            if ('assumptions' in argspec.args 
+                    or 'assumptions' in argspec.kwonlyargs):
+                # The attribute is a callable function with 
+                # 'assumptions' as an argument.
+                # Automatically include the KnownTruth assumptions.
+    
+                # note, index zero is self.
+                if 'assumptions' in argspec.args:
+                    assumptions_idx = argspec.args.index('assumptions')-1
                 else:
-                    assumptions = kwargs.get('assumptions', USE_DEFAULTS)
-                    assumptions = defaults.checkedAssumptions(assumptions)
-                    assumptions = tuple(assumptions) + self.assumptions
-                    kwargs['assumptions'] = defaults.checkedAssumptions(assumptions)
-                return attr.__call__(*args, **kwargs)
-            return call_method_with_known_truth_assumptions
+                    assumptions_idx = None # 'assumptions' is kwonly
+                
+                def call_method_with_known_truth_assumptions(*args, **kwargs):
+                    if (assumptions_idx is not None and 
+                            len(args) > assumptions_idx):
+                        args = list(args)
+                        assumptions = args[assumptions_idx]
+                        assumptions = defaults.checkedAssumptions(assumptions)                    
+                        assumptions += self.assumptions
+                        args[assumptions_idx] = \
+                            defaults.checkedAssumptions(assumptions)
+                    else:
+                        assumptions = kwargs.get('assumptions', USE_DEFAULTS)
+                        assumptions = defaults.checkedAssumptions(assumptions)
+                        assumptions = tuple(assumptions) + self.assumptions
+                        kwargs['assumptions'] = \
+                            defaults.checkedAssumptions(assumptions)
+                    return attr.__call__(*args, **kwargs)
+                return call_method_with_known_truth_assumptions
         
         return attr
             
@@ -725,10 +734,11 @@ class KnownTruth:
             repl_map = dict()
         if relabel_map is not None:
             repl_map.update(relabel_map)
-        return self.instantiate(repl_map, assumptions)
+        return self.instantiate(repl_map, assumptions=assumptions)
 
         
-    def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
+    def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
+                    assumptions=USE_DEFAULTS):
         '''
         Performs an instantiation derivation step to be proven under the given
         assumptions, in addition to the (possibly revised) assumptions of the 
@@ -841,40 +851,45 @@ class KnownTruth:
                 return getParamVar(repl_key.entries[0])
             return getParamVar(repl_key)
         
-        # Determine the number of Forall eliminations.  
-        # The number is determined by the instance variables that occur as 
-        # keys in repl_map.
-        expr = self.expr
-        remaining_repl_vars = \
-            {get_repl_var(repl_key) for repl_key in processed_repl_map.keys()}
-        forall_depth = 0
-        num_forall_eliminations = 0
-        while len(remaining_repl_vars) > 0:
-            if not isinstance(expr, Forall):
-                # No more directly nested universal quantifiers to eliminate.
-                break 
-            lambda_expr = expr.operand
-            assert isinstance(lambda_expr, Lambda), ("Forall Operation operand "
-                                                     "must be a Lambda function")
-            instance_param_vars = lambda_expr.parameterVars
-            expr = lambda_expr.body
-            if isinstance(expr, Conditional):
-                # Skip over the "conditions" of the Forall expression.
-                expr = expr.value
-            forall_depth += 1
-            for iparam_var in instance_param_vars:
-                if iparam_var in remaining_repl_vars:
-                    # Remove this instance parameter variable from the 
-                    # remaining variables to replace.
-                    remaining_repl_vars.remove(iparam_var)
-                    # Eliminate to this depth at least since there is
-                    # a replacement map for the instance variable:
-                    num_forall_eliminations = forall_depth
-                else:
-                    # default is to map instance variables to themselves
-                    processed_repl_map[iparam_var] = iparam_var
+        if num_forall_eliminations is None:
+            # Determine the number of Forall eliminations.  
+            # The number is determined by the instance variables that 
+            # occur as keys in repl_map.
+            expr = self.expr
+            remaining_repl_vars = \
+                {get_repl_var(repl_key) for repl_key 
+                 in processed_repl_map.keys()}
+            forall_depth = 0
+            num_forall_eliminations = 0
+            while len(remaining_repl_vars) > 0:
+                if not isinstance(expr, Forall):
+                    # No more directly nested universal quantifiers 
+                    break  # to eliminate.
+                lambda_expr = expr.operand
+                assert isinstance(lambda_expr, Lambda), (
+                        "Forall Operation operand must be a Lambda function")
+                instance_param_vars = lambda_expr.parameterVars
+                expr = lambda_expr.body
+                if isinstance(expr, Conditional):
+                    # Skip over the "conditions" of the Forall expression.
+                    expr = expr.value
+                forall_depth += 1
+                for iparam_var in instance_param_vars:
+                    if iparam_var in remaining_repl_vars:
+                        # Remove this instance parameter variable from 
+                        # the remaining variables to replace.
+                        remaining_repl_vars.remove(iparam_var)
+                        # Eliminate to this depth at least since there
+                        # is a replacement map for the instance 
+                        # variable:
+                        num_forall_eliminations = forall_depth
+                    else:
+                        # default is to map instance variables to 
+                        # themselves
+                        processed_repl_map[iparam_var] = iparam_var
         return self._checkedTruth(
-                Instantiation(self, num_forall_eliminations=num_forall_eliminations, 
+                Instantiation(self, 
+                              num_forall_eliminations=num_forall_eliminations, 
                               repl_map=processed_repl_map, 
                               equiv_alt_expansions=equiv_alt_expansions,
                               assumptions=assumptions))
@@ -958,7 +973,7 @@ class KnownTruth:
             hypothesis = hypothesis.expr # we want the expression for this purpose
         return self._checkedTruth(HypotheticalReasoning(self, hypothesis))
         
-    def evaluation(self):
+    def evaluation(self, assumptions=USE_DEFAULTS):
         '''
         Calling evaluation on a KnownTruth results in deriving that its
         expression is equal to TRUE, under the assumptions of the KnownTruth.
