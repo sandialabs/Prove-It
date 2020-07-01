@@ -82,7 +82,7 @@ class InSet(Operation):
         try calling 'conclude' on the object it generates.
         try conclude(self, assumptions, minimal_automation=False)
         '''
-        from proveit.logic import SubsetEq
+        from proveit.logic import Equals, SubsetEq
         from proveit import ProofFailure
         from proveit.logic import SimplificationError
         
@@ -91,7 +91,10 @@ class InSet(Operation):
             for knownMembership in InSet.knownMemberships[self.element]:
                 if knownMembership.isSufficient(assumptions):
                     # x in R is a known truth; if we know that R subseteq S,
-                    # we are done.
+                    # or R = S we are done.
+                    eqRel = Equals(knownMembership.domain, self.domain)
+                    if eqRel.proven(assumptions):                    
+                        return eqRel.subRightSideInto(knownMembership.innerExpr().domain)
                     subRel = SubsetEq(knownMembership.domain, self.domain)
                     if subRel.proven(assumptions):
                         # S is a superset of R, so now we can prove x in S.
@@ -144,11 +147,11 @@ class InSet(Operation):
         TRUE or FALSE.  If the domain has a 'membershipObject' method,
         attempt to use the 'equivalence' method from the object it generates.
         '''
-        from proveit.logic import Equals, TRUE, NotInSet
+        from proveit.logic import TRUE, NotInSet
         # try an 'equivalence' method (via the membership object)
         equiv = self.membershipObject.equivalence(assumptions)
-        val = equiv.evaluation(assumptions).rhs
-        evaluation = Equals(equiv, val).prove(assumptions=assumptions)
+        rhs_eval = equiv.rhs.evaluation(assumptions=assumptions)
+        evaluation = equiv.applyTransitivity(rhs_eval, assumptions=assumptions)
         # try also to evaluate this by deducing membership
         # or non-membership in case it generates a shorter proof.
         try:
