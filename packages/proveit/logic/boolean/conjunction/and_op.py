@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
+from proveit import (Literal, Operation, Conditional, 
+                     defaults, USE_DEFAULTS, ProofFailure, InnerExpr)
 from proveit.logic.equality import SimplificationError
 from proveit._common_ import j,k,l,m, n, A, B, C, D, E, F, G
 from proveit.logic.boolean.booleans import inBool
@@ -141,7 +142,7 @@ class And(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
         yield self.deriveInBool
-        #yield self.deriveParts
+        yield self.deriveParts
         #yield self.deriveCommutation
 
     def negationSideEffects(self, knownTruth):
@@ -187,7 +188,8 @@ class And(Operation):
         indexOrExpr specifies X, either by index or the expression.
         '''
         from proveit import ExprRange
-        from ._theorems_ import anyFromAnd, leftFromAnd, rightFromAnd
+        from ._theorems_ import (anyFromAnd, leftFromAnd, rightFromAnd,
+                                 from_unary_and)
         if isinstance(index_or_expr, int):
             idx = index_or_expr
         else:
@@ -196,6 +198,11 @@ class And(Operation):
             raise IndexError("Operand out of range: " + str(idx))
         has_range_operands = any(isinstance(operand, ExprRange) 
                                  for operand in self.operands)
+        if len(self.operands)==1 and not has_range_operands:
+            with defaults.disabled_auto_reduction_types as disabled_types:
+                disabled_types.add(And)
+                return from_unary_and.instantiate({A:self.operands[0]},
+                                                  assumptions=assumptions)
         if len(self.operands)==2 and not has_range_operands:
             # Two operand special case:
             if idx==0:

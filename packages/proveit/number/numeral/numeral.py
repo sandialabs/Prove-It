@@ -1,4 +1,4 @@
-from proveit import defaults, Literal, Operation, USE_DEFAULTS
+from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
 from proveit.logic import IrreducibleValue, Equals
 from proveit._common_ import a, b
 
@@ -101,6 +101,9 @@ class Numeral(Literal, IrreducibleValue):
             from .deci._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
             from .deci._theorems_ import posnat6, posnat7, posnat8, posnat9
             Numeral._inNaturalsPosStmts = {1:posnat1, 2:posnat2, 3:posnat3, 4:posnat4, 5:posnat5, 6:posnat6, 7:posnat7, 8:posnat8, 9:posnat9}
+        if self.n <= 0:
+            raise ProofFailure(self, [], 
+                               "Cannot prove %d in NaturalsPos"%self.n)
         return Numeral._inNaturalsPosStmts[self.n]    
 
     def deducePositive(self):

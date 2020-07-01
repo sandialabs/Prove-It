@@ -36,4 +36,7 @@ class TransRelUpdater:
             self.expr = relation.rhs
         elif relation.rhs == self.expr:
             self.expr = relation.lhs
+        else:
+            raise ValueError("Relation %s should match expression %s "
+                             "on one of its sides."%(relation, self.expr))
         return self.expr
