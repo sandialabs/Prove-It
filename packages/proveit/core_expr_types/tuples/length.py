@@ -340,7 +340,7 @@ class Len(Operation):
                     try:
                         equiv = \
                             self.typical_equiv(assumptions=assumptions)
-                        if equiv==equality:
+                        if equiv.expr==equality:
                             return equiv
                     except (NotImplementedError, ValueError):
                         pass
