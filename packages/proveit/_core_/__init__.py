@@ -2,14 +2,14 @@
 
 from .expression import (
         Expression, traverse_inner_expressions, used_vars, 
-        possibly_free_var_ranges, free_vars,
+        possibly_free_var_ranges, free_vars, attempt_to_simplify,
         expressionDepth, MakeNotImplemented, 
         ImproperReplacement, 
         InnerExpr,
         Label, Literal, Variable, DuplicateLiteralError,
         safeDummyVar, safeDummyVars, safeDefaultOrDummyVar,
         Operation, IndexedVar, indexed_var, Function, OperationSequence, 
-        OperationOverInstances, OperationError, 
+        OperationOverInstances, bundle, unbundle, OperationError, 
         Conditional, 
         Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
         LambdaApplicationError, ArgumentExtractionError, 

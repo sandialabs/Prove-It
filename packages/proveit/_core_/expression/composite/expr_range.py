@@ -443,10 +443,11 @@ class ExprRange(Expression):
             # empty range, then it should be straightforward to
             # prove that the range is empty.
             from proveit.number import isLiteralInt
+            empty_req = Equals(Add(end_index, one), start_index)
             if isLiteralInt(start_index) and isLiteralInt(end_index):
                 if end_index.asInt()+1 == start_index.asInt():
-                    Equals(Add(end_index, one), start_index).prove()
-            if Equals(Add(end_index, one), start_index).proven(assumptions):
+                    empty_req.prove()
+            if empty_req.proven(assumptions):
                 # We can do an empty range reduction
                 # Temporarily disable automation to avoid infinite
                 # recursion.
@@ -462,7 +463,7 @@ class ExprRange(Expression):
                     defaults.disabled_auto_reduction_types.remove(ExprRange)               
             else:
                 yield expr_range # no reduction
-            return
+                return
         assert isinstance(reduction, KnownTruth)
         assert isinstance(reduction.expr, Equals)
         assert len(reduction.expr.operands) == 2
@@ -528,6 +529,7 @@ class ExprRange(Expression):
         
         See the Lambda.apply documentation for a related discussion.
         '''
+        from proveit._core_.expression.expr import attempt_to_simplify
         from proveit._core_.expression.operation.indexed_var import \
             IndexedVar
         from proveit._core_.expression.lambda_expr.lambda_expr import \
@@ -637,7 +639,7 @@ class ExprRange(Expression):
         excluded_var_ranges = \
             self.body._possibly_free_var_ranges(
                     exclusions=parameterized_var_ranges)
-        if len(excluded_var_ranges) > 0:
+        if self.parameter in excluded_var_ranges:
             indices_must_match = True
             reason_indices_must_match = (
                     "the ExprRange parameter appears outside of IndexedVar "
@@ -871,11 +873,15 @@ class ExprRange(Expression):
                     # original indices.
                     new_indices.append(ExprRange(new_param, new_param, 
                                             start_index, end_index))
-                    next_index = Add(end_index, one).simplified(assumptions)
+                    next_index = Add(end_index, one)
             else:
                 # For a singular element entry, yield the replaced
                 # element.
                 if indices_must_match:
+                    # Attempt to simplify the 'next_index' only when 
+                    # we need it.
+                    next_index = attempt_to_simplify(
+                            next_index, assumptions, requirements)
                     # The actual range parameter index is needed:
                     full_entry_repl_map[orig_parameters[0]] = next_index
                 if isinstance(body, ExprRange):
@@ -894,7 +900,7 @@ class ExprRange(Expression):
                     # We need to know the new_indices to match with the
                     # original indices.
                     new_indices.append(next_index)
-                    next_index = Add(next_index, one).simplified(assumptions)
+                    next_index = Add(next_index, one)
                 
         if indices_must_match:
             # The range parameter appears outside of

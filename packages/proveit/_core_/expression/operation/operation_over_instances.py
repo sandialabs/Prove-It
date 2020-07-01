@@ -6,7 +6,9 @@ from proveit._core_.expression.composite import (
         ExprTuple, singleOrCompositeExpression, compositeExpression, 
         ExprRange)
 from proveit._core_.expression.conditional import Conditional
+from proveit._core_.defaults import USE_DEFAULTS
 from .operation import Operation, OperationError
+from .function import Function
 
 def _extract_domain_from_condition(ivar, condition):
     '''
@@ -269,8 +271,8 @@ class OperationOverInstances(Operation):
         self.instanceExpr = instanceExpr
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
         
+        self.instanceParams = instance_params
         if len(instance_params) > 1:
-            self.instanceParams = instance_params
             '''Instance parameters of the OperationOverInstance.'''
             self.instanceVars = [getParamVar(parameter) for 
                                  parameter in instance_params]
@@ -300,11 +302,28 @@ class OperationOverInstances(Operation):
 
         Operation.__init__(self, operator, lambda_map, styles=styles)
     
+    def effectiveCondition(self):
+        '''
+        Return the effective 'condition' of the OperationOverInstances.
+        If there is no 'condition', return And operating on zero
+        operands.
+        '''
+        if hasattr(self, 'condition'):
+            return self.condition
+        else:
+            from proveit.logic import And
+            return And()
+        
     def hasDomain(self):
         if hasattr(self, 'domains'):
             return self.domains is not None
         return self.domain is not None
-                        
+    
+    def first_domain(self):
+        if hasattr(self, 'domains'):
+            return self.domains[0]
+        return self.domain
+                            
     @staticmethod
     def _createOperand(instanceParamOrParams, instanceExpr, conditions):
         if len(conditions) == 0:
@@ -789,6 +808,237 @@ class OperationOverInstances(Operation):
         substitution = self.instanceSubstitution(universality, assumptions=assumptions)
         return substitution.deriveRightViaEquivalence(assumptions=assumptions)
     """
+
+def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
+    '''
+    Given a nested OperationOverInstances, derive or equate an 
+    equivalent form in which a given number of nested levels is 
+    bundled together.  Use the given theorem specific to the particular
+    OperationOverInstances.  
+    
+    For example,
+        \forall_{x, y | Q(x, y)} \forall_{z | R(z)} P(x, y, z)
+    can become
+        \forall_{x, y, z | Q(x, y), R(z)} P(x, y, z)
+    via bundle with num_levels=2.
+    
+    For example of the form of the theorem required, see
+    proveit.logic.boolean.quantification.bundling or
+    proveit.logic.boolean.quantification.bundling_equality.
+    '''
+    from proveit.relation import TransRelUpdater
+    from proveit.logic import Implies, Equals
+    # Make a TransRelUpdater only if the bundle_thm yield an
+    # equation, in which case we'll want the result to be an equation.
+    eq = None 
+    bundled = expr
+    while num_levels >= 2:
+        if (not isinstance(bundled, OperationOverInstances) or
+                not isinstance(bundled.instanceExpr, OperationOverInstances)):
+            raise ValueError("May only 'bundle' nested OperationOverInstances, "
+                             "not %s"%bundled)
+        _m = bundled.instanceParams.length()
+        _n = bundled.instanceExpr.instanceParams.length()
+        _P = bundled.instanceExpr.instanceExpr
+        _Q = bundled.effectiveCondition()
+        _R = bundled.instanceExpr.effectiveCondition()
+        m, n = bundle_thm.instanceVars
+        P, Q, R = bundle_thm.instanceExpr.instanceVars
+        correspondence = bundle_thm.instanceExpr.instanceExpr
+        if isinstance(correspondence, Implies):
+            if (not isinstance(correspondence.antecedent, 
+                               OperationOverInstances)
+                    or not len(correspondence.consequent.instanceParams)==2):
+                raise ValueError("'bundle_thm', %s, does not have the "
+                                 "expected form with the bundled form as "
+                                 "the consequent of the implication, %s"
+                                 %(bundle_thm, correspondence))
+            x_1_to_m, y_1_to_n = correspondence.consequent.instanceParams
+        elif isinstance(correspondence, Equals):
+            if not isinstance(correspondence.rhs, OperationOverInstances
+                    or not len(correspondence.antecedent.instanceParams)==2):
+                raise ValueError("'bundle_thm', %s, does not have the "
+                                 "expected form with the bundled form on "
+                                 "right of the an equality, %s"
+                                 %(bundle_thm, correspondence))
+            x_1_to_m, y_1_to_n = correspondence.rhs.instanceParams        
+        
+        all_params = bundled.instanceParams + bundled.instanceExpr.instanceParams
+        Pxy = Function(P, all_params)
+        Qx = Function(Q, bundled.instanceParams)
+        Rxy = Function(R, all_params)
+        x_1_to_m = x_1_to_m.replaced({m:_m})
+        y_1_to_n = y_1_to_n.replaced({n:_n})
+        instantiation = bundle_thm.instantiate(
+                {m:_m, n:_n, ExprTuple(x_1_to_m):bundled.instanceParams, 
+                 ExprTuple(y_1_to_n):bundled.instanceExpr.instanceParams ,
+                 Pxy:_P, Qx:_Q, Rxy:_R}, assumptions=assumptions)
+        if isinstance(instantiation.expr, Implies):
+            bundled = instantiation.deriveConsequent()
+        elif isinstance(instantiation.expr, Equals):
+            if eq is None:
+                eq = TransRelUpdater(bundled)
+            try:
+                bundled = eq.update(instantiation)
+            except ValueError:
+                raise ValueError(
+                        "Instantiation of bundle_thm %s is %s but "
+                        "should match %s on one side of the equation."
+                        %(bundle_thm, instantiation, bundled))
+        else:
+            raise ValueError("Instantiation of bundle_thm %s is %s but "
+                             "should be an Implies or Equals expression."
+                             %(bundle_thm, instantiation))
+        num_levels -= 1
+    if eq is None:
+        # Return the bundled result.
+        return bundled 
+    else:
+        # Return the equality between the original expression and
+        # the bundled result.
+        return eq.relation
+
+def unbundle(expr, unbundle_thm, num_param_entries=(1,), *, 
+             assumptions=USE_DEFAULTS):
+    '''
+    Given a nested OperationOverInstances, derive or equate an 
+    equivalent form in which the parameter entries are split in
+    number according to 'num_param_entries'.  Use the given theorem 
+    specific to the particular OperationOverInstances.  
+    
+    For example,
+        \forall_{x, y, z | Q(x, y), R(z)} P(x, y, z)
+    can become
+        \forall_{x, y | Q(x, y)} \forall_{z | R(z)} P(x, y, z)
+    via bundle with num_param_entries=(2, 1) or 
+    num_param_entries=(2,) -- the last number can be implied
+    by the remaining number of parameters.
+    
+    For example of the form of the theorem required, see
+    proveit.logic.boolean.quantification.unbundling or
+    proveit.logic.boolean.quantification.bundling_equality.
+    '''
+    from proveit.relation import TransRelUpdater
+    from proveit.logic import Implies, Equals, And
+    # Make a TransRelUpdater only if the bundle_thm yield an
+    # equation, in which case we'll want the result to be an equation.
+    eq = None 
+    unbundled = expr
+    net_indicated_param_entries = sum(num_param_entries)
+    num_actual_param_entries = len(expr.instanceParams)
+    for n in num_param_entries:
+        if not isinstance(n, int) or n <= 0:
+            raise ValueError(
+                    "Each of 'num_param_entries', must be an "
+                    "integer greater than 0.  %s fails this requirement."
+                    %(num_param_entries))
+    if net_indicated_param_entries > num_actual_param_entries:
+        raise ValueError("Sum of 'num_param_entries', %s=%d should not "
+                         "be greater than the number of parameter entries "
+                         "of %s for unbundling."
+                         %(num_param_entries, net_indicated_param_entries,
+                           expr))
+    if net_indicated_param_entries < num_actual_param_entries:
+        diff = num_actual_param_entries - net_indicated_param_entries
+        num_param_entries = list(num_param_entries) + [diff]
+    else:
+        num_param_entries = list(num_param_entries)
+    while len(num_param_entries) > 1:
+        n_last_entries = num_param_entries.pop(-1)
+        first_params = ExprTuple(*unbundled.instanceParams[:-n_last_entries])
+        first_param_vars = {getParamVar(param) for param in first_params}
+        remaining_params = \
+            ExprTuple(*unbundled.instanceParams[-n_last_entries:])
+        _m = first_params.length()
+        _n = remaining_params.length()
+        _P = unbundled.instanceExpr
+        # Split up the conditions between the outer 
+        # OperationOverInstances and inner OperationOverInstances
+        condition = unbundled.effectiveCondition()
+        if isinstance(condition, And):
+            _nQ = 0
+            for cond in condition.operands:
+                cond_vars = free_vars(cond, err_inclusively=True)
+                if first_param_vars.isdisjoint(cond_vars): break
+                _nQ += 1
+            if _nQ == 0:
+                _Q = And()
+            elif _nQ == 1:
+                _Q = condition.operands[0]
+            else:
+                _Q = And(*condition.operands[:_nQ])
+            _nR = len(condition.operands) - _nQ
+            if _nR == 0:
+                _R = And()
+            elif _nR == 1:
+                _R = condition.operands[-1]
+            else:
+                _R = And(*condition.operands[_nQ:])
+        elif first_param_vars.isdisjoint(free_vars(condition, 
+                                                   err_inclusively=True)):
+            _Q = condition
+            _R = And()
+        else:
+            _Q = And()
+            _R = condition
+        m, n = unbundle_thm.instanceVars
+        P, Q, R = unbundle_thm.instanceExpr.instanceVars
+        correspondence = unbundle_thm.instanceExpr.instanceExpr
+        if isinstance(correspondence, Implies):
+            if (not isinstance(correspondence.antecedent, 
+                               OperationOverInstances)
+                    or not len(correspondence.antecedent.instanceParams)==2):
+                raise ValueError("'unbundle_thm', %s, does not have the "
+                                 "expected form with the bundled form as "
+                                 "the antecedent of the implication, %s"
+                                 %(unbundle_thm, correspondence))
+            x_1_to_m, y_1_to_n = correspondence.antecedent.instanceParams
+        elif isinstance(correspondence, Equals):
+            if not isinstance(correspondence.rhs, OperationOverInstances
+                    or not len(correspondence.antecedent.instanceParams)==2):
+                raise ValueError("'unbundle_thm', %s, does not have the "
+                                 "expected form with the bundled form on "
+                                 "right of the an equality, %s"
+                                 %(unbundle_thm, correspondence))
+            x_1_to_m, y_1_to_n = correspondence.rhs.instanceParams
+        else:
+            raise ValueError("'unbundle_thm', %s, does not have the expected "
+                             "form with an equality or implication  "
+                             "correspondence, %s"
+                             %(unbundle_thm, correspondence))
+            
+        Qx = Function(Q, first_params)
+        Rxy = Function(R, unbundled.instanceParams)
+        Pxy = Function(P, unbundled.instanceParams)
+        x_1_to_m = x_1_to_m.replaced({m:_m})
+        y_1_to_n = y_1_to_n.replaced({n:_n})
+        instantiation = unbundle_thm.instantiate(
+                {m:_m, n:_n, ExprTuple(x_1_to_m):first_params, 
+                 ExprTuple(y_1_to_n):remaining_params,
+                 Pxy:_P, Qx:_Q, Rxy:_R}, assumptions=assumptions)
+        if isinstance(instantiation.expr, Implies):
+            unbundled = instantiation.deriveConsequent()
+        elif isinstance(instantiation.expr, Equals):
+            if eq is None:
+                eq = TransRelUpdater(unbundled)
+            try:
+                unbundled = eq.update(instantiation)
+            except ValueError:
+                raise ValueError(
+                        "Instantiation of bundle_thm %s is %s but "
+                        "should match %s on one side of the equation."
+                        %(unbundle_thm, instantiation, unbundled))
+        else:
+            raise ValueError("Instantiation of bundle_thm %s is %s but "
+                             "should be an Implies or Equals expression."
+                             %(unbundle_thm, instantiation))
+    if eq is None:
+        # Return the unbundled result.
+        return unbundled 
+    else:
+        # Return the equality between the original expression and
+        # the unbundled result.
+        return eq.relation
         
 class InstanceSubstitutionException(Exception):
     def __init__(self, msg, operationOverInstances, universality):

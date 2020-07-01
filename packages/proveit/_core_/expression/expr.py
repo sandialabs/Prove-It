@@ -310,6 +310,8 @@ class Expression(metaclass=ExprType):
                 # This specific auto reduction is disabled, so skip it.
                 return lambda assumptions : None
             def safe_auto_reduction(assumptions=USE_DEFAULTS):
+                was_disabled = (attr_self_class in 
+                                defaults.disabled_auto_reduction_types)
                 try:
                     # The specific auto reduction must be disabled
                     # to avoid infinite recursion.
@@ -317,8 +319,9 @@ class Expression(metaclass=ExprType):
                     return attr.__call__(assumptions=assumptions)
                 finally:
                     # Re-enable the reduction.
-                    defaults.disabled_auto_reduction_types.remove(
-                            attr_self_class)
+                    if not was_disabled:
+                        defaults.disabled_auto_reduction_types.remove(
+                                attr_self_class)
             return safe_auto_reduction
         return attr
 
@@ -863,6 +866,8 @@ class Expression(metaclass=ExprType):
             # The default failed, let's try the Expression-class specific version.
             try:
                 evaluation = self.doReducedEvaluation(assumptions)
+                if evaluation is None:
+                    raise EvaluationError(self, assumptions)
                 method_called = self.doReducedEvaluation
             except NotImplementedError:
                 # We have nothing but the default evaluation strategy to try,
@@ -947,10 +952,15 @@ class Expression(metaclass=ExprType):
             try:
                 # first try evaluation.  that is as simple as it gets.
                 simplification = self.doReducedEvaluation(assumptions)
+                if simplification is None:
+                    raise EvaluationError(self, assumptions)
                 method_called = self.doReducedEvaluation
             except (NotImplementedError, EvaluationError):
                 try:
                     simplification = self.doReducedSimplification(assumptions)
+                    if simplification is None:
+                        raise SimplificationError('Unable to simplify: ',
+                                                  str(self))
                     method_called = self.doReducedSimplification
                 except (NotImplementedError, SimplificationError, ProofFailure):
                     # Simplification did not work.  Just use self-equality.
@@ -1160,6 +1170,26 @@ def _entirely_unbound_vars(expr):
     if isinstance(expr, Lambda):
         return ubound_vars.difference(expr.parameterVars)
     return ubound_vars
+
+def attempt_to_simplify(expr, assumptions, requirements=None):
+    '''
+    Attempt to simplify the given expression under the given
+    assumptions.  If successful, return the simplified expression;
+    otherwise, return the original expression.  Append to
+    'requirements' if simplification is successful and not
+    trivial (the simplified expression is not the same as the
+    original).
+    '''
+    from proveit.logic import SimplificationError
+    try:
+        simplification = expr.simplification(assumptions)
+        simplified = simplification.rhs
+        if requirements is not None:
+            if expr != simplified:
+                requirements.append(simplification)
+        return simplified
+    except SimplificationError:
+        return expr
 
 def expressionDepth(expr):
     '''
