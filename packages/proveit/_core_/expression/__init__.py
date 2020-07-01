@@ -1,5 +1,5 @@
 from .expr import (Expression, traverse_inner_expressions, used_vars, 
-                   possibly_free_var_ranges, free_vars,
+                   possibly_free_var_ranges, free_vars, attempt_to_simplify,
                    expressionDepth, MakeNotImplemented, 
                    ImproperReplacement)
 from .style_options import StyleOptions
@@ -7,7 +7,7 @@ from .inner_expr import InnerExpr
 from .fencing import maybeFencedString, maybeFencedLatex, maybeFenced
 from .operation import (
         Operation, IndexedVar, indexed_var, Function, OperationSequence, 
-        OperationOverInstances, OperationError)
+        OperationOverInstances, bundle, unbundle, OperationError)
 from .conditional import Conditional
 from .lambda_expr import (
         Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
