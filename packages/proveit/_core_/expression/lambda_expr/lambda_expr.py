@@ -495,7 +495,6 @@ class Lambda(Expression):
         '''
         from proveit import ExprTuple, extract_var_tuple_indices
         from proveit.logic import Equals
-        
         try:
             if parameter_vars is None:
                 parameter_vars = \
@@ -679,10 +678,10 @@ class Lambda(Expression):
         relabeling.
         '''
         
-        from proveit import Variable, ExprRange, IndexedVar
+        from proveit import Variable, ExprTuple, ExprRange, IndexedVar
         from proveit._core_.expression.composite.expr_range import \
             extract_start_indices, extract_end_indices
-        
+    
         # Within the lambda scope, we can instantiate lambda parameters
         # in a manner that retains the validity of the parameters as
         # parameters.  For any disallowed instantiation of Lambda 
@@ -730,6 +729,13 @@ class Lambda(Expression):
                     else:
                         assert isinstance(param_of_var, IndexedVar)
                         mask_start = mask_end = [param_of_var.index]
+                    # Make replacements in the masked_ start/end:
+                    for mask_indices in (mask_start, mask_end):
+                        for _, idx in enumerate(mask_indices):
+                            mask_indices[_] = \
+                                idx.replaced(repl_map, allow_relabeling,
+                                             assumptions, requirements,
+                                             equality_repl_requirements)
                     # We may only use the variable range forms of 
                     # key_repl that carve out the masked indices (e.g.
                     # (x_1, ..., x_n, x_{n+1}) is usable if the masked
@@ -740,12 +746,12 @@ class Lambda(Expression):
                                 var, key_repl, mask_start, mask_end, 
                                 allow_relabeling, repl_map, inner_repl_map, 
                                 assumptions, requirements):
-                            # No valid variable range form that carvs
+                            # No valid variable range form that carves
                             # out the masked indices.  All we can do
                             # is indicate that the 'param_of_var' is
                             # unchanged and no other expansion is 
                             # allowed.
-                            inner_repl_map[var] = {param_of_var}
+                            inner_repl_map[var] = {ExprTuple(param_of_var)}
                             inner_repl_map[param_of_var] = param_of_var                
                     except ValueError as e:
                         raise ImproperReplacement(
@@ -818,11 +824,11 @@ class Lambda(Expression):
         new_params = []
         for parameter, param_var in zip(self.parameters, self.parameterVars):
             if isinstance(parameter, ExprRange):
-                subbed_param = parameter._replaced_entries(
+                for subbed_param in parameter._replaced_entries(
                         inner_repl_map, allow_relabeling, 
                         assumptions, requirements,
-                        equality_repl_requirements)
-                new_params.extend(subbed_param)
+                        equality_repl_requirements):
+                    new_params.append(subbed_param)
             else:
                 subbed_param = parameter.replaced(
                         inner_repl_map, allow_relabeling, 
@@ -840,7 +846,7 @@ class Lambda(Expression):
             [assumption for assumption in assumptions if
              free_vars(assumption, err_inclusively=True).isdisjoint(
                      new_param_vars)]
-                
+
         return new_params, inner_repl_map, tuple(inner_assumptions)
     
 
@@ -1107,7 +1113,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
                             # No good. Too many arguments for parameter.
                             raise ValueError(
                                     "Too many arguments, %s, for parameter"
-                                    "%s."%(param_operands, parameter))
+                                    " %s."%(param_operands, parameter))
                         elif (max_int_param_operands_len is None or
                                   int_param_len is None or
                                   max_int_param_operands_len==int_param_len):

@@ -539,7 +539,7 @@ class ContextStorage:
             context_name, theorem_name = presumption_name.rsplit('.', 1)
             context = Context.getContext(context_name)
             if theorem_name not in context.theoremNames():
-                raise KeyError("Theorem %s not found in context %s"%theorem_name, context.name)
+                raise KeyError("Theorem %s not found in context %s"%(theorem_name, context.name))
             if presumption_name in presumption_chain:
                 chain_index = presumption_chain.index(presumption_name)
                 presumption = context.getTheorem(theorem_name)
