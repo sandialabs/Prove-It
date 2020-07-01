@@ -6,6 +6,7 @@ and proofs) for the given contexts, including sub-contexts.
 from __future__ import print_function
 import sys
 import os
+import subprocess
 import re
 import time
 import lxml#Comment in for Python 3
@@ -335,8 +336,28 @@ len(gc.get_objects()) # used to check for memory leaks
                 #execute_processor.km.restart_kernel(newport=True)
         with open(notebook_path, 'wt', encoding='utf8') as f:
             nbformat.write(nb, f)
-        
         print("; finished in %0.2f seconds"%(time.time()-start_time))
+        
+        try:
+            # If the file is in a git repository which is filtering
+            # the notebook output, see if the only change is in
+            # the output.  In that case, 'git add' the file so it
+            # doesn't show up as modified.
+            process = subprocess.Popen(["git", "diff", notebook_path],
+                                       stdout=subprocess.PIPE)
+            output = process.communicate()[0]
+            output = re.sub('^diff --git .*$', '', output.decode('utf-8'))
+            if output=="":
+                # No change except perhaps filtered output.
+                # Do "git add" so it won't show up as different.
+                subprocess.Popen(['git', 'add', notebook_path])
+                print("Clearing filtered notebook-output modifications in git:"
+                      "\n\tgit add %s"%notebook_path)
+        except:
+            # Our git check may fail because maybe it isn't in a git
+            # repository.  In that case, don't worry about it.
+            pass
+        
         return nb
 
 def generate_css_if_missing(path):
