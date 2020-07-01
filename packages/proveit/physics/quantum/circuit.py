@@ -1,8 +1,8 @@
 import sys
-from proveit import Lambda, Literal, Operation
+from proveit import Lambda, Literal, Operation, USE_DEFAULTS
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
- # from proveit.physics.quantum._common_ import Xgate, Ygate, Zgate, Hgate
+# from proveit.physics.quantum._common_ import Xgate, Ygate, Zgate, Hgate
 # not clear yet what to substitute for ExpressionTensor -- perhaps ExprArray
 # and Block is not being used in the active code
 # from proveit.multiExpression import ExpressionTensor, Block
@@ -186,12 +186,26 @@ class Gate(Operation):
     # the literal operator of the Gate operation class
     _operator_ = Literal('GATE', context=__file__)
     
-    def __init__(self, gate_operation):
+    def __init__(self, *operand):
         '''
         Create a quantum circuit gate performing the given operation.
-        '''    
-        Operation.__init__(self, Gate._operator_, gate_operation)
-        self.gate_operation = self.operands[0]
+        '''
+        if len(operand) > 1:
+            raise ValueError('Expected one operand, got %s instead.' % len(operand))
+
+        Operation.__init__(self, Gate._operator_, operand)
+
+        if len(operand) == 0:
+            self.gate_operation = None
+        else:
+            self.gate_operation = self.operands[0]
+
+    def auto_reduction(self, assumptions=USE_DEFAULTS):
+        '''
+        Automatically reduce "Gate() = IdentityOp()".
+        '''
+        if len(self.operands) == 0:
+            pass
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -200,8 +214,10 @@ class Gate(Operation):
         return self.formatted('latex', **kwargs)
 
     def formatted(self, formatType, **kwargs):
-        formattedGateOperation = (
-                self.gate_operation.formatted(formatType, fence=False))
+        if self.gate_operation is None:
+            formattedGateOperation = '[]'
+        else:
+            formattedGateOperation = self.gate_operation.formatted(formatType, fence=False)
         if formatType == 'latex':
             return r'\gate{' + formattedGateOperation + r'}'
         else:
@@ -243,13 +259,25 @@ class MultiQubitGate(Gate):
 
         Gate.__init__(self, gate.gate_operation)
 
+    def auto_reduction(self, assumptions=USE_DEFAULTS):
+        '''
+        Automatically reduce "MultiQubitGate() = IdentityOp()" and "MultiQubitGate(Gate(a), Set(n)) = Gate(a)".
+        '''
+        pass
+
+    def extractInitArgValue(argName, operator_or_operators, operand_or_operands):
+     #   print(operand_or_operands)
+      #  print(operator_or_operators)
+        yield Gate(operator_or_operators)
+        yield Set(operand_or_operands)
+
     def styleOptions(self):
         from proveit._core_.expression.style_options import StyleOptions
 
         options = StyleOptions(self)
         options.addOption('representation',
-                          ("'implicit' representation displays X gates as a target, while"
-                           "'explicit' representation always displays the type of gate in a box. Ex. |X|"))
+                           ("'implicit' representation displays X gates as a target, while"
+                            "'explicit' representation always displays the type of gate in a box. Ex. |X|"))
         return options
 
     def string(self, **kwargs):
@@ -291,13 +319,13 @@ class MultiQubitGate(Gate):
         if 'qcircuit' not in lt.packages:
             lt.packages.append('qcircuit')
 
-    # original below
-    # def formatted(self, formatType, fence=false):
-    #     formattedGateOperation = (
-    #             self.gate_operation.formatted(formatType, fence=False))
-    #     if formatType == 'latex':
-    #         return r'\gate{' + formattedGateOperation + r'}' 
-    #     else: return Operation._formatted(self, formatType, fence)
+ # original below
+ # def formatted(self, formatType, fence=false):
+ #     formattedGateOperation = (
+ #             self.gate_operation.formatted(formatType, fence=False))
+ #     if formatType == 'latex':
+ #         return r'\gate{' + formattedGateOperation + r'}'
+ #     else: return Operation._formatted(self, formatType, fence)
 
 
 class Target(Operation):
@@ -412,6 +440,7 @@ class Circuit(ExprArray):
             # cycle through each ExprTuple; k keeps track of which row we are on.
             row = dict()
             if isinstance(entry, ExprTuple):
+                col = 0
                 for i, value in enumerate(entry):
                     # cycle through each row; i keeps track of which column we are on.
                     if isinstance(value, MultiQubitGate):
@@ -477,7 +506,44 @@ class Circuit(ExprArray):
                             else:
                                 # this is the last gate so we skip adding a wire
                                 row[i] = 'skip'
-            wire_placement.append(row)
+                    elif isinstance(value, ExprRange):
+                        # ExprTuple of an ExprRange
+                        j = 0
+                        while j < 3:
+                            # we count to 3 because there are 3 elements in each row of the ExprRange
+                            row[col] = 'gate'
+                            j += 1
+                            col += 1
+                wire_placement.append(row)
+            elif isinstance(entry, ExprRange):
+                if isinstance(entry.first(), ExprTuple):
+                    # ExprRange of an ExprTuple
+                    k = 0
+
+                    while k < 3:
+                        col = 0
+                        # we count to 3 because there are 3 elements in each row of the ExprRange
+                        for i, item in enumerate(entry.first()):
+                            if isinstance(item, ExprRange):
+                                # ExprRange of an ExprTuple of an ExprRange
+                                j = 0
+                                while j < 3:
+                                    # we count to 3 because there are 3 elements in each ExprRange
+                                    if k < 2:
+                                        row[col] = ['gate', 1]
+                                    else:
+                                        row[col] = 'gate'
+                                    j += 1
+                                    col += 1
+                            else:
+                                row[i] = 'gate'
+
+                        wire_placement.append(row)
+                        row = dict()
+                        k += 1
+            else:
+                wire_placement.append(row)
+
         return wire_placement
 
     def string(self, **kwargs):
@@ -500,13 +566,6 @@ class Circuit(ExprArray):
             orientation = self.getStyle('orientation', 'horizontal')
 
         spacing = '@C=1em @R=.7em'
-        for entry in self.entries:
-            if isinstance(entry, ExprTuple):
-                for item in entry:
-                    if isinstance(item, ExprRange):
-                        spacing = '@C=2em @R=1.5em'
-            elif isinstance(entry, ExprRange):
-                spacing = '@C=2em @R=1.5em'
 
         if formatType == 'latex':
             outStr += r'\Qcircuit' + spacing + '{' + '\n'
@@ -542,13 +601,17 @@ class Circuit(ExprArray):
                     add = ' '
                 out_str = ''
                 if column in wires[row]:
+                    if column == 0:
+                        add = '& '
                     if isinstance(wires[row][column], list):
                         # this is the first in a block multiqubit gate
                         if wires[row][column][0] == 'first':
                             out_str += add + r'\multigate{' + str(wires[row][column][1]) + r'}{' + entry + r'}'
-                        else:
+                        elif wires[row][column][0] == 'ghost':
                             # we assume this to be a ghost since there are only two lists: first and ghost
-                            out_str += add + r'\ghost{' + entry + r'} \qwx[' + wires[row][column][1] + r']'
+                            out_str += add + r'\ghost{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
+                        elif wires[row][column][0] == 'gate':
+                            out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column][1]) + r']'
                     elif wires[row][column] == 'ghost':
                         # this is a member of a block multiqubit gate
                         out_str += add + r'\ghost{' + entry + '}'
@@ -565,10 +628,12 @@ class Circuit(ExprArray):
                         else:
                             out_str += add + r'\gate{' + entry + r'}'
                     # if we are adding wires, we add the length according to self.wires
+                    elif wires[row][column] == 'gate':
+                        out_str += add + r'\gate{' + entry + r'}'
                     elif entry == 'X':
                         if entry != 'implicit':
                             # we want to explicitly see the type of gate as a 'letter' representation
-                            out_str += add + r'\gate{' + entry + r'}' + r' \qwx[' + str(wires[row][column]) + r']'
+                            out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
                         else:
                             # this is formatted as a target.
                             out_str += add + r'\targ \qwx[' + wires[row][column] + r']'
@@ -579,7 +644,7 @@ class Circuit(ExprArray):
                         # this is formatted as a solid dot using \ctrl and \cw since there is a classical wire
                         out_str += add + r'\control \cw \cwx[' + str(wires[row][column]) + r']'
                     else:
-                        out_str += add + r'\gate{' + entry + r'}' + r' \qwx[' + str(wires[row][column]) + r']'
+                        out_str += add + r'\gate{' + entry + r'} \qwx[' + str(wires[row][column]) + r']'
 
                     formatted_sub_expressions.append(out_str)
                 else:
