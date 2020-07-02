@@ -229,35 +229,40 @@ class Gate(Operation):
             lt.packages.append('qcircuit')
 
 
-class MultiQubitGate(Gate):
+class MultiQubitGate(Operation):
     '''
     Represents a connection of multiple gates.  In a circuit(), each row that contains a member of a MultiQubitGate
-    must contain a MultiQubitGate() where the arguments are 1- the gate, and 2- the indices of the other gates involved
-    in the MultiQubitGate contained in a Set() starting at index 1, NOT 0.
+    must contain a MultiQubitGate() where the arguments are 1- the name of the gate, and 2- the indices of the other
+    gates involved in the MultiQubitGate contained in a Set() starting at index 1, NOT 0.
     For example,  |1> \\control |1> \\ |0> |x| |0> would be represented as
-    Circuit(ExprTuple(Input, MultiQubitGate(Gate(CONTROL), Set(one, two), Output),
-            ExprTuple(Input, MultiQubitGate(Gate(X), Set(one, two), Output).
+    Circuit(ExprTuple(Input, MultiQubitGate(CONTROL, Set(one, two), Output),
+            ExprTuple(Input, MultiQubitGate(X, Set(one, two), Output).
     If there are consecutive rows that contain the same type of gate, they will
     be represented as a block.
     '''
-    def __init__(self, gate, indices, styles=None):
+    # the literal operator of the Gate operation class
+    _operator_ = Literal('MULTI_QUBIT_GATE', context=__file__)
+
+    def __init__(self, *operands, styles=None):
         '''
         Create a quantum circuit gate performing the given operation.
         '''
-        if not isinstance(gate, Gate):
-            raise TypeError('Expected first input to be a \'Gate\' object, got \'' + gate.__class__.__name__ +
-                            '\' instead.')
-        if not isinstance(indices, Set):
-            raise TypeError('Expected second input to be a \'Set\' got \'' + indices.__class__.__name__ + '\' instead.')
-        self.indices = indices.operands
-        self.gate = gate
+        if len(operands) > 2:
+            raise TypeError('Expected there to be two arguments: gate and set')
+        if len(operands) == 0:
+            # empty multiqubitgate axiom
+            pass
+        elif len(operands) == 1:
+            # multiqubitgate reduction to gate
+            pass
+        else:
+            self.indices = operands[1].operands
+            self.gate = operands[0]
 
-        if styles is None:
-            styles = dict()
+        if styles is None: styles = dict()
         if 'representation' not in styles:
             styles['representation'] = 'explicit'
-
-        Gate.__init__(self, gate.gate_operation)
+        Operation.__init__(self, MultiQubitGate._operator_, operands, styles=styles)
 
     def auto_reduction(self, assumptions=USE_DEFAULTS):
         '''
@@ -265,11 +270,14 @@ class MultiQubitGate(Gate):
         '''
         pass
 
-    def extractInitArgValue(argName, operator_or_operators, operand_or_operands):
-     #   print(operand_or_operands)
-      #  print(operator_or_operators)
-        yield Gate(operator_or_operators)
-        yield Set(operand_or_operands)
+    def extractInitArgValue(argName, operator_or_operators, operand_or_operands, styles=None):
+        print(argName)
+        print(operator_or_operators)
+        print(operand_or_operands)
+        if argName == 'styles':
+            return styles 
+        else:
+            return operand_or_operands
 
     def styleOptions(self):
         from proveit._core_.expression.style_options import StyleOptions
@@ -291,7 +299,7 @@ class MultiQubitGate(Gate):
             representation = self.getStyle('representation', 'explicit')
 
         formattedGateOperation = (
-            self.gate_operation.formatted(formatType, fence=False))
+            self.gate.formatted(formatType, fence=False))
 
         if formatType == 'latex':
             out_str = ''
@@ -447,8 +455,8 @@ class Circuit(ExprArray):
                         index = value.indices.index(num(k))
                         # the index of the current position within the MultiQubitGate.indices.  This should be the same
                         # across all gates in the MultiQubitGate
-                        if value.gate.gate_operation.string() != 'CONTROL' and \
-                                value.gate.gate_operation.string() != 'CLASSICAL\\_CONTROL':
+                        if value.gate.string() != 'CONTROL' and \
+                                value.gate.string() != 'CLASSICAL\\_CONTROL':
                             # control gates should not be inside of a MultiQubit block gate
                             if index < len(value.indices) - 1:
                                 # if this is not the last gate in the multiQubitGate
