@@ -78,9 +78,10 @@ class Implies(TransitiveRelation):
                 return self.evaluation(assumptions)
             except:
                 return self.prove()
+        
         try:
-            # Try evaluating the consequent.
-            evaluation = self.consequent.evaluation(assumptions)
+            # See of the consequent has an evaluation.
+            evaluation = self.consequent.evaluation(assumptions, automation=False)
             if evaluation.rhs == TRUE:
                 # If the consequent evaluates to true, we can prove trivially via hypothetical reasoning
                 return self.consequent.prove(assumptions).asImplication(self.antecedent)
@@ -94,8 +95,8 @@ class Implies(TransitiveRelation):
         except:
             pass
         try:
-            # Try evaluating the antecedent.
-            evaluation = self.antecedent.evaluation(assumptions)
+            # See if the antecedent has an evaluation.
+            evaluation = self.antecedent.evaluation(assumptions, automation=False)
             if evaluation.rhs == FALSE:
                 # Derive A => B given Not(A); it doesn't matter what B is if A is FALSE
                 return falseAntecedentImplication.specialize({A: self.antecedent, B: self.consequent}, assumptions=assumptions)
@@ -107,8 +108,15 @@ class Implies(TransitiveRelation):
             return TransitiveRelation.conclude(self, assumptions)            
         except:
             pass
-        # try to prove the implication via hypothetical reasoning.
-        return self.consequent.prove(tuple(assumptions) + (self.antecedent,)).asImplication(self.antecedent)
+        try:
+            # try to prove the implication via hypothetical reasoning.
+            return self.consequent.prove(tuple(assumptions) + (self.antecedent,)).asImplication(self.antecedent)
+        except ProofFailure:
+            raise ProofFailure(self, assumptions, 
+                               "Unable to automatically conclude %s by "
+                               "standard means.  To try to prove this via "
+                               "transitive implication relations, try "
+                               "'concludeViaTransitivity'.")
 
     def concludeNegation(self, assumptions=USE_DEFAULTS):
         '''

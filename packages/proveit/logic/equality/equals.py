@@ -147,9 +147,22 @@ class Equals(TransitiveRelation):
                     raise ProofFailure(self, assumptions,
                         "Does not match with evaluation: %s"%str(evaluation))
                 return evaluation.deriveReversed()
-            except SimplificationError as e:
-                raise ProofFailure(self, assumptions,
-                        "Evaluation error: %s"%e.message)
+            except EvaluationError as e:
+                raise ProofFailure(self, assumptions, 
+                                   "Evaluation error: %s"%e.message)
+        if hasattr(self.lhs, 'deduceEquality'):
+            # If there is a 'deduceEquality' method, use that.
+            # The responsibility then shifts to that method for
+            # determining what strategies should be attempted
+            # (with the recommendation that it should not attempt
+            # multiple non-trivial automation strategies).
+            eq = self.lhs.deduceEquality(self, assumptions)
+            if eq.expr != self:
+                raise ValueError("'deduceEquality' not implemented "
+                                 "correctly; must deduce the 'equality' "
+                                 "that it is given if it can: "
+                                 "'%s' != '%s'"%(eq.expr, self))
+            return eq
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
             Implies(self.rhs, self.lhs).prove(assumptions, automation=False)
