@@ -14,4 +14,3 @@ summation
 product
 differentiation
 integration
-absolute_value
