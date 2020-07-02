@@ -151,18 +151,18 @@ class Equals(TransitiveRelation):
                 raise ProofFailure(self, assumptions, 
                                    "Evaluation error: %s"%e.message)
         if hasattr(self.lhs, 'deduceEquality'):
-            # Try the 'deduceEquality' method if there is one.
-            try:
-                eq = self.lhs.deduceEquality(self, assumptions)
-            except ProofFailure:
-                eq = None
-            if eq is not None:
-                if eq.expr != self:
-                    raise ValueError("'deduceEquality' not implemented "
-                                     "correctly; must deduce the 'equality' "
-                                     "that it is given if it can: "
-                                     "'%s' != '%s'"%(eq.expr, self))
-                return eq
+            # If there is a 'deduceEquality' method, use that.
+            # The responsibility then shifts to that method for
+            # determining what strategies should be attempted
+            # (with the recommendation that it should not attempt
+            # multiple non-trivial automation strategies).
+            eq = self.lhs.deduceEquality(self, assumptions)
+            if eq.expr != self:
+                raise ValueError("'deduceEquality' not implemented "
+                                 "correctly; must deduce the 'equality' "
+                                 "that it is given if it can: "
+                                 "'%s' != '%s'"%(eq.expr, self))
+            return eq
         try:
             Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
             Implies(self.rhs, self.lhs).prove(assumptions, automation=False)

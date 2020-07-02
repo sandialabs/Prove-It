@@ -657,6 +657,12 @@ class Expression(metaclass=ExprType):
         and it cannot be proven trivially via assumption or defaultConclude.
         The `prove` method has a mechanism to prevent infinite recursion, 
         so there are no worries regarding cyclic attempts to conclude an expression.
+        
+        As a rule of thumb, 'conclude' methods should only attempt
+        one non-trivial strategy for the automation.  Simple checks if
+        something is already known to be true is deemed "trivial".
+        If everything fails, other methods could be recommended to the 
+        user to be attempted manually.
         '''
         raise NotImplementedError("'conclude' not implemented for " + str(self.__class__))
 
@@ -984,34 +990,7 @@ class Expression(metaclass=ExprType):
         Raise a SimplificationError if the simplification
         cannot be done.
         '''
-        raise NotImplementedError("'doReducedSimplification' not implemented for %s class"%str(self.__class__))             
-    
-    def deduceEquality(self, equality, assumptions=USE_DEFAULTS, 
-                       minimal_automation=False):
-        '''
-        Under the given assumptions, attempt to prove the given 
-        'equality' where the left-side is 'self', returning the
-        proven KnownTruth.  If minimal_automation is True, don't do
-        anything "fancy" to attempt to prove this.  If
-        minimal_automation is False, this default version attempts
-        to deduce equality by simplifying both sides and proving
-        that the simplified forms are equal.
-        '''
-        from proveit.logic import Equals
-        assert isinstance(equality, Equals) and equality.lhs == self
-        if minimal_automation:
-            return equality.prove(assumptions, automation=False)
-
-        # Try to prove equality via simplifying both sides.
-        lhs_simplification = equality.lhs.simplification(assumptions)
-        rhs_simplification = equality.rhs.simplification(assumptions)
-        simplified_lhs = lhs_simplification.rhs
-        simplified_rhs = rhs_simplification.rhs
-        if simplified_lhs != equality.lhs or simplified_rhs != equality.rhs:
-            simplified_eq = Equals(simplified_lhs, simplified_rhs).prove(assumptions)
-            return Equals.applyTransitivities(
-                    [lhs_simplification, simplified_eq, rhs_simplification],
-                    assumptions)
+        raise NotImplementedError("'doReducedSimplification' not implemented for %s class"%str(self.__class__))
     
     """
     # Generated automatically via InnerExpr.register_equivalence_method.
