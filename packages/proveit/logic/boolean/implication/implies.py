@@ -102,18 +102,13 @@ class Implies(TransitiveRelation):
                 return falseAntecedentImplication.specialize({A: self.antecedent, B: self.consequent}, assumptions=assumptions)
         except:
             pass
-        try:
-            # Use a breadth-first search approach to find the shortest
-            # path to get from one end-point to the other.
-            return TransitiveRelation.conclude(self, assumptions)            
-        except:
-            pass
+        
         try:
             # try to prove the implication via hypothetical reasoning.
             return self.consequent.prove(tuple(assumptions) + (self.antecedent,)).asImplication(self.antecedent)
         except ProofFailure:
             raise ProofFailure(self, assumptions, 
-                               "Unable to automatically conclude %s by "
+                               "Unable to automatically conclude by "
                                "standard means.  To try to prove this via "
                                "transitive implication relations, try "
                                "'concludeViaTransitivity'.")
