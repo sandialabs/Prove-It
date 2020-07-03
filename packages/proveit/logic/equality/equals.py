@@ -120,7 +120,7 @@ class Equals(TransitiveRelation):
         simple reflexivity (x=x), via an evaluation (if one side is an
         irreducible), or via transitivity.
         '''
-        from proveit.logic import TRUE, FALSE, Implies, Iff
+        from proveit.logic import TRUE, FALSE, Implies, Iff, inBool
         if self.lhs==self.rhs:
             # Trivial x=x
             return self.concludeViaReflexivity()
@@ -150,6 +150,15 @@ class Equals(TransitiveRelation):
             except EvaluationError as e:
                 raise ProofFailure(self, assumptions, 
                                    "Evaluation error: %s"%e.message)
+        
+        if (Implies(self.lhs, self.rhs).proven(assumptions) and 
+                Implies(self.rhs, self.lhs).proven(assumptions) and
+                inBool(self.lhs).proven(assumptions) and
+                inBool(self.rhs).proven(assumptions)):
+            # There is mutual implication both sides are known to be
+            # boolean.  Conclude equality via mutual implication.
+            return Iff(self.lhs, self.rhs).deriveEquality(assumptions)
+        
         if hasattr(self.lhs, 'deduceEquality'):
             # If there is a 'deduceEquality' method, use that.
             # The responsibility then shifts to that method for
@@ -163,33 +172,30 @@ class Equals(TransitiveRelation):
                                  "that it is given if it can: "
                                  "'%s' != '%s'"%(eq.expr, self))
             return eq
-        try:
-            Implies(self.lhs, self.rhs).prove(assumptions, automation=False)
-            Implies(self.rhs, self.lhs).prove(assumptions, automation=False)
-            # lhs => rhs and rhs => lhs, so attempt to prove
-            # lhs = rhs via lhs <=> rhs
-            # which works when they can both be proven to be Booleans.
+        else:
+            '''
+            If there is no 'deduceEquality' method, we'll try
+            simplifying each side to see if they are equal.
+            '''
+            # Try to prove equality via simplifying both sides.
+            lhs_simplification = self.lhs.simplification(assumptions)
+            rhs_simplification = self.rhs.simplification(assumptions)
+            simplified_lhs = lhs_simplification.rhs
+            simplified_rhs = rhs_simplification.rhs
             try:
-                return Iff(self.lhs, self.rhs).deriveEquality(assumptions)
-            except:
-                from proveit.logic.boolean.implication._theorems_ import (
-                        eqFromMutualImpl)
-                return eqFromMutualImpl.specialize(
-                        {A:self.lhs, B:self.rhs}, assumptions=assumptions)
-        except ProofFailure:
-            pass
-        
-        """
-        # Use concludeEquality if available
-        if hasattr(self.lhs, 'concludeEquality'):
-            return self.lhs.concludeEquality(assumptions)
-        if hasattr(self.rhs, 'concludeEquality'):
-            return self.rhs.concludeEquality(assumptions)
-        """
-        # Use a breadth-first search approach to find the shortest
-        # path to get from one end-point to the other.
-        return TransitiveRelation.conclude(self, assumptions)
-                
+                if simplified_lhs != self.lhs or simplified_rhs != self.rhs:
+                    simplified_eq = Equals(simplified_lhs, simplified_rhs).prove(assumptions)
+                    return Equals.applyTransitivities(
+                            [lhs_simplification, simplified_eq, rhs_simplification],
+                            assumptions)
+            except ProofFailure:
+                pass
+        raise ProofFailure(self, assumptions, 
+                           "Unable to automatically conclude by "
+                           "standard means.  To try to prove this via "
+                           "transitive implication relations, try "
+                           "'concludeViaTransitivity'.")
+    
     @staticmethod
     def WeakRelationClass():
         return Equals # = is the strong and weak form of equality,
