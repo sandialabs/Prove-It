@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, ExprTuple, USE_DEFAULTS
+from proveit import ExprTuple, InnerExpr, Literal, Operation, USE_DEFAULTS
 # from proveit.abstract_algebra.generic_methods import apply_permutation_thm
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, generic_permutation)
@@ -40,7 +40,6 @@ class Set(Operation):
     def permutation_move(self, initIdx=None, finalIdx=None,
                          assumptions=USE_DEFAULTS):
         '''
-        change to permutationMove (using move as the verb)
         and use a permutationSwap for the extra one (use swap for the verb)
         Deduce that this Set expression is equal to a Set
         in which the element at index initIdx has been moved to
@@ -55,6 +54,12 @@ class Set(Operation):
         return apply_commutation_thm(self, initIdx, finalIdx, binaryPermutation,
                                      leftwardPermutation, rightwardPermutation,
                                      assumptions)
+
+    # ============================================================== #
+    # Might be useful to have a special swap version of permutation
+    # def permutation_swap
+    # register with swapped as the adjective, swap as the verb
+    # ============================================================== #
 
     def permutation(self, new_order=None, cycles=None,
                     assumptions=USE_DEFAULTS):
@@ -106,12 +111,9 @@ class Set(Operation):
         valid_indices_list = list(range(0, len(self.operands)))
 
         if subset_indices is not None:
-            # perhaps …
-            # and be less demanding on the indices check? What is the
-            # harm of repeated indices? Since we allow repeated elems?
             # We must have had subset=None, so check validity of the
             # indices and use them to create a subset Set
-            self._check_subset_indices(valid_indices_list, subset_indices)
+            self._check_subset_indices_weak(valid_indices_list, subset_indices)
             subset_list_from_indices = [self_list[i] for i in subset_indices]
             subset_from_indices = Set(*subset_list_from_indices)
             subset = subset_from_indices
@@ -119,17 +121,35 @@ class Set(Operation):
         # If we make it this far we should have an explicit subset Set,
         # either explicitly provided or derived from the
         # subset_indices. A subset generated above from the
-        # subset_indices will automatically now be plausible; if the
-        # subset was supplied by as an argument, then we still need to
+        # subset_indices will automatically now be plausible. If the
+        # subset was supplied as an argument, we still need to
         # check if the subset is a plausible subset (it should only
-        # have elements found in the original Set)
-        if subset_indices is None: # subset supplied as argument
-            subset_list = list(subset.operands)
-            error_elems = []
-            for elem in subset_list:
-                if elem not in self_list:
-                    error_elems.append(elem)
-            if len(error_elems)>0:
+        # have elements found in the original Set).
+        # perhaps then make this an if subset_indices is None?
+        subset_list = list(subset.operands)
+        error_elem_candidates = set()
+        for elem in set(subset_list):
+            if elem not in set(self_list):
+                error_elem_candidates.add(elem)
+        if len(error_elem_candidates)>0:
+            # we have candidates in the supposed subset that might not
+            # appear in the supposed superset, but the candidates might
+            # (e.g.) be variables with the appropriate values, so we
+            # check just a little more assiduously before returning
+            # an error message
+            error_elems = error_elem_candidates.copy()
+            from proveit.logic import Equals
+            print("self.elements: {}".format(self.elements))                    # for testing; delete later
+            for elem in error_elem_candidates:
+                for super_elem in set(self.elements):
+                    print("Checking if {0} = {1}".format(elem, super_elem))     # for testing; delete later
+                    if Equals(elem, super_elem).proven(
+                            assumptions=assumptions):
+                        print("Equals(elem, super_elem).proven(): {}".
+                            format(Equals.knownEqualities[elem]))
+                        error_elems.discard(elem)
+                        break
+            if len(error_elems) > 0:
                 raise ValueError(
                         "Specified subset {0} does not appear to be a subset "
                         "of the original set {1}. The following elements "
@@ -352,10 +372,11 @@ class Set(Operation):
         subset_to_support_kt = subset.reduction(assumptions=assumptions)
         subset_reduced = subset_to_support_kt.rhs
         subset_reduced_list = list(subset_reduced.operands)
-        # While we're here, establish the non_subset_elem_proven in
-        # reduced subset as well, just in case (this helps with some
-        # relatively rare cases where elem not in a larger set does not
-        # easily translate to elem not in a smaller, reduced set)
+        # While we're here, establish the non_subset_elem_proven as not
+        # in the reduced subset as well, just in case (this helps with
+        # some relatively rare cases where an elem not in a larger set
+        # does not easily translate to elem not in a smaller, reduced
+        # set)
         subset_to_support_kt.subRightSideInto(
                 non_subset_elem_kt, assumptions=assumptions)
         
@@ -466,9 +487,8 @@ class Set(Operation):
         S.reduction_elem() gives |-S = {a, b, b, a, c};
         S.reduction_elem(elem=b) gives |- S = {a, b, a, a, c};
         S.reduction_elem(idx=4) gives |- S = {a, b, a, b, c}.
-        Created 02/07/2020 by wdc.
-        Last modified 02/07/2020 by wdc:
-            Creation; established input param checking
+        Consider changing name to elem_reduction, then use elem_reduced
+        as adj and elem_reduce as verb.
         '''
         n = len(self.operands)
 
@@ -571,6 +591,70 @@ class Set(Operation):
                  bb:bb_sub, cc:cc_sub}, assumptions=assumptions)
 
 
+    def single_elem_substitution(self, elem=None, idx=None, sub_elem=None,
+                                 assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this enum Set expression is equal to a Set
+        in which the element specified either by elem or by the
+        position idx has been replaced with sub_elem. The deduction
+        depends on the sub_elem being equal to the replace elem.
+        If elem specified in the form elem='elem', method attempts to
+        substitute for the 1st occurrence of elem; if elem=['elem',n],
+        method attempts to substitute for the nth occurrence of elem.
+        If both elem and idx are specified, the elem arg is ignored.
+        Examples: Let S = Set(a, b, a, b, a, c). Then
+        S.single_elem_substitution() gives error;
+        S.single_elem_substitution(elem=b, sub_elem=two,
+                                   assumptions=[Equals(b, four)])
+            gives |- S = {a, 4, a, b, a, c};
+        S.single_elem_substitution(elem=[b, 2], sub_elem=two,
+                                   assumptions=[Equals(b, four)])
+            gives |- S = {a, b, a, 4, a, c};
+        S.single_elem_substitution(idx=3, sub_elem=two,
+                                   assumptions=[Equals(b, four)])
+            gives |- S = {a, b, a, 4, a, c};
+        '''
+        set_length = len(self.operands)
+
+        # if user has specified position index idx,
+        # check for validity and use idx if possible
+        if idx is not None and (idx < -set_length or idx >= set_length):
+            raise IndexError("Index specification idx is out of bounds: {0}. "
+                             "Need {1} ≤ idx ≤ {2}.".
+                             format(idx,-set_length, set_length-1))
+        if idx is not None:
+            # we already checked for valid idx, so
+            # transform any wrap-around indexing for simplicity
+            if idx < 0: idx = set_length+idx
+            elem = self.operands[idx]
+
+        # assume for now that we have a valid idx and nothing else
+
+        # we specialize the equalElementEquality theorem
+        # organize the specialization mapping info
+        from ._theorems_ import equalElementEquality
+        # from proveit._common_ import l, m, n, x, aa, bb, cc
+        from proveit.number import num
+        m, n, aa, b, cc, d = equalElementEquality.allInstanceVars()
+        # We break the set in into [ ]+[idx]+[ ]
+        m_sub, n_sub = (num(idx), num(set_length - idx - 1))
+        print("    m_sub = {}".format(m_sub))
+        print("    n_sub = {}".format(n_sub))
+        aa_sub, b_sub, cc_sub, d_sub = (
+                list(self.operands)[0:idx],
+                list(self.operands)[idx],
+                list(self.operands)[idx + 1:],
+                sub_elem)
+        print("    aa_sub = {}".format(aa_sub))
+        print("    b_sub = {}".format(b_sub))
+        print("    cc_sub = {}".format(cc_sub))
+        print("    d_sub = {}".format(d_sub))
+        return equalElementEquality.specialize(
+            {m:m_sub, n:n_sub, aa:aa_sub, b:b_sub, cc:cc_sub, d:d_sub},
+            assumptions=assumptions)
+
+
+
     # ----------------- #
     # Utility Functions #
     # ----------------- #
@@ -646,6 +730,12 @@ class Set(Operation):
         if proper_subset and len(subset_indices_set) == len(valid_indices_set):
             raise ValueError("The subset indices are not compatible with a "
                              "proper subset (too many elements).")
+
+
+# Register these expression equivalence methods:
+InnerExpr.register_equivalence_method(Set, 'permutation', 'permuted', 'permute')
+InnerExpr.register_equivalence_method(Set, 'permutation_move', 'moved', 'move')
+InnerExpr.register_equivalence_method(Set, 'reduction', 'reduced', 'reduce')
 
 
 
