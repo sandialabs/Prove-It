@@ -692,6 +692,56 @@ class Set(Operation):
             {m:m_sub, n:n_sub, aa:aa_sub, b:b_sub, cc:cc_sub, d:d_sub},
             assumptions=assumptions)
 
+    def elem_substitution(self, elem=None, sub_elem=None,
+                          assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this enum Set expression is equal to the Set
+        obtained when every instance of elem in self is replaced by the
+        sub_elem. The deduction depends on the sub_elem being equal to
+        the elem it is replacing.
+        Examples: Let S = Set(a, b, a, b, a, c). Then
+        S.elem_substitution() gives ERROR;
+        S.elem_substitution(elem=d, sub_elem=two,
+                            assumptions=[Equals(d, two)] gives ERROR;
+        S.elem_substitution(elem=b, sub_elem=four,
+                            assumptions=[Equals(b, four)])
+            gives |- S = {a, 4, a, 4, a, c};
+        S.single_elem_substitution(elem=a, sub_elem=two,
+                                   assumptions=[Equals(a, two)])
+            gives |- S = {2, b, 2, b, 2, c};
+        S.single_elem_substitution(elem=c, sub_elem=d,
+                                   assumptions=[Equals(c, d)])
+            gives |- S = {a, b, a, b, a, d};
+        '''
+        # First, a quick check on elem and sub_elem arguments
+        if elem == None or sub_elem == None:
+            raise ValueError("Set.elem_substitution() method requires "
+                             "the specification of the element to be replaced "
+                             "and the requested substitution value, but "
+                             "found elem={0} and sub_elem={1}.".
+                             format(elem, sub_elem))
+        
+        if elem not in self.operands:
+            raise ValueError("In calling the Set.elem_substitution() method, "
+                             "the element '{0}' to be replaced does not "
+                             "appear to exist in the original set {1}.".
+                             format(elem, self))
+
+        # count the number of elems to replace with the sub_elem
+        self_list = list(self.operands)
+        num_elems_to_replace = self_list.count(elem)
+
+        from proveit import TransRelUpdater
+        eq = TransRelUpdater(self, assumptions)
+
+        expr = self
+        while num_elems_to_replace > 0:
+            expr = eq.update(expr.single_elem_substitution(
+                    elem=elem, sub_elem=sub_elem, assumptions=assumptions))
+            num_elems_to_replace -= 1
+
+        return eq.relation
+
 
     # ----------------- #
     # Utility Functions #
