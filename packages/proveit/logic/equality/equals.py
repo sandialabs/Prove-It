@@ -623,7 +623,7 @@ def reduceOperands(innerExpr, inPlace=True, mustEvaluate=False, assumptions=USE_
                     operandEval = operand.simplification(assumptions=assumptions)
                 if mustEvaluate and not isIrreducibleValue(operandEval.rhs):
                     msg = 'Evaluations expected to be irreducible values'
-                    raise SimplificationError(msg)
+                    raise EvaluationError(msg, assumptions)
                 if operandEval.lhs != operandEval.rhs:
                     # Compose map to replace all instances of the 
                     # operand within the inner expression.
@@ -823,7 +823,8 @@ def defaultSimplification(innerExpr, inPlace=False, mustEvaluate=False,
     # try to simplify via reduction
     if not isinstance(inner, Operation):
         if mustEvaluate:
-            raise SimplificationError('Unknown evaluation: ' + str(inner))
+            raise EvaluationError('Unknown evaluation: ' + str(inner),
+                                  assumptions)
         else:
             # don't know how to simplify, so keep it the same
             return innerSimplification(Equals(inner, inner).prove())
@@ -907,7 +908,7 @@ class SimplificationError(Exception):
     def __str__(self):
         return self.message
 
-class EvaluationError(Exception):
+class EvaluationError(SimplificationError):
     def __init__(self, expr, assumptions):
         self.message = ("Evaluation of %s under assumptions %s is not known"
                         %(expr, assumptions))

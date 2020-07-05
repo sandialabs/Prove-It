@@ -2,6 +2,7 @@ from proveit import (Literal, Operation, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
                      defaults, USE_DEFAULTS, ProofFailure)
 from proveit._common_ import k, n, x, P, S
+from proveit._core_.proof import Generalization
 
 class Forall(OperationOverInstances):
     # operator of the Forall operation
@@ -69,6 +70,31 @@ class Forall(OperationOverInstances):
                                    "Unable to conclude automatically; "
                                    "the 'foldAsForall' method on the "
                                    "domain failed.")
+        else:
+            # If there is no 'foldAsForall' strategy to try, we can
+            # attempt a different non-trivial strategy of proving
+            # via generalization with automation.
+            try:
+                conditions = list(self.inclusiveConditions())
+                proven_inst_expr = self.explicitInstanceExpr().prove(
+                        assumptions=assumptions + tuple(conditions))
+                instanceParamLists = [list(self.explicitInstanceParams())]
+                # see if we can generalize multiple levels 
+                # simultaneously for a shorter proof
+                while isinstance(proven_inst_expr.proof(), Generalization):
+                    new_params = proven_inst_expr.explicitInstanceParams()
+                    instanceParamLists.append(list(new_params))
+                    conditions += proven_inst_expr.conditions
+                    proven_inst_expr = proven_inst_expr.proof().requiredTruths[0]
+                return proven_inst_expr.generalize(instanceParamLists, 
+                                                   conditions=conditions)
+            except ProofFailure:
+                raise ProofFailure(self, assumptions, 
+                                   "Unable to conclude automatically; "
+                                   "the domain has no 'foldAsForall' method "
+                                   "and automated generalization failed.")
+                    
+            
         raise ProofFailure(self, assumptions, 
                            "Unable to conclude automatically; a "
                            "universally quantified instance expression "
@@ -194,7 +220,7 @@ class Forall(OperationOverInstances):
         '''
         return self.prove(assumptions).instantiate(repl_map, assumptions=assumptions)    
         
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if possible
         by calling the condition's forallEvaluation method

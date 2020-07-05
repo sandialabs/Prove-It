@@ -20,9 +20,10 @@ class And(Operation):
         Automatically reduce "And() = TRUE" and "And(a) = a".
         '''
         if len(self.operands) == 0:
-            from proveit.logic.boolean.conjunction._axioms_ import \
-                emptyConjunction
-            return emptyConjunction
+            from proveit.logic.boolean.conjunction._theorems_ import \
+                emptyConjunctionEval
+            if emptyConjunctionEval.isUsable():
+                return emptyConjunctionEval
         elif self.operands.singular():
             try:
                 return self.unaryReduction(assumptions)
@@ -137,6 +138,8 @@ class And(Operation):
         '''
 
         from proveit.logic import Not
+        if len(self.operands)==0:
+            return # No side-effects needed for [And]().
         if len(self.operands) == 2:
             if self.operands[1] == Not(self.operands[0]):
                 # (A or not(A)) is an unfolded Boolean
@@ -224,8 +227,8 @@ class And(Operation):
                 A_sub = self.operands[:idx]
                 B_sub = self.operands[idx]
                 C_sub = self.operands[idx+1:]
-                m_val = Len(A_sub).computed()
-                n_val = Len(C_sub).computed()
+                m_val = Len(A_sub).computed(assumptions)
+                n_val = Len(C_sub).computed(assumptions)
                 return anyFromAnd.specialize(
                         {m:m_val, n:n_val, A:A_sub, B:B_sub, C:C_sub},
                         assumptions=assumptions)
@@ -245,9 +248,9 @@ class And(Operation):
         A_sub = self.operands[:start_idx]
         B_sub = self.operands[start_idx:end_idx+1]
         C_sub = self.operands[end_idx+1:]
-        l_val = Len(A_sub).computed()
-        m_val = Len(B_sub).computed()
-        n_val = Len(C_sub).computed()
+        l_val = Len(A_sub).computed(assumptions)
+        m_val = Len(B_sub).computed(assumptions)
+        n_val = Len(C_sub).computed(assumptions)
         return someFromAnd.instantiate({l:l_val, m: m_val, n: n_val, 
                                        A:A_sub, B:B_sub, C:C_sub}, 
                                        assumptions = assumptions)
@@ -275,15 +278,17 @@ class And(Operation):
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unaryReduction")
         operand = self.operands[0]
-        return unary_and_reduction.specialize({A:operand},
-                                              assumptions=assumptions)
+        with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            disable_reduction_types.add(And)
+            return unary_and_reduction.specialize({A:operand},
+                                                  assumptions=assumptions)
 
     def concludeViaComposition(self, assumptions=USE_DEFAULTS):
         '''
         Prove and return some (A and B ... and ... Z) via A, B, ..., Z each proven individually.
         See also the compose method to do this constructively.
         '''
-        return compose(self.operands, assumptions)
+        return compose(*self.operands, assumptions=assumptions)
     
     def deduceLeftInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -379,13 +384,62 @@ class And(Operation):
         return redundant_conjunction.instantiate(
                 {n:self.operands[0].end_index, A:_A}, assumptions=assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
+    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
+                   minimal_automation=False, **kwargs):
         '''
-        Given operands that evaluate to TRUE or FALSE, derive and
-        return the equality of this expression with TRUE or FALSE. 
+        Attempt to determine whether this conjunction evaluates
+        to true or false under the given assumptions.  If automation
+        is False, it will only succeed if the evaluation is already
+        known.  If automation and minimal_automation are True, it will 
+        only rely upon known  evaluations of the operands to determine 
+        whether to try to prove or disprove the conjunction.
         '''
+        from proveit.logic import TRUE, FALSE, SimplificationError
         from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations
-        return Operation.evaluation(self, assumptions, automation)
+        if len(self.operands)==0:
+            return self.unaryReduction(assumptions)
+        
+        # First just see if it has a known evaluation.
+        try:
+            return Operation.evaluation(self, assumptions, automation=False)
+        except SimplificationError as e:
+            if not automation: 
+                raise e
+    
+        # Depending upon evaluations of operands, we will either
+        # attempt to prove or disprove this conjunction.
+        if minimal_automation:
+            # Only do non-automated evaluations of operands
+            # if minimal_automation is True.
+            operand_automations = (False,)
+        else:
+            # First try non-automated operand evaluation, then
+            # automated only if necessary.
+            operand_automations = (False, True)
+        for operand_automation in operand_automations:
+            operands_evals = []
+            for operand in self.operands:
+                try:
+                    operand_eval = operand.evaluation(
+                            assumptions, automation=operand_automations)
+                    operands_evals.append(operand_eval.rhs)
+                except:
+                    operands_evals.append(None)
+            if FALSE in operands_evals:
+                # If any operand is untrue, the conjunction may
+                # only evaluate to false if it can be evaluated.
+                self.disprove(assumptions)
+                break
+            elif not None in operands_evals:
+                # If no operand is untrue and all the evaluations
+                # are known, the conjunction may only evaluate
+                # to true if it can be evaluated.
+                self.prove(assumptions)
+                break
+        
+        # If we had any success proving or disproving this conjunction
+        # there should be a known evaluation now.
+        return Operation.evaluation(self, assumptions, automation=False)
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''
@@ -476,11 +530,15 @@ class And(Operation):
         return apply_disassociation_thm(self, idx, disassociate, assumptions)
 
     
-def compose(expressions, assumptions=USE_DEFAULTS):
+def compose(*expressions, assumptions=USE_DEFAULTS):
     '''
     Returns [A and B and ...], the And operator applied to the collection of given arguments,
     derived from each separately.
     '''
+    if len(expressions)==0:
+        from proveit.logic.boolean.conjunction._axioms_ import \
+            emptyConjunction
+        return emptyConjunction
     if len(expressions)==2:
         from ._theorems_ import andIfBoth
         return andIfBoth.specialize({A:expressions[0], B:expressions[1]}, assumptions=assumptions)

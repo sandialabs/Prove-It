@@ -58,9 +58,9 @@ class Numeral(Literal, IrreducibleValue):
         from proveit.number import Naturals, NaturalsPos
         from proveit.logic import InSet
         if number_set==Naturals:
-            return self.deduceInNaturals()
+            return self.deduceInNaturals(assumptions)
         elif number_set==NaturalsPos:
-            return self.deduceInNaturalsPos()
+            return self.deduceInNaturalsPos(assumptions)
         else:
             try:
                 # Do this to avoid infinite recursion -- if
@@ -80,7 +80,7 @@ class Numeral(Literal, IrreducibleValue):
                     self.deduceInNaturalsPos()
             return InSet(self, number_set).conclude(assumptions)
         
-    def deduceInNaturals(self):
+    def deduceInNaturals(self, assumptions=USE_DEFAULTS):
         if Numeral._inNaturalsStmts is None:
             from proveit.number.sets.integer._theorems_ import zeroInNats
             from .deci._theorems_ import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
@@ -96,7 +96,7 @@ class Numeral(Literal, IrreducibleValue):
         return Numeral._notZeroStmts[self.n]
     '''
 
-    def deduceInNaturalsPos(self):
+    def deduceInNaturalsPos(self, assumptions=USE_DEFAULTS):
         if Numeral._inNaturalsPosStmts is None:
             from .deci._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
             from .deci._theorems_ import posnat6, posnat7, posnat8, posnat9
@@ -106,7 +106,7 @@ class Numeral(Literal, IrreducibleValue):
                                "Cannot prove %d in NaturalsPos"%self.n)
         return Numeral._inNaturalsPosStmts[self.n]    
 
-    def deducePositive(self):
+    def deducePositive(self, assumptions=USE_DEFAULTS):
         if Numeral._positiveStmts is None:
             from .deci._theorems_ import posnat1, posnat2, posnat3, posnat4, posnat5
             from .deci._theorems_ import posnat6, posnat7, posnat8, posnat9

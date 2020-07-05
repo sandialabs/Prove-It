@@ -174,7 +174,7 @@ class Add(Operation):
                     yield (lambda assumptions : self.deduceSubtraction(knownTruth.rhs, assumptions))            
                     yield (lambda assumptions : self.deduceReversedSubtraction(knownTruth.rhs, assumptions))            
 
-    def deduceStrictIncAdd(self, b, assumptions=USE_DEFAULTS):
+    def deduceStrictIncAdd(self, x, assumptions=USE_DEFAULTS):
         '''
         created by JML 7/17/19. renamed by WMW 9/6/19.
 
@@ -183,7 +183,7 @@ class Add(Operation):
         from proveit.number import num
         # print(b)
         for _i, term in enumerate(self.terms):
-            if term == b:
+            if term == x:
                 idx = _i
         _i = num(idx)
         _j = num(len(self.terms) -1 - idx)
@@ -194,22 +194,25 @@ class Add(Operation):
         return strictlyIncreasingAdditions.specialize(
                 {i:_i,j:_j,a:_a,b:_b,c:_c}, assumptions=assumptions)
 
-    def deduceStrictDecAdd(self, b, assumptions=USE_DEFAULTS):
+    def deduceStrictDecAdd(self, x, assumptions=USE_DEFAULTS):
         '''
         created by JML 7/17/19. renamed by WMW 9/6/19.
 
         '''
         from ._theorems_ import strictlyDecreasingAdditions
-        from proveit._common_ import m, n, AA, B, CC
         from proveit.number import num
         # print(b)
         # print(self.terms)
         for _i, term in enumerate(self.terms):
-            if term == b:
+            if term == x:
                 idx = _i
-        nVal = len(self.terms) -1 - idx
-        # print(nVal)
-        return strictlyDecreasingAdditions.specialize({m:num(idx),n:num(nVal),AA:self.terms[:idx],B:self.terms[idx],CC:self.terms[idx +1:]}, assumptions=assumptions)
+        _i = num(idx)
+        _j = num(len(self.terms) -1 - idx)
+        _a = self.terms[:idx]
+        _b = self.terms[idx]
+        _c = self.terms[idx +1:]        # print(nVal)
+        return strictlyDecreasingAdditions.specialize(
+                {i:_i,j:_j,a:_a,b:_b,c:_c}, assumptions=assumptions)
 
     def deduceNegation(self, rhs, assumptions=USE_DEFAULTS):
         '''
@@ -540,7 +543,7 @@ class Add(Operation):
         
         return hold, order
 
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Perform a number of possible simplification of a Add
         expression after the operands have individually been
@@ -740,7 +743,7 @@ class Add(Operation):
                               "are in the Complexes set."%self)
         return self.evaluation() 
     
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         created by JML on 7/31/19. modified by WMW on 9/7/19.
         evaluate literals in a given expression (used for simplification)
@@ -845,13 +848,16 @@ class Add(Operation):
         '''
         from proveit.number.addition._theorems_ import (
                 addIntClosureBin,addIntClosure, addNatClosureBin, addNatClosure, 
-                addNatPosClosure, addRealClosureBin, addRealClosure, 
-                addRealPosClosure, addComplexClosureBin, addComplexClosure)
+                addNatPosClosure, addNatPosFromNonNeg,
+                addRealClosureBin, addRealClosure, 
+                addRealNonNegClosure, addRealNonNegClosureBin,
+                addRealPosClosure, addRealPosClosureBin, addRealPosFromNonNeg,
+                addComplexClosure, addComplexClosureBin)
         from proveit.number.addition.subtraction._theorems_ import (
                 subtractNatClosureBin, subOneInNats)
         from proveit.number import (zero, one, num, Neg, Greater, 
                                     Integers, Naturals, Reals, RealsPos,
-                                    Complexes, NaturalsPos)
+                                    RealsNonNeg, Complexes, NaturalsPos)
         from proveit.logic import InSet
         if number_set == Integers:
             if len(self.operands) == 2:
@@ -876,26 +882,37 @@ class Add(Operation):
             return addNatClosure.instantiate(
                     {i: num(len(self.operands)), a: self.operands}, 
                     assumptions=assumptions)
-        if number_set == NaturalsPos or number_set == RealsPos:
+        if (number_set == NaturalsPos or number_set == RealsPos and not
+                all(InSet(operand, number_set).proven(assumptions) for
+                    operand in self.operands)):
+            # Unless we know that all of the operands are in the
+            # positive number set, our last resort will be if we know
+            # one of the operands is greater than zero.
             val = -1
             for _i, operand in enumerate(self.operands):
-                try:
-                    Greater(operand, zero).prove(assumptions=assumptions)
+                if Greater(operand, zero).proven(assumptions=assumptions):
                     val = _i
                     # print(b)
                     break
-                except ProofFailure:
-                    pass
             if val == -1:
                 raise ProofFailure(InSet(self, number_set), assumptions, 
                                    "Expecting at least one value to be "
-                                   "greater than zero")
+                                   "known to be greater than zero")
             # print(len(self.operands))
             if number_set == NaturalsPos:
-                temp_thm = addNatPosClosure
+                temp_thm = addNatPosFromNonNeg
             else:
-                temp_thm = addRealPosClosure
+                temp_thm = addRealPosFromNonNeg
+            print(temp_thm, {i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
             return temp_thm.specialize({i: num(val), j:num(len(self.operands) - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]}, assumptions=assumptions)
+        if number_set == RealsPos:
+            if len(self.operands) == 2:
+                return addRealPosClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addRealPosClosure.specialize({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
+        if number_set == RealsNonNeg:
+            if len(self.operands) == 2:
+                return addRealNonNegClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
+            return addRealNonNegClosure.specialize({i: num(len(self.operands)), a: self.operands}, assumptions=assumptions)
         if number_set == Reals:
             if len(self.operands) == 2:
                 return addRealClosureBin.specialize({a: self.operands[0], b: self.operands[1]}, assumptions=assumptions)
@@ -1015,7 +1032,7 @@ class Add(Operation):
     
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
-        Given Boolean operands, deduce that this expression is equal to a form in which the operand
+        Given numerical operands, deduce that this expression is equal to a form in which the operand
         at index initIdx has been moved to finalIdx.
         For example, (a + b + ... + y + z) = (a + ... + y + b + z)
         via initIdx = 1 and finalIdx = -2.
@@ -1036,7 +1053,7 @@ class Add(Operation):
 
     def groupCommutation(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
         '''
-        Given Boolean operands, deduce that this expression is equal to a form in which the operands
+        Given numerical operands, deduce that this expression is equal to a form in which the operands
         at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
         It will do this by performing association first.  If disassocate is True, it
         will be disassociated afterwards.

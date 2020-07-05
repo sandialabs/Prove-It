@@ -30,7 +30,7 @@ class Neg(Operation):
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
     
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this negation expression equated with a simpler form.
         Deals with double negation specifically.
@@ -48,7 +48,7 @@ class Neg(Operation):
             expr = eq.update(expr.simplification(assumptions))
         return eq.relation
     
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Only handles -0 = 0 or double negation.
         '''

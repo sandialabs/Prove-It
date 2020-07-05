@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
+from proveit import (Literal, Operation, defaults, USE_DEFAULTS, 
+                     ProofFailure, InnerExpr)
 from proveit._common_ import A, B, C, D, E, i, j, k, l, m, n
 from proveit.logic.boolean.booleans import inBool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, groupCommute
@@ -38,9 +39,10 @@ class Or(Operation):
         Automatically reduce "Or() = FALSE" and "Or(a) = a".
         '''
         if len(self.operands) == 0:
-            from proveit.logic.boolean.disjunction._axioms_ import \
-                emptyDisjunction
-            return emptyDisjunction
+            from proveit.logic.boolean.disjunction._theorems_ import \
+                emptyDisjunctionEval
+            if emptyDisjunctionEval.isUsable():
+                return emptyDisjunctionEval
         elif self.operands.singular():
             try:
                 return self.unaryReduction(assumptions)
@@ -109,6 +111,8 @@ class Or(Operation):
         Side-effect derivations to attempt automatically for Not(A or B or .. or .. Z).
         '''
         from proveit.logic import Not, And
+        if len(self.operands) == 0:
+            return # No side-effects needed for [Or]()
         yield self.deriveInBool # A or B or .. or .. Z in Booleans
         if len(self.operands) == 2: # Not(A or B)
             yield self.deduceNotLeftIfNeither # Not(A)
@@ -128,8 +132,11 @@ class Or(Operation):
 
     def concludeNegation(self, assumptions):
         from ._theorems_ import falseOrFalseNegated, neitherIntro, notOrIfNotAny
+        from ._axioms_ import emptyDisjunction
         if self == falseOrFalseNegated.operand:
             return falseOrFalseNegated # the negation of (FALSE or FALSE)
+        elif len(self.operands)==0:
+            return emptyDisjunction
         elif len(self.operands)==2:
             return neitherIntro.specialize({A:self.operands[0], B:self.operands[1]}, assumptions=assumptions)
         else:
@@ -312,17 +319,64 @@ class Or(Operation):
         compose([leftImplConclusion, rightImplConclusion], assumptions)
         return hypotheticalDisjunction.specialize({A:leftOperand, B:rightOperand, C:conclusion}, assumptions=assumptions).deriveConclusion(assumptions).deriveConclusion(assumptions)
         
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
+    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
+                   minimal_automation=False, **kwargs):
         '''
-        Given operands that evaluate to TRUE or FALSE, derive and
-        return the equality of this expression with TRUE or FALSE. 
+        Attempt to determine whether this disjunction evaluates
+        to true or false under the given assumptions.  If automation
+        is false, it will only succeed if the evaluation is already
+        known.  If automation and minimal_automation are True, it will 
+        only rely upon known evaluations of the operands to determine 
+        whether to try to prove or disprove the disjunction.
         '''
-        from ._axioms_ import emptyDisjunction
+        from proveit import ExprRange
+        from proveit.logic import TRUE, FALSE, SimplificationError
         from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations
-        if len(self.operands) == 0:
-            return emptyDisjunction
-        return Operation.evaluation(self, assumptions, automation)
-
+        if len(self.operands)==0:
+            return self.unaryReduction(assumptions)
+        
+        # First just see if it has a known evaluation.
+        try:
+            return Operation.evaluation(self, assumptions, automation=False)
+        except SimplificationError as e:
+            if not automation: 
+                raise e
+    
+        # Depending upon evaluations of operands, we will either
+        # attempt to prove or disprove this conjunction.
+        if minimal_automation:
+            # Only do non-automated evaluations of operands
+            # if minimal_automation is True.
+            operand_automations = (False,)
+        else:
+            # First try non-automated operand evaluation, then
+            # automated only if necessary.
+            operand_automations = (False, True)
+        for operand_automation in operand_automations:
+            operands_evals = []
+            for operand in self.operands:
+                try:
+                    operand_eval = operand.evaluation(
+                            assumptions, automation=operand_automations)
+                    operands_evals.append(operand_eval.rhs)
+                except:
+                    operands_evals.append(None)
+            if TRUE in operands_evals:
+                # If any operand is true, the disjunction may
+                # only evaluate to true if it can be evaluated.
+                self.prove(assumptions)
+                break
+            elif not None in operands_evals:
+                # If no operand is true and all the evaluations
+                # are known, the conjunction may only evaluate
+                # to false if it can be evaluated.
+                self.disprove(assumptions)
+                break
+        
+        # If we had any success proving or disproving this conjunction
+        # there should be a known evaluation now.
+        return Operation.evaluation(self, assumptions, automation=False)
+        
     def deriveContradiction(self, assumptions=USE_DEFAULTS):
         r'''
         From (A or B), and assuming not(A) and not(B), derive and return FALSE.
@@ -410,7 +464,9 @@ class Or(Operation):
             raise ValueError("Expression must have a single operand in "
                              "order to invoke unaryReduction")
         operand = self.operands[0]
-        return unaryOrReduction.specialize({A:operand}, assumptions = assumptions)
+        with defaults.disabled_auto_reduction_types as disable_reduction_types:
+            disable_reduction_types.add(Or)
+            return unaryOrReduction.specialize({A:operand}, assumptions = assumptions)
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
