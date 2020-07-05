@@ -604,22 +604,33 @@ class Set(Operation):
         If both elem and idx are specified, the elem arg is ignored.
         Examples: Let S = Set(a, b, a, b, a, c). Then
         S.single_elem_substitution() gives error;
-        S.single_elem_substitution(elem=b, sub_elem=two,
+        S.single_elem_substitution(elem=b, sub_elem=four,
                                    assumptions=[Equals(b, four)])
             gives |- S = {a, 4, a, b, a, c};
-        S.single_elem_substitution(elem=[b, 2], sub_elem=two,
+        S.single_elem_substitution(elem=[b, 2], sub_elem=four,
                                    assumptions=[Equals(b, four)])
             gives |- S = {a, b, a, 4, a, c};
-        S.single_elem_substitution(idx=3, sub_elem=two,
+        S.single_elem_substitution(idx=3, sub_elem=four,
                                    assumptions=[Equals(b, four)])
             gives |- S = {a, b, a, 4, a, c};
         '''
+        # First, a quick check on elem, idx, and sub_elem arguments
+        if elem == None and idx == None:
+            raise ValueError("single_elem_substitution() method requires "
+                             "the specification of element (elem=) or "
+                             "element index (idx=) candidate for "
+                             "substitution.")
+        if sub_elem == None:
+            raise ValueError("single_elem_substitution() method missing "
+                             "sub_elem argument. Must specify the replacement "
+                             "value using argument 'sub_elem='.")
+
         set_length = len(self.operands)
 
         # if user has specified position index idx,
         # check for validity and use idx if possible
         if idx is not None and (idx < -set_length or idx >= set_length):
-            raise IndexError("Index specification idx is out of bounds: {0}. "
+            raise IndexError("Index specification idx = {0} is out of bounds. "
                              "Need {1} ≤ idx ≤ {2}.".
                              format(idx,-set_length, set_length-1))
         if idx is not None:
@@ -628,31 +639,58 @@ class Set(Operation):
             if idx < 0: idx = set_length+idx
             elem = self.operands[idx]
 
-        # assume for now that we have a valid idx and nothing else
+        # Designate which of one of multiple copies of the elem we
+        # want to replace -- default is 1st location:
+        which_elem = 1  
 
-        # we specialize the equalElementEquality theorem
-        # organize the specialization mapping info
+        if idx==None:
+            # We must have had an elem specified
+            if isinstance(elem, list): # elem = [x, n]
+                which_elem = elem[1]   # which_elem = n
+                elem = elem[0]         # elem = x
+                if which_elem < 1 or which_elem > len(self.operands):
+                    raise ValueError(
+                            "In specifying the elem to be replaced in the "
+                            "call to Set.single_elem_substitution(), it "
+                            "doesn't appear to make sense to specify instance "
+                            "#{0} of the element {1} in the set of elements "
+                            "{2}.".format(which_elem, elem, self.operands))
+            # find indice(s) of elem in Set
+            elem_indices = (
+                [i for i, j in enumerate(self.operands) if j == elem])
+            if len(elem_indices) >= which_elem and which_elem > 0:
+                idx = elem_indices[which_elem - 1]
+            else:
+                raise ValueError(
+                        "single_elem_substitution() method looked for "
+                        "{0} instance(s) of the elem '{1}' in the set {2} "
+                        "but found only {3} instance(s). The elem '{1}' does "
+                        "not appear to exist in the original set with "
+                        "sufficient multiplicity.".
+                        format(which_elem, elem, self.operands,
+                               len(elem_indices)))
+
+        # We should now have a valid idx indicating the index of the
+        # set item to be replaced, either because it was explicitly
+        # supplied or because it was derived from the elem argument
+
+        # We deduce the desired equality by specializing the
+        # equalElementEquality theorem from the enumeration context
         from ._theorems_ import equalElementEquality
-        # from proveit._common_ import l, m, n, x, aa, bb, cc
+        # --- Organize the specialization mapping info.
         from proveit.number import num
         m, n, aa, b, cc, d = equalElementEquality.allInstanceVars()
-        # We break the set in into [ ]+[idx]+[ ]
+        # --- Break the set into [ ]+[idx]+[ ].
         m_sub, n_sub = (num(idx), num(set_length - idx - 1))
-        print("    m_sub = {}".format(m_sub))
-        print("    n_sub = {}".format(n_sub))
         aa_sub, b_sub, cc_sub, d_sub = (
                 list(self.operands)[0:idx],
                 list(self.operands)[idx],
                 list(self.operands)[idx + 1:],
                 sub_elem)
-        print("    aa_sub = {}".format(aa_sub))
-        print("    b_sub = {}".format(b_sub))
-        print("    cc_sub = {}".format(cc_sub))
-        print("    d_sub = {}".format(d_sub))
+        # --- Specialize and return.
         return equalElementEquality.specialize(
             {m:m_sub, n:n_sub, aa:aa_sub, b:b_sub, cc:cc_sub, d:d_sub},
             assumptions=assumptions)
-
 
 
     # ----------------- #
