@@ -88,4 +88,4 @@ class EnumNonmembership(Nonmembership):
         if len(enum_elements) == 1:
             return notInSingletonEquiv.specialize({x:self.element, y:enum_elements})
         else:
-            return nonmembershipEquiv.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements})
+            return nonmembershipEquiv.specialize({n:num(len(enum_elements)), x:self.element, y:enum_elements})
