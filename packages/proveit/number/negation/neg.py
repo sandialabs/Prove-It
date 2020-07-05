@@ -29,8 +29,8 @@ class Neg(Operation):
             return complexClosure.specialize({a:self.operand})
         else:
             raise ProofFailure(InSet(self, NumberSet), assumptions, "No negation closure theorem for set %s"%str(NumberSet))
-
-    def simplification(self, assumptions=USE_DEFAULTS):
+    
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this negation expression equated with a simpler form.
         Deals with double negation specifically.
@@ -46,11 +46,21 @@ class Neg(Operation):
             expr = eq.update(self.doubleNegSimplification(assumptions))
             # simplify what is inside the double-negation.
             expr = eq.update(expr.simplification(assumptions))
-            return eq.relation
-
-        # otherwise, just use the default simplification
-        return Operation.simplification(self, assumptions)
-
+        return eq.relation
+    
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+        '''
+        Only handles -0 = 0 or double negation.
+        '''
+        from proveit.logic import EvaluationError
+        from ._theorems_ import negatedZero
+        from proveit.number import zero
+        if self.operand == zero:
+            return negatedZero
+        if isinstance(self.operand, Neg) and isIrreducibleValue(self.operand.operand):
+            return self.doubleNegSimplification(assumptions)
+        raise EvaluationError(self, assumptions)
+        
     def doubleNegSimplification(self, assumptions=USE_DEFAULTS):
         from ._theorems_ import doubleNegation
         assert isinstance(self.operand, Neg), "Expecting a double negation: %s"%str(self)

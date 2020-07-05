@@ -271,7 +271,7 @@ class Implies(TransitiveRelation):
         return the equality of this expression with TRUE or FALSE. 
         '''
         from ._theorems_ import impliesTT, impliesFT, impliesFF, impliesTF # load in truth-table evaluations
-        return Operation.evaluation(self, assumptions, automation)
+        return Operation.evaluation(self, assumptions, automation=automation)
     
     def deduceInBool(self, assumptions=USE_DEFAULTS):
         '''

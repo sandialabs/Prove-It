@@ -114,7 +114,7 @@ class Conditional(Expression):
         return inner_str
     
     '''
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         from proveit.logic import EvaluationError, TRUE
         for condition in self.conditions:
             if condition == TRUE:

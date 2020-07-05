@@ -1,11 +1,12 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure, InnerExpr
+from proveit import (Literal, Operation, USE_DEFAULTS, ExprTuple,
+                     ProofFailure, InnerExpr)
 from proveit.logic import Equals, InSet
 from proveit.number import num
 from proveit.number.sets import (Integers, Naturals, NaturalsPos, Reals,
                                  RealsNonNeg, RealsPos, Complexes)
 import proveit.number.numeral.deci
 from proveit.number.numeral.deci import DIGITS
-from proveit._common_ import a, b, c, d, l, m, n, v, w, x, y, z, vv, ww, xx, yy, zz, S, A, B, C, D, E, AA, BB, CC, DD, EE
+from proveit._common_ import a, b, c, d, i, j, k, n, w, x, y, z
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, groupCommutation, pairwiseEvaluation
 from proveit import TransRelUpdater
 
@@ -37,12 +38,12 @@ class Mult(Operation):
     def deduceInNumberSet(self, numberSet, assumptions=USE_DEFAULTS):
         # edited by JML 7/20/19
         from ._theorems_ import (multIntClosure, multIntClosureBin,
-            multNatClosure, multNatClosureBin, multNatPosClosure,
-            multNatClosureBin, multRealClosure, multRealClosureBin,
-            multRealPosClosure, multRealPosClosureBin,
-            multComplexClosure, multComplexClosureBin,
-            multRealNonNegClosure, multRealNonNegClosureBin)
-        from proveit.number import num
+            multNatClosure, multNatClosureBin, 
+            multNatPosClosure, multNatPosClosureBin,
+            multRealClosure, multRealClosureBin, multRealPosClosure, 
+            multRealPosClosureBin,
+            multRealNonNegClosure, multRealNonNegClosureBin,
+            multComplexClosure, multComplexClosureBin)
         if hasattr(self, 'number_set'):
             numberSet = numberSet.number_set
         bin = False
@@ -57,7 +58,7 @@ class Mult(Operation):
                 thm = multNatClosureBin
                 bin = True
             else:
-                thm = multNatsClosure
+                thm = multNatClosure
         elif numberSet == NaturalsPos:
             if len(self.operands) == 2:
                 thm = multNatPosClosureBin
@@ -72,7 +73,7 @@ class Mult(Operation):
                 thm = multRealClosure
         elif numberSet == RealsPos:
             if len(self.operands) == 2:
-                thm = multRealsPosClosureBin
+                thm = multRealPosClosureBin
                 bin = True
             else:
                 thm = multRealPosClosure
@@ -92,23 +93,28 @@ class Mult(Operation):
             msg = ("'Mult.deduceInNumberSet()' not implemented for the "
                    "%s set"%str(numberSet))
             raise ProofFailure(InSet(self, numberSet), assumptions, msg)
-        from proveit._common_ import AA
         # print("thm", thm)
         # print("self in deduce in number set", self)
         # print("self.operands", self.operands)
         if bin:
             return thm.specialize({a:self.operands[0], b:self.operands[1]},
                                   assumptions=assumptions)
-        return thm.specialize({m:num(len(self.operands)),AA:self.operands},
+        return thm.specialize({n:self.operands.length(assumptions), 
+                               a:self.operands},
                               assumptions=assumptions)
     
     def notEqual(self, rhs, assumptions=USE_DEFAULTS):
         from ._theorems_ import multNotEqZero
+        from proveit.number import zero
         if rhs == zero:
-            return multNotEqZero.specialize({xMulti:self.operands}, assumptions=assumptions)
-        raise ProofFailure(Equals(self, zero), assumptions, "'notEqual' only implemented for a right side of zero")
+            _n = self.operands.length(assumptions)
+            _a = self.operands
+            return multNotEqZero.specialize({n:_n, a:_a}, 
+                                            assumptions=assumptions)
+        raise ProofFailure(Equals(self, zero), assumptions, (
+                "'notEqual' only implemented for a right side of zero"))
     
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this multiplication expression equated with a simpler form.
         Deals with disassociating any nested multiplications,simplifying negations, and
@@ -178,7 +184,7 @@ class Mult(Operation):
         For example:
             w*(-x)*y*z = -(w*x*y*z)
         '''
-        from proveit.number import Neg, num
+        from proveit.number import Neg
         from ._theorems_ import multNegLeft, multNegRight, multNegAny
         
         if not isinstance(self.operands[idx], Neg):
@@ -186,15 +192,22 @@ class Mult(Operation):
         
         if len(self.operands)==2:
             if idx==0:
-                return multNegLeft.specialize({x:self.operands[0].operand, y:self.operands[1]}, assumptions=assumptions)
+                _x = self.operands[0].operand
+                _y = self.operands[1]
+                return multNegLeft.specialize({x:_x, y:_y}, 
+                                              assumptions=assumptions)
             else:
-                return multNegRight.specialize({x:self.operands[0], y:self.operands[1].operand}, assumptions=assumptions)
-        aVal = self.operands[:idx]
-        bVal = self.operands[idx].operand
-        cVal = self.operands[idx+1:]
-        mVal = num(len(aVal))
-        nVal = num(len(cVal))
-        return multNegAny.specialize({m:mVal, n:nVal, AA:aVal, B:bVal, CC:cVal}, assumptions=assumptions)
+                _x = self.operands[0]
+                _y = self.operands[1].operand
+                return multNegRight.specialize({x:_x, y:_y}, 
+                                               assumptions=assumptions)
+        _a = ExprTuple(*self.operands[:idx])
+        _b = self.operands[idx].operand
+        _c = ExprTuple(*self.operands[idx+1:])
+        _i = _a.length(assumptions)
+        _j = _c.length(assumptions)
+        return multNegAny.specialize({i:_i, j:_j, a:_a, b:_b, c:_c}, 
+                                     assumptions=assumptions)
 
     def oneEliminations(self, assumptions=USE_DEFAULTS):
         '''
@@ -227,7 +240,7 @@ class Mult(Operation):
         For example:
             x*y*1*z = x*y*z
         '''
-        from proveit.number import one, num
+        from proveit.number import one
         from ._theorems_ import elimOneLeft, elimOneRight, elimOneAny
         
         if self.operands[idx] != one:
@@ -235,16 +248,19 @@ class Mult(Operation):
         
         if len(self.operands)==2:
             if idx==0:
-                return elimOneLeft.specialize({x:self.operands[1]}, assumptions=assumptions)
+                return elimOneLeft.specialize({x:self.operands[1]}, 
+                                               assumptions=assumptions)
             else:
-                return elimOneRight.specialize({x:self.operands[0]}, assumptions=assumptions)
-        aVal = self.operands[:idx]
-        bVal = self.operands[idx+1:]
-        mVal = num(len(aVal))
-        nVal = num(len(bVal))
-        return elimOneAny.specialize({m:mVal, n:nVal, AA:aVal, BB:bVal}, assumptions=assumptions)
+                return elimOneRight.specialize({x:self.operands[0]}, 
+                                                assumptions=assumptions)
+        _a = ExprTuple(*self.operands[:idx])
+        _b = ExprTuple(*self.operands[idx+1:])
+        _i = _a.length(assumptions)
+        _j = _b.length(assumptions)
+        return elimOneAny.specialize({i:_i, j:_j, a:_a, b:_b}, 
+                                     assumptions=assumptions)
         
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Derive and return this multiplication expression equated with an irreducible value.
         Handle the trivial case of a zero factor or do pairwise evaluation
@@ -262,9 +278,12 @@ class Mult(Operation):
                     return multZeroLeft.specialize({x:self.operands[1]}, assumptions=assumptions)
                 else:
                     return multZeroRight.specialize({x:self.operands[0]}, assumptions=assumptions)
-            Afactors = self.operands[:zeroIdx]
-            Bfactors = self.operands[zeroIdx+1:]
-            return multZeroAny.specialize({m:len(Afactors), n:len(Bfactors), AA:Afactors, BB:Bfactors}, assumptions=assumptions)
+            _a = self.operands[:zeroIdx]
+            _b = self.operands[zeroIdx+1:]
+            _i = ExprTuple(*_a.length(assumptions))
+            _j = ExprTuple(*_b.length(assumptions))
+            return multZeroAny.specialize({i:_i, j:_j, a:_a, b:_b}, 
+                                          assumptions=assumptions)
         except (ValueError, ProofFailure):
             pass # No such "luck" regarding a simple multiplication by zero.
         
@@ -303,7 +322,6 @@ class Mult(Operation):
         to a repeated addition; for example, 3*c = c + c + c.
         '''
         from ._axioms_ import multDef
-        from proveit.number import num
         if hasattr(self.operands[0], 'asInt'):
             reps = self.operands[0].asInt()
         else:
@@ -314,8 +332,10 @@ class Mult(Operation):
         # Group together the remaining factors if necessary:
         if len(self.operands) > 2:
             expr = eq.update(expr.association(1, len(self.operands)-1, assumptions))
-        xVal = self.operands[1]          
-        eq.update(multDef.specialize({m:num(reps), AA:[xVal]*reps, x:xVal}, assumptions=assumptions))
+        _x = self.operands[1]      
+        _n = num(reps)
+        eq.update(multDef.specialize({n:_n, a:[_x]*reps, x:_x}, 
+                                      assumptions=assumptions))
         return eq.relation
     
     def index(self, theFactor, alsoReturnNum=False):
@@ -376,17 +396,34 @@ class Mult(Operation):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.            
         '''
-        from ._theorems_ import distributeThroughSum, distributeThroughSubtract, distributeThroughSummation
-        from proveit.number.division._theorems_ import fracInProd, prodOfFracs
-        from proveit.number import frac, Div, Add, subtract, Sum
+        from ._theorems_ import distributeThroughSum, distributeThroughSubtract#, distributeThroughSummation
+        from proveit.number.division._theorems_ import prodOfFracs #, fracInProd
+        from proveit.number import Add, Div, Neg, Sum
         if idx is None and len(self.factors) == 2 and all(isinstance(factor, Div) for factor in self.factors):
             return prodOfFracs.specialize({x:self.factors[0].numerator, y:self.factors[1].numerator, z:self.factors[0].denominator, w:self.factors[1].denominator}, assumptions=assumptions)
         operand = self.operands[idx]
+        _a = ExprTuple(*self.operands[:idx])
+        _c = ExprTuple(*self.operands[idx+1:])
+        _i = _a.length(assumptions)
+        _k = _c.length(assumptions)
         if isinstance(operand, Add):
-            return distributeThroughSum.specialize({xMulti:self.operands[:idx], yMulti:self.operands[idx].operands, zMulti:self.operands[idx+1:]}, assumptions=assumptions)
-        elif isinstance(operand, subtract):
-            return distributeThroughSubtract.specialize({wMulti:self.operands[:idx], x:self.operands[idx].operands[0], y:self.operands[idx].operands[1], zMulti:self.operands[idx+1:]}, assumptions=assumptions)
-        elif isinstance(operand, Div):            
+            _b = self.operands[idx].operands
+            _j = _b.length(assumptions)
+            return distributeThroughSum.specialize(
+                    {i:_i, j:_j, k:_k, a:_a, b:_b, c:_c}, 
+                    assumptions=assumptions)
+        elif (isinstance(operand, Add) and len(operand.operands)==2 
+                  and isinstance(operand.operands[0], Neg)):
+            _j = _k
+            _x = self.operands[idx].operands[0]
+            _y = self.operands[idx].operands[1].operand
+            return distributeThroughSubtract.specialize(
+                    {i:_i, j:_j, a:_a, x:_x, y:_y, c:_c},
+                    assumptions=assumptions)
+        elif isinstance(operand, Div):       
+            raise NotImplementedError("Mult.distribution must be updated "
+                                      "for Div case.")
+            '''
             eqn = fracInProd.specialize({wMulti:self.operands[:idx], x:self.operands[idx].operands[0], y:self.operands[idx].operands[1], zMulti:self.operands[idx+1:]}, assumptions=assumptions)            
             try:
                 # see if the numerator can simplify (e.g., with a one factor)
@@ -395,7 +432,11 @@ class Mult(Operation):
                 return numerSimplification.subRightSideInto(Equals(eqn.lhs, frac(dummyVar, eqn.rhs.denominator)), dummyVar)
             except:
                 return eqn
+            '''
         elif isinstance(operand, Sum):
+            raise NotImplementedError("Mult.distribution must be updated "
+                                      "for Sum case.")
+            '''
             yMultiSub = operand.indices
             Pop, Pop_sub = Operation(P, operand.indices), operand.summand
             S_sub = operand.domain
@@ -404,6 +445,7 @@ class Mult(Operation):
                                                            xMulti:Etcetera(MultiVariable(xDummy)), zMulti:Etcetera(MultiVariable(zDummy))}, assumptions=assumptions)
             return spec1.deriveConclusion().specialize({Etcetera(MultiVariable(xDummy)):self.operands[:idx], \
                                                         Etcetera(MultiVariable(zDummy)):self.operands[idx+1:]}, assumptions=assumptions)
+            '''
         else:
             raise Exception("Unsupported operand type to distribute over: " + str(operand.__class__))
         
@@ -420,21 +462,30 @@ class Mult(Operation):
         Give any assumptions necessary to prove that the operands are in Complexes so that
         the associative and commutation theorems are applicable.
         '''
+        expr = self
+        eq = TransRelUpdater(expr, assumptions)         
         idx, num = self.index(theFactor, alsoReturnNum=True)
-        expr = self.groupCommutation(idx, 0 if pull=='left' else -1, length=num, assumptions=assumptions)
+        expr = eq.update(self.groupCommutation(
+                idx, 0 if pull=='left' else -num, length=num, 
+                assumptions=assumptions))
         if groupFactor and num > 1:
             if pull == 'left':  # use 0:num type of convention like standard pythong
-                expr = expr.rhs.group(endIdx=num, assumptions=assumptions)
+                expr = eq.update(expr.association(0, num, 
+                                                  assumptions=assumptions))
             elif pull == 'right':
-                expr = expr.rhs.group(startIdx=-num, assumptions=assumptions)
+                expr = eq.update(expr.association(-num, num, 
+                                                  assumptions=assumptions))
         if groupRemainder and len(self.operands)-num > 1:
             # if the factor has been group, effectively there is just 1 factor operand now
-            numFactorOperands = 1 if groupFactor else num
+            num_factor_operands = 1 if groupFactor else num
             if pull == 'left':           
-                expr = expr.rhs.group(startIdx=numFactorOperands, assumptions=assumptions)
+                expr = eq.update(expr.association(num_factor_operands, 
+                                                  len(self.operands)-num_factor_operands,
+                                                  assumptions=assumptions))
             elif pull == 'right':
-                expr = expr.rhs.group(endIdx=-numFactorOperands, assumptions=assumptions)
-        return Equals(self, expr.rhs)
+                expr = eq.update(expr.association(0, num_factor_operands,
+                                                  assumptions=assumptions))
+        return eq.relation
         
     def exponentCombination(self, startIdx=None, endIdx=None,
                             assumptions=USE_DEFAULTS):
@@ -473,12 +524,6 @@ class Mult(Operation):
         # the following sqrt specialization modified by wdc on 2/29/2020
         # based on the above-commented-out code (kept here temporarily
         # until we're sure this works ok)
-        if all(factor.getStyle('radical') == 'sqrt' for factor in self.factors):
-            # combine the square roots into one square root
-            factorBases = [factor.base for factor in self.factors]
-            return sqrtOfProd.specialize(
-                    {n:num(len(factorBases)), xx:factorBases},
-                    assumptions=assumptions)
         if len(self.operands) != 2 or not isinstance(self.operands[0], Exp) or not isinstance(self.operands[1], Exp):
             if len(self.operands) == 2 and isinstance(self.operands[0], Exp) and self.operands[0].base == self.operands[1]:
                 # Of the form a^b a
@@ -527,17 +572,17 @@ class Mult(Operation):
 
     def commutation(self, initIdx=None, finalIdx=None, assumptions=USE_DEFAULTS):
         '''
-        Given Boolean operands, deduce that this expression is equal to a form in which the operand
+        Given numerical operands, deduce that this expression is equal to a form in which the operand
         at index initIdx has been moved to finalIdx.
         For example, (a + b + ... + y + z) = (a + ... + y + b + z)
         via initIdx = 1 and finalIdx = -2.
         '''
         from ._theorems_ import commutation, leftwardCommutation, rightwardCommutation
         return apply_commutation_thm(self, initIdx, finalIdx, commutation, leftwardCommutation, rightwardCommutation, assumptions)
-
+    
     def groupCommutation(self, initIdx, finalIdx, length, disassociate=True, assumptions=USE_DEFAULTS):
         '''
-        Given Boolean operands, deduce that this expression is equal to a form in which the operands
+        Given numerical operands, deduce that this expression is equal to a form in which the operands
         at indices [initIdx, initIdx+length) have been moved to [finalIdx. finalIdx+length).
         It will do this by performing association first.  If disassocate is True, it
         will be disassociated afterwards.

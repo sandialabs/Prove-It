@@ -659,6 +659,17 @@ class Expression(metaclass=ExprType):
         from proveit.logic import Not
         return Not(self).prove(assumptions=assumptions, automation=automation)
                         
+    def diproven(self, assumptions=USE_DEFAULTS):
+        '''
+        Return True if and only if the expression is known to be false.
+        '''
+        from proveit import ProofFailure
+        try:
+            self.disprove(assumptions, automation=False)
+            return True
+        except ProofFailure:
+            return False
+    
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
         Attempt to conclude this expression under the given assumptions, 
@@ -786,7 +797,7 @@ class Expression(metaclass=ExprType):
         Make a copy of the Expression with the same styles.
         '''
         # vacuous substitution makes a copy
-        expr_copy = self.replaced(expr_repl_map=dict()) 
+        expr_copy = self.replaced({}) 
         return expr_copy
     
     def _used_vars(self):
@@ -843,13 +854,19 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.label.var import safeDummyVars
         return safeDummyVars(n, self)
             
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
+    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
+                   **kwargs):
         '''
         If possible, return a KnownTruth of this expression equal to its
         irreducible value.  Checks for an existing evaluation.  If it
         doesn't exist, try some default strategies including a reduction.
         Attempt the Expression-class-specific "doReducedEvaluation"
         when necessary.
+        
+        If automation is False, this may only succeed if the evaluation
+        is already known.  Other keyword arguments will be passed
+        along to doReducedEvaluation to instruct it on how it
+        should behave (e.g., 'minimal_automation').
         '''
         from proveit.logic import (Equals, defaultSimplification, 
                                    SimplificationError, EvaluationError)
@@ -860,18 +877,18 @@ class Expression(metaclass=ExprType):
         
         method_called = None
         try:
-            # First try the default tricks. If a reduction succesfully occurs,
-            # evaluation will be called on that reduction.
-            evaluation = defaultSimplification(self.innerExpr(), mustEvaluate=True, 
-                                               assumptions=assumptions,
-                                               automation=automation)
+            # First try the default tricks. If a reduction succesfully
+            # occurs, evaluation will be called on that reduction.
+            evaluation = defaultSimplification(
+                    self.innerExpr(), mustEvaluate=True, 
+                    assumptions=assumptions, automation=automation)
             method_called = defaultSimplification
         except SimplificationError as e:
             if automation is False:
                 raise e # Nothing else we can try when automation is off.
             # The default failed, let's try the Expression-class specific version.
             try:
-                evaluation = self.doReducedEvaluation(assumptions)
+                evaluation = self.doReducedEvaluation(assumptions, **kwargs)
                 if evaluation is None:
                     raise EvaluationError(self, assumptions)
                 method_called = self.doReducedEvaluation
@@ -904,7 +921,7 @@ class Expression(metaclass=ExprType):
 
         return evaluation
     
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Attempt to evaluate 'self', which should be a reduced
         expression with operands already evaluated.
@@ -913,6 +930,9 @@ class Expression(metaclass=ExprType):
         Must be overridden for class-specific evaluation.
         Raise a SimplificationError if the evaluation
         cannot be done.
+        
+        The kwargs may provide instructions on how this method
+        should behave (e.g., minimal_automation).
         '''
         raise NotImplementedError("'doReducedEvaluation' not implemented for %s class"%str(self.__class__))       
 
@@ -925,13 +945,19 @@ class Expression(metaclass=ExprType):
         return self.evaluation(assumptions=assumptions).rhs
    """ 
         
-    def simplification(self, assumptions=USE_DEFAULTS, automation=True):
+    def simplification(self, assumptions=USE_DEFAULTS, *, automation=True,
+                       **kwargs):
         '''
         If possible, return a KnownTruth of this expression equal to a
         canonically simplified form. Checks for an existing simplifcation.
         If it doesn't exist and automation is True, try some default strategies
         including a reduction.  Attempt the Expression-class-specific 
         "doReducedSimplication" when necessary.
+        
+        If automation is False, this may only succeed if the 
+        simplification is already known.  Other keyword arguments will
+        be passed along to doReducedEvaluation to instruct it on how it
+        should behave (e.g., 'minimal_automation').     
         '''
         from proveit import KnownTruth, ProofFailure
 
@@ -957,13 +983,14 @@ class Expression(metaclass=ExprType):
             # versions of evaluation and simplification.
             try:
                 # first try evaluation.  that is as simple as it gets.
-                simplification = self.doReducedEvaluation(assumptions)
+                simplification = self.doReducedEvaluation(assumptions, **kwargs)
                 if simplification is None:
                     raise EvaluationError(self, assumptions)
                 method_called = self.doReducedEvaluation
             except (NotImplementedError, EvaluationError):
                 try:
-                    simplification = self.doReducedSimplification(assumptions)
+                    simplification = self.doReducedSimplification(
+                            assumptions, **kwargs)
                     if simplification is None:
                         raise SimplificationError('Unable to simplify: ',
                                                   str(self))
@@ -992,7 +1019,7 @@ class Expression(metaclass=ExprType):
              
         return simplification
     
-    def doReducedSimplification(self, assumptions=USE_DEFAULTS):
+    def doReducedSimplification(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Attempt to simplify 'self', which should be a reduced
         expression with operands already simplified.
@@ -1001,6 +1028,9 @@ class Expression(metaclass=ExprType):
         Must be overridden for class-specific simplification.
         Raise a SimplificationError if the simplification
         cannot be done.
+        
+        The kwargs may provide instructions on how this method
+        should behave (e.g., minimal_automation).
         '''
         raise NotImplementedError("'doReducedSimplification' not implemented for %s class"%str(self.__class__))
     

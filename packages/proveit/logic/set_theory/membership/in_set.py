@@ -111,24 +111,16 @@ class InSet(Operation):
         except SimplificationError:
             elem_simplification = None
         
-        exception = None
         if elem_simplification is None:
-            # If there is not a known simplification, try using a 
-            # membershipObject to conclude the membership.
+            # Let's try harder to simplify the element.
             try:
-                # could not prove it through a subset relationship,
-                # now try to use a MembershipObject
-                return self.membershipObject.conclude(assumptions)
-            except Exception as e:
-                exception = e # no luck with that.
+                elem_simplification = self.element.simplification(assumptions)
+                if elem_simplification.lhs == elem_simplification.rhs:
+                    elem_simplification = None # reflection doesn't count
+            except SimplificationError:
+                pass
         
-            # Since the membershipObject approach failed, let's try
-            # harder to simplify the element.
-            elem_simplification = self.element.simplification(assumptions)
-            if elem_simplification.lhs == elem_simplification.rhs:
-                elem_simplification = None # reflection doesn't count
-        
-        # If the element simplification successed, prove the membership
+        # If the element simplification succeeded, prove the membership
         # via the simplified form of the element.
         if elem_simplification is not None:
             simple_elem = elem_simplification.rhs
@@ -136,12 +128,18 @@ class InSet(Operation):
             inner_expr = simple_membership.innerExpr().element 
             return elem_simplification.subLeftSideInto(inner_expr, assumptions)
         else:
-            # No useful simplification strategy.  Raise the exception from
-            # having no 'membershipObject' or the 'membershipObject' failing
-            # to conclude.
-            raise exception
+            # Unable to simplify the element.  Try to conclude via
+            # the 'membershipObject' if there is one.
+            if hasattr(self, 'membershipObject'):
+                return self.membershipObject.conclude(assumptions)
+            
+            raise ProofFailure(self, assumptions, 
+                               "Unable to conclude automatically; "
+                               "the domain, %s, has no 'membershipObject' "
+                               "method with a strategy for proving "
+                               "membership."%self.domain)
     
-    def doReducedEvaluation(self, assumptions=USE_DEFAULTS):
+    def doReducedEvaluation(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         Attempt to form evaluation of whether (element in domain) is
         TRUE or FALSE.  If the domain has a 'membershipObject' method,
