@@ -35,8 +35,9 @@ def apply_commutation_thm(expr, initIdx, finalIdx, binaryThm, leftwardThm, right
 def apply_association_thm(expr, startIdx, length, thm, assumptions=USE_DEFAULTS):
     from proveit import ExprTuple
     from proveit.logic import Equals
-    beg, end = startIdx, startIdx+length
+    beg = startIdx
     if beg < 0: beg = len(expr.operands)+beg # use wrap-around indexing
+    end = beg+length
     if end > len(expr.operands):
         raise IndexError("'startIdx+length' out of bounds: %d > %d."%(end, len(expr.operands)))
     if beg==0 and end==len(expr.operands):
