@@ -72,12 +72,14 @@ class And(Operation):
                 try:
                     if len(disprovenOperandIndices) == 2:
                         return self.andIfBoth(assumptions)
-                    elif disprovenOperandIndices[0] == 0:
-                        return nandIfLeftButNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                    elif disprovenOperandIndices[0] == 1:
+                        return nandIfLeftButNotRight.specialize({A:self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                     else:
-                        return nandIfRightButNotLeft.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-                except:
-                    pass
+                        return nandIfRightButNotLeft.specialize({A:self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                except Exception as e:
+                    if not useAutomationForOperand:
+                        continue # try again with automation
+                    raise e
             if len(disprovenOperandIndices) > 0:
                 try:
                     # proven using concludeViaExample above (unless orIf[Any,Left,Right] was not a usable theorem,
