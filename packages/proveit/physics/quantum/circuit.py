@@ -1,5 +1,6 @@
 import sys
 from proveit import Lambda, Literal, Operation, USE_DEFAULTS
+from proveit._common_ import A, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
 # from proveit.physics.quantum._common_ import Xgate, Ygate, Zgate, Hgate
@@ -168,7 +169,7 @@ class IdentityOp(Literal):
             if gate == 'wire':
                 return r'\qw'
             else:
-                return r'\gate{I}'
+                return r'I'
         else:
             if gate == 'wire':
                 return '--'
@@ -205,7 +206,8 @@ class Gate(Operation):
         Automatically reduce "Gate() = IdentityOp()".
         '''
         if len(self.operands) == 0:
-            pass
+            from proveit.physics.quantum._axioms_ import emptyGate
+            return emptyGate
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -218,6 +220,8 @@ class Gate(Operation):
             formattedGateOperation = '[]'
         else:
             formattedGateOperation = self.gate_operation.formatted(formatType, fence=False)
+        if isinstance(self.gate_operation, IdentityOp):
+            return self.gate_operation.formatted(formatType)
         if formatType == 'latex':
             return r'\gate{' + formattedGateOperation + r'}'
         else:
@@ -243,41 +247,35 @@ class MultiQubitGate(Operation):
     # the literal operator of the Gate operation class
     _operator_ = Literal('MULTI_QUBIT_GATE', context=__file__)
 
-    def __init__(self, *operands, styles=None):
+    def __init__(self, gate, gate_set, styles=None):
         '''
         Create a quantum circuit gate performing the given operation.
         '''
-        if len(operands) > 2:
-            raise TypeError('Expected there to be two arguments: gate and set')
-        if len(operands) == 0:
-            # empty multiqubitgate axiom
-            pass
-        elif len(operands) == 1:
-            # multiqubitgate reduction to gate
-            pass
-        else:
-            self.indices = operands[1].operands
-            self.gate = operands[0]
+        if isinstance(gate_set, Set):
+            self.indices = gate_set.operands
+        self.gate_set = gate_set
+        self.gate = gate
 
         if styles is None: styles = dict()
         if 'representation' not in styles:
             styles['representation'] = 'explicit'
-        Operation.__init__(self, MultiQubitGate._operator_, operands, styles=styles)
+        Operation.__init__(self, MultiQubitGate._operator_, (gate, gate_set), styles=styles)
 
     def auto_reduction(self, assumptions=USE_DEFAULTS):
         '''
         Automatically reduce "MultiQubitGate() = IdentityOp()" and "MultiQubitGate(Gate(a), Set(n)) = Gate(a)".
         '''
-        pass
-
-    def extractInitArgValue(argName, operator_or_operators, operand_or_operands, styles=None):
-        print(argName)
-        print(operator_or_operators)
-        print(operand_or_operands)
-        if argName == 'styles':
-            return styles 
-        else:
-            return operand_or_operands
+        if len(self.operands) == 0:
+            # from proveit.physics.quantum._axioms_ import emptyMultiQubitGate
+            # return emptyMultiQuibitGate
+            pass
+        elif self.gate_set.operands.singular():
+            try:
+                return self.unaryReduction(assumptions)
+            except:
+                # Cannot do the reduction if the operand is not known
+                # to be in NaturalsPos.
+                pass
 
     def styleOptions(self):
         from proveit._core_.expression.style_options import StyleOptions
@@ -293,6 +291,14 @@ class MultiQubitGate(Operation):
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
+
+    def unaryReduction(self, assumptions=USE_DEFAULTS):
+        # from proveit.physics.quantum._theorems_ import unary_MultiQubitGate_reduction
+        if not self.gate_set.operands.singular():
+            raise ValueError("Expression must have a single operand in "
+                             "order to invoke unaryReduction")
+        operand = self.gate_set.operands[0]
+        # return unary_MultiQubitGate_reduction.specialize({U: self.gate, A: operand}, assumptions=assumptions)
 
     def formatted(self, formatType, representation=None, **kwargs):
         if representation is None:
@@ -317,7 +323,10 @@ class MultiQubitGate(Operation):
                 # this is formatted as a solid dot, but with classical wires.
                 out_str += r'\control \cw'
             else:
-                out_str += formattedGateOperation
+                if isinstance(self.gate_set, Set):
+                    out_str += formattedGateOperation
+                else:
+                    out_str += formattedGateOperation + r' with ' + self.gate_set.formatted(formatType)
             return out_str
         else:
             return Operation._formatted(self, formatType)
@@ -410,6 +419,133 @@ class Circuit(ExprArray):
         # check each column for same expression throughout
         self.checkRange()
         self.check_indices()
+
+    def checkRange(self):
+        '''
+        If there is an ExprRange contained in the circuit,
+        every item in the same column MUST agree in length
+        of the ExprRange.  If not, raise an error.
+        '''
+        pos = []
+        box = False
+        k = 0
+        n = 0
+        for m, expr in enumerate(self):
+            if isinstance(expr, ExprTuple):
+                count = 0
+                for i, entry in enumerate(expr):
+                    if isinstance(entry, ExprRange):
+                        if m == 0:
+                            placeholder = []
+                            placeholder.append(i)
+                            if isinstance(entry.first(), MultiQubitGate):
+                                placeholder.append(entry.first().subExpr(1).subExpr(1))
+                            else:
+                                placeholder.append(entry.first().subExpr(1))
+                            if isinstance(entry.first(), MultiQubitGate):
+                                placeholder.append(entry.last().subExpr(1).subExpr(1))
+                            else:
+                                placeholder.append(entry.last().subExpr(1))
+                            pos.append(placeholder)
+                        else:
+                            if len(pos) == 0:
+                                raise ValueError('There is an invalid ExprRange in tuple number %s' % str(i))
+                            for item in pos:
+                                if item[0] == i:
+                                    if entry.first().subExpr(1) != item[1]:
+                                        raise ValueError('Columns containing ExprRanges '
+                                                         'must agree for every row. %s is '
+                                                         'not equal to %s.' % (entry.first().subExpr(1), item[1]))
+                                    if entry.last().subExpr(1) != item[2]:
+                                        raise ValueError('Columns containing ExprRanges '
+                                                         'must agree for every row. %s is '
+                                                         'not equal to %s.' % (entry.last().subExpr(1), item[2]))
+                                    k += 1
+                        count += 3
+                    else:
+                        count += 1
+
+                if count != self.getRowLength():
+                    raise ValueError('One or more rows are a different length.  Please double check your entries.')
+            elif isinstance(expr, ExprRange):
+                if isinstance(expr.first(), ExprTuple):
+                    first = None
+                    last = None
+                    for i, entry in enumerate(expr.first()):
+
+                        if isinstance(entry, ExprTuple):
+                            raise ValueError('Nested ExprTuples are not supported. Fencing is an '
+                                             'extraneous feature for the ExprArray class.')
+                        elif isinstance(entry, ExprRange):
+                            if m == 0:
+                                placeholder = []
+                                placeholder.append(i)
+                                if isinstance(entry.first(), MultiQubitGate):
+                                    placeholder.append(entry.first().subExpr(1).subExpr(1))
+                                else:
+                                    placeholder.append(entry.first().subExpr(1))
+                                if isinstance(entry.first(), MultiQubitGate):
+                                    placeholder.append(entry.last().subExpr(1).subExpr(1))
+                                else:
+                                    placeholder.append(entry.last().subExpr(1))
+                                pos.append(placeholder)
+                            box = True
+                            if first is None:
+                                if isinstance(entry.first(), MultiQubitGate):
+                                    first = entry.first().subExpr(1).subExpr(1)
+                                else:
+                                    first = entry.first().subExpr(0).subExpr(1)
+                            if isinstance(entry.first(), MultiQubitGate):
+                                current = entry.first().subExpr(1).subExpr(1)
+                            else:
+                                current = entry.first().subExpr(0).subExpr(1)
+                            if first != current:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (first, current))
+                            if first != current:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (first, current))
+                        else:
+                            if first is None:
+                                first = entry.subExpr(1)
+                            if first != entry.subExpr(1):
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (first, entry.subExpr(1)))
+                    for entry in expr.last():
+                        if isinstance(entry, ExprTuple):
+                            raise ValueError('Nested ExprTuples are not supported. Fencing is an '
+                                             'extraneous feature for the ExprArray class.')
+                        elif isinstance(entry, ExprRange):
+                            if last is None:
+                                if isinstance(entry.first(), MultiQubitGate):
+                                    last = entry.first().subExpr(1).subExpr(1)
+                                else:
+                                    last = entry.first().subExpr(0).subExpr(1)
+                            if isinstance(entry.first(), MultiQubitGate):
+                                current = entry.first().subExpr(1).subExpr(1)
+                            else:
+                                current = entry.first().subExpr(0).subExpr(1)
+                            if last != current:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (last, current))
+                            if last != current:
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (last, current))
+                        else:
+                            if last is None:
+                                last = entry.subExpr(1)
+                            if last != entry.subExpr(1):
+                                raise ValueError('Rows containing ExprRanges must agree for every column. %s is '
+                                                 'not equal to %s.' % (last, entry.subExpr(1)))
+            n = m
+
+        if k != len(pos):
+            if n == 0:
+                if not box:
+                    raise ValueError('ExprArrays must have more than one row.')
+            else:
+                raise ValueError('The ExprRange in the first tuple is not in the same column '
+                                 'as the ExprRange in tuple number %s' % str(n))
 
     def check_indices(self):
         '''
@@ -514,15 +650,31 @@ class Circuit(ExprArray):
                             else:
                                 # this is the last gate so we skip adding a wire
                                 row[i] = 'skip'
+
                     elif isinstance(value, ExprRange):
                         # ExprTuple of an ExprRange
                         j = 0
-                        while j < 3:
-                            # we count to 3 because there are 3 elements in each row of the ExprRange
-                            row[col] = 'gate'
-                            j += 1
-                            col += 1
+                        if isinstance(value.first(), MultiQubitGate):
+                            while j < 3:
+                                # we count to 3 because there are 3 elements in each row of the ExprRange
+                                row[col] = 'gate'
+                                j += 1
+                                col += 1
+                        elif not isinstance(value.first(), Gate):
+                            if isinstance(value.first(), Literal):
+                                from proveit.physics.quantum._common_ import SPACE, CONTROL, CLASSICAL_CONTROL
+                                if value.first() != SPACE or value.first() != CONTROL or \
+                                    value.first() != CLASSICAL_CONTROL:
+                                    raise TypeError('Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                                                    'Literal imported from proveit.physics.quantum._common_  %s is not'
+                                                    % value.first())
+                            else:
+                                raise TypeError('Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                                                'Literal imported from proveit.physics.quantum._common_  %s is not'
+                                                % value.first())
+
                 wire_placement.append(row)
+
             elif isinstance(entry, ExprRange):
                 if isinstance(entry.first(), ExprTuple):
                     # ExprRange of an ExprTuple
@@ -535,20 +687,50 @@ class Circuit(ExprArray):
                             if isinstance(item, ExprRange):
                                 # ExprRange of an ExprTuple of an ExprRange
                                 j = 0
-                                while j < 3:
-                                    # we count to 3 because there are 3 elements in each ExprRange
-                                    if k < 2:
-                                        row[col] = ['gate', 1]
+                                if isinstance(item.first(), MultiQubitGate):
+                                    while j < 3:
+                                        # we count to 3 because there are 3 elements in each ExprRange
+                                        if k < 2:
+                                            row[col] = ['gate', 1]
+                                        else:
+                                            row[col] = 'gate'
+                                        j += 1
+                                        col += 1
+                                elif not isinstance(item.first(), Gate):
+                                    if isinstance(item.first(), Literal):
+                                        from proveit.physics.quantum._common_ import SPACE, CONTROL, CLASSICAL_CONTROL
+                                        if item.first() != SPACE or item.first() != CONTROL or \
+                                                item.first() != CLASSICAL_CONTROL:
+                                            raise TypeError(
+                                                'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                                                'Literal imported from proveit.physics.quantum._common_  %s is not'
+                                                % item.first())
                                     else:
-                                        row[col] = 'gate'
-                                    j += 1
-                                    col += 1
-                            else:
+                                        raise TypeError(
+                                            'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                                            'Literal imported from proveit.physics.quantum._common_  %s is not'
+                                            % item.first())
+
+                            elif isinstance(item, MultiQubitGate):
                                 row[i] = 'gate'
+                            elif not isinstance(item, Gate):
+                                if isinstance(item, Literal):
+                                    from proveit.physics.quantum._common_ import SPACE, CONTROL, CLASSICAL_CONTROL
+                                    if item != SPACE or item != CONTROL or \
+                                            item != CLASSICAL_CONTROL:
+                                        raise TypeError(
+                                            'Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                                            'Literal imported from proveit.physics.quantum._common_  %s is not'
+                                            % item)
+                                else:
+                                    raise TypeError('Operand contained in Circuit must be a MultiQubitGate, Gate, or a '
+                                                    'Literal imported from proveit.physics.quantum._common_  %s is not'
+                                                    % item)
 
                         wire_placement.append(row)
                         row = dict()
                         k += 1
+
             else:
                 wire_placement.append(row)
 
@@ -608,7 +790,7 @@ class Circuit(ExprArray):
                 else:
                     add = ' '
                 out_str = ''
-                if column in wires[row]:
+                if wires is not None and wires[row] is not None and len(wires[row]) != 0 and column in wires[row]:
                     if column == 0:
                         add = '& '
                     if isinstance(wires[row][column], list):
@@ -645,6 +827,8 @@ class Circuit(ExprArray):
                         else:
                             # this is formatted as a target.
                             out_str += add + r'\targ \qwx[' + wires[row][column] + r']'
+                    elif entry == 'I':
+                        out_str += add + r'\gate{I}'
                     elif entry == r'\control \qw':
                         # this is formatted as a solid dot using \ctrl since there is a wire
                         out_str += add + r'\ctrl{' + str(wires[row][column]) + r'}'
