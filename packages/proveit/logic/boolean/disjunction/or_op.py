@@ -329,8 +329,7 @@ class Or(Operation):
         only rely upon known evaluations of the operands to determine 
         whether to try to prove or disprove the disjunction.
         '''
-        from proveit import ExprRange
-        from proveit.logic import TRUE, FALSE, SimplificationError
+        from proveit.logic import TRUE, SimplificationError
         from ._axioms_ import orTT, orTF, orFT, orFF # load in truth-table evaluations
         if len(self.operands)==0:
             return self.unaryReduction(assumptions)
