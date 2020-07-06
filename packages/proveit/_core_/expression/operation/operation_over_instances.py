@@ -414,9 +414,9 @@ class OperationOverInstances(Operation):
                 yield ivar
         else:
             yield self.instanceParam
-            if isinstance(self.instanceExpr, self.__class__):
-                for innerIvar in self.instanceExpr._allInstanceParams():
-                    yield innerIvar
+        if isinstance(self.instanceExpr, self.__class__):
+            for innerIvar in self.instanceExpr._allInstanceParams():
+                yield innerIvar
     
     def allInstanceParams(self):
         '''
