@@ -53,7 +53,6 @@ class And(Operation):
                                  falseAndFalseNegated, nandIfNeither, 
                                  nandIfLeftButNotRight, nandIfRightButNotLeft)
         from proveit.logic import Not
-        from proveit.number import num
         not_self = Not(self)
         if not_self in {trueAndFalseNegated.expr, falseAndTrueNegated.expr, falseAndFalseNegated.expr}:
             # should be disproven via one of the imported theorems as a simple special case
@@ -78,66 +77,26 @@ class And(Operation):
                     if len(disprovenOperandIndices) == 2:
                         return nandIfNeither.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                     elif disprovenOperandIndices[0] == 0:
-                        return nandIfLeftButNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-                    else:
                         return nandIfRightButNotLeft.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                    else:
+                        return nandIfLeftButNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                 except:
                     pass
             if len(disprovenOperandIndices) > 0:
+                # Not(self) should have been proven via 
+                # concludeViaExample above 
                 try:
-                    # proven using concludeViaExample above (unless orIf[Any,Left,Right] was not a usable theorem,
-                    # in which case this will fail and we can simply try the default below)
                     return not_self.prove(assumptions, automation=False)
-                except Exception as e:
-                    raise e
-                    # orIf[Any,Left,Right] must not have been a usable theorem; use the default below.
-                    break
-
-
-        '''
-        If there is a negation, try to automatically conclude a few special cases.
-        Then, evaluate each operand to prove the expression FALSE so the negation
-        will be true.
-        
-        from ._theorems_ import trueAndFalseNegated, falseAndTrueNegated, falseAndFalseNegated
-        from proveit.number import num
-        from proveit.logic.boolean._common_ import TRUE, FALSE
-        # Try a few special cases
-        if len(self.operands) == 2:
-            if self.operands == (TRUE, FALSE):
-                return trueAndFalseNegated
-            if self.operands == (FALSE, TRUE):
-                return falseAndTrueNegated
-            if self.operands == (FALSE, FALSE):
-                return falseAndFalseNegated
-        # Loop over the operands and see if there is an evaluation for the operands
-        for idx,operand in enumerate(self.operands):
-            try:
-                evaluation = operand.evaluation(assumptions)
-            except ProofFailure:
-                continue
-            if evaluation.rhs == FALSE:
-                if len(self.operands) == 2:
-                    if idx == 0:
-                        # if the left side is false
-                        try:
-                            from ._theorems_ import nandIfNotLeft
-                            return nandIfNotLeft.specialize({A: self.operands[0], B: self.operands[1]},assumptions=assumptions)
-                        except ProofFailure:
-                            continue
-                    if idx == 1:
-                        # if the right side is false
-                        from ._theorems_ import nandIfNotRight
-                        return nandIfNotRight.specialize({A: self.operands[0], B: self.operands[1]},assumptions=assumptions)
-                else:
-                    # if there is more than two operands, see if at least one of them is false. 
-                    mVal, nVal = num(idx), num(len(self.operands) - idx - 1)
-                    from ._theorems_ import nandIfNotOne
-                    try:
-                        return nandIfNotOne.specialize({m: mVal, n: nVal, AA: self.operands[:idx], B: self.operands[idx], CC: self.operands[idx + 1:]},assumptions=assumptions)
-                    except ProofFailure:
-                        continue
-        '''
+                except:
+                    # If it wasn't proven via concludeViaExample, let's
+                    # call it again to raise the appropriate exception.
+                    operand = self.operands[disprovenOperandIndices[0]]
+                    return self.concludeViaExample(operand, assumptions=assumptions)
+        raise ProofFailure(not_self, assumptions, 
+                           "Unable to conclude the negated conjunction; "
+                           "we could not disprove any of the conjunction "
+                           "operands.")
+    
     def sideEffects(self, knownTruth):
         '''
         Side-effect derivations to attempt automatically.
