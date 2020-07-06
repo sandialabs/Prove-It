@@ -49,11 +49,15 @@ class And(Operation):
 
     def concludeNegation(self, assumptions=USE_DEFAULTS):
         # Created by JML on 6/24/19
-        from ._theorems_ import trueAndFalseNegated, falseAndTrueNegated, falseAndFalseNegated,andIfBoth, nandIfLeftButNotRight, nandIfRightButNotLeft
+        from ._theorems_ import (trueAndFalseNegated, falseAndTrueNegated, 
+                                 falseAndFalseNegated, nandIfNeither, 
+                                 nandIfLeftButNotRight, nandIfRightButNotLeft)
+        from proveit.logic import Not
         from proveit.number import num
-        if self in {trueAndFalseNegated.expr, falseAndTrueNegated.expr, falseAndFalseNegated.expr}:
+        not_self = Not(self)
+        if not_self in {trueAndFalseNegated.expr, falseAndTrueNegated.expr, falseAndFalseNegated.expr}:
             # should be disproven via one of the imported theorems as a simple special case
-            return self.prove()
+            return not_self.prove()
             # Prove that the conjunction is true by proving that one of its operands is false and then negate it.
         # In the first attempt, don't use automation to prove any of the operands so that
         # we don't waste time trying to prove operands when we already know one to be false
@@ -63,7 +67,8 @@ class And(Operation):
                 try:
                     operand.disprove(assumptions, automation=useAutomationForOperand)
                     disprovenOperandIndices.append(_k)
-                    self.concludeViaExample(operand, assumptions=assumptions)  # possible way to prove it
+                    # possible way to prove it
+                    self.concludeViaExample(operand, assumptions=assumptions)  
                 except ProofFailure:
                     pass
             if len(self.operands) == 2 and len(disprovenOperandIndices) > 0:
@@ -71,21 +76,20 @@ class And(Operation):
                 # Try a possibly simpler proof than concludeViaExample.
                 try:
                     if len(disprovenOperandIndices) == 2:
-                        return self.andIfBoth(assumptions)
-                    elif disprovenOperandIndices[0] == 1:
-                        return nandIfLeftButNotRight.specialize({A:self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                        return nandIfNeither.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                    elif disprovenOperandIndices[0] == 0:
+                        return nandIfLeftButNotRight.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
                     else:
-                        return nandIfRightButNotLeft.specialize({A:self.operands[0], B: self.operands[1]}, assumptions=assumptions)
-                except Exception as e:
-                    if not useAutomationForOperand:
-                        continue # try again with automation
-                    raise e
+                        return nandIfRightButNotLeft.specialize({A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+                except:
+                    pass
             if len(disprovenOperandIndices) > 0:
                 try:
                     # proven using concludeViaExample above (unless orIf[Any,Left,Right] was not a usable theorem,
                     # in which case this will fail and we can simply try the default below)
-                    return self.prove(assumptions, automation=False)
-                except:
+                    return not_self.prove(assumptions, automation=False)
+                except Exception as e:
+                    raise e
                     # orIf[Any,Left,Right] must not have been a usable theorem; use the default below.
                     break
 
@@ -396,7 +400,7 @@ class And(Operation):
         only rely upon known  evaluations of the operands to determine 
         whether to try to prove or disprove the conjunction.
         '''
-        from proveit.logic import TRUE, FALSE, SimplificationError
+        from proveit.logic import FALSE
         from ._axioms_ import andTT, andTF, andFT, andFF # load in truth-table evaluations
         if len(self.operands)==0:
             return self.unaryReduction(assumptions)
