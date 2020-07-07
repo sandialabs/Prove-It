@@ -107,6 +107,23 @@ class ExprRange(Expression):
         yield self.start_index
         yield self.end_index
 
+    def remakeWithStyleCalls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a 
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'withWrappingAt'
+        and 'withJustification' calls.
+        '''
+        call_strs = []
+        parameterization = self.getStyle('parameterization', 'default')
+        if parameterization != 'default':
+            if parameterization == 'explicit':
+                call_strs.append('withExplicitParameterization()')
+            if parameterization == 'implicit':
+                call_strs.append('withImplicitParameterization()')
+        return call_strs
+    
     def styleOptions(self):
         options = StyleOptions(self)
         options.addOption(
