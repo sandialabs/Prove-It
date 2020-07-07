@@ -384,7 +384,7 @@ def exportToHTML(notebook_path, nb=None, strip_links=False, make_images_inline=F
         html_exporter.preprocessors[0].path = os.path.split(notebook_path)[0]
         if nb is None:
             # read in if it wasn't provided
-            with open(notebook_path) as f:
+            with open(notebook_path, encoding='utf8') as f:
                 nb = nbformat.read(f, as_version=4)
         # export to HTML
         (body, resources) = html_exporter.from_notebook_node(nb)
@@ -618,7 +618,6 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                                          no_execute=no_latex, no_latex=no_latex)
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_theorems_.ipynb'),
                                          no_execute=no_latex, no_latex=no_latex)    
-    
     if not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the 
         # contexts.

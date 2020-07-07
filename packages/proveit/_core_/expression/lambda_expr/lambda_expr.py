@@ -1054,8 +1054,9 @@ def extract_param_replacements(parameters, parameter_vars, body,
     operand(s) (ExprTuple-wrapped as appropriate).
     '''
     from proveit import (ExprTuple, ExprRange, ProofFailure, 
-                         Len, extract_var_tuple_indices)
+                         extract_var_tuple_indices)
     from proveit.logic import Equals, EvaluationError
+    from proveit.core_expr_types import Len
     # Loop through each parameter entry and match it with corresponding
     # operand(s).  Singular parameter entries match with singular
     # operand entries.  Iterated parameter entries match with
