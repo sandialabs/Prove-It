@@ -19,15 +19,11 @@ class Forall(OperationOverInstances):
         satisfied.  The instance parameter(s) and condition(s)
         may be singular or plural (iterable).
         '''
-        # nestMultiIvars=True will cause it to treat multiple instance 
-        # variables as nested Forall operations internally
-        # and only join them together as a style consequence.
         OperationOverInstances.__init__(
                 self, Forall._operator_, instanceParamOrParams, 
                 instanceExpr, domain=domain, domains=domains,
                 condition=condition, conditions=conditions, 
-                #nestMultiIvars=True, _lambda_map=_lambda_map)
-                nestMultiIvars=False, _lambda_map=_lambda_map)
+                _lambda_map=_lambda_map)
         
     def sideEffects(self, knownTruth):
         '''
@@ -53,8 +49,8 @@ class Forall(OperationOverInstances):
         while isinstance(expr, Forall):
             new_params = expr.explicitInstanceParams()
             instanceParamLists.append(list(new_params))
-            conditions += list(expr.inclusiveConditions())
-            expr = expr.explicitInstanceExpr()
+            conditions += list(expr.conditions)
+            expr = expr.instanceExpr
             new_assumptions = assumptions + tuple(conditions)
             if expr.proven(assumptions=assumptions + tuple(conditions)):
                 proven_inst_expr = expr.prove(new_assumptions)
@@ -75,8 +71,8 @@ class Forall(OperationOverInstances):
             # attempt a different non-trivial strategy of proving
             # via generalization with automation.
             try:
-                conditions = list(self.inclusiveConditions())
-                proven_inst_expr = self.explicitInstanceExpr().prove(
+                conditions = list(self.conditions)
+                proven_inst_expr = self.instanceExpr.prove(
                         assumptions=assumptions + tuple(conditions))
                 instanceParamLists = [list(self.explicitInstanceParams())]
                 # see if we can generalize multiple levels 

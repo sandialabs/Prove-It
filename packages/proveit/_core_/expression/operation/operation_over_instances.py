@@ -46,7 +46,7 @@ class OperationOverInstances(Operation):
     
     def __init__(self, operator, instanceParamOrParams, instanceExpr, *,
                  domain=None, domains=None, condition=None, conditions=None,
-                 nestMultiIvars=False, styles=None, _lambda_map=None):
+                 styles=None, _lambda_map=None):
         '''
         Create an Operation for the given operator that is applied over
         instances of the given instance parameter(s), instanceParamOrParams, 
@@ -59,16 +59,6 @@ class OperationOverInstances(Operation):
         OperationOverInstances is effected as an Operation over a Lambda map
         with a conditional body.
         
-        If nestMultiIvars is True do the following:
-        When there are multiple instance parameters, this will generate a 
-        nested tructure in actuality and simply set the style to display these 
-        instance variables together.  In other words, whether instance 
-        variables are joined together, like
-        "forall_{x, y} P(x, y)" or split in a nested structure like
-        "forall_{x} [forall_y P(x, y)]"
-        is deemed to be a matter of style, not substance.  Internally it is 
-        treated as the latter.
-              
         If a 'domain' is supplied, additional conditions are generated that 
         each instance parameter is in the domain "set": InSet(x_i, domain),
         where x_i is for each instance parameter.  If, instead, 'domains' are 
@@ -113,10 +103,6 @@ class OperationOverInstances(Operation):
                 # No conditions.
                 instanceExpr = lambda_map.body
                 conditions = ExprTuple()
-            if len(instance_params) > 1 and nestMultiIvars:
-                raise ValueError("Invalid 'lambda_map' for %s: multiple parameters "
-                                 "(%s) are not allowed when 'nestMultiIvars' is True."
-                                 %(str(self.__class__), str(instance_params)))
         else:
             # We will need to generate the Lambda sub-expression.
             # Do some initial preparations w.r.t. instanceParams, domain(s), and
@@ -166,103 +152,18 @@ class OperationOverInstances(Operation):
         # supplied, this should simply reproduce them from the conditions that 
         # were prepended.
         domain = domains = None # These may be reset below if there are ...
-        nondomain_conditions = conditions # ... domain conditions.
         if (len(conditions)>=len(instance_params)):
             domains = [_extract_domain_from_condition(ivar, cond) for
                        ivar, cond in zip(instance_params, conditions)]
             if all(domain is not None for domain in domains):
                 # Used if we have a single instance variable 
-                # or nestMultiIvars is True:
                 domain = domains[0] 
-                nondomain_conditions = conditions[len(instance_params):]
             else: domains=None
         
         if _lambda_map is None:
-            # Now do the actual lambda_map creation after handling
-            # nesting.
-            
-            # Handle nesting of multiple instance variables if needed.
-            if len(instance_params) > 1 and nestMultiIvars:
-                
-                # Figure out how many "non-domain" conditions belong at
-                # each level.  At each level, "non-domain" conditions 
-                # are  included up to the first one that has any free 
-                # variables that include any of the "inner" instance 
-                # variable parameters.
-                cond_free_vars = {cond:free_vars(cond, err_inclusively=True) 
-                                  for cond in nondomain_conditions}
-                num_nondomain_conditions_vs_level = [0]*len(instance_params)
-                remaining_nondomain_conditions = list(nondomain_conditions)
-                for i in range(len(instance_params)):
-                    # Parameter variables correpsonding to 'inner' instance
-                    # variables at this level:
-                    inner_instance_params = set(getParamVar(iparam) for 
-                                                iparam in instance_params[i+1:])
-                    # Start with the default # of non-domain conditions:
-                    num_nondomain_conditions = len(remaining_nondomain_conditions)
-                    # Go until a condition contains any of the "inner"
-                    # instance variable parameters as a free variable.
-                    for k, cond in enumerate(remaining_nondomain_conditions):
-                        if not cond_free_vars[cond].isdisjoint(inner_instance_params):
-                            num_nondomain_conditions = k
-                            break
-                    # Record the # of non-domain conditions and update the
-                    # 'remaining' ones.
-                    num_nondomain_conditions_vs_level[i] = num_nondomain_conditions
-                    remaining_nondomain_conditions = \
-                        remaining_nondomain_conditions[num_nondomain_conditions:]
-                
-                # Generate the nested OperationOverInstances from the inside
-                # out.
-                remaining_nondomain_conditions= list(nondomain_conditions)
-                for i in range(len(instance_params)-1, 0, -1):
-                    inner_instance_param = instance_params[i]
-                    
-                    # Get the appropriate conditions for level i.
-                    nconds = num_nondomain_conditions_vs_level[i]
-                    if nconds > 0:
-                        inner_conditions = remaining_nondomain_conditions[-nconds:]
-                        remaining_nondomain_conditions = \
-                            remaining_nondomain_conditions[:-nconds]
-                    else:
-                        inner_conditions = []
-                    if domains is not None:
-                        # prepend the domain condition
-                        inner_conditions.insert(0, conditions[i])
-                    
-                    # create the instanceExpr at level i.
-                    innerOperand = self._createOperand([inner_instance_param], instanceExpr, 
-                                                       conditions=inner_conditions)
-                    inner_styles = dict(styles)
-                    if i == len(instance_params)-1:
-                        # Inner-most -- no joining further.
-                        inner_styles['instance_params'] = 'no_join' 
-                    else:
-                        # Join with the next level.
-                        inner_styles['instance_params'] = 'join_next' 
-                    instanceExpr = self.__class__._make(['Operation'], inner_styles, 
-                                                        [operator, innerOperand])
-                    
-                
-                assert num_nondomain_conditions_vs_level[0] \
-                            == len(remaining_nondomain_conditions)
-                
-                # Get the appropriate top-level condition.
-                if domains is None:
-                    conditions = remaining_nondomain_conditions
-                else:
-                    # prepend the domain condition at the top level.
-                    conditions = [conditions[0]] + remaining_nondomain_conditions
-                
+            # Now do the actual lambda_map creation
+            if len(instance_params)==1:
                 instanceParamOrParams = instance_params[0]
-                instance_params = [instanceParamOrParams]
-                # Combine instance variables in the style:
-                styles['instance_params'] = 'join_next' 
-            elif len(instance_params)==1:
-                instanceParamOrParams = instance_params[0]
-                # No combining instance variables in the style:
-                styles['instance_params'] = 'no_join' 
-            
             # Generate the Lambda sub-expression.
             lambda_map = OperationOverInstances._createOperand(instanceParamOrParams, 
                                                                instanceExpr, 
@@ -349,7 +250,7 @@ class OperationOverInstances(Operation):
         elif argName=='instanceExpr':
             # return the inner instance expression after joining the
             # instance variables according to the style
-            return OperationOverInstances.explicitInstanceExpr(self)
+            return self.instanceExpr
         elif argName=='domain' or argName=='domains':
             # return the proper single domain or list of domains
             domains = OperationOverInstances.explicitDomains(self)
@@ -498,31 +399,7 @@ class OperationOverInstances(Operation):
         Added by wdc on 6/06/2019.
         '''
         return list(self._allConditions())
-    
-    def _joinedNestings(self):
-        '''
-        Yield the nested levels of the OperationOverInstances that are
-        joined together in the style.
-        '''
-        yield self
-        iVarStyle = self.getStyle('instance_params', '')
-        if iVarStyle == 'join_next':
-            assert isinstance(self.instanceExpr, self.__class__), (
-                "Not expecting 'instance_params' style to be " +
-                "'join_next' unless there is nesting of the same " +
-                "type of OperationOverInstances")
-            for expr in self.instanceExpr.joinedNestings():
-                yield expr
-
-    def joinedNestings(self):
-        '''
-        Returns the nested levels of the OperationOverInstances that
-        are joined together in the style. Relies on the generator
-        function _joinedNestings() defined above. Added here by wdc
-        on 8/25/2019.
-        '''
-        return list(self._joinedNestings())
-    
+        
     def explicitInstanceParams(self):
         '''
         Return the instance parameters that are to be shown explicitly 
@@ -535,7 +412,7 @@ class OperationOverInstances(Operation):
         if hasattr(self, 'instanceParams'):
             return self.instanceParams
         else:
-            return [expr.instanceParam for expr in self.joinedNestings()]
+            return [self.instanceParam]
 
     def explicitInstanceVars(self):
         '''
@@ -559,11 +436,8 @@ class OperationOverInstances(Operation):
             return []
         if hasattr(self, 'domains'):
             return self.domains
-        else:
-            domains = [expr.domain for expr in self.joinedNestings()]
-            if None not in domains:
-                # only show as explicit domains if none of them are None:
-                return domains
+        elif self.domain is not None:
+            return [self.domain]
         return [] # No explicitly displayed domains
     
     def domainConditions(self):
@@ -582,11 +456,10 @@ class OperationOverInstances(Operation):
             if len(explicit_domains)==0:
                 return [] # no explicit domains
             domain_conditions = []
-            for expr in self.joinedNestings():
-                assert (expr.domain == 
-                        _extract_domain_from_condition(expr.instanceParam, 
-                                                       expr.conditions[0]))
-                domain_conditions.append(expr.conditions[0])
+            assert (self.domain == 
+                    _extract_domain_from_condition(self.instanceParam, 
+                                                   self.conditions[0]))
+            domain_conditions.append(self.conditions[0])
             return domain_conditions
     
     def explicitConditions(self):
@@ -607,35 +480,14 @@ class OperationOverInstances(Operation):
         else:
             explicit_domains = self.explicitDomains()
             conditions = []
-            for expr in self.joinedNestings():
-                if len(explicit_domains)==0:
-                    conditions.extend(expr.conditions)
-                else:
-                    cond_domain = _extract_domain_from_condition(expr.instanceParam, 
-                                                                 expr.conditions[0])
-                    assert cond_domain == expr.domain
-                    conditions.extend(expr.conditions[1:])
+            if len(explicit_domains)==0:
+                conditions.extend(self.conditions)
+            else:
+                cond_domain = _extract_domain_from_condition(self.instanceParam, 
+                                                             self.conditions[0])
+                assert cond_domain == self.domain
+                conditions.extend(self.conditions[1:])
             return conditions
-
-    def inclusiveConditions(self):
-        '''
-        Return all of the conditions at this level according to the style,
-        including all of the conditions of 'joined' instance variables.
-        '''
-        conditions = []
-        for expr in self.joinedNestings():
-            conditions.extend(expr.conditions)
-        return conditions
-        
-    def explicitInstanceExpr(self):
-        '''
-        Return the instance expression after joining instance variables
-        according to the style.
-        '''
-        iVarStyle = self.getStyle('instance_params', '')
-        if iVarStyle == 'join_next':
-            return self.instanceExpr.explicitInstanceExpr()
-        return self.instanceExpr
     
     def _instanceParamLists(self):
         '''
@@ -643,25 +495,14 @@ class OperationOverInstances(Operation):
         paramaters (see allInstanceParams method) but grouped together
         according to the style joining instance variables together.
         '''
-        i_param_group = []
         expr = self
         while isinstance(expr, self.__class__):
             if hasattr(expr, 'instanceParams'):
-                yield expr.instanceParams # grouped together intrinsically
-                                          # -- no nestMultiIvars
+                yield expr.instanceParams # grouped together
             else:
-                i_param_group.append(expr.instanceParam)
-                i_param_style = expr.getStyle('instance_params', '')
-                if i_param_style != 'join_next':
-                    yield i_param_group # this group is done
-                    i_param_group = [] # start next group
+                yield [expr.instanceParam]
             expr = expr.instanceExpr
-        assert len(i_param_group)==0, (
-            "Not expecting 'instance_params' style to be " +
-            "'join_next' unless there is nesting of the same type " +
-            "of OperationOverInstances")
         
-    
     def instanceParamLists(self):
         '''
         Returns lists of instance parameters that include all of the instance
@@ -704,10 +545,10 @@ class OperationOverInstances(Operation):
             withWrapping = self.getStyle('withWrapping', '')
 
         # override this default as desired
-        explicitIparams = list(self.explicitInstanceParams()) # the (joined) instance vars to show explicitly
-        explicitConditions = ExprTuple(*self.explicitConditions()) # the (joined) conditions to show explicitly after '|'
-        explicitDomains = ExprTuple(*self.explicitDomains()) # the (joined) domains
-        explicitInstanceExpr = self.explicitInstanceExpr() # left over after joining instance vars according to the style
+        explicitIparams = list(self.explicitInstanceParams()) 
+        explicitConditions = ExprTuple(*self.explicitConditions()) 
+        explicitDomains = ExprTuple(*self.explicitDomains()) 
+        instanceExpr = self.instanceExpr 
         hasExplicitIparams = (len(explicitIparams) > 0)
         hasExplicitConditions = (len(explicitConditions) > 0)
         hasMultiDomain = (len(explicitDomains)>1 and (not hasattr(self, 'domain')
@@ -732,7 +573,7 @@ class OperationOverInstances(Operation):
                 if hasExplicitIparams: outStr += " | "
                 outStr += explicitConditions.formatted(formatType, fence=False)                
                 #outStr += ', '.join(condition.formatted(formatType) for condition in self.conditions if condition not in implicitConditions) 
-            outStr += '} ' + explicitInstanceExpr.formatted(formatType,fence=True)
+            outStr += '} ' + instanceExpr.formatted(formatType,fence=True)
             if fence: outStr += ']'
         if formatType == 'latex':
             if fence: outStr += r'\left['
