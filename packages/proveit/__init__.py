@@ -26,7 +26,6 @@ from ._core_ import (
         HypotheticalReasoning, Instantiation, Generalization,
         ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
         StyleOptions, maybeFencedString, maybeFencedLatex, maybeFenced)
-from .core_expr_types import (Len,)
 from .relation import (TransitiveRelation, TransitiveSequence, TransitivityException, 
                        TransRelUpdater)
 
