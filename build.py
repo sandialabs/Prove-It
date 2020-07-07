@@ -597,7 +597,8 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
         # Next, run _axioms_.ipynb and _theorems_.ipynb notebooks for the contexts.
         # The order does not matter assuming these expression constructions
         # do not depend upon other axioms or theorems (but possibly common expressions).
-        # do this twice to get rid of extraneous information about adding/removing from database
+        # Execute twice unless no_latex==True to get rid of extraneous 
+        # information about adding/removing from database
         if no_execute:
             for context_path in context_paths:
                 exportToHTML(os.path.join(context_path, '_axioms_.ipynb'))
@@ -608,14 +609,15 @@ def build(execute_processor, context_paths, all_paths, no_execute=False,
                 #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
                 execute_processor.executeNotebook(os.path.join(context_path, '_axioms_.ipynb'))
                 execute_processor.executeNotebook(os.path.join(context_path, '_theorems_.ipynb'))    
-            # the second time we'll export to html
+            # The second time we'll export to html.  Unless 'no_latex'
+            # is True, we will execute again to clear extra information.
             for context_path in context_paths:
                 #revise_special_notebook(os.path.join(context_path, '_axioms_.ipynb'))
                 #revise_special_notebook(os.path.join(context_path, '_theorems_.ipynb'))
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_axioms_.ipynb'),
-                                         no_latex=no_latex)
+                                         no_execute=no_latex, no_latex=no_latex)
                 executeAndExportNotebook(execute_processor, os.path.join(context_path, '_theorems_.ipynb'),
-                                         no_latex=no_latex)    
+                                         no_execute=no_latex, no_latex=no_latex)    
     
     if not just_execute_expression_nbs and not just_execute_demos:
         # Get the proof notebook filenames for the theorems in all of the 
