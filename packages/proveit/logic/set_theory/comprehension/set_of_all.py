@@ -18,15 +18,10 @@ class SetOfAll(OperationOverInstances):
         are satisfied:
         {instanceElement | conditions}_{instanceParamOrParams \in S}
         '''
-        # nestMultiIvars=False will ensure it does NOT treat multiple
-        # instance variables as nested SetOfAll operations -- that
-        # would not make sense (unlike forall, exists, summation, and
-        # product where it does make sense).
         OperationOverInstances.__init__(
                 self, SetOfAll._operator_, instanceParamOrParams,
                 instanceElement, domain=domain, domains=domains,
-                condition=condition, conditions=conditions,
-                nestMultiIvars=False, _lambda_map=_lambda_map)
+                condition=condition, conditions=conditions, _lambda_map=_lambda_map)
         self.instanceElement = self.instanceExpr
         if hasattr(self, 'instanceParam'):
             if not hasattr(self, 'domain'):
