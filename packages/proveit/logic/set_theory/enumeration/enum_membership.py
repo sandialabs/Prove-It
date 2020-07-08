@@ -14,35 +14,44 @@ class EnumMembership(Membership):
     
     def sideEffects(self, knownTruth):
         '''
-        Unfold the enumerated set membership, and in boolean as a side-effect.
+        Unfold the enumerated set membership, and in boolean as
+        a side-effect.
         '''
         yield self.unfold
 
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''
-        From [(element=x) or (element=y) or ..], derive and return [element in {x, y, ..}].
+        From [(element=x) or (element=y) or ..], derive and return
+        [element in {x, y, ..}].
         '''   
         from ._theorems_ import foldSingleton, fold
         enum_elements = self.domain.elements
         if len(enum_elements) == 1:
-            return foldSingleton.specialize({x:self.element, y:enum_elements[0]}, assumptions=assumptions)
+            return foldSingleton.specialize(
+                {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return fold.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements}, assumptions=assumptions)
+            return fold.specialize(
+                {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+                assumptions=assumptions)
     
     def equivalence(self, assumptions=USE_DEFAULTS):
         '''
-        Deduce and return and [element in {x, y, ..}] = [(element=x) or (element=y) or ...] 
-        where self = {y}.
+        From the EnumMembership object [element in {a, ..., n}],
+        deduce and return:
+        |– [element in {x, y, ..}] = [(element=a) or ... or (element=a)]
         '''
         from ._axioms_ import enumSetDef
         from ._theorems_ import singletonDef
         enum_elements = self.domain.elements
 
         if len(enum_elements) == 1:
-            return singletonDef.specialize({x:self.element, y:enum_elements[0]}, assumptions=assumptions)
+            return singletonDef.specialize(
+                {x:self.element, y:enum_elements[0]}, assumptions=assumptions)
         else:
-            return enumSetDef.specialize({l:num(len(enum_elements)), x:self.element, yy:enum_elements}, assumptions=assumptions)
+            return enumSetDef.specialize(
+                {l:num(len(enum_elements)), x:self.element, yy:enum_elements},
+                assumptions=assumptions)
 
     def deriveInSingleton(self, expression, assumptions=USE_DEFAULTS):
         # implemented by JML 6/28/19
