@@ -41,13 +41,12 @@ class Set(Operation):
     def permutation_move(self, initIdx=None, finalIdx=None,
                          assumptions=USE_DEFAULTS):
         '''
-        and use a permutationSwap for the extra one (use swap for the verb)
         Deduce that this Set expression is equal to a Set
         in which the element at index initIdx has been moved to
         finalIdx. For example, {a, b, c, d} = {a, c, b, d} via
         initIdx = 1 (i.e. 'b') and finalIdx = -2. In traditional
         cycle notation, this corresponds to an index-based cycle
-        (initIdx, initIdx+1, … finalIdx) where
+        (initIdx, initIdx+1, ..., finalIdx) where
         0 ≤ initIdx ≤ finalIdx ≤ n - 1 for a set of size n.
         '''
         from ._theorems_ import (binaryPermutation, leftwardPermutation,
@@ -56,11 +55,33 @@ class Set(Operation):
                                      leftwardPermutation, rightwardPermutation,
                                      assumptions)
 
-    # ============================================================== #
-    # Might be useful to have a special swap version of permutation
-    # def permutation_swap
-    # register with swapped as the adjective, swap as the verb
-    # ============================================================== #
+
+    def permutation_swap(self, idx01=None, idx02=None,
+                         assumptions=USE_DEFAULTS):
+        '''
+        Deduce that this Set expression is equal to a Set in which the
+        elements at indices idx01 and idx02 have swapped locations.
+        For example,
+        {a, b, c, d, e}.permutation_swap(2, 4) would return
+        |– {a, b, c, d, e} = {a, b, e, d, c}
+        '''
+        # Before processing, quickly check that:
+        # (1) user has specified both idx values;
+        # (2) and the idx values are plausible.
+        if idx01 is None or idx02 is None:
+            raise ValueError("Set.permutation_swap() method expecting the "
+                             "individual index locations of the two elements "
+                             "to swap, idx01 = {0} and idx02 = {1}".
+                             format(idx01, idx02))
+        if idx01 is not None and idx02 is not None:
+            valid_indices_list = list(range(0, len(self.operands)))
+            self._check_subset_indices_weak(valid_indices_list, [idx01, idx02])
+
+        new_order = list(range(0, len(self.operands)))
+        new_order[idx01], new_order[idx02] = new_order[idx02], new_order[idx01]
+
+        return self.permutation(new_order=new_order, assumptions=assumptions)
+
 
     def permutation(self, new_order=None, cycles=None,
                     assumptions=USE_DEFAULTS):
@@ -159,10 +180,10 @@ class Set(Operation):
                             break 
                 if len(error_elems) > 0:
                     raise ValueError(
-                            "Specified subset {0} does not appear to be a subset "
-                            "of the original set {1}. The following elements "
-                            "appear in the requested subset Set but not in the "
-                            "original Set: {2}.".
+                            "Specified subset {0} does not appear to be a "
+                            "subset of the original set {1}. The following "
+                            "elements appear in the requested subset Set but "
+                            "not in the original Set: {2}.".
                             format(subset, self, error_elems))
                 # use any equivalences found above and stored in dict
                 # to deduce subset equal to the set obtained when the
@@ -172,7 +193,8 @@ class Set(Operation):
                 eq = TransRelUpdater(temp_subset, assumptions)
                 for key in error_elem_equivalences_dict:
                     temp_subset = eq.update(temp_subset.elem_substitution(
-                            elem=key, sub_elem=error_elem_equivalences_dict[key],
+                            elem=key,
+                            sub_elem=error_elem_equivalences_dict[key],
                             assumptions=assumptions))
                 subset = temp_subset
                 subset_to_substituted_subset_kt = eq.relation
@@ -262,7 +284,7 @@ class Set(Operation):
             # no substitutions into subset performed earlier, so no
             # back-substitution needed:
             return substituted_subset_of_orig_superset
-    
+
 
     def deduceEnumProperSubset(self, subset_indices=None, subset=None,
                                assumptions=USE_DEFAULTS):
@@ -909,9 +931,14 @@ class Set(Operation):
 
 
 # Register these expression equivalence methods:
-InnerExpr.register_equivalence_method(Set, 'permutation', 'permuted', 'permute')
-InnerExpr.register_equivalence_method(Set, 'permutation_move', 'moved', 'move')
-InnerExpr.register_equivalence_method(Set, 'reduction', 'reduced', 'reduce')
+InnerExpr.register_equivalence_method(
+        Set, 'permutation', 'permuted', 'permute')
+InnerExpr.register_equivalence_method(
+        Set, 'permutation_move', 'moved', 'move')
+InnerExpr.register_equivalence_method(
+        Set, 'permutation_swap', 'swapped', 'swap')
+InnerExpr.register_equivalence_method(
+        Set, 'reduction', 'reduced', 'reduce')
 
 
 
